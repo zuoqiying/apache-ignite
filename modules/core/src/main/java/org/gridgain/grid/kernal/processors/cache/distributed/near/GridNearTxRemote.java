@@ -72,6 +72,8 @@ public class GridNearTxRemote<K, V> extends GridDistributedTxRemoteAdapter<K, V>
      * @param ctx Cache registry.
      * @param txSize Expected transaction size.
      * @param grpLockKey Group lock key if this is a group-lock transaction.
+     * @param subjId Subject ID.
+     * @param taskNameHash Task name hash code.
      * @throws IgniteCheckedException If unmarshalling failed.
      */
     public GridNearTxRemote(
@@ -130,6 +132,8 @@ public class GridNearTxRemote<K, V> extends GridDistributedTxRemoteAdapter<K, V>
      * @param ctx Cache registry.
      * @param txSize Expected transaction size.
      * @param grpLockKey Collection of group lock keys if this is a group-lock transaction.
+     * @param subjId Subject ID.
+     * @param taskNameHash Task name hash code.
      */
     public GridNearTxRemote(
         GridCacheSharedContext<K, V> ctx,
@@ -311,8 +315,10 @@ public class GridNearTxRemote<K, V> extends GridDistributedTxRemoteAdapter<K, V>
     }
 
     /**
+     * @param cacheCtx Cache context.
      * @param key Key to add to read set.
      * @param keyBytes Key bytes.
+     * @param op Cache operation.
      * @param val Value.
      * @param valBytes Value bytes.
      * @param drVer Data center replication version.

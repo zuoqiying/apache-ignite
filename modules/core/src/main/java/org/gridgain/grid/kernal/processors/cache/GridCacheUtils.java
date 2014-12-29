@@ -27,6 +27,7 @@ import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
 import javax.cache.expiry.*;
+import javax.cache.processor.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -1670,5 +1671,33 @@ public class GridCacheUtils {
         assert duration.getTimeUnit() != null;
 
         return duration.getTimeUnit().toMillis(duration.getDurationAmount());
+    }
+
+    /**
+     * @param txEntry Entry.
+     * @param val Value.
+     * @return Invoke result.
+     */
+    @Nullable public static <K, V> CacheInvokeResult<Object> computeInvokeResult(
+        IgniteTxEntry<K, V> txEntry, V val, boolean ignoreNull) {
+        try {
+            Object res = null;
+
+            for (T2<EntryProcessor<K, V, ?>, Object[]> t : txEntry.entryProcessors()) {
+                CacheInvokeEntry<K, V> invokeEntry = new CacheInvokeEntry<>(txEntry.key(), val);
+
+                EntryProcessor<K, V, ?> entryProcessor = t.get1();
+
+                res = entryProcessor.process(invokeEntry, t.get2());
+            }
+
+            if (res == null && ignoreNull)
+                return null;
+            else
+                return new CacheInvokeResult<>(res);
+        }
+        catch (Exception e) {
+            return new CacheInvokeResult<>(e);
+        }
     }
 }

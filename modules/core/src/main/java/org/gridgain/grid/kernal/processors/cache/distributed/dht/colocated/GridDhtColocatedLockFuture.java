@@ -1261,6 +1261,12 @@ public final class GridDhtColocatedLockFuture<K, V> extends GridCompoundIdentity
                         // In colocated cache we must receive responses only for detached entries.
                         assert txEntry.cached().detached();
 
+                        if (txEntry.op() == GridCacheOperation.TRANSFORM) {
+                            CacheInvokeResult<Object> invokeRes = res.invokeResult(i);
+
+                            txEntry.invokeResult(invokeRes);
+                        }
+
                         txEntry.markLocked();
 
                         GridDhtDetachedCacheEntry<K, V> entry = (GridDhtDetachedCacheEntry<K, V>)txEntry.cached();

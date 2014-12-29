@@ -49,6 +49,15 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
     /** Filter evaluation results for fast-commit transactions. */
     private boolean[] filterRes;
 
+    /** Result for invoke operation. */
+    @GridToStringInclude
+    @GridDirectTransient
+    private List<CacheInvokeResult<Object>> invokeRes;
+
+    /** Serialized results for invoke operation. */
+    @GridDirectCollection(byte[].class)
+    private List<byte[]> invokeResBytes;
+
     /**
      * Empty constructor (required by {@link Externalizable}).
      */
@@ -148,6 +157,7 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
      * @param filterPassed Boolean flag indicating whether filter passed for fast-commit transaction.
      * @param dhtVer DHT version.
      * @param mappedVer Mapped version.
+     * @param res Result for invoke operation.
      * @param ctx Context.
      * @throws IgniteCheckedException If failed.
      */
@@ -157,6 +167,7 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
         boolean filterPassed,
         @Nullable GridCacheVersion dhtVer,
         @Nullable GridCacheVersion mappedVer,
+        @Nullable CacheInvokeResult<Object> res,
         GridCacheContext<K, V> ctx
     ) throws IgniteCheckedException {
         int idx = valuesSize();
@@ -167,8 +178,37 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
         if (filterRes != null)
             filterRes[idx] = filterPassed;
 
+        if (res != null) {
+            if (invokeRes == null)
+                invokeRes = new ArrayList<>(dhtVers.length);
+
+            invokeRes.add(res);
+        }
+
         // Delegate to super.
         addValueBytes(val, valBytes, ctx);
+    }
+
+    /**
+     * @param idx Key index.
+     * @return Result for invoke operation.
+     */
+    public CacheInvokeResult<Object> invokeResult(int idx) {
+        return invokeRes != null ? invokeRes.get(idx) : null;
+    }
+
+    /** {@inheritDoc} */
+    @Override public void prepareMarshal(GridCacheSharedContext<K, V> ctx) throws IgniteCheckedException {
+        super.prepareMarshal(ctx);
+
+        invokeResBytes = marshalCollection(invokeRes, ctx);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void finishUnmarshal(GridCacheSharedContext<K, V> ctx, ClassLoader ldr) throws IgniteCheckedException {
+        super.finishUnmarshal(ctx, ldr);
+
+        invokeRes = unmarshalCollection(invokeResBytes, ctx, ldr);
     }
 
     /** {@inheritDoc} */
@@ -192,6 +232,8 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
         _clone.dhtVers = dhtVers;
         _clone.mappedVers = mappedVers;
         _clone.filterRes = filterRes;
+        _clone.invokeRes = invokeRes;
+        _clone.invokeResBytes = invokeResBytes;
     }
 
     /** {@inheritDoc} */
@@ -244,6 +286,33 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
                 commState.idx++;
 
             case 13:
+                if (invokeResBytes != null) {
+                    if (commState.it == null) {
+                        if (!commState.putInt(invokeResBytes.size()))
+                            return false;
+
+                        commState.it = invokeResBytes.iterator();
+                    }
+
+                    while (commState.it.hasNext() || commState.cur != NULL) {
+                        if (commState.cur == NULL)
+                            commState.cur = commState.it.next();
+
+                        if (!commState.putByteArray((byte[])commState.cur))
+                            return false;
+
+                        commState.cur = NULL;
+                    }
+
+                    commState.it = null;
+                } else {
+                    if (!commState.putInt(-1))
+                        return false;
+                }
+
+                commState.idx++;
+
+            case 14:
                 if (mappedVers != null) {
                     if (commState.it == null) {
                         if (!commState.putInt(mappedVers.length))
@@ -270,13 +339,13 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
 
                 commState.idx++;
 
-            case 14:
+            case 15:
                 if (!commState.putGridUuid(miniId))
                     return false;
 
                 commState.idx++;
 
-            case 15:
+            case 16:
                 if (pending != null) {
                     if (commState.it == null) {
                         if (!commState.putInt(pending.size()))
@@ -365,6 +434,35 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
                 }
 
                 if (commState.readSize >= 0) {
+                    if (invokeResBytes == null)
+                        invokeResBytes = new ArrayList<>(commState.readSize);
+
+                    for (int i = commState.readItems; i < commState.readSize; i++) {
+                        byte[] _val = commState.getByteArray();
+
+                        if (_val == BYTE_ARR_NOT_READ)
+                            return false;
+
+                        invokeResBytes.add((byte[])_val);
+
+                        commState.readItems++;
+                    }
+                }
+
+                commState.readSize = -1;
+                commState.readItems = 0;
+
+                commState.idx++;
+
+            case 14:
+                if (commState.readSize == -1) {
+                    if (buf.remaining() < 4)
+                        return false;
+
+                    commState.readSize = commState.getInt();
+                }
+
+                if (commState.readSize >= 0) {
                     if (mappedVers == null)
                         mappedVers = new GridCacheVersion[commState.readSize];
 
@@ -385,7 +483,7 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
 
                 commState.idx++;
 
-            case 14:
+            case 15:
                 IgniteUuid miniId0 = commState.getGridUuid();
 
                 if (miniId0 == GRID_UUID_NOT_READ)
@@ -395,7 +493,7 @@ public class GridNearLockResponse<K, V> extends GridDistributedLockResponse<K, V
 
                 commState.idx++;
 
-            case 15:
+            case 16:
                 if (commState.readSize == -1) {
                     if (buf.remaining() < 4)
                         return false;

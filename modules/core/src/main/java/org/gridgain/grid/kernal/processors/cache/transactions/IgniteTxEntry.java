@@ -70,9 +70,12 @@ public class IgniteTxEntry<K, V> implements GridPeerDeployAware, Externalizable,
     /** Filter bytes. */
     private byte[] filterBytes;
 
-    /** Transform. */
+    /** EntryProcessors for invoke operation. */
     @GridToStringInclude
     private Collection<T2<EntryProcessor<K, V, ?>, Object[]>> entryProcessorsCol;
+
+    /** */
+    private CacheInvokeResult<Object> invokeRes;
 
     /** Transform closure bytes. */
     @GridToStringExclude
@@ -621,6 +624,20 @@ public class IgniteTxEntry<K, V> implements GridPeerDeployAware, Externalizable,
         transformClosBytes = null;
 
         val.op(TRANSFORM);
+    }
+
+    /**
+     * @param invokeRes Remotely computed result for invoke operation.
+     */
+    public void invokeResult(@Nullable CacheInvokeResult<Object> invokeRes) {
+        this.invokeRes = invokeRes;
+    }
+
+    /**
+     * @return Remotely computed result for invoke operation.
+     */
+    @Nullable public CacheInvokeResult<Object> invokeResult() {
+        return invokeRes;
     }
 
     /**

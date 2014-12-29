@@ -2259,7 +2259,9 @@ public abstract class IgniteTxLocalAdapter<K, V> extends IgniteTxAdapter<K, V>
                     if (!F.isEmptyOrNulls(filter) && !F.isAlwaysTrue(filter))
                         retval = true;
 
-                    if (retval || txEntry.op() == TRANSFORM) {
+                    boolean invoke = computeInvoke && txEntry.op() == TRANSFORM && txEntry.invokeResult() == null;
+
+                    if (retval || invoke) {
                         if (!cacheCtx.isNear()) {
                             try {
                                 if (!hasPrevVal)
@@ -2288,12 +2290,16 @@ public abstract class IgniteTxLocalAdapter<K, V> extends IgniteTxAdapter<K, V>
                                 v = cached.rawGetOrUnmarshal(false);
                         }
 
-                        if (txEntry.op() == TRANSFORM) {
-                            if (computeInvoke)
-                                addInvokeResult(txEntry, v, ret);
-                        }
-                        else
+                        if (retval)
                             ret.value(v);
+                    }
+
+                    if (computeInvoke && txEntry.op() == TRANSFORM) {
+                        CacheInvokeResult<Object> res =
+                            invoke ? CU.computeInvokeResult(txEntry, v, true) : txEntry.invokeResult();
+
+                        if (res != null && !res.empty())
+                            ret.addEntryProcessResult(k, res);
                     }
 
                     boolean pass = cacheCtx.isAll(cached, filter);
@@ -2359,23 +2365,10 @@ public abstract class IgniteTxLocalAdapter<K, V> extends IgniteTxAdapter<K, V>
      * @param ret Return value to update.
      */
     private void addInvokeResult(IgniteTxEntry<K, V> txEntry, V val, GridCacheReturn ret) {
-        try {
-            Object res = null;
+        CacheInvokeResult<Object> res = CU.computeInvokeResult(txEntry, val, true);
 
-            for (T2<EntryProcessor<K, V, ?>, Object[]> t : txEntry.entryProcessors()) {
-                CacheInvokeEntry<K, V> invokeEntry = new CacheInvokeEntry<>(txEntry.key(), val);
-
-                EntryProcessor<K, V, ?> entryProcessor = t.get1();
-
-                res = entryProcessor.process(invokeEntry, t.get2());
-            }
-
-            if (res != null)
-                ret.addEntryProcessResult(txEntry.key(), new CacheInvokeResult<>(res));
-        }
-        catch (Exception e) {
-            ret.addEntryProcessResult(txEntry.key(), new CacheInvokeResult(e));
-        }
+        if (res != null)
+            ret.addEntryProcessResult(txEntry.key(), res);
     }
 
     /**

@@ -955,10 +955,17 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
         assert mappedVer != null;
         assert tx == null || tx.xidVersion().equals(mappedVer);
 
+        boolean nearCacheReq = U.hasNearCache(nearNode, ctx.name());
+
         try {
             // Send reply back to originating near node.
             GridNearLockResponse<K, V> res = new GridNearLockResponse<>(ctx.cacheId(),
-                req.version(), req.futureId(), req.miniId(), tx != null && tx.onePhaseCommit(), entries.size(), err);
+                req.version(),
+                req.futureId(),
+                req.miniId(),
+                tx != null && tx.onePhaseCommit(),
+                entries.size(),
+                err);
 
             if (err == null) {
                 res.pending(localDhtPendingVersions(entries, mappedVer));
@@ -984,11 +991,29 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
                                 try {
                                     GridCacheVersion ver = e.version();
 
-                                    boolean ret = req.returnValue(i) || dhtVer == null || !dhtVer.equals(ver);
+                                    IgniteTxEntry<K, V> writeEntry = null;
+
+                                    boolean ret;
+
+                                    if (req.implicitTx()) {
+                                        ret = req.returnValue(i) ||
+                                            (nearCacheReq && (dhtVer == null || !dhtVer.equals(ver)));
+                                    }
+                                    else
+                                        ret = req.returnValue(i) || dhtVer == null || !dhtVer.equals(ver);
+
+                                    boolean invoke = false;
+
+                                    if (!ret && tx != null && req.hasTransforms()) {
+                                        writeEntry = tx.entry(ctx.txKey(e.key()));
+
+                                        if (writeEntry.op() == TRANSFORM)
+                                            invoke = true;
+                                    }
 
                                     V val = null;
 
-                                    if (ret)
+                                    if (ret || invoke)
                                         val = e.innerGet(tx,
                                             /*swap*/true,
                                             /*read-through*/true,
@@ -1014,7 +1039,8 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
                                     boolean filterPassed = false;
 
                                     if (tx != null && tx.onePhaseCommit()) {
-                                        IgniteTxEntry<K, V> writeEntry = tx.entry(ctx.txKey(e.key()));
+                                        if (writeEntry == null)
+                                            writeEntry = tx.entry(ctx.txKey(e.key()));
 
                                         assert writeEntry != null :
                                             "Missing tx entry for locked cache entry: " + e;
@@ -1032,6 +1058,7 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
                                         filterPassed,
                                         ver,
                                         mappedVer,
+                                        invoke ? computeInvokeResult(writeEntry, val, false) : null,
                                         ctx);
                                 }
                                 catch (GridCacheFilterFailedException ex) {
@@ -1043,7 +1070,7 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
                             else {
                                 // We include values into response since they are required for local
                                 // calls and won't be serialized. We are also including DHT version.
-                                res.addValueBytes(null, null, false, e.version(), mappedVer, ctx);
+                                res.addValueBytes(null, null, false, e.version(), mappedVer, null, ctx);
                             }
 
                             break;
@@ -1069,8 +1096,13 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
             U.error(log, "Failed to get value for lock reply message for node [node=" +
                 U.toShortString(nearNode) + ", req=" + req + ']', e);
 
-            return new GridNearLockResponse<>(ctx.cacheId(), req.version(), req.futureId(), req.miniId(), false,
-                entries.size(), e);
+            return new GridNearLockResponse<>(ctx.cacheId(),
+                req.version(),
+                req.futureId(),
+                req.miniId(),
+                false,
+                entries.size(),
+                e);
         }
     }
 
