@@ -96,63 +96,68 @@ public class CacheManager implements javax.cache.CacheManager {
     /** {@inheritDoc} */
     @Override public <K, V, C extends Configuration<K, V>> Cache<K, V> createCache(String cacheName, C cacheCfg)
         throws IllegalArgumentException {
-        ensureNotClosed();
+        try {
+            ensureNotClosed();
 
-        if (cacheCfg == null)
-            throw new NullPointerException();
+            if (cacheCfg == null)
+                throw new NullPointerException();
 
-        if (cacheName == null)
-            throw new NullPointerException();
+            if (cacheName == null)
+                throw new NullPointerException();
 
-        CacheConfiguration igniteCacheCfg;
+            CacheConfiguration igniteCacheCfg;
 
-        if (cacheCfg instanceof CompleteConfiguration)
-            igniteCacheCfg = new CacheConfiguration((CompleteConfiguration)cacheCfg);
-        else {
-            igniteCacheCfg = new CacheConfiguration();
+            if (cacheCfg instanceof CompleteConfiguration)
+                igniteCacheCfg = new CacheConfiguration((CompleteConfiguration)cacheCfg);
+            else {
+                igniteCacheCfg = new CacheConfiguration();
 
-            igniteCacheCfg.setTypes(cacheCfg.getKeyType(), cacheCfg.getValueType());
-            igniteCacheCfg.setStoreValueBytes(cacheCfg.isStoreByValue());
-        }
-
-        igniteCacheCfg.setName(cacheName);
-
-        IgniteCache<K, V> res;
-
-        synchronized (igniteMap) {
-            if (igniteMap.containsKey(cacheName))
-                throw new CacheException("Cache already exists [cacheName=" + cacheName + ", manager=" + uri + ']');
-
-            Ignite ignite;
-
-            if (uri.equals(cachingProvider.getDefaultURI())) {
-                IgniteConfiguration cfg = new IgniteConfiguration();
-                cfg.setGridName(mgrIdx.incrementAndGet() + "-grid-for-" + cacheName);
-
-                cfg.setCacheConfiguration(igniteCacheCfg);
-
-                try {
-                    ignite = Ignition.start(cfg);
-                }
-                catch (IgniteException e) {
-                    throw new CacheException(e);
-                }
+                igniteCacheCfg.setTypes(cacheCfg.getKeyType(), cacheCfg.getValueType());
+                igniteCacheCfg.setStoreValueBytes(cacheCfg.isStoreByValue());
             }
-            else
-                throw new UnsupportedOperationException();
 
-            res = ignite.jcache(cacheName);
+            igniteCacheCfg.setName(cacheName);
 
-            igniteMap.put(cacheName, ignite);
+            IgniteCache<K, V> res;
+
+            synchronized (igniteMap) {
+                if (igniteMap.containsKey(cacheName))
+                    throw new CacheException("Cache already exists [cacheName=" + cacheName + ", manager=" + uri + ']');
+
+                Ignite ignite;
+
+                if (uri.equals(cachingProvider.getDefaultURI())) {
+                    IgniteConfiguration cfg = new IgniteConfiguration();
+                    cfg.setGridName(mgrIdx.incrementAndGet() + "-grid-for-" + cacheName);
+
+                    cfg.setCacheConfiguration(igniteCacheCfg);
+
+                    try {
+                        ignite = Ignition.start(cfg);
+                    }
+                    catch (IgniteException e) {
+                        throw new CacheException(e);
+                    }
+                }
+                else
+                    throw new UnsupportedOperationException();
+
+                res = ignite.jcache(cacheName);
+
+                igniteMap.put(cacheName, ignite);
+            }
+
+            if (igniteCacheCfg.isManagementEnabled())
+                enableManagement(cacheName, true);
+
+            if (igniteCacheCfg.isStatisticsEnabled())
+                enableStatistics(cacheName, true);
+
+            return res;
         }
-
-        if (igniteCacheCfg.isManagementEnabled())
-            enableManagement(cacheName, true);
-
-        if (igniteCacheCfg.isStatisticsEnabled())
-            enableStatistics(cacheName, true);
-
-        return res;
+        catch (UnsupportedOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
