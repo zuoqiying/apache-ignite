@@ -1655,6 +1655,13 @@ public class CacheConfiguration extends MutableConfiguration {
         this.readFromBackup = readFromBackup;
     }
 
+    @Override public MutableConfiguration setWriteThrough(boolean isWriteThrough) {
+        if (isWriteThrough)
+            throw new RuntimeException("!!!");
+
+        return super.setWriteThrough(isWriteThrough);
+    }
+
     @Override public MutableConfiguration setReadThrough(boolean isReadThrough) {
         if (isReadThrough)
             throw new RuntimeException("!!!");
