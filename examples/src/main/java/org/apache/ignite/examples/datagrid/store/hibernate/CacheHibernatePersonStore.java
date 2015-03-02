@@ -202,7 +202,7 @@ public class CacheHibernatePersonStore extends CacheStoreAdapter<Long, Person> {
     }
 
     /** {@inheritDoc} */
-    @Override public void txEnd(boolean commit) {
+    @Override public void sessionEnd(boolean commit) {
         CacheStoreSession storeSes = session();
 
         Transaction tx = storeSes.transaction();
