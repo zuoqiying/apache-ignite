@@ -19,7 +19,6 @@ package org.apache.ignite.cache.store.jdbc;
 
 import org.apache.ignite.*;
 import org.apache.ignite.cache.*;
-import org.apache.ignite.cache.store.*;
 import org.apache.ignite.cache.store.jdbc.dialect.*;
 import org.apache.ignite.cache.store.jdbc.model.*;
 import org.apache.ignite.internal.processors.cache.*;
@@ -351,7 +350,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
         store.write(new CacheEntryImpl<>(k1, v1));
         store.write(new CacheEntryImpl<>(k2, v2));
 
-        store.txEnd(true);
+        store.sessionEnd(true);
 
         ses.newSession(null);
 
@@ -366,7 +365,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
 
         store.delete(k1);
 
-        store.txEnd(true);
+        store.sessionEnd(true);
 
         assertNull(store.load(k1));
         assertEquals(v2, store.load(k2));
@@ -399,7 +398,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
         // Put.
         store.write(new CacheEntryImpl<>(k1, v1));
 
-        store.txEnd(false); // Rollback.
+        store.sessionEnd(false); // Rollback.
 
         tx = new DummyTx();
 
@@ -419,7 +418,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
 
         store.writeAll(col);
 
-        store.txEnd(false); // Rollback.
+        store.sessionEnd(false); // Rollback.
 
         tx = new DummyTx();
 
@@ -436,7 +435,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
 
         store.writeAll(col);
 
-        store.txEnd(true); // Commit.
+        store.sessionEnd(true); // Commit.
 
         tx = new DummyTx();
 
@@ -449,7 +448,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
 
         store.write(new CacheEntryImpl<>(k4, v4));
 
-        store.txEnd(false); // Rollback.
+        store.sessionEnd(false); // Rollback.
 
         tx = new DummyTx();
 
@@ -462,7 +461,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
         // Remove.
         store.delete(k3);
 
-        store.txEnd(false); // Rollback.
+        store.sessionEnd(false); // Rollback.
 
         tx = new DummyTx();
 
@@ -475,7 +474,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
         // Remove all.
         store.deleteAll(Arrays.asList(k3));
 
-        store.txEnd(false); // Rollback.
+        store.sessionEnd(false); // Rollback.
 
         tx = new DummyTx();
 
@@ -516,7 +515,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
             store.write(new CacheEntryImpl<>(k1, v1));
 
             if (tx != null && commit) {
-                store.txEnd(true);
+                store.sessionEnd(true);
 
                 tx = new DummyTx();
 
@@ -540,7 +539,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
             store.writeAll(col);
 
             if (tx != null && commit) {
-                store.txEnd(true);
+                store.sessionEnd(true);
 
                 tx = new DummyTx();
 
@@ -579,7 +578,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
             store.deleteAll(Arrays.asList(k2, k3));
 
             if (tx != null && commit) {
-                store.txEnd(true);
+                store.sessionEnd(true);
 
                 tx = new DummyTx();
 
@@ -595,7 +594,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
             store.delete(k1);
 
             if (tx != null && commit) {
-                store.txEnd(true);
+                store.sessionEnd(true);
 
                 tx = new DummyTx();
 
@@ -607,7 +606,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
         }
         finally {
             if (tx != null)
-                store.txEnd(false);
+                store.sessionEnd(false);
         }
     }
 
@@ -652,7 +651,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
                             }
 
                             if (tx != null)
-                                store.txEnd(true);
+                                store.sessionEnd(true);
 
                             queue.add(key);
                         }
@@ -669,7 +668,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
                                 store.deleteAll(Collections.singleton(key));
 
                             if (tx != null)
-                                store.txEnd(true);
+                                store.sessionEnd(true);
                         }
                     }
                     else { // Update.
@@ -694,7 +693,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
                             }
 
                             if (tx != null)
-                                store.txEnd(true);
+                                store.sessionEnd(true);
 
                             queue.add(key);
                         }
@@ -717,7 +716,7 @@ public class CacheJdbcPojoStoreTest extends GridCommonAbstractTest {
                         }
 
                         if (tx != null)
-                            store.txEnd(true);
+                            store.sessionEnd(true);
 
                         queue.add(key);
                     }

@@ -97,5 +97,5 @@ public interface CacheStore<K, V> extends CacheLoader<K, V>, CacheWriter<K, V> {
      *      may bring cache transaction into {@link TransactionState#UNKNOWN} which will
      *      consequently cause all transacted entries to be invalidated.
      */
-    public void txEnd(boolean commit) throws CacheWriterException;
+    public void sessionEnd(boolean commit) throws CacheWriterException;
 }
