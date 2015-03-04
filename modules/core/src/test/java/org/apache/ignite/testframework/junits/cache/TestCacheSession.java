@@ -18,11 +18,8 @@
 package org.apache.ignite.testframework.junits.cache;
 
 import org.apache.ignite.cache.store.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
 import org.apache.ignite.transactions.*;
 import org.jetbrains.annotations.*;
-
-import java.util.*;
 
 /**
  *
@@ -32,7 +29,7 @@ public class TestCacheSession implements CacheStoreSession {
     private Transaction tx;
 
     /** */
-    private Map<Object, Object> props;
+    private Object attach;
 
     /**
      *
@@ -41,7 +38,7 @@ public class TestCacheSession implements CacheStoreSession {
     public void newSession(@Nullable Transaction tx) {
         this.tx = tx;
 
-        props = null;
+        attach = null;
     }
 
     /** {@inheritDoc} */
@@ -55,12 +52,17 @@ public class TestCacheSession implements CacheStoreSession {
     }
 
     /** {@inheritDoc} */
-    @SuppressWarnings("unchecked")
-    @Override public <K, V> Map<K, V> properties() {
-        if (props == null)
-            props = U.newHashMap(1);
+    @Override public Object attach(@Nullable Object obj) {
+        Object oldAttach = attach;
 
-        return (Map<K, V>)props;
+        attach = obj;
+
+        return oldAttach;
+    }
+
+    /** {@inheritDoc} */
+    @Override public Object getAttached() {
+        return attach;
     }
 
     /** {@inheritDoc} */

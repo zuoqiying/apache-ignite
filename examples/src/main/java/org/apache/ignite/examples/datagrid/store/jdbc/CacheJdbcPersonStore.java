@@ -35,9 +35,6 @@ import java.util.*;
  *
  */
 public class CacheJdbcPersonStore extends CacheStoreAdapter<Long, Person> {
-    /** Transaction metadata attribute name. */
-    private static final String ATTR_NAME = "SIMPLE_STORE_CONNECTION";
-
     /** Auto-injected store session. */
     @CacheStoreSessionResource
     private CacheStoreSession ses;
@@ -71,9 +68,7 @@ public class CacheJdbcPersonStore extends CacheStoreAdapter<Long, Person> {
 
     /** {@inheritDoc} */
     @Override public void sessionEnd(boolean commit) {
-        Map<String, Connection> props = ses.properties();
-
-        try (Connection conn = props.remove(ATTR_NAME)) {
+        try (Connection conn = (Connection)ses.attach(null)) {
             if (conn != null) {
                 if (commit)
                     conn.commit();
@@ -222,16 +217,14 @@ public class CacheJdbcPersonStore extends CacheStoreAdapter<Long, Person> {
         // If there is an ongoing transaction,
         // we must reuse the same connection.
         if (ses.isWithinTransaction()) {
-            Map<Object, Object> props = ses.properties();
-
-            Connection conn = (Connection)props.get(ATTR_NAME);
+            Connection conn = (Connection)ses.getAttached();
 
             if (conn == null) {
                 conn = openConnection(false);
 
                 // Store connection in session properties, so it can be accessed
                 // for other operations on the same transaction.
-                props.put(ATTR_NAME, conn);
+                ses.attach(conn);
             }
 
             return conn;

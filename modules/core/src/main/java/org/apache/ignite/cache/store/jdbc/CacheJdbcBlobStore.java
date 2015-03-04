@@ -32,7 +32,6 @@ import javax.cache.*;
 import javax.cache.integration.*;
 import javax.sql.*;
 import java.sql.*;
-import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
@@ -108,9 +107,6 @@ public class CacheJdbcBlobStore<K, V> extends CacheStoreAdapter<K, V> {
     /** Default delete entry query (value is <tt>delete from ENTRIES where key=?</tt>). */
     public static final String DFLT_DEL_QRY = "delete from ENTRIES where key=?";
 
-    /** Connection attribute name. */
-    private static final String ATTR_CONN = "JDBC_STORE_CONNECTION";
-
     /** Connection URL. */
     private String connUrl = DFLT_CONN_URL;
 
@@ -183,9 +179,7 @@ public class CacheJdbcBlobStore<K, V> extends CacheStoreAdapter<K, V> {
 
         Transaction tx = transaction();
 
-        Map<String, Connection> props = session().properties();
-
-        Connection conn = props.remove(ATTR_CONN);
+        Connection conn = (Connection)session().attach(null);
 
         if (conn != null) {
             try {
@@ -322,16 +316,14 @@ public class CacheJdbcBlobStore<K, V> extends CacheStoreAdapter<K, V> {
      */
     private Connection connection(@Nullable Transaction tx) throws SQLException  {
         if (tx != null) {
-            Map<String, Connection> props = session().properties();
-
-            Connection conn = props.get(ATTR_CONN);
+            Connection conn = (Connection)session().getAttached();
 
             if (conn == null) {
                 conn = openConnection(false);
 
                 // Store connection in session properties, so it can be accessed
                 // for other operations on the same transaction.
-                props.put(ATTR_CONN, conn);
+                session().attach(conn);
             }
 
             return conn;
@@ -581,7 +573,7 @@ public class CacheJdbcBlobStore<K, V> extends CacheStoreAdapter<K, V> {
     /**
      * @return Current transaction.
      */
-    @Nullable private Transaction transaction() {
+    private Transaction transaction() {
         CacheStoreSession ses = session();
 
         return ses != null ? ses.transaction() : null;

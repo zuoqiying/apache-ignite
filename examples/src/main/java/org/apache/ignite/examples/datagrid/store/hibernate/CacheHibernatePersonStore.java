@@ -37,9 +37,6 @@ public class CacheHibernatePersonStore extends CacheStoreAdapter<Long, Person> {
     /** Default hibernate configuration resource path. */
     private static final String DFLT_HIBERNATE_CFG = "/org/apache/ignite/examples/datagrid/store/hibernate/hibernate.cfg.xml";
 
-    /** Session attribute name. */
-    private static final String ATTR_SES = "HIBERNATE_STORE_SESSION";
-
     /** Session factory. */
     private SessionFactory sesFactory;
 
@@ -207,9 +204,7 @@ public class CacheHibernatePersonStore extends CacheStoreAdapter<Long, Person> {
 
         Transaction tx = storeSes.transaction();
 
-        Map<String, Session> props = storeSes.properties();
-
-        Session ses = props.remove(ATTR_SES);
+        Session ses = (Session)storeSes.attach(null);
 
         if (ses != null) {
             org.hibernate.Transaction hTx = ses.getTransaction();
@@ -247,9 +242,7 @@ public class CacheHibernatePersonStore extends CacheStoreAdapter<Long, Person> {
         Session ses;
 
         if (tx != null) {
-            Map<String, Session> props = session().properties();
-
-            ses = props.get(ATTR_SES);
+            ses = (Session)session().getAttached();
 
             if (ses == null) {
                 ses = sesFactory.openSession();
@@ -258,7 +251,7 @@ public class CacheHibernatePersonStore extends CacheStoreAdapter<Long, Person> {
 
                 // Store session in session properties, so it can be accessed
                 // for other operations on the same transaction.
-                props.put(ATTR_SES, ses);
+                session().attach(ses);
 
                 System.out.println("Hibernate session open [ses=" + ses + ", tx=" + tx.xid() + "]");
             }

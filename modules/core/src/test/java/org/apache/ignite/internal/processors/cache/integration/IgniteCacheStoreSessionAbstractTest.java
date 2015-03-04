@@ -205,7 +205,7 @@ public abstract class IgniteCacheStoreSessionAbstractTest extends IgniteCacheAbs
         private final String expMtd;
 
         /** */
-        private  final Map<Object, Object> expProps;
+        private final Object expAttach;
 
         /** */
         private final String expCacheName;
@@ -213,13 +213,13 @@ public abstract class IgniteCacheStoreSessionAbstractTest extends IgniteCacheAbs
         /**
          * @param tx {@code True} if transaction is enabled.
          * @param expMtd Expected method.
-         * @param expProps Expected properties.
+         * @param expAttach Expected properties.
          * @param expCacheName Expected cache name.
          */
-        public ExpectedData(boolean tx, String expMtd, Map<Object, Object> expProps, String expCacheName) {
+        ExpectedData(boolean tx, String expMtd, Object expAttach, String expCacheName) {
             this.tx = tx;
             this.expMtd = expMtd;
-            this.expProps = expProps;
+            this.expAttach = expAttach;
             this.expCacheName = expCacheName;
         }
     }
@@ -329,13 +329,7 @@ public abstract class IgniteCacheStoreSessionAbstractTest extends IgniteCacheAbs
             else
                 assertNull(ses.transaction());
 
-            Map<Object, Object> props = ses.properties();
-
-            assertNotNull(props);
-
-            assertEquals(exp.expProps, props);
-
-            props.put(props.size(), mtd);
+            assertEquals(exp.expAttach, ses.getAttached());
 
             assertEquals(exp.expCacheName, ses.cacheName());
         }

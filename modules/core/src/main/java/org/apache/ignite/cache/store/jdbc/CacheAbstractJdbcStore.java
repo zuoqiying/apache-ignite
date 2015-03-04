@@ -86,9 +86,6 @@ public abstract class CacheAbstractJdbcStore<K, V> implements CacheStore<K, V>, 
     /** Default batch size for put and remove operations. */
     protected static final int DFLT_PARALLEL_LOAD_CACHE_MINIMUM_THRESHOLD = 512;
 
-    /** Connection attribute property name. */
-    protected static final String ATTR_CONN_PROP = "JDBC_STORE_CONNECTION";
-
     /** Empty column value. */
     protected static final Object[] EMPTY_COLUMN_VALUE = new Object[] { null };
 
@@ -257,15 +254,13 @@ public abstract class CacheAbstractJdbcStore<K, V> implements CacheStore<K, V>, 
         CacheStoreSession ses = session();
 
         if (ses.transaction() != null) {
-            Map<String, Connection> prop = ses.properties();
-
-            Connection conn = prop.get(ATTR_CONN_PROP);
+            Connection conn = (Connection)ses.getAttached();
 
             if (conn == null) {
                 conn = openConnection(false);
 
                 // Store connection in session to used it for other operations in the same session.
-                prop.put(ATTR_CONN_PROP, conn);
+                ses.attach(conn);
             }
 
             return conn;
@@ -306,7 +301,7 @@ public abstract class CacheAbstractJdbcStore<K, V> implements CacheStore<K, V>, 
 
         Transaction tx = ses.transaction();
 
-        Connection conn = ses.<String, Connection>properties().remove(ATTR_CONN_PROP);
+        Connection conn = (Connection)ses.attach(null);
 
         if (conn != null) {
             assert tx != null;

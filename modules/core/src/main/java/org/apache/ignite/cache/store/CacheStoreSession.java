@@ -19,6 +19,7 @@ package org.apache.ignite.cache.store;
 
 import org.apache.ignite.resources.*;
 import org.apache.ignite.transactions.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -52,12 +53,19 @@ public interface CacheStoreSession {
     public boolean isWithinTransaction();
 
     /**
-     * Gets current session properties. You can add properties directly to the
-     * returned map.
+     * Attaches the given object to this session.
      *
-     * @return Current session properties.
+     * @param obj The object to be attached.
+     * @return Previously attached object.
      */
-    public <K, V> Map<K, V> properties();
+    public Object attach(@Nullable Object obj);
+
+    /**
+     * Returns the current attached object.
+     *
+     * @return The object currently attached to this session, or {@code null} if there is no attachment.
+     */
+    public Object getAttached();
 
     /**
      * Cache name for the current store operation. Note that if the same store

@@ -24,7 +24,6 @@ import org.apache.ignite.internal.*;
 import org.apache.ignite.internal.processors.cache.store.*;
 import org.apache.ignite.internal.processors.cache.transactions.*;
 import org.apache.ignite.internal.processors.cache.version.*;
-import org.apache.ignite.internal.util.*;
 import org.apache.ignite.internal.util.lang.*;
 import org.apache.ignite.internal.util.tostring.*;
 import org.apache.ignite.internal.util.typedef.*;
@@ -842,7 +841,7 @@ public class GridCacheStoreManager<K, V> extends GridCacheManagerAdapter<K, V> {
 
         /** */
         @GridToStringInclude
-        private Map<Object, Object> props;
+        private Object attach;
 
         /**
          * @param tx Current transaction.
@@ -861,16 +860,6 @@ public class GridCacheStoreManager<K, V> extends GridCacheManagerAdapter<K, V> {
         }
 
         /**
-         * @return Properties.
-         */
-        private Map<Object, Object> properties() {
-            if (props == null)
-                props = new GridLeanMap<>();
-
-            return props;
-        }
-
-        /**
          * @return Cache name.
          */
         private String cacheName() {
@@ -882,6 +871,20 @@ public class GridCacheStoreManager<K, V> extends GridCacheManagerAdapter<K, V> {
          */
         private void cacheName(String cacheName) {
             this.cacheName = cacheName;
+        }
+
+        /**
+         * @return Attachment.
+         */
+        public Object attachment() {
+            return attach;
+        }
+
+        /**
+         * @param attach New attachment.
+         */
+        public void attachment(Object attach) {
+            this.attach = attach;
         }
 
         /** {@inheritDoc} */
@@ -917,11 +920,21 @@ public class GridCacheStoreManager<K, V> extends GridCacheManagerAdapter<K, V> {
         }
 
         /** {@inheritDoc} */
-        @SuppressWarnings("unchecked")
-        @Override public <K1, V1> Map<K1, V1> properties() {
+        @Override public Object attach(@Nullable Object obj) {
+            SessionData sesData = sesHolder.get();
+
+            Object oldAttach = sesData.attach;
+
+            sesData.attachment(obj);
+
+            return oldAttach;
+        }
+
+        /** {@inheritDoc} */
+        @Override public Object getAttached() {
             SessionData ses0 = sesHolder.get();
 
-            return ses0 != null ? (Map<K1, V1>)ses0.properties() : null;
+            return ses0 != null ? ses0.attachment() : null;
         }
 
         /** {@inheritDoc} */

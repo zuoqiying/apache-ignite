@@ -158,9 +158,6 @@ public class CacheHibernateBlobStore<K, V> extends CacheStoreAdapter<K, V> {
     /** Default <tt>hibernate.hbm2ddl.auto</tt> property value (value is <tt>true</tt>). */
     public static final String DFLT_HBM2DDL_AUTO = "update";
 
-    /** Session attribute name. */
-    private static final String ATTR_SES = "HIBERNATE_STORE_SESSION";
-
     /** Name of Hibarname mapping resource. */
     private static final String MAPPING_RESOURCE =
             "org/apache/ignite/cache/store/hibernate/CacheHibernateBlobStoreEntry.hbm.xml";
@@ -332,9 +329,7 @@ public class CacheHibernateBlobStore<K, V> extends CacheStoreAdapter<K, V> {
 
         Transaction tx = transaction();
 
-        Map<String, Session> props = session().properties();
-
-        Session ses = props.remove(ATTR_SES);
+        Session ses = (Session)session().attach(null);
 
         if (ses != null) {
             org.hibernate.Transaction hTx = ses.getTransaction();
@@ -373,9 +368,7 @@ public class CacheHibernateBlobStore<K, V> extends CacheStoreAdapter<K, V> {
         Session ses;
 
         if (tx != null) {
-            Map<String, Session> props = session().properties();
-
-            ses = props.get(ATTR_SES);
+            ses = (Session)session().getAttached();
 
             if (ses == null) {
                 ses = sesFactory.openSession();
@@ -384,7 +377,7 @@ public class CacheHibernateBlobStore<K, V> extends CacheStoreAdapter<K, V> {
 
                 // Store session in transaction metadata, so it can be accessed
                 // for other operations on the same transaction.
-                props.put(ATTR_SES, ses);
+                session().attach(ses);
 
                 if (log.isDebugEnabled())
                     log.debug("Hibernate session open [ses=" + ses + ", tx=" + tx.xid() + "]");
