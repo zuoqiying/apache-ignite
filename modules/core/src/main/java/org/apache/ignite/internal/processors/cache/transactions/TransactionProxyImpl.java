@@ -33,7 +33,7 @@ import java.util.*;
 /**
  * Cache transaction proxy.
  */
-public class TransactionProxyImpl<K, V> implements TransactionProxy, Externalizable {
+public class TransactionProxyImpl<K, V> implements TransactionProxy, TransactionEx, Externalizable {
     /** */
     private static final long serialVersionUID = 0L;
 
