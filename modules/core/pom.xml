@@ -241,4 +241,8 @@
             </build>
         </profile>
     </profiles>
+
+  <scm>
+    <tag>ignite-release-test-2-branch</tag>
+  </scm>
 </project>

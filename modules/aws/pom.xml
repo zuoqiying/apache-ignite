@@ -72,4 +72,8 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+  <scm>
+    <tag>ignite-release-test-2-branch</tag>
+  </scm>
 </project>
