@@ -31,13 +31,13 @@
     </parent>
 
     <artifactId>ignite-schema-load</artifactId>
-    <version>1.0.0-RELEASE-TEST-RC1</version>
+    <version>1.0.0-RELEASE-TEST-RC2-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-core</artifactId>
-            <version>1.0.0-RELEASE-TEST-RC1</version>
+            <version>1.0.0-RELEASE-TEST-RC2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -104,6 +104,6 @@
     </profiles>
 
   <scm>
-    <tag>1.0.0-RELEASE-TEST-RC1</tag>
+    <tag>ignite-release-test-2-branch</tag>
   </scm>
 </project>
