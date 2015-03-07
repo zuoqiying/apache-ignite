@@ -31,7 +31,7 @@
     </parent>
 
     <artifactId>ignite-core</artifactId>
-    <version>1.0.0-RELEASE-TEST-RC3-SNAPSHOT</version>
+    <version>1.0.0-RELEASE-TEST-RC3</version>
 
     <dependencies>
         <dependency>
@@ -182,7 +182,7 @@
                             <dependency>
                                 <groupId>org.apache.ignite</groupId>
                                 <artifactId>ignite-tools</artifactId>
-                                <version>1.0.0-RELEASE-TEST-RC3-SNAPSHOT</version>
+                                <version>1.0.0-RELEASE-TEST-RC3</version>
                             </dependency>
                         </dependencies>
                         <executions>
@@ -243,6 +243,6 @@
     </profiles>
 
   <scm>
-    <tag>ignite-release-test-2-branch</tag>
+    <tag>1.0.0-RELEASE-TEST-RC3</tag>
   </scm>
 </project>
