@@ -31,7 +31,7 @@
     </parent>
 
     <artifactId>ignite-codegen</artifactId>
-    <version>1.0.0-RELEASE-TEST-RC2-SNAPSHOT</version>
+    <version>1.0.0-RELEASE-TEST-RC4</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -43,11 +43,11 @@
         <dependency>
             <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-core</artifactId>
-            <version>1.0.0-RELEASE-TEST-RC2-SNAPSHOT</version>
+            <version>1.0.0-RELEASE-TEST-RC4</version>
         </dependency>
     </dependencies>
 
   <scm>
-    <tag>ignite-release-test-i-2-branch</tag>
+    <tag>1.0.0-RELEASE-TEST-RC4</tag>
   </scm>
 </project>
