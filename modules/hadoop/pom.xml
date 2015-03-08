@@ -218,4 +218,8 @@
             </plugin>
         </plugins>
     </build>
+
+  <scm>
+    <tag>ignite-release-test-i-2-branch</tag>
+  </scm>
 </project>
