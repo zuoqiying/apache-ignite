@@ -460,14 +460,14 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 6:
-//                if (!writer.writeByteArray("jobAttrsBytes", jobAttrsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("jobAttrsBytes", jobAttrsBytes))
+                    return false;
 
                 writer.incrementState();
 
             case 7:
-//                if (!writer.writeByteArray("jobBytes", jobBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("jobBytes", jobBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -484,8 +484,8 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 10:
-//                if (!writer.writeByteArray("sesAttrsBytes", sesAttrsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("sesAttrsBytes", sesAttrsBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -502,8 +502,8 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 13:
-//                if (!writer.writeByteArray("siblingsBytes", siblingsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("siblingsBytes", siblingsBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -615,7 +615,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 6:
-//                jobAttrsBytes = reader.readByteArray("jobAttrsBytes");
+                jobAttrsBytes = reader.readByteBuffer("jobAttrsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -623,7 +623,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 7:
-//                jobBytes = reader.readByteArray("jobBytes");
+                jobBytes = reader.readByteBuffer("jobBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -647,7 +647,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 10:
-//                sesAttrsBytes = reader.readByteArray("sesAttrsBytes");
+                sesAttrsBytes = reader.readByteBuffer("sesAttrsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -671,7 +671,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 13:
-//                siblingsBytes = reader.readByteArray("siblingsBytes");
+                siblingsBytes = reader.readByteBuffer("siblingsBytes");
 
                 if (!reader.isLastRead())
                     return false;

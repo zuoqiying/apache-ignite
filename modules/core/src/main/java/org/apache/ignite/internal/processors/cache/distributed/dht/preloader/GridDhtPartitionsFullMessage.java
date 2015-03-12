@@ -131,8 +131,8 @@ public class GridDhtPartitionsFullMessage extends GridDhtPartitionsAbstractMessa
 
         switch (writer.state()) {
             case 5:
-//                if (!writer.writeByteArray("partsBytes", partsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("partsBytes", partsBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -159,7 +159,7 @@ public class GridDhtPartitionsFullMessage extends GridDhtPartitionsAbstractMessa
 
         switch (reader.state()) {
             case 5:
-//                partsBytes = reader.readByteArray("partsBytes");
+                partsBytes = reader.readByteBuffer("partsBytes");
 
                 if (!reader.isLastRead())
                     return false;

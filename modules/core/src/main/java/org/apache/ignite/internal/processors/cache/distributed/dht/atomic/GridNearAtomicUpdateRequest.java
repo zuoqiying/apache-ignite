@@ -586,14 +586,14 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
                 writer.incrementState();
 
             case 6:
-                if (!writer.writeCollection("entryProcessorsBytes", entryProcessorsBytes, MessageCollectionItemType.BYTE_ARR))
+                if (!writer.writeCollection("entryProcessorsBytes", entryProcessorsBytes, MessageCollectionItemType.BYTE_BUF))
                     return false;
 
                 writer.incrementState();
 
             case 7:
-//                if (!writer.writeByteArray("expiryPlcBytes", expiryPlcBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("expiryPlcBytes", expiryPlcBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -628,7 +628,7 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
                 writer.incrementState();
 
             case 13:
-                if (!writer.writeObjectArray("invokeArgsBytes", invokeArgsBytes, MessageCollectionItemType.BYTE_ARR))
+                if (!writer.writeObjectArray("invokeArgsBytes", invokeArgsBytes, MessageCollectionItemType.BYTE_BUF))
                     return false;
 
                 writer.incrementState();
@@ -728,7 +728,7 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
                 reader.incrementState();
 
             case 6:
-                entryProcessorsBytes = reader.readCollection("entryProcessorsBytes", MessageCollectionItemType.BYTE_ARR);
+                entryProcessorsBytes = reader.readCollection("entryProcessorsBytes", MessageCollectionItemType.BYTE_BUF);
 
                 if (!reader.isLastRead())
                     return false;
@@ -736,7 +736,7 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
                 reader.incrementState();
 
             case 7:
-//                expiryPlcBytes = reader.readByteArray("expiryPlcBytes");
+                expiryPlcBytes = reader.readByteBuffer("expiryPlcBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -784,7 +784,7 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
                 reader.incrementState();
 
             case 13:
-//                invokeArgsBytes = reader.readObjectArray("invokeArgsBytes", MessageCollectionItemType.BYTE_ARR, byte[].class);
+                invokeArgsBytes = reader.readObjectArray("invokeArgsBytes", MessageCollectionItemType.BYTE_BUF, ByteBuffer.class);
 
                 if (!reader.isLastRead())
                     return false;

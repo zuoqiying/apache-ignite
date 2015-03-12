@@ -257,14 +257,14 @@ public abstract class GridDistributedBaseMessage extends GridCacheMessage implem
 
         switch (writer.state()) {
             case 3:
-//                if (!writer.writeByteArray("candsByIdxBytes", candsByIdxBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("candsByIdxBytes", candsByIdxBytes))
+                    return false;
 
                 writer.incrementState();
 
             case 4:
-//                if (!writer.writeByteArray("candsByKeyBytes", candsByKeyBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("candsByKeyBytes", candsByKeyBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -303,7 +303,7 @@ public abstract class GridDistributedBaseMessage extends GridCacheMessage implem
 
         switch (reader.state()) {
             case 3:
-//                candsByIdxBytes = reader.readByteArray("candsByIdxBytes");
+                candsByIdxBytes = reader.readByteBuffer("candsByIdxBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -311,7 +311,7 @@ public abstract class GridDistributedBaseMessage extends GridCacheMessage implem
                 reader.incrementState();
 
             case 4:
-//                candsByKeyBytes = reader.readByteArray("candsByKeyBytes");
+                candsByKeyBytes = reader.readByteBuffer("candsByKeyBytes");
 
                 if (!reader.isLastRead())
                     return false;

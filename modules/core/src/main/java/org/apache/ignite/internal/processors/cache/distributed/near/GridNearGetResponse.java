@@ -220,8 +220,8 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 writer.incrementState();
 
             case 4:
-//                if (!writer.writeByteArray("errBytes", errBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("errBytes", errBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -280,7 +280,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 4:
-//                errBytes = reader.readByteArray("errBytes");
+                errBytes = reader.readByteBuffer("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

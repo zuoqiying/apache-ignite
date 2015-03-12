@@ -127,8 +127,8 @@ public class GridDhtAffinityAssignmentResponse extends GridCacheMessage {
 
         switch (writer.state()) {
             case 3:
-//                if (!writer.writeByteArray("affAssignmentBytes", affAssignmentBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("affAssignmentBytes", affAssignmentBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -155,7 +155,7 @@ public class GridDhtAffinityAssignmentResponse extends GridCacheMessage {
 
         switch (reader.state()) {
             case 3:
-//                affAssignmentBytes = reader.readByteArray("affAssignmentBytes");
+                affAssignmentBytes = reader.readByteBuffer("affAssignmentBytes");
 
                 if (!reader.isLastRead())
                     return false;

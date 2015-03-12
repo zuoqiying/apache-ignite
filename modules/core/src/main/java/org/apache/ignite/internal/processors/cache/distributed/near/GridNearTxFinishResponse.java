@@ -129,8 +129,8 @@ public class GridNearTxFinishResponse extends GridDistributedTxFinishResponse {
 
         switch (writer.state()) {
             case 5:
-//                if (!writer.writeByteArray("errBytes", errBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("errBytes", errBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -163,7 +163,7 @@ public class GridNearTxFinishResponse extends GridDistributedTxFinishResponse {
 
         switch (reader.state()) {
             case 5:
-//                errBytes = reader.readByteArray("errBytes");
+                errBytes = reader.readByteBuffer("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

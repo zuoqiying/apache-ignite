@@ -217,8 +217,8 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
 
         switch (writer.state()) {
             case 0:
-//                if (!writer.writeByteArray("gridExBytes", gridExBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("gridExBytes", gridExBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -229,8 +229,8 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 2:
-//                if (!writer.writeByteArray("jobAttrsBytes", jobAttrsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("jobAttrsBytes", jobAttrsBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -247,8 +247,8 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 5:
-//                if (!writer.writeByteArray("resBytes", resBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("resBytes", resBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -272,7 +272,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
 
         switch (reader.state()) {
             case 0:
-//                gridExBytes = reader.readByteArray("gridExBytes");
+                gridExBytes = reader.readByteBuffer("gridExBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -288,7 +288,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 2:
-//                jobAttrsBytes = reader.readByteArray("jobAttrsBytes");
+                jobAttrsBytes = reader.readByteBuffer("jobAttrsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -312,7 +312,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 5:
-//                resBytes = reader.readByteArray("resBytes");
+                resBytes = reader.readByteBuffer("resBytes");
 
                 if (!reader.isLastRead())
                     return false;

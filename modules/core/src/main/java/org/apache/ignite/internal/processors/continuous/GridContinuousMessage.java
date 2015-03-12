@@ -160,8 +160,8 @@ public class GridContinuousMessage implements Message {
 
         switch (writer.state()) {
             case 0:
-//                if (!writer.writeByteArray("dataBytes", dataBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("dataBytes", dataBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -203,7 +203,7 @@ public class GridContinuousMessage implements Message {
 
         switch (reader.state()) {
             case 0:
-//                dataBytes = reader.readByteArray("dataBytes");
+                dataBytes = reader.readByteBuffer("dataBytes");
 
                 if (!reader.isLastRead())
                     return false;

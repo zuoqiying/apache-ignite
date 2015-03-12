@@ -90,8 +90,8 @@ public class GridJobSiblingsResponse implements Message {
 
         switch (writer.state()) {
             case 0:
-//                if (!writer.writeByteArray("siblingsBytes", siblingsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("siblingsBytes", siblingsBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -109,7 +109,7 @@ public class GridJobSiblingsResponse implements Message {
 
         switch (reader.state()) {
             case 0:
-//                siblingsBytes = reader.readByteArray("siblingsBytes");
+                siblingsBytes = reader.readByteBuffer("siblingsBytes");
 
                 if (!reader.isLastRead())
                     return false;

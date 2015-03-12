@@ -288,7 +288,7 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
                 reader.incrementState();
 
             case 4:
-//                valBytes = reader.readByteArray("valBytes");
+                valBytes = reader.readByteBuffer("valBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -305,17 +305,11 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
 
         }
 
-        assert key != null;
-        assert !(val != null && valBytes != null);
-
         return true;
     }
 
     /** {@inheritDoc} */
     @Override public boolean writeTo(ByteBuffer buf, MessageWriter writer) {
-        assert key != null;
-        assert !(val != null && valBytes != null);
-
         writer.setBuffer(buf);
 
         if (!super.writeTo(buf, writer))
@@ -342,8 +336,8 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
                 writer.incrementState();
 
             case 4:
-//                if (!writer.writeByteArray("valBytes", valBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("valBytes", valBytes))
+                    return false;
 
                 writer.incrementState();
 

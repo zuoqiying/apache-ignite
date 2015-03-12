@@ -223,8 +223,8 @@ public class GridCacheEntryInfo implements Message {
                 writer.incrementState();
 
             case 3:
-//                if (!writer.writeByteArray("keyBytes", keyBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("keyBytes", keyBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -284,7 +284,7 @@ public class GridCacheEntryInfo implements Message {
                 reader.incrementState();
 
             case 3:
-//                keyBytes = reader.readByteArray("keyBytes");
+                keyBytes = reader.readByteBuffer("keyBytes");
 
                 if (!reader.isLastRead())
                     return false;

@@ -397,8 +397,8 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
                 writer.incrementState();
 
             case 11:
-//                if (!writer.writeByteArray("grpLockKeyBytes", grpLockKeyBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("grpLockKeyBytes", grpLockKeyBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -457,8 +457,8 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
                 writer.incrementState();
 
             case 21:
-//                if (!writer.writeByteArray("txNodesBytes", txNodesBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("txNodesBytes", txNodesBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -525,7 +525,7 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
                 reader.incrementState();
 
             case 11:
-//                grpLockKeyBytes = reader.readByteArray("grpLockKeyBytes");
+                grpLockKeyBytes = reader.readByteBuffer("grpLockKeyBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -613,7 +613,7 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
                 reader.incrementState();
 
             case 21:
-//                txNodesBytes = reader.readByteArray("txNodesBytes");
+                txNodesBytes = reader.readByteBuffer("txNodesBytes");
 
                 if (!reader.isLastRead())
                     return false;

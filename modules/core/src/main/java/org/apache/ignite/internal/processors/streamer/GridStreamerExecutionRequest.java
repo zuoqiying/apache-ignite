@@ -162,8 +162,8 @@ public class GridStreamerExecutionRequest implements Message {
 
         switch (writer.state()) {
             case 0:
-//                if (!writer.writeByteArray("batchBytes", batchBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("batchBytes", batchBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -217,7 +217,7 @@ public class GridStreamerExecutionRequest implements Message {
 
         switch (reader.state()) {
             case 0:
-//                batchBytes = reader.readByteArray("batchBytes");
+                batchBytes = reader.readByteBuffer("batchBytes");
 
                 if (!reader.isLastRead())
                     return false;

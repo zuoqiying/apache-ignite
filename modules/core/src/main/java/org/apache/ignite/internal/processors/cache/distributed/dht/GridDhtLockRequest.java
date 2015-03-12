@@ -352,8 +352,8 @@ public class GridDhtLockRequest extends GridDistributedLockRequest {
                 writer.incrementState();
 
             case 26:
-//                if (!writer.writeByteArray("ownedBytes", ownedBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("ownedBytes", ownedBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -430,7 +430,7 @@ public class GridDhtLockRequest extends GridDistributedLockRequest {
                 reader.incrementState();
 
             case 26:
-//                ownedBytes = reader.readByteArray("ownedBytes");
+                ownedBytes = reader.readByteBuffer("ownedBytes");
 
                 if (!reader.isLastRead())
                     return false;

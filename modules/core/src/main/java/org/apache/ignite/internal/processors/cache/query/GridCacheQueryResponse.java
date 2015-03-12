@@ -217,14 +217,14 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
 
         switch (writer.state()) {
             case 3:
-                if (!writer.writeCollection("dataBytes", dataBytes, MessageCollectionItemType.BYTE_ARR))
+                if (!writer.writeCollection("dataBytes", dataBytes, MessageCollectionItemType.BYTE_BUF))
                     return false;
 
                 writer.incrementState();
 
             case 4:
-//                if (!writer.writeByteArray("errBytes", errBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("errBytes", errBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -241,7 +241,7 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
                 writer.incrementState();
 
             case 7:
-                if (!writer.writeCollection("metaDataBytes", metaDataBytes, MessageCollectionItemType.BYTE_ARR))
+                if (!writer.writeCollection("metaDataBytes", metaDataBytes, MessageCollectionItemType.BYTE_BUF))
                     return false;
 
                 writer.incrementState();
@@ -269,7 +269,7 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
 
         switch (reader.state()) {
             case 3:
-                dataBytes = reader.readCollection("dataBytes", MessageCollectionItemType.BYTE_ARR);
+                dataBytes = reader.readCollection("dataBytes", MessageCollectionItemType.BYTE_BUF);
 
                 if (!reader.isLastRead())
                     return false;
@@ -277,7 +277,7 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
                 reader.incrementState();
 
             case 4:
-//                errBytes = reader.readByteArray("errBytes");
+                errBytes = reader.readByteBuffer("errBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -301,7 +301,7 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
                 reader.incrementState();
 
             case 7:
-                metaDataBytes = reader.readCollection("metaDataBytes", MessageCollectionItemType.BYTE_ARR);
+                metaDataBytes = reader.readCollection("metaDataBytes", MessageCollectionItemType.BYTE_BUF);
 
                 if (!reader.isLastRead())
                     return false;

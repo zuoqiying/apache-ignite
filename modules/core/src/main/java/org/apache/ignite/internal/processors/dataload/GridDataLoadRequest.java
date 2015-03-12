@@ -284,8 +284,8 @@ public class GridDataLoadRequest implements Message {
                 writer.incrementState();
 
             case 8:
-//                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("resTopicBytes", resTopicBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -302,8 +302,8 @@ public class GridDataLoadRequest implements Message {
                 writer.incrementState();
 
             case 11:
-//                if (!writer.writeByteArray("updaterBytes", updaterBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("updaterBytes", updaterBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -395,7 +395,7 @@ public class GridDataLoadRequest implements Message {
                 reader.incrementState();
 
             case 8:
-//                resTopicBytes = reader.readByteArray("resTopicBytes");
+                resTopicBytes = reader.readByteBuffer("resTopicBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -419,7 +419,7 @@ public class GridDataLoadRequest implements Message {
                 reader.incrementState();
 
             case 11:
-//                updaterBytes = reader.readByteArray("updaterBytes");
+                updaterBytes = reader.readByteBuffer("updaterBytes");
 
                 if (!reader.isLastRead())
                     return false;

@@ -71,7 +71,7 @@ public abstract class CacheObjectAdapter implements CacheObject, Externalizable 
 
         switch (reader.state()) {
             case 0:
-//                valBytes = reader.readByteArray("valBytes");
+                valBytes = reader.readByteBuffer("valBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -96,8 +96,8 @@ public abstract class CacheObjectAdapter implements CacheObject, Externalizable 
 
         switch (writer.state()) {
             case 0:
-//                if (!writer.writeByteArray("valBytes", valBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("valBytes", valBytes))
+                    return false;
 
                 writer.incrementState();
 

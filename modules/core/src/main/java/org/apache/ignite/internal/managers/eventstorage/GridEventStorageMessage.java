@@ -285,20 +285,20 @@ public class GridEventStorageMessage implements Message {
                 writer.incrementState();
 
             case 2:
-//                if (!writer.writeByteArray("evtsBytes", evtsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("evtsBytes", evtsBytes))
+                    return false;
 
                 writer.incrementState();
 
             case 3:
-//                if (!writer.writeByteArray("exBytes", exBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("exBytes", exBytes))
+                    return false;
 
                 writer.incrementState();
 
             case 4:
-//                if (!writer.writeByteArray("filter", filter))
-//                    return false;
+                if (!writer.writeByteBuffer("filter", filter))
+                    return false;
 
                 writer.incrementState();
 
@@ -315,8 +315,8 @@ public class GridEventStorageMessage implements Message {
                 writer.incrementState();
 
             case 7:
-//                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("resTopicBytes", resTopicBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -360,7 +360,7 @@ public class GridEventStorageMessage implements Message {
                 reader.incrementState();
 
             case 2:
-//                evtsBytes = reader.readByteArray("evtsBytes");
+                evtsBytes = reader.readByteBuffer("evtsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -368,7 +368,7 @@ public class GridEventStorageMessage implements Message {
                 reader.incrementState();
 
             case 3:
-//                exBytes = reader.readByteArray("exBytes");
+                exBytes = reader.readByteBuffer("exBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -376,7 +376,7 @@ public class GridEventStorageMessage implements Message {
                 reader.incrementState();
 
             case 4:
-//                filter = reader.readByteArray("filter");
+                filter = reader.readByteBuffer("filter");
 
                 if (!reader.isLastRead())
                     return false;
@@ -400,7 +400,7 @@ public class GridEventStorageMessage implements Message {
                 reader.incrementState();
 
             case 7:
-//                resTopicBytes = reader.readByteArray("resTopicBytes");
+                resTopicBytes = reader.readByteBuffer("resTopicBytes");
 
                 if (!reader.isLastRead())
                     return false;

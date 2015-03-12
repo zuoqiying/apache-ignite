@@ -110,8 +110,8 @@ public class GridTaskSessionRequest implements Message, GridTaskMessage {
 
         switch (writer.state()) {
             case 0:
-//                if (!writer.writeByteArray("attrsBytes", attrsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("attrsBytes", attrsBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -141,7 +141,7 @@ public class GridTaskSessionRequest implements Message, GridTaskMessage {
 
         switch (reader.state()) {
             case 0:
-//                attrsBytes = reader.readByteArray("attrsBytes");
+                attrsBytes = reader.readByteBuffer("attrsBytes");
 
                 if (!reader.isLastRead())
                     return false;

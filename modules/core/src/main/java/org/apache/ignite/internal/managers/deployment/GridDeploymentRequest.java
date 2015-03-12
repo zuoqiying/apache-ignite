@@ -186,8 +186,8 @@ public class GridDeploymentRequest implements Message {
                 writer.incrementState();
 
             case 3:
-//                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("resTopicBytes", resTopicBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -235,7 +235,7 @@ public class GridDeploymentRequest implements Message {
                 reader.incrementState();
 
             case 3:
-//                resTopicBytes = reader.readByteArray("resTopicBytes");
+                resTopicBytes = reader.readByteBuffer("resTopicBytes");
 
                 if (!reader.isLastRead())
                     return false;

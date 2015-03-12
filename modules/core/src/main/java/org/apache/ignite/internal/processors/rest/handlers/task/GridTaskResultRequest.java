@@ -117,8 +117,8 @@ public class GridTaskResultRequest implements Message {
                 writer.incrementState();
 
             case 1:
-//                if (!writer.writeByteArray("topicBytes", topicBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("topicBytes", topicBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -144,7 +144,7 @@ public class GridTaskResultRequest implements Message {
                 reader.incrementState();
 
             case 1:
-//                topicBytes = reader.readByteArray("topicBytes");
+                topicBytes = reader.readByteBuffer("topicBytes");
 
                 if (!reader.isLastRead())
                     return false;

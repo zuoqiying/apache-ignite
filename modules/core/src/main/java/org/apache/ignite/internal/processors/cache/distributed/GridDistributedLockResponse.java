@@ -244,8 +244,8 @@ public class GridDistributedLockResponse extends GridDistributedBaseMessage {
 
         switch (writer.state()) {
             case 8:
-//                if (!writer.writeByteArray("errBytes", errBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("errBytes", errBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -278,7 +278,7 @@ public class GridDistributedLockResponse extends GridDistributedBaseMessage {
 
         switch (reader.state()) {
             case 8:
-//                errBytes = reader.readByteArray("errBytes");
+                errBytes = reader.readByteBuffer("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

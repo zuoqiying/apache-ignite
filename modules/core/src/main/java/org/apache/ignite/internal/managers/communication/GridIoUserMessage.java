@@ -215,8 +215,8 @@ public class GridIoUserMessage implements Message {
 
         switch (writer.state()) {
             case 0:
-//                if (!writer.writeByteArray("bodyBytes", bodyBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("bodyBytes", bodyBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -245,8 +245,8 @@ public class GridIoUserMessage implements Message {
                 writer.incrementState();
 
             case 5:
-//                if (!writer.writeByteArray("topicBytes", topicBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("topicBytes", topicBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -270,7 +270,7 @@ public class GridIoUserMessage implements Message {
 
         switch (reader.state()) {
             case 0:
-//                bodyBytes = reader.readByteArray("bodyBytes");
+                bodyBytes = reader.readByteBuffer("bodyBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -314,7 +314,7 @@ public class GridIoUserMessage implements Message {
                 reader.incrementState();
 
             case 5:
-//                topicBytes = reader.readByteArray("topicBytes");
+                topicBytes = reader.readByteBuffer("topicBytes");
 
                 if (!reader.isLastRead())
                     return false;

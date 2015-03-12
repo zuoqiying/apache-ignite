@@ -18,7 +18,6 @@
 package org.apache.ignite.codegen;
 
 import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.dataload.*;
 import org.apache.ignite.internal.util.typedef.internal.*;
 import org.apache.ignite.lang.*;
 import org.apache.ignite.plugin.extensions.communication.*;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 
 import static java.lang.reflect.Modifier.*;
@@ -85,6 +85,7 @@ public class MessageCodeGenerator {
         TYPES.put(double[].class, MessageCollectionItemType.DOUBLE_ARR);
         TYPES.put(char[].class, MessageCollectionItemType.CHAR_ARR);
         TYPES.put(boolean[].class, MessageCollectionItemType.BOOLEAN_ARR);
+        TYPES.put(ByteBuffer.class, MessageCollectionItemType.BYTE_BUF);
         TYPES.put(String.class, MessageCollectionItemType.STRING);
         TYPES.put(BitSet.class, MessageCollectionItemType.BIT_SET);
         TYPES.put(UUID.class, MessageCollectionItemType.UUID);
@@ -140,7 +141,7 @@ public class MessageCodeGenerator {
 
         MessageCodeGenerator gen = new MessageCodeGenerator(srcDir);
 
-        gen.generateAndWrite(IgniteDataLoaderEntry.class);
+        gen.generateAll(true);
 
 //        gen.generateAndWrite(GridDistributedLockRequest.class);
 //        gen.generateAndWrite(GridDistributedLockResponse.class);
@@ -301,8 +302,16 @@ public class MessageCodeGenerator {
     private void generate(Class<? extends Message> cls) throws Exception {
         assert cls != null;
 
-        if (cls.isAnnotationPresent(IgniteCodeGeneratingFail.class))
-            throw new IllegalStateException("@IgniteCodeGeneratingFail is provided for class: " + cls.getName());
+        if (cls.isInterface())
+            return;
+
+        if (cls.isAnnotationPresent(IgniteCodeGeneratingFail.class)) {
+            System.out.println("    @IgniteCodeGeneratingFail is provided for class: " + cls.getName());
+
+            return;
+
+//            throw new IllegalStateException("@IgniteCodeGeneratingFail is provided for class: " + cls.getName());
+        }
 
         write.clear();
         read.clear();
@@ -558,6 +567,8 @@ public class MessageCodeGenerator {
             returnFalseIfFailed(write, "writer.writeCharArray", field, name);
         else if (type == boolean[].class)
             returnFalseIfFailed(write, "writer.writeBooleanArray", field, name);
+        else if (type == ByteBuffer.class)
+            returnFalseIfFailed(write, "writer.writeByteBuffer", field, name);
         else if (type == String.class)
             returnFalseIfFailed(write, "writer.writeString", field, name);
         else if (type == BitSet.class)
@@ -640,6 +651,8 @@ public class MessageCodeGenerator {
             returnFalseIfReadFailed(name, "reader.readCharArray", field);
         else if (type == boolean[].class)
             returnFalseIfReadFailed(name, "reader.readBooleanArray", field);
+        else if (type == ByteBuffer.class)
+            returnFalseIfReadFailed(name, "reader.readByteBuffer", field);
         else if (type == String.class)
             returnFalseIfReadFailed(name, "reader.readString", field);
         else if (type == BitSet.class)

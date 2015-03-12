@@ -164,14 +164,14 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
 
         switch (writer.state()) {
             case 8:
-//                if (!writer.writeByteArray("candsBytes", candsBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("candsBytes", candsBytes))
+                    return false;
 
                 writer.incrementState();
 
             case 9:
-//                if (!writer.writeByteArray("errBytes", errBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("errBytes", errBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -192,7 +192,7 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
 
         switch (reader.state()) {
             case 8:
-//                candsBytes = reader.readByteArray("candsBytes");
+                candsBytes = reader.readByteBuffer("candsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -200,7 +200,7 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
                 reader.incrementState();
 
             case 9:
-//                errBytes = reader.readByteArray("errBytes");
+                errBytes = reader.readByteBuffer("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

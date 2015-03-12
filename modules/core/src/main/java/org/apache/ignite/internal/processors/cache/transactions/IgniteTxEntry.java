@@ -794,8 +794,8 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
                 writer.incrementState();
 
             case 3:
-//                if (!writer.writeByteArray("expiryPlcBytes", expiryPlcBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("expiryPlcBytes", expiryPlcBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -825,8 +825,8 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
                 writer.incrementState();
 
             case 8:
-//                if (!writer.writeByteArray("transformClosBytes", transformClosBytes))
-//                    return false;
+                if (!writer.writeByteBuffer("transformClosBytes", transformClosBytes))
+                    return false;
 
                 writer.incrementState();
 
@@ -880,7 +880,7 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
                 reader.incrementState();
 
             case 3:
-//                expiryPlcBytes = reader.readByteArray("expiryPlcBytes");
+                expiryPlcBytes = reader.readByteBuffer("expiryPlcBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -920,7 +920,7 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
                 reader.incrementState();
 
             case 8:
-//                transformClosBytes = reader.readByteArray("transformClosBytes");
+                transformClosBytes = reader.readByteBuffer("transformClosBytes");
 
                 if (!reader.isLastRead())
                     return false;
