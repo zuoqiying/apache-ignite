@@ -50,17 +50,14 @@ public class GridClientOptimizedMarshaller implements GridClientMarshaller {
      * Constructs optimized marshaller with specific parameters.
      *
      * @param requireSer Require serializable flag.
-     * @param poolSize Object streams pool size.
      * @throws IOException If an I/O error occurs while writing stream header.
      * @throws IgniteException If this marshaller is not supported on the current JVM.
      * @see OptimizedMarshaller
      */
-    public GridClientOptimizedMarshaller(boolean requireSer, int poolSize) throws IOException {
-        opMarsh = new OptimizedMarshaller();
+    public GridClientOptimizedMarshaller(boolean requireSer) throws IOException {
+        opMarsh = new OptimizedMarshaller(requireSer);
 
         opMarsh.setContext(new ClientMarshallerContext());
-        opMarsh.setRequireSerializable(requireSer);
-        opMarsh.setPoolSize(poolSize);
     }
 
     /** {@inheritDoc} */

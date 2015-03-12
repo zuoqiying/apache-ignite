@@ -19,6 +19,8 @@ package org.apache.ignite.marshaller.optimized;
 
 import org.apache.ignite.*;
 import org.apache.ignite.internal.util.*;
+import org.apache.ignite.internal.util.io.*;
+import org.apache.ignite.internal.util.typedef.internal.*;
 import org.apache.ignite.marshaller.*;
 import org.jetbrains.annotations.*;
 import sun.misc.*;
@@ -74,6 +76,9 @@ import java.nio.*;
  * For information about Spring framework visit <a href="http://www.springframework.org/">www.springframework.org</a>
  */
 public class OptimizedMarshaller extends AbstractMarshaller {
+    /** Initial buffer size. */
+    private static final int INIT_BUF_SIZE = 4 * 1024;
+
     /** Default class loader. */
     private final ClassLoader dfltClsLdr = getClass().getClassLoader();
 
@@ -101,6 +106,8 @@ public class OptimizedMarshaller extends AbstractMarshaller {
      * @param requireSer Whether to require {@link Serializable}.
      */
     public OptimizedMarshaller(boolean requireSer) {
+        this();
+
         this.requireSer = requireSer;
     }
 
@@ -122,25 +129,6 @@ public class OptimizedMarshaller extends AbstractMarshaller {
         this.mapper = mapper;
     }
 
-    /**
-     * Specifies size of cached object streams used by marshaller. Object streams are cached for
-     * performance reason to avoid costly recreation for every serialization routine. If {@code 0} (default),
-     * pool is not used and each thread has its own cached object stream which it keeps reusing.
-     * <p>
-     * Since each stream has an internal buffer, creating a stream for each thread can lead to
-     * high memory consumption if many large messages are marshalled or unmarshalled concurrently.
-     * Consider using pool in this case. This will limit number of streams that can be created and,
-     * therefore, decrease memory consumption.
-     * <p>
-     * NOTE: Using streams pool can decrease performance since streams will be shared between
-     * different threads which will lead to more frequent context switching.
-     *
-     * @param poolSize Streams pool size. If {@code 0}, pool is not used.
-     */
-    public void setPoolSize(int poolSize) {
-        OptimizedObjectStreamRegistry.poolSize(poolSize);
-    }
-
     /** {@inheritDoc} */
     @Override public void marshal(@Nullable Object obj, OutputStream out) throws IgniteCheckedException {
         assert out != null;
@@ -148,7 +136,8 @@ public class OptimizedMarshaller extends AbstractMarshaller {
         OptimizedObjectOutputStream objOut = null;
 
         try {
-            objOut = OptimizedObjectStreamRegistry.out();
+            // TODO: IGNITE-471 - Need adaptive initial size.
+            objOut = new OptimizedObjectOutputStream(new GridUnsafeDataOutput(INIT_BUF_SIZE));
 
             objOut.context(ctx, mapper, requireSer);
 
@@ -160,7 +149,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
             throw new IgniteCheckedException("Failed to serialize object: " + obj, e);
         }
         finally {
-            OptimizedObjectStreamRegistry.closeOut(objOut);
+            U.closeQuiet(objOut);
         }
     }
 
@@ -169,7 +158,8 @@ public class OptimizedMarshaller extends AbstractMarshaller {
         OptimizedObjectOutputStream objOut = null;
 
         try {
-            objOut = OptimizedObjectStreamRegistry.out();
+            // TODO: IGNITE-471 - Need adaptive initial size.
+            objOut = new OptimizedObjectOutputStream(new GridUnsafeDataOutput(INIT_BUF_SIZE));
 
             objOut.context(ctx, mapper, requireSer);
 
@@ -181,7 +171,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
             throw new IgniteCheckedException("Failed to serialize object: " + obj, e);
         }
         finally {
-            OptimizedObjectStreamRegistry.closeOut(objOut);
+            U.closeQuiet(objOut);
         }
     }
 
@@ -193,7 +183,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
         OptimizedObjectInputStream objIn = null;
 
         try {
-            objIn = OptimizedObjectStreamRegistry.in();
+            objIn = new OptimizedObjectInputStream(new GridUnsafeDataInput());
 
             objIn.context(ctx, mapper, clsLdr != null ? clsLdr : dfltClsLdr);
 
@@ -210,7 +200,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
                 clsLdr, e);
         }
         finally {
-            OptimizedObjectStreamRegistry.closeIn(objIn);
+            U.closeQuiet(objIn);
         }
     }
 
@@ -223,10 +213,11 @@ public class OptimizedMarshaller extends AbstractMarshaller {
         OptimizedObjectInputStream objIn = null;
 
         try {
-            objIn = OptimizedObjectStreamRegistry.in();
+            objIn = new OptimizedObjectInputStream(new GridUnsafeDataInput());
 
             objIn.context(ctx, mapper, clsLdr != null ? clsLdr : dfltClsLdr);
 
+            // TODO: IGNITE-471 - Position is not moved.
             objIn.in().bytes(buf.array(), buf.position(), buf.remaining());
 
             return (T)objIn.readObject();
@@ -240,7 +231,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
                 clsLdr, e);
         }
         finally {
-            OptimizedObjectStreamRegistry.closeIn(objIn);
+            U.closeQuiet(objIn);
         }
     }
 

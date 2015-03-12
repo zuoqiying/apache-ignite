@@ -239,41 +239,6 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
     /**
      * @throws Exception If failed.
      */
-    public void testPool() throws Exception {
-        final TestObject obj = new TestObject();
-
-        obj.longVal = 100L;
-        obj.doubleVal = 100.0d;
-        obj.longArr = new Long[100 * 1024];
-        obj.doubleArr = new Double[100 * 1024];
-
-        Arrays.fill(obj.longArr, 100L);
-        Arrays.fill(obj.doubleArr, 100.0d);
-
-        final OptimizedMarshaller marsh = new OptimizedMarshaller();
-
-        marsh.setContext(CTX);
-
-        marsh.setPoolSize(5);
-
-        try {
-            multithreaded(new Callable<Object>() {
-                @Override public Object call() throws Exception {
-                    for (int i = 0; i < 50; i++)
-                        assertEquals(obj, marsh.unmarshal(marsh.marshal(obj), null));
-
-                    return null;
-                }
-            }, 20);
-        }
-        finally {
-            marsh.setPoolSize(0);
-        }
-    }
-
-    /**
-     * @throws Exception If failed.
-     */
     public void testObjectWithNulls() throws Exception {
         TestObject obj = new TestObject();
 
@@ -883,7 +848,7 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
      * @throws Exception If failed.
      */
     public void testReadToArray() throws Exception {
-        OptimizedObjectInputStream in = OptimizedObjectStreamRegistry.in();
+        OptimizedObjectInputStream in = new OptimizedObjectInputStream(new GridUnsafeDataInput());
 
         try {
             byte[] arr = new byte[50];
@@ -922,7 +887,7 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
                 assertEquals(i < 10 ? 40 + i : 0, buf[i]);
         }
         finally {
-            OptimizedObjectStreamRegistry.closeIn(in);
+            U.closeQuiet(in);
         }
     }
 
@@ -1020,7 +985,7 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
         OptimizedObjectInputStream in = null;
 
         try {
-            out = OptimizedObjectStreamRegistry.out();
+            out = new OptimizedObjectOutputStream(new GridUnsafeDataOutput(512));
 
             out.context(CTX, null, true);
 
@@ -1028,7 +993,7 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
 
             byte[] arr = out.out().array();
 
-            in = OptimizedObjectStreamRegistry.in();
+            in = new OptimizedObjectInputStream(new GridUnsafeDataInput());
 
             in.context(CTX, null, getClass().getClassLoader());
 
@@ -1041,8 +1006,8 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
             return (T)obj0;
         }
         finally {
-            OptimizedObjectStreamRegistry.closeOut(out);
-            OptimizedObjectStreamRegistry.closeIn(in);
+            U.closeQuiet(out);
+            U.closeQuiet(in);
         }
     }
 
