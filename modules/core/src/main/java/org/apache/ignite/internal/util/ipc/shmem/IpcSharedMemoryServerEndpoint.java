@@ -44,21 +44,6 @@ public class IpcSharedMemoryServerEndpoint implements IpcServerEndpoint {
     /** IPC error message. */
     public static final String OUT_OF_RESOURCES_MSG = "Failed to allocate shared memory segment";
 
-    /** Default endpoint port number. */
-    public static final int DFLT_IPC_PORT = 10500;
-
-    /** Default shared memory space in bytes. */
-    public static final int DFLT_SPACE_SIZE = 256 * 1024;
-
-    /**
-     * Default token directory. Note that this path is relative to {@code IGNITE_HOME/work} folder
-     * if {@code IGNITE_HOME} system or environment variable specified, otherwise it is relative to
-     * {@code work} folder under system {@code java.io.tmpdir} folder.
-     *
-     * @see org.apache.ignite.configuration.IgniteConfiguration#getWorkDirectory()
-     */
-    public static final String DFLT_TOKEN_DIR_PATH = "ipc/shmem";
-
     /**
      * Shared memory token file name prefix.
      *
