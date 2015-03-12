@@ -61,7 +61,7 @@ public class KeyCacheObjectImpl extends CacheObjectAdapter implements KeyCacheOb
         if (valBytes == null)
             valBytes = ctx.processor().marshal(ctx, val);
 
-        return valBytes;
+        return valBytes.slice();
     }
 
     /** {@inheritDoc} */

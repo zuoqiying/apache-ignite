@@ -1361,6 +1361,11 @@ public class DirectByteBufferStream {
 
                 break;
 
+            case BYTE_BUF:
+                writeByteBuffer((ByteBuffer)val);
+
+                break;
+
             case STRING:
                 writeString((String)val);
 
@@ -1453,6 +1458,9 @@ public class DirectByteBufferStream {
 
             case BOOLEAN_ARR:
                 return readBooleanArray();
+
+            case BYTE_BUF:
+                return readByteBuffer();
 
             case STRING:
                 return readString();
