@@ -45,7 +45,7 @@ public class IgfsAckMessage extends IgfsCommunicationMessage {
     private IgniteCheckedException err;
 
     /** */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /**
      * Empty constructor required by {@link Externalizable}.
@@ -118,8 +118,8 @@ public class IgfsAckMessage extends IgfsCommunicationMessage {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -152,7 +152,7 @@ public class IgfsAckMessage extends IgfsCommunicationMessage {
 
         switch (reader.state()) {
             case 0:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

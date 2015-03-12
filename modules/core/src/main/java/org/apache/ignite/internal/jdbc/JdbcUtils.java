@@ -22,6 +22,7 @@ import org.apache.ignite.internal.util.typedef.internal.*;
 import org.apache.ignite.marshaller.*;
 import org.apache.ignite.marshaller.jdk.*;
 
+import java.nio.*;
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
@@ -46,7 +47,7 @@ class JdbcUtils {
         assert args != null;
 
         try {
-            return MARSHALLER.marshal(args);
+            return U.toArray(MARSHALLER.marshal(args));
         }
         catch (IgniteCheckedException e) {
             throw new SQLException("Failed to unmarshal result.", e);
@@ -75,7 +76,7 @@ class JdbcUtils {
         assert bytes != null;
 
         try {
-            return MARSHALLER.unmarshal(bytes, null);
+            return MARSHALLER.unmarshal(ByteBuffer.wrap(bytes), null);
         }
         catch (IgniteCheckedException e) {
             throw new SQLException("Failed to unmarshal result.", e);

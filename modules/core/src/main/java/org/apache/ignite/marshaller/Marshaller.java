@@ -21,6 +21,7 @@ import org.apache.ignite.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 
 /**
  * {@code GridMarshaller} allows to marshal or unmarshal objects in grid. It provides
@@ -83,13 +84,13 @@ public interface Marshaller {
     public void marshal(@Nullable Object obj, OutputStream out) throws IgniteCheckedException;
 
     /**
-     * Marshals object to byte array.
+     * Marshals object to bytes.
      *
      * @param obj Object to marshal.
-     * @return Byte array.
+     * @return Byte buffer.
      * @throws IgniteCheckedException If marshalling failed.
      */
-    public byte[] marshal(@Nullable Object obj) throws IgniteCheckedException;
+    public ByteBuffer marshal(@Nullable Object obj) throws IgniteCheckedException;
 
     /**
      * Unmarshals object from the output stream using given class loader.
@@ -104,13 +105,12 @@ public interface Marshaller {
     public <T> T unmarshal(InputStream in, @Nullable ClassLoader clsLdr) throws IgniteCheckedException;
 
     /**
-     * Unmarshals object from byte array using given class loader.
+     * Unmarshals object from bytes using given class loader.
      *
-     * @param <T> Type of unmarshalled object.
-     * @param arr Byte array.
+     * @param buf Byte buffer.
      * @param clsLdr Class loader to use.
      * @return Unmarshalled object.
      * @throws IgniteCheckedException If unmarshalling failed.
      */
-    public <T> T unmarshal(byte[] arr, @Nullable ClassLoader clsLdr) throws IgniteCheckedException;
+    public <T> T unmarshal(ByteBuffer buf, @Nullable ClassLoader clsLdr) throws IgniteCheckedException;
 }

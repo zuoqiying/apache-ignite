@@ -66,7 +66,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
     private Throwable err;
 
     /** Serialized error. */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /**
      * Empty constructor required for {@link Externalizable}.
@@ -220,8 +220,8 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 writer.incrementState();
 
             case 4:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -280,7 +280,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 4:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

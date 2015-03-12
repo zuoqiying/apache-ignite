@@ -41,6 +41,7 @@ import org.jetbrains.annotations.*;
 
 import javax.cache.*;
 import javax.cache.event.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -845,7 +846,7 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         Marshaller m = ctx.config().getMarshaller();
 
         try {
-            byte[] bytes = m.marshal(svc);
+            ByteBuffer bytes = m.marshal(svc);
 
             Service cp = m.unmarshal(bytes, svc.getClass().getClassLoader());
 

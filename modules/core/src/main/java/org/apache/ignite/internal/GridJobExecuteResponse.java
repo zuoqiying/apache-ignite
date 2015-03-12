@@ -45,21 +45,21 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
     private IgniteUuid jobId;
 
     /** */
-    private byte[] gridExBytes;
+    private ByteBuffer gridExBytes;
 
     /** */
     @GridDirectTransient
     private IgniteException gridEx;
 
     /** */
-    private byte[] resBytes;
+    private ByteBuffer resBytes;
 
     /** */
     @GridDirectTransient
     private Object res;
 
     /** */
-    private byte[] jobAttrsBytes;
+    private ByteBuffer jobAttrsBytes;
 
     /** */
     @GridDirectTransient
@@ -96,11 +96,11 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
     public GridJobExecuteResponse(UUID nodeId,
         IgniteUuid sesId,
         IgniteUuid jobId,
-        byte[] gridExBytes,
+        ByteBuffer gridExBytes,
         IgniteException gridEx,
-        byte[] resBytes,
+        ByteBuffer resBytes,
         Object res,
-        byte[] jobAttrsBytes,
+        ByteBuffer jobAttrsBytes,
         Map<Object, Object> jobAttrs,
         boolean isCancelled)
     {
@@ -137,7 +137,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
     /**
      * @return Serialized job result.
      */
-    @Nullable public byte[] getJobResultBytes() {
+    @Nullable public ByteBuffer getJobResultBytes() {
         return resBytes;
     }
 
@@ -151,7 +151,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
     /**
      * @return Serialized job exception.
      */
-    @Nullable public byte[] getExceptionBytes() {
+    @Nullable public ByteBuffer getExceptionBytes() {
         return gridExBytes;
     }
 
@@ -165,7 +165,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
     /**
      * @return Serialized job attributes.
      */
-    @Nullable public byte[] getJobAttributesBytes() {
+    @Nullable public ByteBuffer getJobAttributesBytes() {
         return jobAttrsBytes;
     }
 
@@ -217,8 +217,8 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("gridExBytes", gridExBytes))
-                    return false;
+//                if (!writer.writeByteArray("gridExBytes", gridExBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -229,8 +229,8 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 2:
-                if (!writer.writeByteArray("jobAttrsBytes", jobAttrsBytes))
-                    return false;
+//                if (!writer.writeByteArray("jobAttrsBytes", jobAttrsBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -247,8 +247,8 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 5:
-                if (!writer.writeByteArray("resBytes", resBytes))
-                    return false;
+//                if (!writer.writeByteArray("resBytes", resBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -272,7 +272,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
 
         switch (reader.state()) {
             case 0:
-                gridExBytes = reader.readByteArray("gridExBytes");
+//                gridExBytes = reader.readByteArray("gridExBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -288,7 +288,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 2:
-                jobAttrsBytes = reader.readByteArray("jobAttrsBytes");
+//                jobAttrsBytes = reader.readByteArray("jobAttrsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -312,7 +312,7 @@ public class GridJobExecuteResponse implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 5:
-                resBytes = reader.readByteArray("resBytes");
+//                resBytes = reader.readByteArray("resBytes");
 
                 if (!reader.isLastRead())
                     return false;

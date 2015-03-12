@@ -95,7 +95,7 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
 
     /** Group lock key bytes. */
     @GridToStringExclude
-    private byte[] grpLockKeyBytes;
+    private ByteBuffer grpLockKeyBytes;
 
     /** Partition lock flag. */
     private boolean partLock;
@@ -108,7 +108,7 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
     private Map<UUID, Collection<UUID>> txNodes;
 
     /** */
-    private byte[] txNodesBytes;
+    private ByteBuffer txNodesBytes;
 
     /** One phase commit flag. */
     private boolean onePhaseCommit;
@@ -397,8 +397,8 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
                 writer.incrementState();
 
             case 11:
-                if (!writer.writeByteArray("grpLockKeyBytes", grpLockKeyBytes))
-                    return false;
+//                if (!writer.writeByteArray("grpLockKeyBytes", grpLockKeyBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -457,8 +457,8 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
                 writer.incrementState();
 
             case 21:
-                if (!writer.writeByteArray("txNodesBytes", txNodesBytes))
-                    return false;
+//                if (!writer.writeByteArray("txNodesBytes", txNodesBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -525,7 +525,7 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
                 reader.incrementState();
 
             case 11:
-                grpLockKeyBytes = reader.readByteArray("grpLockKeyBytes");
+//                grpLockKeyBytes = reader.readByteArray("grpLockKeyBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -613,7 +613,7 @@ public class GridDistributedTxPrepareRequest extends GridDistributedBaseMessage 
                 reader.incrementState();
 
             case 21:
-                txNodesBytes = reader.readByteArray("txNodesBytes");
+//                txNodesBytes = reader.readByteArray("txNodesBytes");
 
                 if (!reader.isLastRead())
                     return false;

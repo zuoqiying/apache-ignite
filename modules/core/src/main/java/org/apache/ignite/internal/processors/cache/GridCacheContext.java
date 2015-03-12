@@ -58,6 +58,7 @@ import javax.cache.*;
 import javax.cache.configuration.*;
 import javax.cache.expiry.*;
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -1769,7 +1770,7 @@ public class GridCacheContext<K, V> implements Externalizable {
      * @return Cache key object.
      * @throws IgniteCheckedException If failed.
      */
-    public KeyCacheObject toCacheKeyObject(byte[] bytes) throws IgniteCheckedException {
+    public KeyCacheObject toCacheKeyObject(ByteBuffer bytes) throws IgniteCheckedException {
         Object obj = ctx.cacheObjects().unmarshal(cacheObjCtx, bytes, deploy().localLoader());
 
         return cacheObjects().toCacheKeyObject(cacheObjCtx, obj, false);
@@ -1782,7 +1783,7 @@ public class GridCacheContext<K, V> implements Externalizable {
      * @return Cache object.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable public CacheObject unswapCacheObject(byte type, byte[] bytes, @Nullable IgniteUuid clsLdrId)
+    @Nullable public CacheObject unswapCacheObject(byte type, ByteBuffer bytes, @Nullable IgniteUuid clsLdrId)
         throws IgniteCheckedException
     {
         if (ctx.config().isPeerClassLoadingEnabled() && type != CacheObject.TYPE_BYTE_ARR) {

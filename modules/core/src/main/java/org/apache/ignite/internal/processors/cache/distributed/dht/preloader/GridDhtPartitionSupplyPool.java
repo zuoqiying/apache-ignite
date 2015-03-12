@@ -33,6 +33,7 @@ import org.apache.ignite.thread.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
@@ -364,7 +365,7 @@ class GridDhtPartitionSupplyPool<K, V> {
 
                                         GridCacheEntryInfo info = new GridCacheEntryInfo();
 
-                                        info.keyBytes(e.getKey());
+                                        info.keyBytes(ByteBuffer.wrap(e.getKey()));
                                         info.ttl(swapEntry.ttl());
                                         info.expireTime(swapEntry.expireTime());
                                         info.version(swapEntry.version());

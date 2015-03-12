@@ -23,6 +23,7 @@ import org.apache.ignite.internal.util.typedef.internal.*;
 import org.apache.ignite.lang.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 
 /**
@@ -33,7 +34,7 @@ class GridAffinityMessage implements Externalizable {
     private static final long serialVersionUID = 0L;
 
     /** */
-    private byte[] src;
+    private ByteBuffer src;
 
     /** */
     private IgniteUuid clsLdrId;
@@ -60,7 +61,7 @@ class GridAffinityMessage implements Externalizable {
      * @param ldrParties Node loader participant map.
      */
     GridAffinityMessage(
-        byte[] src,
+        ByteBuffer src,
         String srcClsName,
         IgniteUuid clsLdrId,
         DeploymentMode depMode,
@@ -84,7 +85,7 @@ class GridAffinityMessage implements Externalizable {
     /**
      * @return Source object.
      */
-    public byte[] source() {
+    public ByteBuffer source() {
         return src;
     }
 
@@ -125,7 +126,7 @@ class GridAffinityMessage implements Externalizable {
 
     /** {@inheritDoc} */
     @Override public void writeExternal(ObjectOutput out) throws IOException {
-        U.writeByteArray(out, src);
+        U.writeByteBuffer(out, src);
 
         out.writeInt(depMode.ordinal());
 
@@ -137,7 +138,7 @@ class GridAffinityMessage implements Externalizable {
 
     /** {@inheritDoc} */
     @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        src = U.readByteArray(in);
+        src = U.readByteBuffer(in);
 
         depMode = DeploymentMode.fromOrdinal(in.readInt());
 

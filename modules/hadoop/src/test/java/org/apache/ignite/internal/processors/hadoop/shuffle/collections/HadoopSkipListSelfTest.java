@@ -187,7 +187,7 @@ public class HadoopSkipListSelfTest extends HadoopAbstractMapTest {
 
                 UNSAFE.copyMemory(null, ptr, buf, BYTE_ARR_OFF, size);
 
-                dataInput.bytes(buf, size);
+                dataInput.bytes(buf, 0, size);
 
                 try {
                     w.readFields(dataInput);

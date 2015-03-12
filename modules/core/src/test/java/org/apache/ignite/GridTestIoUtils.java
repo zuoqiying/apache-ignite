@@ -22,6 +22,7 @@ import org.apache.ignite.marshaller.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 
 import static junit.framework.Assert.*;
@@ -126,7 +127,7 @@ public final class GridTestIoUtils {
     public static <T> T externalize(Externalizable obj, Marshaller marshaller) throws Exception {
         assert marshaller != null;
 
-        byte[] buf = marshaller.marshal(obj);
+        ByteBuffer buf = marshaller.marshal(obj);
 
         // Sleep to make sure that clock advances (necessary for some tests)
         Thread.sleep(10);

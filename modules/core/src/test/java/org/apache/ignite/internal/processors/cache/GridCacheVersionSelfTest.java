@@ -23,6 +23,7 @@ import org.apache.ignite.marshaller.optimized.*;
 import org.apache.ignite.testframework.*;
 import org.apache.ignite.testframework.junits.common.*;
 
+import java.nio.*;
 import java.util.concurrent.*;
 
 /**
@@ -85,8 +86,8 @@ public class GridCacheVersionSelfTest extends GridCommonAbstractTest {
 
         marsh.setContext(new MarshallerContextTestImpl());
 
-        byte[] verBytes = marsh.marshal(ver);
-        byte[] verExBytes = marsh.marshal(verEx);
+        ByteBuffer verBytes = marsh.marshal(ver);
+        ByteBuffer verExBytes = marsh.marshal(verEx);
 
         GridCacheVersion verNew = marsh.unmarshal(verBytes, Thread.currentThread().getContextClassLoader());
         GridCacheVersionEx verExNew = marsh.unmarshal(verExBytes, Thread.currentThread().getContextClassLoader());

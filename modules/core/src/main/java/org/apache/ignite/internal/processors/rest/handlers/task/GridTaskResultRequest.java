@@ -39,7 +39,7 @@ public class GridTaskResultRequest implements Message {
     private Object topic;
 
     /** Serialized topic. */
-    private byte[] topicBytes;
+    private ByteBuffer topicBytes;
 
     /**
      * Public no-arg constructor for {@link Externalizable} support.
@@ -53,7 +53,7 @@ public class GridTaskResultRequest implements Message {
      * @param topic Topic.
      * @param topicBytes Serialized topic.
      */
-    GridTaskResultRequest(IgniteUuid taskId, Object topic, byte[] topicBytes) {
+    GridTaskResultRequest(IgniteUuid taskId, Object topic, ByteBuffer topicBytes) {
         this.taskId = taskId;
         this.topic = topic;
         this.topicBytes = topicBytes;
@@ -85,7 +85,7 @@ public class GridTaskResultRequest implements Message {
     /**
      * @return Serialized topic.
      */
-    public byte[] topicBytes() {
+    public ByteBuffer topicBytes() {
         return topicBytes;
     }
 
@@ -117,8 +117,8 @@ public class GridTaskResultRequest implements Message {
                 writer.incrementState();
 
             case 1:
-                if (!writer.writeByteArray("topicBytes", topicBytes))
-                    return false;
+//                if (!writer.writeByteArray("topicBytes", topicBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -144,7 +144,7 @@ public class GridTaskResultRequest implements Message {
                 reader.incrementState();
 
             case 1:
-                topicBytes = reader.readByteArray("topicBytes");
+//                topicBytes = reader.readByteArray("topicBytes");
 
                 if (!reader.isLastRead())
                     return false;

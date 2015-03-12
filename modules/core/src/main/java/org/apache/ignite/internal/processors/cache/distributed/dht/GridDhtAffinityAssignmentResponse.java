@@ -44,7 +44,7 @@ public class GridDhtAffinityAssignmentResponse extends GridCacheMessage {
     private List<List<ClusterNode>> affAssignment;
 
     /** Affinity assignment bytes. */
-    private byte[] affAssignmentBytes;
+    private ByteBuffer affAssignmentBytes;
 
     /**
      * Empty constructor.
@@ -127,8 +127,8 @@ public class GridDhtAffinityAssignmentResponse extends GridCacheMessage {
 
         switch (writer.state()) {
             case 3:
-                if (!writer.writeByteArray("affAssignmentBytes", affAssignmentBytes))
-                    return false;
+//                if (!writer.writeByteArray("affAssignmentBytes", affAssignmentBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -155,7 +155,7 @@ public class GridDhtAffinityAssignmentResponse extends GridCacheMessage {
 
         switch (reader.state()) {
             case 3:
-                affAssignmentBytes = reader.readByteArray("affAssignmentBytes");
+//                affAssignmentBytes = reader.readByteArray("affAssignmentBytes");
 
                 if (!reader.isLastRead())
                     return false;

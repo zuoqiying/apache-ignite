@@ -41,6 +41,7 @@ import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
@@ -1365,7 +1366,7 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
         private IgnitePredicate<ClusterNode> prjPred;
 
         /** Serialized projection predicate. */
-        private byte[] prjPredBytes;
+        private ByteBuffer prjPredBytes;
 
         /** Deployment class name. */
         private String clsName;
@@ -1443,7 +1444,7 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
             out.writeBoolean(b);
 
             if (b) {
-                U.writeByteArray(out, prjPredBytes);
+                U.writeByteBuffer(out, prjPredBytes);
                 U.writeString(out, clsName);
                 out.writeObject(depInfo);
             }
@@ -1462,7 +1463,7 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
             boolean b = in.readBoolean();
 
             if (b) {
-                prjPredBytes = U.readByteArray(in);
+                prjPredBytes = U.readByteBuffer(in);
                 clsName = U.readString(in);
                 depInfo = (GridDeploymentInfo)in.readObject();
             }

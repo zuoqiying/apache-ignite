@@ -39,7 +39,7 @@ public class GridTaskSessionRequest implements Message, GridTaskMessage {
     private IgniteUuid jobId;
 
     /** Changed attributes bytes. */
-    private byte[] attrsBytes;
+    private ByteBuffer attrsBytes;
 
     /** Changed attributes. */
     @GridDirectTransient
@@ -58,7 +58,7 @@ public class GridTaskSessionRequest implements Message, GridTaskMessage {
      * @param attrsBytes Serialized attributes.
      * @param attrs Attributes.
      */
-    public GridTaskSessionRequest(IgniteUuid sesId, IgniteUuid jobId, byte[] attrsBytes, Map<?, ?> attrs) {
+    public GridTaskSessionRequest(IgniteUuid sesId, IgniteUuid jobId, ByteBuffer attrsBytes, Map<?, ?> attrs) {
         assert sesId != null;
         assert attrsBytes != null;
         assert attrs != null;
@@ -72,7 +72,7 @@ public class GridTaskSessionRequest implements Message, GridTaskMessage {
     /**
      * @return Changed attributes (serialized).
      */
-    public byte[] getAttributesBytes() {
+    public ByteBuffer getAttributesBytes() {
         return attrsBytes;
     }
 
@@ -110,8 +110,8 @@ public class GridTaskSessionRequest implements Message, GridTaskMessage {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("attrsBytes", attrsBytes))
-                    return false;
+//                if (!writer.writeByteArray("attrsBytes", attrsBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -141,7 +141,7 @@ public class GridTaskSessionRequest implements Message, GridTaskMessage {
 
         switch (reader.state()) {
             case 0:
-                attrsBytes = reader.readByteArray("attrsBytes");
+//                attrsBytes = reader.readByteArray("attrsBytes");
 
                 if (!reader.isLastRead())
                     return false;

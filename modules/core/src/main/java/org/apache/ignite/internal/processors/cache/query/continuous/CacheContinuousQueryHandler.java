@@ -32,6 +32,7 @@ import org.jetbrains.annotations.*;
 import javax.cache.event.*;
 import javax.cache.event.EventType;
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 
 import static org.apache.ignite.events.EventType.*;
@@ -435,7 +436,7 @@ class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler {
         private static final long serialVersionUID = 0L;
 
         /** Serialized object. */
-        private byte[] bytes;
+        private ByteBuffer bytes;
 
         /** Deployment class name. */
         private String clsName;
@@ -493,14 +494,14 @@ class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler {
 
         /** {@inheritDoc} */
         @Override public void writeExternal(ObjectOutput out) throws IOException {
-            U.writeByteArray(out, bytes);
+            U.writeByteBuffer(out, bytes);
             U.writeString(out, clsName);
             out.writeObject(depInfo);
         }
 
         /** {@inheritDoc} */
         @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            bytes = U.readByteArray(in);
+            bytes = U.readByteBuffer(in);
             clsName = U.readString(in);
             depInfo = (GridDeploymentInfo)in.readObject();
         }

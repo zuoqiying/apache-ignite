@@ -53,7 +53,7 @@ public class GridContinuousMessage implements Message {
     private Collection<Message> msgs;
 
     /** Serialized message data. */
-    private byte[] dataBytes;
+    private ByteBuffer dataBytes;
 
     /** Future ID for synchronous event notifications. */
     private IgniteUuid futId;
@@ -129,14 +129,14 @@ public class GridContinuousMessage implements Message {
     /**
      * @return Serialized message data.
      */
-    public byte[] dataBytes() {
+    public ByteBuffer dataBytes() {
         return dataBytes;
     }
 
     /**
      * @param dataBytes Serialized message data.
      */
-    public void dataBytes(byte[] dataBytes) {
+    public void dataBytes(ByteBuffer dataBytes) {
         this.dataBytes = dataBytes;
     }
 
@@ -160,8 +160,8 @@ public class GridContinuousMessage implements Message {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("dataBytes", dataBytes))
-                    return false;
+//                if (!writer.writeByteArray("dataBytes", dataBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -203,7 +203,7 @@ public class GridContinuousMessage implements Message {
 
         switch (reader.state()) {
             case 0:
-                dataBytes = reader.readByteArray("dataBytes");
+//                dataBytes = reader.readByteArray("dataBytes");
 
                 if (!reader.isLastRead())
                     return false;

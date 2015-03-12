@@ -41,6 +41,7 @@ import org.apache.ignite.lang.*;
 import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.concurrent.*;
@@ -62,7 +63,7 @@ public class IgniteDataLoaderImpl<K, V> implements IgniteDataLoader<K, V>, Delay
     private Updater<K, V> updater = ISOLATED_UPDATER;
 
     /** */
-    private byte[] updaterBytes;
+    private ByteBuffer updaterBytes;
 
     /** Max remap count before issuing an error. */
     private static final int DFLT_MAX_REMAP_CNT = 32;
@@ -107,7 +108,7 @@ public class IgniteDataLoaderImpl<K, V> implements IgniteDataLoader<K, V>, Delay
     private final Object topic;
 
     /** */
-    private byte[] topicBytes;
+    private ByteBuffer topicBytes;
 
     /** {@code True} if data loader has been cancelled. */
     private volatile boolean cancelled;
@@ -1208,7 +1209,7 @@ public class IgniteDataLoaderImpl<K, V> implements IgniteDataLoader<K, V>, Delay
 
             Throwable err = null;
 
-            byte[] errBytes = res.errorBytes();
+            ByteBuffer errBytes = res.errorBytes();
 
             if (errBytes != null) {
                 try {

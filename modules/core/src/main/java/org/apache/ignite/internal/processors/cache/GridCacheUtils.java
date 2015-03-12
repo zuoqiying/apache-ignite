@@ -41,6 +41,7 @@ import javax.cache.*;
 import javax.cache.expiry.*;
 import javax.cache.integration.*;
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -1198,7 +1199,7 @@ public class GridCacheUtils {
      * @throws IgniteCheckedException If marshalling failed.
      */
     @SuppressWarnings("unchecked")
-    public static byte[] marshal(GridCacheSharedContext ctx, Object obj)
+    public static ByteBuffer marshal(GridCacheSharedContext ctx, Object obj)
         throws IgniteCheckedException {
         assert ctx != null;
 

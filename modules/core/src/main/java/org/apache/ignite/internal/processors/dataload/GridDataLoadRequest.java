@@ -39,13 +39,13 @@ public class GridDataLoadRequest implements Message {
     private long reqId;
 
     /** */
-    private byte[] resTopicBytes;
+    private ByteBuffer resTopicBytes;
 
     /** Cache name. */
     private String cacheName;
 
     /** */
-    private byte[] updaterBytes;
+    private ByteBuffer updaterBytes;
 
     /** Entries to update. */
     @GridDirectCollection(IgniteDataLoaderEntry.class)
@@ -100,9 +100,9 @@ public class GridDataLoadRequest implements Message {
      * @param forceLocDep Force local deployment.
      */
     public GridDataLoadRequest(long reqId,
-        byte[] resTopicBytes,
+        ByteBuffer resTopicBytes,
         @Nullable String cacheName,
-        byte[] updaterBytes,
+        ByteBuffer updaterBytes,
         Collection<IgniteDataLoaderEntry> entries,
         boolean ignoreDepOwnership,
         boolean skipStore,
@@ -137,7 +137,7 @@ public class GridDataLoadRequest implements Message {
     /**
      * @return Response topic.
      */
-    public byte[] responseTopicBytes() {
+    public ByteBuffer responseTopicBytes() {
         return resTopicBytes;
     }
 
@@ -151,7 +151,7 @@ public class GridDataLoadRequest implements Message {
     /**
      * @return Updater.
      */
-    public byte[] updaterBytes() {
+    public ByteBuffer updaterBytes() {
         return updaterBytes;
     }
 
@@ -284,8 +284,8 @@ public class GridDataLoadRequest implements Message {
                 writer.incrementState();
 
             case 8:
-                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
-                    return false;
+//                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -302,8 +302,8 @@ public class GridDataLoadRequest implements Message {
                 writer.incrementState();
 
             case 11:
-                if (!writer.writeByteArray("updaterBytes", updaterBytes))
-                    return false;
+//                if (!writer.writeByteArray("updaterBytes", updaterBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -395,7 +395,7 @@ public class GridDataLoadRequest implements Message {
                 reader.incrementState();
 
             case 8:
-                resTopicBytes = reader.readByteArray("resTopicBytes");
+//                resTopicBytes = reader.readByteArray("resTopicBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -419,7 +419,7 @@ public class GridDataLoadRequest implements Message {
                 reader.incrementState();
 
             case 11:
-                updaterBytes = reader.readByteArray("updaterBytes");
+//                updaterBytes = reader.readByteArray("updaterBytes");
 
                 if (!reader.isLastRead())
                     return false;

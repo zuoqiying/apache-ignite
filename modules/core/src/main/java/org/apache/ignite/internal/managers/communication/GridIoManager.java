@@ -39,6 +39,7 @@ import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.Map.*;
 import java.util.concurrent.*;
@@ -1120,8 +1121,8 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         @Nullable Object topic, boolean ordered, long timeout) throws IgniteCheckedException {
         boolean loc = nodes.size() == 1 && F.first(nodes).id().equals(locNodeId);
 
-        byte[] serMsg = null;
-        byte[] serTopic = null;
+        ByteBuffer serMsg = null;
+        ByteBuffer serTopic = null;
 
         if (!loc) {
             serMsg = marsh.marshal(msg);
@@ -1667,7 +1668,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             assert msgBody != null || ioMsg.bodyBytes() != null;
 
             try {
-                byte[] msgTopicBytes = ioMsg.topicBytes();
+                ByteBuffer msgTopicBytes = ioMsg.topicBytes();
 
                 Object msgTopic = ioMsg.topic();
 

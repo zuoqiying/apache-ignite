@@ -22,6 +22,8 @@ import org.apache.ignite.internal.processors.hadoop.message.*;
 import org.apache.ignite.internal.util.nio.*;
 import org.apache.ignite.marshaller.*;
 
+import java.nio.*;
+
 /**
  * Serialization filter.
  */
@@ -64,7 +66,8 @@ public class HadoopMarshallerFilter extends GridNioFilterAdapter {
         assert msg instanceof byte[];
 
         // Always unmarshal with system classloader.
-        proceedMessageReceived(ses, marshaller.unmarshal((byte[])msg, null));
+        // TODO: IGNITE-471 - Is this correct?
+        proceedMessageReceived(ses, marshaller.unmarshal((ByteBuffer)msg, null));
     }
 
     /** {@inheritDoc} */

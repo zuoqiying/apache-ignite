@@ -18,12 +18,14 @@
 package org.apache.ignite.marshaller.optimized;
 
 import org.apache.ignite.*;
+import org.apache.ignite.internal.util.typedef.internal.*;
 import org.apache.ignite.lang.*;
 import org.apache.ignite.marshaller.*;
 import org.apache.ignite.testframework.*;
 import org.apache.ignite.testframework.junits.common.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.concurrent.*;
 
 /**
@@ -42,7 +44,7 @@ public class OptimizedMarshallerSelfTest extends GridMarshallerAbstractTest {
     public void testTestMarshalling() throws Exception {
         final String msg = "PASSED";
 
-        byte[] buf = marshal(new IgniteRunnable() {
+        ByteBuffer buf = marshal(new IgniteRunnable() {
             @Override public void run() {
                 c1.apply(msg);
                 c2.apply(msg);
@@ -88,7 +90,7 @@ public class OptimizedMarshallerSelfTest extends GridMarshallerAbstractTest {
 
                     arr[0] = (byte)200;
 
-                    unmarshal(arr);
+                    unmarshal(ByteBuffer.wrap(arr));
 
                     return null;
                 }
@@ -132,10 +134,9 @@ public class OptimizedMarshallerSelfTest extends GridMarshallerAbstractTest {
         /** {@inheritDoc} */
         private void writeObject(ObjectOutputStream out) throws IOException {
             try {
-                byte[] arr = marshal(str);
+                ByteBuffer buf = marshal(str);
 
-                out.writeInt(arr.length);
-                out.write(arr);
+                U.writeByteBuffer(out, buf);
 
                 out.writeInt(val);
             }
@@ -148,11 +149,9 @@ public class OptimizedMarshallerSelfTest extends GridMarshallerAbstractTest {
         @SuppressWarnings("UnusedParameters")
         private void readObject(ObjectInputStream in) throws IOException {
             try {
-                byte[] arr = new byte[in.readInt()];
+                ByteBuffer buf = U.readByteBuffer(in);
 
-                in.read(arr);
-
-                str = unmarshal(arr);
+                str = unmarshal(buf);
 
                 val = in.readInt();
             }

@@ -38,6 +38,7 @@ import org.apache.ignite.resources.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -460,7 +461,7 @@ public class GridTaskCommandHandler extends GridRestCommandHandlerAdapter {
 
             // 2. Send message.
             try {
-                byte[] topicBytes = ctx.config().getMarshaller().marshal(topic);
+                ByteBuffer topicBytes = ctx.config().getMarshaller().marshal(topic);
 
                 ctx.io().send(taskNode, TOPIC_REST, new GridTaskResultRequest(taskId, topic, topicBytes), SYSTEM_POOL);
             }

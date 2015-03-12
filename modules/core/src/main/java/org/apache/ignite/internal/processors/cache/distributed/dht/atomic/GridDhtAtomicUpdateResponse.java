@@ -52,7 +52,7 @@ public class GridDhtAtomicUpdateResponse extends GridCacheMessage implements Gri
     private IgniteCheckedException err;
 
     /** Serialized update error. */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /** Evicted readers. */
     @GridToStringInclude
@@ -181,8 +181,8 @@ public class GridDhtAtomicUpdateResponse extends GridCacheMessage implements Gri
 
         switch (writer.state()) {
             case 3:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -221,7 +221,7 @@ public class GridDhtAtomicUpdateResponse extends GridCacheMessage implements Gri
 
         switch (reader.state()) {
             case 3:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

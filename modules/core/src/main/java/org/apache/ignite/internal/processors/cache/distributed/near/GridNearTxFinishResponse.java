@@ -42,7 +42,7 @@ public class GridNearTxFinishResponse extends GridDistributedTxFinishResponse {
     private Throwable err;
 
     /** Serialized error. */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /** Mini future ID. */
     private IgniteUuid miniId;
@@ -129,8 +129,8 @@ public class GridNearTxFinishResponse extends GridDistributedTxFinishResponse {
 
         switch (writer.state()) {
             case 5:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -163,7 +163,7 @@ public class GridNearTxFinishResponse extends GridDistributedTxFinishResponse {
 
         switch (reader.state()) {
             case 5:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

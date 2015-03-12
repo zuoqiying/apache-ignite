@@ -646,7 +646,7 @@ public class GridNioSelfTest extends GridCommonAbstractTest {
 
                                 MessageWithId msg = new MessageWithId();
 
-                                byte[] data = serializeMessage(msg);
+                                byte[] data = U.toArray(serializeMessage(msg));
 
                                 for (int j = 0; j < 10; j++)
                                     client.sendMessage(data, data.length);
@@ -748,7 +748,7 @@ public class GridNioSelfTest extends GridCommonAbstractTest {
                         while (cntr.getAndIncrement() < MSG_CNT * THREAD_CNT) {
                             MessageWithId msg = new MessageWithId();
 
-                            byte[] data = serializeMessage(msg);
+                            byte[] data = U.toArray(serializeMessage(msg));
 
                             long start = System.currentTimeMillis();
 
@@ -1120,7 +1120,7 @@ public class GridNioSelfTest extends GridCommonAbstractTest {
      * @return Serialized message.
      * @throws IgniteCheckedException If failed.
      */
-    private <T extends Serializable> byte[] serializeMessage(T msg) throws IgniteCheckedException {
+    private <T extends Serializable> ByteBuffer serializeMessage(T msg) throws IgniteCheckedException {
         return marsh.marshal(msg);
     }
 
@@ -1133,7 +1133,7 @@ public class GridNioSelfTest extends GridCommonAbstractTest {
      * @throws IgniteCheckedException If failed.
      */
     @SuppressWarnings({"RedundantTypeArguments"})
-    private <T> T deserializeMessage(byte[] data) throws IgniteCheckedException {
+    private <T> T deserializeMessage(ByteBuffer data) throws IgniteCheckedException {
         return marsh.<T>unmarshal(data, getClass().getClassLoader());
     }
 
@@ -1265,7 +1265,7 @@ public class GridNioSelfTest extends GridCommonAbstractTest {
             try {
                 long deliveryTime = System.currentTimeMillis();
 
-                MessageWithId msg = deserializeMessage(data);
+                MessageWithId msg = deserializeMessage(ByteBuffer.wrap(data));
 
                 Integer id = msg.getId();
 

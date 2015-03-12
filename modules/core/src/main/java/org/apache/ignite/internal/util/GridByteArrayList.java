@@ -385,7 +385,7 @@ public class GridByteArrayList implements Message, Externalizable {
     public InputStream inputStream() {
         GridUnsafeDataInput in = new GridUnsafeDataInput();
 
-        in.bytes(data, size);
+        in.bytes(data, 0, size);
 
         return in;
     }

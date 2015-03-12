@@ -30,6 +30,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.lang.reflect.Proxy;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -75,7 +76,7 @@ public class OptimizedMarshallerTest extends GridCommonAbstractTest {
 
         marsh.setRequireSerializable(false);
 
-        byte[] bytes = marsh.marshal(new TcpDiscoveryVmIpFinder());
+        ByteBuffer bytes = marsh.marshal(new TcpDiscoveryVmIpFinder());
 
         TcpDiscoveryIpFinder ipFinder = marsh.unmarshal(bytes, null);
 
@@ -112,7 +113,7 @@ public class OptimizedMarshallerTest extends GridCommonAbstractTest {
 
         ipFinder.setShared(false);
 
-        byte[] bytes = marsh.marshal(ipFinder);
+        ByteBuffer bytes = marsh.marshal(ipFinder);
 
         ipFinder = marsh.unmarshal(bytes, null);
 
@@ -129,7 +130,7 @@ public class OptimizedMarshallerTest extends GridCommonAbstractTest {
 
         marsh.setRequireSerializable(false);
 
-        byte[] bytes = marsh.marshal(new TestTcpDiscoveryIpFinderAdapter());
+        ByteBuffer bytes = marsh.marshal(new TestTcpDiscoveryIpFinderAdapter());
 
         TcpDiscoveryIpFinder ipFinder = marsh.unmarshal(bytes, null);
 
@@ -146,9 +147,7 @@ public class OptimizedMarshallerTest extends GridCommonAbstractTest {
 
         marsh.setRequireSerializable(false);
 
-        byte[] bytes = marsh.marshal(new GridMarshallerTestInheritedBean());
-
-        info(Arrays.toString(bytes));
+        ByteBuffer bytes = marsh.marshal(new GridMarshallerTestInheritedBean());
 
         GridMarshallerTestInheritedBean bean = marsh.unmarshal(bytes, null);
 
@@ -163,7 +162,7 @@ public class OptimizedMarshallerTest extends GridCommonAbstractTest {
     public void testNonSerializable5() throws IgniteCheckedException {
         Marshaller marsh = marshaller();
 
-        byte[] bytes = marsh.marshal(true);
+        ByteBuffer bytes = marsh.marshal(true);
 
         Boolean val = marsh.unmarshal(bytes, null);
 

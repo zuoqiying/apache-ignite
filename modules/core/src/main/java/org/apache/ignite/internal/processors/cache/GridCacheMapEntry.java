@@ -42,7 +42,6 @@ import javax.cache.processor.*;
 import java.io.*;
 import java.nio.*;
 import java.util.*;
-import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
 import static org.apache.ignite.events.EventType.*;
@@ -233,7 +232,7 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
                 if (val != null) {
                     byte type = val.type();
 
-                    valPtr = mem.putOffHeap(valPtr, val.valueBytes(cctx.cacheObjectContext()), type);
+                    valPtr = mem.putOffHeap(valPtr, U.toArray(val.valueBytes(cctx.cacheObjectContext())), type);
                 }
                 else {
                     mem.removeOffHeap(valPtr);
@@ -256,7 +255,7 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
      * @param valBytes Value bytes.
      * @return Length of value.
      */
-    private int valueLength0(@Nullable CacheObject val, @Nullable IgniteBiTuple<byte[], Byte> valBytes) {
+    private int valueLength0(@Nullable CacheObject val, @Nullable IgniteBiTuple<ByteBuffer, Byte> valBytes) {
         byte[] bytes = val != null ? (byte[])val.value(cctx.cacheObjectContext(), false) : null;
 
         if (bytes != null)
@@ -265,7 +264,7 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
         if (valBytes == null)
             return 0;
 
-        return valBytes.get1().length - (((valBytes.get2() == CacheObject.TYPE_BYTE_ARR) ? 0 : 6));
+        return U.toArray(valBytes.get1()).length - (((valBytes.get2() == CacheObject.TYPE_BYTE_ARR) ? 0 : 6));
     }
 
     /**
@@ -277,7 +276,7 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
         CacheObject val0 = val;
 
         if (val0 == null && valPtr != 0) {
-            IgniteBiTuple<byte[], Byte> t = valueBytes0();
+            IgniteBiTuple<ByteBuffer, Byte> t = valueBytes0();
 
             return cctx.cacheObjects().toCacheObject(cctx.cacheObjectContext(), t.get2(), t.get1());
         }
@@ -295,12 +294,12 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
         synchronized (this) {
             key.prepareMarshal(cctx.cacheObjectContext());
 
-            kb = key.valueBytes(cctx.cacheObjectContext());
+            kb = U.toArray(key.valueBytes(cctx.cacheObjectContext()));
 
             if (val != null) {
                 val.prepareMarshal(cctx.cacheObjectContext());
 
-                vb = val.valueBytes(cctx.cacheObjectContext());
+                vb = U.toArray(val.valueBytes(cctx.cacheObjectContext()));
             }
 
            extrasSize = extrasSize();
@@ -525,10 +524,10 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
                     val.value(cctx.cacheObjectContext(), false).getClass().getClassLoader());
             }
 
-            IgniteBiTuple<byte[], Byte> valBytes = valueBytes0();
+            IgniteBiTuple<ByteBuffer, Byte> valBytes = valueBytes0();
 
             cctx.swap().write(key(),
-                ByteBuffer.wrap(valBytes.get1()),
+                valBytes.get1(),
                 valBytes.get2(),
                 ver,
                 ttlExtras(),
@@ -544,19 +543,22 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
     /**
      * @return Value bytes and flag indicating whether value is byte array.
      */
-    protected IgniteBiTuple<byte[], Byte> valueBytes0() {
+    // TODO: IGNITE-471 - Switch to other class here???
+    protected IgniteBiTuple<ByteBuffer, Byte> valueBytes0() {
         assert Thread.holdsLock(this);
 
         if (valPtr != 0) {
             assert isOffHeapValuesOnly() || cctx.offheapTiered();
 
-            return cctx.unsafeMemory().get(valPtr);
+            IgniteBiTuple<byte[], Byte> t = cctx.unsafeMemory().get(valPtr);
+
+            return F.t(ByteBuffer.wrap(t.get1()), t.get2());
         }
         else {
             assert val != null;
 
             try {
-                byte[] bytes = val.valueBytes(cctx.cacheObjectContext());
+                ByteBuffer bytes = val.valueBytes(cctx.cacheObjectContext());
 
                 return new IgniteBiTuple<>(bytes, val.type());
             }
@@ -3678,8 +3680,8 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
             GridCacheQueryManager qryMgr = cctx.queries();
 
             if (qryMgr != null) {
-                qryMgr.store(key.value(cctx.cacheObjectContext(), false),
-                    null,
+                qryMgr.store(
+                    key.value(cctx.cacheObjectContext(), false),
                     CU.value(val, cctx, false),
                     null,
                     ver,
@@ -3915,11 +3917,11 @@ public abstract class GridCacheMapEntry implements GridCacheEntryEx {
                         valClsLdrId = cctx.deploy().getClassLoaderId(
                             U.detectObjectClassLoader(val.value(cctx.cacheObjectContext(), false)));
 
-                    IgniteBiTuple<byte[], Byte> valBytes = valueBytes0();
+                    IgniteBiTuple<ByteBuffer, Byte> valBytes = valueBytes0();
 
                     ret = new GridCacheBatchSwapEntry(key(),
                         partition(),
-                        ByteBuffer.wrap(valBytes.get1()),
+                        valBytes.get1(),
                         valBytes.get2(),
                         ver,
                         ttlExtras(),

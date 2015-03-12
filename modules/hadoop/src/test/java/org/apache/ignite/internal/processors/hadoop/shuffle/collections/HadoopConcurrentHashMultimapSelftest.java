@@ -34,7 +34,7 @@ import static org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory.*;
 /**
  *
  */
-public class HadoopConcurrentHashMultimapSelftest extends HadoopAbstractMapTest {
+public class HadoopConcurrentHashMultimapSelfTest extends HadoopAbstractMapTest {
     /** */
     public void testMapSimple() throws Exception {
         GridUnsafeMemory mem = new GridUnsafeMemory(0);
@@ -151,7 +151,7 @@ public class HadoopConcurrentHashMultimapSelftest extends HadoopAbstractMapTest 
 
                 UNSAFE.copyMemory(null, ptr, buf, BYTE_ARR_OFF, size);
 
-                dataInput.bytes(buf, size);
+                dataInput.bytes(buf, 0, size);
 
                 try {
                     w.readFields(dataInput);

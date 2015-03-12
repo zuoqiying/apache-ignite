@@ -48,7 +48,7 @@ public class GridDhtPartitionDemandMessage extends GridCacheMessage {
     private Object topic;
 
     /** Serialized topic. */
-    private byte[] topicBytes;
+    private ByteBuffer topicBytes;
 
     /** Timeout. */
     private long timeout;
@@ -223,8 +223,8 @@ public class GridDhtPartitionDemandMessage extends GridCacheMessage {
                 writer.incrementState();
 
             case 6:
-                if (!writer.writeByteArray("topicBytes", topicBytes))
-                    return false;
+//                if (!writer.writeByteArray("topicBytes", topicBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -281,7 +281,7 @@ public class GridDhtPartitionDemandMessage extends GridCacheMessage {
                 reader.incrementState();
 
             case 6:
-                topicBytes = reader.readByteArray("topicBytes");
+//                topicBytes = reader.readByteArray("topicBytes");
 
                 if (!reader.isLastRead())
                     return false;

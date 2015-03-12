@@ -101,11 +101,6 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
     /** Last length check timestamp. */
     private long lastCheck;
 
-    /** {@inheritDoc} */
-    @Override public void bytes(byte[] bytes, int len) {
-        bytes(bytes, 0, len);
-    }
-
     /**
      * @param bytes Bytes.
      * @param off Offset.

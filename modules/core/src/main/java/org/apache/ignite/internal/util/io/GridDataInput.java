@@ -25,9 +25,10 @@ import java.io.*;
 public interface GridDataInput extends DataInput {
     /**
      * @param bytes Bytes.
+     * @param off Offset.
      * @param len Length.
      */
-    public void bytes(byte[] bytes, int len);
+    public void bytes(byte[] bytes, int off, int len);
 
     /**
      * @param in Underlying input stream.

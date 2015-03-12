@@ -80,7 +80,7 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
 
     /** Transform closure bytes. */
     @GridToStringExclude
-    private byte[] transformClosBytes;
+    private ByteBuffer transformClosBytes;
 
     /** Time to live. */
     private long ttl;
@@ -148,7 +148,7 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
     private boolean transferExpiryPlc;
 
     /** Expiry policy bytes. */
-    private byte[] expiryPlcBytes;
+    private ByteBuffer expiryPlcBytes;
 
     /**
      * Required by {@link Externalizable}
@@ -794,8 +794,8 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
                 writer.incrementState();
 
             case 3:
-                if (!writer.writeByteArray("expiryPlcBytes", expiryPlcBytes))
-                    return false;
+//                if (!writer.writeByteArray("expiryPlcBytes", expiryPlcBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -825,8 +825,8 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
                 writer.incrementState();
 
             case 8:
-                if (!writer.writeByteArray("transformClosBytes", transformClosBytes))
-                    return false;
+//                if (!writer.writeByteArray("transformClosBytes", transformClosBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -880,7 +880,7 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
                 reader.incrementState();
 
             case 3:
-                expiryPlcBytes = reader.readByteArray("expiryPlcBytes");
+//                expiryPlcBytes = reader.readByteArray("expiryPlcBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -920,7 +920,7 @@ public class IgniteTxEntry implements GridPeerDeployAware, Message {
                 reader.incrementState();
 
             case 8:
-                transformClosBytes = reader.readByteArray("transformClosBytes");
+//                transformClosBytes = reader.readByteArray("transformClosBytes");
 
                 if (!reader.isLastRead())
                     return false;

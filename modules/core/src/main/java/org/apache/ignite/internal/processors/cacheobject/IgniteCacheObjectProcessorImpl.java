@@ -31,6 +31,7 @@ import org.apache.ignite.lang.*;
 import org.jetbrains.annotations.*;
 
 import java.math.*;
+import java.nio.*;
 import java.util.*;
 
 import static org.apache.ignite.cache.CacheMemoryMode.*;
@@ -83,12 +84,12 @@ public class IgniteCacheObjectProcessorImpl extends GridProcessorAdapter impleme
     }
 
     /** {@inheritDoc} */
-    @Override public byte[] marshal(CacheObjectContext ctx, Object val) throws IgniteCheckedException {
+    @Override public ByteBuffer marshal(CacheObjectContext ctx, Object val) throws IgniteCheckedException {
         return CU.marshal(ctx.kernalContext().cache().context(), val);
     }
 
     /** {@inheritDoc} */
-    @Override public Object unmarshal(CacheObjectContext ctx, byte[] bytes, ClassLoader clsLdr)
+    @Override public Object unmarshal(CacheObjectContext ctx, ByteBuffer bytes, ClassLoader clsLdr)
         throws IgniteCheckedException
     {
         return ctx.kernalContext().cache().context().marshaller().unmarshal(bytes, clsLdr);
@@ -163,17 +164,18 @@ public class IgniteCacheObjectProcessorImpl extends GridProcessorAdapter impleme
             ClassLoader ldr =
                 valClsLdrId != null ? ctx.deploy().getClassLoader(valClsLdrId) : ctx.deploy().localLoader();
 
-            return toCacheObject(ctx.cacheObjectContext(), unmarshal(ctx.cacheObjectContext(), bytes, ldr), false);
+            return toCacheObject(ctx.cacheObjectContext(), unmarshal(ctx.cacheObjectContext(),
+                ByteBuffer.wrap(bytes), ldr), false);
         }
         else
-            return toCacheObject(ctx.cacheObjectContext(), type, bytes);
+            return toCacheObject(ctx.cacheObjectContext(), type, ByteBuffer.wrap(bytes));
     }
 
     /** {@inheritDoc} */
-    @Override public CacheObject toCacheObject(CacheObjectContext ctx, byte type, byte[] bytes) {
+    @Override public CacheObject toCacheObject(CacheObjectContext ctx, byte type, ByteBuffer bytes) {
         switch (type) {
             case CacheObject.TYPE_BYTE_ARR:
-                return new CacheObjectByteArrayImpl(bytes);
+                return new CacheObjectByteArrayImpl(U.toArray(bytes));
 
             case CacheObject.TYPE_REGULAR:
                 return new CacheObjectImpl(null, bytes);

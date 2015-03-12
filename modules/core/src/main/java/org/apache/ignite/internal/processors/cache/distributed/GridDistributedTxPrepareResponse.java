@@ -43,7 +43,7 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
     private Map<KeyCacheObject, Collection<GridCacheMvccCandidate>> cands;
 
     /** */
-    private byte[] candsBytes;
+    private ByteBuffer candsBytes;
 
     /** Error. */
     @GridToStringExclude
@@ -51,7 +51,7 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
     private Throwable err;
 
     /** Serialized error. */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /**
      * Empty constructor (required by {@link Externalizable}).
@@ -164,14 +164,14 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
 
         switch (writer.state()) {
             case 8:
-                if (!writer.writeByteArray("candsBytes", candsBytes))
-                    return false;
+//                if (!writer.writeByteArray("candsBytes", candsBytes))
+//                    return false;
 
                 writer.incrementState();
 
             case 9:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -192,7 +192,7 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
 
         switch (reader.state()) {
             case 8:
-                candsBytes = reader.readByteArray("candsBytes");
+//                candsBytes = reader.readByteArray("candsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -200,7 +200,7 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
                 reader.incrementState();
 
             case 9:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

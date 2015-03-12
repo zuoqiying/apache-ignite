@@ -41,7 +41,7 @@ public class GridIoMessage implements Message {
     private Object topic;
 
     /** Topic bytes. */
-    private byte[] topicBytes;
+    private ByteBuffer topicBytes;
 
     /** Topic ordinal. */
     private int topicOrd = -1;
@@ -122,14 +122,14 @@ public class GridIoMessage implements Message {
     /**
      * @return Topic bytes.
      */
-    byte[] topicBytes() {
+    ByteBuffer topicBytes() {
         return topicBytes;
     }
 
     /**
      * @param topicBytes Topic bytes.
      */
-    void topicBytes(byte[] topicBytes) {
+    void topicBytes(ByteBuffer topicBytes) {
         this.topicBytes = topicBytes;
     }
 
@@ -221,8 +221,8 @@ public class GridIoMessage implements Message {
                 writer.incrementState();
 
             case 5:
-                if (!writer.writeByteArray("topicBytes", topicBytes))
-                    return false;
+//                if (!writer.writeByteArray("topicBytes", topicBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -290,7 +290,7 @@ public class GridIoMessage implements Message {
                 reader.incrementState();
 
             case 5:
-                topicBytes = reader.readByteArray("topicBytes");
+//                topicBytes = reader.readByteArray("topicBytes");
 
                 if (!reader.isLastRead())
                     return false;

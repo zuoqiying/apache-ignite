@@ -37,7 +37,7 @@ public class CacheEntrySerializablePredicate implements CacheEntryPredicate {
     private CacheEntryPredicate p;
 
     /** */
-    private byte[] bytes;
+    private ByteBuffer bytes;
 
     /**
      * Required by {@link org.apache.ignite.plugin.extensions.communication.Message}.
@@ -109,8 +109,8 @@ public class CacheEntrySerializablePredicate implements CacheEntryPredicate {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("bytes", bytes))
-                    return false;
+//                if (!writer.writeByteArray("bytes", bytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -128,7 +128,7 @@ public class CacheEntrySerializablePredicate implements CacheEntryPredicate {
 
         switch (reader.state()) {
             case 0:
-                bytes = reader.readByteArray("bytes");
+//                bytes = reader.readByteArray("bytes");
 
                 if (!reader.isLastRead())
                     return false;

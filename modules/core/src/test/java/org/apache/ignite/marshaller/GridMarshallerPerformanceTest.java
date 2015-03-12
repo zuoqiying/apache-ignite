@@ -98,7 +98,7 @@ public class GridMarshallerPerformanceTest extends GridCommonAbstractTest {
      * @throws Exception If failed.
      */
     public void testGridMarshaller() throws Exception {
-        final GridTuple<byte[]> tuple = new GridTuple<>();
+        final GridTuple<ByteBuffer> tuple = new GridTuple<>();
 
         final OptimizedMarshaller marsh = new OptimizedMarshaller();
 

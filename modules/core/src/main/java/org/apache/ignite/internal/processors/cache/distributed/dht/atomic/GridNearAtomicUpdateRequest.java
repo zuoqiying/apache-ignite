@@ -83,15 +83,15 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
     private List<EntryProcessor<Object, Object, Object>> entryProcessors;
 
     /** Entry processors bytes. */
-    @GridDirectCollection(byte[].class)
-    private List<byte[]> entryProcessorsBytes;
+    @GridDirectCollection(ByteBuffer.class)
+    private List<ByteBuffer> entryProcessorsBytes;
 
     /** Optional arguments for entry processor. */
     @GridDirectTransient
     private Object[] invokeArgs;
 
     /** Entry processor arguments bytes. */
-    private byte[][] invokeArgsBytes;
+    private ByteBuffer[] invokeArgsBytes;
 
     /** Conflict versions. */
     @GridDirectCollection(GridCacheVersion.class)
@@ -111,7 +111,7 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
     private ExpiryPolicy expiryPlc;
 
     /** Expiry policy bytes. */
-    private byte[] expiryPlcBytes;
+    private ByteBuffer expiryPlcBytes;
 
     /** Filter. */
     private CacheEntryPredicate[] filter;
@@ -592,8 +592,8 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
                 writer.incrementState();
 
             case 7:
-                if (!writer.writeByteArray("expiryPlcBytes", expiryPlcBytes))
-                    return false;
+//                if (!writer.writeByteArray("expiryPlcBytes", expiryPlcBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -736,7 +736,7 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
                 reader.incrementState();
 
             case 7:
-                expiryPlcBytes = reader.readByteArray("expiryPlcBytes");
+//                expiryPlcBytes = reader.readByteArray("expiryPlcBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -784,7 +784,7 @@ public class GridNearAtomicUpdateRequest extends GridCacheMessage implements Gri
                 reader.incrementState();
 
             case 13:
-                invokeArgsBytes = reader.readObjectArray("invokeArgsBytes", MessageCollectionItemType.BYTE_ARR, byte[].class);
+//                invokeArgsBytes = reader.readObjectArray("invokeArgsBytes", MessageCollectionItemType.BYTE_ARR, byte[].class);
 
                 if (!reader.isLastRead())
                     return false;

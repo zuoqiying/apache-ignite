@@ -31,6 +31,7 @@ import org.jetbrains.annotations.*;
 import javax.cache.*;
 import javax.cache.integration.*;
 import javax.sql.*;
+import java.nio.*;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -560,7 +561,7 @@ public class CacheJdbcBlobStore<K, V> extends CacheStoreAdapter<K, V> {
      * @throws IgniteCheckedException If failed to convert.
      */
     protected byte[] toBytes(Object obj) throws IgniteCheckedException {
-        return ignite.configuration().getMarshaller().marshal(obj);
+        return U.toArray(ignite.configuration().getMarshaller().marshal(obj));
     }
 
     /**
@@ -575,7 +576,7 @@ public class CacheJdbcBlobStore<K, V> extends CacheStoreAdapter<K, V> {
         if (bytes == null || bytes.length == 0)
             return null;
 
-        return ignite.configuration().getMarshaller().unmarshal(bytes, getClass().getClassLoader());
+        return ignite.configuration().getMarshaller().unmarshal(ByteBuffer.wrap(bytes), getClass().getClassLoader());
     }
 
     /**

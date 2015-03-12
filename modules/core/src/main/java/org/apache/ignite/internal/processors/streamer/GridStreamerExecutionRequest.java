@@ -40,7 +40,7 @@ public class GridStreamerExecutionRequest implements Message {
 
     /** Serialized batch in case if P2P class loading is enabled. */
     @GridToStringExclude
-    private byte[] batchBytes;
+    private ByteBuffer batchBytes;
 
     /** Deployment mode. */
     private DeploymentMode depMode;
@@ -77,7 +77,7 @@ public class GridStreamerExecutionRequest implements Message {
      */
     public GridStreamerExecutionRequest(
         boolean forceLocDep,
-        byte[] batchBytes,
+        ByteBuffer batchBytes,
         @Nullable DeploymentMode depMode,
         @Nullable String sampleClsName,
         @Nullable String userVer,
@@ -140,7 +140,7 @@ public class GridStreamerExecutionRequest implements Message {
     /**
      * @return Serialized batch in case if P2P class loading is enabled.
      */
-    public byte[] batchBytes() {
+    public ByteBuffer batchBytes() {
         return batchBytes;
     }
 
@@ -162,8 +162,8 @@ public class GridStreamerExecutionRequest implements Message {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("batchBytes", batchBytes))
-                    return false;
+//                if (!writer.writeByteArray("batchBytes", batchBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -217,7 +217,7 @@ public class GridStreamerExecutionRequest implements Message {
 
         switch (reader.state()) {
             case 0:
-                batchBytes = reader.readByteArray("batchBytes");
+//                batchBytes = reader.readByteArray("batchBytes");
 
                 if (!reader.isLastRead())
                     return false;

@@ -41,7 +41,7 @@ public class GridCacheEntryInfo implements Message {
     private KeyCacheObject key;
 
     /** Key bytes, set when entry is read from swap and there is no key instance. */
-    private byte[] keyBytes;
+    private ByteBuffer keyBytes;
 
     /** Cache ID. */
     private int cacheId;
@@ -90,14 +90,14 @@ public class GridCacheEntryInfo implements Message {
     /**
      * @param bytes Key bytes.
      */
-    public void keyBytes(byte[] bytes) {
+    public void keyBytes(ByteBuffer bytes) {
         this.keyBytes = bytes;
     }
 
     /**
      * @return Key bytes.
      */
-    public byte[] keyBytes() {
+    public ByteBuffer keyBytes() {
         return keyBytes;
     }
 
@@ -223,8 +223,8 @@ public class GridCacheEntryInfo implements Message {
                 writer.incrementState();
 
             case 3:
-                if (!writer.writeByteArray("keyBytes", keyBytes))
-                    return false;
+//                if (!writer.writeByteArray("keyBytes", keyBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -284,7 +284,7 @@ public class GridCacheEntryInfo implements Message {
                 reader.incrementState();
 
             case 3:
-                keyBytes = reader.readByteArray("keyBytes");
+//                keyBytes = reader.readByteArray("keyBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -349,15 +349,15 @@ public class GridCacheEntryInfo implements Message {
         CacheObjectContext cacheObjCtx = ctx.cacheObjectContext();
 
         if (val != null)
-            size += val.valueBytes(cacheObjCtx).length;
+            size += U.toArray(val.valueBytes(cacheObjCtx)).length;
 
         if (key == null) {
             assert keyBytes != null;
 
-            size += keyBytes.length;
+            size += U.toArray(keyBytes).length;
         }
         else
-            size += key.valueBytes(cacheObjCtx).length;
+            size += U.toArray(key.valueBytes(cacheObjCtx)).length;
 
         return SIZE_OVERHEAD + size;
     }

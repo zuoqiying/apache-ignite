@@ -25,6 +25,7 @@ import org.apache.ignite.testframework.junits.common.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -490,7 +491,7 @@ public abstract class GridSwapSpaceSpiAbstractSelfTest extends GridCommonAbstrac
             while (iter.hasNext()) {
                 Map.Entry<byte[], byte[]> next = iter.next();
 
-                String key = getTestResources().getMarshaller().unmarshal(next.getKey(), null);
+                String key = getTestResources().getMarshaller().unmarshal(ByteBuffer.wrap(next.getKey()), null);
 
                 info("Got from iterator [key=" + key + ", val=" + new String(next.getValue()));
 
@@ -530,7 +531,7 @@ public abstract class GridSwapSpaceSpiAbstractSelfTest extends GridCommonAbstrac
             while (iter.hasNext()) {
                 Map.Entry<byte[], byte[]> next = iter.next();
 
-                String key = getTestResources().getMarshaller().unmarshal(next.getKey(), null);
+                String key = getTestResources().getMarshaller().unmarshal(ByteBuffer.wrap(next.getKey()), null);
 
                 info("Got from iterator [key=" + key + ", val=" + new String(next.getValue()));
 

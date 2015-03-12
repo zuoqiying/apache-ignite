@@ -20,6 +20,8 @@ package org.apache.ignite.internal.processors.cache;
 import org.apache.ignite.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
+
 /**
  *
  */
@@ -38,7 +40,7 @@ public class KeyCacheObjectImpl extends CacheObjectAdapter implements KeyCacheOb
      * @param val Value.
      * @param valBytes Value bytes.
      */
-    public KeyCacheObjectImpl(Object val, byte[] valBytes) {
+    public KeyCacheObjectImpl(Object val, ByteBuffer valBytes) {
         assert val != null;
 
         this.val = val;
@@ -55,7 +57,7 @@ public class KeyCacheObjectImpl extends CacheObjectAdapter implements KeyCacheOb
     }
 
     /** {@inheritDoc} */
-    @Override public byte[] valueBytes(CacheObjectContext ctx) throws IgniteCheckedException {
+    @Override public ByteBuffer valueBytes(CacheObjectContext ctx) throws IgniteCheckedException {
         if (valBytes == null)
             valBytes = ctx.processor().marshal(ctx, val);
 

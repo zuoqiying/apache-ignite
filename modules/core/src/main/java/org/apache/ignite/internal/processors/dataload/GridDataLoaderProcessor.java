@@ -30,6 +30,7 @@ import org.apache.ignite.marshaller.*;
 import org.apache.ignite.thread.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -274,7 +275,7 @@ public class GridDataLoaderProcessor<K, V> extends GridProcessorAdapter {
      */
     private void sendResponse(UUID nodeId, Object resTopic, long reqId, @Nullable Throwable err,
         boolean forceLocDep) {
-        byte[] errBytes;
+        ByteBuffer errBytes;
 
         try {
             errBytes = err != null ? marsh.marshal(err) : null;

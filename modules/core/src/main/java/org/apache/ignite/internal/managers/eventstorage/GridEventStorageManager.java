@@ -36,6 +36,7 @@ import org.apache.ignite.spi.eventstorage.*;
 import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -881,7 +882,7 @@ public class GridEventStorageManager extends GridManagerAdapter<EventStorageSpi>
 
             ioMgr.addMessageListener(resTopic, resLsnr);
 
-            byte[] serFilter = marsh.marshal(p);
+            ByteBuffer serFilter = marsh.marshal(p);
 
             GridDeployment dep = ctx.deploy().deploy(p.getClass(), U.detectClassLoader(p.getClass()));
 

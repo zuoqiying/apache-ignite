@@ -26,6 +26,7 @@ import org.apache.ignite.lang.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 
 /**
@@ -42,10 +43,10 @@ public class GridMessageListenHandler implements GridContinuousHandler {
     private IgniteBiPredicate<UUID, Object> pred;
 
     /** */
-    private byte[] topicBytes;
+    private ByteBuffer topicBytes;
 
     /** */
-    private byte[] predBytes;
+    private ByteBuffer predBytes;
 
     /** */
     private String clsName;
@@ -176,8 +177,8 @@ public class GridMessageListenHandler implements GridContinuousHandler {
         out.writeBoolean(depEnabled);
 
         if (depEnabled) {
-            U.writeByteArray(out, topicBytes);
-            U.writeByteArray(out, predBytes);
+            U.writeByteBuffer(out, topicBytes);
+            U.writeByteBuffer(out, predBytes);
             U.writeString(out, clsName);
             out.writeObject(depInfo);
         }
@@ -188,12 +189,13 @@ public class GridMessageListenHandler implements GridContinuousHandler {
     }
 
     /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
     @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         depEnabled = in.readBoolean();
 
         if (depEnabled) {
-            topicBytes = U.readByteArray(in);
-            predBytes = U.readByteArray(in);
+            topicBytes = U.readByteBuffer(in);
+            predBytes = U.readByteBuffer(in);
             clsName = U.readString(in);
             depInfo = (GridDeploymentInfoBean)in.readObject();
         }

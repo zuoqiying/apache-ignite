@@ -24,6 +24,7 @@ import org.jetbrains.annotations.*;
 import sun.misc.*;
 
 import java.io.*;
+import java.nio.*;
 
 /**
  * Optimized implementation of {@link org.apache.ignite.marshaller.Marshaller}. Unlike {@link org.apache.ignite.marshaller.jdk.JdkMarshaller},
@@ -164,7 +165,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
     }
 
     /** {@inheritDoc} */
-    @Override public byte[] marshal(@Nullable Object obj) throws IgniteCheckedException {
+    @Override public ByteBuffer marshal(@Nullable Object obj) throws IgniteCheckedException {
         OptimizedObjectOutputStream objOut = null;
 
         try {
@@ -174,7 +175,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
 
             objOut.writeObject(obj);
 
-            return objOut.out().array();
+            return ByteBuffer.wrap(objOut.out().internalArray(), 0, objOut.out().offset());
         }
         catch (IOException e) {
             throw new IgniteCheckedException("Failed to serialize object: " + obj, e);
@@ -215,8 +216,9 @@ public class OptimizedMarshaller extends AbstractMarshaller {
 
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
-    @Override public <T> T unmarshal(byte[] arr, @Nullable ClassLoader clsLdr) throws IgniteCheckedException {
-        assert arr != null;
+    @Override public <T> T unmarshal(ByteBuffer buf, @Nullable ClassLoader clsLdr) throws IgniteCheckedException {
+        assert buf != null;
+        assert buf.hasArray(); // TODO: IGNITE-471 - Support offheap?
 
         OptimizedObjectInputStream objIn = null;
 
@@ -225,7 +227,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
 
             objIn.context(ctx, mapper, clsLdr != null ? clsLdr : dfltClsLdr);
 
-            objIn.in().bytes(arr, arr.length);
+            objIn.in().bytes(buf.array(), buf.position(), buf.remaining());
 
             return (T)objIn.readObject();
         }

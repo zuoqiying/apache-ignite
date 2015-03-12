@@ -20,6 +20,8 @@ package org.apache.ignite.internal.processors.cache;
 import org.apache.ignite.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
+
 /**
  *
  */
@@ -38,7 +40,7 @@ public class CacheObjectImpl extends CacheObjectAdapter {
      * @param val Value.
      * @param valBytes Value bytes.
      */
-    public CacheObjectImpl(Object val, byte[] valBytes) {
+    public CacheObjectImpl(Object val, ByteBuffer valBytes) {
         assert val != null || valBytes != null;
 
         this.val = val;
@@ -71,7 +73,7 @@ public class CacheObjectImpl extends CacheObjectAdapter {
     }
 
     /** {@inheritDoc} */
-    @Override public byte[] valueBytes(CacheObjectContext ctx) throws IgniteCheckedException {
+    @Override public ByteBuffer valueBytes(CacheObjectContext ctx) throws IgniteCheckedException {
         if (valBytes == null)
             valBytes = ctx.processor().marshal(ctx, val);
 

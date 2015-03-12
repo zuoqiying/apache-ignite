@@ -39,7 +39,7 @@ public class GridJobSiblingsRequest implements Message {
     private Object topic;
 
     /** */
-    private byte[] topicBytes;
+    private ByteBuffer topicBytes;
 
     /**
      * Empty constructor required by {@link Externalizable}.
@@ -53,7 +53,7 @@ public class GridJobSiblingsRequest implements Message {
      * @param topic Topic.
      * @param topicBytes Serialized topic.
      */
-    public GridJobSiblingsRequest(IgniteUuid sesId, Object topic, byte[] topicBytes) {
+    public GridJobSiblingsRequest(IgniteUuid sesId, Object topic, ByteBuffer topicBytes) {
         assert sesId != null;
         assert topic != null || topicBytes != null;
 
@@ -79,7 +79,7 @@ public class GridJobSiblingsRequest implements Message {
     /**
      * @return Serialized topic.
      */
-    public byte[] topicBytes() {
+    public ByteBuffer topicBytes() {
         return topicBytes;
     }
 
@@ -102,8 +102,8 @@ public class GridJobSiblingsRequest implements Message {
                 writer.incrementState();
 
             case 1:
-                if (!writer.writeByteArray("topicBytes", topicBytes))
-                    return false;
+//                if (!writer.writeByteArray("topicBytes", topicBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -129,7 +129,7 @@ public class GridJobSiblingsRequest implements Message {
                 reader.incrementState();
 
             case 1:
-                topicBytes = reader.readByteArray("topicBytes");
+//                topicBytes = reader.readByteArray("topicBytes");
 
                 if (!reader.isLastRead())
                     return false;

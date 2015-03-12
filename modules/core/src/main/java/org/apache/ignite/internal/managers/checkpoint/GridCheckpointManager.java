@@ -36,6 +36,7 @@ import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -137,7 +138,7 @@ public class GridCheckpointManager extends GridManagerAdapter<CheckpointSpi> {
         try {
             switch (scope) {
                 case GLOBAL_SCOPE: {
-                    byte[] data = state == null ? null : marsh.marshal(state);
+                    byte[] data = state == null ? null : U.toArray(marsh.marshal(state));
 
                     saved = getSpi(ses.getCheckpointSpi()).saveCheckpoint(key, data, timeout, override);
 
@@ -168,7 +169,7 @@ public class GridCheckpointManager extends GridManagerAdapter<CheckpointSpi> {
                         timeout = ses.getEndTime() - now;
 
                     // Save it first to avoid getting null value on another node.
-                    byte[] data = state == null ? null : marsh.marshal(state);
+                    byte[] data = state == null ? null : U.toArray(marsh.marshal(state));
 
                     Set<String> keys = keyMap.get(ses.getId());
 
@@ -293,7 +294,7 @@ public class GridCheckpointManager extends GridManagerAdapter<CheckpointSpi> {
 
             // Always deserialize with task/session class loader.
             if (data != null)
-                state = marsh.unmarshal(data, ses.getClassLoader());
+                state = marsh.unmarshal(ByteBuffer.wrap(data), ses.getClassLoader());
 
             record(EVT_CHECKPOINT_LOADED, key);
 

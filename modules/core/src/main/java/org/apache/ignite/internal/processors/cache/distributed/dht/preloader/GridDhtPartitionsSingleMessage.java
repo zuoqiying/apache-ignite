@@ -43,7 +43,7 @@ public class GridDhtPartitionsSingleMessage extends GridDhtPartitionsAbstractMes
     private Map<Integer, GridDhtPartitionMap> parts = new HashMap<>();
 
     /** Serialized partitions. */
-    private byte[] partsBytes;
+    private ByteBuffer partsBytes;
 
     /**
      * Required by {@link Externalizable}.
@@ -110,8 +110,8 @@ public class GridDhtPartitionsSingleMessage extends GridDhtPartitionsAbstractMes
 
         switch (writer.state()) {
             case 5:
-                if (!writer.writeByteArray("partsBytes", partsBytes))
-                    return false;
+//                if (!writer.writeByteArray("partsBytes", partsBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -132,7 +132,7 @@ public class GridDhtPartitionsSingleMessage extends GridDhtPartitionsAbstractMes
 
         switch (reader.state()) {
             case 5:
-                partsBytes = reader.readByteArray("partsBytes");
+//                partsBytes = reader.readByteArray("partsBytes");
 
                 if (!reader.isLastRead())
                     return false;

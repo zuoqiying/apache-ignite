@@ -40,7 +40,7 @@ public class GridJobSiblingsResponse implements Message {
     private Collection<ComputeJobSibling> siblings;
 
     /** */
-    private byte[] siblingsBytes;
+    private ByteBuffer siblingsBytes;
 
     /**
      * Empty constructor required by {@link Externalizable}.
@@ -53,7 +53,8 @@ public class GridJobSiblingsResponse implements Message {
      * @param siblings Siblings.
      * @param siblingsBytes Serialized siblings.
      */
-    public GridJobSiblingsResponse(@Nullable Collection<ComputeJobSibling> siblings, @Nullable byte[] siblingsBytes) {
+    public GridJobSiblingsResponse(@Nullable Collection<ComputeJobSibling> siblings,
+        @Nullable ByteBuffer siblingsBytes) {
         this.siblings = siblings;
         this.siblingsBytes = siblingsBytes;
     }
@@ -89,8 +90,8 @@ public class GridJobSiblingsResponse implements Message {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("siblingsBytes", siblingsBytes))
-                    return false;
+//                if (!writer.writeByteArray("siblingsBytes", siblingsBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -108,7 +109,7 @@ public class GridJobSiblingsResponse implements Message {
 
         switch (reader.state()) {
             case 0:
-                siblingsBytes = reader.readByteArray("siblingsBytes");
+//                siblingsBytes = reader.readByteArray("siblingsBytes");
 
                 if (!reader.isLastRead())
                     return false;

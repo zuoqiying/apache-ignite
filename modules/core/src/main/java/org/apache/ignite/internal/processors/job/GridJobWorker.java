@@ -33,6 +33,7 @@ import org.apache.ignite.lang.*;
 import org.apache.ignite.marshaller.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -74,7 +75,7 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
     private final Object taskTopic;
 
     /** */
-    private byte[] jobBytes;
+    private ByteBuffer jobBytes;
 
     /** Task originating node. */
     private final ClusterNode taskNode;
@@ -146,7 +147,7 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
         long createTime,
         GridJobSessionImpl ses,
         GridJobContextImpl jobCtx,
-        byte[] jobBytes,
+        ByteBuffer jobBytes,
         ComputeJob job,
         ClusterNode taskNode,
         boolean internal,

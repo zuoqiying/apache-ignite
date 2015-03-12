@@ -31,6 +31,7 @@ import org.apache.ignite.marshaller.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 
 import static org.apache.ignite.events.EventType.*;
@@ -57,7 +58,7 @@ class GridEventConsumeHandler implements GridContinuousHandler {
     private IgnitePredicate<Event> filter;
 
     /** Serialized filter. */
-    private byte[] filterBytes;
+    private ByteBuffer filterBytes;
 
     /** Deployment class name. */
     private String clsName;
@@ -298,7 +299,7 @@ class GridEventConsumeHandler implements GridContinuousHandler {
         out.writeBoolean(b);
 
         if (b) {
-            U.writeByteArray(out, filterBytes);
+            U.writeByteBuffer(out, filterBytes);
             U.writeString(out, clsName);
             out.writeObject(depInfo);
         }
@@ -309,11 +310,12 @@ class GridEventConsumeHandler implements GridContinuousHandler {
     }
 
     /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
     @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         boolean b = in.readBoolean();
 
         if (b) {
-            filterBytes = U.readByteArray(in);
+            filterBytes = U.readByteBuffer(in);
             clsName = U.readString(in);
             depInfo = (GridDeploymentInfo)in.readObject();
         }
@@ -334,7 +336,7 @@ class GridEventConsumeHandler implements GridContinuousHandler {
         private Event evt;
 
         /** Serialized event. */
-        private byte[] bytes;
+        private ByteBuffer bytes;
 
         /** Cache name (for cache events only). */
         private String cacheName;
@@ -401,7 +403,7 @@ class GridEventConsumeHandler implements GridContinuousHandler {
             out.writeBoolean(b);
 
             if (b) {
-                U.writeByteArray(out, bytes);
+                U.writeByteBuffer(out, bytes);
                 U.writeString(out, cacheName);
                 out.writeObject(depInfo);
             }
@@ -414,7 +416,7 @@ class GridEventConsumeHandler implements GridContinuousHandler {
             boolean b = in.readBoolean();
 
             if (b) {
-                bytes = U.readByteArray(in);
+                bytes = U.readByteBuffer(in);
                 cacheName = U.readString(in);
                 depInfo = (GridDeploymentInfo)in.readObject();
             }

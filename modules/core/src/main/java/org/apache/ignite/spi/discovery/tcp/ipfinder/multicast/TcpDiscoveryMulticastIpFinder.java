@@ -31,6 +31,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 
 import static org.apache.ignite.IgniteSystemProperties.*;
@@ -542,14 +543,22 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
         private AddressResponse(Collection<InetSocketAddress> addrs) throws IgniteCheckedException {
             this.addrs = addrs;
 
-            byte[] addrsData = marsh.marshal(addrs);
-            data = new byte[U.IGNITE_HEADER.length + addrsData.length];
+            ByteBuffer addrsData = marsh.marshal(addrs);
 
-            if (data.length > MAX_DATA_LENGTH)
-                throw new IgniteCheckedException("Too long data packet [size=" + data.length + ", max=" + MAX_DATA_LENGTH + "]");
+            int len = U.IGNITE_HEADER.length + addrsData.remaining();
 
-            System.arraycopy(U.IGNITE_HEADER, 0, data, 0, U.IGNITE_HEADER.length);
-            System.arraycopy(addrsData, 0, data, 4, addrsData.length);
+            if (len > MAX_DATA_LENGTH)
+                throw new IgniteCheckedException("Too long data packet [size=" + len +
+                    ", max=" + MAX_DATA_LENGTH + "]");
+
+            ByteBuffer buf = ByteBuffer.allocate(len);
+
+            buf.put(U.IGNITE_HEADER);
+            buf.put(addrsData);
+
+            assert buf.array().length == len;
+
+            data = buf.array();
         }
 
         /**
@@ -559,9 +568,9 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
         private AddressResponse(byte[] data) throws IgniteCheckedException {
             assert U.bytesEqual(U.IGNITE_HEADER, 0, data, 0, U.IGNITE_HEADER.length);
 
-            this.data = data;
+            ByteBuffer buf = ByteBuffer.wrap(data, U.IGNITE_HEADER.length, data.length - U.IGNITE_HEADER.length);
 
-            addrs = marsh.unmarshal(Arrays.copyOfRange(data, U.IGNITE_HEADER.length, data.length), null);
+            addrs = marsh.unmarshal(buf, null);
         }
 
         /**

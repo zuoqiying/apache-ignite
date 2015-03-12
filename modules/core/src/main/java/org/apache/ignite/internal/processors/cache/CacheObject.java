@@ -21,6 +21,8 @@ import org.apache.ignite.*;
 import org.apache.ignite.plugin.extensions.communication.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
+
 /**
  *
  */
@@ -43,7 +45,7 @@ public interface CacheObject extends Message {
      * @return Value bytes.
      * @throws IgniteCheckedException If failed.
      */
-    public byte[] valueBytes(CacheObjectContext ctx) throws IgniteCheckedException;
+    public ByteBuffer valueBytes(CacheObjectContext ctx) throws IgniteCheckedException;
 
     /**
      * @return Object type.

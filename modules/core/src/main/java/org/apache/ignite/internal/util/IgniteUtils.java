@@ -1967,6 +1967,42 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * @param out Output stream.
+     * @param buf Byte buffer.
+     * @throws IOException In case of error.
+     */
+    public static void writeByteBuffer(DataOutput out, @Nullable ByteBuffer buf) throws IOException {
+        if (buf == null)
+            out.writeInt(-1);
+        else {
+            // TODO: IGNITE-471 - Support offheap?
+            assert buf.hasArray();
+
+            out.writeInt(buf.remaining());
+            out.write(buf.array(), buf.position(), buf.remaining());
+        }
+    }
+
+    /**
+     * @param in Input stream.
+     * @return Byte buffer.
+     * @throws IOException In case of error.
+     */
+    @Nullable public static ByteBuffer readByteBuffer(DataInput in) throws IOException {
+        int len = in.readInt();
+
+        if (len == -1)
+            return null;
+        else {
+            byte[] arr = new byte[len];
+
+            in.readFully(arr);
+
+            return ByteBuffer.wrap(arr);
+        }
+    }
+
+    /**
      * Writes byte array to output stream accounting for <tt>null</tt> values.
      *
      * @param out Output stream to write to.
@@ -9024,6 +9060,24 @@ public abstract class IgniteUtils {
         }
 
         return cnt;
+    }
+
+    /**
+     * // TODO: IGNITE-471 - Remove method.
+     *
+     * @param buf Byte buffer.
+     * @return Byte array.
+     */
+    public static byte[] toArray(ByteBuffer buf) {
+        if (buf.hasArray() && buf.position() == 0 && buf.remaining() == buf.capacity())
+            return buf.array();
+        else {
+            byte[] arr = new byte[buf.remaining()];
+
+            buf.get(arr);
+
+            return arr;
+        }
     }
 
     /**

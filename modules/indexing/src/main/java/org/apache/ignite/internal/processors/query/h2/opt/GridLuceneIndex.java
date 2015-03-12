@@ -37,6 +37,7 @@ import org.apache.lucene.util.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
@@ -173,7 +174,7 @@ public class GridLuceneIndex implements Closeable {
             }
         }
 
-        String keyStr = Base64.encodeBase64String(marshaller.marshal(key));
+        String keyStr = Base64.encodeBase64String(U.toArray(marshaller.marshal(key)));
 
         try {
             // Delete first to avoid duplicates.
@@ -184,8 +185,19 @@ public class GridLuceneIndex implements Closeable {
 
             doc.add(new Field(KEY_FIELD_NAME, keyStr, Field.Store.YES, Field.Index.NOT_ANALYZED));
 
-            if (storeVal && type.valueClass() != String.class)
-                doc.add(new Field(VAL_FIELD_NAME, marshaller.marshal(val)));
+            if (storeVal && type.valueClass() != String.class) {
+                ByteBuffer buf = marshaller.marshal(val);
+
+                if (buf.hasArray())
+                    doc.add(new Field(VAL_FIELD_NAME, buf.array(), buf.position(), buf.remaining()));
+                else {
+                    byte[] bytes = new byte[buf.remaining()];
+
+                    buf.get(bytes);
+
+                    doc.add(new Field(VAL_FIELD_NAME, bytes));
+                }
+            }
 
             doc.add(new Field(VER_FIELD_NAME, ver));
 
@@ -210,7 +222,8 @@ public class GridLuceneIndex implements Closeable {
      */
     public void remove(Object key) throws IgniteCheckedException {
         try {
-            writer.deleteDocuments(new Term(KEY_FIELD_NAME, Base64.encodeBase64String(marshaller.marshal(key))));
+            writer.deleteDocuments(new Term(KEY_FIELD_NAME,
+                Base64.encodeBase64String(U.toArray(marshaller.marshal(key)))));
         }
         catch (IOException e) {
             throw new IgniteCheckedException(e);
@@ -359,11 +372,11 @@ public class GridLuceneIndex implements Closeable {
                 if (ctx != null && ctx.deploy().enabled())
                     ldr = ctx.cache().internalCache(spaceName).context().deploy().globalLoader();
 
-                K k = marshaller.unmarshal(Base64.decodeBase64(keyStr), ldr);
+                K k = marshaller.unmarshal(ByteBuffer.wrap(Base64.decodeBase64(keyStr)), ldr);
 
                 byte[] valBytes = doc.getBinaryValue(VAL_FIELD_NAME);
 
-                V v = valBytes != null ? marshaller.<V>unmarshal(valBytes, ldr) :
+                V v = valBytes != null ? marshaller.<V>unmarshal(ByteBuffer.wrap(valBytes), ldr) :
                     type.valueClass() == String.class ?
                     (V)doc.get(VAL_STR_FIELD_NAME): null;
 

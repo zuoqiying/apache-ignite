@@ -32,6 +32,7 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.*;
 import org.apache.ignite.spi.swapspace.file.*;
 import org.apache.ignite.testframework.junits.common.*;
 
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
@@ -321,7 +322,8 @@ public class GridCacheOffHeapAndSwapSelfTest extends GridCommonAbstractTest {
                 while (it.hasNext()) {
                     Map.Entry<byte[], GridCacheSwapEntry> swapEntry = it.next();
 
-                    Long key = ctx.marshaller().unmarshal(swapEntry.getKey(), ctx.deploy().globalLoader());
+                    Long key = ctx.marshaller().unmarshal(ByteBuffer.wrap(swapEntry.getKey()),
+                        ctx.deploy().globalLoader());
 
                     assertTrue(vals.contains(key));
 

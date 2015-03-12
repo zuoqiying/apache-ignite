@@ -102,23 +102,23 @@ public class GridDhtAtomicUpdateRequest extends GridCacheMessage implements Grid
     private List<EntryProcessor<Object, Object, Object>> entryProcessors;
 
     /** Entry processors bytes. */
-    @GridDirectCollection(byte[].class)
-    private List<byte[]> entryProcessorsBytes;
+    @GridDirectCollection(ByteBuffer.class)
+    private List<ByteBuffer> entryProcessorsBytes;
 
     /** Near entry processors. */
     @GridDirectTransient
     private List<EntryProcessor<Object, Object, Object>> nearEntryProcessors;
 
     /** Near entry processors bytes. */
-    @GridDirectCollection(byte[].class)
-    private List<byte[]> nearEntryProcessorsBytes;
+    @GridDirectCollection(ByteBuffer.class)
+    private List<ByteBuffer> nearEntryProcessorsBytes;
 
     /** Optional arguments for entry processor. */
     @GridDirectTransient
     private Object[] invokeArgs;
 
     /** Entry processor arguments bytes. */
-    private byte[][] invokeArgsBytes;
+    private ByteBuffer[] invokeArgsBytes;
 
     /** Subject ID. */
     private UUID subjId;
@@ -758,7 +758,7 @@ public class GridDhtAtomicUpdateRequest extends GridCacheMessage implements Grid
                 reader.incrementState();
 
             case 8:
-                invokeArgsBytes = reader.readObjectArray("invokeArgsBytes", MessageCollectionItemType.BYTE_ARR, byte[].class);
+//                invokeArgsBytes = reader.readObjectArray("invokeArgsBytes", MessageCollectionItemType.BYTE_ARR, byte[].class);
 
                 if (!reader.isLastRead())
                     return false;

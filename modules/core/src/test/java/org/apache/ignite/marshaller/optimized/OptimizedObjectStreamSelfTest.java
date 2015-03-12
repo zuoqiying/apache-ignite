@@ -717,7 +717,7 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
 
         byte[] bytes = "line1\nline2\r\nli\rne3\nline4".getBytes();
 
-        in.in().bytes(bytes, bytes.length);
+        in.in().bytes(bytes, 0, bytes.length);
 
         assertEquals("line1", in.readLine());
         assertEquals("line2", in.readLine());
@@ -891,7 +891,7 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
             for (int i = 0; i < arr.length; i++)
                 arr[i] = (byte)i;
 
-            in.in().bytes(arr, arr.length);
+            in.in().bytes(arr, 0, arr.length);
 
             byte[] buf = new byte[10];
 
@@ -1032,7 +1032,7 @@ public class OptimizedObjectStreamSelfTest extends GridCommonAbstractTest {
 
             in.context(CTX, null, getClass().getClassLoader());
 
-            in.in().bytes(arr, arr.length);
+            in.in().bytes(arr, 0, arr.length);
 
             Object obj0 = in.readObject();
 

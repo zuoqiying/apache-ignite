@@ -45,6 +45,7 @@ import org.jetbrains.annotations.*;
 import javax.cache.*;
 import javax.cache.expiry.*;
 import java.io.*;
+import java.nio.*;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -311,15 +312,13 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
      * Writes key-value pair to index.
      *
      * @param key Key.
-     * @param keyBytes Byte array with key data.
      * @param val Value.
      * @param valBytes Value bytes.
      * @param ver Cache entry version.
      * @param expirationTime Expiration time or 0 if never expires.
      * @throws IgniteCheckedException In case of error.
      */
-    public void store(K key, @Nullable byte[] keyBytes, @Nullable V val, @Nullable byte[] valBytes,
-        GridCacheVersion ver, long expirationTime)
+    public void store(K key, @Nullable V val, @Nullable ByteBuffer valBytes, GridCacheVersion ver, long expirationTime)
         throws IgniteCheckedException {
         assert key != null;
         assert val != null || valBytes != null;
@@ -334,7 +333,7 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
             if (val == null)
                 val = cctx.marshaller().unmarshal(valBytes, cctx.deploy().globalLoader());
 
-            qryProc.store(space, key, keyBytes, val, valBytes, CU.versionToBytes(ver), expirationTime);
+            qryProc.store(space, key, val, CU.versionToBytes(ver), expirationTime);
         }
         finally {
             invalidateResultCache();
@@ -693,19 +692,17 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
         if (data == null)
             data = Collections.emptyList();
 
-        final GridIterator<IgniteBiTuple<K, V>> it = F.iterator(
-            data,
-            new C1<GridCacheSetItemKey, IgniteBiTuple<K, V>>() {
+        final GridIterator<IgniteBiTuple<K, V>> it = F.iterator(data, new C1<GridCacheSetItemKey, IgniteBiTuple<K,
+                V>>() {
                 @Override public IgniteBiTuple<K, V> apply(GridCacheSetItemKey e) {
                     return new IgniteBiTuple<>((K)e.item(), (V)Boolean.TRUE);
                 }
-            },
-            true,
-            new P1<GridCacheSetItemKey>() {
+            }, true, new P1<GridCacheSetItemKey>() {
                 @Override public boolean apply(GridCacheSetItemKey e) {
                     return filter.apply(e, null);
                 }
-            });
+            }
+        );
 
         return new GridCloseableIteratorAdapter<IgniteBiTuple<K, V>>() {
             @Override protected boolean onHasNext() {
@@ -2261,7 +2258,7 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
         /**
          * @return Key bytes.
          */
-        protected abstract byte[] keyBytes();
+        protected abstract ByteBuffer keyBytes();
 
         /**
          * @return Value.
@@ -2334,8 +2331,8 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
         }
 
         /** {@inheritDoc} */
-        @Override protected byte[] keyBytes() {
-            return e.getKey();
+        @Override protected ByteBuffer keyBytes() {
+            return ByteBuffer.wrap(e.getKey());
         }
 
         /** {@inheritDoc} */
@@ -2343,7 +2340,8 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
         @Override protected V unmarshalValue() throws IgniteCheckedException {
             IgniteBiTuple<byte[], Byte> t = GridCacheSwapEntryImpl.getValue(e.getValue());
 
-            CacheObject obj = cctx.cacheObjects().toCacheObject(cctx.cacheObjectContext(), t.get2(), t.get1());
+            CacheObject obj = cctx.cacheObjects().toCacheObject(cctx.cacheObjectContext(),
+                t.get2(), ByteBuffer.wrap(t.get1()));
 
             return obj.value(cctx.cacheObjectContext(), false);
         }
@@ -2387,8 +2385,8 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
         }
 
         /** {@inheritDoc} */
-        @Override protected byte[] keyBytes() {
-            return U.copyMemory(keyPtr.get1(), keyPtr.get2());
+        @Override protected ByteBuffer keyBytes() {
+            return ByteBuffer.wrap(U.copyMemory(keyPtr.get1(), keyPtr.get2()));
         }
 
         /** {@inheritDoc} */

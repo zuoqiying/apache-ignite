@@ -27,6 +27,7 @@ import org.apache.ignite.spi.checkpoint.*;
 import org.apache.ignite.testframework.junits.common.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 
 /**
@@ -62,7 +63,7 @@ public abstract class GridSessionCheckpointAbstractSelfTest extends GridCommonAb
 
         assert marshaller != null;
 
-        String state = marshaller.unmarshal(serState, getClass().getClassLoader());
+        String state = marshaller.unmarshal(ByteBuffer.wrap(serState), getClass().getClassLoader());
 
         assert state != null : "Global state is missing: " + globalKey;
         assert state.equals(globalState) : "Invalid state value: " + state;
@@ -90,14 +91,14 @@ public abstract class GridSessionCheckpointAbstractSelfTest extends GridCommonAb
 
         byte[] serState = spi.loadCheckpoint(sesKey);
 
-        String state = marsh.unmarshal(serState, cl);
+        String state = marsh.unmarshal(ByteBuffer.wrap(serState), cl);
 
         assert state != null : "Session state is missing: " + sesKey;
         assert state.equals(sesState) : "Invalid state value: " + state;
 
         serState = spi.loadCheckpoint(globalKey);
 
-        state = marsh.unmarshal(serState, cl);
+        state = marsh.unmarshal(ByteBuffer.wrap(serState), cl);
 
         assert state != null : "Global state is missing: " + globalKey;
         assert state.equals(globalState) : "Invalid state value: " + state;

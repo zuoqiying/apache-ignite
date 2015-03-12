@@ -94,9 +94,9 @@ public class GridCacheEntryMemorySizeSelfTest extends GridCommonAbstractTest {
                 }
             });
 
-            KEY_SIZE = marsh.marshal(1).length;
-            ONE_KB_VAL_SIZE = marsh.marshal(new Value(new byte[1024])).length;
-            TWO_KB_VAL_SIZE = marsh.marshal(new Value(new byte[2048])).length;
+            KEY_SIZE = U.toArray(marsh.marshal(1)).length;
+            ONE_KB_VAL_SIZE = U.toArray(marsh.marshal(new Value(new byte[1024]))).length;
+            TWO_KB_VAL_SIZE = U.toArray(marsh.marshal(new Value(new byte[2048]))).length;
         }
         catch (IgniteCheckedException e) {
             throw new IgniteException(e);

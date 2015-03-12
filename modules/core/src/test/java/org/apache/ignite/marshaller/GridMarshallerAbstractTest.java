@@ -39,6 +39,7 @@ import org.apache.ignite.testframework.junits.common.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -155,7 +156,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
         GridMarshallerTestBean inBean = newTestBean(cache);
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -185,7 +186,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
         GridMarshallerTestBean inBean = newTestBean(cache);
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -213,7 +214,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
     public void testMarshalling() throws Exception {
         GridMarshallerTestBean inBean = newTestBean(new Object());
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -250,7 +251,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
             }
         });
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -287,7 +288,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
         GridMarshallerTestBean inBean = newTestBean(new LocalRunnable());
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -314,7 +315,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
     public void testMarshallingNestedClassInstance() throws Exception {
         GridMarshallerTestBean inBean = newTestBean(new NestedClass());
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -341,7 +342,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
     public void testMarshallingStaticNestedClassInstance() throws Exception {
         GridMarshallerTestBean inBean = newTestBean(new StaticNestedClass());
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -368,7 +369,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
     public void testMarshallingNullObject() throws Exception {
         GridMarshallerTestBean inBean = newTestBean(null);
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -430,7 +431,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
         ComputeTask<?, ?> inTask = (ComputeTask<?, ?>)tstClsLdr.loadClass(GridP2PTestTask.class.getName()).
             newInstance();
 
-        byte[] buf = marsh.marshal(inTask);
+        ByteBuffer buf = marsh.marshal(inTask);
 
         ComputeTask<?, ?> outTask = marsh.unmarshal(buf, tstClsLdr);
 
@@ -446,7 +447,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
     public void testGridKernalMarshalling() throws Exception {
         GridMarshallerTestBean inBean = newTestBean(grid());
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -478,7 +479,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
             }
         }));
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -502,7 +503,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
     public void testLoggerMarshalling() throws Exception {
         GridMarshallerTestBean inBean = newTestBean(grid().log());
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -534,7 +535,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
         GridMarshallerTestBean inBean = newTestBean(loc);
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -565,7 +566,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
         GridMarshallerTestBean inBean = newTestBean(inSrvc);
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -594,7 +595,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
     public void testKernalContext() throws Exception {
         GridMarshallerTestBean inBean = newTestBean(GridKernalTestUtils.context(grid()));
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -626,7 +627,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
         GridMarshallerTestBean inBean = newTestBean(scheduler);
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -660,7 +661,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
             GridMarshallerTestBean inBean = newTestBean(compute);
 
-            byte[] buf = marshal(inBean);
+            ByteBuffer buf = marshal(inBean);
 
             GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -702,7 +703,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
             GridMarshallerTestBean inBean = newTestBean(evts);
 
-            byte[] buf = marshal(inBean);
+            ByteBuffer buf = marshal(inBean);
 
             GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -738,7 +739,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
             GridMarshallerTestBean inBean = newTestBean(messaging);
 
-            byte[] buf = marshal(inBean);
+            ByteBuffer buf = marshal(inBean);
 
             GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -774,7 +775,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
             GridMarshallerTestBean inBean = newTestBean(services);
 
-            byte[] buf = marshal(inBean);
+            ByteBuffer buf = marshal(inBean);
 
             GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -807,7 +808,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
 
         GridMarshallerTestBean inBean = newTestBean(streamer);
 
-        byte[] buf = marshal(inBean);
+        ByteBuffer buf = marshal(inBean);
 
         GridMarshallerTestBean outBean = unmarshal(buf);
 
@@ -846,7 +847,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
      * @return Byte buffer.
      * @throws IgniteCheckedException Thrown if any exception occurs while marshalling.
      */
-    protected static byte[] marshal(Object bean) throws IgniteCheckedException {
+    protected static ByteBuffer marshal(Object bean) throws IgniteCheckedException {
         return marsh.marshal(bean);
     }
 
@@ -856,7 +857,7 @@ public abstract class GridMarshallerAbstractTest extends GridCommonAbstractTest 
      * @throws IgniteCheckedException Thrown if any exception occurs while unmarshalling.
      */
     @SuppressWarnings({"RedundantTypeArguments"})
-    protected static <T> T unmarshal(byte[] buf) throws IgniteCheckedException {
+    protected static <T> T unmarshal(ByteBuffer buf) throws IgniteCheckedException {
         return marsh.<T>unmarshal(buf, Thread.currentThread().getContextClassLoader());
     }
 

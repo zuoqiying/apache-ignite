@@ -23,6 +23,9 @@ import org.apache.ignite.internal.util.io.*;
 import org.apache.ignite.internal.util.typedef.internal.*;
 import org.jetbrains.annotations.*;
 
+import java.io.*;
+import java.nio.*;
+
 /**
  * Base class for marshallers. Provides default implementations of methods
  * that work with byte array or {@link GridByteArrayList}. These implementations
@@ -42,7 +45,7 @@ public abstract class AbstractMarshaller implements Marshaller {
     }
 
     /** {@inheritDoc} */
-    @Override public byte[] marshal(@Nullable Object obj) throws IgniteCheckedException {
+    @Override public ByteBuffer marshal(@Nullable Object obj) throws IgniteCheckedException {
         GridByteArrayOutputStream out = null;
 
         try {
@@ -50,7 +53,7 @@ public abstract class AbstractMarshaller implements Marshaller {
 
             marshal(obj, out);
 
-            return out.toByteArray();
+            return ByteBuffer.wrap(out.internalArray(), 0, out.size());
         }
         finally {
             U.close(out, null);
@@ -58,11 +61,11 @@ public abstract class AbstractMarshaller implements Marshaller {
     }
 
     /** {@inheritDoc} */
-    @Override public <T> T unmarshal(byte[] arr, @Nullable ClassLoader clsLdr) throws IgniteCheckedException {
-        GridByteArrayInputStream in = null;
+    @Override public <T> T unmarshal(ByteBuffer buf, @Nullable ClassLoader clsLdr) throws IgniteCheckedException {
+        InputStream in = null;
 
         try {
-            in = new GridByteArrayInputStream(arr, 0, arr.length);
+            in = new GridByteBufferInputStream(buf);
 
             return unmarshal(in, clsLdr);
         }

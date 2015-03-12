@@ -30,6 +30,7 @@ import org.apache.ignite.spi.*;
 import org.apache.ignite.spi.swapspace.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
 import java.util.*;
 
 import static org.apache.ignite.events.EventType.*;
@@ -413,7 +414,7 @@ public class GridSwapSpaceManager extends GridManagerAdapter<SwapSpaceSpi> {
         if (swapBytes == null)
             return null;
 
-        return marsh.unmarshal(swapBytes, ldr != null ? ldr : U.gridClassLoader());
+        return marsh.unmarshal(ByteBuffer.wrap(swapBytes), ldr != null ? ldr : U.gridClassLoader());
     }
 
     /**
@@ -424,7 +425,7 @@ public class GridSwapSpaceManager extends GridManagerAdapter<SwapSpaceSpi> {
      * @throws IgniteCheckedException If failed.
      */
     private byte[] marshal(Object obj) throws IgniteCheckedException {
-        return ctx.config().getMarshaller().marshal(obj);
+        return U.toArray(ctx.config().getMarshaller().marshal(obj));
     }
 
     /**

@@ -41,24 +41,24 @@ public class GridEventStorageMessage implements Message {
     private Object resTopic;
 
     /** */
-    private byte[] resTopicBytes;
+    private ByteBuffer resTopicBytes;
 
     /** */
-    private byte[] filter;
+    private ByteBuffer filter;
 
     /** */
     @GridDirectTransient
     private Collection<Event> evts;
 
     /** */
-    private byte[] evtsBytes;
+    private ByteBuffer evtsBytes;
 
     /** */
     @GridDirectTransient
     private Throwable ex;
 
     /** */
-    private byte[] exBytes;
+    private ByteBuffer exBytes;
 
     /** */
     private IgniteUuid clsLdrId;
@@ -93,7 +93,7 @@ public class GridEventStorageMessage implements Message {
      */
     GridEventStorageMessage(
         Object resTopic,
-        byte[] filter,
+        ByteBuffer filter,
         String filterClsName,
         IgniteUuid clsLdrId,
         DeploymentMode depMode,
@@ -144,21 +144,21 @@ public class GridEventStorageMessage implements Message {
     /**
      * @return Serialized response topic.
      */
-    byte[] responseTopicBytes() {
+    ByteBuffer responseTopicBytes() {
         return resTopicBytes;
     }
 
     /**
      * @param resTopicBytes Serialized response topic.
      */
-    void responseTopicBytes(byte[] resTopicBytes) {
+    void responseTopicBytes(ByteBuffer resTopicBytes) {
         this.resTopicBytes = resTopicBytes;
     }
 
     /**
      * @return Filter.
      */
-    byte[] filter() {
+    ByteBuffer filter() {
         return filter;
     }
 
@@ -179,14 +179,14 @@ public class GridEventStorageMessage implements Message {
     /**
      * @return Serialized events.
      */
-    byte[] eventsBytes() {
+    ByteBuffer eventsBytes() {
         return evtsBytes;
     }
 
     /**
      * @param evtsBytes Serialized events.
      */
-    void eventsBytes(byte[] evtsBytes) {
+    void eventsBytes(ByteBuffer evtsBytes) {
         this.evtsBytes = evtsBytes;
     }
 
@@ -249,14 +249,14 @@ public class GridEventStorageMessage implements Message {
     /**
      * @return Serialized exception.
      */
-    byte[] exceptionBytes() {
+    ByteBuffer exceptionBytes() {
         return exBytes;
     }
 
     /**
      * @param exBytes Serialized exception.
      */
-    void exceptionBytes(byte[] exBytes) {
+    void exceptionBytes(ByteBuffer exBytes) {
         this.exBytes = exBytes;
     }
 
@@ -285,20 +285,20 @@ public class GridEventStorageMessage implements Message {
                 writer.incrementState();
 
             case 2:
-                if (!writer.writeByteArray("evtsBytes", evtsBytes))
-                    return false;
+//                if (!writer.writeByteArray("evtsBytes", evtsBytes))
+//                    return false;
 
                 writer.incrementState();
 
             case 3:
-                if (!writer.writeByteArray("exBytes", exBytes))
-                    return false;
+//                if (!writer.writeByteArray("exBytes", exBytes))
+//                    return false;
 
                 writer.incrementState();
 
             case 4:
-                if (!writer.writeByteArray("filter", filter))
-                    return false;
+//                if (!writer.writeByteArray("filter", filter))
+//                    return false;
 
                 writer.incrementState();
 
@@ -315,8 +315,8 @@ public class GridEventStorageMessage implements Message {
                 writer.incrementState();
 
             case 7:
-                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
-                    return false;
+//                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -360,7 +360,7 @@ public class GridEventStorageMessage implements Message {
                 reader.incrementState();
 
             case 2:
-                evtsBytes = reader.readByteArray("evtsBytes");
+//                evtsBytes = reader.readByteArray("evtsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -368,7 +368,7 @@ public class GridEventStorageMessage implements Message {
                 reader.incrementState();
 
             case 3:
-                exBytes = reader.readByteArray("exBytes");
+//                exBytes = reader.readByteArray("exBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -376,7 +376,7 @@ public class GridEventStorageMessage implements Message {
                 reader.incrementState();
 
             case 4:
-                filter = reader.readByteArray("filter");
+//                filter = reader.readByteArray("filter");
 
                 if (!reader.isLastRead())
                     return false;
@@ -400,7 +400,7 @@ public class GridEventStorageMessage implements Message {
                 reader.incrementState();
 
             case 7:
-                resTopicBytes = reader.readByteArray("resTopicBytes");
+//                resTopicBytes = reader.readByteArray("resTopicBytes");
 
                 if (!reader.isLastRead())
                     return false;

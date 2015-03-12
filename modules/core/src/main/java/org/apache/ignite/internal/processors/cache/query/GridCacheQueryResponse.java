@@ -49,14 +49,14 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
     private Throwable err;
 
     /** */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /** */
     private boolean fields;
 
     /** */
-    @GridDirectCollection(byte[].class)
-    private Collection<byte[]> metaDataBytes;
+    @GridDirectCollection(ByteBuffer.class)
+    private Collection<ByteBuffer> metaDataBytes;
 
     /** */
     @GridToStringInclude
@@ -64,8 +64,8 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
     private List<GridQueryFieldMetadata> metadata;
 
     /** */
-    @GridDirectCollection(byte[].class)
-    private Collection<byte[]> dataBytes;
+    @GridDirectCollection(ByteBuffer.class)
+    private Collection<ByteBuffer> dataBytes;
 
     /** */
     @GridDirectTransient
@@ -223,8 +223,8 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
                 writer.incrementState();
 
             case 4:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -277,7 +277,7 @@ public class GridCacheQueryResponse extends GridCacheMessage implements GridCach
                 reader.incrementState();
 
             case 4:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

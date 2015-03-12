@@ -24,6 +24,8 @@ import org.apache.ignite.internal.processors.*;
 import org.apache.ignite.internal.processors.cache.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
+
 /**
  * Cache objects processor.
  */
@@ -92,7 +94,7 @@ public interface IgniteCacheObjectProcessor extends GridProcessor {
      * @return Value bytes.
      * @throws IgniteCheckedException If failed.
      */
-    public byte[] marshal(CacheObjectContext ctx, Object val) throws IgniteCheckedException;
+    public ByteBuffer marshal(CacheObjectContext ctx, Object val) throws IgniteCheckedException;
 
     /**
      * @param ctx Context.
@@ -101,7 +103,7 @@ public interface IgniteCacheObjectProcessor extends GridProcessor {
      * @return Unmarshalled object.
      * @throws IgniteCheckedException If failed.
      */
-    public Object unmarshal(CacheObjectContext ctx, byte[] bytes, ClassLoader clsLdr) throws IgniteCheckedException;
+    public Object unmarshal(CacheObjectContext ctx, ByteBuffer bytes, ClassLoader clsLdr) throws IgniteCheckedException;
 
     /**
      * @param node Node.
@@ -134,7 +136,7 @@ public interface IgniteCacheObjectProcessor extends GridProcessor {
      * @param bytes Object bytes.
      * @return Cache object.
      */
-    public CacheObject toCacheObject(CacheObjectContext ctx, byte type, byte[] bytes);
+    public CacheObject toCacheObject(CacheObjectContext ctx, byte type, ByteBuffer bytes);
 
     /**
      * @param ctx Context.

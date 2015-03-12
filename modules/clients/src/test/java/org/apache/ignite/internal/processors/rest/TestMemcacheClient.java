@@ -18,7 +18,6 @@
 package org.apache.ignite.internal.processors.rest;
 
 import org.apache.ignite.*;
-import org.apache.ignite.internal.util.*;
 import org.apache.ignite.internal.util.typedef.internal.*;
 import org.apache.ignite.logger.java.*;
 import org.apache.ignite.marshaller.*;
@@ -27,6 +26,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -679,7 +679,7 @@ final class TestMemcacheClient {
             flags |= BYTE_ARR_FLAG;
         }
         else {
-            bytes = jdkMarshaller.marshal(obj);
+            bytes = U.toArray(jdkMarshaller.marshal(obj));
 
             flags |= SERIALIZED_FLAG;
         }
@@ -698,7 +698,7 @@ final class TestMemcacheClient {
         assert flags >= 0;
 
         if ((flags & SERIALIZED_FLAG) != 0)
-            return jdkMarshaller.unmarshal(bytes, getClass().getClassLoader());
+            return jdkMarshaller.unmarshal(ByteBuffer.wrap(bytes), getClass().getClassLoader());
 
         int masked = flags & 0xff00;
 

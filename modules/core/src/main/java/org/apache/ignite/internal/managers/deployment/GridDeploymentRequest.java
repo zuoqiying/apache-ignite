@@ -39,7 +39,7 @@ public class GridDeploymentRequest implements Message {
     private Object resTopic;
 
     /** Serialized topic. */
-    private byte[] resTopicBytes;
+    private ByteBuffer resTopicBytes;
 
     /** Requested class name. */
     private String rsrcName;
@@ -101,14 +101,14 @@ public class GridDeploymentRequest implements Message {
     /**
      * @return Serialized topic.
      */
-    byte[] responseTopicBytes() {
+    ByteBuffer responseTopicBytes() {
         return resTopicBytes;
     }
 
     /**
      * @param resTopicBytes Serialized topic.
      */
-    void responseTopicBytes(byte[] resTopicBytes) {
+    void responseTopicBytes(ByteBuffer resTopicBytes) {
         this.resTopicBytes = resTopicBytes;
     }
 
@@ -186,8 +186,8 @@ public class GridDeploymentRequest implements Message {
                 writer.incrementState();
 
             case 3:
-                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
-                    return false;
+//                if (!writer.writeByteArray("resTopicBytes", resTopicBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -235,7 +235,7 @@ public class GridDeploymentRequest implements Message {
                 reader.incrementState();
 
             case 3:
-                resTopicBytes = reader.readByteArray("resTopicBytes");
+//                resTopicBytes = reader.readByteArray("resTopicBytes");
 
                 if (!reader.isLastRead())
                     return false;

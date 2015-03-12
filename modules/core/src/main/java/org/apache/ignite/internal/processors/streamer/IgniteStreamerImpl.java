@@ -40,6 +40,7 @@ import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -786,7 +787,7 @@ public class IgniteStreamerImpl implements IgniteStreamerEx, Externalizable {
                         log.debug("Sending completion response to remote node [nodeId=" + dstNodeId +
                             ", futId=" + futId + ", err=" + err + ']');
 
-                    byte[] errBytes = err != null ? ctx.config().getMarshaller().marshal(err) : null;
+                    ByteBuffer errBytes = err != null ? ctx.config().getMarshaller().marshal(err) : null;
 
                     sendWithRetries(dstNodeId, new GridStreamerResponse(futId, errBytes));
                 }
@@ -1018,7 +1019,7 @@ public class IgniteStreamerImpl implements IgniteStreamerEx, Externalizable {
         throws IgniteCheckedException {
         boolean depEnabled = ctx.deploy().enabled();
 
-        byte[] batchBytes = ctx.config().getMarshaller().marshal(batch);
+        ByteBuffer batchBytes = ctx.config().getMarshaller().marshal(batch);
 
         if (!depEnabled)
             return new GridStreamerExecutionRequest(true, batchBytes, null, null, null, null, null);

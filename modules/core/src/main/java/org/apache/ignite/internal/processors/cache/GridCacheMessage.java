@@ -366,14 +366,14 @@ public abstract class GridCacheMessage implements Message {
      * @return Marshalled collection.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable protected final byte[][] marshalInvokeArguments(@Nullable Object[] args,
+    @Nullable protected final ByteBuffer[] marshalInvokeArguments(@Nullable Object[] args,
         GridCacheSharedContext ctx) throws IgniteCheckedException {
         assert ctx != null;
 
         if (args == null || args.length == 0)
             return null;
 
-        byte[][] argsBytes = new byte[args.length][];
+        ByteBuffer[] argsBytes = new ByteBuffer[args.length];
 
         for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
@@ -395,7 +395,7 @@ public abstract class GridCacheMessage implements Message {
      * @return Unmarshalled collection.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable protected final Object[] unmarshalInvokeArguments(@Nullable byte[][] byteCol,
+    @Nullable protected final Object[] unmarshalInvokeArguments(@Nullable ByteBuffer[] byteCol,
         GridCacheSharedContext ctx,
         ClassLoader ldr) throws IgniteCheckedException {
         assert ldr != null;
@@ -420,14 +420,14 @@ public abstract class GridCacheMessage implements Message {
      * @return Marshalled collection.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable protected List<byte[]> marshalCollection(@Nullable Collection<?> col,
+    @Nullable protected List<ByteBuffer> marshalCollection(@Nullable Collection<?> col,
         GridCacheSharedContext ctx) throws IgniteCheckedException {
         assert ctx != null;
 
         if (col == null)
             return null;
 
-        List<byte[]> byteCol = new ArrayList<>(col.size());
+        List<ByteBuffer> byteCol = new ArrayList<>(col.size());
 
         for (Object o : col) {
             if (ctx.deploymentEnabled())
@@ -540,7 +540,7 @@ public abstract class GridCacheMessage implements Message {
      * @return Unmarshalled collection.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable protected <T> List<T> unmarshalCollection(@Nullable Collection<byte[]> byteCol,
+    @Nullable protected <T> List<T> unmarshalCollection(@Nullable Collection<ByteBuffer> byteCol,
         GridCacheSharedContext ctx, ClassLoader ldr) throws IgniteCheckedException {
         assert ldr != null;
         assert ctx != null;
@@ -552,61 +552,10 @@ public abstract class GridCacheMessage implements Message {
 
         Marshaller marsh = ctx.marshaller();
 
-        for (byte[] bytes : byteCol)
+        for (ByteBuffer bytes : byteCol)
             col.add(bytes == null ? null : marsh.<T>unmarshal(bytes, ldr));
 
         return col;
-    }
-
-    /**
-     * @param map Map to marshal.
-     * @param ctx Context.
-     * @return Marshalled map.
-     * @throws IgniteCheckedException If failed.
-     */
-    @SuppressWarnings("TypeMayBeWeakened") // Don't weaken type to clearly see that it's linked hash map.
-    @Nullable protected final LinkedHashMap<byte[], Boolean> marshalBooleanLinkedMap(
-        @Nullable LinkedHashMap<?, Boolean> map, GridCacheSharedContext ctx) throws IgniteCheckedException {
-        assert ctx != null;
-
-        if (map == null)
-            return null;
-
-        LinkedHashMap<byte[], Boolean> byteMap = U.newLinkedHashMap(map.size());
-
-        for (Map.Entry<?, Boolean> e : map.entrySet()) {
-            if (ctx.deploymentEnabled())
-                prepareObject(e.getKey(), ctx);
-
-            byteMap.put(CU.marshal(ctx, e.getKey()), e.getValue());
-        }
-
-        return byteMap;
-    }
-
-    /**
-     * @param byteMap Map to unmarshal.
-     * @param ctx Context.
-     * @param ldr Loader.
-     * @return Unmarshalled map.
-     * @throws IgniteCheckedException If failed.
-     */
-    @Nullable protected final <K1> LinkedHashMap<K1, Boolean> unmarshalBooleanLinkedMap(
-        @Nullable Map<byte[], Boolean> byteMap, GridCacheSharedContext ctx, ClassLoader ldr) throws IgniteCheckedException {
-        assert ldr != null;
-        assert ctx != null;
-
-        if (byteMap == null)
-            return null;
-
-        LinkedHashMap<K1, Boolean> map = U.newLinkedHashMap(byteMap.size());
-
-        Marshaller marsh = ctx.marshaller();
-
-        for (Map.Entry<byte[], Boolean> e : byteMap.entrySet())
-            map.put(marsh.<K1>unmarshal(e.getKey(), ldr), e.getValue());
-
-        return map;
     }
 
     /** {@inheritDoc} */

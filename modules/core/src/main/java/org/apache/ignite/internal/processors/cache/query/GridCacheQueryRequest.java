@@ -62,28 +62,28 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
     private IgniteBiPredicate<Object, Object> keyValFilter;
 
     /** */
-    private byte[] keyValFilterBytes;
+    private ByteBuffer keyValFilterBytes;
 
     /** */
     @GridDirectTransient
     private IgniteReducer<Object, Object> rdc;
 
     /** */
-    private byte[] rdcBytes;
+    private ByteBuffer rdcBytes;
 
     /** */
     @GridDirectTransient
     private IgniteClosure<Object, Object> trans;
 
     /** */
-    private byte[] transBytes;
+    private ByteBuffer transBytes;
 
     /** */
     @GridDirectTransient
     private Object[] args;
 
     /** */
-    private byte[] argsBytes;
+    private ByteBuffer argsBytes;
 
     /** */
     private int pageSize;
@@ -436,8 +436,8 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
                 writer.incrementState();
 
             case 4:
-                if (!writer.writeByteArray("argsBytes", argsBytes))
-                    return false;
+//                if (!writer.writeByteArray("argsBytes", argsBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -496,8 +496,8 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
                 writer.incrementState();
 
             case 14:
-                if (!writer.writeByteArray("keyValFilterBytes", keyValFilterBytes))
-                    return false;
+//                if (!writer.writeByteArray("keyValFilterBytes", keyValFilterBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -508,8 +508,8 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
                 writer.incrementState();
 
             case 16:
-                if (!writer.writeByteArray("rdcBytes", rdcBytes))
-                    return false;
+//                if (!writer.writeByteArray("rdcBytes", rdcBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -526,8 +526,8 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
                 writer.incrementState();
 
             case 19:
-                if (!writer.writeByteArray("transBytes", transBytes))
-                    return false;
+//                if (!writer.writeByteArray("transBytes", transBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -562,7 +562,7 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
                 reader.incrementState();
 
             case 4:
-                argsBytes = reader.readByteArray("argsBytes");
+//                argsBytes = reader.readByteArray("argsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -642,7 +642,7 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
                 reader.incrementState();
 
             case 14:
-                keyValFilterBytes = reader.readByteArray("keyValFilterBytes");
+//                keyValFilterBytes = reader.readByteArray("keyValFilterBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -658,7 +658,7 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
                 reader.incrementState();
 
             case 16:
-                rdcBytes = reader.readByteArray("rdcBytes");
+//                rdcBytes = reader.readByteArray("rdcBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -682,7 +682,7 @@ public class GridCacheQueryRequest extends GridCacheMessage implements GridCache
                 reader.incrementState();
 
             case 19:
-                transBytes = reader.readByteArray("transBytes");
+//                transBytes = reader.readByteArray("transBytes");
 
                 if (!reader.isLastRead())
                     return false;

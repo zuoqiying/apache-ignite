@@ -39,10 +39,10 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
 
     /** Key bytes. */
     @GridDirectTransient
-    private byte[] keyBytes;
+    private ByteBuffer keyBytes;
 
     /** Value bytes. */
-    private byte[] valBytes;
+    private ByteBuffer valBytes;
 
     /** TTL. */
     private long ttl;
@@ -93,8 +93,9 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
      * @param ttl TTL.
      * @param ver Version.
      */
-    public GridCacheRawVersionedEntry(byte[] keyBytes,
-        byte[] valBytes,
+    public GridCacheRawVersionedEntry(
+        ByteBuffer keyBytes,
+        ByteBuffer valBytes,
         long ttl,
         long expireTime,
         GridCacheVersion ver) {
@@ -122,7 +123,7 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
     /**
      * @return Key bytes.
      */
-    public byte[] keyBytes() {
+    public ByteBuffer keyBytes() {
         return keyBytes;
     }
 
@@ -134,7 +135,7 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
     /**
      * @return Value bytes.
      */
-    public byte[] valueBytes() {
+    public ByteBuffer valueBytes() {
         return valBytes;
     }
 
@@ -287,7 +288,7 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
                 reader.incrementState();
 
             case 4:
-                valBytes = reader.readByteArray("valBytes");
+//                valBytes = reader.readByteArray("valBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -341,8 +342,8 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
                 writer.incrementState();
 
             case 4:
-                if (!writer.writeByteArray("valBytes", valBytes))
-                    return false;
+//                if (!writer.writeByteArray("valBytes", valBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -374,8 +375,6 @@ public class GridCacheRawVersionedEntry<K, V> extends IgniteDataLoaderEntry impl
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(GridCacheRawVersionedEntry.class, this, "keyBytesLen",
-            keyBytes != null ? keyBytes.length : "n/a", "valBytesLen",
-            valBytes != null ? valBytes.length : "n/a");
+        return S.toString(GridCacheRawVersionedEntry.class, this);
     }
 }

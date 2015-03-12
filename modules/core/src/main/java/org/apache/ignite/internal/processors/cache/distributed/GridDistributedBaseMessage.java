@@ -53,7 +53,7 @@ public abstract class GridDistributedBaseMessage extends GridCacheMessage implem
 
     /** */
     @GridToStringExclude
-    private byte[] candsByIdxBytes;
+    private ByteBuffer candsByIdxBytes;
 
     /** Collections of local lock candidates. */
     @GridToStringInclude
@@ -62,7 +62,7 @@ public abstract class GridDistributedBaseMessage extends GridCacheMessage implem
 
     /** Collections of local lock candidates in serialized form. */
     @GridToStringExclude
-    private byte[] candsByKeyBytes;
+    private ByteBuffer candsByKeyBytes;
 
     /** Committed versions with order higher than one for this message (needed for commit ordering). */
     @GridToStringInclude
@@ -257,14 +257,14 @@ public abstract class GridDistributedBaseMessage extends GridCacheMessage implem
 
         switch (writer.state()) {
             case 3:
-                if (!writer.writeByteArray("candsByIdxBytes", candsByIdxBytes))
-                    return false;
+//                if (!writer.writeByteArray("candsByIdxBytes", candsByIdxBytes))
+//                    return false;
 
                 writer.incrementState();
 
             case 4:
-                if (!writer.writeByteArray("candsByKeyBytes", candsByKeyBytes))
-                    return false;
+//                if (!writer.writeByteArray("candsByKeyBytes", candsByKeyBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -303,7 +303,7 @@ public abstract class GridDistributedBaseMessage extends GridCacheMessage implem
 
         switch (reader.state()) {
             case 3:
-                candsByIdxBytes = reader.readByteArray("candsByIdxBytes");
+//                candsByIdxBytes = reader.readByteArray("candsByIdxBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -311,7 +311,7 @@ public abstract class GridDistributedBaseMessage extends GridCacheMessage implem
                 reader.incrementState();
 
             case 4:
-                candsByKeyBytes = reader.readByteArray("candsByKeyBytes");
+//                candsByKeyBytes = reader.readByteArray("candsByKeyBytes");
 
                 if (!reader.isLastRead())
                     return false;

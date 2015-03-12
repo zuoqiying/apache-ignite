@@ -20,6 +20,8 @@ package org.apache.ignite.marshaller.optimized;
 import junit.framework.*;
 import org.apache.ignite.marshaller.*;
 
+import java.nio.*;
+
 /**
  *
  */
@@ -32,7 +34,7 @@ public class OptimizedMarshallerEnumSelfTest extends TestCase {
 
         marsh.setContext(new MarshallerContextTestImpl());
 
-        byte[] bytes = marsh.marshal(TestEnum.Bond);
+        ByteBuffer bytes = marsh.marshal(TestEnum.Bond);
 
         TestEnum unmarshalled = marsh.unmarshal(bytes, Thread.currentThread().getContextClassLoader());
 

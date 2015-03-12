@@ -35,7 +35,7 @@ public abstract class CacheObjectAdapter implements CacheObject, Externalizable 
     protected Object val;
 
     /** */
-    protected byte[] valBytes;
+    protected ByteBuffer valBytes;
 
     /**
      * @param ctx Context.
@@ -54,12 +54,12 @@ public abstract class CacheObjectAdapter implements CacheObject, Externalizable 
     @Override public void writeExternal(ObjectOutput out) throws IOException {
         assert valBytes != null;
 
-        U.writeByteArray(out, valBytes);
+        U.writeByteBuffer(out, valBytes);
     }
 
     /** {@inheritDoc} */
     @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        valBytes = U.readByteArray(in);
+        valBytes = U.readByteBuffer(in);
     }
 
     /** {@inheritDoc} */
@@ -71,7 +71,7 @@ public abstract class CacheObjectAdapter implements CacheObject, Externalizable 
 
         switch (reader.state()) {
             case 0:
-                valBytes = reader.readByteArray("valBytes");
+//                valBytes = reader.readByteArray("valBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -96,8 +96,8 @@ public abstract class CacheObjectAdapter implements CacheObject, Externalizable 
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("valBytes", valBytes))
-                    return false;
+//                if (!writer.writeByteArray("valBytes", valBytes))
+//                    return false;
 
                 writer.incrementState();
 

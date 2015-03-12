@@ -33,7 +33,7 @@ public class GridDataLoadResponse implements Message {
     private long reqId;
 
     /** */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /** */
     private boolean forceLocDep;
@@ -43,7 +43,7 @@ public class GridDataLoadResponse implements Message {
      * @param errBytes Error bytes.
      * @param forceLocDep Force local deployment.
      */
-    public GridDataLoadResponse(long reqId, byte[] errBytes, boolean forceLocDep) {
+    public GridDataLoadResponse(long reqId, ByteBuffer errBytes, boolean forceLocDep) {
         this.reqId = reqId;
         this.errBytes = errBytes;
         this.forceLocDep = forceLocDep;
@@ -66,7 +66,7 @@ public class GridDataLoadResponse implements Message {
     /**
      * @return Error bytes.
      */
-    public byte[] errorBytes() {
+    public ByteBuffer errorBytes() {
         return errBytes;
     }
 
@@ -95,8 +95,8 @@ public class GridDataLoadResponse implements Message {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -126,7 +126,7 @@ public class GridDataLoadResponse implements Message {
 
         switch (reader.state()) {
             case 0:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

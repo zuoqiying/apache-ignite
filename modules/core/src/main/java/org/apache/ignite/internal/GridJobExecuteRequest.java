@@ -47,7 +47,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
 
     /** */
     @GridToStringExclude
-    private byte[] jobBytes;
+    private ByteBuffer jobBytes;
 
     /** */
     @GridToStringExclude
@@ -76,7 +76,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
 
     /** */
     @GridToStringExclude
-    private byte[] sesAttrsBytes;
+    private ByteBuffer sesAttrsBytes;
 
     /** */
     @GridToStringExclude
@@ -85,7 +85,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
 
     /** */
     @GridToStringExclude
-    private byte[] jobAttrsBytes;
+    private ByteBuffer jobAttrsBytes;
 
     /** */
     @GridToStringExclude
@@ -100,7 +100,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
     private Collection<ComputeJobSibling> siblings;
 
     /** */
-    private byte[] siblingsBytes;
+    private ByteBuffer siblingsBytes;
 
     /** Transient since needs to hold local creation time. */
     @GridDirectTransient
@@ -168,16 +168,16 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
             String taskName,
             String userVer,
             String taskClsName,
-            byte[] jobBytes,
+            ByteBuffer jobBytes,
             ComputeJob job,
             long startTaskTime,
             long timeout,
             @Nullable Collection<UUID> top,
-            byte[] siblingsBytes,
+            ByteBuffer siblingsBytes,
             Collection<ComputeJobSibling> siblings,
-            byte[] sesAttrsBytes,
+            ByteBuffer sesAttrsBytes,
             Map<Object, Object> sesAttrs,
-            byte[] jobAttrsBytes,
+            ByteBuffer jobAttrsBytes,
             Map<? extends Serializable, ? extends Serializable> jobAttrs,
             String cpSpi,
             IgniteUuid clsLdrId,
@@ -264,7 +264,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
     /**
      * @return Serialized job bytes.
      */
-    public byte[] getJobBytes() {
+    public ByteBuffer getJobBytes() {
         return jobBytes;
     }
 
@@ -301,7 +301,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
     /**
      * @return Serialized collection of split siblings.
      */
-    public byte[] getSiblingsBytes() {
+    public ByteBuffer getSiblingsBytes() {
         return siblingsBytes;
     }
 
@@ -315,7 +315,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
     /**
      * @return Session attributes.
      */
-    public byte[] getSessionAttributesBytes() {
+    public ByteBuffer getSessionAttributesBytes() {
         return sesAttrsBytes;
     }
 
@@ -329,7 +329,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
     /**
      * @return Job attributes.
      */
-    public byte[] getJobAttributesBytes() {
+    public ByteBuffer getJobAttributesBytes() {
         return jobAttrsBytes;
     }
 
@@ -460,14 +460,14 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 6:
-                if (!writer.writeByteArray("jobAttrsBytes", jobAttrsBytes))
-                    return false;
+//                if (!writer.writeByteArray("jobAttrsBytes", jobAttrsBytes))
+//                    return false;
 
                 writer.incrementState();
 
             case 7:
-                if (!writer.writeByteArray("jobBytes", jobBytes))
-                    return false;
+//                if (!writer.writeByteArray("jobBytes", jobBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -484,8 +484,8 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 10:
-                if (!writer.writeByteArray("sesAttrsBytes", sesAttrsBytes))
-                    return false;
+//                if (!writer.writeByteArray("sesAttrsBytes", sesAttrsBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -502,8 +502,8 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 writer.incrementState();
 
             case 13:
-                if (!writer.writeByteArray("siblingsBytes", siblingsBytes))
-                    return false;
+//                if (!writer.writeByteArray("siblingsBytes", siblingsBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -615,7 +615,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 6:
-                jobAttrsBytes = reader.readByteArray("jobAttrsBytes");
+//                jobAttrsBytes = reader.readByteArray("jobAttrsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -623,7 +623,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 7:
-                jobBytes = reader.readByteArray("jobBytes");
+//                jobBytes = reader.readByteArray("jobBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -647,7 +647,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 10:
-                sesAttrsBytes = reader.readByteArray("sesAttrsBytes");
+//                sesAttrsBytes = reader.readByteArray("sesAttrsBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -671,7 +671,7 @@ public class GridJobExecuteRequest implements Message, GridTaskMessage {
                 reader.incrementState();
 
             case 13:
-                siblingsBytes = reader.readByteArray("siblingsBytes");
+//                siblingsBytes = reader.readByteArray("siblingsBytes");
 
                 if (!reader.isLastRead())
                     return false;

@@ -255,16 +255,14 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      *
      * @param space Space.
      * @param key Key.
-     * @param keyBytes Byte array with key data.
      * @param val Value.
-     * @param valBytes Byte array with value data.
      * @param ver Cache entry version.
      * @param expirationTime Expiration time or 0 if never expires.
      * @throws IgniteCheckedException In case of error.
      */
     @SuppressWarnings("unchecked")
-    public <K, V> void store(final String space, final K key, @Nullable byte[] keyBytes, final V val,
-        @Nullable byte[] valBytes, byte[] ver, long expirationTime) throws IgniteCheckedException {
+    public <K, V> void store(final String space, final K key, final V val, byte[] ver, long expirationTime)
+        throws IgniteCheckedException {
         assert key != null;
         assert val != null;
 

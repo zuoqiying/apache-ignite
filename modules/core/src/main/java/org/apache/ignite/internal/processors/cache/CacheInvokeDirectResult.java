@@ -47,7 +47,7 @@ public class CacheInvokeDirectResult implements Message {
     private Exception err;
 
     /** */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /**
      * Required for {@link Message}.
@@ -142,8 +142,8 @@ public class CacheInvokeDirectResult implements Message {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -173,7 +173,7 @@ public class CacheInvokeDirectResult implements Message {
 
         switch (reader.state()) {
             case 0:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

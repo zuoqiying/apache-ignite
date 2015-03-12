@@ -35,7 +35,7 @@ public class GridTaskResultResponse implements Message {
     private Object res;
 
     /** Serialized result. */
-    private byte[] resBytes;
+    private ByteBuffer resBytes;
 
     /** Finished flag. */
     private boolean finished;
@@ -63,14 +63,14 @@ public class GridTaskResultResponse implements Message {
     /**
      * @param resBytes Serialized result.
      */
-    public void resultBytes(byte[] resBytes) {
+    public void resultBytes(ByteBuffer resBytes) {
         this.resBytes = resBytes;
     }
 
     /**
      * @return Serialized result.
      */
-    public byte[] resultBytes() {
+    public ByteBuffer resultBytes() {
         return resBytes;
     }
 
@@ -147,8 +147,8 @@ public class GridTaskResultResponse implements Message {
                 writer.incrementState();
 
             case 3:
-                if (!writer.writeByteArray("resBytes", resBytes))
-                    return false;
+//                if (!writer.writeByteArray("resBytes", resBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -190,7 +190,7 @@ public class GridTaskResultResponse implements Message {
                 reader.incrementState();
 
             case 3:
-                resBytes = reader.readByteArray("resBytes");
+//                resBytes = reader.readByteArray("resBytes");
 
                 if (!reader.isLastRead())
                     return false;

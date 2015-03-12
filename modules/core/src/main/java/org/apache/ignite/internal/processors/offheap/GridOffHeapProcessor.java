@@ -30,6 +30,7 @@ import org.apache.ignite.marshaller.*;
 import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
 import java.util.*;
 
 /**
@@ -104,7 +105,7 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
     private byte[] keyBytes(Object key, @Nullable byte[] keyBytes) throws IgniteCheckedException {
         assert key != null;
 
-        return keyBytes != null ? keyBytes : marsh.marshal(key);
+        return keyBytes != null ? keyBytes : U.toArray(marsh.marshal(key));
     }
 
     /**
@@ -208,7 +209,8 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
         if (valBytes == null)
             return null;
 
-        return marsh.unmarshal(valBytes, ldr == null ? U.gridClassLoader() : ldr);
+        // TODO: IGNITE-471 - Migrate to buffers.
+        return marsh.unmarshal(ByteBuffer.wrap(valBytes), ldr == null ? U.gridClassLoader() : ldr);
     }
 
     /**

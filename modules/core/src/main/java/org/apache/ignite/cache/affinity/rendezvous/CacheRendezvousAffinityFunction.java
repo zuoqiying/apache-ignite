@@ -28,6 +28,7 @@ import org.apache.ignite.resources.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.security.*;
 import java.util.*;
 
@@ -289,16 +290,20 @@ public class CacheRendezvousAffinityFunction implements CacheAffinityFunction, E
             Object nodeHash = hashIdRslvr.resolve(node);
 
             try {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                ByteBuffer nodeHashBytes = ignite.configuration().getMarshaller().marshal(nodeHash);
 
-                byte[] nodeHashBytes = ignite.configuration().getMarshaller().marshal(nodeHash);
+                int len = 4 + nodeHashBytes.remaining();
 
-                out.write(U.intToBytes(part), 0, 4); // Avoid IOException.
-                out.write(nodeHashBytes, 0, nodeHashBytes.length); // Avoid IOException.
+                ByteBuffer buf = ByteBuffer.allocate(len);
+
+                buf.putInt(part);
+                buf.put(nodeHashBytes);
+
+                assert buf.array().length == len;
 
                 d.reset();
 
-                byte[] bytes = d.digest(out.toByteArray());
+                byte[] bytes = d.digest(buf.array());
 
                 long hash =
                       (bytes[0] & 0xFFL)

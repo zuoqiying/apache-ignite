@@ -36,6 +36,7 @@ import org.apache.ignite.resources.*;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -1015,7 +1016,7 @@ public class GridClosureProcessor extends GridProcessorAdapter {
         private boolean hadLocNode;
 
         /** */
-        private byte[] closureBytes;
+        private ByteBuffer closureBytes;
 
         /** */
         private IgniteClosure<?, ?> closure;

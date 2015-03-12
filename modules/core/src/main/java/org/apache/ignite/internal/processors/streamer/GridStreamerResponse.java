@@ -35,7 +35,7 @@ public class GridStreamerResponse implements Message {
     private IgniteUuid futId;
 
     /** */
-    private byte[] errBytes;
+    private ByteBuffer errBytes;
 
     /**
      *
@@ -48,7 +48,7 @@ public class GridStreamerResponse implements Message {
      * @param futId Future ID.
      * @param errBytes Serialized error, if any.
      */
-    public GridStreamerResponse(IgniteUuid futId, @Nullable byte[] errBytes) {
+    public GridStreamerResponse(IgniteUuid futId, @Nullable ByteBuffer errBytes) {
         assert futId != null;
 
         this.futId = futId;
@@ -65,7 +65,7 @@ public class GridStreamerResponse implements Message {
     /**
      * @return Serialized error.
      */
-    public byte[] errorBytes() {
+    public ByteBuffer errorBytes() {
         return errBytes;
     }
 
@@ -87,8 +87,8 @@ public class GridStreamerResponse implements Message {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeByteArray("errBytes", errBytes))
-                    return false;
+//                if (!writer.writeByteArray("errBytes", errBytes))
+//                    return false;
 
                 writer.incrementState();
 
@@ -112,7 +112,7 @@ public class GridStreamerResponse implements Message {
 
         switch (reader.state()) {
             case 0:
-                errBytes = reader.readByteArray("errBytes");
+//                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;

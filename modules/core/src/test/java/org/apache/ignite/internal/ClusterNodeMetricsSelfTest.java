@@ -22,6 +22,7 @@ import org.apache.ignite.cluster.*;
 import org.apache.ignite.configuration.*;
 import org.apache.ignite.events.*;
 import org.apache.ignite.internal.processors.task.*;
+import org.apache.ignite.internal.util.typedef.internal.*;
 import org.apache.ignite.lang.*;
 import org.apache.ignite.messaging.*;
 import org.apache.ignite.testframework.junits.common.*;
@@ -183,7 +184,7 @@ public class ClusterNodeMetricsSelfTest extends GridCommonAbstractTest {
 
         Object msg = new TestMessage();
 
-        int size = ignite0.configuration().getMarshaller().marshal(msg).length;
+        int size = U.toArray(ignite0.configuration().getMarshaller().marshal(msg)).length;
 
         assert size > MSG_SIZE;
 

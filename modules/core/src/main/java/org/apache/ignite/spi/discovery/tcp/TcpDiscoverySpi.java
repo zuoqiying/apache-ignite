@@ -42,6 +42,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 import java.text.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -1699,7 +1700,7 @@ public class TcpDiscoverySpi extends TcpDiscoverySpiAdapter implements TcpDiscov
             if (credBytes == null)
                 return null;
 
-            return marsh.unmarshal(credBytes, null);
+            return marsh.unmarshal(ByteBuffer.wrap(credBytes), null);
         }
         catch (IgniteCheckedException e) {
             throw new IgniteSpiException("Failed to unmarshal node security credentials: " + node.id(), e);
@@ -3589,7 +3590,7 @@ public class TcpDiscoverySpi extends TcpDiscoverySpiAdapter implements TcpDiscov
                             SecurityContext subj = nodeAuth.authenticateNode(node, cred);
 
                             SecurityContext coordSubj = ignite.configuration().getMarshaller().unmarshal(
-                                node.<byte[]>attribute(IgniteNodeAttributes.ATTR_SECURITY_SUBJECT),
+                                ByteBuffer.wrap(node.<byte[]>attribute(IgniteNodeAttributes.ATTR_SECURITY_SUBJECT)),
                                 U.gridClassLoader());
 
                             if (!permissionsEqual(coordSubj.subject().permissions(), subj.subject().permissions())) {

@@ -58,6 +58,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.math.*;
+import java.nio.*;
 import java.sql.*;
 import java.text.*;
 import java.util.*;
@@ -1249,7 +1250,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
                         }
                     }
 
-                    byte[] bytes = marshaller.marshal(obj);
+                    byte[] bytes = U.toArray(marshaller.marshal(obj));
 
                     int len = bytes.length;
 
@@ -1272,16 +1273,16 @@ public class IgniteH2Indexing implements GridQueryIndexing {
 
                     bytes = Arrays.copyOf(bytes, last); // Trim the last byte.
 
-                    return marshaller.unmarshal(bytes, ldr);
+                    return marshaller.unmarshal(ByteBuffer.wrap(bytes), ldr);
                 }
             } :
             new JavaObjectSerializer() {
                 @Override public byte[] serialize(Object obj) throws Exception {
-                    return marshaller.marshal(obj);
+                    return U.toArray(marshaller.marshal(obj));
                 }
 
                 @Override public Object deserialize(byte[] bytes) throws Exception {
-                    return marshaller.unmarshal(bytes, null);
+                    return marshaller.unmarshal(ByteBuffer.wrap(bytes), null);
                 }
             };
     }
