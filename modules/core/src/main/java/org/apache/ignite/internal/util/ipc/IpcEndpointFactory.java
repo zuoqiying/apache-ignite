@@ -54,8 +54,8 @@ public class IpcEndpointFactory {
             port = -1;
 
         return "shmem".equalsIgnoreCase(split[0]) ?
-            connectSharedMemoryEndpoint(port > 0 ? port : IpcSharedMemoryServerEndpoint.DFLT_IPC_PORT, log) :
-            connectTcpEndpoint(split[0], port > 0 ? port : IpcServerTcpEndpoint.DFLT_IPC_PORT);
+            connectSharedMemoryEndpoint(port > 0 ? port : IpcSharedMemoryServerEndpoint.DFLT_PORT, log) :
+            connectTcpEndpoint(split[0], port > 0 ? port : IpcServerTcpEndpoint.DFLT_PORT);
     }
 
     /**

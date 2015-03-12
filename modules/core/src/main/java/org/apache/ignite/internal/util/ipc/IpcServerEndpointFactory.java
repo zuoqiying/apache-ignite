@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.util.ipc;
 
 import org.apache.ignite.*;
+import org.apache.ignite.igfs.*;
 import org.apache.ignite.internal.util.ipc.loopback.*;
 import org.apache.ignite.internal.util.ipc.shmem.*;
 import org.apache.ignite.internal.util.typedef.internal.*;
@@ -27,40 +28,45 @@ import java.util.*;
 /**
  * Grid IpcServerEndpoint configuration deserializer.
  */
-public class IpcServerEndpointDeserializer {
+public class IpcServerEndpointFactory {
     /**
-     * Deserializes IPC server endpoint config into concrete
-     * instance of {@link IpcServerEndpoint}.
+     * Create IPC server endpoint from configuration.
      *
      * @param endpointCfg Map with properties of the IPC server endpoint config.
+     * @param mgmt Management flag.
      * @return Deserialized instance of {@link IpcServerEndpoint}.
      * @throws IgniteCheckedException If any problem with configuration properties setting has happened.
      */
-    public static IpcServerEndpoint deserialize(Map<String,String> endpointCfg) throws IgniteCheckedException {
+    public static IpcServerEndpoint create(IgfsIpcEndpointConfiguration endpointCfg, boolean mgmt)
+        throws IgniteCheckedException {
         A.notNull(endpointCfg, "endpointCfg");
 
-        String endpointType = endpointCfg.get("type");
+        IgfsIpcEndpointType typ = endpointCfg.getType();
 
-        if (endpointType == null)
+        if (typ == null)
             throw new IgniteCheckedException("Failed to create server endpoint (type is not specified)");
 
-        switch (endpointType) {
-            case "shmem": {
+        switch (typ) {
+            case SHMEM: {
                 IpcSharedMemoryServerEndpoint endpoint = new IpcSharedMemoryServerEndpoint();
 
-                endpoint.setupConfiguration(endpointCfg);
+                endpoint.setPort(endpointCfg.getPort());
+                endpoint.setSize(endpointCfg.getMemorySize());
+                endpoint.setTokenDirectoryPath(endpointCfg.getTokenDirectoryPath());
 
                 return endpoint;
             }
-            case "tcp": {
+            case TCP: {
                 IpcServerTcpEndpoint endpoint = new IpcServerTcpEndpoint();
 
-                endpoint.setupConfiguration(endpointCfg);
+                endpoint.setHost(endpointCfg.getHost());
+                endpoint.setPort(endpointCfg.getPort());
+                endpoint.setManagement(mgmt);
 
                 return endpoint;
             }
             default:
-                throw new IgniteCheckedException("Failed to create server endpoint (type is unknown): " + endpointType);
+                throw new IgniteCheckedException("Failed to create server endpoint (type is unknown): " + typ);
         }
     }
 }
