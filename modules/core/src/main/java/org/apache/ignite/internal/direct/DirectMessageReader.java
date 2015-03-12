@@ -200,6 +200,15 @@ public class DirectMessageReader implements MessageReader {
     }
 
     /** {@inheritDoc} */
+    @Override public ByteBuffer readByteBuffer(String name) {
+        ByteBuffer val = stream.readByteBuffer();
+
+        lastRead = stream.lastFinished();
+
+        return val;
+    }
+
+    /** {@inheritDoc} */
     @Override public String readString(String name) {
         String val = stream.readString();
 

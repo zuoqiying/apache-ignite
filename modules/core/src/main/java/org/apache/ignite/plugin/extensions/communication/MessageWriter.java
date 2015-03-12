@@ -199,6 +199,15 @@ public interface MessageWriter {
     public boolean writeBooleanArray(String name, boolean[] val);
 
     /**
+     * Writes {@link ByteBuffer}.
+     *
+     * @param name Field name.
+     * @param val {@link ByteBuffer}.
+     * @return Whether value was fully written.
+     */
+    public boolean writeByteBuffer(String name, ByteBuffer val);
+
+    /**
      * Writes {@link String}.
      *
      * @param name Field name.

@@ -531,6 +531,20 @@ public class DirectByteBufferStream {
     }
 
     /**
+     * @param val Value.
+     */
+    public void writeByteBuffer(ByteBuffer val) {
+        if (val != null) {
+            // TODO: IGNITE-471 - Support offheap?
+            assert val.hasArray();
+
+            writeByteArray(val.array(), val.position(), val.remaining());
+        }
+        else
+            writeInt(-1);
+    }
+
+    /**
      * @param val Value
      */
     public void writeString(String val) {
@@ -890,6 +904,15 @@ public class DirectByteBufferStream {
      */
     public boolean[] readBooleanArray() {
         return readArray(BOOLEAN_ARR_CREATOR, 0, BOOLEAN_ARR_OFF);
+    }
+
+    /**
+     * @return Value.
+     */
+    public ByteBuffer readByteBuffer() {
+        byte[] arr = readByteArray();
+
+        return arr != null ? ByteBuffer.wrap(arr) : null;
     }
 
     /**

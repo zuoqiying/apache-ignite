@@ -166,6 +166,14 @@ public interface MessageReader {
     public boolean[] readBooleanArray(String name);
 
     /**
+     * Reads {@link ByteBuffer}.
+     *
+     * @param name Field name.
+     * @return {@link ByteBuffer}.
+     */
+    public ByteBuffer readByteBuffer(String name);
+
+    /**
      * Reads {@link String}.
      *
      * @param name Field name.

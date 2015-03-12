@@ -71,6 +71,9 @@ public enum MessageCollectionItemType {
     /** Boolean array. */
     BOOLEAN_ARR,
 
+    /** Byte buffer. */
+    BYTE_BUF,
+
     /** String. */
     STRING,
 
