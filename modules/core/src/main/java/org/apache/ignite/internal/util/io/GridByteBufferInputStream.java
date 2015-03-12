@@ -31,7 +31,7 @@ public class GridByteBufferInputStream extends InputStream {
      * @param buf Byte buffer.
      */
     public GridByteBufferInputStream(ByteBuffer buf) {
-        this.buf = buf;
+        this.buf = buf.asReadOnlyBuffer();
     }
 
     /** {@inheritDoc} */
