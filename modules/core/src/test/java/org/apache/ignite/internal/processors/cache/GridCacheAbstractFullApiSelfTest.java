@@ -3416,8 +3416,7 @@ public abstract class GridCacheAbstractFullApiSelfTest extends GridCacheAbstract
     /**
      * @throws Exception If failed.
      */
-    // TODO: IGNITE-471: Enable
-    public void _testUnswap() throws Exception {
+    public void testUnswap() throws Exception {
         GridCache<String, Integer> cache = cache();
 
         List<String> keys = primaryKeysForCache(jcache(), 3);
