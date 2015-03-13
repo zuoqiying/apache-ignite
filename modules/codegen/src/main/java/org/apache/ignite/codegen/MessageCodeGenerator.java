@@ -299,7 +299,7 @@ public class MessageCodeGenerator {
         for (Field field : declaredFields) {
             int mod = field.getModifiers();
 
-            if (!isStatic(mod) && !isTransient(mod) && !field.isAnnotationPresent(GridDirectTransient.class))
+            if (!isStatic(mod) && !field.isAnnotationPresent(GridDirectTransient.class))
                 fields.add(field);
         }
 
