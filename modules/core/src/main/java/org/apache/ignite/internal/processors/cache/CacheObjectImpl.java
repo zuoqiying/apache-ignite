@@ -77,7 +77,7 @@ public class CacheObjectImpl extends CacheObjectAdapter {
         if (valBytes == null)
             valBytes = ctx.processor().marshal(ctx, val);
 
-        return valBytes.slice();
+        return valBytes.duplicate();
     }
 
     /** {@inheritDoc} */

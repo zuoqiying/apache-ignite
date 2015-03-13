@@ -18,7 +18,6 @@
 package org.apache.ignite.testsuites;
 
 import junit.framework.*;
-import org.apache.ignite.internal.util.io.*;
 import org.apache.ignite.marshaller.jdk.*;
 import org.apache.ignite.marshaller.optimized.*;
 
@@ -38,7 +37,6 @@ public class IgniteMarshallerSelfTestSuite extends TestSuite {
         suite.addTest(new TestSuite(OptimizedMarshallerSelfTest.class));
         suite.addTest(new TestSuite(OptimizedMarshallerTest.class));
         suite.addTest(new TestSuite(OptimizedObjectStreamSelfTest.class));
-        suite.addTest(new TestSuite(GridUnsafeDataOutputArraySizingSelfTest.class));
 
         return suite;
     }

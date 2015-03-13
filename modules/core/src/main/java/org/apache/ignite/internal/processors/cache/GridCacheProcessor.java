@@ -51,6 +51,7 @@ import org.jetbrains.annotations.*;
 import javax.cache.configuration.*;
 import javax.cache.integration.*;
 import javax.management.*;
+import java.nio.*;
 import java.util.*;
 
 import static org.apache.ignite.IgniteSystemProperties.*;
@@ -1480,7 +1481,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             if (qryMgr != null) {
                 try {
-                    KeyCacheObject key = cctx.toCacheKeyObject(keyBytes);
+                    KeyCacheObject key = cctx.bytesToCacheKeyObject(ByteBuffer.wrap(keyBytes));
 
                     qryMgr.remove(key.value(cctx.cacheObjectContext(), false));
                 }

@@ -32,6 +32,7 @@ import org.apache.ignite.lang.*;
 import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
@@ -497,7 +498,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition> 
 
                     byte[] keyBytes = entry.getKey();
 
-                    KeyCacheObject key = cctx.toCacheKeyObject(keyBytes);
+                    KeyCacheObject key = cctx.bytesToCacheKeyObject(ByteBuffer.wrap(keyBytes));
 
                     cctx.swap().remove(key);
 

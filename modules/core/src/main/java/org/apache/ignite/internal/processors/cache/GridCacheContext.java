@@ -1770,7 +1770,7 @@ public class GridCacheContext<K, V> implements Externalizable {
      * @return Cache key object.
      * @throws IgniteCheckedException If failed.
      */
-    public KeyCacheObject toCacheKeyObject(ByteBuffer bytes) throws IgniteCheckedException {
+    public KeyCacheObject bytesToCacheKeyObject(ByteBuffer bytes) throws IgniteCheckedException {
         Object obj = ctx.cacheObjects().unmarshal(cacheObjCtx, bytes, deploy().localLoader());
 
         return cacheObjects().toCacheKeyObject(cacheObjCtx, obj, false);
