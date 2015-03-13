@@ -119,7 +119,7 @@ public class GridCacheSwapManager extends GridCacheManagerAdapter {
                     if (!firstEvictWarn)
                         warnFirstEvict();
 
-                    writeToSwap(part, cctx.toCacheKeyObject(kb), vb);
+                    writeToSwap(part, cctx.toCacheKeyObject(ByteBuffer.wrap(kb)), vb);
                 }
                 catch (IgniteCheckedException e) {
                     log.error("Failed to unmarshal off-heap entry [part=" + part + ", hash=" + hash + ']', e);
