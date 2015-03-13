@@ -77,7 +77,8 @@ import java.nio.*;
  */
 public class OptimizedMarshaller extends AbstractMarshaller {
     /** Initial buffer size. */
-    private static final int INIT_BUF_SIZE = 4 * 1024;
+    // TODO: IGNITE-471 - Make configurable
+    private static final int INIT_BUF_SIZE = 256;
 
     /** Default class loader. */
     private final ClassLoader dfltClsLdr = getClass().getClassLoader();

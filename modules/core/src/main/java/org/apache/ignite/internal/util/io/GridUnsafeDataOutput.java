@@ -71,9 +71,6 @@ public class GridUnsafeDataOutput extends OutputStream implements GridDataOutput
     /** Underlying output stream. */
     private OutputStream out;
 
-    /** Maximum message size. */
-    private int maxOff;
-
     /** Last length check timestamp. */
     private long lastCheck = U.currentTimeMillis();
 
@@ -139,30 +136,12 @@ public class GridUnsafeDataOutput extends OutputStream implements GridDataOutput
     private void requestFreeSize(int size) {
         size = off + size;
 
-        maxOff = Math.max(maxOff, size);
-
-        long now = U.currentTimeMillis();
-
         if (size > bytes.length) {
             byte[] newBytes = new byte[size << 1]; // Grow.
 
             UNSAFE.copyMemory(bytes, byteArrOff, newBytes, byteArrOff, off);
 
             bytes = newBytes;
-        }
-        else if (now - lastCheck > CHECK_FREQ) {
-            int halfSize = bytes.length >> 1;
-
-            if (maxOff < halfSize) {
-                byte[] newBytes = new byte[halfSize]; // Shrink.
-
-                UNSAFE.copyMemory(bytes, byteArrOff, newBytes, byteArrOff, off);
-
-                bytes = newBytes;
-            }
-
-            maxOff = 0;
-            lastCheck = now;
         }
     }
 
