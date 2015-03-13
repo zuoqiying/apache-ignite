@@ -37,7 +37,7 @@ public class CacheEntrySerializablePredicate implements CacheEntryPredicate {
     private CacheEntryPredicate p;
 
     /** */
-    private ByteBuffer bytes;
+    private transient ByteBuffer bytes;
 
     /**
      * Required by {@link org.apache.ignite.plugin.extensions.communication.Message}.
