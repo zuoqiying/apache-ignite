@@ -23,17 +23,12 @@ import sun.misc.*;
 
 import java.io.*;
 
-import static org.apache.ignite.IgniteSystemProperties.*;
-
 /**
  * Data output based on {@code Unsafe} operations.
  */
 public class GridUnsafeDataOutput extends OutputStream implements GridDataOutput {
     /** Unsafe. */
     private static final Unsafe UNSAFE = GridUnsafe.unsafe();
-
-    /** */
-    private static final Long CHECK_FREQ = Long.getLong(IGNITE_MARSHAL_BUFFERS_RECHECK, 10000);
 
     /** */
     private static final long byteArrOff = UNSAFE.arrayBaseOffset(byte[].class);
@@ -70,9 +65,6 @@ public class GridUnsafeDataOutput extends OutputStream implements GridDataOutput
 
     /** Underlying output stream. */
     private OutputStream out;
-
-    /** Last length check timestamp. */
-    private long lastCheck = U.currentTimeMillis();
 
     /**
      *

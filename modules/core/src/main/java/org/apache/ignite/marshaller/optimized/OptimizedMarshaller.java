@@ -76,15 +76,17 @@ import java.nio.*;
  * For information about Spring framework visit <a href="http://www.springframework.org/">www.springframework.org</a>
  */
 public class OptimizedMarshaller extends AbstractMarshaller {
-    /** Initial buffer size. */
-    // TODO: IGNITE-471 - Make configurable
-    private static final int INIT_BUF_SIZE = 64;
+    /** Default initial buffer size. */
+    private static final int DFLT_INIT_BUF_SIZE = 4 * 1024;
 
     /** Default class loader. */
     private final ClassLoader dfltClsLdr = getClass().getClassLoader();
 
     /** Whether or not to require an object to be serializable in order to be marshalled. */
     private boolean requireSer = true;
+
+    /** Initial buffer size. */
+    private int initBufSize = DFLT_INIT_BUF_SIZE;
 
     /** ID mapper. */
     private OptimizedMarshallerIdMapper mapper;
@@ -122,6 +124,15 @@ public class OptimizedMarshaller extends AbstractMarshaller {
     }
 
     /**
+     * Sets initial buffer size.
+     *
+     * @param initBufSize Initial buffer size.
+     */
+    public void setInitialBufferSize(int initBufSize) {
+        this.initBufSize = initBufSize;
+    }
+
+    /**
      * Sets ID mapper.
      *
      * @param mapper ID mapper.
@@ -138,7 +149,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
 
         try {
             // TODO: IGNITE-471 - Need adaptive initial size.
-            objOut = new OptimizedObjectOutputStream(new GridUnsafeDataOutput(INIT_BUF_SIZE));
+            objOut = new OptimizedObjectOutputStream(new GridUnsafeDataOutput(initBufSize));
 
             objOut.context(ctx, mapper, requireSer);
 
@@ -160,7 +171,7 @@ public class OptimizedMarshaller extends AbstractMarshaller {
 
         try {
             // TODO: IGNITE-471 - Need adaptive initial size.
-            objOut = new OptimizedObjectOutputStream(new GridUnsafeDataOutput(INIT_BUF_SIZE));
+            objOut = new OptimizedObjectOutputStream(new GridUnsafeDataOutput(initBufSize));
 
             objOut.context(ctx, mapper, requireSer);
 
