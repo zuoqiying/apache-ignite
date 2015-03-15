@@ -6070,7 +6070,8 @@ public abstract class GridCacheAdapter<K, V> implements GridCache<K, V>,
                     ttl = 0;
             }
 
-            GridCacheRawVersionedEntry e = new GridCacheRawVersionedEntry(ctx.toCacheKeyObject(key),
+            GridCacheRawVersionedEntry e = new GridCacheRawVersionedEntry(
+                key,
                 ctx.toCacheObject(val),
                 ttl,
                 0,

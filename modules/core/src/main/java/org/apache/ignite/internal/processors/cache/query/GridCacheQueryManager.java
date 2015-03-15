@@ -588,15 +588,15 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
 
         T2<String, List<Object>> resKey = null;
 
+        if (qry.clause() == null) {
+            assert !loc;
+
+            throw new IgniteCheckedException("Received next page request after iterator was removed. " +
+                "Consider increasing maximum number of stored iterators (see " +
+                "GridCacheConfiguration.getMaximumQueryIteratorCount() configuration property).");
+        }
+
         if (qry.type() == SQL_FIELDS) {
-            if (qry.clause() == null) {
-                assert !loc;
-
-                throw new IgniteCheckedException("Received next page request after iterator was removed. " +
-                    "Consider increasing maximum number of stored iterators (see " +
-                    "GridCacheConfiguration.getMaximumQueryIteratorCount() configuration property).");
-            }
-
             if (cctx.gridEvents().isRecordable(EVT_CACHE_QUERY_EXECUTED)) {
                 cctx.gridEvents().record(new CacheQueryExecutedEvent<>(
                     cctx.localNode(),
