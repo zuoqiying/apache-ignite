@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.cache;
 
 import org.apache.ignite.*;
+import org.apache.ignite.internal.util.typedef.internal.*;
 import org.jetbrains.annotations.*;
 
 import java.nio.*;
@@ -92,7 +93,12 @@ public class KeyCacheObjectImpl extends CacheObjectAdapter implements KeyCacheOb
 
     /** {@inheritDoc} */
     @Override public CacheObject prepareForCache(CacheObjectContext ctx) {
-        return this;
+        ByteBuffer valBytes0 = U.trim(valBytes);
+
+        if (valBytes0 != valBytes)
+            return new KeyCacheObjectImpl(val, valBytes0);
+        else
+            return this;
     }
 
     /** {@inheritDoc} */

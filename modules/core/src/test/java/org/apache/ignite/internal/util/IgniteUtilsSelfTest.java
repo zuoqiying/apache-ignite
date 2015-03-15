@@ -27,7 +27,6 @@ import org.apache.ignite.testframework.*;
 import org.apache.ignite.testframework.http.*;
 import org.apache.ignite.testframework.junits.*;
 import org.apache.ignite.testframework.junits.common.*;
-import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.lang.annotation.*;
@@ -45,17 +44,6 @@ import static org.junit.Assert.*;
 public class IgniteUtilsSelfTest extends GridCommonAbstractTest {
     /** */
     public static final int[] EMPTY = new int[0];
-
-    /**
-     * @return 120 character length string.
-     */
-    private String text120() {
-        char[] chs = new char[120];
-
-        Arrays.fill(chs, 'x');
-
-        return new String(chs);
-    }
 
     /**
      *
@@ -341,20 +329,6 @@ public class IgniteUtilsSelfTest extends GridCommonAbstractTest {
         finally {
             stopGrid(1);
         }
-    }
-
-    /**
-     * @param r Runnable.
-     * @return Job created for given runnable.
-     */
-    private static ComputeJob job(final Runnable r) {
-        return new ComputeJobAdapter() {
-            @Nullable @Override public Object execute() {
-                r.run();
-
-                return null;
-            }
-        };
     }
 
     /**
@@ -690,7 +664,9 @@ public class IgniteUtilsSelfTest extends GridCommonAbstractTest {
         assertTrue(ips.get(ips.size() - 1).isUnresolved());
     }
 
-
+    /**
+     * @throws Exception If failed.
+     */
     public void testMD5Calculation() throws Exception {
         String md5 = U.calculateMD5(new ByteArrayInputStream("Corrupted information.".getBytes()));
 
@@ -698,12 +674,58 @@ public class IgniteUtilsSelfTest extends GridCommonAbstractTest {
     }
 
     /**
-     * Test enum.
+     * @throws Exception If failed.
      */
-    private enum TestEnum {
-        E1,
-        E2,
-        E3
+    public void testHeapByteBufferTrim() throws Exception {
+        byte[] arr = new byte[20];
+
+        for (int i = 0; i < arr.length; i++)
+            arr[i] = (byte)i;
+
+        ByteBuffer buf = ByteBuffer.wrap(arr);
+
+        testByteBufferTrim(buf);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testDirectByteBufferTrim() throws Exception {
+        int cap = 20;
+
+        ByteBuffer buf = ByteBuffer.allocateDirect(cap);
+
+        for (int i = 0; i < cap; i++)
+            buf.put((byte)i);
+
+        buf.flip();
+
+        testByteBufferTrim(buf);
+    }
+
+    /**
+     * @param buf Buffer.
+     * @throws Exception If failed.
+     */
+    private void testByteBufferTrim(ByteBuffer buf) throws Exception {
+        ByteBuffer trimmed = U.trim(buf);
+
+        assertSame(buf, trimmed);
+
+        buf.position(5);
+        buf.limit(15);
+
+        trimmed = U.trim(buf);
+
+        assertNotSame(buf, trimmed);
+        assertTrue(trimmed.hasArray());
+
+        byte[] trimmedArr = trimmed.array();
+
+        assertEquals(10, trimmedArr.length);
+
+        for (int i = 0; i < trimmedArr.length; i++)
+            assertEquals((byte)(5 + i), trimmedArr[i]);
     }
 
     @Documented @Retention(RetentionPolicy.RUNTIME) @Target(ElementType.TYPE)

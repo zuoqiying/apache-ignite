@@ -47,6 +47,7 @@ import org.apache.ignite.transactions.*;
 import org.jdk8.backport.*;
 import org.jetbrains.annotations.*;
 import sun.misc.*;
+import sun.nio.ch.*;
 
 import javax.management.*;
 import javax.naming.*;
@@ -9066,21 +9067,59 @@ public abstract class IgniteUtils {
     }
 
     /**
-     * // TODO: IGNITE-471 - Remove method.
+     * @param buf Byte buffer.
+     * @return Trimmed byte buffer.
+     */
+    public static ByteBuffer trim(ByteBuffer buf) {
+        if (buf == null)
+            return null;
+        else if (buf.position() == 0 && buf.limit() == buf.capacity())
+            return buf;
+        else
+            return ByteBuffer.wrap(copyToArray(buf));
+    }
+
+    /**
+     * // TODO: IGNITE-471 - Remove method?
      *
      * @param buf Byte buffer.
      * @return Byte array.
      */
     public static byte[] toArray(ByteBuffer buf) {
+        assert buf != null;
+
         if (buf.hasArray() && buf.position() == 0 && buf.remaining() == buf.capacity())
             return buf.array();
-        else {
-            byte[] arr = new byte[buf.remaining()];
+        else
+            return copyToArray(buf);
+    }
 
-            buf.get(arr);
+    /**
+     * @param buf Byte buffer.
+     * @return Array.
+     */
+    private static byte[] copyToArray(ByteBuffer buf) {
+        int len = buf.remaining();
 
-            return arr;
+        byte[] arr = new byte[len];
+
+        Object src;
+        long off;
+
+        if (buf.hasArray()) {
+            src = buf.array();
+            off = BYTE_ARRAY_DATA_OFFSET + buf.position();
         }
+        else {
+            assert buf.isDirect();
+
+            src = null;
+            off = ((DirectBuffer)buf).address() + buf.position();
+        }
+
+        UNSAFE.copyMemory(src, off, arr, BYTE_ARRAY_DATA_OFFSET, len);
+
+        return arr;
     }
 
     /**
