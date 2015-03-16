@@ -77,7 +77,7 @@ import java.nio.*;
  */
 public class OptimizedMarshaller extends AbstractMarshaller {
     /** Default initial buffer size. */
-    private static final int DFLT_INIT_BUF_SIZE = 4 * 1024;
+    private static final int DFLT_INIT_BUF_SIZE = 16;
 
     /** Default class loader. */
     private final ClassLoader dfltClsLdr = getClass().getClassLoader();

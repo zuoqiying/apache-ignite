@@ -19,7 +19,9 @@ package org.apache.ignite.internal.util.io;
 
 import org.apache.ignite.internal.util.*;
 import org.apache.ignite.internal.util.tostring.*;
+import org.apache.ignite.internal.util.typedef.*;
 import org.apache.ignite.internal.util.typedef.internal.*;
+import org.apache.ignite.lang.*;
 import sun.misc.*;
 
 import java.io.*;
@@ -63,13 +65,21 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
     /** Length of char buffer (for reading strings). */
     private static final int CHAR_BUF_SIZE = 256;
 
+    /** */
+    private static final ThreadLocal<IgniteBiTuple<byte[], char[]>> UTF_BUF_TC =
+        new ThreadLocal<IgniteBiTuple<byte[], char[]>>() {
+            @Override protected IgniteBiTuple<byte[], char[]> initialValue() {
+                return F.t(new byte[MAX_BLOCK_SIZE], new char[CHAR_BUF_SIZE]);
+            }
+        };
+
     /** Buffer for reading general/block data. */
     @GridToStringExclude
-    private final byte[] utfBuf = new byte[MAX_BLOCK_SIZE];
+    private byte[] utfBuf;
 
     /** Char buffer for fast string reads. */
     @GridToStringExclude
-    private final char[] urfCBuf = new char[CHAR_BUF_SIZE];
+    private char[] utfCBuf;
 
     /** Current offset into buf. */
     private int pos;
@@ -93,7 +103,7 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
 
     /** Buffer for reading from stream. */
     @GridToStringExclude
-    private byte[] inBuf = new byte[1024];
+    private byte[] inBuf;
 
     /** Maximum message size. */
     private int maxOff;
@@ -117,7 +127,7 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
     @Override public void inputStream(InputStream in) throws IOException {
         this.in = in;
 
-        buf = inBuf;
+        buf = inBuf = new byte[1024];
     }
 
     /**
@@ -467,6 +477,13 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
 
     /** {@inheritDoc} */
     @Override public String readUTF() throws IOException {
+        if (utfBuf == null || utfCBuf == null) {
+            IgniteBiTuple<byte[], char[]> t = UTF_BUF_TC.get();
+
+            utfBuf = t.get1();
+            utfCBuf = t.get2();
+        }
+
         return readUTFBody(readInt());
     }
 
@@ -539,7 +556,7 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
                     case 6:
                     case 7:
                         // 1 byte format: 0xxxxxxx
-                        urfCBuf[cpos++] = (char)b1;
+                        utfCBuf[cpos++] = (char)b1;
 
                         break;
 
@@ -551,7 +568,7 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
                         if ((b2 & 0xC0) != 0x80)
                             throw new UTFDataFormatException();
 
-                        urfCBuf[cpos++] = (char)(((b1 & 0x1F) << 6) | (b2 & 0x3F));
+                        utfCBuf[cpos++] = (char)(((b1 & 0x1F) << 6) | (b2 & 0x3F));
 
                         break;
 
@@ -565,7 +582,7 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
                         if ((b2 & 0xC0) != 0x80 || (b3 & 0xC0) != 0x80)
                             throw new UTFDataFormatException();
 
-                        urfCBuf[cpos++] = (char)(((b1 & 0x0F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F));
+                        utfCBuf[cpos++] = (char)(((b1 & 0x0F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F));
 
                         break;
 
@@ -586,7 +603,7 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
             }
         }
 
-        sbuf.append(urfCBuf, 0, cpos);
+        sbuf.append(utfCBuf, 0, cpos);
 
         return pos - start;
     }

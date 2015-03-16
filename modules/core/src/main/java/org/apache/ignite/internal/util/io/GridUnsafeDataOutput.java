@@ -54,8 +54,15 @@ public class GridUnsafeDataOutput extends OutputStream implements GridDataOutput
     /** Length of char buffer (for writing strings). */
     private static final int CHAR_BUF_SIZE = 256;
 
+    /** */
+    private static final ThreadLocal<char[]> CBUF_TC = new ThreadLocal<char[]>() {
+        @Override protected char[] initialValue() {
+            return new char[CHAR_BUF_SIZE];
+        }
+    };
+
     /** Char buffer for fast string writes. */
-    private final char[] cbuf = new char[CHAR_BUF_SIZE];
+    private char[] cbuf;
 
     /** Bytes. */
     private byte[] bytes;
@@ -375,6 +382,9 @@ public class GridUnsafeDataOutput extends OutputStream implements GridDataOutput
 
     /** {@inheritDoc} */
     @Override public void writeUTF(String s) throws IOException {
+        if (cbuf == null)
+            cbuf = CBUF_TC.get();
+
         writeUTF(s, utfLength(s));
     }
 
