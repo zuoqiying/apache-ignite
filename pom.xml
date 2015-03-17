@@ -142,6 +142,7 @@
         <module>modules/jcl</module>
         <module>modules/schema-import</module>
         <module>modules/codegen</module>
+        <module>modules/interop</module>
     </modules>
 
     <dependencyManagement>
