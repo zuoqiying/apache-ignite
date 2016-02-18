@@ -26,12 +26,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
 import javax.cache.configuration.Factory;
 import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
 import javax.cache.event.CacheEntryListener;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteMessaging;
 import org.apache.ignite.cache.CacheEntryEventSerializableFilter;
 import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.cache.CacheRebalanceMode;
@@ -47,6 +49,7 @@ import org.apache.ignite.internal.binary.BinaryMarshaller;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.P2;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.plugin.CachePluginConfiguration;
@@ -86,8 +89,13 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
     /** */
     private volatile boolean useExtClassLoader = false;
 
+    private volatile boolean disableP2p = false;
+
     /** */
     private TcpDiscoveryIpFinder ipFinder = new TcpDiscoveryVmIpFinder(true);
+
+    /** */
+    private static volatile CountDownLatch latch;
 
     /** {@inheritDoc} */
     @Override protected void afterTest() throws Exception {
@@ -117,6 +125,9 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
         spi.setExpireCount(50_000);
 
         cfg.setEventStorageSpi(spi);
+
+        if (disableP2p)
+            cfg.setPeerClassLoadingEnabled(false);
 
         if (getTestGridName(1).equals(gridName) || useExtClassLoader ||
             cfg.getMarshaller() instanceof BinaryMarshaller)
@@ -474,6 +485,40 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
     /**
      * @throws Exception If test failed.
      */
+    public void testExternalClassesAtMessage() throws Exception {
+        try {
+            useExtClassLoader = true;
+            disableP2p = true;
+
+            final Class cls = (Class)getExternalClassLoader().
+                loadClass("org.apache.ignite.tests.p2p.CacheDeploymentExternalizableTestValue");
+
+            Ignite g1 = startGrid(1);
+            startGrid(2);
+
+            IgniteMessaging rmtMsg = g1.message();
+
+            latch = new CountDownLatch(2);
+
+            rmtMsg.remoteListen("MyOrderedTopic", new Listener());
+
+            Object o = cls.newInstance();
+
+            o.toString();
+
+            rmtMsg.send("MyOrderedTopic", o);
+
+            latch.await();
+        }
+        finally {
+            useExtClassLoader = false;
+            disableP2p = false;
+        }
+    }
+
+    /**
+     * @throws Exception If test failed.
+     */
     public void testSync() throws Exception {
         preloadMode = SYNC;
         batchSize = 512;
@@ -771,6 +816,24 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
         /** {@inheritDoc} */
         @Override public void removeNode(UUID nodeId) {
             // No-op.
+        }
+    }
+
+    /**
+     *
+     */
+    private static class Listener implements P2<UUID, Object> {
+        /**
+         * @param nodeId
+         * @param msg
+         * @return
+         */
+        @Override public boolean apply(UUID nodeId, Object msg) {
+            System.out.println("Received message [msg=" + msg + ", from=" + nodeId + ']');
+
+            latch.countDown();
+
+            return true; // Return true to continue listening.
         }
     }
 }

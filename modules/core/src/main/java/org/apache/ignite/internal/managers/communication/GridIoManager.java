@@ -1989,7 +1989,8 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                         return;
 
                     if (msgBody == null) {
-                        msgBody = marsh.unmarshal(ioMsg.bodyBytes(), dep != null ? dep.classLoader() : null);
+                        msgBody = marsh.unmarshal(ioMsg.bodyBytes(),
+                            U.resolveClassLoader(dep != null ? dep.classLoader() : null, ctx.config()));
 
                         ioMsg.body(msgBody); // Save body to avoid future unmarshallings.
                     }
