@@ -1642,7 +1642,8 @@ class ClientImpl extends TcpDiscoveryImpl {
                         Map<Integer, byte[]> data = msg.newNodeDiscoveryData();
 
                         if (data != null)
-                            spi.onExchange(newNodeId, newNodeId, data, null);
+                            spi.onExchange(newNodeId, newNodeId, data,
+                                U.resolveClassLoader(spi.ignite().configuration()));
                     }
                 }
                 else {

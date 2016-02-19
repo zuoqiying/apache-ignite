@@ -599,24 +599,24 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
 
             final int usrType = Integer.MAX_VALUE - 1;
 
-            latch = new CountDownLatch(4);
-
-            g1.events().localListen(new EventListener(), usrType);
-            g1.events().localListen((IgnitePredicate)cls2.newInstance(), usrType);
-            g1.events().remoteListen(null, new EventListener(), usrType);
-            g1.events().remoteListen(null, (IgnitePredicate)cls2.newInstance(), usrType);
-
-            g1.events().recordLocal(new EventAdapter(null, "Test message.", usrType) {
-                Object o = cls.newInstance();
-                // No-op.
-            });
-
-            Collection<Event> evts = g1.events().remoteQuery(new EventListener(), 0, usrType);
-            evts = g1.events().remoteQuery((IgnitePredicate)cls2.newInstance(), 0, usrType);
-            evts = g1.events().localQuery(new EventListener(), 0, usrType);
-            evts = g1.events().localQuery((IgnitePredicate)cls2.newInstance(), 0, usrType);
-
-            latch.await();
+//            latch = new CountDownLatch(4);
+//
+//            g1.events().localListen(new EventListener(), usrType);
+//            g1.events().localListen((IgnitePredicate)cls2.newInstance(), usrType);
+//            g1.events().remoteListen(null, new EventListener(), usrType);
+//            g1.events().remoteListen(null, (IgnitePredicate)cls2.newInstance(), usrType);
+//
+//            g1.events().recordLocal(new EventAdapter(null, "Test message.", usrType) {
+//                Object o = cls.newInstance();
+//                // No-op.
+//            });
+//
+//            Collection<Event> evts = g1.events().remoteQuery(new EventListener(), 0, usrType);
+//            evts = g1.events().remoteQuery((IgnitePredicate)cls2.newInstance(), 0, usrType);
+//            evts = g1.events().localQuery(new EventListener(), 0, usrType);
+//            evts = g1.events().localQuery((IgnitePredicate)cls2.newInstance(), 0, usrType);
+//
+//            latch.await();
         }
         finally {
             useExtClassLoader = false;
