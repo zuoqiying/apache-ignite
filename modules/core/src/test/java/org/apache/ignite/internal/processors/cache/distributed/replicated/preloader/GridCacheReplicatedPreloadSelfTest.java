@@ -44,6 +44,7 @@ import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.events.Event;
+import org.apache.ignite.events.EventAdapter;
 import org.apache.ignite.internal.IgniteKernal;
 import org.apache.ignite.internal.binary.BinaryMarshaller;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
@@ -64,8 +65,11 @@ import static org.apache.ignite.cache.CacheRebalanceMode.ASYNC;
 import static org.apache.ignite.cache.CacheRebalanceMode.SYNC;
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
 import static org.apache.ignite.configuration.DeploymentMode.CONTINUOUS;
+import static org.apache.ignite.events.EventType.EVTS_ALL;
+import static org.apache.ignite.events.EventType.EVT_CACHE_OBJECT_PUT;
 import static org.apache.ignite.events.EventType.EVT_CACHE_REBALANCE_STARTED;
 import static org.apache.ignite.events.EventType.EVT_CACHE_REBALANCE_STOPPED;
+
 
 /**
  * Tests for replicated cache preloader.
@@ -96,6 +100,9 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
 
     /** */
     private static volatile CountDownLatch latch;
+
+    /** */
+    private static boolean cutromEvt = false;
 
     /** {@inheritDoc} */
     @Override protected void afterTest() throws Exception {
@@ -135,6 +142,16 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
 
         if (isClient)
             cfg.setClientMode(true);
+
+        if (cutromEvt) {
+            int[] evts = new int[EVTS_ALL.length + 1];
+
+            evts[0] = Integer.MAX_VALUE - 1;
+
+            System.arraycopy(EVTS_ALL, 0, evts, 1, EVTS_ALL.length);
+
+            cfg.setIncludeEventTypes(evts);
+        }
 
         return cfg;
     }
@@ -500,19 +517,113 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
 
             latch = new CountDownLatch(2);
 
-            rmtMsg.remoteListen("MyOrderedTopic", new Listener());
+            rmtMsg.remoteListen("MyOrderedTopic", new MessageListener());
 
             Object o = cls.newInstance();
 
             o.toString();
 
             rmtMsg.send("MyOrderedTopic", o);
+            rmtMsg.sendOrdered("MyOrderedTopic", o, 0);
 
             latch.await();
+
+            // Custom topic.
+
+            final Class cls2 = (Class)getExternalClassLoader().
+                loadClass("org.apache.ignite.tests.p2p.CacheDeploymentTestEnumValue");
+
+            Object topic = cls2.getEnumConstants()[0];
+
+            latch = new CountDownLatch(2);
+
+            rmtMsg.remoteListen(topic, new MessageListener());
+
+            rmtMsg.send(topic, topic);
+            rmtMsg.sendOrdered(topic, topic, 0);
+
+            latch.await();
+
         }
         finally {
             useExtClassLoader = false;
             disableP2p = false;
+        }
+    }
+
+    /**
+     * @throws Exception If test failed.
+     */
+    public void testExternalClassesAtEventP2pDisabled() throws Exception {
+        testExternalClassesAtEvent0(true);
+
+    }
+
+    /**
+     * @throws Exception If test failed.
+     */
+    public void testExternalClassesAtEvent() throws Exception {
+        testExternalClassesAtEvent0(false);
+    }
+
+    /**
+     * @throws Exception If test failed.
+     */
+    private void testExternalClassesAtEvent0(boolean p2p) throws Exception {
+        try {
+            useExtClassLoader = true;
+            cutromEvt = true;
+
+            if (p2p)
+                disableP2p = true;
+
+            final Class cls = (Class)getExternalClassLoader().
+                loadClass("org.apache.ignite.tests.p2p.CacheDeploymentExternalizableTestValue");
+            final Class cls2 = (Class)getExternalClassLoader().
+                loadClass("org.apache.ignite.tests.p2p.GridEventConsumeFilter");
+
+            Ignite g1 = startGrid(1);
+            startGrid(2);
+
+            latch = new CountDownLatch(3);
+
+            g1.events().localListen((IgnitePredicate)cls2.newInstance(), EVT_CACHE_OBJECT_PUT);
+            g1.events().localListen(new EventListener(), EVT_CACHE_OBJECT_PUT);
+
+            g1.events().remoteListen(null, (IgnitePredicate)cls2.newInstance(), EVT_CACHE_OBJECT_PUT);
+            g1.events().remoteListen(null, new EventListener(), EVT_CACHE_OBJECT_PUT);
+
+            g1.cache(null).put("1", cls.newInstance());
+
+            latch.await();
+
+            final int usrType = Integer.MAX_VALUE - 1;
+
+//            latch = new CountDownLatch(4);
+//
+//            g1.events().localListen(new EventListener(), usrType);
+//            g1.events().localListen((IgnitePredicate)cls2.newInstance(), usrType);
+//            g1.events().remoteListen(null, new EventListener(), usrType);
+//            g1.events().remoteListen(null, (IgnitePredicate)cls2.newInstance(), usrType);
+//
+//            g1.events().recordLocal(new EventAdapter(null, "Test message.", usrType) {
+//                Object o = cls.newInstance();
+//                // No-op.
+//            });
+//
+//            Collection<Event> evts = g1.events().remoteQuery(new EventListener(), 0, usrType);
+//            evts = g1.events().remoteQuery((IgnitePredicate)cls2.newInstance(), 0, usrType);
+//            evts = g1.events().localQuery(new EventListener(), 0, usrType);
+//            evts = g1.events().localQuery((IgnitePredicate)cls2.newInstance(), 0, usrType);
+//
+//            latch.await();
+        }
+        finally {
+            useExtClassLoader = false;
+            cutromEvt = false;
+
+            if (p2p)
+                disableP2p = false;
         }
     }
 
@@ -822,7 +933,7 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
     /**
      *
      */
-    private static class Listener implements P2<UUID, Object> {
+    private static class MessageListener implements P2<UUID, Object> {
         /**
          * @param nodeId
          * @param msg
@@ -834,6 +945,16 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
             latch.countDown();
 
             return true; // Return true to continue listening.
+        }
+    }
+
+    private static class EventListener implements IgnitePredicate<Event> {
+        @Override public boolean apply(Event evt) {
+            System.out.println("Cache event: " + evt);
+
+            latch.countDown();
+
+            return true;
         }
     }
 }
