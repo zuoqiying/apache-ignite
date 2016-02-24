@@ -1,7 +1,47 @@
 Apache Ignite Release Notes
 ===========================
 
-Apache Ignite In-Memory Data Fabric 1.5
+Apache Ignite In-Memory Data Fabric 1.5.7
+---------------------------------------
+* Added method to get versioned cache entry.
+* Added ability to get partition 'updateCntr' with continuous query public API.
+* Fixed several ClassNotFoundException in OSGi environment.
+* Fixed continuous query notification with single node topology.
+* Fixed continuous query notification with cache listeners.
+* Fixed continuous query deployment in case originating node has left.
+* Fixed NPE in GridMergeIndex.
+* Fixed race condition on load cache on changing topology.
+* Fixed OOME when OFFHEAP_TIERED mode is used.
+* Fixed support for classes with equal simple name for binary marshaller.
+
+Apache Ignite In-Memory Data Fabric 1.5.6
+---------------------------------------
+* Support of package-private implementations for Ignite Services.
+* Fixed unintentional deserialization of BinaryObjects in OFFHEAP mode with peer class loading enabled.
+
+Apache Ignite In-Memory Data Fabric 1.5.5
+---------------------------------------
+* Fixed the issue when CacheStore was updated even if EntryProcessor didn't update an entry.
+* Fixed execution of Splunk MapReduce jobs on top of Ignite MR.
+
+Apache Ignite In-Memory Data Fabric 1.5.4
+---------------------------------------
+* Passed update notifier flag to discovery data to be sure that all cluster nodes have the same notifier status as the first node.
+* Optimized cache 'get' operations on affinity node.
+* Supported Ignite Compute tasks cancellation for Ignite.NET.
+* Fixed race in marshalling logic that could arise when several nodes are running on the same host.
+* Fixed marshalling of Java collection and maps for BinaryMarshaller.
+* Fixed eviction policy notification if swap or off heap is enabled and an entry is not loaded during preloading.
+* Fixed redeployment issues happened with ScanQueries filters.
+* Fixed an issue in ContinuousQueries that caused missing of notifications.
+
+Apache Ignite In-Memory Data Fabric 1.5.3
+---------------------------------------
+* IGFS: Added pluggable factory interface for Hadoop FileSystem creation.
+* IGFS: Added configuration flag to disable default path modes under "/ignite" folder.
+* IGFS: Various stability fixes.
+
+Apache Ignite In-Memory Data Fabric 1.5.1
 ---------------------------------------
 * Ignite.NET: Initial Release.
 * Ignite C++: Initial Release.
@@ -13,7 +53,6 @@ Apache Ignite In-Memory Data Fabric 1.5
 * Added Ignite Sink (integration with Apache Flume).
 * Added Apache Camel Streamer.
 * Added OSGi support.
-* Added example to demonstrate the usage of EntryProcessor.
 * Fixed optimistic serializable transactions: implemented "deadlock-free" locking algorithm.
 * Fixed failover for continuous queries.
 * Fixed compilation and runtime errors under OpenJDK and IBM JDK.
@@ -21,18 +60,16 @@ Apache Ignite In-Memory Data Fabric 1.5
 * Fixed and improved cache types configuration.
 * Fixed cache rebalancing.
 * Many stability and fault-tolerance fixes.
-
+* Added example to demonstrate the usage of EntryProcessor.
 
 Complete list of closed issues: https://issues.apache.org/jira/issues/?jql=project%20%3D%20IGNITE%20AND%20fixVersion%20%3D%201.5%20AND%20status%20%3D%20closed
 
-Apache Ignite In-Memory Data Fabric 1.4
+Apache Ignite In-Memory Data Fabric 1.4.1
 ---------------------------------------
 * Added SSL support to communication and discovery.
 * Added support for log4j2.
 * Added versioned entry to cache API.
 * Added client node based JDBC driver implementation.
-* Fixed consistency issue for custom events processing within discovery.
-* Fixed race in cache swap/unswap logic.
 * Fixed IGNITE_HOME resolution with JBoss.
 * Fixed configuration file resolution on classpath.
 * Fixed MBean registration for caches.
@@ -43,21 +80,39 @@ Apache Ignite In-Memory Data Fabric 1.4
 * Fixed affinity routing in compute grid.
 * Many stability and fault-tolerance fixes.
 
-Apache Ignite In-Memory Data Fabric 1.3
+Apache Ignite In-Memory Data Fabric 1.3.3
+---------------------------------------
+
+* Added SSL support to communication and discovery.
+* Fixed IGNITE_HOME resolution with JBoss.
+* Fixed configuration file resolution on classpath.
+* Fixed MBean registration for caches.
+* Many stability and fault-tolerance fixes.
+
+Apache Ignite In-Memory Data Fabric 1.3.1
 ---------------------------------------
 
 * Added auto-retries for cache operations in recoverable cases.
 * Added integration with Apache YARN.
-* Added auto detection and dropping of slow client nodes.
 * Fixed several issues with JTA integration.
 * Fixed several issues with Hibernate L2 cache.
-* Fixed issue with GAR files in source release.
 * Stability fixes for TCP discovery SPI.
 * Stability fixes for onheap and offheap SQL queries.
 * Bug fixes in In-Memory Accelerator For Apache Hadoop.
 * Many stability and fault-tolerance fixes.
 
-Apache Ignite In-Memory Data Fabric 1.2
+Apache Ignite In-Memory Data Fabric 1.1.4
+---------------------------------------
+
+* Added dropping of slow clients.
+* Fixed several connectivity issues.
+
+Apache Ignite In-Memory Data Fabric 1.1.3
+---------------------------------------
+
+* Fixed cache store configuration validation.
+
+Apache Ignite In-Memory Data Fabric 1.1.2
 ---------------------------------------
 
 * Added client mode to TCP discovery SPI.
@@ -69,7 +124,13 @@ Apache Ignite In-Memory Data Fabric 1.2
 * Bug fixes in In-Memory Accelerator For Apache Hadoop.
 * Many stability and fault-tolerance fixes.
 
-Apache Ignite In-Memory Data Fabric 1.1
+Apache Ignite In-Memory Data Fabric 1.0.5
+---------------------------------------
+
+* Fixed unnecessary value sending for near cache with near lock response
+* Optimized getOrCreateCache methods for case when cache is already started locally
+
+Apache Ignite In-Memory Data Fabric 1.0.4
 ---------------------------------------
 
 * Added Google Compute Engine TCP discovery IP finder.
