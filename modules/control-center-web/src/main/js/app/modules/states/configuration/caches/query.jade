@@ -34,7 +34,7 @@ form.panel.panel-default(name='query' novalidate)
         .panel-body(ng-if='__show__')
             .col-sm-6
                 .settings-row
-                    +text('SQL schema name:', model + '.sqlSchema', 'sqlSchema', 'false', 'Input schema name', 'Schema name for cache according to SQL ANSI-99')
+                    +text('SQL schema name:', model + '.sqlSchema', 'sqlSchema', 'true', 'false', 'Input schema name', 'Schema name for cache according to SQL ANSI-99')
                 .settings-row
                     +number('On-heap cache for off-heap indexes:', model + '.sqlOnheapRowCacheSize', 'sqlOnheapRowCacheSize', 'true', '10240', '1',
                         'Number of SQL rows which will be cached onheap to avoid deserialization on each SQL index access')

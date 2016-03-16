@@ -121,7 +121,7 @@ form.panel.panel-default(name='store' novalidate)
 
                                 .details-row
                                     +text('Data source bean name:', pojoStoreFactory + '.dataSourceBean',
-                                        'dataSourceBean', 'true', 'Input bean name',
+                                        'dataSourceBean', 'true', 'true', 'Input bean name',
                                         'Name of the data source bean in Spring context')
                                 .details-row
                                     +dialect('Dialect:', pojoStoreFactory + '.dialect', 'pojoDialect',
@@ -144,15 +144,15 @@ form.panel.panel-default(name='store' novalidate)
                                         </ul>')
                                 div(ng-if='#{blobStoreFactoryVia} === "URL"')
                                     .details-row
-                                        +text('Connection URL:', blobStoreFactory + '.connectionUrl', 'connectionUrl', 'true', 'Input URL',
+                                        +text('Connection URL:', blobStoreFactory + '.connectionUrl', 'connectionUrl', 'true', 'true', 'Input URL',
                                             'URL for database access, for example: jdbc:h2:mem:myDatabase')
                                     .details-row
-                                        +text('User:', blobStoreFactory + '.user', 'user', 'true', 'Input user name', 'User name for database access')
+                                        +text('User:', blobStoreFactory + '.user', 'user', 'true', 'true', 'Input user name', 'User name for database access')
                                     .details-row
                                         label Note, password will be generated as stub
                                 div(ng-if='#{blobStoreFactoryVia} !== "URL"')
                                     .details-row
-                                        +text('Data source bean name:', blobStoreFactory + '.dataSourceBean', 'dataSourceBean', 'true', 'Input bean name',
+                                        +text('Data source bean name:', blobStoreFactory + '.dataSourceBean', 'dataSourceBean', 'true', 'true', 'Input bean name',
                                             'Name of the data source bean in Spring context')
                                     .details-row
                                         +dialect('Database:', blobStoreFactory + '.dialect', 'blobDialect', 'Supported databases:', 'Generic database', 'Choose database')
@@ -160,23 +160,23 @@ form.panel.panel-default(name='store' novalidate)
                                     +checkbox('Init schema', blobStoreFactory + '.initSchema', 'initSchema',
                                         'Flag indicating whether DB schema should be initialized by Ignite (default behaviour) or was explicitly created by user')
                                 .details-row
-                                    +text('Create query:', blobStoreFactory + '.createTableQuery', 'createTableQuery', 'false', 'SQL for table creation',
+                                    +text('Create query:', blobStoreFactory + '.createTableQuery', 'createTableQuery', 'true', 'false', 'SQL for table creation',
                                         'Query for table creation in underlying database<br/>\
                                         Default value: create table if not exists ENTRIES (key binary primary key, val binary)')
                                 .details-row
-                                    +text('Load query:', blobStoreFactory + '.loadQuery', 'loadQuery', 'false', 'SQL for load entry',
+                                    +text('Load query:', blobStoreFactory + '.loadQuery', 'loadQuery', 'true', 'false', 'SQL for load entry',
                                         'Query for entry load from underlying database<br/>\
                                         Default value: select * from ENTRIES where key=?')
                                 .details-row
-                                    +text('Insert query:', blobStoreFactory + '.insertQuery', 'insertQuery', 'false', 'SQL for insert entry',
+                                    +text('Insert query:', blobStoreFactory + '.insertQuery', 'insertQuery', 'true', 'false', 'SQL for insert entry',
                                         'Query for insert entry into underlying database<br/>\
                                         Default value: insert into ENTRIES (key, val) values (?, ?)')
                                 .details-row
-                                    +text('Update query:', blobStoreFactory + '.updateQuery', 'updateQuery', 'false', 'SQL for update entry',
+                                    +text('Update query:', blobStoreFactory + '.updateQuery', 'updateQuery', 'true', 'false', 'SQL for update entry',
                                         'Query for update entry in underlying database<br/>\
                                         Default value: update ENTRIES set val=? where key=?')
                                 .details-row
-                                    +text('Delete query:', blobStoreFactory + '.deleteQuery', 'deleteQuery', 'false', 'SQL for delete entry',
+                                    +text('Delete query:', blobStoreFactory + '.deleteQuery', 'deleteQuery', 'true', 'false', 'SQL for delete entry',
                                         'Query for delete entry from underlying database<br/>\
                                         Default value: delete from ENTRIES where key=?')
 

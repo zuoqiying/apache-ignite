@@ -14,6 +14,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
+include ../../../../../../../app/helpers/jade/mixins.jade
+
 - var model = 'backupItem.discovery.Multicast';
 - var addresses = model + '.addresses';
 - var form = 'discoveryMulticastAddresses';
@@ -80,43 +82,14 @@ div
                 data-placeholder='228.1.2.4'
             )
     .details-row
-        ignite-form-field
-            ignite-form-field-label
-                | Port number:
-            ignite-form-field-tooltip
-                | Port number which multicast messages are sent to
-            ignite-form-field-input-number(
-                data-id='multicastPort'
-                data-name='multicastPort'
-                data-ng-model='#{model}.multicastPort'
-                data-max='65535'
-                data-placeholder='47400'
-            )
+        +number-min-max('Port number:', model + '.multicastPort', 'multicastPort', 'true', '47400', '0', '65535', 'Port number which multicast messages are sent to')
     .details-row
-        ignite-form-field
-            ignite-form-field-label
-                | Waits for reply:
-            ignite-form-field-tooltip
-                | Time in milliseconds IP finder waits for reply to multicast address request
-            ignite-form-field-input-number(
-                data-id='responseWaitTime'
-                data-name='responseWaitTime'
-                data-ng-model='#{model}.responseWaitTime'
-                data-placeholder='500'
-            )
+        +number('Waits for reply:', model + '.responseWaitTime', 'responseWaitTime', 'true', '500', '0',
+            'Time in milliseconds IP finder waits for reply to multicast address request')
     .details-row
-        ignite-form-field
-            ignite-form-field-label
-                | Attempts count:
-            ignite-form-field-tooltip
-                | Number of attempts to send multicast address request#[br]
-                | IP finder re-sends request only in case if no reply for previous request is received
-            ignite-form-field-input-number(
-                data-id='addressRequestAttempts'
-                data-name='addressRequestAttempts'
-                data-ng-model='#{model}.addressRequestAttempts'
-                data-placeholder='2'
-            )
+        +number('Attempts count:', model + '.addressRequestAttempts', 'addressRequestAttempts', 'true', '2', '0',
+            'Number of attempts to send multicast address request<br/>\
+            IP finder re - sends request only in case if no reply for previous request is received')
     .details-row
         ignite-form-field
             ignite-form-field-label

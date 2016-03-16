@@ -26,8 +26,21 @@ mixin checkbox(lbl, model, name, tip)
         ignite-form-field-tooltip
             | !{tip}
 
-//- Mixin for text field.
-mixin text(lbl, model, name, required, placeholder, tip)
+//- Mixin for checkbox with enabled condition.
+mixin checkbox-enabled(lbl, model, name, enabled, tip)
+    ignite-form-field.checkbox
+        ignite-form-field-input-checkbox(
+            data-id=name
+            data-name=name
+            data-ng-model=model
+            data-ng-disabled='!(#{enabled})'
+        )
+        | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+
+//- Mixin for text field with enabled condition.
+mixin text(lbl, model, name, enabled, required, placeholder, tip)
     ignite-form-field
         ignite-form-field-label
             | #{lbl}
@@ -38,6 +51,7 @@ mixin text(lbl, model, name, required, placeholder, tip)
             data-name=name
             data-ng-model=model
             data-placeholder=placeholder
+            data-ng-disabled='!(#{enabled})'
             data-ng-required=required
         )
 
@@ -53,9 +67,26 @@ mixin number-requited(lbl, model, name, required, enabled, placeholder, min, tip
             data-name=name
             data-ng-model=model
             data-ng-required=required
-            data-ng-disabled='!#{enabled}'
+            data-ng-disabled='!(#{enabled})'
             data-placeholder=placeholder
             data-min=min
+        )
+
+//- Mixin for required numeric field with maximum and minimum limit.
+mixin number-min-max(lbl, model, name, enabled, placeholder, min, max, tip)
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+        ignite-form-field-input-number(
+            data-id=name
+            data-name=name
+            data-ng-model=model
+            data-ng-disabled='!(#{enabled})'
+            data-placeholder=placeholder
+            data-min=min
+            data-max=max
         )
 
 //- Mixin for numeric field.
@@ -75,7 +106,7 @@ mixin dropdown-required(lbl, model, name, required, enabled, placeholder, option
             data-options=options
             data-ng-model=model
             data-ng-required=required
-            data-ng-disabled='!#{enabled}'
+            data-ng-disabled='!(#{enabled})'
             data-placeholder=placeholder
         )
 
