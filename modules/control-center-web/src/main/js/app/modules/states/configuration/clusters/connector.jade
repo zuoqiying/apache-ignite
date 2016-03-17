@@ -33,7 +33,7 @@ form.panel.panel-default(name='connector' novalidate)
                 .settings-row
                     +checkbox('Enabled', enabled, 'restEnabled', 'Flag indicating whether to configure connector configuration')
                 .settings-row
-                    +text('Jetty configuration path:', model + '.jettyPath', 'connectorJettyPath', enabled, 'false', 'Input path to Jetty configuration',
+                    +text-enabled('Jetty configuration path:', model + '.jettyPath', 'connectorJettyPath', enabled, 'false', 'Input path to Jetty configuration',
                         'Path, either absolute or relative to IGNITE_HOME, to Jetty XML configuration file<br/>\
                         Jetty is used to support REST over HTTP protocol for accessing Ignite APIs remotely<br/>\
                         If not provided, Jetty instance with default configuration will be started picking IgniteSystemProperties.IGNITE_JETTY_HOST and IgniteSystemProperties.IGNITE_JETTY_PORT as host and port respectively')
@@ -109,7 +109,7 @@ form.panel.panel-default(name='connector' novalidate)
                             data-ng-disabled='!#{model}.enabled'
                         )
                 .settings-row
-                    +text('Secret key:', model + '.secretKey', 'connectorSecretKey', enabled, 'false', 'Specify to enable authentication', 'Secret key to authenticate REST requests')
+                    +text-enabled('Secret key:', model + '.secretKey', 'connectorSecretKey', enabled, 'false', 'Specify to enable authentication', 'Secret key to authenticate REST requests')
                 .settings-row
                     +checkbox-enabled('Enable SSL', model + '.sslEnabled', 'connectorSslEnabled', enabled, 'Enables/disables SSL for REST TCP binary protocol')
                 .settings-row

@@ -24,15 +24,15 @@ include ../../../../../../../app/helpers/jade/mixins.jade
 
 div
     .details-row
-        +text('Credential:', model + '.credential', 'credential', 'true', 'false', 'Input cloud credential',
+        +text('Credential:', model + '.credential', 'credential', 'false', 'Input cloud credential',
             'Credential that is used during authentication on the cloud<br/>\
             Depending on a cloud platform it can be a password or access key')
     .details-row
-        +text('Path to credential:', model + '.credentialPath', 'credentialPath', 'true', 'false', 'Input pathto credential',
+        +text('Path to credential:', model + '.credentialPath', 'credentialPath', 'false', 'Input pathto credential',
             'Path to a credential that is used during authentication on the cloud<br/>\
             Access key or private key should be stored in a plain or PEM file without a passphrase')
     .details-row
-        +text('Identity:', model + '.identity', 'identity', 'true', 'true', 'Input identity',
+        +text('Identity:', model + '.identity', 'identity', 'true', 'Input identity',
             'Identity that is used as a user name during a connection to the cloud<br/>\
             Depending on a cloud platform it can be an email address, user name, etc')
     .details-row

@@ -33,7 +33,7 @@ div
                 data-ng-model='#{model}.curator'
             )
     .details-row
-        +text('Connect string:', model + '.zkConnectionString', 'zkConnectionString', 'true', 'true', 'host:port[chroot][,host:port[chroot]]',
+        +text('Connect string:', model + '.zkConnectionString', 'zkConnectionString', 'true', 'host:port[chroot][,host:port[chroot]]',
             'When "IGNITE_ZK_CONNECTION_STRING" system property is not configured this property will be used')
     .details-row
         +dropdown('Retry policy:', model + '.retryPolicy.kind', 'retryPolicy', 'true', 'Default',
@@ -69,9 +69,9 @@ div
                 ignite-configuration-clusters-general-discovery-zookeeper-forever(ng-switch-when='Forever')
                 ignite-configuration-clusters-general-discovery-zookeeper-custom(ng-switch-when='Custom')
     .details-row
-        +text('Base path:', model + '.basePath', 'basePath', 'true', 'false', '/services', 'Base path for service registration')
+        +text('Base path:', model + '.basePath', 'basePath', 'false', '/services', 'Base path for service registration')
     .details-row
-        +text('Service name:', model + '.serviceName', 'serviceName', 'true', 'false', 'ignite',
+        +text('Service name:', model + '.serviceName', 'serviceName', 'false', 'ignite',
             'Service name to use, as defined by Curator&#39;s ServiceDiscovery recipe \
             In physical ZooKeeper terms, it represents the node under basePath, under which services will be registered')
     .details-row

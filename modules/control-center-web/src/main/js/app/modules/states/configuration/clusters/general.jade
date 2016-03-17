@@ -27,7 +27,7 @@ form.panel.panel-default(name='general' novalidate)
         .panel-body
             .col-sm-6
                 .settings-row
-                    +text('Name:', model + '.name', 'clusterName', 'true', 'true', 'Input name', 'Grid name')
+                    +text('Name:', model + '.name', 'clusterName', 'true', 'Input name', 'Grid name')
                 .settings-row
                     +dropdown-multiple('<span>Caches:</span>' +
                         '<a ui-sref="base.configuration.caches({id: ' + model + '._id})"> (add)</a>',

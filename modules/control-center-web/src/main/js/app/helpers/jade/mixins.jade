@@ -30,10 +30,10 @@ mixin checkbox(lbl, model, name, tip)
 mixin checkbox-enabled(lbl, model, name, enabled, tip)
     ignite-form-field.checkbox
         ignite-form-field-input-checkbox(
-        data-id=name
-        data-name=name
-        data-ng-model=model
-        data-ng-disabled='!(#{enabled})'
+            data-id=name
+            data-name=name
+            data-ng-model=model
+            data-ng-disabled='!(#{enabled})'
         )
         | #{lbl}
         ignite-form-field-tooltip
