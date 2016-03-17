@@ -45,16 +45,8 @@ form.panel.panel-default(name='discovery' novalidate)
                 .settings-row
                     +number('Local port range:', model + '.localPortRange', 'discoLocalPortRange', 'true', '100', '1', 'Local port range')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | Address resolver:
-                        ignite-form-field-tooltip
-                            | Class name of resolution between external and internal addresses provider
-                        ignite-form-field-java-class(
-                            data-id='discoAddressResolver'
-                            data-name='discoAddressResolver'
-                            data-ng-model='#{model}.addressResolver'
-                        )
+                    +java-class('Address resolver:', model + '.addressResolver', 'discoAddressResolver', 'true', 'false',
+                        'Class name of resolution between external and internal addresses provider')
                 .settings-row
                     +number('Socket timeout:', model + '.socketTimeout', 'socketTimeout', 'true', '5000', '0', 'Socket operations timeout')
                 .settings-row
@@ -77,38 +69,11 @@ form.panel.panel-default(name='discovery' novalidate)
                 .settings-row
                     +number('Topology history:', model + '.topHistorySize', 'topHistorySize', 'true', '1000', '0', 'Size of topology snapshots history')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | Discovery listener:
-                        ignite-form-field-tooltip
-                            | Grid discovery listener
-                        ignite-form-field-java-class(
-                            data-id='discoListener'
-                            data-name='discoListener'
-                            data-ng-model='#{model}.listener'
-                        )
+                    +java-class('Discovery listener:', model + '.listener', 'discoListener', 'true', 'false', 'Grid discovery listener')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | Data exchange:
-                        ignite-form-field-tooltip
-                            | Class name of handler for initial data exchange between Ignite nodes
-                        ignite-form-field-java-class(
-                            data-id='dataExchange'
-                            data-name='dataExchange'
-                            data-ng-model='#{model}.dataExchange'
-                        )
+                    +java-class('Data exchange:', model + '.dataExchange', 'dataExchange', 'true', 'false', 'Class name of handler for initial data exchange between Ignite nodes')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | Metrics provider:
-                        ignite-form-field-tooltip
-                            | Class name of metric provider to discovery SPI
-                        ignite-form-field-java-class(
-                            data-id='metricsProvider'
-                            data-name='metricsProvider'
-                            data-ng-model='#{model}.metricsProvider'
-                        )
+                    +java-class('Metrics provider:', model + '.metricsProvider', 'metricsProvider', 'true', 'false', 'Class name of metric provider to discovery SPI')
                 .settings-row
                     +number('Reconnect count:', model + '.reconnectCount', 'discoReconnectCount', 'true', '10', '1', 'Reconnect attempts count')
                 .settings-row
@@ -116,16 +81,7 @@ form.panel.panel-default(name='discovery' novalidate)
                 .settings-row
                     +number('IP finder clean frequency:', model + '.ipFinderCleanFrequency', 'ipFinderCleanFrequency', 'true', '60000', '1', 'IP finder clean frequency')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | Node authenticator:
-                        ignite-form-field-tooltip
-                            | Node authenticator
-                        ignite-form-field-java-class(
-                            data-id='authenticator'
-                            data-name='authenticator'
-                            data-ng-model='#{model}.authenticator'
-                        )
+                    +java-class('Node authenticator:', model + '.authenticator', 'authenticator', 'true', 'false', 'Node authenticator')
                 .settings-row
                     +checkbox('Force server mode', model + '.forceServerMode', 'forceServerMode', 'Force server mode')
                 .settings-row

@@ -20,18 +20,10 @@ include ../../../../../../../app/helpers/jade/mixins.jade
 
 div
     .details-row
-        ignite-form-field
-            ignite-form-field-label
-                | Curator:
-            ignite-form-field-tooltip
-                | The Curator framework in use #[br]
-                | By default generates curator of org.apache.curator. framework.imps.CuratorFrameworkImpl
-                | class with configured connect string, retry policy, and default session and connection timeouts
-            ignite-form-field-java-class(
-                data-id='curator'
-                data-name='curator'
-                data-ng-model='#{model}.curator'
-            )
+        +java-class('Curator:', model + '.curator', 'curator', 'true', 'false',
+            'The Curator framework in use<br/>\
+            By default generates curator of org.apache.curator. framework.imps.CuratorFrameworkImpl\
+            class with configured connect string, retry policy, and default session and connection timeouts')
     .details-row
         +text('Connect string:', model + '.zkConnectionString', 'zkConnectionString', 'true', 'host:port[chroot][,host:port[chroot]]',
             'When "IGNITE_ZK_CONNECTION_STRING" system property is not configured this property will be used')

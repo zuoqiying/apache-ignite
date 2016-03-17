@@ -38,16 +38,7 @@ form.panel.panel-default(name='communication' novalidate)
                 .settings-row
                     +number('Discovery startup delay:', model + '.discoveryStartupDelay', 'discoveryStartupDelay', 'true', '60000', '1', 'This value is used to expire messages from waiting list whenever node discovery discrepancies happen')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | Communication listener:
-                        ignite-form-field-tooltip
-                            | Communication listener
-                        ignite-form-field-java-class(
-                            data-id='comListener'
-                            data-name='comListener'
-                            data-ng-model='#{communication}.listener'
-                        )
+                    +java-class('Communication listener:', communication + '.listener', 'comListener', 'true', 'false', 'Communication listener')
                 .settings-row
                     ignite-form-field
                         ignite-form-field-label
@@ -103,15 +94,6 @@ form.panel.panel-default(name='communication' novalidate)
                 .settings-row
                     +number('Selectors count:', communication + '.selectorsCount', 'selectorsCount', 'true', 'min(4, availableProcessors)', '1', 'Count of selectors te be used in TCP server')
                 .settings-row
-                   ignite-form-field
-                        ignite-form-field-label
-                            | Address resolver:
-                        ignite-form-field-tooltip
-                            | Address resolver
-                        ignite-form-field-java-class(
-                            data-id='comAddressResolver'
-                            data-name='comAddressResolver'
-                            data-ng-model='#{communication}.addressResolver'
-                        )
+                    +java-class('Address resolver:', communication + '.addressResolver', 'comAddressResolver', 'true', 'false', 'Address resolver')
             .col-sm-6
                 +preview-xml-java(model, 'clusterCommunication')

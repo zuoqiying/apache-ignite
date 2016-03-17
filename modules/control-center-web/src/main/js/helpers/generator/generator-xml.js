@@ -530,8 +530,8 @@ $generatorXml.clusterBinary = function (binary, res) {
         res.startBlock('<bean class="org.apache.ignite.configuration.BinaryConfiguration">');
 
         $generatorXml.simpleBeanProperty(res, binary, 'idMapper');
-        $generatorXml.simpleBeanProperty(res, binary, 'serializer');
         $generatorXml.simpleBeanProperty(res, binary, 'nameMapper');
+        $generatorXml.simpleBeanProperty(res, binary, 'serializer');
 
         if ($commonUtils.isDefinedAndNotEmpty(binary.typeConfigurations)) {
             res.startBlock('<property name="typeConfigurations">');

@@ -96,18 +96,9 @@ form.panel.panel-default(name='connector' novalidate)
                     +number('Thread pool size:', model + '.threadPoolSize', 'connectorThreadPoolSize', enabled, 'max(8, availableProcessors) * 2', '1',
                         'Thread pool size to use for processing of client messages (REST requests)')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | Message interceptor:
-                        ignite-form-field-tooltip
-                            | Interceptor allows to transform all objects exchanged via REST protocol#[br]
-                            | For example if you use custom serialisation on client you can write interceptor to transform binary representations received from client to Java objects and later access them from java code directly
-                        ignite-form-field-java-class(
-                            data-id='connectorMessageInterceptor'
-                            data-name='connectorMessageInterceptor'
-                            data-ng-model='#{model}.messageInterceptor'
-                            data-ng-disabled='!#{model}.enabled'
-                        )
+                    +java-class('Message interceptor:', model + '.messageInterceptor', 'connectorMessageInterceptor', enabled, 'false',
+                        'Interceptor allows to transform all objects exchanged via REST protocol<br/>\
+                        For example if you use custom serialisation on client you can write interceptor to transform binary representations received from client to Java objects and later access them from java code directly')
                 .settings-row
                     +text-enabled('Secret key:', model + '.secretKey', 'connectorSecretKey', enabled, 'false', 'Specify to enable authentication', 'Secret key to authenticate REST requests')
                 .settings-row
@@ -115,17 +106,7 @@ form.panel.panel-default(name='connector' novalidate)
                 .settings-row
                     +checkbox-enabled('Enable SSL client auth', model + '.sslClientAuth', 'connectorSslClientAuth', sslEnabled, 'Flag indicating whether or not SSL client authentication is required')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | SSL factory:
-                        ignite-form-field-tooltip
-                            | Instance of Factory that will be used to create an instance of SSLContext for Secure Socket Layer on TCP binary protocol
-                        ignite-form-field-java-class(
-                            data-id='connectorSslFactory'
-                            data-name='connectorSslFactory'
-                            data-ng-model='#{model}.sslFactory'
-                            data-ng-required='#{model}.sslEnabled'
-                            data-ng-disabled='!#{model}.enabled || !#{model}.sslEnabled'
-                        )
+                    +java-class('SSL factory:', model + '.sslFactory', 'connectorSslFactory', sslEnabled, sslEnabled,
+                        'Instance of Factory that will be used to create an instance of SSLContext for Secure Socket Layer on TCP binary protocol')
             .col-sm-6
                 +preview-xml-java(model, 'clusterConnector')
