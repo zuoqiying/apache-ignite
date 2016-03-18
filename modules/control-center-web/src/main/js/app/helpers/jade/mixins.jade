@@ -192,7 +192,7 @@ mixin table-java-class-field(field, items, save, newItem)
 //- Mixin for table save button.
 mixin table-save-button(valid, save, newItem)
     - var reset = (newItem ? 'group.add = []' : 'field.edit = false')
-    - var onClick = valid + ' && ' + save + '; ' + valid  + '&& (' + reset + ');'
+    - var onClick = valid + ' && ' + save + '; ' + valid  + ' && (' + reset + ');'
 
     i.fa.fa-floppy-o(
         ng-show=valid
@@ -203,7 +203,12 @@ mixin table-save-button(valid, save, newItem)
 
 //- Mixin for table remove button.
 mixin table-remove-button(items, tip)
+    +table-remove-conditional-button(items, 'true', tip)
+
+//- Mixin for table remove button.
+mixin table-remove-conditional-button(items, show, tip)
     i.tipField.fa.fa-remove(
+        ng-show='#{show}'
         ng-hide='field.edit'
         bs-tooltip='"#{tip}"'
         ng-click='#{items}.splice(#{items}.indexOf(model), 1)'
@@ -215,6 +220,13 @@ mixin table-feedback-unique(from, field, tip)
 
     i.fa.fa-exclamation-triangle.form-control-feedback(
         ng-show='!' + formField + '.$pristine && ' + formField + '.$error.igniteUnique'
+        bs-tooltip
+        data-title=tip
+    )
+
+mixin table-feedback-ip-address(from, field, tip)
+    i.fa.fa-exclamation-triangle.form-control-feedback(
+        ng-show='#{form}.#{field}.$error.ipaddress'
         bs-tooltip
         data-title=tip
     )

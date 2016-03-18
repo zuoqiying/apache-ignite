@@ -21,6 +21,26 @@ include ../../../../../app/helpers/jade/mixins.jade
 - var form = 'deployment'
 - var enabled = 'backupItem.peerClassLoadingEnabled'
 
+mixin table-field-path-exclude(field, save, newItem)
+    - var reset = (newItem ? 'group.add = []' : 'field.edit = false')
+    - var resetOnEnter = (newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)')
+    - var resetOnBlur = (newItem ? '!stopblur && (group.add = [])' : 'field.edit = false')
+
+    ignite-form-field-input-text(
+        data-name='#{field}'
+        data-ng-model='#{field}'
+        data-ng-required='true'
+        data-placeholder='Enter package name'
+        data-java-keywords='true'
+        data-java-package-name='true'
+        data-ignite-unique='#{exclude}'
+        data-ignite-form-field-input-autofocus='true'
+        on-enter='#{valid} && (#{save}); #{valid} && #{resetOnEnter};'
+        on-escape='#{reset}'
+        ng-blur='#{valid} && (#{save}); #{resetOnBlur};'
+    )
+        block
+
 mixin feedback(name, error, message)
     i.fa.fa-exclamation-triangle.form-control-feedback(
         ng-show='!#{form}.#{name}.$pristine && #{form}.#{name}.$error.#{error}'
@@ -72,78 +92,36 @@ form.panel.panel-default(name='#{form}' novalidate)
                         ignite-form-group-add(ng-show='#{enabled}' ng-click='(group.add = [{}])')
                             | Add package name.
 
-                        - var field = 'edit'
-                        - var valid = form + '.' + field + '.$valid'
-                        - var save = exclude + '[$index] = ' + field
-
                         .group-content(ng-if='#{exclude}.length')
+                            - var field = 'edit'
+                            - var valid = form + '.' + field + '.$valid'
+                            - var save = exclude + '[$index] = ' + field
+
                             ignite-form-field(ng-repeat='model in #{exclude} track by $index' type='internal')
                                 .indexField
-                                    | {{ $index+1 }}) 
-                                i.tipField.fa.fa-remove(
-                                    ng-hide='field.edit'
-                                    bs-tooltip='"Remove package name"'
-                                    ng-click='#{exclude}.splice(#{exclude}.indexOf(model), 1)'
-                                )
+                                    | {{ $index+1 }})
+                                +table-remove-button(exclude, 'Remove package name')
                                 span(ng-hide='field.edit')
                                     a.labelFormField(ng-click='#{enabled} && (field.edit = true)') {{ model }}
                                 span(ng-if='field.edit' ng-init='#{field} = model')
-                                    ignite-form-field-input-text(
-                                        data-name='#{field}'
-                                        data-ng-model='#{field}'
-                                        data-ng-required='true'
-                                        data-placeholder='Enter package name'
-                                        data-java-keywords='true'
-                                        data-java-package-name='true'
-                                        data-ignite-unique='#{exclude}'
-                                        data-ignite-form-field-input-autofocus='true'
-                                        on-enter='#{valid} && (#{save}); #{valid} && (field.edit = false);'
-                                        on-escape='field.edit = false'
-                                        ng-blur='#{valid} && (#{save}); (field.edit = false)'
-                                    )
-                                        i.fa.fa-floppy-o(
-                                            ng-show='#{valid}'
-                                            ng-click='#{valid} && (#{save}); #{valid} && (field.edit = false);'
-                                            bs-tooltip 
-                                            data-title='Click icon or press [Enter] to save item' 
-                                        )
-
-                                        +feedback(field, 'required', 'Package name could not be empty')
+                                    +table-field-path-exclude(field, save, false)
+                                        +table-save-button(valid, save, false)
                                         +feedback(field, 'javaPackageName', 'Package name is invalid')
                                         +feedback(field, 'javaKeywords', 'Package name could not contains reserved java keyword')
-                                        +feedback(field, 'igniteUnique', 'Such package already exists')
-
-                        - var field = 'new'
-                        - var valid = form + '.' + field + '.$valid'
-                        - var push = exclude + '.push(' + field + ')'
+                                        +table-feedback-unique(form, field, 'Such package already exists')
 
                         .group-content(ng-repeat='field in group.add')
-                            ignite-form-field(type='internal')
-                                ignite-form-field-input-text(
-                                    data-name='#{field}'
-                                    data-ng-model='#{field}'
-                                    data-ng-required='true'
-                                    data-placeholder='Enter package name'
-                                    data-java-keywords='true'
-                                    data-java-package-name='true'
-                                    data-ignite-unique='#{exclude}'
-                                    data-ignite-form-field-input-autofocus='true'
-                                    on-enter='#{valid} && #{push}; #{valid} && (stopblur = true) && (group.add = [{}])'
-                                    on-escape='group.add = []'
-                                    ng-blur='#{valid} && #{push}; !stopblur && (group.add = [])'
-                                )
-                                    i.fa.fa-floppy-o(
-                                        ng-show='#{valid}'
-                                        ng-click='#{valid} && #{push}; #{valid} && (group.add = [])'
-                                        bs-tooltip 
-                                        data-title='Click icon or press [Enter] to save item' 
-                                    )
+                            - var field = 'new'
+                            - var valid = form + '.' + field + '.$valid'
+                            - var save = exclude + '.push(' + field + ')'
 
-                                    +feedback(field, 'required', 'Package name could not be empty')
+                            ignite-form-field(type='internal')
+                                +table-field-path-exclude(field, save, true)
+                                    +table-save-button(valid, save, true)
                                     +feedback(field, 'javaPackageName', 'Package name is invalid')
                                     +feedback(field, 'javaKeywords', 'Package name could not contains reserved java keyword')
-                                    +feedback(field, 'igniteUnique', 'Such package already exists')
-            
+                                    +table-feedback-unique(form, field, 'Such package already exists')
+
                         .group-content-empty(ng-if='!(#{exclude}.length) && !group.add.length')
                             | Not defined
             .col-sm-6
