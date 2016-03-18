@@ -52,12 +52,12 @@ form.panel.panel-default(name='#{form}' novalidate)
                 .settings-row
                     +checkbox('Enabled', enabled, 'sslEnabled', 'Flag indicating whether to configure SSL configuration')
                 .settings-row
-                    +text-options('Algorithm to create a key manager:', model + 'keyAlgorithm', 'keyAlgorithm', '["SumX509", "X509"]', enabled, 'SumX509',
-                        'Sets key manager algorithm that will be used to create a key manager,<br/>\
+                    +text-options('Algorithm to create a key manager:', model + '.keyAlgorithm', 'keyAlgorithm', '["SumX509", "X509"]', enabled, 'SumX509',
+                        'Sets key manager algorithm that will be used to create a key manager<br/>\
                         Notice that in most cased default value suites well, however, on Android platform this value need to be set to X509')
                 .settings-row
                     +text-enabled('Key store file:', model + '.keyStoreFilePath', 'keyStoreFilePath', enabled, enabled, 'Path to the key store file',
-                        'Path to the key store file,<br/>\
+                        'Path to the key store file<br/>\
                         This is a mandatory parameter since ssl context could not be initialized without key manager')
                 .settings-row
                     +text-options('Key store type:', model + '.keyStoreType', 'keyStoreType', '["JKS", "PCKS11", "PCKS12"]', enabled, 'JKS',

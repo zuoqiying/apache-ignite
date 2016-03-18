@@ -41,17 +41,7 @@ mixin addressField(field, save, newItem)
 
 div
     .details-row
-        ignite-form-field
-            ignite-form-field-label
-                | IP address:
-            ignite-form-field-tooltip
-                | IP address of multicast group
-            ignite-form-field-input-text(
-                data-id='multicastGroup'
-                data-name='multicastGroup'
-                data-ng-model='#{model}.multicastGroup'
-                data-placeholder='228.1.2.4'
-            )
+        +text-ip-address('IP address:', model + '.multicastGroup', 'multicastGroup', 'true', '228.1.2.4', 'IP address of multicast group')
     .details-row
         +number-min-max('Port number:', model + '.multicastPort', 'multicastPort', 'true', '47400', '0', '65535', 'Port number which multicast messages are sent to')
     .details-row
@@ -62,18 +52,10 @@ div
             'Number of attempts to send multicast address request<br/>\
             IP finder re - sends request only in case if no reply for previous request is received')
     .details-row
-        ignite-form-field
-            ignite-form-field-label
-                | Local address:
-            ignite-form-field-tooltip
-                | Local host address used by this IP finder#[br]
-                | If provided address is non-loopback then multicast socket is bound to this interface#[br]
-                | If local address is not set or is any local address then IP finder creates multicast sockets for all found non-loopback addresses
-            ignite-form-field-input-text(
-                data-id='localAddress'
-                data-name='localAddress'
-                data-ng-model='#{model}.localAddress'
-            )
+        +text-ip-address('Local address:', model + '.localAddress', 'localAddress', 'true', '0.0.0.0',
+            'Local host address used by this IP finder<br/>\
+            If provided address is non - loopback then multicast socket is bound to this interface<br/>\
+            If local address is not set or is any local address then IP finder creates multicast sockets for all found non - loopback addresses')
     .details-row
         ignite-form-group(ng-model='#{addresses}' ng-form='discoveryMulticastAddresses')
             - var uniqueTip = 'Such IP address already exists!'

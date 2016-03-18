@@ -38,21 +38,11 @@ form.panel.panel-default(name='connector' novalidate)
                         Jetty is used to support REST over HTTP protocol for accessing Ignite APIs remotely<br/>\
                         If not provided, Jetty instance with default configuration will be started picking IgniteSystemProperties.IGNITE_JETTY_HOST and IgniteSystemProperties.IGNITE_JETTY_PORT as host and port respectively')
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | TCP host:
-                        ignite-form-field-tooltip
-                            | Host for TCP binary protocol server#[br]
-                            | This can be either an IP address or a domain name#[br]
-                            | If not defined, system-wide local address will be used IgniteConfiguration#getLocalHost()#[br]
-                            | You can also use '0.0.0.0' value to bind to all locally-available IP addresses
-                        ignite-form-field-input-text(
-                            data-id='connectorHost'
-                            data-name='connectorHost'
-                            data-ng-model='#{model}.host'
-                            data-ng-disabled='!#{model}.enabled'
-                            data-placeholder='IgniteConfiguration#getLocalHost()'
-                        )
+                    +text-ip-address('TCP host:', model + '.host', 'connectorHost', enabled, 'IgniteConfiguration#getLocalHost()',
+                        'Host for TCP binary protocol server<br/>\
+                        This can be either an IP address or a domain name<br/>\
+                        If not defined, system - wide local address will be used IgniteConfiguration#getLocalHost()<br/>\
+                        You can also use "0.0.0.0" value to bind to all locally - available IP addresses')
                 .settings-row
                     +number-min-max('TCP port:', model + '.port', 'connectorPort', enabled, '11211', '1024', '65535', 'Port for TCP binary protocol server')
                 .settings-row

@@ -29,17 +29,7 @@ form.panel.panel-default(name='discovery' novalidate)
         .panel-body(ng-if='__show__')
             .col-sm-6
                 .settings-row
-                    ignite-form-field
-                        ignite-form-field-label
-                            | Local address:
-                        ignite-form-field-tooltip
-                            | Local address
-                        ignite-form-field-input-text(
-                            data-id='discoLocalAddress'
-                            data-name='discoLocalAddress'
-                            data-ng-model='#{model}.localAddress'
-                            data-placeholder='228.1.2.4'
-                        )
+                    +text-ip-address('Local address:', model + '.localAddress', 'discoLocalAddress', 'true', '228.1.2.4', 'Local address')
                 .settings-row
                     +number-min-max('Local port:', model + '.localPort', 'discoLocalPort', 'true', '47500', '1024', '65535', 'Local port which node uses')
                 .settings-row

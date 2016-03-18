@@ -64,7 +64,7 @@ form.panel.panel-default(name='binary' novalidate)
                         .group-content(ng-form='form' ng-repeat='model in #{types} track by $index')
                             hr(ng-if='$index !== 0')
                             .settings-row
-                                table-field-type-name()
+                                +table-field-type-name()
                             .settings-row
                                 +java-class('ID mapper:', 'model.idMapper', 'idMapper{{$index}}', 'true', 'false',
                                     'Maps given from BinaryNameMapper type and filed name to ID that will be used by Ignite in internals<br/>\

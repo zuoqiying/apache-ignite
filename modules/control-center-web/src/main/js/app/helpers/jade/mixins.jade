@@ -55,6 +55,22 @@ mixin java-class(lbl, model, name, enabled, required, tip)
         )
 
 //- Mixin for text field.
+mixin text-ip-address(lbl, model, name, enabled, placeholder, tip)
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+        ignite-form-field-input-text(
+            data-id=name
+            data-name=name
+            data-ng-model=model
+            data-ipaddress='true'
+            data-ng-disabled='!(#{enabled})'
+            data-placeholder=placeholder
+        )
+
+//- Mixin for text field.
 mixin text-enabled(lbl, model, name, enabled, required, placeholder, tip)
     ignite-form-field
         ignite-form-field-label
