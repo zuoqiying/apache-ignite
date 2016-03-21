@@ -35,6 +35,7 @@ import javax.cache.event.CacheEntryListener;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteMessaging;
+import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.cache.CacheEntryEventSerializableFilter;
 import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.cache.CacheRebalanceMode;
@@ -45,8 +46,8 @@ import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.events.Event;
-import org.apache.ignite.events.EventAdapter;
 import org.apache.ignite.internal.IgniteKernal;
+import org.apache.ignite.internal.binary.BinaryEnumObjectImpl;
 import org.apache.ignite.internal.binary.BinaryMarshaller;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
@@ -59,6 +60,7 @@ import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.spi.eventstorage.memory.MemoryEventStorageSpi;
+import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 import static org.apache.ignite.cache.CacheMode.REPLICATED;
@@ -94,6 +96,7 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
     /** */
     private volatile boolean useExtClassLoader = false;
 
+    /** Disable p2p. */
     private volatile boolean disableP2p = false;
 
     /** */
@@ -172,9 +175,8 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
         cacheCfg.setRebalanceBatchSize(batchSize);
         cacheCfg.setRebalanceThreadPoolSize(poolSize);
 
-        if (extClassloadingAtCfg) {
+        if (extClassloadingAtCfg)
             loadExternalClassesToCfg(cacheCfg);
-        }
 
         return cacheCfg;
     }
@@ -328,6 +330,14 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
             cache1.put(2, e1);
 
             Object e2 = cache2.get(2);
+
+            if (g1.configuration().getMarshaller() instanceof BinaryMarshaller) {
+                BinaryObject enumObj = (BinaryObject)cache2.withKeepBinary().get(2);
+
+                assertEquals(0, enumObj.enumOrdinal());
+                assertTrue(enumObj.type().isEnum());
+                assertTrue(enumObj instanceof BinaryEnumObjectImpl);
+            }
 
             assert e2 != null;
             assert e2.toString().equals(e1.toString());
