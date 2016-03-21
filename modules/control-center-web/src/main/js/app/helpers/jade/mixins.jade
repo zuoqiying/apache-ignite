@@ -97,7 +97,7 @@ mixin text-options(lbl, model, name, options, enabled, placeholder, tip)
             | #{lbl}
         ignite-form-field-tooltip
             | !{tip}
-        ignite-form-field-input-text(
+        ignite-form-field-input-datalist(
             data-id=name
             data-name=name
             data-ng-model=model
@@ -125,6 +125,10 @@ mixin number-requited(lbl, model, name, required, enabled, placeholder, min, tip
 
 //- Mixin for required numeric field with maximum and minimum limit.
 mixin number-min-max(lbl, model, name, enabled, placeholder, min, max, tip)
+    +number-min-max-step(lbl, model, name, enabled, placeholder, min, max, '1', tip)
+
+//- Mixin for required numeric field with maximum and minimum limit.
+mixin number-min-max-step(lbl, model, name, enabled, placeholder, min, max, step, tip)
     ignite-form-field
         ignite-form-field-label
             | #{lbl}
@@ -138,6 +142,7 @@ mixin number-min-max(lbl, model, name, enabled, placeholder, min, max, tip)
             data-placeholder=placeholder
             data-min=min
             data-max=max
+            data-step=step
         )
 
 //- Mixin for numeric field.
