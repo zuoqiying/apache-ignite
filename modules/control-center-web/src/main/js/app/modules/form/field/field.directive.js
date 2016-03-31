@@ -25,6 +25,18 @@ export default ['igniteFormField', [() => {
         ctrl.type = ctrl.type || 'external';
     }];
 
+    const link = ($scope, $element) => {
+        $element.on('focusin', () => {
+            console.log('focusin')
+        });
+
+        $element.on('focusout', () => {
+            console.log('focusout');
+
+            $element.focus();
+        });
+    };
+
     return {
         restrict: 'E',
         scope: {},
@@ -34,6 +46,7 @@ export default ['igniteFormField', [() => {
             type: '@',
             name: '@'
         },
+        link,
         template,
         controller,
         controllerAs: 'field',
