@@ -19,7 +19,7 @@ import template from './text.jade!';
 import './text.css!';
 
 export default ['igniteFormFieldInputText', ['IgniteFormGUID', (guid) => {
-    const link = (scope, el, attrs, [ngModel, form, label]) => {
+    const link = (scope, el, attrs, [ngModel, form, field]) => {
         const {id, ngModelName} = scope;
 
         const name = ngModelName;
@@ -33,14 +33,16 @@ export default ['igniteFormFieldInputText', ['IgniteFormGUID', (guid) => {
             get: () => scope.form[scope.name]
         });
 
-        if (label) {
-            label.for = scope.id;
+        if (field) {
+            field.for = scope.id;
 
-            scope.label = label;
+            scope.label = field;
 
             scope.$watch('required', (required) => {
-                label.required = required || false;
+                field.required = required || false;
             });
+
+            field.$addModel(ngModel);
         }
 
         form.$defaults = form.$defaults || {};

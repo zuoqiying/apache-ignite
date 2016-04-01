@@ -18,22 +18,31 @@
 import template from './field.jade!';
 import './field.css!';
 
-export default ['igniteFormField', [() => {
+export default ['igniteFormField', ['$timeout', ($timeout) => {
     const controller = [function() {
         const ctrl = this;
+        const models = {};
 
         ctrl.type = ctrl.type || 'external';
+
+        ctrl.models = models;
+
+        ctrl.$addModel = (ngModel) => {
+            models[ngModel.$name] = ngModel;
+        };
     }];
 
-    const link = ($scope, $element) => {
+    const link = ($scope, $element, $attrs, [form, field]) => {
+        let focusout;
+
         $element.on('focusin', () => {
-            console.log('focusin')
+            let valid = _.every(field.models, ({ $valid }) => $valid);
+            $timeout.cancel(focusout);
         });
 
         $element.on('focusout', () => {
-            console.log('focusout');
-
-            $element.focus();
+            let valid = _.every(field.models, ({ $valid }) => $valid);
+            focusout = $timeout(valid ? field.validFocusout : field.invalidFocusout);
         });
     };
 
@@ -44,7 +53,9 @@ export default ['igniteFormField', [() => {
             for: '@',
             label: '@',
             type: '@',
-            name: '@'
+            name: '@',
+            validFocusout: '&',
+            invalidFocusout: '&'
         },
         link,
         template,
@@ -52,6 +63,6 @@ export default ['igniteFormField', [() => {
         controllerAs: 'field',
         replace: true,
         transclude: true,
-        require: '^form'
+        require: ['^form', 'igniteFormField']
     };
 }]];

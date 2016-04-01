@@ -24,11 +24,13 @@ mixin pathModeEditor(newItem)
     -var field = newItem ? 'new' : 'edit'
     -var path = field + 'Path'
     -var mode = field + 'Mode'
+    -var modelPath = 'data.' + path
+    -var modelMode = 'data.' + mode
     -var reset = newItem ? 'group.add = []' : 'field.edit = false'
-    -var valid = pathModesForm + '.' + path + '.$valid && ' + pathModesForm + '.' + mode + '.$valid'
-    -var item = '{path:' + path + ', mode: ' + mode  + '}'
+    -var valid = pathModesForm + '.' + modelPath + '.$valid && ' + pathModesForm + '.' + modelMode + '.$valid'
+    -var item = '{path:' + modelPath + ', mode: ' + modelMode  + '}'
     -var save = pathModes + (newItem ? '.push(' + item + ')' : '[$index] = ' + item)
-    -var unique = pathModesForm + '.' + path + '.$error.igniteUnique'
+    -var unique = pathModesForm + '.' + modelPath + '.$error.igniteUnique'
 
     .col-sm-12
         .col-sm-8
@@ -36,7 +38,7 @@ mixin pathModeEditor(newItem)
             ignite-form-field-input-text(
                 data-id=path
                 data-name=path
-                data-ng-model=path
+                data-ng-model=modelPath
                 enter-focus-next=mode
                 data-ng-required='true'
                 data-ignite-unique=pathModes
@@ -44,7 +46,6 @@ mixin pathModeEditor(newItem)
                 data-placeholder='Input path'
                 data-ignite-form-field-input-autofocus='true'
                 on-escape=reset
-                on-enter='!(#{valid}) || (#{save}); !(#{valid}) || (#{reset});'
             )
                 +unique-feedback(unique, 'Such path already exists!')
         .col-sm-4
@@ -53,7 +54,7 @@ mixin pathModeEditor(newItem)
             ignite-form-field-dropdown(
                 data-id=mode
                 data-name=mode
-                data-ng-model=mode
+                data-ng-model=modelMode
                 data-options='[\
                     {value: "PRIMARY", label: "PRIMARY"},\
                     {value: "PROXY", label: "PROXY"},\
@@ -62,7 +63,6 @@ mixin pathModeEditor(newItem)
                 ]',
                 data-ng-required='true'
                 data-placeholder='Mode'
-                on-enter='!(#{valid}) || (#{save}); !(#{valid}) || (#{reset});'
             )
 
 form.panel.panel-default(name='misc' novalidate)
@@ -101,38 +101,40 @@ form.panel.panel-default(name='misc' novalidate)
                             | Path modes
                         ignite-form-group-tooltip
                             | Map of path prefixes to IGFS modes used for them
-                        ignite-form-group-add(ng-click='field.edit = false; group.add = [{}];')
+                        ignite-form-group-add(ng-click='group.add = [{}];')
                             | Add path mode
 
                         .group-content(ng-if=pathModes + '.length')
+                            -var newItem = false;
                             -var field = 'edit';
-                            -var path = field + 'Path'
-                            -var mode = field + 'Mode'
-                            -var reset = newItem ? 'group.add = []' : 'field.edit = false'
+                            -var path = 'data.' + field + 'Path'
+                            -var mode = 'data.' + field + 'Mode'
+                            -var reset = newItem ? 'group.add = []' : 'data.edit = false'
                             -var valid = pathModesForm + '.' + path + '.$valid && ' + pathModesForm + '.' + mode + '.$valid'
                             -var item = '{path:' + path + ', mode: ' + mode  + '}'
                             -var save = pathModes + (newItem ? '.push(' + item + ')' : '[$index] = ' + item)
                             -var unique = pathModesForm + '.' + path + '.$error.igniteUnique'
 
-                            ignite-form-field(ng-repeat='model in #{pathModes} track by $index' type='internal' name='Path mode')
-                                +table-remove-button(pathModes, 'Remove path')
-                                span(ng-hide='field.edit')
-                                    a.labelFormField(ng-click='field.edit = true; group.add = []') {{ model.path }} [ {{ model.mode }}]
-                                span(ng-if='field.edit' ng-init='editPath = model.path; editMode = model.mode')
+                            ignite-form-field(ng-repeat='model in #{pathModes} track by $index' type='internal' name='Path mode'  data-valid-focusout='#{save}; #{reset}' data-invalid-focusout=reset ng-init='data = {}')
+                                span(ng-hide='data.edit')
+                                    +table-remove-button(pathModes, 'Remove path')
+                                    a.labelFormField(ng-click='data.edit = true; group.add = []') {{ model.path }} [ {{ model.mode }}]
+                                span(ng-if='data.edit' ng-init='data.editPath = model.path; data.editMode = model.mode')
                                     +pathModeEditor(false)
 
-                        .group-content(ng-repeat='field in group.add')
+                        .group-content(ng-repeat='data in group.add')
+                            -var newItem = true;
                             -var field = 'new';
-                            -var path = field + 'Path'
-                            -var mode = field + 'Mode'
+                            -var path = 'data.' + field + 'Path'
+                            -var mode = 'data.' + field + 'Mode'
                             -var reset = newItem ? 'group.add = []' : 'field.edit = false'
+                            -var clear = newItem ? 'group.add = [{}]' : 'field.edit = false'
                             -var valid = pathModesForm + '.' + path + '.$valid && ' + pathModesForm + '.' + mode + '.$valid'
                             -var item = '{path:' + path + ', mode: ' + mode  + '}'
                             -var save = pathModes + (newItem ? '.push(' + item + ')' : '[$index] = ' + item)
                             -var unique = pathModesForm + '.' + path + '.$error.igniteUnique'
-                            ignite-form-field(type='internal' name='Path mode' on-enter='str = 123')
-                                div
-                                    | test {{ str }}
+
+                            ignite-form-field(type='internal' name='Path mode' data-valid-focusout='#{save}; #{clear}' data-invalid-focusout=reset)
                                 +pathModeEditor(true)
 
 

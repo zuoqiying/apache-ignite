@@ -20,19 +20,21 @@ import template from './dropdown.jade!';
 export default ['igniteFormFieldDropdown', ['IgniteFormGUID', (guid) => {
     const controller = () => {};
 
-    const link = (scope, $element, attrs, [form, label]) => {
+    const link = (scope, $element, attrs, [ngModel, form, field]) => {
         const {id, name} = scope;
 
         scope.id = id || guid();
 
-        if (label) {
-            label.for = scope.id;
+        if (field) {
+            field.for = scope.id;
 
-            scope.label = label;
+            scope.label = field;
 
             scope.$watch('required', (required) => {
-                label.required = required || false;
+                field.required = required || false;
             });
+
+            field.$addModel(ngModel);
         }
 
         form.$defaults = form.$defaults || {};
@@ -71,6 +73,6 @@ export default ['igniteFormFieldDropdown', ['IgniteFormGUID', (guid) => {
         controllerAs: 'dropdown',
         replace: true,
         transclude: true,
-        require: ['^form', '?^igniteFormField']
+        require: ['ngModel', '^form', '?^igniteFormField']
     };
 }]];
