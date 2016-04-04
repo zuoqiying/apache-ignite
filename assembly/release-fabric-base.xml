@@ -180,6 +180,11 @@
         </fileSet>
 
         <fileSet>
+            <directory>examples/target/repo</directory>
+            <outputDirectory>/examples/repo</outputDirectory>
+        </fileSet>
+
+        <fileSet>
             <directory>target/javadoc/core</directory>
             <outputDirectory>/docs/javadoc</outputDirectory>
         </fileSet>
