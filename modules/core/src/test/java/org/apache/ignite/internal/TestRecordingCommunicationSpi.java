@@ -82,6 +82,8 @@ public class TestRecordingCommunicationSpi extends TcpCommunicationSpi {
                 }
 
                 if (block) {
+                    ignite.log().info("Block message [node=" + node.id() + ", msg=" + ioMsg.message() + ']');
+
                     blockedMsgs.add(new T2<>(node, ioMsg));
 
                     return;
@@ -148,8 +150,14 @@ public class TestRecordingCommunicationSpi extends TcpCommunicationSpi {
         synchronized (this) {
             blockCls.clear();
 
-            for (T2<ClusterNode, GridIoMessage> msg : blockedMsgs)
+            blockP = null;
+
+            for (T2<ClusterNode, GridIoMessage> msg : blockedMsgs) {
+                ignite.log().info("Send blocked message [node=" + msg.get1().id() +
+                    ", msg=" + msg.get2().message() + ']');
+
                 super.sendMessage(msg.get1(), msg.get2());
+            }
 
             blockedMsgs.clear();
         }

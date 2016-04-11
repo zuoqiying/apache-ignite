@@ -569,6 +569,8 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                             }
                         }, daemonFilter)));
 
+                    ctx.cache().context().exchange().localJoinEvent(discoEvt);
+
                     locJoinEvt.onDone(discoEvt);
 
                     return;

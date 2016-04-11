@@ -21,6 +21,7 @@ import java.io.Externalizable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.internal.GridDirectTransient;
@@ -78,7 +79,7 @@ public class GridDhtPartitionsFullMessage extends GridDhtPartitionsAbstractMessa
         @NotNull AffinityTopologyVersion topVer) {
         super(id, lastVer);
 
-        assert id == null || topVer.equals(id.topologyVersion());
+        assert id == null || topVer.compareTo(id.topologyVersion()) >= 0;
 
         this.topVer = topVer;
     }
