@@ -1464,6 +1464,16 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
     }
 
     /**
+     * Gets minimum node version for the given topology version.
+     *
+     * @param topVer Topology version to get minimum node version for.
+     * @return Minimum node version.
+     */
+    public IgniteProductVersion minimumNodeVersion(AffinityTopologyVersion topVer) {
+        return discoCache(topVer).minVer;
+    }
+
+    /**
      * Gets cache nodes for cache with given name.
      *
      * @param cacheName Cache name.
@@ -2437,6 +2447,9 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
         /** Highest node order. */
         private final long maxOrder;
 
+        /** */
+        private final IgniteProductVersion minVer;
+
         /**
          * Cached alive nodes list. As long as this collection doesn't accept {@code null}s use {@link
          * #maskNull(String)} before passing raw cache names to it.
@@ -2572,8 +2585,13 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                 nodes.add(node);
             }
 
+            IgniteProductVersion minVer = localNode().version();
+
             // Need second iteration to add this node to all previous node versions.
             for (ClusterNode node : allNodes) {
+                if (node.version().compareTo(minVer) < 0)
+                    minVer = node.version();
+
                 IgniteProductVersion nodeVer = U.productVersion(node);
 
                 // Get all versions lower or equal node's version.
@@ -2583,6 +2601,8 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                 for (Collection<ClusterNode> prevVersions : updateView.values())
                     prevVersions.add(node);
             }
+
+            this.minVer = minVer;
 
             maxOrder = maxOrder0;
 

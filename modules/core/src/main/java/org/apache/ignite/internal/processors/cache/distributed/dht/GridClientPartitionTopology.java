@@ -245,7 +245,7 @@ public class GridClientPartitionTopology implements GridDhtPartitionTopology {
         assert topVer.equals(exchId.topologyVersion()) : "Invalid topology version [topVer=" +
             topVer + ", exchId=" + exchId + ']';
 
-        if (!exchId.isJoined())
+        if (exchId.isLeft())
             removeNode(exchId.nodeId());
 
         // In case if node joins, get topology at the time of joining node.
@@ -292,17 +292,14 @@ public class GridClientPartitionTopology implements GridDhtPartitionTopology {
 
     /** {@inheritDoc} */
     @Override public boolean afterExchange(GridDhtPartitionsExchangeFuture exchFut) throws IgniteCheckedException {
-        AffinityTopologyVersion topVer = exchFut.topologyVersion();
-
         lock.writeLock().lock();
 
         try {
-            assert topVer.equals(exchFut.topologyVersion()) : "Invalid topology version [topVer=" +
-                topVer + ", exchId=" + exchFut.exchangeId() + ']';
-
             if (log.isDebugEnabled())
                 log.debug("Partition map before afterExchange [exchId=" + exchFut.exchangeId() + ", fullMap=" +
                     fullMapString() + ']');
+
+            topVer = exchFut.topologyVersion();
 
             updateSeq.incrementAndGet();
 

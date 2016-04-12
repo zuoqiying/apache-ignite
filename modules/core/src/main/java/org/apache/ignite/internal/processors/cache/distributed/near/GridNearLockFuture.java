@@ -732,17 +732,15 @@ public final class GridNearLockFuture extends GridCompoundIdentityFuture<Boolean
             topVer = tx.topologyVersionSnapshot();
 
         if (topVer != null) {
-            for (GridDhtTopologyFuture fut : cctx.shared().exchange().exchangeFutures()){
-                if (fut.topologyVersion().equals(topVer)){
-                    Throwable err = fut.validateCache(cctx);
+            GridDhtTopologyFuture fut = cctx.shared().exchange().finishedFuture(topVer);
 
-                    if (err != null) {
-                        onDone(err);
+            if (fut != null && fut.topologyVersion().equals(topVer)){
+                Throwable err = fut.validateCache(cctx);
 
-                        return;
-                    }
+                if (err != null) {
+                    onDone(err);
 
-                    break;
+                    return;
                 }
             }
 

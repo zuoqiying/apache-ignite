@@ -17,16 +17,24 @@
 
 package org.apache.ignite.internal.processors.cache.distributed;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteKernal;
 import org.apache.ignite.internal.TestRecordingCommunicationSpi;
 import org.apache.ignite.internal.managers.communication.GridIoMessage;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsFullMessage;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsSingleMessage;
 import org.apache.ignite.internal.util.typedef.G;
@@ -37,6 +45,14 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.GridTestUtils;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
+
+import static org.apache.ignite.cache.CacheAtomicWriteOrderMode.PRIMARY;
+import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
+import static org.apache.ignite.cache.CacheAtomicityMode.TRANSACTIONAL;
+import static org.apache.ignite.cache.CacheMode.REPLICATED;
+import static org.apache.ignite.cache.CacheRebalanceMode.ASYNC;
+import static org.apache.ignite.cache.CacheRebalanceMode.SYNC;
+import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
 
 /**
  *
@@ -62,9 +78,12 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
 
         cfg.setClientMode(client);
 
-        CacheConfiguration ccfg = new CacheConfiguration();
+        List<CacheConfiguration> ccfgs = new ArrayList<>();
 
-        cfg.setCacheConfiguration(ccfg);
+        ccfgs.addAll(cacheConfigurations(ATOMIC));
+        ccfgs.addAll(cacheConfigurations(TRANSACTIONAL));
+
+        cfg.setCacheConfiguration(ccfgs.toArray(new CacheConfiguration[ccfgs.size()]));
 
         TestRecordingCommunicationSpi commSpi = new TestRecordingCommunicationSpi();
 
@@ -97,47 +116,67 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
     /**
      * @throws Exception If failed.
      */
-    public void testMultipleJoin() throws Exception {
+    public void testMultipleJoin1() throws Exception {
+        multipleJoin(2);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoin2() throws Exception {
+        multipleJoin(10);
+    }
+
+    /**
+     * @param nodes Number of nodes joining concurrently.
+     * @throws Exception If failed.
+     */
+    private void multipleJoin(int nodes) throws Exception {
+        assert nodes > 1;
+
         Ignite ignite0 = startGrid(0);
 
         TestRecordingCommunicationSpi spi0 = waitSpi(getTestGridName(0));
 
         spi0.record(GridDhtPartitionsFullMessage.class);
 
-        IgniteInternalFuture<?> fut1 = GridTestUtils.runAsync(new Callable<Void>() {
-            @Override public Void call() throws Exception {
-                blockP.set(blockSinglePartitions(2));
+        List<IgniteInternalFuture<?>> futs = new ArrayList<>();
 
-                startGrid(1);
+        for (int i = 0; i < nodes; i++) {
+            final int nodeIdx = i + 1;
+            final int topVer = i + 2;
 
-                return null;
-            }
-        }, "start-1");
+            IgniteInternalFuture<?> fut = GridTestUtils.runAsync(new Callable<Void>() {
+                @Override public Void call() throws Exception {
+                    blockP.set(blockSinglePartitions(topVer));
 
-        ((IgniteKernal)ignite0).context().discovery().topologyFuture(2).get();
+                    startGrid(nodeIdx);
 
-        IgniteInternalFuture<?> fut2 = GridTestUtils.runAsync(new Callable<Void>() {
-            @Override public Void call() throws Exception {
-                blockP.set(blockSinglePartitions(3));
+                    return null;
+                }
+            }, "start-" + getTestGridName(nodeIdx));
 
-                startGrid(2);
+            futs.add(fut);
 
-                return null;
-            }
-        }, "start-2");
+            ((IgniteKernal)ignite0).context().discovery().topologyFuture(topVer).get();
+        }
 
-        TestRecordingCommunicationSpi spi1 = waitSpi(getTestGridName(1));
-        TestRecordingCommunicationSpi spi2 = waitSpi(getTestGridName(2));
+        List<TestRecordingCommunicationSpi> spis = new ArrayList<>();
 
-        ((IgniteKernal)ignite0).context().discovery().topologyFuture(3).get();
+        for (int i = 0; i < nodes; i++)
+            spis.add(waitSpi(getTestGridName(i + 1)));
 
-        spi1.stopBlock();
-        spi2.stopBlock();
+        ((IgniteKernal)ignite0).context().discovery().topologyFuture(nodes + 1).get();
 
-        fut1.get();
-        fut2.get();
+        for (TestRecordingCommunicationSpi spi : spis)
+            spi.stopBlock();
 
-        assertEquals(2, spi0.recordedMessages().size());
+        for (IgniteInternalFuture<?> fut : futs)
+            fut.get();
+
+        assertEquals(nodes, exchangeMessageCount(spi0));
+
+        checkNodes(topVer(nodes + 1), nodes + 1);
     }
 
     /**
@@ -172,6 +211,70 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
     }
 
     /**
+     *
+     * @param expTopVer Expected topology version.
+     * @param expNodes Expected nodes number.
+     * @throws Exception If failed.
+     */
+    private void checkNodes(AffinityTopologyVersion expTopVer, int expNodes) throws Exception {
+        List<Ignite> nodes = G.allGrids();
+
+        assertEquals(expNodes, nodes.size());
+
+        log.info("Check nodes [topVer=" + expTopVer + ", nodes=" + nodes.size() + ']');
+
+        for (Ignite node : nodes) {
+            GridKernalContext ctx = ((IgniteKernal)node).context();
+
+            IgniteInternalFuture<?> fut = ctx.cache().context().exchange().affinityReadyFuture(expTopVer);
+
+            if (fut != null)
+                fut.get();
+
+            assertEquals(expTopVer, ctx.cache().context().exchange().readyAffinityVersion());
+        }
+
+        checkCaches(nodes);
+
+        awaitPartitionMapExchange();
+    }
+
+    /**
+     * @param nodes Nodes.
+     */
+    private void checkCaches(List<Ignite> nodes) {
+        for (Ignite node : nodes) {
+            Collection<String> cacheNames = node.cacheNames();
+
+            log.info("Check caches [node=" + node.name() + ", caches=" + cacheNames + ']');
+
+            assertFalse(cacheNames.isEmpty());
+
+            for (String cacheName : cacheNames) {
+                IgniteCache<Object, Object> cache = node.cache(cacheName);
+
+                assertNotNull(cache);
+
+                Long val = System.currentTimeMillis();
+
+                ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+                for (int i = 0; i < 50; i++) {
+                    int key = rnd.nextInt(100_000);
+
+                    cache.put(key, val);
+
+                    assertEquals(val, cache.get(key));
+
+                    cache.remove(key);
+
+                    assertNull(cache.get(key));
+                }
+            }
+        }
+    }
+
+    /**
      * @param topVer Message topology version.
      * @return Message block predicate.
      */
@@ -192,6 +295,99 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
     }
 
     /**
+     * @param atomicityMode Cache atomicity mode.
+     * @return Cache configurations.
+     */
+    private List<CacheConfiguration> cacheConfigurations(CacheAtomicityMode atomicityMode) {
+        List<CacheConfiguration> caches = new ArrayList<>();
+
+        int idx = 0;
+
+        {
+            CacheConfiguration ccfg = cacheConfiguration("cache-" + idx++ + "-" + atomicityMode, atomicityMode);
+            ccfg.setRebalanceMode(ASYNC);
+            ccfg.setBackups(0);
+
+            caches.add(ccfg);
+        }
+
+        {
+            CacheConfiguration ccfg = cacheConfiguration("cache-" + idx++ + "-" + atomicityMode, atomicityMode);
+            ccfg.setRebalanceMode(SYNC);
+            ccfg.setBackups(0);
+
+            caches.add(ccfg);
+        }
+
+        {
+            CacheConfiguration ccfg = cacheConfiguration("cache-" + idx++ + "-" + atomicityMode, atomicityMode);
+            ccfg.setRebalanceMode(ASYNC);
+            ccfg.setBackups(1);
+
+            caches.add(ccfg);
+        }
+
+        {
+            CacheConfiguration ccfg = cacheConfiguration("cache-" + idx++ + "-" + atomicityMode, atomicityMode);
+            ccfg.setRebalanceMode(SYNC);
+            ccfg.setBackups(1);
+
+            caches.add(ccfg);
+        }
+
+        {
+            CacheConfiguration ccfg = cacheConfiguration("cache-" + idx++ + "-" + atomicityMode, atomicityMode);
+            ccfg.setRebalanceMode(ASYNC);
+            ccfg.setBackups(2);
+
+            caches.add(ccfg);
+        }
+
+        {
+            CacheConfiguration ccfg = cacheConfiguration("cache-" + idx++ + "-" + atomicityMode, atomicityMode);
+            ccfg.setRebalanceMode(SYNC);
+            ccfg.setBackups(2);
+
+            caches.add(ccfg);
+        }
+
+        {
+            CacheConfiguration ccfg = cacheConfiguration("cache-" + idx++ + "-" + atomicityMode, atomicityMode);
+            ccfg.setRebalanceMode(ASYNC);
+            ccfg.setCacheMode(REPLICATED);
+
+            caches.add(ccfg);
+        }
+
+        {
+            CacheConfiguration ccfg = cacheConfiguration("cache-" + idx + "-" + atomicityMode, atomicityMode);
+            ccfg.setRebalanceMode(SYNC);
+            ccfg.setCacheMode(REPLICATED);
+
+            caches.add(ccfg);
+        }
+
+        return caches;
+    }
+
+    /**
+     * @param name Cache name.
+     * @param atomicityMode Atomicity mode.
+     * @return Cache configuration.
+     */
+    private CacheConfiguration cacheConfiguration(String name, CacheAtomicityMode atomicityMode) {
+        CacheConfiguration ccfg = new CacheConfiguration();
+
+        ccfg.setName(name);
+        ccfg.setAtomicityMode(atomicityMode);
+        ccfg.setAtomicWriteOrderMode(PRIMARY);
+        ccfg.setWriteSynchronizationMode(FULL_SYNC);
+        ccfg.setStartSize(1024);
+
+        return ccfg;
+    }
+
+    /**
      * @param nodeName Node name.
      * @return Communication SPI.
      * @throws Exception If failed.
@@ -203,5 +399,24 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
 
             return commSpis.get(nodeName);
         }
+    }
+
+    /**
+     * @param spi Message recording SPI.
+     * @return Number of recorded {@link GridDhtPartitionsFullMessage} sent for exchange.
+     */
+    private int exchangeMessageCount(TestRecordingCommunicationSpi spi) {
+        List<Object> msgs = spi.recordedMessages();
+
+        int cnt = 0;
+
+        for (Object msg : msgs) {
+            assert msg instanceof GridDhtPartitionsFullMessage;
+
+            if (((GridDhtPartitionsFullMessage) msg).exchangeId() != null)
+                cnt++;
+        }
+
+        return cnt;
     }
 }

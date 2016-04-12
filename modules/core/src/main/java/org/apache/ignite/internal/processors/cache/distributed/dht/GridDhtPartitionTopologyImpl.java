@@ -448,16 +448,13 @@ class GridDhtPartitionTopologyImpl implements GridDhtPartitionTopology {
 
         int num = cctx.affinity().partitions();
 
-        AffinityTopologyVersion topVer = exchFut.topologyVersion();
-
         lock.writeLock().lock();
 
         try {
             if (stopping)
                 return false;
 
-            assert topVer.equals(exchFut.topologyVersion()) : "Invalid topology version [topVer=" +
-                topVer + ", exchId=" + exchFut.exchangeId() + ']';
+            AffinityTopologyVersion topVer = this.topVer = exchFut.topologyVersion();
 
             if (log.isDebugEnabled())
                 log.debug("Partition map before afterExchange [exchId=" + exchFut.exchangeId() + ", fullMap=" +

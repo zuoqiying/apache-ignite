@@ -63,6 +63,7 @@ import org.apache.ignite.internal.IgniteKernal;
 import org.apache.ignite.internal.IgnitionEx;
 import org.apache.ignite.internal.binary.BinaryEnumCache;
 import org.apache.ignite.internal.binary.BinaryMarshaller;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.resource.GridSpringResourceContext;
 import org.apache.ignite.internal.util.GridClassLoaderCache;
 import org.apache.ignite.internal.util.GridTestClockTimer;
@@ -1763,6 +1764,23 @@ public abstract class GridAbstractTest extends TestCase {
         Class<T> lastItf = interfaces[interfaces.length - 1];
 
         return notSerializableProxy(obj, lastItf, Arrays.copyOf(interfaces, interfaces.length - 1));
+    }
+
+    /**
+     * @param major Major version.
+     * @param minor Minor version.
+     * @return Topology version.
+     */
+    protected static AffinityTopologyVersion topVer(long major, int minor) {
+        return new AffinityTopologyVersion(major, minor);
+    }
+
+    /**
+     * @param major Major version.
+     * @return Topology version.
+     */
+    protected static AffinityTopologyVersion topVer(long major) {
+        return topVer(major, 0);
     }
 
     /**

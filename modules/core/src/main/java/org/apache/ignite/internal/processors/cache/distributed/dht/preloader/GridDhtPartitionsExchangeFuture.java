@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -206,6 +207,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         forcePreload = false;
 
         this.exchId = exchId;
+        this.resExchId = exchId;
         this.reassign = reassign;
         this.discoEvt = discoEvt;
         this.cctx = cctx;
@@ -227,6 +229,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         forcePreload = true;
 
         this.exchId = exchId;
+        this.resExchId = exchId;
         this.discoEvt = discoEvt;
         this.cctx = cctx;
 
@@ -257,6 +260,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         this.cctx = cctx;
         this.busyLock = busyLock;
         this.exchId = exchId;
+        this.resExchId = exchId;
         this.reqs = reqs;
 
         log = cctx.logger(getClass());
@@ -276,6 +280,15 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
     /** {@inheritDoc} */
     @Override public AffinityTopologyVersion topologyVersion() {
+        assert isDone();
+
+        return resExchId != null ? resExchId.topologyVersion() : exchId.topologyVersion();
+    }
+
+    /**
+     * @return Exchange start topology version.
+     */
+    public AffinityTopologyVersion startTopologyVersion() {
         return exchId.topologyVersion();
     }
 
@@ -476,7 +489,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
             assert discoEvt != null : this;
             assert !dummy && !forcePreload : this;
 
-            srvNodes = new ArrayList<>(cctx.discovery().aliveServerNodesWithCaches(topologyVersion()));
+            srvNodes = new ArrayList<>(cctx.discovery().aliveServerNodesWithCaches(startTopologyVersion()));
 
             remaining.addAll(F.nodeIds(F.view(srvNodes, F.remoteNodes(cctx.localNodeId()))));
 
@@ -611,7 +624,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
                 if (isCacheAdded(cacheCtx.cacheId(), exchId.topologyVersion())) {
-                    if (cacheCtx.discovery().cacheAffinityNodes(cacheCtx.name(), topologyVersion()).isEmpty())
+                    if (cacheCtx.discovery().cacheAffinityNodes(cacheCtx.name(), startTopologyVersion()).isEmpty())
                         U.quietAndWarn(log, "No server nodes found for cache client: " + cacheCtx.namex());
                 }
 
@@ -622,7 +635,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             if (exchId.isLeft()) {
                 for (String name : cctx.cache().cacheNames()) {
-                    if (cctx.discovery().cacheAffinityNodes(name, topologyVersion()).isEmpty()) {
+                    if (cctx.discovery().cacheAffinityNodes(name, startTopologyVersion()).isEmpty()) {
                         if (cachesWithoutNodes == null)
                             cachesWithoutNodes = new ArrayList<>();
 
@@ -855,7 +868,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
      *
      */
     private void dumpPendingObjects() {
-        U.warn(log, "Failed to wait for partition release future [topVer=" + topologyVersion() +
+        U.warn(log, "Failed to wait for partition release future [topVer=" + startTopologyVersion() +
             ", node=" + cctx.localNodeId() + "]. Dumping pending objects that might be the cause: ");
 
         cctx.exchange().dumpDebugInfo();
@@ -1015,7 +1028,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     private void spreadPartitions() {
         // TODO IGNITE-1837.
 //        try {
-//            sendAllPartitions(rmtNodes, exchId);
+//            sendAllPartitions(srvNodes, exchId);
 //
 //            return true;
 //        }
@@ -1024,7 +1037,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 //
 //            if (!X.hasCause(e, InterruptedException.class))
 //                U.error(log, "Failed to send full partition map to nodes (will retry after timeout) [nodes=" +
-//                    F.nodeId8s(rmtNodes) + ", exchangeId=" + exchId + ']', e);
+//                    F.nodeId8s(srvNodes) + ", exchangeId=" + exchId + ']', e);
 //
 //            return false;
 //        }
@@ -1047,7 +1060,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         cctx.cache().onExchangeDone(exchId.topologyVersion(), reqs, err);
 
-        log.info("Finish exchange [topVer=" + topologyVersion() + ", resTopVer=" + res + ", evt=" + discoEvt + ']');
+        log.info("Finish exchange [topVer=" + startTopologyVersion() +
+            ", resTopVer=" + res +
+            ", err=" + err +
+            ", evt=" + discoEvt + ']');
 
         cctx.exchange().onExchangeDone(this, res, err);
 
@@ -1150,22 +1166,25 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                     List<ClusterNode> rmtNodes = null;
 
                     synchronized (mux) {
-                        log.info("Future received message [node=" + node.id() + ", remaining=" + remaining + ']');
-
                         assert crd != null;
 
                         if (crd.isLocal()) {
                             if (remaining.remove(node.id())) {
+                                log.info("Coordinator removed remaining message " +
+                                    "[node=" + node.id() + ", remaining=" + remaining + ']');
+
                                 updatePartitionSingleMap(msg);
 
                                 allReceived = remaining.isEmpty();
 
                                 if (allReceived) {
-                                    rmtNodes = new ArrayList<>(srvNodes);
+                                    rmtNodes = new ArrayList<>(GridDhtPartitionsExchangeFuture.this.srvNodes);
 
                                     rmtNodes.remove(crd);
                                 }
                             }
+                            else
+                                log.info("Coordinator skipped message [node=" + node.id() + ", remaining=" + remaining + ']');
                         }
                         else
                             singleMsgs.put(node, msg);
@@ -1193,37 +1212,60 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         }
     }
 
+    public boolean joinExchangeAdded(GridDhtPartitionExchangeId exchId) {
+        synchronized (mux) {
+            if (addedJoinEvts != null) {
+                for (DiscoveryEvent evt : addedJoinEvts) {
+                    if (exchId.topologyVersion().equals(new AffinityTopologyVersion(evt.topologyVersion())))
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @param evts Events.
      */
-    public void processJoinExchanges(Collection<DiscoveryEvent> evts) {
+    public boolean processJoinExchanges(Collection<DiscoveryEvent> evts) {
         synchronized (mux) {
             if (addedJoinEvts == null)
                 addedJoinEvts = new ArrayList<>();
 
             addedJoinEvts.addAll(evts);
 
+            boolean added = false;
+
             for (DiscoveryEvent evt : evts) {
-                log.info("Future add join message [node=" + evt.eventNode().id() + ", remaining=" + remaining + ']');
+                if (cctx.discovery().alive(evt.eventNode())) {
+                    added = true;
 
-                boolean add = remaining.add(evt.eventNode().id());
+                    boolean add = remaining.add(evt.eventNode().id());
 
-                assert add : evt;
+                    assert add : evt;
 
-                add = srvNodes.add(evt.eventNode());
+                    add = srvNodes.add(evt.eventNode());
 
-                assert add : evt;
+                    log.info("Future added join message [node=" + evt.eventNode().id() +
+                        ", remaining=" + remaining + ']');
+
+                    assert add : evt;
+                }
             }
+
+            return added;
         }
     }
 
+    /**
+     * @return {@code True} if there are pending exchanges which can be handled as part of current exchange.
+     */
     private boolean onAllReceived() {
         if (discoEvt.type() == EVT_NODE_JOINED) {
             if (cctx.exchange().beforeFinishJoinExchange(this))
                 return true;
         }
-
-        resExchId = exchId;
 
         List<DiscoveryEvent> addedJoinEvts;
 
@@ -1241,9 +1283,15 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                     cacheCtx.affinity().calculateAffinity(topVer, evt);
                 }
-
-                resExchId = new GridDhtPartitionExchangeId(evt.eventNode().id(), evt.type(), topVer);
             }
+
+            DiscoveryEvent last = addedJoinEvts.get(addedJoinEvts.size() - 1);
+
+            assert resExchId.equals(exchId);
+
+            resExchId = new GridDhtPartitionExchangeId(last.eventNode().id(),
+                last.type(),
+                new AffinityTopologyVersion(last.topologyVersion()));
         }
 
         return false;
@@ -1342,16 +1390,16 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                 final AffinityTopologyVersion resTopVer = msg.topologyVersion();
 
-                if (!resTopVer.equals(topologyVersion())) {
-                    assert resTopVer.compareTo(topologyVersion()) >= 0;
+                if (!resTopVer.equals(startTopologyVersion())) {
+                    assert resTopVer.compareTo(startTopologyVersion()) >= 0;
 
-                    IgniteInternalFuture<Map<AffinityTopologyVersion, DiscoveryEvent>> discoFut =
-                        cctx.exchange().discoveryFuture(topologyVersion(), resTopVer);
+                    IgniteInternalFuture<NavigableMap<AffinityTopologyVersion, DiscoveryEvent>> discoFut =
+                        cctx.exchange().discoveryFuture(startTopologyVersion(), resTopVer);
 
-                    discoFut.listen(new CI1<IgniteInternalFuture<Map<AffinityTopologyVersion, DiscoveryEvent>>>() {
-                        @Override public void apply(IgniteInternalFuture<Map<AffinityTopologyVersion, DiscoveryEvent>> fut) {
+                    discoFut.listen(new CI1<IgniteInternalFuture<NavigableMap<AffinityTopologyVersion, DiscoveryEvent>>>() {
+                        @Override public void apply(IgniteInternalFuture<NavigableMap<AffinityTopologyVersion, DiscoveryEvent>> fut) {
                             try {
-                                Map<AffinityTopologyVersion, DiscoveryEvent> evts = fut.get();
+                                NavigableMap<AffinityTopologyVersion, DiscoveryEvent> evts = fut.get();
 
                                 for (Map.Entry<AffinityTopologyVersion, DiscoveryEvent> e : evts.entrySet()) {
                                     for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
@@ -1362,6 +1410,13 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                                     }
                                 }
 
+                                Map.Entry<AffinityTopologyVersion, DiscoveryEvent> last = evts.lastEntry();
+
+                                DiscoveryEvent evt = last.getValue();
+
+                                resExchId =
+                                    new GridDhtPartitionExchangeId(evt.eventNode().id(), evt.type(), last.getKey());
+
                                 onDone(resTopVer);
                             }
                             catch (IgniteCheckedException e) {
@@ -1369,6 +1424,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                             }
                         }
                     });
+
+                    return;
                 }
 
                 onDone(resTopVer);
@@ -1481,10 +1538,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                                 for (int i = 0; i < cacheCtx.affinity().partitions(); i++)
                                     affAssignment.add(empty);
 
-                                cacheCtx.affinity().initializeAffinity(topologyVersion(), affAssignment);
+                                cacheCtx.affinity().initializeAffinity(startTopologyVersion(), affAssignment);
                             }
 
-                            onDone(topologyVersion());
+                            onDone(startTopologyVersion());
 
                             return;
                         }
