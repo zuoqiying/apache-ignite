@@ -27,14 +27,17 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteKernal;
+import org.apache.ignite.internal.IgnitionEx;
 import org.apache.ignite.internal.TestRecordingCommunicationSpi;
 import org.apache.ignite.internal.managers.communication.GridIoMessage;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsFullMessage;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsSingleMessage;
 import org.apache.ignite.internal.util.typedef.G;
@@ -182,32 +185,204 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
     /**
      * @throws Exception If failed.
      */
-    public void testMultipleJoinJoinedLeft() throws Exception {
+    public void testMultipleJoinJoinedLeft1() throws Exception {
+        multipleJoinJoinedLeft(1);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoinJoinedLeft2() throws Exception {
+        multipleJoinJoinedLeft(2);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoinJoinedLeft3() throws Exception {
+        multipleJoinJoinedLeft(3);
+    }
+
+    /**
+     * @param failedIdx Failed node index.
+     * @throws Exception If failed.
+     */
+    public void multipleJoinJoinedLeft(int failedIdx) throws Exception {
+        Ignite ignite0 = startGrid(0);
+
+        List<IgniteInternalFuture<?>> futs = new ArrayList<>();
+
+        final int NODES = 3;
+
+        for (int i = 0; i < NODES; i++) {
+            final int nodeIdx = i + 1;
+            final int topVer = i + 2;
+
+            IgniteInternalFuture<?> fut = GridTestUtils.runAsync(new Callable<Void>() {
+                @Override public Void call() throws Exception {
+                    blockP.set(blockSinglePartitions(topVer));
+
+                    startGrid(nodeIdx);
+
+                    return null;
+                }
+            }, "start-" + getTestGridName(nodeIdx));
+
+            futs.add(fut);
+
+            ((IgniteKernal)ignite0).context().discovery().topologyFuture(topVer).get();
+        }
+
+        List<TestRecordingCommunicationSpi> spis = new ArrayList<>();
+
+        for (int i = 0; i < NODES; i++) {
+            int nodeIdx = i + 1;
+
+            if (nodeIdx != failedIdx)
+                spis.add(waitSpi(getTestGridName(nodeIdx)));
+        }
+
+        ((IgniteKernal)ignite0).context().discovery().topologyFuture(NODES + 1).get();
+
+        IgniteKernal failNode = IgnitionEx.gridx(getTestGridName(failedIdx));
+
+        ((TcpDiscoverySpi)failNode.configuration().getDiscoverySpi()).simulateNodeFailure();
+
+        for (TestRecordingCommunicationSpi spi : spis)
+            spi.stopBlock();
+
+        for (int i = 0; i < NODES; i++) {
+            int nodeIdx = i + 1;
+
+            IgniteInternalFuture<?> fut = futs.get(i);
+
+            if (nodeIdx != failedIdx)
+                fut.get();
+            else {
+                try {
+                    fut.cancel();
+
+                    fut.get();
+                }
+                catch (Exception ignore) {
+                    // No-op.
+                }
+            }
+        }
+
+        checkNodes(topVer(NODES + 2), NODES);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoinCoordinatorLeft1() throws Exception {
+        multipleJoinCoordinatorLeft(0);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoinCoordinatorLeft2() throws Exception {
+        multipleJoinCoordinatorLeft(1);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoinCoordinatorLeft3() throws Exception {
+        multipleJoinCoordinatorLeft(2);
+    }
+
+    /**
+     * @param joinFailCnt Number of joining nodes to fail.
+     * @throws Exception If failed.
+     */
+    private void multipleJoinCoordinatorLeft(int joinFailCnt) throws Exception {
+        Ignite ignite0 = startGrid(0);
+
+        List<IgniteInternalFuture<?>> futs = new ArrayList<>();
+
+        final int NODES = 5;
+
+        for (int i = 0; i < NODES; i++) {
+            final int nodeIdx = i + 1;
+            final int topVer = i + 2;
+
+            IgniteInternalFuture<?> fut = GridTestUtils.runAsync(new Callable<Void>() {
+                @Override public Void call() throws Exception {
+                    blockP.set(blockSinglePartitions(topVer));
+
+                    startGrid(nodeIdx);
+
+                    return null;
+                }
+            }, "start-" + getTestGridName(nodeIdx));
+
+            futs.add(fut);
+
+            ((IgniteKernal)ignite0).context().discovery().topologyFuture(topVer).get();
+        }
+
+        TestRecordingCommunicationSpi spi0 = waitSpi(getTestGridName(0));
+
+        spi0.blockMessages(new IgnitePredicate<GridIoMessage>() {
+            @Override public boolean apply(GridIoMessage msg) {
+                return msg.message() instanceof GridDhtPartitionsFullMessage;
+            }
+        });
+
+        List<TestRecordingCommunicationSpi> spis = new ArrayList<>();
+
+        for (int i = 0; i < NODES; i++) {
+            int nodeIdx = i + 1;
+
+            //if (nodeIdx != failedIdx)
+                spis.add(waitSpi(getTestGridName(nodeIdx)));
+        }
+
+        for (TestRecordingCommunicationSpi spi : spis)
+            spi.stopBlock();
+
+        stopGrid(0);
+
+        for (int i = 0; i < NODES - 1; i++) {
+            int nodeIdx = i + 1;
+
+            IgniteInternalFuture<?> fut = futs.get(i);
+
+            if (true)
+                fut.get();
+            else {
+                try {
+                    fut.cancel();
+
+                    fut.get();
+                }
+                catch (Exception ignore) {
+                    // No-op.
+                }
+            }
+        }
     }
 
     /**
      * @throws Exception If failed.
      */
     public void testMultipleJoinClients() throws Exception {
-
     }
 
     /**
      * @throws Exception If failed.
      */
-    public void testMultipleJoinCoordinatorLeft() throws Exception {
+    public void testConcurrentJoinDelaySinglePartitionsMessage() throws Exception {
+        // TODO: both clients and server.
     }
 
     /**
      * @throws Exception If failed.
      */
     public void testMultipleJoinJoinedStartCache() throws Exception {
-    }
-
-    /**
-     * @throws Exception If failed.
-     */
-    public void testJoiningNodeBecomeCoordinator() throws Exception {
     }
 
     /**
@@ -223,6 +398,8 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
 
         log.info("Check nodes [topVer=" + expTopVer + ", nodes=" + nodes.size() + ']');
 
+        Map<String, List<List<ClusterNode>>> aff = new HashMap<>();
+
         for (Ignite node : nodes) {
             GridKernalContext ctx = ((IgniteKernal)node).context();
 
@@ -232,6 +409,16 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
                 fut.get();
 
             assertEquals(expTopVer, ctx.cache().context().exchange().readyAffinityVersion());
+
+            for (GridCacheContext cctx : ctx.cache().context().cacheContexts()) {
+                List<List<ClusterNode>> aff1 = aff.get(cctx.name());
+                List<List<ClusterNode>> aff2 = cctx.affinity().assignments(expTopVer);
+
+                if (aff1 == null)
+                    aff.put(cctx.name(), aff2);
+                else
+                    assertEquals(aff1, aff2);
+            }
         }
 
         checkCaches(nodes);

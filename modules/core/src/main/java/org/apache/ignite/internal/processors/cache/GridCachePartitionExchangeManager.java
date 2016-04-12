@@ -238,6 +238,9 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
             synchronized (this) {
                 res = new ArrayList<>(exchanges.size());
 
+                if (curExch != null)
+                    exchanges.add(curExch);
+
                 for (Exchange exchange : exchanges)
                     res.add(exchange.fut);
             }
@@ -270,6 +273,9 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
          */
         void onExchangeDone(GridDhtPartitionsExchangeFuture exchFut, AffinityTopologyVersion topVer) {
             synchronized (this) {
+                log.info("onExchangeDone [lastVer=" + lastVer +
+                    ", newVer=" + topVer + ", curExch=" + curExch + ']');
+
                 assert curExch == null || curExch.fut == exchFut;
                 assert topVer.compareTo(lastVer) > 0;
 
@@ -583,8 +589,9 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                     }
                 }
 
-                log.info("Add new exchange [curExch=" + curExch +
-                    ", evtTopVer=" + exchId.topologyVersion() + ", evt=" + e + ']');
+                log.info("Add new exchange [evtTopVer=" + exchId.topologyVersion() +
+                    ", curExch=" + curExch +
+                    ", evt=" + e + ']');
 
                 exchanges.add(new Exchange(exchId, fut));
 
@@ -1366,27 +1373,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
         if (log.isDebugEnabled())
             log.debug("Exchange done [topVer=" + resTopVer + ", fut=" + exchFut + ", err=" + err + ']');
 
-        if (resTopVer != null)
-            exchQ.onExchangeDone(exchFut, resTopVer);
-        else
-            assert err != null : exchFut;
-
-        IgniteProductVersion minVer = cctx.localNode().version();
-        IgniteProductVersion maxVer = cctx.localNode().version();
-
-        if (err == null) {
-            if (!F.isEmpty(exchFut.discoveryEvent().topologyNodes())) {
-                for (ClusterNode node : exchFut.discoveryEvent().topologyNodes()) {
-                    IgniteProductVersion ver = node.version();
-
-                    if (ver.compareTo(minVer) < 0)
-                        minVer = ver;
-
-                    if (ver.compareTo(maxVer) > 0)
-                        maxVer = ver;
-                }
-            }
-        }
+        exchQ.onExchangeDone(exchFut, resTopVer);
 
         if (err == null) {
             while (true) {
@@ -1715,11 +1702,6 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                     // If not first preloading and no more topology events present.
                     if (!cctx.kernalContext().clientNode() && exchQ.empty() && preloadFinished)
                         timeout = cctx.gridConfig().getNetworkTimeout();
-
-                    // After workers line up and before preloading starts we initialize all futures.
-//                    if (log.isDebugEnabled())
-//                        log.debug("Before waiting for exchange futures [futs" +
-//                            F.view(exchFuts.values(), F.unfinishedFutures()) + ", worker=" + this + ']');
 
                     // Take next exchange future.
                     exchFut = exchQ.poll(timeout);
