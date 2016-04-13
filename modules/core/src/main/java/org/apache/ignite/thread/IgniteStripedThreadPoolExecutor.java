@@ -21,14 +21,19 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.jsr166.ThreadLocalRandom8;
 
 /**
  * An {@link ExecutorService} that executes submitted tasks using pooled grid threads.
@@ -50,21 +55,34 @@ public class IgniteStripedThreadPoolExecutor implements ExecutorService {
     private final int segMask;
 
     /**
-     *
+     * Create thread pool with default concurrency level {@link #DFLT_CONCUR_LVL}.
      */
     public IgniteStripedThreadPoolExecutor() {
-        execs = new ExecutorService[DFLT_CONCUR_LVL];
+        this(DFLT_CONCUR_LVL, DFLT_SEG_POOL_SIZE, "null", "null");
+    }
 
-        ThreadFactory factory = new IgniteThreadFactory(null);
+    /**
+     * Create striped thread pool.
+     *
+     * @param concurrentLvl Concurrency level.
+     * @param poolSize Pool size.
+     */
+    public IgniteStripedThreadPoolExecutor(int concurrentLvl, int poolSize, String gridName, String threadNamePrefix) {
+        execs = new ExecutorService[concurrentLvl];
 
-        for (int i = 0; i < DFLT_CONCUR_LVL; i++)
-            execs[i] = Executors.newFixedThreadPool(DFLT_SEG_POOL_SIZE, factory);
+        ThreadFactory factory = new IgniteThreadFactory(gridName, threadNamePrefix);
+
+        for (int i = 0; i < concurrentLvl; i++)
+            if (poolSize == 1)
+                execs[i] = Executors.newSingleThreadExecutor(factory);
+            else
+                execs[i] = Executors.newFixedThreadPool(poolSize, factory);
 
         // Find power-of-two sizes best matching arguments
         int sshift = 0;
         int ssize = 1;
 
-        while (ssize < DFLT_CONCUR_LVL) {
+        while (ssize < concurrentLvl) {
             ++sshift;
 
             ssize <<= 1;
@@ -72,7 +90,6 @@ public class IgniteStripedThreadPoolExecutor implements ExecutorService {
 
         segShift = 32 - sshift;
         segMask = ssize - 1;
-
     }
 
     /** {@inheritDoc} */
@@ -136,6 +153,23 @@ public class IgniteStripedThreadPoolExecutor implements ExecutorService {
     /** {@inheritDoc} */
     @Override public Future<?> submit(Runnable task) {
         return execForTask(task).submit(task);
+    }
+
+    /**
+     * Executes the given command at some time in the future. The command with the same {@code index}
+     * will be executed in the same thread.
+     *
+     * @param task the runnable task
+     * @param idx Striped index.
+     * @throws RejectedExecutionException if this task cannot be
+     * accepted for execution.
+     * @throws NullPointerException if command is null
+     */
+    public void execute(Runnable task, int idx) {
+        if (idx < execs.length)
+            execs[idx].execute(task);
+        else
+            execs[idx % execs.length].execute(task);
     }
 
     /** {@inheritDoc} */
@@ -221,8 +255,7 @@ public class IgniteStripedThreadPoolExecutor implements ExecutorService {
     private <T> ExecutorService execForTask(T cmd) {
         assert cmd != null;
 
-        //return execs[ThreadLocalRandom8.current().nextInt(DFLT_CONCUR_LVL)];
-        return execs[(hash(cmd.hashCode()) >>> segShift) & segMask];
+        return execs[(hash(System.identityHashCode(cmd)) >>> segShift) & segMask];
     }
 
     /** {@inheritDoc} */

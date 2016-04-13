@@ -218,6 +218,9 @@ public class IgniteConfiguration {
     /** Public pool size. */
     private int pubPoolSize = DFLT_PUBLIC_THREAD_CNT;
 
+    /** Async Callback pool size. */
+    private int callbackPoolSize = DFLT_PUBLIC_THREAD_CNT;
+
     /** System pool size. */
     private int sysPoolSize = DFLT_SYSTEM_CORE_THREAD_CNT;
 
@@ -710,6 +713,17 @@ public class IgniteConfiguration {
     }
 
     /**
+     * Size of thread pool that is in charge of processing continuous query events.
+     * <p>
+     * If not provided, executor service will have size {@link #DFLT_PUBLIC_THREAD_CNT}.
+     *
+     * @return Thread pool size to be used
+     */
+    public int getAsyncCallbackPoolSize() {
+        return callbackPoolSize;
+    }
+
+    /**
      * Size of thread pool that is in charge of processing internal and Visor
      * {@link ComputeJob GridJobs}.
      * <p>
@@ -813,6 +827,19 @@ public class IgniteConfiguration {
      */
     public IgniteConfiguration setSystemThreadPoolSize(int poolSize) {
         sysPoolSize = poolSize;
+
+        return this;
+    }
+
+    /**
+     * Sets async callback thread pool size to use within grid.
+     *
+     * @param poolSize Thread pool size to use within grid.
+     * @return {@code this} for chaining.
+     * @see IgniteConfiguration#getAsyncCallbackPoolSize()
+     */
+    public IgniteConfiguration setAsyncCallbackPoolSize(int poolSize) {
+        this.callbackPoolSize = poolSize;
 
         return this;
     }

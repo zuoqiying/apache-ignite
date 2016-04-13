@@ -23,6 +23,7 @@ import javax.cache.event.CacheEntryEventFilter;
 import javax.cache.event.CacheEntryUpdatedListener;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CacheEntryEventSerializableFilter;
+import org.apache.ignite.lang.IgniteAsyncCallback;
 
 /**
  * API for configuring continuous cache queries.
@@ -173,6 +174,9 @@ public final class ContinuousQuery<K, V> extends Query<Cache.Entry<K, V>> {
      * <b>WARNING:</b> all operations that involve any kind of JVM-local or distributed locking (e.g.,
      * synchronization or transactional cache operations), should be executed asynchronously without
      * blocking the thread that called the callback. Otherwise, you can get deadlocks.
+     * * <p>
+     * If listener implements {@link IgniteAsyncCallback} marker interface then cache operations are allowed.
+     * see {@link IgniteAsyncCallback}.
      *
      * @param locLsnr Local callback.
      * @return {@code this} for chaining.
@@ -227,6 +231,9 @@ public final class ContinuousQuery<K, V> extends Query<Cache.Entry<K, V>> {
      * <b>WARNING:</b> all operations that involve any kind of JVM-local or distributed locking
      * (e.g., synchronization or transactional cache operations), should be executed asynchronously
      * without blocking the thread that called the filter. Otherwise, you can get deadlocks.
+     * <p>
+     * If filter implements {@link IgniteAsyncCallback} marker interface then cache operations are allowed.
+     * see {@link IgniteAsyncCallback}.
      *
      * @param rmtFilterFactory Key-value filter factory.
      * @return {@code this} for chaining.

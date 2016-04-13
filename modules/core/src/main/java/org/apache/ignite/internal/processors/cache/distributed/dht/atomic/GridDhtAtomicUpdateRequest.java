@@ -242,7 +242,6 @@ public class GridDhtAtomicUpdateRequest extends GridCacheMessage implements Grid
      * @param partId Partition.
      * @param prevVal Previous value.
      * @param updateCntr Update counter.
-     * @param storeLocPrevVal If {@code true} stores previous value.
      */
     public void addWriteValue(KeyCacheObject key,
         @Nullable CacheObject val,
@@ -253,18 +252,10 @@ public class GridDhtAtomicUpdateRequest extends GridCacheMessage implements Grid
         boolean addPrevVal,
         int partId,
         @Nullable CacheObject prevVal,
-        @Nullable Long updateCntr,
-        boolean storeLocPrevVal) {
+        @Nullable Long updateCntr) {
         keys.add(key);
 
         partIds.add(partId);
-
-        if (storeLocPrevVal) {
-            if (locPrevVals == null)
-                locPrevVals = new ArrayList<>();
-
-            locPrevVals.add(prevVal);
-        }
 
         if (forceTransformBackups) {
             assert entryProcessor != null;
@@ -477,12 +468,12 @@ public class GridDhtAtomicUpdateRequest extends GridCacheMessage implements Grid
     }
 
     /**
-     * @param updCntr Update counter.
+     * @param idx Update counter index.
      * @return Update counter.
      */
-    public Long updateCounter(int updCntr) {
-        if (updateCntrs != null && updCntr < updateCntrs.size())
-            return updateCntrs.get(updCntr);
+    public Long updateCounter(int idx) {
+        if (updateCntrs != null && idx < updateCntrs.size())
+            return updateCntrs.get(idx);
 
         return null;
     }
