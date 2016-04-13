@@ -22,8 +22,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CacheAtomicityMode;
@@ -40,6 +42,7 @@ import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsFullMessage;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsSingleMessage;
+import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.G;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.plugin.extensions.communication.Message;
@@ -48,6 +51,7 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.GridTestUtils;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
+import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.cache.CacheAtomicWriteOrderMode.PRIMARY;
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
@@ -65,7 +69,7 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
     protected static final TcpDiscoveryIpFinder ipFinder = new TcpDiscoveryVmIpFinder(true);
 
     /** */
-    private boolean client;
+    private ThreadLocal<Boolean> client = new ThreadLocal<>();
 
     /** */
     private ThreadLocal<IgnitePredicate<GridIoMessage>> blockP = new ThreadLocal<>();
@@ -79,7 +83,13 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
 
         ((TcpDiscoverySpi)cfg.getDiscoverySpi()).setIpFinder(ipFinder);
 
-        cfg.setClientMode(client);
+        Boolean client0 = client.get();
+
+        if (client0 != null) {
+            cfg.setClientMode(client0);
+
+            client.remove();
+        }
 
         List<CacheConfiguration> ccfgs = new ArrayList<>();
 
@@ -120,21 +130,43 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
      * @throws Exception If failed.
      */
     public void testMultipleJoin1() throws Exception {
-        multipleJoin(2);
+        multipleJoin(2, null);
     }
 
     /**
      * @throws Exception If failed.
      */
     public void testMultipleJoin2() throws Exception {
-        multipleJoin(10);
+        multipleJoin(10, null);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoinWithClients1() throws Exception {
+        multipleJoin(3, F.asSet(3));
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoinWithClients2() throws Exception {
+        multipleJoin(4, F.asSet(3, 4));
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testMultipleJoinWithClients4() throws Exception {
+        multipleJoin(10, F.asSet(3, 5, 7, 9));
     }
 
     /**
      * @param nodes Number of nodes joining concurrently.
+     * @param clientIdxs Client nodes indexes.
      * @throws Exception If failed.
      */
-    private void multipleJoin(int nodes) throws Exception {
+    private void multipleJoin(int nodes, @Nullable final Set<Integer> clientIdxs) throws Exception {
         assert nodes > 1;
 
         Ignite ignite0 = startGrid(0);
@@ -152,6 +184,9 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
             IgniteInternalFuture<?> fut = GridTestUtils.runAsync(new Callable<Void>() {
                 @Override public Void call() throws Exception {
                     blockP.set(blockSinglePartitions(topVer));
+
+                    if (clientIdxs != null && clientIdxs.contains(nodeIdx))
+                        client.set(true);
 
                     startGrid(nodeIdx);
 
@@ -180,6 +215,56 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
         assertEquals(nodes, exchangeMessageCount(spi0));
 
         checkNodes(topVer(nodes + 1), nodes + 1);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testConcurrentJoinDelayMessage() throws Exception {
+        startGrid(0);
+
+        final AtomicInteger idx = new AtomicInteger(1);
+
+        final int THREADS = 20;
+
+        GridTestUtils.runMultiThreaded(new Callable<Void>() {
+            @Override public Void call() throws Exception {
+                blockP.set(delaySinglePartitions());
+
+                startGrid(idx.getAndIncrement());
+
+                return null;
+            }
+        }, THREADS, "start");
+
+        checkNodes(topVer(THREADS + 1), THREADS + 1);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testConcurrentJoinDelayMessageWithClients() throws Exception {
+        startGrid(0);
+
+        final AtomicInteger idx = new AtomicInteger(1);
+
+        final int THREADS = 30;
+
+        GridTestUtils.runMultiThreaded(new Callable<Void>() {
+            @Override public Void call() throws Exception {
+                blockP.set(delaySinglePartitions());
+
+                int idx0 = idx.getAndIncrement();
+
+                client.set(idx0 % 2 == 1);
+
+                startGrid(idx0);
+
+                return null;
+            }
+        }, THREADS, "start");
+
+        checkNodes(topVer(THREADS + 1), THREADS + 1);
     }
 
     /**
@@ -276,21 +361,21 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
     /**
      * @throws Exception If failed.
      */
-    public void testMultipleJoinCoordinatorLeft1() throws Exception {
+    public void _testMultipleJoinCoordinatorLeft1() throws Exception {
         multipleJoinCoordinatorLeft(0);
     }
 
     /**
      * @throws Exception If failed.
      */
-    public void testMultipleJoinCoordinatorLeft2() throws Exception {
+    public void _testMultipleJoinCoordinatorLeft2() throws Exception {
         multipleJoinCoordinatorLeft(1);
     }
 
     /**
      * @throws Exception If failed.
      */
-    public void testMultipleJoinCoordinatorLeft3() throws Exception {
+    public void _testMultipleJoinCoordinatorLeft3() throws Exception {
         multipleJoinCoordinatorLeft(2);
     }
 
@@ -334,6 +419,8 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
 
         List<TestRecordingCommunicationSpi> spis = new ArrayList<>();
 
+        // TODO
+
         for (int i = 0; i < NODES; i++) {
             int nodeIdx = i + 1;
 
@@ -369,14 +456,7 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
     /**
      * @throws Exception If failed.
      */
-    public void testMultipleJoinClients() throws Exception {
-    }
-
-    /**
-     * @throws Exception If failed.
-     */
-    public void testConcurrentJoinDelaySinglePartitionsMessage() throws Exception {
-        // TODO: both clients and server.
+    public void testMultipleJoinAnotherExchangeInProgress() throws Exception {
     }
 
     /**
@@ -405,8 +485,13 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
 
             IgniteInternalFuture<?> fut = ctx.cache().context().exchange().affinityReadyFuture(expTopVer);
 
-            if (fut != null)
+            if (fut != null) {
+                log.info("Wait future [node=" + node.name() +
+                    ", readyVer=" + ctx.cache().context().exchange().readyAffinityVersion() +
+                    ", fut=" + fut + ']');
+
                 fut.get();
+            }
 
             assertEquals(expTopVer, ctx.cache().context().exchange().readyAffinityVersion());
 
@@ -459,6 +544,26 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
                 }
             }
         }
+    }
+
+    /**
+     * @return Message delay predicate.
+     */
+    private IgnitePredicate<GridIoMessage> delaySinglePartitions() {
+        return new IgnitePredicate<GridIoMessage>() {
+            @Override public boolean apply(GridIoMessage msg) {
+                if (msg.message() instanceof GridDhtPartitionsSingleMessage) {
+                    try {
+                        Thread.sleep(ThreadLocalRandom.current().nextInt(100, 500));
+                    }
+                    catch (InterruptedException ignore) {
+                        // No-op.
+                    }
+                }
+
+                return false;
+            }
+        };
     }
 
     /**
