@@ -952,11 +952,11 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
      * @throws IgniteCheckedException If failed.
      */
     private void sendAllPartitions(Collection<? extends ClusterNode> nodes) throws IgniteCheckedException {
+        AffinityTopologyVersion resTopVer = resExchId.topologyVersion();
+
         log.info("Coordinator creates full partitions message [time=" + (U.currentTimeMillis() - startTime()) / 1000f +
             ", topVer=" + exchId.topologyVersion() +
-            ", remaining=" + remaining + ']');
-
-        AffinityTopologyVersion resTopVer = resExchId.topologyVersion();
+            ", resTopVer=" + resTopVer + ']');
 
         GridDhtPartitionsFullMessage m = new GridDhtPartitionsFullMessage(resExchId,
             lastVer.get(),
@@ -1267,6 +1267,20 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
      * @param evts Events.
      */
     public boolean processJoinExchanges(Collection<DiscoveryEvent> evts) {
+        for (DiscoveryEvent evt : evts) {
+            AffinityTopologyVersion topVer = new AffinityTopologyVersion(evt.topologyVersion());
+
+            for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
+                if (cacheCtx.isLocal())
+                    continue;
+
+                if (CU.clientNode(evt.eventNode()))
+                    cacheCtx.affinity().clientEventTopologyChange(evt, topVer);
+                else
+                    cacheCtx.affinity().calculateAffinity(topVer, evt);
+            }
+        }
+
         synchronized (mux) {
             if (addedJoinEvts == null)
                 addedJoinEvts = new ArrayList<>();
@@ -1317,24 +1331,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         }
 
         log.info("Coordinator received all messages [time=" + (U.currentTimeMillis() - startTime()) / 1000f +
-            ", topVer=" + exchId.topologyVersion() +
-            ", remaining=" + remaining + ']');
+            ", topVer=" + exchId.topologyVersion() + ']');
 
         if (addedJoinEvts != null) {
-            for (DiscoveryEvent evt : addedJoinEvts) {
-                AffinityTopologyVersion topVer = new AffinityTopologyVersion(evt.topologyVersion());
-
-                for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
-                    if (cacheCtx.isLocal())
-                        continue;
-
-                    if (CU.clientNode(evt.eventNode()))
-                        cacheCtx.affinity().clientEventTopologyChange(evt, topVer);
-                    else
-                        cacheCtx.affinity().calculateAffinity(topVer, evt);
-                }
-            }
-
             DiscoveryEvent last = addedJoinEvts.get(addedJoinEvts.size() - 1);
 
             assert resExchId.equals(exchId);
