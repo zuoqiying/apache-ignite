@@ -203,6 +203,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         this.discoEvt = exchFut.discoEvt;
         this.cctx = cctx;
 
+        log = cctx.logger(getClass());
+
         onDone(exchFut.topologyVersion());
     }
 
@@ -225,6 +227,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         this.cctx = cctx;
 
         reassign = true;
+
+        log = cctx.logger(getClass());
 
         onDone(exchFut.topologyVersion());
     }
@@ -834,6 +838,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         if (crd.isLocal()) {
             if (F.isEmpty(remaining)) {
+                initFut.onDone(true);
+
                 coordinatorAllReceived();
 
                 return;
@@ -1053,10 +1059,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         cctx.cache().onExchangeDone(exchId.topologyVersion(), reqs, err);
 
-//        log.info("Finish exchange [topVer=" + startTopologyVersion() +
-//            ", resTopVer=" + res +
-//            ", err=" + err +
-//            ", evt=" + discoEvt + ']');
+        log.info("Finish exchange [topVer=" + startTopologyVersion() +
+            ", resTopVer=" + res +
+            ", err=" + err +
+            ", evt=" + discoEvt + ']');
 
         cctx.exchange().onExchangeDone(this, resExchId.topologyVersion(), err);
 
@@ -1164,18 +1170,18 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                         if (crd.isLocal()) {
                             if (remaining.remove(node.id())) {
-//                                log.info("Coordinator removed remaining message [node=" + node.id() +
-//                                    ", topVer=" + exchId.topologyVersion() +
-//                                    ", remaining=" + remaining + ']');
+                                log.info("Coordinator removed remaining message [node=" + node.id() +
+                                    ", topVer=" + exchId.topologyVersion() +
+                                    ", remaining=" + remaining + ']');
 
                                 updatePartitionSingleMap(msg);
 
                                 allReceived = remaining.isEmpty();
                             }
-//                            else
-//                                log.info("Coordinator skipped message [node=" + node.id() +
-//                                    ", topVer=" + exchId.topologyVersion() +
-//                                    ", remaining=" + remaining + ']');
+                            else
+                                log.info("Coordinator skipped message [node=" + node.id() +
+                                    ", topVer=" + exchId.topologyVersion() +
+                                    ", remaining=" + remaining + ']');
                         }
                         else
                             singleMsgs.put(node, msg);
@@ -1204,9 +1210,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 nodes = new ArrayList<>(srvNodes);
             }
 
-//            log.info("Coordinator finish exchange [topVer=" + exchId.topologyVersion() +
-//                ", resTopVer=" + resExchId.topologyVersion() +
-//                ", nodes=" + U.nodeIds(srvNodes) + ']');
+            log.info("Coordinator finish exchange [topVer=" + exchId.topologyVersion() +
+                ", resTopVer=" + resExchId.topologyVersion() +
+                ", nodes=" + U.nodeIds(srvNodes) + ']');
 
             if (!nodes.isEmpty())
                 sendAllPartitions(nodes);
@@ -1255,9 +1261,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                     add = srvNodes.add(evt.eventNode());
 
-//                    log.info("Coordinator added join message [node=" + evt.eventNode().id() +
-//                        ", topVer=" + exchId.topologyVersion() +
-//                        ", remaining=" + remaining + ']');
+                    log.info("Coordinator added join message [node=" + evt.eventNode().id() +
+                        ", topVer=" + exchId.topologyVersion() +
+                        ", remaining=" + remaining + ']');
 
                     assert add : evt;
                 }
@@ -1385,10 +1391,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                             log.debug("Received full partition map from unexpected node [oldest=" + crd.id() +
                                 ", nodeId=" + node.id() + ']');
 
-//                        log.info("Received full partitions message from unexpected node [node=" + node.id() +
-//                            ", crd=" + crd.id() +
-//                            ", msgTopVer=" + msg.topologyVersion() +
-//                            ", exchTopVer=" + exchId.topologyVersion() + ']');
+                        log.info("Received full partitions message from unexpected node [node=" + node.id() +
+                            ", crd=" + crd.id() +
+                            ", msgTopVer=" + msg.topologyVersion() +
+                            ", exchTopVer=" + exchId.topologyVersion() + ']');
 
                         if (node.order() > crd.order())
                             fullMsgs.put(node, msg);
@@ -1396,9 +1402,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                         return;
                     }
 
-//                    log.info("Received full partitions message [node=" + node.id() +
-//                        ", msgTopVer=" + msg.topologyVersion() +
-//                        ", exchTopVer=" + exchId.topologyVersion() + ']');
+                    log.info("Received full partitions message [node=" + node.id() +
+                        ", msgTopVer=" + msg.topologyVersion() +
+                        ", exchTopVer=" + exchId.topologyVersion() + ']');
 
                     remaining.clear();
                 }
@@ -1552,9 +1558,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                             if (crd != null && crd.isLocal() && rmvd) {
                                 allReceived = remaining.isEmpty();
 
-//                                log.info("Coordinator received node left event [node=" + node.id() +
-//                                    ", topVer=" + exchId.topologyVersion() +
-//                                    ", remaining=" + remaining + ']');
+                                log.info("Coordinator received node left event [node=" + node.id() +
+                                    ", topVer=" + exchId.topologyVersion() +
+                                    ", remaining=" + remaining + ']');
                             }
 
                             crd0 = crd;

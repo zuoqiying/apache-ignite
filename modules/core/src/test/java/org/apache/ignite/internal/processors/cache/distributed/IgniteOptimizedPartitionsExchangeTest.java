@@ -221,9 +221,7 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
      * @throws Exception If failed.
      */
     public void testConcurrentJoinDelayMessage() throws Exception {
-        startGrid(0);
-
-        final AtomicInteger idx = new AtomicInteger(1);
+        final AtomicInteger idx = new AtomicInteger(0);
 
         final int THREADS = 20;
 
@@ -237,7 +235,7 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
             }
         }, THREADS, "start");
 
-        checkNodes(topVer(THREADS + 1), THREADS + 1);
+        checkNodes(topVer(THREADS), THREADS);
     }
 
     /**

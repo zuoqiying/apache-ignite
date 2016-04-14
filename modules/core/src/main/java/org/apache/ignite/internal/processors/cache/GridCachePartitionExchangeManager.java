@@ -275,9 +275,9 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
             synchronized (this) {
                 clientReqs = clientMsgs.remove(exchFut.exchangeId());
 
-//                log.info("onExchangeDone [newVer=" + topVer +
-//                    ", lastVer=" + lastVer +
-//                    ", curExch=" + curExch + ']');
+                log.info("onExchangeDone [newVer=" + topVer +
+                    ", lastVer=" + lastVer +
+                    ", curExch=" + curExch + ']');
 
                 exchHist.put(exchFut.startTopologyVersion(), exchFut);
 
@@ -288,9 +288,9 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                         Exchange exchange = it.next();
 
                         if (topVer.compareTo(exchange.id.topologyVersion()) >= 0 && exchange.fut.realExchange()) {
-//                        log.info("Remove exchange [lastVer=" + lastVer +
-//                            ", evtTopVer=" + exchange.id.topologyVersion() +
-//                            ", evt=" + exchange.fut.discoveryEvent() + ']');
+                            log.info("Remove exchange [lastVer=" + lastVer +
+                                ", evtTopVer=" + exchange.id.topologyVersion() +
+                                ", evt=" + exchange.fut.discoveryEvent() + ']');
 
                             it.remove();
                         }
@@ -407,9 +407,9 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                     }
 
                     if (msgExch == null) {
-//                    log.info("Received single message, store message [node=" + node.id() +
-//                        ", msgExchId=" + msg.exchangeId() +
-//                        ", curExch=" + curExch + ']');
+                        log.info("Received single message, store message [node=" + node.id() +
+                            ", msgExchId=" + msg.exchangeId() +
+                            ", curExch=" + curExch + ']');
 
                         Map<ClusterNode, GridDhtPartitionsSingleMessage> exchMsgs = singleMsgs.get(msg.exchangeId());
 
@@ -424,9 +424,9 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                 }
 
                 if (msgExch != null) {
-//                log.info("Received single message, notify exchange [node=" + node.id() +
-//                    ", msgExchId=" + msg.exchangeId() +
-//                    ", exch=" + msgExch + ']');
+                    log.info("Received single message, notify exchange [node=" + node.id() +
+                        ", msgExchId=" + msg.exchangeId() +
+                        ", exch=" + msgExch + ']');
 
                     msgExch.fut.onReceive(node, msg);
                 }
@@ -457,12 +457,12 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                         fullMsgs = this.fullMsgs.remove(exch.id);
 
                         if (exch.fut.realExchange() && lastVer.compareTo(exch.fut.startTopologyVersion()) >= 0) {
-                            //log.info("Poll skip processed exchange [lastVer=" + lastVer + ", exch=" + exch + ']');
+                            log.info("Poll skip processed exchange [lastVer=" + lastVer + ", exch=" + exch + ']');
 
                             continue;
                         }
 
-                        //log.info("Poll next exchange: " + exch);
+                        log.info("Poll next exchange: " + exch);
 
                         if (exch.fut.realExchange())
                             curExch = exch;
@@ -545,7 +545,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
             synchronized (this) {
                 assert curExch != null && curExch.fut == fut : curExch;
 
-                //log.info("beforeFinishJoinExchange [curExch=" + curExch + ']');
+                log.info("beforeFinishJoinExchange [curExch=" + curExch + ']');
 
                 boolean added = false;
 
@@ -607,9 +607,9 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                     for (Map.Entry<ClusterNode, GridDhtPartitionsSingleMessage> e : pendingMsgs.entrySet()) {
                         GridDhtPartitionsSingleMessage msg = e.getValue();
 
-//                    log.info("beforeFinishJoinExchange, process pending event [node=" + e.getKey().id() +
-//                        ", msgExchId=" + msg.exchangeId() +
-//                        ", exch=" + exch + ']');
+                        log.info("beforeFinishJoinExchange, process pending event [node=" + e.getKey().id() +
+                            ", msgExchId=" + msg.exchangeId() +
+                            ", exch=" + exch + ']');
 
                         exch.fut.onReceive(e.getKey(), msg);
                     }
@@ -649,16 +649,16 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                         evtsHist.remove(evtsHist.firstKey());
 
                     if (lastVer.compareTo(exchId.topologyVersion()) >= 0) {
-//                        log.info("Skip exchange [lastVer=" + lastVer +
-//                            ", evtTopVer=" + exchId.topologyVersion() + ", evt=" + e + ']');
+                        log.info("Skip exchange [lastVer=" + lastVer +
+                            ", evtTopVer=" + exchId.topologyVersion() + ", evt=" + e + ']');
 
                         return;
                     }
                 }
 
-//                log.info("Add new exchange [evtTopVer=" + exchId.topologyVersion() +
-//                    ", curExch=" + curExch +
-//                    ", evt=" + e + ']');
+                log.info("Add new exchange [evtTopVer=" + exchId.topologyVersion() +
+                    ", curExch=" + curExch +
+                    ", evt=" + e + ']');
 
                 exchanges.add(new Exchange(exchId, fut));
 
