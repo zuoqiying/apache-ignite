@@ -1461,6 +1461,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                     discoFut.listen(new CI1<IgniteInternalFuture<NavigableMap<AffinityTopologyVersion, DiscoveryEvent>>>() {
                         @Override public void apply(IgniteInternalFuture<NavigableMap<AffinityTopologyVersion, DiscoveryEvent>> fut) {
                             try {
+                                long start = U.currentTimeMillis();
+
                                 NavigableMap<AffinityTopologyVersion, DiscoveryEvent> evts = fut.get();
 
                                 for (Map.Entry<AffinityTopologyVersion, DiscoveryEvent> e : evts.entrySet()) {
@@ -1483,6 +1485,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                                 resExchId =
                                     new GridDhtPartitionExchangeId(evt.eventNode().id(), evt.type(), last.getKey());
+
+                                log.info("Calculated affinity for extra join events [time=" + (U.currentTimeMillis() - start) / 1000f +
+                                    ", topVer=" + exchId.topologyVersion() +
+                                    ", resTopVer=" + last.getKey() + ']');
 
                                 onDone(resTopVer);
                             }
