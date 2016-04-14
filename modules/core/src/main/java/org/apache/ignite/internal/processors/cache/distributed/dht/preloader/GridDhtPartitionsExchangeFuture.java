@@ -1256,6 +1256,20 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
      * @param evts Events.
      */
     public boolean processJoinExchanges(Collection<DiscoveryEvent> evts) {
+        for (DiscoveryEvent evt : evts) {
+            AffinityTopologyVersion topVer = new AffinityTopologyVersion(evt.topologyVersion());
+
+            for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
+                if (cacheCtx.isLocal())
+                    continue;
+
+                if (CU.clientNode(evt.eventNode()))
+                    cacheCtx.affinity().clientEventTopologyChange(evt, topVer);
+                else
+                    cacheCtx.affinity().calculateAffinity(topVer, evt);
+            }
+        }
+
         synchronized (mux) {
             if (addedJoinEvts == null)
                 addedJoinEvts = new ArrayList<>();
@@ -1305,20 +1319,6 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         }
 
         if (addedJoinEvts != null) {
-            for (DiscoveryEvent evt : addedJoinEvts) {
-                AffinityTopologyVersion topVer = new AffinityTopologyVersion(evt.topologyVersion());
-
-                for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
-                    if (cacheCtx.isLocal())
-                        continue;
-
-                    if (CU.clientNode(evt.eventNode()))
-                        cacheCtx.affinity().clientEventTopologyChange(evt, topVer);
-                    else
-                        cacheCtx.affinity().calculateAffinity(topVer, evt);
-                }
-            }
-
             DiscoveryEvent last = addedJoinEvts.get(addedJoinEvts.size() - 1);
 
             assert resExchId.equals(exchId);
@@ -1704,7 +1704,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 cctx.kernalContext().timeout().removeTimeoutObject(old);
 
             GridTimeoutObject timeoutObj = new GridTimeoutObjectAdapter(
-                cctx.gridConfig().getNetworkTimeout() * Math.max(1, cctx.gridConfig().getCacheConfiguration().length)) {
+                2 * cctx.gridConfig().getNetworkTimeout() * Math.max(1, cctx.gridConfig().getCacheConfiguration().length)) {
                 @Override public void onTimeout() {
                     cctx.kernalContext().closure().runLocalSafe(new Runnable() {
                         @Override public void run() {
@@ -1717,10 +1717,12 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                             try {
                                 U.warn(log,
                                     "Retrying preload partition exchange due to timeout [done=" + isDone() +
-                                        ", dummy=" + dummy + ", exchId=" + exchId +
-                                        ", rmtIds=" + ", remaining=" +
+                                        ", dummy=" + dummy +
+                                        ", exchId=" + exchId +
+                                        ", rmtIds=" +
                                         ", initFut=" + initFut.isDone() +
-                                        ", oldest=" + crd + ", evtLatch=" + evtLatch.getCount() +
+                                        ", oldest=" + crd +
+                                        ", evtLatch=" + evtLatch.getCount() +
                                         ", locNodeOrder=" + cctx.localNode().order() +
                                         ", locNodeId=" + cctx.localNode().id() + ']',
                                     "Retrying preload partition exchange due to timeout.");
