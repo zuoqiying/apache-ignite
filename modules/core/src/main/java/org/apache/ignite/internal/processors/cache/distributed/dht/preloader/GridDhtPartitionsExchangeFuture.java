@@ -1068,11 +1068,11 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         cctx.cache().onExchangeDone(exchId.topologyVersion(), reqs, err);
 
-        if (LOG_EXCHANGE_INFO)
-            log.info("Finish exchange [topVer=" + startTopologyVersion() +
-                ", resTopVer=" + res +
-                ", err=" + err +
-                ", evt=" + discoEvt + ']');
+        log.info("Finish exchange [topVer=" + startTopologyVersion() +
+            ", resTopVer=" + res +
+            ", time=" + (U.currentTimeMillis() - startTime()) / 1000f +
+            ", err=" + err +
+            ", evt=" + discoEvt + ']');
 
         cctx.exchange().onExchangeDone(this, resExchId.topologyVersion(), err);
 
@@ -1256,20 +1256,6 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
      * @param evts Events.
      */
     public boolean processJoinExchanges(Collection<DiscoveryEvent> evts) {
-        for (DiscoveryEvent evt : evts) {
-            AffinityTopologyVersion topVer = new AffinityTopologyVersion(evt.topologyVersion());
-
-            for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
-                if (cacheCtx.isLocal())
-                    continue;
-
-                if (CU.clientNode(evt.eventNode()))
-                    cacheCtx.affinity().clientEventTopologyChange(evt, topVer);
-                else
-                    cacheCtx.affinity().calculateAffinity(topVer, evt);
-            }
-        }
-
         synchronized (mux) {
             if (addedJoinEvts == null)
                 addedJoinEvts = new ArrayList<>();
@@ -1312,13 +1298,28 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 return true;
         }
 
-        List<DiscoveryEvent> addedJoinEvts;
+        List<DiscoveryEvent> addedJoinEvts = null;
 
         synchronized (mux) {
-            addedJoinEvts = this.addedJoinEvts;
+            if (this.addedJoinEvts != null)
+                addedJoinEvts = new ArrayList<>(this.addedJoinEvts);
         }
 
         if (addedJoinEvts != null) {
+            for (DiscoveryEvent evt : addedJoinEvts) {
+                AffinityTopologyVersion topVer = new AffinityTopologyVersion(evt.topologyVersion());
+
+                for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
+                    if (cacheCtx.isLocal())
+                        continue;
+
+                    if (CU.clientNode(evt.eventNode()))
+                        cacheCtx.affinity().clientEventTopologyChange(evt, topVer);
+                    else
+                        cacheCtx.affinity().calculateAffinity(topVer, evt);
+                }
+            }
+
             DiscoveryEvent last = addedJoinEvts.get(addedJoinEvts.size() - 1);
 
             assert resExchId.equals(exchId);
@@ -1703,8 +1704,11 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
             if (old != null)
                 cctx.kernalContext().timeout().removeTimeoutObject(old);
 
+            final long timeout = cctx.gridConfig().getNetworkTimeout()
+                * Math.max(1, cctx.gridConfig().getCacheConfiguration().length);
+
             GridTimeoutObject timeoutObj = new GridTimeoutObjectAdapter(
-                2 * cctx.gridConfig().getNetworkTimeout() * Math.max(1, cctx.gridConfig().getCacheConfiguration().length)) {
+                timeout) {
                 @Override public void onTimeout() {
                     cctx.kernalContext().closure().runLocalSafe(new Runnable() {
                         @Override public void run() {
@@ -1715,19 +1719,40 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                                 return;
 
                             try {
-                                U.warn(log,
-                                    "Retrying preload partition exchange due to timeout [done=" + isDone() +
-                                        ", dummy=" + dummy +
+                                ClusterNode crd;
+                                Set<UUID> remaining;
+                                List<DiscoveryEvent> addedJoinEvts = null;
+
+                                synchronized (mux) {
+                                    crd = GridDhtPartitionsExchangeFuture.this.crd;
+
+                                    remaining = new HashSet<>(GridDhtPartitionsExchangeFuture.this.remaining);
+
+                                    if (GridDhtPartitionsExchangeFuture.this.addedJoinEvts != null)
+                                        addedJoinEvts = new ArrayList<>(GridDhtPartitionsExchangeFuture.this.addedJoinEvts);
+                                }
+
+                                if (crd != null && crd.isLocal()) {
+                                    U.warn(log, "Coordinator still waiting for exchange [done=" + isDone() +
+                                        ", time=" + (U.currentTimeMillis() - startTime()) / 1000 +
                                         ", exchId=" + exchId +
-                                        ", rmtIds=" +
-                                        ", initFut=" + initFut.isDone() +
-                                        ", oldest=" + crd +
-                                        ", evtLatch=" + evtLatch.getCount() +
+                                        ", remaining=" + remaining +
+                                        ", addedJoins=" + addedJoinEvts +
                                         ", locNodeOrder=" + cctx.localNode().order() +
                                         ", locNodeId=" + cctx.localNode().id() + ']',
-                                    "Retrying preload partition exchange due to timeout.");
+                                        "Coordinator still waiting for exchange.");
+                                }
+                                else {
+                                    U.warn(log, "Still waiting for exchange [done=" + isDone() +
+                                        ", time=" + (U.currentTimeMillis() - startTime()) / 1000 +
+                                        ", exchId=" + exchId +
+                                        ", crd=" + crd +
+                                        ", locNodeOrder=" + cctx.localNode().order() +
+                                        ", locNodeId=" + cctx.localNode().id() + ']',
+                                        "Still waiting for exchange.");
+                                }
 
-                                recheck();
+                                // recheck();
                             }
                             finally {
                                 leaveBusy();
