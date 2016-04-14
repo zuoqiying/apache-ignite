@@ -64,6 +64,7 @@ import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.CI1;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -77,6 +78,7 @@ import static org.apache.ignite.events.EventType.EVT_NODE_JOINED;
 import static org.apache.ignite.events.EventType.EVT_NODE_LEFT;
 import static org.apache.ignite.internal.events.DiscoveryCustomEvent.EVT_DISCOVERY_CUSTOM_EVT;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SYSTEM_POOL;
+import static org.apache.ignite.internal.processors.cache.GridCachePartitionExchangeManager.LOG_EXCHANGE_INFO;
 
 /**
  * Future for exchanging partition maps.
@@ -1024,22 +1026,29 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     /**
      * @return {@code True} if succeeded.
      */
-    private void spreadPartitions() {
-        // TODO IGNITE-1837.
-//        try {
-//            sendAllPartitions(srvNodes, exchId);
-//
-//            return true;
-//        }
-//        catch (IgniteCheckedException e) {
-//            scheduleRecheck();
-//
-//            if (!X.hasCause(e, InterruptedException.class))
-//                U.error(log, "Failed to send full partition map to nodes (will retry after timeout) [nodes=" +
-//                    F.nodeId8s(srvNodes) + ", exchangeId=" + exchId + ']', e);
-//
-//            return false;
-//        }
+    private boolean spreadPartitions() {
+        try {
+            List<ClusterNode> nodes;
+
+            synchronized (mux) {
+                nodes = new ArrayList<>(srvNodes);
+
+                nodes.remove(cctx.localNode());
+            }
+
+            sendAllPartitions(nodes);
+
+            return true;
+        }
+        catch (IgniteCheckedException e) {
+            scheduleRecheck();
+
+            if (!X.hasCause(e, InterruptedException.class))
+                U.error(log, "Failed to send full partition map to nodes (will retry after timeout) [nodes=" +
+                    F.nodeId8s(srvNodes) + ", exchangeId=" + exchId + ']', e);
+
+            return false;
+        }
     }
 
     /** {@inheritDoc} */
@@ -1059,10 +1068,11 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         cctx.cache().onExchangeDone(exchId.topologyVersion(), reqs, err);
 
-        log.info("Finish exchange [topVer=" + startTopologyVersion() +
-            ", resTopVer=" + res +
-            ", err=" + err +
-            ", evt=" + discoEvt + ']');
+        if (LOG_EXCHANGE_INFO)
+            log.info("Finish exchange [topVer=" + startTopologyVersion() +
+                ", resTopVer=" + res +
+                ", err=" + err +
+                ", evt=" + discoEvt + ']');
 
         cctx.exchange().onExchangeDone(this, resExchId.topologyVersion(), err);
 
@@ -1145,8 +1155,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 log.debug("Received message for finished future (will reply only to sender) [msg=" + msg +
                     ", fut=" + this + ']');
 
-            log.info("Coordinator send message for finished future [node=" + node.id() +
-                ", topVer=" + exchId.topologyVersion() + ']');
+            if (LOG_EXCHANGE_INFO)
+                log.info("Coordinator send message for finished future [node=" + node.id() +
+                    ", topVer=" + exchId.topologyVersion() + ']');
 
             sendAllPartitions(node.id(), cctx.gridConfig().getNetworkSendRetryCount());
         }
@@ -1170,18 +1181,21 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                         if (crd.isLocal()) {
                             if (remaining.remove(node.id())) {
-                                log.info("Coordinator removed remaining message [node=" + node.id() +
-                                    ", topVer=" + exchId.topologyVersion() +
-                                    ", remaining=" + remaining + ']');
+                                if (LOG_EXCHANGE_INFO)
+                                    log.info("Coordinator removed remaining message [node=" + node.id() +
+                                        ", topVer=" + exchId.topologyVersion() +
+                                        ", remaining=" + remaining + ']');
 
                                 updatePartitionSingleMap(msg);
 
                                 allReceived = remaining.isEmpty();
                             }
-                            else
-                                log.info("Coordinator skipped message [node=" + node.id() +
-                                    ", topVer=" + exchId.topologyVersion() +
-                                    ", remaining=" + remaining + ']');
+                            else {
+                                if (LOG_EXCHANGE_INFO)
+                                    log.info("Coordinator skipped message [node=" + node.id() +
+                                        ", topVer=" + exchId.topologyVersion() +
+                                        ", remaining=" + remaining + ']');
+                            }
                         }
                         else
                             singleMsgs.put(node, msg);
@@ -1210,9 +1224,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 nodes = new ArrayList<>(srvNodes);
             }
 
-            log.info("Coordinator finish exchange [topVer=" + exchId.topologyVersion() +
-                ", resTopVer=" + resExchId.topologyVersion() +
-                ", nodes=" + U.nodeIds(srvNodes) + ']');
+            if (LOG_EXCHANGE_INFO)
+                log.info("Coordinator finish exchange [topVer=" + exchId.topologyVersion() +
+                    ", resTopVer=" + resExchId.topologyVersion() +
+                    ", nodes=" + U.nodeIds(srvNodes) + ']');
 
             if (!nodes.isEmpty())
                 sendAllPartitions(nodes);
@@ -1261,9 +1276,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                     add = srvNodes.add(evt.eventNode());
 
-                    log.info("Coordinator added join message [node=" + evt.eventNode().id() +
-                        ", topVer=" + exchId.topologyVersion() +
-                        ", remaining=" + remaining + ']');
+                    if (LOG_EXCHANGE_INFO)
+                        log.info("Coordinator added join message [node=" + evt.eventNode().id() +
+                            ", topVer=" + exchId.topologyVersion() +
+                            ", remaining=" + remaining + ']');
 
                     assert add : evt;
                 }
@@ -1391,10 +1407,11 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                             log.debug("Received full partition map from unexpected node [oldest=" + crd.id() +
                                 ", nodeId=" + node.id() + ']');
 
-                        log.info("Received full partitions message from unexpected node [node=" + node.id() +
-                            ", crd=" + crd.id() +
-                            ", msgTopVer=" + msg.topologyVersion() +
-                            ", exchTopVer=" + exchId.topologyVersion() + ']');
+                        if (LOG_EXCHANGE_INFO)
+                            log.info("Received full partitions message from unexpected node [node=" + node.id() +
+                                ", crd=" + crd.id() +
+                                ", msgTopVer=" + msg.topologyVersion() +
+                                ", exchTopVer=" + exchId.topologyVersion() + ']');
 
                         if (node.order() > crd.order())
                             fullMsgs.put(node, msg);
@@ -1402,9 +1419,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                         return;
                     }
 
-                    log.info("Received full partitions message [node=" + node.id() +
-                        ", msgTopVer=" + msg.topologyVersion() +
-                        ", exchTopVer=" + exchId.topologyVersion() + ']');
+                    if (LOG_EXCHANGE_INFO)
+                        log.info("Received full partitions message [node=" + node.id() +
+                            ", msgTopVer=" + msg.topologyVersion() +
+                            ", exchTopVer=" + exchId.topologyVersion() + ']');
 
                     remaining.clear();
                 }
@@ -1558,9 +1576,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                             if (crd != null && crd.isLocal() && rmvd) {
                                 allReceived = remaining.isEmpty();
 
-                                log.info("Coordinator received node left event [node=" + node.id() +
-                                    ", topVer=" + exchId.topologyVersion() +
-                                    ", remaining=" + remaining + ']');
+                                if (LOG_EXCHANGE_INFO)
+                                    log.info("Coordinator received node left event [node=" + node.id() +
+                                        ", topVer=" + exchId.topologyVersion() +
+                                        ", remaining=" + remaining + ']');
                             }
 
                             crd0 = crd;
@@ -1635,40 +1654,43 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     private void recheck() {
         ClusterNode oldest;
 
+        Set<UUID> remaining = null;
+
         synchronized (mux) {
             oldest = crd;
+
+            if (oldest == null)
+                return;
+
+            if (oldest.isLocal())
+                remaining = new HashSet<>(this.remaining);
         }
 
-        if (oldest == null)
-            return;
+        if (oldest.isLocal()) {
+            if (remaining != null && !remaining.isEmpty()) {
+                try {
+                    cctx.io().safeSend(cctx.discovery().nodes(remaining),
+                        new GridDhtPartitionsSingleRequest(exchId), SYSTEM_POOL, null);
+                }
+                catch (IgniteCheckedException e) {
+                    U.error(log, "Failed to request partitions from nodes [exchangeId=" + exchId +
+                        ", nodes=" + remaining + ']', e);
+                }
+            }
+            // Resend full partition map because last attempt failed.
+            else {
+                if (spreadPartitions()) {
+                    onDone(exchId.topologyVersion());
 
-        // TODO IGNITE-1837.
+                    return;
+                }
+            }
+        }
+        else
+            sendPartitions(oldest);
 
-        // If this is the oldest node.
-//        if (oldest.id().equals(cctx.localNodeId())) {
-//            Collection<UUID> remaining = remaining();
-//
-//            if (!remaining.isEmpty()) {
-//                try {
-//                    cctx.io().safeSend(cctx.discovery().nodes(remaining),
-//                        new GridDhtPartitionsSingleRequest(exchId), SYSTEM_POOL, null);
-//                }
-//                catch (IgniteCheckedException e) {
-//                    U.error(log, "Failed to request partitions from nodes [exchangeId=" + exchId +
-//                        ", nodes=" + remaining + ']', e);
-//                }
-//            }
-//            // Resend full partition map because last attempt failed.
-//            else {
-//                if (spreadPartitions())
-//                    onDone(exchId.topologyVersion());
-//            }
-//        }
-//        else
-//            sendPartitions(oldest);
-//
-//        // Schedule another send.
-//        scheduleRecheck();
+        // Schedule another send.
+        scheduleRecheck();
     }
 
     /**

@@ -359,21 +359,21 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
     /**
      * @throws Exception If failed.
      */
-    public void _testMultipleJoinCoordinatorLeft1() throws Exception {
+    public void testMultipleJoinCoordinatorLeft1() throws Exception {
         multipleJoinCoordinatorLeft(0);
     }
 
     /**
      * @throws Exception If failed.
      */
-    public void _testMultipleJoinCoordinatorLeft2() throws Exception {
+    public void testMultipleJoinCoordinatorLeft2() throws Exception {
         multipleJoinCoordinatorLeft(1);
     }
 
     /**
      * @throws Exception If failed.
      */
-    public void _testMultipleJoinCoordinatorLeft3() throws Exception {
+    public void testMultipleJoinCoordinatorLeft3() throws Exception {
         multipleJoinCoordinatorLeft(2);
     }
 
@@ -417,13 +417,9 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
 
         List<TestRecordingCommunicationSpi> spis = new ArrayList<>();
 
-        // TODO
-
         for (int i = 0; i < NODES; i++) {
-            int nodeIdx = i + 1;
-
-            //if (nodeIdx != failedIdx)
-                spis.add(waitSpi(getTestGridName(nodeIdx)));
+            if (i >= joinFailCnt)
+                spis.add(waitSpi(getTestGridName(i + 1)));
         }
 
         for (TestRecordingCommunicationSpi spi : spis)
@@ -431,12 +427,16 @@ public class IgniteOptimizedPartitionsExchangeTest extends GridCommonAbstractTes
 
         stopGrid(0);
 
-        for (int i = 0; i < NODES - 1; i++) {
-            int nodeIdx = i + 1;
+        for (int i = 0; i < joinFailCnt; i++) {
+            IgniteKernal failNode = IgnitionEx.gridx(getTestGridName(i + 1));
 
+            ((TcpDiscoverySpi)failNode.configuration().getDiscoverySpi()).simulateNodeFailure();
+        }
+
+        for (int i = 0; i < NODES; i++) {
             IgniteInternalFuture<?> fut = futs.get(i);
 
-            if (true)
+            if (i >= joinFailCnt)
                 fut.get();
             else {
                 try {
