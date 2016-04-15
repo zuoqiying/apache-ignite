@@ -17,7 +17,6 @@
 
 package org.apache.ignite.cache.affinity.rendezvous;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -26,8 +25,8 @@ import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +48,7 @@ import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiPredicate;
 import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.marshaller.Marshaller;
 import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.resources.LoggerResource;
 import org.jetbrains.annotations.Nullable;
@@ -320,32 +320,33 @@ public class RendezvousAffinityFunction implements AffinityFunction, Externaliza
     /**
      * Returns collection of nodes (primary first) for specified partition.
      */
-    public List<ClusterNode> assignPartition(int part, List<ClusterNode> nodes, int backups,
+    private List<ClusterNode> assignPartition(
+        MessageDigest d,
+        IgniteBiTuple<Long, ClusterNode>[] nodesArr,
+        List<byte[]> nodesHashes,
+        int part,
+        List<ClusterNode> nodes,
+        int backups,
         @Nullable Map<UUID, Collection<ClusterNode>> neighborhoodCache) {
-        if (nodes.size() <= 1)
+        final int size = nodes.size();
+
+        if (size <= 1)
             return nodes;
 
-        List<IgniteBiTuple<Long, ClusterNode>> lst = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            ClusterNode node = nodes.get(i);
 
-        MessageDigest d = digest.get();
+            byte[] nodeHashBytes = nodesHashes.get(i);
 
-        for (ClusterNode node : nodes) {
-            Object nodeHash = resolveNodeHash(node);
+            d.reset();
 
-            try {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
+            d.update(U.intToBytes(part));
+            d.update(nodeHashBytes);
 
-                byte[] nodeHashBytes = ignite.configuration().getMarshaller().marshal(nodeHash);
+            byte[] bytes = d.digest();
 
-                out.write(U.intToBytes(part), 0, 4); // Avoid IOException.
-                out.write(nodeHashBytes, 0, nodeHashBytes.length); // Avoid IOException.
-
-                d.reset();
-
-                byte[] bytes = d.digest(out.toByteArray());
-
-                long hash =
-                      (bytes[0] & 0xFFL)
+            long hash =
+                (bytes[0] & 0xFFL)
                     | ((bytes[1] & 0xFFL) << 8)
                     | ((bytes[2] & 0xFFL) << 16)
                     | ((bytes[3] & 0xFFL) << 24)
@@ -354,27 +355,23 @@ public class RendezvousAffinityFunction implements AffinityFunction, Externaliza
                     | ((bytes[6] & 0xFFL) << 48)
                     | ((bytes[7] & 0xFFL) << 56);
 
-                lst.add(F.t(hash, node));
-            }
-            catch (IgniteCheckedException e) {
-                throw new IgniteException(e);
-            }
+            nodesArr[i] = (F.t(hash, node));
         }
 
-        Collections.sort(lst, COMPARATOR);
+        Arrays.sort(nodesArr, COMPARATOR);
 
-        int primaryAndBackups = backups == Integer.MAX_VALUE ? nodes.size() : Math.min(backups + 1, nodes.size());
+        int primaryAndBackups = backups == Integer.MAX_VALUE ? size : Math.min(backups + 1, size);
 
         List<ClusterNode> res = new ArrayList<>(primaryAndBackups);
 
-        ClusterNode primary = lst.get(0).get2();
+        ClusterNode primary = nodesArr[0].get2();
 
         res.add(primary);
 
         // Select backups.
         if (backups > 0) {
-            for (int i = 1; i < lst.size() && res.size() < primaryAndBackups; i++) {
-                IgniteBiTuple<Long, ClusterNode> next = lst.get(i);
+            for (int i = 1; i < size && res.size() < primaryAndBackups; i++) {
+                IgniteBiTuple<Long, ClusterNode> next = nodesArr[i];
 
                 ClusterNode node = next.get2();
 
@@ -389,10 +386,10 @@ public class RendezvousAffinityFunction implements AffinityFunction, Externaliza
             }
         }
 
-        if (res.size() < primaryAndBackups && nodes.size() >= primaryAndBackups && exclNeighbors) {
+        if (res.size() < primaryAndBackups && size >= primaryAndBackups && exclNeighbors) {
             // Need to iterate again in case if there are no nodes which pass exclude neighbors backups criteria.
-            for (int i = 1; i < lst.size() && res.size() < primaryAndBackups; i++) {
-                IgniteBiTuple<Long, ClusterNode> next = lst.get(i);
+            for (int i = 1; i < size && res.size() < primaryAndBackups; i++) {
+                IgniteBiTuple<Long, ClusterNode> next = nodesArr[i];
 
                 ClusterNode node = next.get2();
 
@@ -429,14 +426,44 @@ public class RendezvousAffinityFunction implements AffinityFunction, Externaliza
     }
 
     /** {@inheritDoc} */
+    @SuppressWarnings({"ForLoopReplaceableByForEach", "unchecked"})
     @Override public List<List<ClusterNode>> assignPartitions(AffinityFunctionContext affCtx) {
         List<List<ClusterNode>> assignments = new ArrayList<>(parts);
 
         Map<UUID, Collection<ClusterNode>> neighborhoodCache = exclNeighbors ?
             GridCacheUtils.neighbors(affCtx.currentTopologySnapshot()) : null;
 
+        List<ClusterNode> nodes = affCtx.currentTopologySnapshot();
+
+        IgniteBiTuple<Long, ClusterNode>[] nodesArr = new IgniteBiTuple[nodes.size()];
+
+        MessageDigest d = digest.get();
+
+        Marshaller marsh = ignite.configuration().getMarshaller();
+
+        List<byte[]> nodesHashes = new ArrayList<>(nodes.size());
+
+        try {
+            for (int i = 0; i < nodes.size(); i++) {
+                ClusterNode node = nodes.get(i);
+
+                Object nodeHash = resolveNodeHash(node);
+
+                nodesHashes.add(marsh.marshal(nodeHash));
+            }
+        }
+        catch (IgniteCheckedException e) {
+            throw new IgniteException(e);
+        }
+
         for (int i = 0; i < parts; i++) {
-            List<ClusterNode> partAssignment = assignPartition(i, affCtx.currentTopologySnapshot(), affCtx.backups(),
+            List<ClusterNode> partAssignment = assignPartition(
+                d,
+                nodesArr,
+                nodesHashes,
+                i,
+                nodes,
+                affCtx.backups(),
                 neighborhoodCache);
 
             assignments.add(partAssignment);
