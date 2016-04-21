@@ -592,61 +592,7 @@ public class TcpDiscoveryNode extends GridMetadataAwareAdapter implements Cluste
         clientRouterNodeId = U.readUuid(in);
     }
 
-//    /**
-//     * @return Node.
-//     */
-//    protected Object readResolve() {
-//        IgniteKernal ignite = IgnitionEx.localIgnitex();
-//
-//        U.debug(">>> loc ignite: " + ignite);
-//        U.debug(">>> read: " + this);
-//
-//        if (ignite == null)
-//            return this;
-//
-//        ConcurrentMap<Long, ConcurrentLinkedHashMap<GridTuple3<Long, Long, UUID>, TcpDiscoveryNode>> nodeLocalMap =
-//            ignite.cluster().nodeLocalMap();
-//
-//        ConcurrentLinkedHashMap<GridTuple3<Long, Long, UUID>, TcpDiscoveryNode> cache =
-//            nodeLocalMap.get(Long.MIN_VALUE);
-//
-//        if (cache == null) {
-//            ConcurrentLinkedHashMap<GridTuple3<Long, Long, UUID>, TcpDiscoveryNode> old = nodeLocalMap.putIfAbsent(
-//                Long.MIN_VALUE,
-//                cache = new ConcurrentLinkedHashMap<>(16,
-//                    .75f,
-//                    1,
-//                    1024,
-//                    ConcurrentLinkedHashMap.QueuePolicy.PER_SEGMENT_Q));
-//
-//            if (old != null)
-//                cache = old;
-//        }
-//
-//        GridTuple3<Long, Long, UUID> key = new GridTuple3<>(
-//            order,
-//            intOrder,
-//            id);
-//
-//        TcpDiscoveryNode node = cache.get(key);
-//
-//        if (node != null) {
-//            U.debug("found in cache: " + node);
-//
-//            assert node.equals(this) : node + " " + this;
-//
-//            return node;
-//        }
-//        else {
-//            TcpDiscoveryNode old = cache.putIfAbsent(
-//                key,
-//                this);
-//
-//            return old != null ? old : this;
-//        }
-//    }
-
-        /** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override public int hashCode() {
         return id.hashCode();
     }

@@ -79,6 +79,7 @@ public class TcpDiscoveryJoinRequestMessage extends TcpDiscoveryAbstractMessage 
         setFlag(RESPONDED_FLAG_POS, responded);
     }
 
+    /** {@inheritDoc} */
     @Override public boolean equals(Object obj) {
         // NOTE!
         // Do not call super. As IDs will differ, but we can ignore this.

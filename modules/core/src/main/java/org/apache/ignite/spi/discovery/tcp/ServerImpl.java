@@ -1814,7 +1814,7 @@ class ServerImpl extends TcpDiscoveryImpl {
     private class EnsuredMessageHistory {
         /** Pending messages. */
         private final GridBoundedLinkedHashSet<TcpDiscoveryAbstractMessage>
-            msgs = new GridBoundedLinkedHashSet<>(10);
+            msgs = new GridBoundedLinkedHashSet<>(ENSURED_MSG_HIST_SIZE);
 
         /**
          * @param msg Adds message.
@@ -2570,7 +2570,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                             }
                             finally {
                                 if (!success) {
-                                    U.debug(log, "Closing socket to next: " + next);
+                                    if (log.isDebugEnabled())
+                                        log.debug("Closing socket to next: " + next);
 
                                     U.closeQuiet(sock);
 
@@ -2735,7 +2736,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                             forceSndPending = false;
 
                             if (!sent) {
-                                U.debug(log, "Closing socket to next (not sent): " + next);
+                                if (log.isDebugEnabled())
+                                    log.debug("Closing socket to next (not sent): " + next);
 
                                 U.closeQuiet(sock);
 
@@ -3103,7 +3105,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                 final IgniteNodeValidationResult err = spi.getSpiContext().validateNode(node);
 
                 if (err != null) {
-                    U.debug(log, "IgniteNodeValidationResult: " + err);
+                    if (log.isDebugEnabled())
+                        log.debug("Node validation failed [res=" + err + ", node=" + node + ']');
 
                     utilityPool.submit(
                         new Runnable() {
@@ -5821,16 +5824,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                 if (msg == null)
                     noMessageLoop();
-                else {
-                    long start = U.currentTimeMillis();
-
+                else
                     processMessage(msg);
-
-                    long duration = U.currentTimeMillis() - start;
-
-                    if (duration > 1000)
-                        U.warn(log, "Message processed for too long [duraiton=" + duration + ", msg=" + msg + ']');
-                }
             }
         }
 
@@ -5863,8 +5858,6 @@ class ServerImpl extends TcpDiscoveryImpl {
                 msg instanceof TcpDiscoveryJoinRequestMessage ||
                 msg instanceof TcpDiscoveryCustomEventMessage) &&
                 queue.contains(msg)) {
-                U.debug(log, ">>> Ignoring message: " + msg);
-
                 if (log.isDebugEnabled())
                     log.debug("Ignoring duplicate message: " + msg);
 

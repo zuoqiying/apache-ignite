@@ -1254,18 +1254,6 @@ public class IgnitionEx {
     }
 
     /**
-     * Gets a name of the grid, which is owner of current thread.
-     *
-     * @return Grid instance related to current thread or {@code null} if not found.
-     */
-    public static IgniteKernal localIgnitex() {
-        if (Thread.currentThread() instanceof IgniteThread)
-            return gridx(((IgniteThread)Thread.currentThread()).getGridName());
-        else
-            return null;
-    }
-
-    /**
      * Gets grid instance without waiting its initialization.
      *
      * @param name Grid name.
