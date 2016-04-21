@@ -50,11 +50,10 @@ public class Bench1 {
         -DIGNITE_QUIET=false -server -Xmx12g -cp ignite-core-rebal-master.jar \
         -Xloggc:gctop.log -verbose:gc -XX:+PrintGCDateStamps org.apache.ignite.Bench1 32 70 > top.log 2>&1 &
 
-    nohup java \
-        -DIGNITE_QUIET=false -server -Xmx16g -cp ignite-core-rebal-master.jar \
+    nohup java -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=10225 \
+        -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false \
+        -DIGNITE_QUIET=false -server -Xmx26g -cp ignite-core-rebal-master.jar \
         -Xloggc:gctop`date +"%m%d%H%M%S"`.log -verbose:gc -XX:+PrintGCDateStamps org.apache.ignite.Bench1 1 60 > top`date +"%m%d%H%M%S"`.log 2>&1 &
-
-
 
      */
 
