@@ -55,6 +55,8 @@ import org.apache.ignite.internal.processors.cache.query.continuous.IgniteCacheC
 import org.apache.ignite.internal.processors.cache.query.continuous.IgniteCacheContinuousQueryClientTest;
 import org.apache.ignite.internal.processors.cache.query.continuous.IgniteCacheContinuousQueryClientTxReconnectTest;
 
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_DISCOVERY_HISTORY_SIZE;
+
 /**
  * Test suite for cache queries.
  */
@@ -66,43 +68,11 @@ public class IgniteCacheQuerySelfTestSuite3 extends TestSuite {
     public static TestSuite suite() throws Exception {
         TestSuite suite = new TestSuite("Ignite Cache Queries Test Suite 3");
 
+        System.setProperty(IGNITE_DISCOVERY_HISTORY_SIZE, "100");
+
         // Continuous queries.
-        suite.addTestSuite(GridCacheContinuousQueryLocalSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryLocalAtomicSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryReplicatedSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryReplicatedAtomicSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryReplicatedP2PDisabledSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryPartitionedSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryPartitionedOnlySelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryPartitionedP2PDisabledSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryTxSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryTxOffheapTieredTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryTxOffheapValuesTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryAtomicSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryAtomicNearEnabledSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryAtomicP2PDisabledSelfTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryAtomicOffheapTieredTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryAtomicOffheapValuesTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryReplicatedTxOneNodeTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryReplicatedAtomicOneNodeTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryPartitionTxOneNodeTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryPartitionAtomicOneNodeTest.class);
-        suite.addTestSuite(IgniteCacheContinuousQueryClientTest.class);
-        suite.addTestSuite(IgniteCacheContinuousQueryClientReconnectTest.class);
-        suite.addTestSuite(IgniteCacheContinuousQueryClientTxReconnectTest.class);
         suite.addTestSuite(CacheContinuousQueryRandomOperationsTest.class);
-        suite.addTestSuite(CacheContinuousQueryRandomOperationsTwoNodesTest.class);
-        suite.addTestSuite(GridCacheContinuousQueryConcurrentTest.class);
         suite.addTestSuite(CacheContinuousQueryAsyncFilterListenerTest.class);
-        suite.addTestSuite(CacheContinuousQueryFactoryFilterRandomOperationTest.class);
-        suite.addTestSuite(CacheContinuousQueryFactoryAsyncFilterRandomOperationTest.class);
-        suite.addTestSuite(CacheContinuousQueryOrderingEventTest.class);
-        suite.addTestSuite(CacheContinuousQueryOperationFromCallbackTest.class);
-        suite.addTestSuite(CacheContinuousQueryOperationP2PTest.class);
-        suite.addTestSuite(CacheContinuousBatchAckTest.class);
-        suite.addTestSuite(CacheContinuousBatchForceServerModeAckTest.class);
-        suite.addTestSuite(CacheContinuousQueryExecuteInPrimaryTest.class);
-        suite.addTestSuite(CacheContinuousQueryLostPartitionTest.class);
 
         return suite;
     }
