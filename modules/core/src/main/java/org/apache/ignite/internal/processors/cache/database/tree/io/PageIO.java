@@ -53,16 +53,22 @@ public abstract class PageIO {
     public static final short T_H2_REF_INNER = 4;
 
     /** */
-    public static final short T_FREE_LEAF = 5;
+    public static final short T_DATA_REF_INNER = 5;
 
     /** */
-    public static final short T_FREE_INNER = 6;
+    public static final short T_DATA_REF_LEAF = 6;
 
     /** */
-    public static final short T_REUSE_LEAF = 7;
+    public static final short T_FREE_LEAF = 7;
 
     /** */
-    public static final short T_REUSE_INNER = 8;
+    public static final short T_FREE_INNER = 8;
+
+    /** */
+    public static final short T_REUSE_LEAF = 9;
+
+    /** */
+    public static final short T_REUSE_INNER = 10;
 
     /** */
     private final int ver;
@@ -94,8 +100,6 @@ public abstract class PageIO {
      * @param type Type.
      */
     public static void setType(ByteBuffer buf, int type) {
-        assert type >= T_DATA && type <= T_H2_REF_INNER : type;
-
         buf.putShort(TYPE_OFF, (short)type);
 
         assert getType(buf) == type;

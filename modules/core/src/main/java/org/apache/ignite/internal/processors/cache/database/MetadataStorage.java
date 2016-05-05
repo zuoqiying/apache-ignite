@@ -17,33 +17,30 @@
 
 package org.apache.ignite.internal.processors.cache.database;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiTuple;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-
 /**
- *
+ * Metadata storage.
  */
-public class MetadataStorage {
+public class MetadataStorage implements MetaStore {
     /** */
-    public static final byte PAGE_TYPE_EMPTY = 0;
+        public static final byte PAGE_TYPE_EMPTY = 0;
 
-    /** */
-    public static final byte PAGE_TYPE_INDEX = 1;
+        /** */
+        public static final byte PAGE_TYPE_INDEX = 1;
 
-    /** */
-    public static final byte PAGE_TYPE_PARTS = 2;
-
-    /** */
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+        /** */
+        public static final byte PAGE_TYPE_PARTS = 2;
 
     /** */
     private PageMemory pageMem;
@@ -55,18 +52,10 @@ public class MetadataStorage {
         this.pageMem = pageMem;
     }
 
-    /**
-     * @param cacheId Cache ID.
-     * @param idxName Index name.
-     * @return A tuple, consisting of a root page ID for the given index and a boolean flag
-     *      indicating whether the page was newly allocated.
-     */
-    public IgniteBiTuple<FullPageId, Boolean> getOrAllocateForIndex(
-        int cacheId,
-        String idxName
-    ) throws IgniteCheckedException {
-        return getOrAllocate(PAGE_TYPE_INDEX, cacheId, idxName.getBytes(UTF_8));
-    }
+    /** {@inheritDoc} */
+    @Override public synchronized IgniteBiTuple<FullPageId, Boolean> getOrAllocateForIndex(int cacheId, String idxName)
+        throws IgniteCheckedException {
+        byte[] idxNameBytes = idxName.getBytes(StandardCharsets.UTF_8);
 
     /**
      * @param cacheId Cache ID.
@@ -185,12 +174,19 @@ public class MetadataStorage {
                 try {
                     state.writePage = nextPageId;
 
-                    nextPageId = buf.getLong();
+                    buf = nextPage.getForRead();
 
-                    rootPageId = scanForIndexRoot(buf, idxNameBytes, cacheId);
+                    try {
+                        nextPageId = buf.getLong();
 
-                    if (rootPageId != null)
-                        return rootPageId;
+                        rootPageId = scanForIndexRoot(buf, idxNameBytes, cacheId);
+
+                        if (rootPageId != null)
+                            return rootPageId;
+                    }
+                    finally {
+                        nextPage.releaseRead();
+                    }
                 }
                 finally {
                     pageMem.releasePage(nextPage);
@@ -246,12 +242,12 @@ public class MetadataStorage {
             try {
                 long nextPageId = writeBuf.getLong();
 
-                assert nextPageId == 0;
+                assert nextPageId == 0: "[nextPageId=" + U.hexLong(nextPageId) + ", writePageId=" + U.hexLong(writePageId) + ']';
 
                 // Position buffer to the last record.
                 writeBuf.position(state.position);
 
-                FullPageId newPageId = pageMem.allocatePage(cacheId, 0, allocatorFlags);
+                FullPageId idxRoot = pageMem.allocatePage(cacheId, 0, PageIdAllocator.FLAG_META);
 
                 if (writeBuf.remaining() < nameBytes.length + 9) {
                     // Link new meta page.
@@ -271,6 +267,8 @@ public class MetadataStorage {
                     writePage = pageMem.page(newMeta);
                     writeBuf = writePage.getForWrite();
                     writePageId = newMeta.pageId();
+                    // Next page, just need to make an offset.
+                    writeBuf.putLong(0);
                 }
 
                 writeBuf.put(type);

@@ -18,6 +18,8 @@
 package org.apache.ignite.internal.processors.cache.database.tree.io;
 
 import java.nio.ByteBuffer;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.processors.cache.database.tree.util.PageHandler;
 
 /**
  * Abstract IO routines for B+Tree leaf pages.
@@ -33,23 +35,16 @@ public abstract class BPlusLeafIO<L> extends BPlusIO<L> {
     }
 
     /** {@inheritDoc} */
-    @Override public final int getMaxCount(ByteBuffer buf) {
+    @Override public int getMaxCount(ByteBuffer buf) {
         return (buf.capacity() - ITEMS_OFF) / itemSize;
     }
 
     /** {@inheritDoc} */
     @Override public final void copyItems(ByteBuffer src, ByteBuffer dst, int srcIdx, int dstIdx, int cnt,
-        boolean cpLeft) {
+        boolean cpLeft) throws IgniteCheckedException {
         assert srcIdx != dstIdx || src != dst;
 
-        if (dstIdx > srcIdx) {
-            for (int i = cnt - 1; i >= 0; i--)
-                dst.putLong(offset(dstIdx + i), src.getLong(offset(srcIdx + i)));
-        }
-        else {
-            for (int i = 0; i < cnt; i++)
-                dst.putLong(offset(dstIdx + i), src.getLong(offset(srcIdx + i)));
-        }
+        PageHandler.copyMemory(src, dst, offset(srcIdx), offset(dstIdx), cnt * itemSize);
     }
 
     /**

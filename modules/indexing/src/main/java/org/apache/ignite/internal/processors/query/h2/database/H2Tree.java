@@ -6,9 +6,7 @@ import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
 import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusIO;
-import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusInnerIO;
-import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusLeafIO;
-import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
+import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
 import org.apache.ignite.internal.processors.query.h2.database.io.H2InnerIO;
 import org.apache.ignite.internal.processors.query.h2.database.io.H2LeafIO;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2Row;
@@ -21,6 +19,7 @@ public abstract class H2Tree extends BPlusTree<SearchRow, GridH2Row> {
     private final H2RowStore rowStore;
 
     /**
+     * @param reuseList Reuse list.
      * @param cacheId Cache ID.
      * @param pageMem Page memory.
      * @param rowStore Row data store.
@@ -28,9 +27,15 @@ public abstract class H2Tree extends BPlusTree<SearchRow, GridH2Row> {
      * @param initNew Initialize new index.
      * @throws IgniteCheckedException If failed.
      */
-    public H2Tree(int cacheId, PageMemory pageMem, H2RowStore rowStore, FullPageId metaPageId, boolean initNew)
-        throws IgniteCheckedException {
-        super(cacheId, pageMem, metaPageId);
+    public H2Tree(
+        ReuseList reuseList,
+        int cacheId,
+        PageMemory pageMem,
+        H2RowStore rowStore,
+        FullPageId metaPageId,
+        boolean initNew
+    ) throws IgniteCheckedException {
+        super(cacheId, pageMem, metaPageId, reuseList, H2InnerIO.VERSIONS, H2LeafIO.VERSIONS);
 
         assert rowStore != null;
 
@@ -45,26 +50,6 @@ public abstract class H2Tree extends BPlusTree<SearchRow, GridH2Row> {
      */
     public H2RowStore getRowStore() {
         return rowStore;
-    }
-
-    /** {@inheritDoc} */
-    @Override protected BPlusIO<SearchRow> io(int type, int ver) {
-        if (type == PageIO.T_H2_REF_INNER)
-            return H2InnerIO.VERSIONS.forVersion(ver);
-
-        assert type == PageIO.T_H2_REF_LEAF: type;
-
-        return H2LeafIO.VERSIONS.forVersion(ver);
-    }
-
-    /** {@inheritDoc} */
-    @Override protected BPlusInnerIO<SearchRow> latestInnerIO() {
-        return H2InnerIO.VERSIONS.latest();
-    }
-
-    /** {@inheritDoc} */
-    @Override protected BPlusLeafIO<SearchRow> latestLeafIO() {
-        return H2LeafIO.VERSIONS.latest();
     }
 
     /** {@inheritDoc} */
