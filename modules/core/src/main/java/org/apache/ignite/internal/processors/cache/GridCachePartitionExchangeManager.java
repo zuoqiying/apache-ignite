@@ -998,7 +998,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                         top = cacheCtx.topology();
 
                     if (top != null)
-                        updated |= top.update(null, entry.getValue(), null) != null;
+                        updated |= top.update(msg.exchangeId(), entry.getValue(), msg.partitionUpdateCounters(cacheId)) != null;
                 }
 
                 if (!cctx.kernalContext().clientNode() && updated)
@@ -1047,7 +1047,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                         top = cacheCtx.topology();
 
                     if (top != null)
-                        updated |= top.update(null, entry.getValue(), null) != null;
+                        updated |= top.update(msg.exchangeId(), entry.getValue(), msg.partitionUpdateCounters(cacheId)) != null;
                 }
 
                 if (updated)

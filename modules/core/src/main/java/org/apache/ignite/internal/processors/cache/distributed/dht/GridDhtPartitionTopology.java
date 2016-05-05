@@ -199,9 +199,9 @@ public interface GridDhtPartitionTopology {
      * @param cntrMap Partition update counters.
      * @return Local partition map if there were evictions or {@code null} otherwise.
      */
-    public GridDhtPartitionMap2 update(@Nullable GridDhtPartitionExchangeId exchId,
+    public GridDhtPartitionMap2 update(GridDhtPartitionExchangeId exchId,
         GridDhtPartitionFullMap partMap,
-        @Nullable Map<Integer, Long> cntrMap);
+        Map<Integer, Long> cntrMap);
 
     /**
      * @param exchId Exchange ID.
@@ -209,9 +209,9 @@ public interface GridDhtPartitionTopology {
      * @param cntrMap Partition update counters.
      * @return Local partition map if there were evictions or {@code null} otherwise.
      */
-    @Nullable public GridDhtPartitionMap2 update(@Nullable GridDhtPartitionExchangeId exchId,
+    @Nullable public GridDhtPartitionMap2 update(GridDhtPartitionExchangeId exchId,
         GridDhtPartitionMap2 parts,
-        @Nullable Map<Integer, Long> cntrMap);
+        Map<Integer, Long> cntrMap);
 
     /**
      * @return Partition update counters.
