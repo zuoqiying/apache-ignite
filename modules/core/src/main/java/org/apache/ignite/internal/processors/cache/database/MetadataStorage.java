@@ -34,13 +34,13 @@ import org.apache.ignite.lang.IgniteBiTuple;
  */
 public class MetadataStorage implements MetaStore {
     /** */
-        public static final byte PAGE_TYPE_EMPTY = 0;
+    public static final byte PAGE_TYPE_EMPTY = 0;
 
-        /** */
-        public static final byte PAGE_TYPE_INDEX = 1;
+    /** */
+    public static final byte PAGE_TYPE_INDEX = 1;
 
-        /** */
-        public static final byte PAGE_TYPE_PARTS = 2;
+    /** */
+    public static final byte PAGE_TYPE_PARTS = 2;
 
     /** */
     private PageMemory pageMem;
@@ -56,6 +56,8 @@ public class MetadataStorage implements MetaStore {
     @Override public synchronized IgniteBiTuple<FullPageId, Boolean> getOrAllocateForIndex(int cacheId, String idxName)
         throws IgniteCheckedException {
         byte[] idxNameBytes = idxName.getBytes(StandardCharsets.UTF_8);
+        return getOrAllocate(PAGE_TYPE_INDEX, cacheId, idxNameBytes);
+    }
 
     /**
      * @param cacheId Cache ID.
@@ -100,6 +102,7 @@ public class MetadataStorage implements MetaStore {
      * @param nameBytes Name to find.
      * @return Non-zero root page iD if an index with the given name was found.
      */
+
     private FullPageId tryFindRef(Page meta, byte type, byte[] nameBytes, int cacheId, SearchState state)
         throws IgniteCheckedException {
         ByteBuffer buf = meta.getForRead();
@@ -242,16 +245,16 @@ public class MetadataStorage implements MetaStore {
             try {
                 long nextPageId = writeBuf.getLong();
 
-                assert nextPageId == 0: "[nextPageId=" + U.hexLong(nextPageId) + ", writePageId=" + U.hexLong(writePageId) + ']';
+                assert nextPageId == 0 : "[nextPageId=" + U.hexLong(nextPageId) + ", writePageId=" + U.hexLong(writePageId) + ']';
 
                 // Position buffer to the last record.
                 writeBuf.position(state.position);
 
-                FullPageId idxRoot = pageMem.allocatePage(cacheId, 0, PageIdAllocator.FLAG_META);
+                FullPageId newPageId = pageMem.allocatePage(cacheId, 0, allocatorFlags);
 
                 if (writeBuf.remaining() < nameBytes.length + 9) {
                     // Link new meta page.
-                    FullPageId newMeta = pageMem.allocatePage(0, 0, PageIdAllocator.FLAG_META);
+                    FullPageId newMeta = pageMem.allocatePage(0, 0, allocatorFlags);
 
                     writeBuf.putLong(0, newMeta.pageId());
 
