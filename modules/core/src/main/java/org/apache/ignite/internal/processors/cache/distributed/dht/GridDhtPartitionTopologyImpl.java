@@ -1031,7 +1031,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             for (Map.Entry<Integer, T2<Long, UUID>> entry : this.cntrMap.entrySet()) {
                 if (entry.getValue().get1() > 0 && entry.getValue().get2().equals(cctx.localNodeId())) {
-                    GridDhtLocalPartition part = locParts.get(entry.getKey());
+                    GridDhtLocalPartition part = locParts[entry.getKey()];
 
                     part.own();
 
@@ -1041,7 +1041,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 }
             }
 
-            for (GridDhtLocalPartition part : locParts.values()) {
+            for (GridDhtLocalPartition part : locParts) {
                 Long cntr = cntrMap.get(part.id());
 
                 if (cntr != null && cntr > part.updateCounter() && part.state() == OWNING) {
@@ -1115,14 +1115,12 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             part2node = p2n;
 
-            changed |= checkEvictions(updateSeq);
-
             AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
 
             if (!affVer.equals(AffinityTopologyVersion.NONE) && affVer.compareTo(topVer) >= 0) {
                 List<List<ClusterNode>> aff = cctx.affinity().assignments(topVer);
 
-                changed = checkEvictions(updateSeq, aff);
+                changed |= checkEvictions(updateSeq, aff);
 
                 updateRebalanceVersion(aff);
             }
