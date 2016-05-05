@@ -1255,7 +1255,7 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
         onUpdateFinished(topVer, localUpdateCntr);
 
-        if (intercept)
+        if (intercept) {
             entry0.updateCounter(updateCntr0);
 
             cctx.config().getInterceptor().onAfterRemove(entry0);
