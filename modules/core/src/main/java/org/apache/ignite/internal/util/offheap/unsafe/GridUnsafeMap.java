@@ -940,8 +940,8 @@ public class GridUnsafeMap implements GridOffHeapMap {
 
                 long oldTblEnd = oldTblAddr + memCap;
 
-                if (log != null && log.isDebugEnabled())
-                    log.debug("Rehashing [size=" + totalCnt.sum() + ", segIdx=" + idx + ", oldCap=" + oldCap +
+                if (log != null)
+                    log.info("Rehashing [size=" + totalCnt.sum() + ", segIdx=" + idx + ", oldCap=" + oldCap +
                         ", oldMemCap=" + oldMemCap + ", newCap=" + newCap + ", newMemCap=" + newMemCap + ']');
 
                 for (long oldBinAddr = oldTblAddr; oldBinAddr < oldTblEnd; oldBinAddr += 8) {

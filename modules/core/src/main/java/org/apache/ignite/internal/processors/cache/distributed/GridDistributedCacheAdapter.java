@@ -158,10 +158,8 @@ public abstract class GridDistributedCacheAdapter<K, V> extends GridCacheAdapter
         if (entry.markObsoleteVersion(ver)) {
             IgniteLogger log = ctx.offheapDebugLog();
 
-            if (log.isDebugEnabled())
-                log.debug("innerUpdate-update [key=" + key.value(ctx.cacheObjectContext(), false) +
-                    ", entry=" + System.identityHashCode(entry) +
-                    ']');
+            log.info("innerUpdate-update [key=" + key.value(ctx.cacheObjectContext(), false) +
+                ", entry=" + System.identityHashCode(entry) + ']');
 
             removeEntry(entry);
         }

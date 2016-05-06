@@ -2119,8 +2119,7 @@ public class GridCacheSwapManager extends GridCacheManagerAdapter {
                             if (ldrId.equals(swapEntry.keyClassLoaderId())) {
                                 IgniteLogger log = cctx.offheapDebugLog();
 
-                                if (log.isDebugEnabled())
-                                    log.debug("onUndeploy remove key [ldrId=" + ldrId + ']');
+                                log.info("onUndeploy remove key [ldrId=" + ldrId + ']');
 
                                 iter.removeX();
 
@@ -2141,8 +2140,7 @@ public class GridCacheSwapManager extends GridCacheManagerAdapter {
 
                                 IgniteLogger log = cctx.offheapDebugLog();
 
-                                if (log.isDebugEnabled())
-                                    log.debug("onUndeploy remove value [ldrId=" + ldrId + ']');
+                                log.info("onUndeploy remove value [ldrId=" + ldrId + ']');
 
                                 if (ldrId.equals(valLdrId)) {
                                     iter.removeX();

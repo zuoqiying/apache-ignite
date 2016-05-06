@@ -229,8 +229,7 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
     @Nullable public byte[] remove(@Nullable String spaceName, int part, KeyCacheObject key, byte[] keyBytes) throws IgniteCheckedException {
         IgniteLogger log = ctx.offheapDebugLog();
 
-        if (log.isDebugEnabled())
-            log.debug("offheap proc remove [key=" + key.value(null, false) + ']');
+        log.info("offheap proc remove [key=" + key.value(null, false) + ']');
 
         GridOffHeapPartitionedMap m = offheap(spaceName);
 
@@ -255,8 +254,9 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
             throw new IgniteCheckedException("Failed to write data to off-heap space, no space registered for name: " +
                 spaceName);
 
-        if (log.isDebugEnabled())
-            log.debug("offheap proc put [key=" + key.value(null, false) + ']');
+        IgniteLogger log = ctx.offheapDebugLog();
+
+        log.info("offheap proc put [key=" + key.value(null, false) + ']');
 
         m.put(part, U.hash(key), keyBytes(key, keyBytes), valBytes);
     }
@@ -273,8 +273,9 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
      */
     public boolean removex(@Nullable String spaceName, int part, KeyCacheObject key, byte[] keyBytes)
         throws IgniteCheckedException {
-        if (log.isDebugEnabled())
-            log.debug("offheap proc removex [key=" + key.value(null, false) + ']');
+        IgniteLogger log = ctx.offheapDebugLog();
+
+        log.info("offheap proc removex [key=" + key.value(null, false) + ']');
 
         GridOffHeapPartitionedMap m = offheap(spaceName);
 
@@ -299,8 +300,9 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
         IgniteBiPredicate<Long, Integer> p) throws IgniteCheckedException {
         GridOffHeapPartitionedMap m = offheap(spaceName);
 
-        if (log.isDebugEnabled())
-            log.debug("offheap proc removex2 [key=" + key.value(null, false) + ']');
+        IgniteLogger log = ctx.offheapDebugLog();
+
+        log.info("offheap proc removex2 [key=" + key.value(null, false) + ']');
 
         return m != null && m.removex(part, U.hash(key), keyBytes(key, keyBytes), p);
     }
