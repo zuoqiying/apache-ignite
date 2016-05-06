@@ -23,6 +23,7 @@ import java.util.Queue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.util.GridCloseableIteratorAdapter;
 import org.apache.ignite.internal.util.lang.GridCloseableIterator;
 import org.apache.ignite.internal.util.offheap.GridOffHeapEventListener;
@@ -115,6 +116,9 @@ public class GridUnsafeMap implements GridOffHeapMap {
     /** */
     private final boolean rmvEvicted;
 
+    /** */
+    private final IgniteLogger log;
+
     /**
      * @param concurrency Concurrency.
      * @param load Load factor.
@@ -128,6 +132,7 @@ public class GridUnsafeMap implements GridOffHeapMap {
         @Nullable GridOffHeapEvictListener evictLsnr) {
         this.concurrency = concurrency;
         this.load = load;
+        this.log = null;
 
         part = 0;
 
@@ -201,7 +206,7 @@ public class GridUnsafeMap implements GridOffHeapMap {
      */
     @SuppressWarnings("unchecked")
     GridUnsafeMap(int part, int concurrency, float load, long initCap, LongAdder8 totalCnt, GridUnsafeMemory mem,
-        GridUnsafeLru lru, @Nullable GridOffHeapEvictListener evictLsnr, GridUnsafeLruPoller lruPoller) {
+        GridUnsafeLru lru, @Nullable GridOffHeapEvictListener evictLsnr, GridUnsafeLruPoller lruPoller, IgniteLogger log) {
         this.part = part;
         this.concurrency = concurrency > MAX_CONCURRENCY ? MAX_CONCURRENCY : concurrency;
         this.load = load;
@@ -209,6 +214,7 @@ public class GridUnsafeMap implements GridOffHeapMap {
         this.mem = mem;
         this.lru = lru;
         this.lruPoller = lruPoller;
+        this.log = log;
 
         if (lru != null)
             this.evictLsnr = evictLsnr;
@@ -933,6 +939,10 @@ public class GridUnsafeMap implements GridOffHeapMap {
                 long newTblAddr = mem.allocateSystem(newMemCap, true);
 
                 long oldTblEnd = oldTblAddr + memCap;
+
+                if (log != null && log.isDebugEnabled())
+                    log.debug("Rehashing [size=" + totalCnt.sum() + ", segIdx=" + idx + ", oldCap=" + oldCap +
+                        ", oldMemCap=" + oldMemCap + ", newCap=" + newCap + ", newMemCap=" + newMemCap + ']');
 
                 for (long oldBinAddr = oldTblAddr; oldBinAddr < oldTblEnd; oldBinAddr += 8) {
                     long entryAddr = Bin.first(oldBinAddr, mem);

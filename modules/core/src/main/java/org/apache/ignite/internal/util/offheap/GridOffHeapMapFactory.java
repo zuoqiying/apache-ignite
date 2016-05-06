@@ -17,6 +17,7 @@
 
 package org.apache.ignite.internal.util.offheap;
 
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMap;
 import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafePartitionedMap;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ public class GridOffHeapMapFactory {
      * @return Off-heap map.
      */
     public static GridOffHeapPartitionedMap unsafePartitionedMap(int parts, long initCap) {
-        return new GridUnsafePartitionedMap(parts, 128, 0.75f, initCap, 0, (short)0, null);
+        return new GridUnsafePartitionedMap(parts, 128, 0.75f, initCap, 0, (short)0, null, null);
     }
 
     /**
@@ -141,7 +142,7 @@ public class GridOffHeapMapFactory {
      * @return Off-heap map.
      */
     public static GridOffHeapPartitionedMap unsafePartitionedMap(int parts, int concurrency, long initCap) {
-        return new GridUnsafePartitionedMap(parts, concurrency, 0.75f, initCap, 0, (short)0, null);
+        return new GridUnsafePartitionedMap(parts, concurrency, 0.75f, initCap, 0, (short)0, null, null);
     }
 
     /**
@@ -155,7 +156,7 @@ public class GridOffHeapMapFactory {
      */
     public static GridOffHeapPartitionedMap unsafePartitionedMap(int parts, int concurrency, float load,
         long initCap) {
-        return new GridUnsafePartitionedMap(parts, concurrency, load, initCap, 0, (short)0, null);
+        return new GridUnsafePartitionedMap(parts, concurrency, load, initCap, 0, (short)0, null, null);
     }
 
     /**
@@ -170,7 +171,7 @@ public class GridOffHeapMapFactory {
      */
     public static GridOffHeapPartitionedMap unsafePartitionedMap(int parts, long initCap, long totalMem,
         short lruStripes) {
-        return new GridUnsafePartitionedMap(parts, 128, 0.75f, initCap, totalMem, lruStripes, null);
+        return new GridUnsafePartitionedMap(parts, 128, 0.75f, initCap, totalMem, lruStripes, null, null);
     }
 
     /**
@@ -186,7 +187,7 @@ public class GridOffHeapMapFactory {
      */
     public static GridOffHeapPartitionedMap unsafePartitionedMap(int parts, long initCap, long totalMem,
         short lruStripes, @Nullable GridOffHeapEvictListener lsnr) {
-        return new GridUnsafePartitionedMap(parts, 128, 0.75f, initCap, totalMem, lruStripes, lsnr);
+        return new GridUnsafePartitionedMap(parts, 128, 0.75f, initCap, totalMem, lruStripes, lsnr, null);
     }
 
     /**
@@ -203,7 +204,7 @@ public class GridOffHeapMapFactory {
      */
     public static GridOffHeapPartitionedMap unsafePartitionedMap(int parts, int concurrency, long initCap,
         long totalMem, short lruStripes, @Nullable GridOffHeapEvictListener lsnr) {
-        return new GridUnsafePartitionedMap(parts, concurrency, 0.75f, initCap, totalMem, lruStripes, lsnr);
+        return new GridUnsafePartitionedMap(parts, concurrency, 0.75f, initCap, totalMem, lruStripes, lsnr, null);
     }
 
     /**
@@ -220,7 +221,7 @@ public class GridOffHeapMapFactory {
      * @return Off-heap map.
      */
     public static GridOffHeapPartitionedMap unsafePartitionedMap(int parts, int concurrency, float load,
-        long initCap, long totalMem, short lruStripes, @Nullable GridOffHeapEvictListener lsnr) {
-        return new GridUnsafePartitionedMap(parts, concurrency, load, initCap, totalMem, lruStripes, lsnr);
+        long initCap, long totalMem, short lruStripes, @Nullable GridOffHeapEvictListener lsnr, IgniteLogger log) {
+        return new GridUnsafePartitionedMap(parts, concurrency, load, initCap, totalMem, lruStripes, lsnr, log);
     }
 }

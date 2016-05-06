@@ -2061,6 +2061,10 @@ public class GridCacheContext<K, V> implements Externalizable {
         }
     }
 
+    public IgniteLogger offheapDebugLog() {
+        return ctx.offheapDebugLog();
+    }
+
     /** {@inheritDoc} */
     @Override public String toString() {
         return "GridCacheContext: " + name();

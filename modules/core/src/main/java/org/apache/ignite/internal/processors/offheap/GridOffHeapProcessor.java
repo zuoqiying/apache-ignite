@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.offheap;
 
 import java.util.Set;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.processors.GridProcessorAdapter;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
@@ -70,7 +71,7 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
         spaceName = maskNull(spaceName);
 
         GridOffHeapPartitionedMap m = GridOffHeapMapFactory.unsafePartitionedMap(parts, 1024, 0.75f, init, max,
-            (short)512, lsnr);
+            (short)512, lsnr, ctx.offheapDebugLog());
 
         GridOffHeapPartitionedMap old = offheap.put(spaceName, m);
 
@@ -226,6 +227,11 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
      * @throws IgniteCheckedException If failed.
      */
     @Nullable public byte[] remove(@Nullable String spaceName, int part, KeyCacheObject key, byte[] keyBytes) throws IgniteCheckedException {
+        IgniteLogger log = ctx.offheapDebugLog();
+
+        if (log.isDebugEnabled())
+            log.debug("offheap proc remove [key=" + key.value(null, false) + ']');
+
         GridOffHeapPartitionedMap m = offheap(spaceName);
 
         return m == null ? null : m.remove(part, U.hash(key), keyBytes(key, keyBytes));
@@ -249,6 +255,9 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
             throw new IgniteCheckedException("Failed to write data to off-heap space, no space registered for name: " +
                 spaceName);
 
+        if (log.isDebugEnabled())
+            log.debug("offheap proc put [key=" + key.value(null, false) + ']');
+
         m.put(part, U.hash(key), keyBytes(key, keyBytes), valBytes);
     }
 
@@ -264,6 +273,9 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
      */
     public boolean removex(@Nullable String spaceName, int part, KeyCacheObject key, byte[] keyBytes)
         throws IgniteCheckedException {
+        if (log.isDebugEnabled())
+            log.debug("offheap proc removex [key=" + key.value(null, false) + ']');
+
         GridOffHeapPartitionedMap m = offheap(spaceName);
 
         return m != null && m.removex(part, U.hash(key), keyBytes(key, keyBytes));
@@ -286,6 +298,9 @@ public class GridOffHeapProcessor extends GridProcessorAdapter {
         byte[] keyBytes,
         IgniteBiPredicate<Long, Integer> p) throws IgniteCheckedException {
         GridOffHeapPartitionedMap m = offheap(spaceName);
+
+        if (log.isDebugEnabled())
+            log.debug("offheap proc removex2 [key=" + key.value(null, false) + ']');
 
         return m != null && m.removex(part, U.hash(key), keyBytes(key, keyBytes), p);
     }

@@ -573,4 +573,6 @@ public interface GridKernalContext extends Iterable<GridComponent> {
      * @return Platform processor.
      */
     public PlatformProcessor platform();
+
+    public IgniteLogger offheapDebugLog();
 }

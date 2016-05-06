@@ -20,6 +20,7 @@ package org.apache.ignite.internal.util.offheap.unsafe;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.util.GridCloseableIteratorAdapter;
 import org.apache.ignite.internal.util.lang.GridCloseableIterator;
 import org.apache.ignite.internal.util.offheap.GridOffHeapEventListener;
@@ -78,7 +79,7 @@ public class GridUnsafePartitionedMap implements GridOffHeapPartitionedMap {
      */
     @SuppressWarnings("unchecked")
     public GridUnsafePartitionedMap(int parts, int concurrency, float load, long initCap, long totalMem,
-        short lruStripes, @Nullable GridOffHeapEvictListener evictLsnr) {
+        short lruStripes, @Nullable GridOffHeapEvictListener evictLsnr, IgniteLogger log) {
         this.parts = parts;
         this.concurrency = concurrency;
         this.load = load;
@@ -135,7 +136,7 @@ public class GridUnsafePartitionedMap implements GridOffHeapPartitionedMap {
                             left -= released;
                         }
                     }
-                }
+                }, log
             );
         }
     }

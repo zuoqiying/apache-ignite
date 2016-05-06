@@ -335,6 +335,9 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
     /** */
     private volatile boolean disconnected;
 
+    /** */
+    private IgniteLogger offheapDebugLog;
+
     /**
      * No-arg constructor is required by externalization.
      */
@@ -401,6 +404,8 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
                 log.debug("Failed to load spring component, will not be able to extract userVersion from " +
                     "META-INF/ignite.xml.");
         }
+
+        offheapDebugLog = log.getLogger("org.apache.ignite.internal.debug.offheap");
     }
 
     /** {@inheritDoc} */
@@ -954,6 +959,11 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
     /** {@inheritDoc} */
     @Override public PlatformProcessor platform() {
         return platformProc;
+    }
+
+    /** {@inheritDoc} */
+    @Override public IgniteLogger offheapDebugLog() {
+        return offheapDebugLog;
     }
 
     /**

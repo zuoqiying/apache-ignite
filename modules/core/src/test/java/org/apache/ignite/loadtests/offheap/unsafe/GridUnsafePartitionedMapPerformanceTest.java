@@ -29,6 +29,6 @@ public class GridUnsafePartitionedMapPerformanceTest extends GridOffHeapPartitio
     /** {@inheritDoc} */
     @Override protected GridOffHeapPartitionedMap newMap() {
         return GridOffHeapMapFactory.unsafePartitionedMap(RendezvousAffinityFunction.DFLT_PARTITION_COUNT,
-            Runtime.getRuntime().availableProcessors(), load, LOAD_CNT, mem, lruStripes, null);
+            Runtime.getRuntime().availableProcessors(), load, LOAD_CNT, mem, lruStripes, null, null);
     }
 }

@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteInterruptedException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.processors.query.GridQueryTypeDescriptor;
 import org.apache.ignite.internal.util.typedef.internal.SB;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -246,6 +248,15 @@ public abstract class GridH2AbstractKeyValueRow extends GridH2Row {
                     }
 
                     attempt++;
+
+                    GridKernalContext ctx = desc.owner().ctx;
+
+                    if (ctx != null) {
+                        IgniteLogger log = ctx.offheapDebugLog();
+
+                        if (log.isDebugEnabled())
+                            log.debug("Failed to get value for key [" + k + ", attempt=" + attempt + ']');
+                    }
 
                     if (start == 0)
                         start = U.currentTimeMillis();

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.cluster.ClusterTopologyException;
 import org.apache.ignite.compute.ComputeJob;
@@ -154,8 +155,16 @@ public abstract class GridDistributedCacheAdapter<K, V> extends GridCacheAdapter
         if (entry == null)
             return;
 
-        if (entry.markObsoleteVersion(ver))
+        if (entry.markObsoleteVersion(ver)) {
+            IgniteLogger log = ctx.offheapDebugLog();
+
+            if (log.isDebugEnabled())
+                log.debug("innerUpdate-update [key=" + key.value(ctx.cacheObjectContext(), false) +
+                    ", entry=" + System.identityHashCode(entry) +
+                    ']');
+
             removeEntry(entry);
+        }
     }
 
     /** {@inheritDoc} */

@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cache.CacheMemoryMode;
 import org.apache.ignite.internal.managers.swapspace.GridSwapSpaceManager;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
@@ -2116,6 +2117,11 @@ public class GridCacheSwapManager extends GridCacheManagerAdapter {
                             IgniteUuid valLdrId = swapEntry.valueClassLoaderId();
 
                             if (ldrId.equals(swapEntry.keyClassLoaderId())) {
+                                IgniteLogger log = cctx.offheapDebugLog();
+
+                                if (log.isDebugEnabled())
+                                    log.debug("onUndeploy remove key [ldrId=" + ldrId + ']');
+
                                 iter.removeX();
 
                                 undeployCnt++;
@@ -2132,6 +2138,11 @@ public class GridCacheSwapManager extends GridCacheManagerAdapter {
                                     if (val != null)
                                         valLdrId = cctx.deploy().getClassLoaderId(val.getClass().getClassLoader());
                                 }
+
+                                IgniteLogger log = cctx.offheapDebugLog();
+
+                                if (log.isDebugEnabled())
+                                    log.debug("onUndeploy remove value [ldrId=" + ldrId + ']');
 
                                 if (ldrId.equals(valLdrId)) {
                                     iter.removeX();

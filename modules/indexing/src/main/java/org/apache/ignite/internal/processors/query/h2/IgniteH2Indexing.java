@@ -289,7 +289,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
     };
 
     /** */
-    private volatile GridKernalContext ctx;
+    public volatile GridKernalContext ctx;
 
     /** Statement cache. */
     private final ConcurrentHashMap<Thread, StatementCache> stmtCache = new ConcurrentHashMap<>();

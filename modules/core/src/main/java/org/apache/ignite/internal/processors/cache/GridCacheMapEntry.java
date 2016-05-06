@@ -449,6 +449,14 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 return false;
 
             if (cctx.swap().onOffheapEvict(key, entry, partition(), evictVer)) {
+                IgniteLogger log = cctx.offheapDebugLog();
+
+                if (log.isDebugEnabled())
+                    log.debug("onOffheapEvict true [key=" + keyValue(false) +
+                        ", entry=" + System.identityHashCode(this) +
+                        ", ptr=" + offHeapPointer() +
+                        ']');
+
                 assert !hasValueUnlocked() : this;
 
                 obsolete = markObsolete0(obsoleteVer, false, null);
@@ -461,8 +469,17 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                     clearIndex(val);
                 }
             }
-            else
+            else {
+                IgniteLogger log = cctx.offheapDebugLog();
+
+                if (log.isDebugEnabled())
+                    log.debug("onOffheapEvict false [key=" + keyValue(false) +
+                        ", entry=" + System.identityHashCode(this) +
+                        ", ptr=" + offHeapPointer() +
+                        ']');
+
                 obsolete = false;
+            }
         }
 
         if (obsolete)
@@ -498,6 +515,21 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
                 if (cctx.offheapTiered()) {
                     e = cctx.swap().readOffheapPointer(this);
+
+                    IgniteLogger log = cctx.offheapDebugLog();
+
+                    if (log.isDebugEnabled()) {
+                        if (e != null)
+                            log.debug("Read offheap pointer [key=" + keyValue(false) +
+                                ", entry=" + System.identityHashCode(this) +
+                                ", ptr=" + e.offheapPointer() +
+                                ']');
+                        else
+                            log.debug("Read offheap pointer [key=" + keyValue(false) +
+                                ", entry=" + System.identityHashCode(this) +
+                                ", val=" + null +
+                                ']');
+                    }
 
                     if (e != null) {
                         if (e.offheapPointer() > 0) {
@@ -564,6 +596,14 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
             if (expireTime > 0 && U.currentTimeMillis() >= expireTime) { // Don't swap entry if it's expired.
                 // Entry might have been updated.
                 if (cctx.offheapTiered()) {
+                    IgniteLogger log = cctx.offheapDebugLog();
+
+                    if (log.isDebugEnabled())
+                        log.debug("Remove offheap expired [key=" + keyValue(false) +
+                            ", entry=" + System.identityHashCode(this) +
+                            ", ptr=" + offHeapPointer() +
+                            ']');
+
                     cctx.swap().removeOffheap(key);
 
                     offHeapPointer(0);
@@ -576,8 +616,17 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 if (log.isDebugEnabled())
                     log.debug("Value did not change, skip write swap entry: " + this);
 
-                if (cctx.swap().offheapEvictionEnabled())
+                if (cctx.swap().offheapEvictionEnabled()) {
+                    IgniteLogger log = cctx.offheapDebugLog();
+
+                    if (log.isDebugEnabled())
+                        log.debug("enableOffheapEviction [key=" + keyValue(false) +
+                            ", entry=" + System.identityHashCode(this) +
+                            ", ptr=" + offHeapPointer() +
+                            ']');
+
                     cctx.swap().enableOffheapEviction(key(), partition());
+                }
 
                 return;
             }
@@ -597,6 +646,14 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
             IgniteBiTuple<byte[], Byte> valBytes = valueBytes0();
 
+            IgniteLogger log = cctx.offheapDebugLog();
+
+            if (log.isDebugEnabled())
+                log.debug("writeToOffheap [key=" + keyValue(false) +
+                    ", entry=" + System.identityHashCode(this) +
+                    ", ptr=" + offHeapPointer() +
+                    ']');
+
             cctx.swap().write(key(),
                 ByteBuffer.wrap(valBytes.get1()),
                 valBytes.get2(),
@@ -607,9 +664,6 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 valClsLdrId);
 
             flags &= ~IS_SWAPPING_REQUIRED;
-
-            if (log.isDebugEnabled())
-                log.debug("Wrote swap entry: " + this);
         }
     }
 
@@ -644,6 +698,14 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
     protected final void releaseSwap() throws IgniteCheckedException {
         if (cctx.isSwapOrOffheapEnabled()) {
             synchronized (this) {
+                IgniteLogger log = cctx.offheapDebugLog();
+
+                if (log.isDebugEnabled())
+                    log.debug("releaseSwap [key=" + keyValue(false) +
+                        ", entry=" + System.identityHashCode(this) +
+                        ", ptr=" + offHeapPointer() +
+                        ']');
+
                 cctx.swap().remove(key());
             }
 
@@ -963,8 +1025,18 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
                     update(ret, expTime, ttl, nextVer, true);
 
-                    if (hadValPtr && cctx.offheapTiered())
+                    if (hadValPtr && cctx.offheapTiered()) {
+                        IgniteLogger log = cctx.offheapDebugLog();
+
+                        if (log.isDebugEnabled())
+                            log.debug("innerGet-remove [key=" + keyValue(false) +
+                                ", entry=" + System.identityHashCode(this) +
+                                ", ptr=" + offHeapPointer() +
+                                ']');
+
+
                         cctx.swap().removeOffheap(key);
+                    }
 
                     if (cctx.deferredDelete() && deletedUnlocked() && !isInternal() && !detached())
                         deletedUnlocked(false);
@@ -2313,6 +2385,14 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
             // Actual update.
             if (op == GridCacheOperation.UPDATE) {
+                IgniteLogger log = cctx.offheapDebugLog();
+
+                if (log.isDebugEnabled())
+                    log.debug("innerUpdate [key=" + keyValue(false) +
+                        ", entry=" + System.identityHashCode(this) +
+                        ", ptr=" + offHeapPointer() +
+                        ']');
+
                 if (intercept) {
                     updated0 = value(updated0, updated, false);
 
@@ -2456,6 +2536,16 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
                 if (cctx.offheapTiered() && hasValPtr) {
                     boolean rmv = cctx.swap().removeOffheap(key);
+
+                    IgniteLogger log = cctx.offheapDebugLog();
+
+                    if (log.isDebugEnabled())
+                        log.debug("innerUpdate remove offheap [key=" + keyValue(false) +
+                            ", entry=" + System.identityHashCode(this) +
+                            ", rmv=" + rmv +
+                            ", ptr=" + offHeapPointer() +
+                            ']');
+
 
                     assert rmv;
                 }
@@ -2845,6 +2935,14 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 obsoleteVer = ver;
 
                 obsoleteVersionExtras(obsoleteVer, extras);
+
+                IgniteLogger log = cctx.offheapDebugLog();
+
+                if (log.isDebugEnabled())
+                    log.debug("markObsolete0 [key=" + keyValue(false) +
+                        ", entry=" + System.identityHashCode(this) +
+                        ", ptr=" + offHeapPointer() +
+                        ']');
 
                 if (clear)
                     value(null);
@@ -4111,6 +4209,14 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
             flags &= ~IS_OFFHEAP_PTR_MASK;
 
             if (prevVal != null) {
+                IgniteLogger log = cctx.offheapDebugLog();
+
+                if (log.isDebugEnabled())
+                    log.debug("evictFailed [key=" + keyValue(false) +
+                        ", entry=" + System.identityHashCode(this) +
+                        ", ptr=" + offHeapPointer() +
+                        ']');
+
                 cctx.swap().removeOffheap(key());
 
                 value(prevVal);
@@ -4136,8 +4242,17 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
             if (!hasReaders() && markObsolete0(obsoleteVer, false, null)) {
                 if (!isStartVersion() && hasValueUnlocked()) {
                     if (cctx.offheapTiered() && hasOffHeapPointer()) {
-                        if (cctx.swap().offheapEvictionEnabled())
+                        if (cctx.swap().offheapEvictionEnabled()) {
+                            IgniteLogger log = cctx.offheapDebugLog();
+
+                            if (log.isDebugEnabled())
+                                log.debug("enableOffheapEviction evictInBatchInternal [key=" + keyValue(false) +
+                                    ", entry=" + System.identityHashCode(this) +
+                                    ", ptr=" + offHeapPointer() +
+                                    ']');
+
                             cctx.swap().enableOffheapEviction(key(), partition());
+                        }
 
                         return null;
                     }
