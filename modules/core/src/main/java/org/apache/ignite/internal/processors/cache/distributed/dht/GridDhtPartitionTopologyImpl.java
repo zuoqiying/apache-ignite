@@ -1020,81 +1020,12 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 return null;
             }
 
-            boolean changed = false;
-
-            for (Map.Entry<Integer, Long> e : cntrMap.entrySet()) {
-                Long cntr = this.cntrMap.get(e.getKey()).get1();
-
-                if (cntr == null || cntr < e.getValue())
-                    this.cntrMap.put(e.getKey(), new T2<>(e.getValue(), partMap.nodeId()));
-            }
-
-            for (Map.Entry<Integer, T2<Long, UUID>> entry : this.cntrMap.entrySet()) {
-                if (entry.getValue().get1() > 0 && entry.getValue().get2().equals(cctx.localNodeId())) {
-                    GridDhtLocalPartition part = locParts[entry.getKey()];
-
-                    part.own();
-
-                    partMap.get(cctx.localNodeId()).put(part.id(), OWNING);
-
-                    changed = true;
-                }
-            }
-
-            for (GridDhtLocalPartition part : locParts) {
-                Long cntr = cntrMap.get(part.id());
-
-                if (cntr != null && cntr > part.updateCounter() && part.state() == OWNING) {
-                    T2<Long, UUID> t = this.cntrMap.get(part.id());
-
-                    assert t != null;
-
-                    if (t.get2().equals(cctx.localNodeId()))
-                        continue;
-
-                    // TODO: change local state to moving, remote to owning.
-
-                    changed = true;
-                }
-            }
-
             long updateSeq = this.updateSeq.incrementAndGet();
 
             if (exchId != null)
                 lastExchangeId = exchId;
 
-            if (node2part != null) {
-                for (GridDhtPartitionMap2 part : node2part.values()) {
-                    GridDhtPartitionMap2 newPart = partMap.get(part.nodeId());
-
-                    // If for some nodes current partition has a newer map,
-                    // then we keep the newer value.
-                    if (newPart != null &&
-                        (newPart.updateSequence() < part.updateSequence() || (
-                            cctx.startTopologyVersion() != null &&
-                                newPart.topologyVersion() != null && // Backward compatibility.
-                                cctx.startTopologyVersion().compareTo(newPart.topologyVersion()) > 0))
-                        ) {
-                        if (log.isDebugEnabled())
-                            log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
-                                mapString(part) + ", newPart=" + mapString(newPart) + ']');
-
-                        partMap.put(part.nodeId(), part);
-                    }
-                }
-
-                for (Iterator<UUID> it = partMap.keySet().iterator(); it.hasNext(); ) {
-                    UUID nodeId = it.next();
-
-                    if (!cctx.discovery().alive(nodeId)) {
-                        if (log.isDebugEnabled())
-                            log.debug("Removing left node from full map update [nodeId=" + nodeId + ", partMap=" +
-                                partMap + ']');
-
-                        it.remove();
-                    }
-                }
-            }
+            boolean changed = updatePartMap(exchId, partMap, cntrMap);
 
             node2part = partMap;
 
@@ -1137,6 +1068,93 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         }
     }
 
+    private boolean updatePartMap(GridDhtPartitionExchangeId exchId, GridDhtPartitionFullMap partMap,
+        Map<Integer, Long> cntrMap) {
+
+        for (Map.Entry<Integer, Long> e : cntrMap.entrySet()) {
+            T2<Long, UUID> t = this.cntrMap.get(e.getKey());
+
+            Long cntr = t.get1();
+
+            if (cntr == null || cntr < e.getValue() ||
+                (cntr.equals(e.getValue()) && t.get2().compareTo(partMap.nodeId()) < 0))
+                this.cntrMap.put(e.getKey(), new T2<>(e.getValue(), partMap.nodeId()));
+        }
+
+        boolean changed = false;
+
+        if (node2part != null) {
+            for (GridDhtPartitionMap2 part : node2part.values()) {
+                GridDhtPartitionMap2 newPart = partMap.get(part.nodeId());
+
+                // If for some nodes current partition has a newer map,
+                // then we keep the newer value.
+                if (newPart != null &&
+                    (newPart.updateSequence() < part.updateSequence() || (
+                        cctx.startTopologyVersion() != null &&
+                            newPart.topologyVersion() != null && // Backward compatibility.
+                            cctx.startTopologyVersion().compareTo(newPart.topologyVersion()) > 0))
+                    ) {
+                    if (log.isDebugEnabled())
+                        log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
+                            mapString(part) + ", newPart=" + mapString(newPart) + ']');
+
+                    partMap.put(part.nodeId(), part);
+                }
+            }
+
+            for (Iterator<UUID> it = partMap.keySet().iterator(); it.hasNext(); ) {
+                UUID nodeId = it.next();
+
+                if (!cctx.discovery().alive(nodeId)) {
+                    if (log.isDebugEnabled())
+                        log.debug("Removing left node from full map update [nodeId=" + nodeId + ", partMap=" +
+                            partMap + ']');
+
+                    it.remove();
+                }
+            }
+        }
+
+        for (Map.Entry<Integer, T2<Long, UUID>> entry : this.cntrMap.entrySet()) {
+            if (entry.getValue().get1() > 0 && entry.getValue().get2().equals(cctx.localNodeId())) {
+                GridDhtLocalPartition part = locParts[entry.getKey()];
+
+                boolean success = part.own();
+
+                assert success;
+
+                partMap.get(cctx.localNodeId()).put(part.id(), OWNING);
+
+                changed = true;
+            }
+        }
+
+        for (int p = 0; p < locParts.length; p++) {
+            GridDhtLocalPartition part = locParts[p];
+
+            Long cntr = cntrMap.get(p);
+
+            if (cntr != null && cntr > part.updateCounter() && part.state() == OWNING) {
+                T2<Long, UUID> t = this.cntrMap.get(p);
+
+                assert t != null;
+
+                if (t.get2().equals(cctx.localNodeId()))
+                    continue;
+
+                partMap.get(t.get2()).put(p, OWNING);
+                partMap.get(cctx.localNodeId()).put(p, MOVING);
+
+                locParts[p] = new GridDhtLocalPartition(cctx, p, entryFactory);
+
+                changed = true;
+            }
+        }
+
+        return changed;
+    }
+
     /** {@inheritDoc} */
     @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
     @Nullable @Override public GridDhtPartitionMap2 update(GridDhtPartitionExchangeId exchId,
@@ -1157,22 +1175,6 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         try {
             if (stopping)
                 return null;
-
-            for (Map.Entry<Integer, Long> e : cntrMap.entrySet()) {
-                Long cntr = this.cntrMap.get(e.getKey());
-
-                if (cntr == null || cntr < e.getValue()) {
-                    this.cntrMap.put(e.getKey(), e.getValue());
-                    maxCntrOwnerMap.put(e.getKey(), parts.nodeId());
-                }
-            }
-
-            for (GridDhtLocalPartition part : locParts.values()) {
-                Long cntr = cntrMap.get(part.id());
-
-                if (cntr != null)
-                    part.updateCounter(cntr);
-            }
 
             if (lastExchangeId != null && exchId != null && lastExchangeId.compareTo(exchId) > 0) {
                 if (log.isDebugEnabled())
@@ -1492,7 +1494,11 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         lock.readLock().lock();
 
         try {
-            Map<Integer, Long> res = new HashMap<>(cntrMap);
+            Map<Integer, Long> res = new HashMap<>();
+
+            for (Map.Entry<Integer, T2<Long, UUID>> entry : cntrMap.entrySet()) {
+                res.put(entry.getKey(), entry.getValue().get1());
+            }
 
             for (int i = 0; i < locParts.length; i++) {
                 GridDhtLocalPartition part = locParts[i];
