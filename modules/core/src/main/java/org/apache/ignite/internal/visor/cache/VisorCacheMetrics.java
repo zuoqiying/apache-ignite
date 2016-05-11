@@ -221,81 +221,79 @@ public class VisorCacheMetrics implements Serializable {
      * @return Data transfer object for given cache metrics.
      */
     public VisorCacheMetrics from(IgniteEx ignite, String cacheName) {
-        VisorCacheMetrics cm = new VisorCacheMetrics();
-
         GridCacheProcessor cacheProcessor = ignite.context().cache();
 
         IgniteCache<Object, Object> c = cacheProcessor.jcache(cacheName);
 
-        cm.name = cacheName;
-        cm.mode = cacheProcessor.cacheMode(cacheName);
-        cm.sys = cacheProcessor.systemCache(cacheName);
+        name = cacheName;
+        mode = cacheProcessor.cacheMode(cacheName);
+        sys = cacheProcessor.systemCache(cacheName);
 
         CacheMetrics m = c.localMetrics();
 
-        cm.size = m.getSize();
-        cm.offHeapPrimarySize = m.getOffHeapPrimaryEntriesCount();
-        cm.offHeapBackupSize = m.getOffHeapBackupEntriesCount();
-        cm.swapSize = m.getSwapSize();
-        cm.keySize = m.getKeySize();
+        size = m.getSize();
+        offHeapPrimarySize = m.getOffHeapPrimaryEntriesCount();
+        offHeapBackupSize = m.getOffHeapBackupEntriesCount();
+        swapSize = m.getSwapSize();
+        keySize = m.getKeySize();
 
-        cm.reads = m.getCacheGets();
-        cm.offHeapReads = m.getOffHeapGets();
-        cm.swapReads = m.getSwapGets();
-        cm.writes = m.getCachePuts() + m.getCacheRemovals();
-        cm.offHeapWrites = m.getOffHeapPuts() + m.getOffHeapRemovals();
-        cm.swapWrites = m.getSwapPuts() + m.getSwapRemovals();
-        cm.hits = m.getCacheHits();
-        cm.offHeapHits = m.getOffHeapHits();
-        cm.swapHits = m.getOffHeapHits();
-        cm.misses = m.getCacheMisses();
-        cm.offHeapMisses = m.getOffHeapMisses();
-        cm.swapMisses = m.getSwapMisses();
+        reads = m.getCacheGets();
+        offHeapReads = m.getOffHeapGets();
+        swapReads = m.getSwapGets();
+        writes = m.getCachePuts() + m.getCacheRemovals();
+        offHeapWrites = m.getOffHeapPuts() + m.getOffHeapRemovals();
+        swapWrites = m.getSwapPuts() + m.getSwapRemovals();
+        hits = m.getCacheHits();
+        offHeapHits = m.getOffHeapHits();
+        swapHits = m.getOffHeapHits();
+        misses = m.getCacheMisses();
+        offHeapMisses = m.getOffHeapMisses();
+        swapMisses = m.getSwapMisses();
 
-        cm.txCommits = m.getCacheTxCommits();
-        cm.txRollbacks = m.getCacheTxRollbacks();
+        txCommits = m.getCacheTxCommits();
+        txRollbacks = m.getCacheTxRollbacks();
 
-        cm.avgTxCommitTime = m.getAverageTxCommitTime();
-        cm.avgTxRollbackTime = m.getAverageTxRollbackTime();
+        avgTxCommitTime = m.getAverageTxCommitTime();
+        avgTxRollbackTime = m.getAverageTxRollbackTime();
 
-        cm.puts = m.getCachePuts();
-        cm.offHeapPuts = m.getOffHeapPuts();
-        cm.swapPuts = m.getSwapPuts();
-        cm.removals = m.getCacheRemovals();
-        cm.offHeapRemovals = m.getOffHeapRemovals();
-        cm.swapRemovals = m.getSwapRemovals();
-        cm.evictions = m.getCacheEvictions();
-        cm.offHeapEvictions = m.getOffHeapEvictions();
+        puts = m.getCachePuts();
+        offHeapPuts = m.getOffHeapPuts();
+        swapPuts = m.getSwapPuts();
+        removals = m.getCacheRemovals();
+        offHeapRemovals = m.getOffHeapRemovals();
+        swapRemovals = m.getSwapRemovals();
+        evictions = m.getCacheEvictions();
+        offHeapEvictions = m.getOffHeapEvictions();
 
-        cm.avgReadTime = m.getAverageGetTime();
-        cm.avgPutTime = m.getAveragePutTime();
-        cm.avgRemovalTime = m.getAverageRemoveTime();
+        avgReadTime = m.getAverageGetTime();
+        avgPutTime = m.getAveragePutTime();
+        avgRemovalTime = m.getAverageRemoveTime();
 
-        cm.readsPerSec = perSecond(m.getAverageGetTime());
-        cm.putsPerSec = perSecond(m.getAveragePutTime());
-        cm.removalsPerSec = perSecond(m.getAverageRemoveTime());
-        cm.commitsPerSec = perSecond(m.getAverageTxCommitTime());
-        cm.rollbacksPerSec = perSecond(m.getAverageTxRollbackTime());
+        readsPerSec = perSecond(m.getAverageGetTime());
+        putsPerSec = perSecond(m.getAveragePutTime());
+        removalsPerSec = perSecond(m.getAverageRemoveTime());
+        commitsPerSec = perSecond(m.getAverageTxCommitTime());
+        rollbacksPerSec = perSecond(m.getAverageTxRollbackTime());
 
-        cm.qryMetrics = VisorCacheQueryMetrics.from(c.queryMetrics());
+        qryMetrics = VisorCacheQueryMetrics.from(c.queryMetrics());
 
-        cm.dhtEvictQueueCurrSize = m.getDhtEvictQueueCurrentSize();
-        cm.txThreadMapSize = m.getTxThreadMapSize();
-        cm.txXidMapSize = m.getTxXidMapSize();
-        cm.txCommitQueueSize = m.getTxCommitQueueSize();
-        cm.txPrepareQueueSize = m.getTxPrepareQueueSize();
-        cm.txStartVerCountsSize = m.getTxStartVersionCountsSize();
-        cm.txCommittedVersionsSize = m.getTxCommittedVersionsSize();
-        cm.txRolledbackVersionsSize = m.getTxRolledbackVersionsSize();
-        cm.txDhtThreadMapSize = m.getTxDhtThreadMapSize();
-        cm.txDhtXidMapSize = m.getTxDhtXidMapSize();
-        cm.txDhtCommitQueueSize = m.getTxDhtCommitQueueSize();
-        cm.txDhtPrepareQueueSize = m.getTxDhtPrepareQueueSize();
-        cm.txDhtStartVerCountsSize = m.getTxDhtStartVersionCountsSize();
-        cm.txDhtCommittedVersionsSize = m.getTxDhtCommittedVersionsSize();
-        cm.txDhtRolledbackVersionsSize = m.getTxDhtRolledbackVersionsSize();
+        dhtEvictQueueCurrSize = m.getDhtEvictQueueCurrentSize();
+        txThreadMapSize = m.getTxThreadMapSize();
+        txXidMapSize = m.getTxXidMapSize();
+        txCommitQueueSize = m.getTxCommitQueueSize();
+        txPrepareQueueSize = m.getTxPrepareQueueSize();
+        txStartVerCountsSize = m.getTxStartVersionCountsSize();
+        txCommittedVersionsSize = m.getTxCommittedVersionsSize();
+        txRolledbackVersionsSize = m.getTxRolledbackVersionsSize();
+        txDhtThreadMapSize = m.getTxDhtThreadMapSize();
+        txDhtXidMapSize = m.getTxDhtXidMapSize();
+        txDhtCommitQueueSize = m.getTxDhtCommitQueueSize();
+        txDhtPrepareQueueSize = m.getTxDhtPrepareQueueSize();
+        txDhtStartVerCountsSize = m.getTxDhtStartVersionCountsSize();
+        txDhtCommittedVersionsSize = m.getTxDhtCommittedVersionsSize();
+        txDhtRolledbackVersionsSize = m.getTxDhtRolledbackVersionsSize();
 
-        return cm;
+        return this;
     }
 
     /**
