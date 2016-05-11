@@ -17,9 +17,9 @@
 
 package org.apache.ignite.cache.affinity;
 
-import org.apache.ignite.cluster.*;
-
-import java.io.*;
+import java.io.Serializable;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.IgniteConfiguration;
 
 /**
  * Resolver which is used to provide node hash value for affinity function.
@@ -29,9 +29,12 @@ import java.io.*;
  * will help to map keys to the same nodes whenever possible.
  * <p>
  * Note that on case clients exist they will query this object from the server and use it for affinity calculation.
- * Therefore you must ensure that server and clients can marshal and unmarshal this object in portable format,
- * i.e. all parties have object class(es) configured as portable.
+ * Therefore you must ensure that server and clients can marshal and unmarshal this object in binary format,
+ * i.e. all parties have object class(es) configured as binary.
+ *
+ * @deprecated Use {@link IgniteConfiguration#setConsistentId(Serializable)} instead.
  */
+@Deprecated
 public interface AffinityNodeHashResolver extends Serializable {
     /**
      * Resolve alternate hash value for the given Grid node.
@@ -39,5 +42,6 @@ public interface AffinityNodeHashResolver extends Serializable {
      * @param node Grid node.
      * @return Resolved hash ID.
      */
+    @Deprecated
     public Object resolve(ClusterNode node);
 }

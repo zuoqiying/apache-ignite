@@ -17,13 +17,12 @@
 
 package org.apache.ignite.marshaller;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.plugin.*;
-import org.jsr166.*;
-
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.MarshallerContextAdapter;
+import org.apache.ignite.plugin.PluginProvider;
+import org.jsr166.ConcurrentHashMap8;
 
 /**
  * Test marshaller context.
@@ -62,5 +61,12 @@ public class MarshallerContextTestImpl extends MarshallerContextAdapter {
     /** {@inheritDoc} */
     @Override protected String className(int id) {
         return map.get(id);
+    }
+
+    /**
+     * @return Internal map.
+     */
+    public ConcurrentMap<Integer, String> internalMap() {
+        return map;
     }
 }

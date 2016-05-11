@@ -17,17 +17,16 @@
 
 package org.apache.ignite.internal.processors.hadoop.fs;
 
-import org.apache.hadoop.conf.*;
-import org.apache.hadoop.fs.*;
-import org.apache.hadoop.mapreduce.*;
-import org.apache.ignite.*;
-import org.apache.ignite.hadoop.fs.v1.*;
-import org.apache.ignite.internal.util.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.jetbrains.annotations.*;
-
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.net.URI;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.hadoop.fs.v1.IgniteHadoopFileSystem;
+import org.apache.ignite.internal.util.GridStringBuilder;
+import org.apache.ignite.internal.util.typedef.F;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * File system cache utility methods used by Map-Reduce tasks and jobs.
@@ -40,7 +39,7 @@ public class HadoopFileSystemCacheUtils {
     public static HadoopLazyConcurrentMap<FsCacheKey, FileSystem> createHadoopLazyConcurrentMap() {
         return new HadoopLazyConcurrentMap<>(
             new HadoopLazyConcurrentMap.ValueFactory<FsCacheKey, FileSystem>() {
-                @Override public FileSystem createValue(FsCacheKey key) {
+                @Override public FileSystem createValue(FsCacheKey key) throws IOException {
                     try {
                         assert key != null;
 
@@ -58,8 +57,10 @@ public class HadoopFileSystemCacheUtils {
 
                         return FileSystem.get(uri, cfg, key.user());
                     }
-                    catch (IOException | InterruptedException ioe) {
-                        throw new IgniteException(ioe);
+                    catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+
+                        throw new IOException("Failed to create file system due to interrupt.", e);
                     }
                 }
             }

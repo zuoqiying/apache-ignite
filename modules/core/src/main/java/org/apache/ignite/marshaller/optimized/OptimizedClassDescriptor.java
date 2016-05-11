@@ -17,27 +17,83 @@
 
 package org.apache.ignite.marshaller.optimized;
 
-import org.apache.ignite.internal.util.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.marshaller.*;
-import sun.misc.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import org.apache.ignite.internal.util.GridUnsafe;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.marshaller.MarshallerContext;
+import org.apache.ignite.marshaller.MarshallerExclusions;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static java.lang.reflect.Modifier.*;
-import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.*;
+import static java.lang.reflect.Modifier.isFinal;
+import static java.lang.reflect.Modifier.isPrivate;
+import static java.lang.reflect.Modifier.isStatic;
+import static java.lang.reflect.Modifier.isTransient;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.ARRAY_LIST;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.BOOLEAN;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.BOOLEAN_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.BYTE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.BYTE_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.CHAR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.CHAR_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.CLS;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.DATE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.DOUBLE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.DOUBLE_ARR;
 import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.ENUM;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.EXTERNALIZABLE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.FLOAT;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.FLOAT_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.HASH_MAP;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.HASH_SET;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.HASH_SET_MAP_OFF;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.INT;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.INT_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LINKED_HASH_MAP;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LINKED_HASH_SET;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LINKED_LIST;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LONG;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LONG_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.OBJ_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.PROPS;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.PROXY;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.SERIALIZABLE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.SHORT;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.SHORT_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.STR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.UUID;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.classDescriptor;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.computeSerialVersionUid;
 
 /**
  * Class descriptor.
  */
 class OptimizedClassDescriptor {
-    /** Unsafe. */
-    private static final Unsafe UNSAFE = GridUnsafe.unsafe();
-
     /** Class. */
     private final Class<?> cls;
 
@@ -106,6 +162,9 @@ class OptimizedClassDescriptor {
 
     /** Access order field offset. */
     private long accessOrderFieldOff;
+
+    /** Proxy interfaces. */
+    private Class<?>[] proxyIntfs;
 
     /**
      * Creates descriptor for class.
@@ -216,7 +275,7 @@ class OptimizedClassDescriptor {
                 type = PROPS;
 
                 try {
-                    dfltsFieldOff = UNSAFE.objectFieldOffset(Properties.class.getDeclaredField("defaults"));
+                    dfltsFieldOff = GridUnsafe.objectFieldOffset(Properties.class.getDeclaredField("defaults"));
                 }
                 catch (NoSuchFieldException e) {
                     throw new IOException(e);
@@ -228,7 +287,7 @@ class OptimizedClassDescriptor {
                 type = HASH_MAP;
 
                 try {
-                    loadFactorFieldOff = UNSAFE.objectFieldOffset(HashMap.class.getDeclaredField("loadFactor"));
+                    loadFactorFieldOff = GridUnsafe.objectFieldOffset(HashMap.class.getDeclaredField("loadFactor"));
                 }
                 catch (NoSuchFieldException e) {
                     throw new IOException(e);
@@ -238,7 +297,7 @@ class OptimizedClassDescriptor {
                 type = HASH_SET;
 
                 try {
-                    loadFactorFieldOff = UNSAFE.objectFieldOffset(HashMap.class.getDeclaredField("loadFactor"));
+                    loadFactorFieldOff = GridUnsafe.objectFieldOffset(HashMap.class.getDeclaredField("loadFactor"));
                 }
                 catch (NoSuchFieldException e) {
                     throw new IOException(e);
@@ -250,8 +309,10 @@ class OptimizedClassDescriptor {
                 type = LINKED_HASH_MAP;
 
                 try {
-                    loadFactorFieldOff = UNSAFE.objectFieldOffset(HashMap.class.getDeclaredField("loadFactor"));
-                    accessOrderFieldOff = UNSAFE.objectFieldOffset(LinkedHashMap.class.getDeclaredField("accessOrder"));
+                    loadFactorFieldOff =
+                        GridUnsafe.objectFieldOffset(HashMap.class.getDeclaredField("loadFactor"));
+                    accessOrderFieldOff =
+                        GridUnsafe.objectFieldOffset(LinkedHashMap.class.getDeclaredField("accessOrder"));
                 }
                 catch (NoSuchFieldException e) {
                     throw new IOException(e);
@@ -261,7 +322,7 @@ class OptimizedClassDescriptor {
                 type = LINKED_HASH_SET;
 
                 try {
-                    loadFactorFieldOff = UNSAFE.objectFieldOffset(HashMap.class.getDeclaredField("loadFactor"));
+                    loadFactorFieldOff = GridUnsafe.objectFieldOffset(HashMap.class.getDeclaredField("loadFactor"));
                 }
                 catch (NoSuchFieldException e) {
                     throw new IOException(e);
@@ -273,6 +334,11 @@ class OptimizedClassDescriptor {
                 type = CLS;
 
                 isCls = true;
+            }
+            else if (Proxy.class.isAssignableFrom(cls)) {
+                type = PROXY;
+
+                proxyIntfs = cls.getInterfaces();
             }
             else {
                 Class<?> c = cls;
@@ -415,7 +481,7 @@ class OptimizedClassDescriptor {
 
                                         fieldInfo = new FieldInfo(f,
                                             serField.getName(),
-                                            UNSAFE.objectFieldOffset(f),
+                                            GridUnsafe.objectFieldOffset(f),
                                             fieldType(serField.getType()));
                                     }
 
@@ -439,7 +505,7 @@ class OptimizedClassDescriptor {
 
                                 if (!isStatic(mod) && !isTransient(mod)) {
                                     FieldInfo fieldInfo = new FieldInfo(f, f.getName(),
-                                        UNSAFE.objectFieldOffset(f), fieldType(f.getType()));
+                                        GridUnsafe.objectFieldOffset(f), fieldType(f.getType()));
 
                                     clsFields.add(fieldInfo);
                                 }
@@ -500,6 +566,13 @@ class OptimizedClassDescriptor {
      */
     boolean isClass() {
         return isCls;
+    }
+
+    /**
+     * @return {@code True} if descriptor is for {@link Proxy}.
+     */
+    boolean isProxy() {
+        return type == PROXY;
     }
 
     /**
@@ -680,6 +753,23 @@ class OptimizedClassDescriptor {
                 OptimizedClassDescriptor clsDesc = classDescriptor(clsMap, (Class<?>)obj, ctx, mapper);
 
                 clsDesc.writeTypeData(out);
+
+                break;
+
+            case PROXY:
+                out.writeInt(proxyIntfs.length);
+
+                for (Class<?> intf : proxyIntfs) {
+                    OptimizedClassDescriptor intfDesc = classDescriptor(clsMap, intf, ctx, mapper);
+
+                    intfDesc.writeTypeData(out);
+                }
+
+                InvocationHandler ih = Proxy.getInvocationHandler(obj);
+
+                assert ih != null;
+
+                out.writeObject(ih);
 
                 break;
 

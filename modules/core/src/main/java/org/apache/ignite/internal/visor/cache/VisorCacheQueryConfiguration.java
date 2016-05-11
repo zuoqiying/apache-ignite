@@ -17,10 +17,9 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-
-import java.io.*;
+import java.io.Serializable;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  * Data transfer object for cache query configuration data.
@@ -65,16 +64,14 @@ public class VisorCacheQueryConfiguration implements Serializable {
      * @param ccfg Cache configuration.
      * @return Fill data transfer object with cache query configuration data.
      */
-    public static VisorCacheQueryConfiguration from(CacheConfiguration ccfg) {
-        VisorCacheQueryConfiguration cfg = new VisorCacheQueryConfiguration();
+    public VisorCacheQueryConfiguration from(CacheConfiguration ccfg) {
+        sqlFuncClss = compactClasses(ccfg.getSqlFunctionClasses());
+        longQryWarnTimeout = ccfg.getLongQueryWarningTimeout();
+        sqlEscapeAll = ccfg.isSqlEscapeAll();
+        indexedTypes = compactClasses(ccfg.getIndexedTypes());
+        sqlOnheapRowCacheSize = ccfg.getSqlOnheapRowCacheSize();
 
-        cfg.sqlFuncClss = compactClasses(ccfg.getSqlFunctionClasses());
-        cfg.longQryWarnTimeout = ccfg.getLongQueryWarningTimeout();
-        cfg.sqlEscapeAll = ccfg.isSqlEscapeAll();
-        cfg.indexedTypes = compactClasses(ccfg.getIndexedTypes());
-        cfg.sqlOnheapRowCacheSize = ccfg.getSqlOnheapRowCacheSize();
-
-        return cfg;
+        return this;
     }
 
     /**

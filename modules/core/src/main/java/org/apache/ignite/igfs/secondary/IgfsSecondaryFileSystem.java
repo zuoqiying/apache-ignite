@@ -17,12 +17,13 @@
 
 package org.apache.ignite.igfs.secondary;
 
-import org.apache.ignite.*;
-import org.apache.ignite.igfs.*;
-import org.jetbrains.annotations.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.igfs.IgfsFile;
+import org.apache.ignite.igfs.IgfsPath;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Secondary file system interface.
@@ -191,18 +192,4 @@ public interface IgfsSecondaryFileSystem {
      * @throws IgniteException In case of error.
      */
     public long usedSpaceSize() throws IgniteException;
-
-    /**
-     * Gets the implementation specific properties of file system.
-     *
-     * @return Map of properties.
-     */
-    public Map<String,String> properties();
-
-
-    /**
-     * Closes the secondary file system.
-     * @throws IgniteException in case of an error.
-     */
-    public void close() throws IgniteException;
 }

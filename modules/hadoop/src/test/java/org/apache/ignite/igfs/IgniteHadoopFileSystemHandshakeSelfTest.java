@@ -17,30 +17,35 @@
 
 package org.apache.ignite.igfs;
 
-import org.apache.hadoop.conf.*;
+import java.io.IOException;
+import java.net.URI;
+import java.util.concurrent.Callable;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.*;
-import org.apache.ignite.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.hadoop.fs.v2.*;
-import org.apache.ignite.internal.processors.igfs.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.spi.communication.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.*;
-import org.apache.ignite.testframework.*;
+import org.apache.hadoop.fs.Path;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteFileSystem;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.FileSystemConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.hadoop.fs.v2.IgniteHadoopFileSystem;
+import org.apache.ignite.internal.processors.igfs.IgfsCommonAbstractTest;
+import org.apache.ignite.internal.util.typedef.G;
+import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.testframework.GridTestUtils;
 
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.*;
-
-import static org.apache.ignite.cache.CacheAtomicityMode.*;
-import static org.apache.ignite.cache.CacheMode.*;
-import static org.apache.ignite.cache.CacheWriteSynchronizationMode.*;
-import static org.apache.ignite.igfs.IgfsMode.*;
-import static org.apache.ignite.internal.processors.hadoop.igfs.HadoopIgfsUtils.*;
-import static org.apache.ignite.internal.util.ipc.shmem.IpcSharedMemoryServerEndpoint.*;
+import static org.apache.ignite.cache.CacheAtomicityMode.TRANSACTIONAL;
+import static org.apache.ignite.cache.CacheMode.PARTITIONED;
+import static org.apache.ignite.cache.CacheMode.REPLICATED;
+import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
+import static org.apache.ignite.igfs.IgfsMode.PRIMARY;
+import static org.apache.ignite.internal.processors.hadoop.igfs.HadoopIgfsUtils.PARAM_IGFS_ENDPOINT_NO_EMBED;
+import static org.apache.ignite.internal.processors.hadoop.igfs.HadoopIgfsUtils.PARAM_IGFS_ENDPOINT_NO_LOCAL_SHMEM;
+import static org.apache.ignite.internal.processors.hadoop.igfs.HadoopIgfsUtils.PARAM_IGFS_ENDPOINT_NO_LOCAL_TCP;
+import static org.apache.ignite.internal.util.ipc.shmem.IpcSharedMemoryServerEndpoint.DFLT_IPC_PORT;
 
 /**
  * Tests for IGFS file system handshake.
@@ -58,6 +63,12 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
     /** IGFS path. */
     private static final IgfsPath PATH = new IgfsPath("/path");
 
+    /** A host-port pair used for URI in embedded mode. */
+    private static final String HOST_PORT_UNUSED = "somehost:65333";
+
+    /** Flag defines if to use TCP or embedded connection mode: */
+    private boolean tcp = false;
+
     /** {@inheritDoc} */
     @Override protected void afterTest() throws Exception {
         stopAllGrids(true);
@@ -71,21 +82,37 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
     public void testHandshake() throws Exception {
         startUp(false, false);
 
+        tcp = true;
+
         checkValid(IGFS_NAME + ":" + GRID_NAME + "@");
         checkValid(IGFS_NAME + ":" + GRID_NAME + "@127.0.0.1");
         checkValid(IGFS_NAME + ":" + GRID_NAME + "@127.0.0.1:" + DFLT_IPC_PORT);
 
-        checkInvalid(IGFS_NAME + "@");
-        checkInvalid(IGFS_NAME + "@127.0.0.1");
-        checkInvalid(IGFS_NAME + "@127.0.0.1:" + DFLT_IPC_PORT);
+        checkValid(IGFS_NAME + "@");
+        checkValid(IGFS_NAME + "@127.0.0.1");
+        checkValid(IGFS_NAME + "@127.0.0.1:" + DFLT_IPC_PORT);
 
-        checkInvalid(":" + GRID_NAME + "@");
-        checkInvalid(":" + GRID_NAME + "@127.0.0.1");
-        checkInvalid(":" + GRID_NAME + "@127.0.0.1:" + DFLT_IPC_PORT);
+        checkValid(":" + GRID_NAME + "@");
+        checkValid(":" + GRID_NAME + "@127.0.0.1");
+        checkValid(":" + GRID_NAME + "@127.0.0.1:" + DFLT_IPC_PORT);
 
-        checkInvalid("");
-        checkInvalid("127.0.0.1");
-        checkInvalid("127.0.0.1:" + DFLT_IPC_PORT);
+        checkValid("");
+        checkValid("127.0.0.1");
+        checkValid("127.0.0.1:" + DFLT_IPC_PORT);
+
+        tcp = false; // Embedded mode:
+
+        checkValid(IGFS_NAME + ":" + GRID_NAME + "@");
+        checkValid(IGFS_NAME + ":" + GRID_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkValid(IGFS_NAME + "@"); // Embedded mode fails, but remote tcp succeeds.
+        checkInvalid(IGFS_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkValid(":" + GRID_NAME + "@"); // Embedded mode fails, but remote tcp succeeds.
+        checkInvalid(":" + GRID_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkValid("@"); // Embedded mode fails, but remote tcp succeeds.
+        checkInvalid("@" + HOST_PORT_UNUSED);
     }
 
     /**
@@ -95,6 +122,8 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
      */
     public void testHandshakeDefaultGrid() throws Exception {
         startUp(true, false);
+
+        tcp = true;
 
         checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@");
         checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@127.0.0.1");
@@ -108,9 +137,23 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
         checkInvalid(":" + GRID_NAME + "@127.0.0.1");
         checkInvalid(":" + GRID_NAME + "@127.0.0.1:" + DFLT_IPC_PORT);
 
-        checkInvalid("");
-        checkInvalid("127.0.0.1");
-        checkInvalid("127.0.0.1:" + DFLT_IPC_PORT);
+        checkValid("");
+        checkValid("127.0.0.1");
+        checkValid("127.0.0.1:" + DFLT_IPC_PORT);
+
+        tcp = false; // Embedded mode:
+
+        checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@");
+        checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkValid(IGFS_NAME + "@");
+        checkValid(IGFS_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkInvalid(":" + GRID_NAME + "@");
+        checkInvalid(":" + GRID_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkValid("@"); // Embedded mode fails, but remote tcp succeeds.
+        checkInvalid("@" + HOST_PORT_UNUSED);
     }
 
     /**
@@ -119,7 +162,9 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
      * @throws Exception If failed.
      */
     public void testHandshakeDefaultIgfs() throws Exception {
-        startUp(false, true);
+        startUp(false/*grid name*/, true/*default igfs*/);
+
+        tcp = true;
 
         checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@");
         checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@127.0.0.1");
@@ -133,9 +178,23 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
         checkValid(":" + GRID_NAME + "@127.0.0.1");
         checkValid(":" + GRID_NAME + "@127.0.0.1:" + DFLT_IPC_PORT);
 
-        checkInvalid("");
-        checkInvalid("127.0.0.1");
-        checkInvalid("127.0.0.1:" + DFLT_IPC_PORT);
+        checkValid("");
+        checkValid("127.0.0.1");
+        checkValid("127.0.0.1:" + DFLT_IPC_PORT);
+
+        tcp = false; // Embedded mode:
+
+        checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@");
+        checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkInvalid(IGFS_NAME + "@");
+        checkInvalid(IGFS_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkValid(":" + GRID_NAME + "@");
+        checkValid(":" + GRID_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkValid("@"); // NB: in embedded mode this fails, but remote TCP still succeeds.
+        checkInvalid("@" + HOST_PORT_UNUSED);
     }
 
     /**
@@ -145,6 +204,8 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
      */
     public void testHandshakeDefaultGridDefaultIgfs() throws Exception {
         startUp(true, true);
+
+        tcp = true;
 
         checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@");
         checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@127.0.0.1");
@@ -161,6 +222,20 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
         checkValid("");
         checkValid("127.0.0.1");
         checkValid("127.0.0.1:" + DFLT_IPC_PORT);
+
+        tcp = false; // Embedded mode:
+
+        checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@");
+        checkInvalid(IGFS_NAME + ":" + GRID_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkInvalid(IGFS_NAME + "@");
+        checkInvalid(IGFS_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkInvalid(":" + GRID_NAME + "@");
+        checkInvalid(":" + GRID_NAME + "@" + HOST_PORT_UNUSED);
+
+        checkValid("@");
+        checkValid("@" + HOST_PORT_UNUSED);
     }
 
     /**
@@ -253,7 +328,7 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
      * @throws Exception If failed.
      */
     private void checkValid(String authority) throws Exception {
-        FileSystem fs = fileSystem(authority);
+        FileSystem fs = fileSystem(authority, tcp);
 
         assert fs.exists(new Path(PATH.toString()));
     }
@@ -268,7 +343,7 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
     private void checkInvalid(final String authority) throws Exception {
         GridTestUtils.assertThrows(log, new Callable<Object>() {
             @Override public Object call() throws Exception {
-                fileSystem(authority);
+                fileSystem(authority, tcp);
 
                 return null;
             }
@@ -276,14 +351,14 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
     }
 
     /**
-     *
+     * Gets the file system using authority and tcp flag.
      *
      * @param authority Authority.
      * @return File system.
      * @throws Exception If failed.
      */
-    private static FileSystem fileSystem(String authority) throws Exception {
-        return FileSystem.get(new URI("igfs://" + authority + "/"), configuration(authority));
+    private static FileSystem fileSystem(String authority, boolean tcp) throws Exception {
+        return FileSystem.get(new URI("igfs://" + authority + "/"), configuration(authority, tcp));
     }
 
     /**
@@ -292,7 +367,7 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
      * @param authority Authority.
      * @return Configuration.
      */
-    private static Configuration configuration(String authority) {
+    private static Configuration configuration(String authority, boolean tcp) {
         Configuration cfg = new Configuration();
 
         cfg.set("fs.defaultFS", "igfs://" + authority + "/");
@@ -302,7 +377,11 @@ public class IgniteHadoopFileSystemHandshakeSelfTest extends IgfsCommonAbstractT
 
         cfg.setBoolean("fs.igfs.impl.disable.cache", true);
 
-        cfg.setBoolean(String.format(PARAM_IGFS_ENDPOINT_NO_EMBED, authority), true);
+        if (tcp)
+            cfg.setBoolean(String.format(PARAM_IGFS_ENDPOINT_NO_EMBED, authority), true);
+        else
+            cfg.setBoolean(String.format(PARAM_IGFS_ENDPOINT_NO_LOCAL_TCP, authority), true);
+
         cfg.setBoolean(String.format(PARAM_IGFS_ENDPOINT_NO_LOCAL_SHMEM, authority), true);
 
         return cfg;

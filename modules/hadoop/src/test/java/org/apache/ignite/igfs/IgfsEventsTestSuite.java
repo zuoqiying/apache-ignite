@@ -17,15 +17,20 @@
 
 package org.apache.ignite.igfs;
 
-import junit.framework.*;
-import org.apache.ignite.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.hadoop.fs.*;
-import org.apache.ignite.internal.util.ipc.shmem.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.jetbrains.annotations.*;
+import junit.framework.TestSuite;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteFileSystem;
+import org.apache.ignite.configuration.FileSystemConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.hadoop.fs.IgniteHadoopIgfsSecondaryFileSystem;
+import org.apache.ignite.internal.util.ipc.shmem.IpcSharedMemoryServerEndpoint;
+import org.apache.ignite.internal.util.typedef.G;
+import org.jetbrains.annotations.Nullable;
 
-import static org.apache.ignite.igfs.IgfsMode.*;
+import static org.apache.ignite.igfs.IgfsMode.DUAL_ASYNC;
+import static org.apache.ignite.igfs.IgfsMode.DUAL_SYNC;
+import static org.apache.ignite.igfs.IgfsMode.PRIMARY;
 
 /**
  * Test suite for IGFS event tests.
@@ -41,11 +46,11 @@ public class IgfsEventsTestSuite extends TestSuite {
 
         TestSuite suite = new TestSuite("Ignite FS Events Test Suite");
 
-        suite.addTest(new TestSuite(ldr.loadClass(ShmemPrivate.class.getName())));
+        suite.addTest(new TestSuite(ldr.loadClass(ShmemPrimary.class.getName())));
         suite.addTest(new TestSuite(ldr.loadClass(ShmemDualSync.class.getName())));
         suite.addTest(new TestSuite(ldr.loadClass(ShmemDualAsync.class.getName())));
 
-        suite.addTest(new TestSuite(ldr.loadClass(LoopbackPrivate.class.getName())));
+        suite.addTest(new TestSuite(ldr.loadClass(LoopbackPrimary.class.getName())));
         suite.addTest(new TestSuite(ldr.loadClass(LoopbackDualSync.class.getName())));
         suite.addTest(new TestSuite(ldr.loadClass(LoopbackDualAsync.class.getName())));
 
@@ -61,7 +66,7 @@ public class IgfsEventsTestSuite extends TestSuite {
 
         TestSuite suite = new TestSuite("Ignite IGFS Events Test Suite Noarch Only");
 
-        suite.addTest(new TestSuite(ldr.loadClass(LoopbackPrivate.class.getName())));
+        suite.addTest(new TestSuite(ldr.loadClass(LoopbackPrimary.class.getName())));
         suite.addTest(new TestSuite(ldr.loadClass(LoopbackDualSync.class.getName())));
         suite.addTest(new TestSuite(ldr.loadClass(LoopbackDualAsync.class.getName())));
 
@@ -71,10 +76,12 @@ public class IgfsEventsTestSuite extends TestSuite {
     /**
      * Shared memory IPC in PRIVATE mode.
      */
-    public static class ShmemPrivate extends IgfsEventsAbstractSelfTest {
+    public static class ShmemPrimary extends IgfsEventsAbstractSelfTest {
         /** {@inheritDoc} */
         @Override protected FileSystemConfiguration getIgfsConfiguration() throws IgniteCheckedException {
             FileSystemConfiguration igfsCfg = super.getIgfsConfiguration();
+
+            igfsCfg.setDefaultMode(IgfsMode.PRIMARY);
 
             IgfsIpcEndpointConfiguration endpointCfg = new IgfsIpcEndpointConfiguration();
 
@@ -90,10 +97,12 @@ public class IgfsEventsTestSuite extends TestSuite {
     /**
      * Loopback socket IPS in PRIVATE mode.
      */
-    public static class LoopbackPrivate extends IgfsEventsAbstractSelfTest {
+    public static class LoopbackPrimary extends IgfsEventsAbstractSelfTest {
         /** {@inheritDoc} */
         @Override protected FileSystemConfiguration getIgfsConfiguration() throws IgniteCheckedException {
             FileSystemConfiguration igfsCfg = super.getIgfsConfiguration();
+
+            igfsCfg.setDefaultMode(IgfsMode.PRIMARY);
 
             IgfsIpcEndpointConfiguration endpointCfg = new IgfsIpcEndpointConfiguration();
 
@@ -218,6 +227,8 @@ public class IgfsEventsTestSuite extends TestSuite {
         /** {@inheritDoc} */
         @Override protected FileSystemConfiguration getIgfsConfiguration() throws IgniteCheckedException {
             FileSystemConfiguration igfsCfg = super.getIgfsConfiguration();
+
+            igfsCfg.setDefaultMode(IgfsMode.PRIMARY);
 
             igfsCfg.setSecondaryFileSystem(new IgniteHadoopIgfsSecondaryFileSystem(
                 "igfs://igfs-secondary:grid-secondary@127.0.0.1:11500/",

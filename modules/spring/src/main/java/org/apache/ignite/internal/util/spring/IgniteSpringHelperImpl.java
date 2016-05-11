@@ -17,26 +17,43 @@
 
 package org.apache.ignite.internal.util.spring;
 
-import org.apache.ignite.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.processors.resource.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.jetbrains.annotations.*;
-import org.springframework.beans.*;
-import org.springframework.beans.factory.*;
-import org.springframework.beans.factory.config.*;
-import org.springframework.beans.factory.support.*;
-import org.springframework.beans.factory.xml.*;
-import org.springframework.context.*;
-import org.springframework.context.support.*;
-import org.springframework.core.io.*;
-
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.processors.resource.GridSpringResourceContext;
+import org.apache.ignite.internal.processors.resource.GridSpringResourceContextImpl;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.X;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteBiTuple;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.PropertyValue;
+import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.UrlResource;
 
 /**
  * Spring configuration helper.
@@ -201,11 +218,11 @@ public class IgniteSpringHelperImpl implements IgniteSpringHelper {
         }
         catch (NoSuchBeanDefinitionException e) {
             throw new IgniteCheckedException("Spring bean with provided name doesn't exist " +
-                    ", beanName=" + beanName + ']');
+                ", beanName=" + beanName + ']');
         }
         catch (BeansException e) {
             throw new IgniteCheckedException("Failed to load Spring bean with provided name " +
-                    ", beanName=" + beanName + ']', e);
+                ", beanName=" + beanName + ']', e);
         }
     }
 
@@ -421,36 +438,70 @@ public class IgniteSpringHelperImpl implements IgniteSpringHelper {
     private static GenericApplicationContext prepareSpringContext(final String... excludedProps){
         GenericApplicationContext springCtx = new GenericApplicationContext();
 
-        BeanFactoryPostProcessor postProc = new BeanFactoryPostProcessor() {
-            @Override public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
-                throws BeansException {
-                for (String beanName : beanFactory.getBeanDefinitionNames()) {
-                    BeanDefinition def = beanFactory.getBeanDefinition(beanName);
+        if (excludedProps.length > 0) {
+            final List<String> excludedPropsList = Arrays.asList(excludedProps);
 
-                    if (def.getBeanClassName() != null) {
-                        try {
-                            Class.forName(def.getBeanClassName());
-                        }
-                        catch (ClassNotFoundException ignored) {
-                            ((BeanDefinitionRegistry) beanFactory).removeBeanDefinition(beanName);
+            BeanFactoryPostProcessor postProc = new BeanFactoryPostProcessor() {
+                /**
+                 * @param def Registered BeanDefinition.
+                 * @throws BeansException in case of errors.
+                 */
+                private void processNested(BeanDefinition def) throws BeansException {
+                    Iterator<PropertyValue> iterVals = def.getPropertyValues().getPropertyValueList().iterator();
+
+                    while (iterVals.hasNext()) {
+                        PropertyValue val = iterVals.next();
+
+                        if (excludedPropsList.contains(val.getName())) {
+                            iterVals.remove();
 
                             continue;
                         }
-                    }
 
-                    MutablePropertyValues vals = def.getPropertyValues();
+                        if (val.getValue() instanceof Iterable) {
+                            Iterator iterNested = ((Iterable)val.getValue()).iterator();
 
-                    for (PropertyValue val : new ArrayList<>(vals.getPropertyValueList())) {
-                        for (String excludedProp : excludedProps) {
-                            if (val.getName().equals(excludedProp))
-                                vals.removePropertyValue(val);
+                            while (iterNested.hasNext()) {
+                                Object item = iterNested.next();
+
+                                if (item instanceof BeanDefinitionHolder) {
+                                    BeanDefinitionHolder h = (BeanDefinitionHolder)item;
+
+                                    try {
+                                        if (h.getBeanDefinition().getBeanClassName() != null)
+                                            Class.forName(h.getBeanDefinition().getBeanClassName());
+
+                                        processNested(h.getBeanDefinition());
+                                    }
+                                    catch (ClassNotFoundException ignored) {
+                                        iterNested.remove();
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-            }
-        };
 
-        springCtx.addBeanFactoryPostProcessor(postProc);
+                @Override public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
+                    throws BeansException {
+                    for (String beanName : beanFactory.getBeanDefinitionNames()) {
+                        try {
+                            BeanDefinition def = beanFactory.getBeanDefinition(beanName);
+
+                            if (def.getBeanClassName() != null)
+                                Class.forName(def.getBeanClassName());
+
+                            processNested(def);
+                        }
+                        catch (ClassNotFoundException ignored) {
+                            ((BeanDefinitionRegistry)beanFactory).removeBeanDefinition(beanName);
+                        }
+                    }
+                }
+            };
+
+            springCtx.addBeanFactoryPostProcessor(postProc);
+        }
 
         return springCtx;
     }

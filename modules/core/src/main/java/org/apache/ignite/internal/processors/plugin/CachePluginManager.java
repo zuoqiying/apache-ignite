@@ -17,16 +17,30 @@
 
 package org.apache.ignite.internal.processors.plugin;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.processors.cache.dr.*;
-import org.apache.ignite.internal.processors.cache.store.*;
-import org.apache.ignite.plugin.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.internal.GridCachePluginContext;
+import org.apache.ignite.internal.GridKernalContext;
+import org.apache.ignite.internal.processors.cache.CacheConflictResolutionManager;
+import org.apache.ignite.internal.processors.cache.CacheOsConflictResolutionManager;
+import org.apache.ignite.internal.processors.cache.GridCacheManagerAdapter;
+import org.apache.ignite.internal.processors.cache.dr.GridCacheDrManager;
+import org.apache.ignite.internal.processors.cache.dr.GridOsCacheDrManager;
+import org.apache.ignite.internal.processors.cache.store.CacheOsStoreManager;
+import org.apache.ignite.internal.processors.cache.store.CacheStoreManager;
+import org.apache.ignite.plugin.CachePluginConfiguration;
+import org.apache.ignite.plugin.CachePluginContext;
+import org.apache.ignite.plugin.CachePluginProvider;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import javax.cache.Cache;
 
 /**
  * Cache plugin manager.
@@ -117,6 +131,28 @@ public class CachePluginManager extends GridCacheManagerAdapter {
             return (T)new CacheOsStoreManager(ctx, cfg);
 
         throw new IgniteException("Unsupported component type: " + cls);
+    }
+
+    /**
+     * Unwrap entry to specified type. For details see {@code javax.cache.Cache.Entry.unwrap(Class)}.
+     *
+     * @param entry Entry to unwrap.
+     * @param cls Type of the expected component.
+     * @param <T> Return type.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return New instance of underlying type or {@code null} if it's not available.
+     */
+    @SuppressWarnings({"unchecked", "ForLoopReplaceableByForEach"})
+    @Nullable public <T, K, V> T unwrapCacheEntry(Cache.Entry<K, V> entry, Class<T> cls) {
+        for (int i = 0; i < providersList.size(); i++) {
+            final T res = (T)providersList.get(i).unwrapCacheEntry(entry, cls);
+
+            if (res != null)
+                return res;
+        }
+
+        return null;
     }
 
     /**

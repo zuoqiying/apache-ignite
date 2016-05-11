@@ -17,12 +17,11 @@
 
 package org.apache.ignite.internal;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.plugin.extensions.communication.*;
-import org.jetbrains.annotations.*;
-
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.plugin.extensions.communication.MessageFactory;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Component type.
@@ -286,7 +285,7 @@ public enum IgniteComponentType {
                 return (T)ctor.newInstance(ctx);
             }
         }
-        catch (Exception e) {
+        catch (Throwable e) {
             throw componentException(e);
         }
     }
@@ -310,7 +309,7 @@ public enum IgniteComponentType {
      * @param err Creation error.
      * @return Component creation exception.
      */
-    private IgniteCheckedException componentException(Exception err) {
+    private IgniteCheckedException componentException(Throwable err) {
         return new IgniteCheckedException("Failed to create Ignite component (consider adding " + module +
             " module to classpath) [component=" + this + ", cls=" + clsName + ']', err);
     }

@@ -17,81 +17,245 @@
 
 package org.apache.ignite.internal.util;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.compute.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.events.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.cluster.*;
-import org.apache.ignite.internal.compute.*;
-import org.apache.ignite.internal.events.*;
-import org.apache.ignite.internal.managers.deployment.*;
-import org.apache.ignite.internal.mxbean.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.processors.cache.version.*;
-import org.apache.ignite.internal.transactions.*;
-import org.apache.ignite.internal.util.io.*;
-import org.apache.ignite.internal.util.ipc.shmem.*;
-import org.apache.ignite.internal.util.lang.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.internal.util.worker.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.lifecycle.*;
-import org.apache.ignite.plugin.*;
-import org.apache.ignite.plugin.extensions.communication.*;
-import org.apache.ignite.spi.*;
-import org.apache.ignite.spi.discovery.*;
-import org.apache.ignite.transactions.*;
-import org.jetbrains.annotations.*;
-import org.jsr166.*;
-import sun.misc.*;
-
-import javax.management.*;
-import javax.naming.*;
-import javax.net.ssl.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.Externalizable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.annotation.Annotation;
-import java.lang.management.*;
+import java.lang.management.CompilationMXBean;
+import java.lang.management.LockInfo;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MonitorInfo;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.RuntimeMXBean;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Array;
-import java.lang.reflect.*;
-import java.math.*;
-import java.net.*;
-import java.nio.*;
-import java.nio.channels.*;
-import java.nio.charset.*;
-import java.security.*;
-import java.security.cert.*;
-import java.sql.*;
-import java.text.*;
-import java.util.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.net.URLConnection;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileLock;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.charset.Charset;
+import java.security.AccessController;
+import java.security.KeyManagementException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
+import java.security.cert.X509Certificate;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.concurrent.locks.*;
-import java.util.jar.*;
-import java.util.logging.*;
-import java.util.regex.*;
-import java.util.zip.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.UUID;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.jar.JarFile;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import javax.management.DynamicMBean;
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.naming.Context;
+import javax.naming.NamingException;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteClientDisconnectedException;
+import org.apache.ignite.IgniteDeploymentException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteInterruptedException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.IgniteSystemProperties;
+import org.apache.ignite.cluster.ClusterGroupEmptyException;
+import org.apache.ignite.cluster.ClusterMetrics;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.cluster.ClusterTopologyException;
+import org.apache.ignite.compute.ComputeTask;
+import org.apache.ignite.compute.ComputeTaskCancelledException;
+import org.apache.ignite.compute.ComputeTaskName;
+import org.apache.ignite.compute.ComputeTaskTimeoutException;
+import org.apache.ignite.configuration.AddressResolver;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.events.EventType;
+import org.apache.ignite.internal.GridKernalContext;
+import org.apache.ignite.internal.IgniteClientDisconnectedCheckedException;
+import org.apache.ignite.internal.IgniteDeploymentCheckedException;
+import org.apache.ignite.internal.IgniteFutureCancelledCheckedException;
+import org.apache.ignite.internal.IgniteFutureTimeoutCheckedException;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.IgniteInterruptedCheckedException;
+import org.apache.ignite.internal.IgniteNodeAttributes;
+import org.apache.ignite.internal.cluster.ClusterGroupEmptyCheckedException;
+import org.apache.ignite.internal.cluster.ClusterTopologyCheckedException;
+import org.apache.ignite.internal.compute.ComputeTaskCancelledCheckedException;
+import org.apache.ignite.internal.compute.ComputeTaskTimeoutCheckedException;
+import org.apache.ignite.internal.events.DiscoveryCustomEvent;
+import org.apache.ignite.internal.managers.communication.GridIoManager;
+import org.apache.ignite.internal.managers.deployment.GridDeploymentInfo;
+import org.apache.ignite.internal.mxbean.IgniteStandardMXBean;
+import org.apache.ignite.internal.processors.cache.GridCacheAttributes;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersionEx;
+import org.apache.ignite.internal.transactions.IgniteTxHeuristicCheckedException;
+import org.apache.ignite.internal.transactions.IgniteTxOptimisticCheckedException;
+import org.apache.ignite.internal.transactions.IgniteTxRollbackCheckedException;
+import org.apache.ignite.internal.transactions.IgniteTxTimeoutCheckedException;
+import org.apache.ignite.internal.util.future.IgniteFutureImpl;
+import org.apache.ignite.internal.util.io.GridFilenameUtils;
+import org.apache.ignite.internal.util.ipc.shmem.IpcSharedMemoryNativeLoader;
+import org.apache.ignite.internal.util.lang.GridClosureException;
+import org.apache.ignite.internal.util.lang.GridPeerDeployAware;
+import org.apache.ignite.internal.util.lang.GridTuple;
+import org.apache.ignite.internal.util.typedef.C1;
+import org.apache.ignite.internal.util.typedef.CI1;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.G;
+import org.apache.ignite.internal.util.typedef.P1;
+import org.apache.ignite.internal.util.typedef.X;
+import org.apache.ignite.internal.util.typedef.internal.A;
+import org.apache.ignite.internal.util.typedef.internal.SB;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.util.worker.GridWorker;
+import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgniteClosure;
+import org.apache.ignite.lang.IgniteFutureCancelledException;
+import org.apache.ignite.lang.IgniteFutureTimeoutException;
+import org.apache.ignite.lang.IgniteOutClosure;
+import org.apache.ignite.lang.IgnitePredicate;
+import org.apache.ignite.lang.IgniteProductVersion;
+import org.apache.ignite.lang.IgniteUuid;
+import org.apache.ignite.lifecycle.LifecycleAware;
+import org.apache.ignite.plugin.PluginProvider;
+import org.apache.ignite.plugin.extensions.communication.Message;
+import org.apache.ignite.plugin.extensions.communication.MessageWriter;
+import org.apache.ignite.spi.IgniteSpi;
+import org.apache.ignite.spi.IgniteSpiException;
+import org.apache.ignite.spi.discovery.DiscoverySpi;
+import org.apache.ignite.spi.discovery.DiscoverySpiOrderSupport;
+import org.apache.ignite.transactions.TransactionDeadlockException;
+import org.apache.ignite.transactions.TransactionHeuristicException;
+import org.apache.ignite.transactions.TransactionOptimisticException;
+import org.apache.ignite.transactions.TransactionRollbackException;
+import org.apache.ignite.transactions.TransactionTimeoutException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jsr166.ConcurrentHashMap8;
+import sun.misc.SharedSecrets;
+import sun.misc.URLClassPath;
+import sun.misc.Unsafe;
 
-import static org.apache.ignite.IgniteSystemProperties.*;
-import static org.apache.ignite.events.EventType.*;
-import static org.apache.ignite.internal.IgniteNodeAttributes.*;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_DISABLE_HOSTNAME_VERIFIER;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_HOME;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_LOCAL_HOST;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_MBEAN_APPEND_CLASS_LOADER_ID;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_MBEAN_APPEND_JVM_ID;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_NO_DISCO_ORDER;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_SSH_HOST;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_SSH_USER_NAME;
+import static org.apache.ignite.IgniteSystemProperties.getBoolean;
+import static org.apache.ignite.events.EventType.EVTS_ALL;
+import static org.apache.ignite.events.EventType.EVTS_ALL_MINUS_METRIC_UPDATE;
+import static org.apache.ignite.events.EventType.EVT_NODE_METRICS_UPDATED;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_BUILD_DATE;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_BUILD_VER;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_CACHE;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_JVM_PID;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_MACS;
+import static org.apache.ignite.internal.util.GridUnsafe.objectFieldOffset;
+import static org.apache.ignite.internal.util.GridUnsafe.putObjectVolatile;
+import static org.apache.ignite.internal.util.GridUnsafe.staticFieldBase;
+import static org.apache.ignite.internal.util.GridUnsafe.staticFieldOffset;
 
 /**
  * Collection of utility methods used throughout the system.
  */
 @SuppressWarnings({"UnusedReturnValue", "UnnecessaryFullyQualifiedName"})
 public abstract class IgniteUtils {
-    /** Unsafe. */
-    private static final Unsafe UNSAFE = GridUnsafe.unsafe();
-
     /** {@code True} if {@code unsafe} should be used for array copy. */
     private static final boolean UNSAFE_BYTE_ARR_CP = unsafeByteArrayCopyAvailable();
-
-    /** Offset. */
-    private static final int BYTE_ARRAY_DATA_OFFSET = UNSAFE.arrayBaseOffset(byte[].class);
 
     /** Sun-specific JDK constructor factory for objects that don't have empty constructor. */
     private static final Method CTOR_FACTORY;
@@ -129,6 +293,9 @@ public abstract class IgniteUtils {
 
     /** Secure socket protocol to use. */
     private static final String HTTPS_PROTOCOL = "TLS";
+
+    /** Correct Mbean cache name pattern. */
+    private static Pattern MBEAN_CACHE_NAME_PATTERN = Pattern.compile("^[a-zA-Z_0-9]+$");
 
     /** Project home directory. */
     private static volatile GridTuple<String> ggHome;
@@ -312,6 +479,15 @@ public abstract class IgniteUtils {
     /** */
     private static volatile Boolean hasShmem;
 
+    /** Object.hashCode() */
+    private static Method hashCodeMtd;
+
+    /** Object.equals(...) */
+    private static Method equalsMtd;
+
+    /** Object.toString() */
+    private static Method toStringMtd;
+
     /**
      * Initializes enterprise check.
      */
@@ -361,7 +537,7 @@ public abstract class IgniteUtils {
                 }
 
             // UNIX name detection.
-            if (osLow.contains("olaris"))
+            if (osLow.contains("olaris") || osLow.contains("sunos"))
                 solaris = true;
             else if (osLow.contains("inux"))
                 linux = true;
@@ -417,6 +593,7 @@ public abstract class IgniteUtils {
         primitiveMap.put("double", double.class);
         primitiveMap.put("char", char.class);
         primitiveMap.put("boolean", boolean.class);
+        primitiveMap.put("void", void.class);
 
         boxedClsMap.put(byte.class, Byte.class);
         boxedClsMap.put(short.class, Short.class);
@@ -426,6 +603,7 @@ public abstract class IgniteUtils {
         boxedClsMap.put(double.class, Double.class);
         boxedClsMap.put(char.class, Character.class);
         boxedClsMap.put(boolean.class, Boolean.class);
+        boxedClsMap.put(void.class, Void.class);
 
         try {
             OBJECT_CTOR = Object.class.getConstructor();
@@ -504,9 +682,8 @@ public abstract class IgniteUtils {
 
                 // We use unsafe operations to update static fields on interface because
                 // they are treated as static final and cannot be updated via standard reflection.
-                UNSAFE.putObjectVolatile(UNSAFE.staticFieldBase(f1), UNSAFE.staticFieldOffset(f1), gridEvents());
-                UNSAFE.putObjectVolatile(UNSAFE.staticFieldBase(f2), UNSAFE.staticFieldOffset(f2),
-                    gridEvents(EVT_NODE_METRICS_UPDATED));
+                putObjectVolatile(staticFieldBase(f1), staticFieldOffset(f1), gridEvents());
+                putObjectVolatile(staticFieldBase(f2), staticFieldOffset(f2), gridEvents(EVT_NODE_METRICS_UPDATED));
 
                 assert EVTS_ALL != null;
                 assert EVTS_ALL.length == GRID_EVTS.length;
@@ -533,6 +710,15 @@ public abstract class IgniteUtils {
 
         // Set the http.strictPostRedirect property to prevent redirected POST from being mapped to a GET.
         System.setProperty("http.strictPostRedirect", "true");
+
+        for (Method mtd : Object.class.getMethods()) {
+            if ("hashCode".equals(mtd.getName()))
+                hashCodeMtd = mtd;
+            else if ("equals".equals(mtd.getName()))
+                equalsMtd = mtd;
+            else if ("toString".equals(mtd.getName()))
+                toStringMtd = mtd;
+        }
     }
 
     /**
@@ -580,7 +766,14 @@ public abstract class IgniteUtils {
 
         m.put(ClusterTopologyCheckedException.class, new C1<IgniteCheckedException, IgniteException>() {
             @Override public IgniteException apply(IgniteCheckedException e) {
-                return new ClusterTopologyException(e.getMessage(), e);
+                ClusterTopologyException topEx = new ClusterTopologyException(e.getMessage(), e);
+
+                ClusterTopologyCheckedException checked = (ClusterTopologyCheckedException)e;
+
+                if (checked.retryReadyFuture() != null)
+                    topEx.retryReadyFuture(new IgniteFutureImpl<>(checked.retryReadyFuture()));
+
+                return topEx;
             }
         });
 
@@ -616,6 +809,9 @@ public abstract class IgniteUtils {
 
         m.put(IgniteTxTimeoutCheckedException.class, new C1<IgniteCheckedException, IgniteException>() {
             @Override public IgniteException apply(IgniteCheckedException e) {
+                if (e.getCause() instanceof TransactionDeadlockException)
+                    return new TransactionTimeoutException(e.getMessage(), e.getCause());
+
                 return new TransactionTimeoutException(e.getMessage(), e);
             }
         });
@@ -623,6 +819,15 @@ public abstract class IgniteUtils {
         m.put(IgniteTxOptimisticCheckedException.class, new C1<IgniteCheckedException, IgniteException>() {
             @Override public IgniteException apply(IgniteCheckedException e) {
                 return new TransactionOptimisticException(e.getMessage(), e);
+            }
+        });
+
+        m.put(IgniteClientDisconnectedCheckedException.class, new C1<IgniteCheckedException, IgniteException>() {
+            @Override public IgniteException apply(IgniteCheckedException e) {
+                return new IgniteClientDisconnectedException(
+                    ((IgniteClientDisconnectedCheckedException)e).reconnectFuture(),
+                    e.getMessage(),
+                    e);
             }
         });
 
@@ -673,6 +878,23 @@ public abstract class IgniteUtils {
      * @return Ignite runtime exception.
      */
     public static IgniteException convertException(IgniteCheckedException e) {
+        IgniteClientDisconnectedException e0 = e.getCause(IgniteClientDisconnectedException.class);
+
+        if (e0 != null) {
+            assert e0.reconnectFuture() != null : e0;
+
+            throw e0;
+        }
+
+        IgniteClientDisconnectedCheckedException disconnectedErr =
+            e.getCause(IgniteClientDisconnectedCheckedException.class);
+
+        if (disconnectedErr != null) {
+            assert disconnectedErr.reconnectFuture() != null : disconnectedErr;
+
+            e = disconnectedErr;
+        }
+
         C1<IgniteCheckedException, IgniteException> converter = exceptionConverters.get(e.getClass());
 
         if (converter != null)
@@ -958,7 +1180,7 @@ public abstract class IgniteUtils {
     }
 
     /**
-     * Returns current JVM maxMemory in the same format as {@link #heapSize(org.apache.ignite.cluster.ClusterNode, int)}.
+     * Returns current JVM maxMemory in the same format as {@link #heapSize(ClusterNode, int)}.
      *
      * @param precision Precision.
      * @return Maximum memory size in GB.
@@ -1139,9 +1361,9 @@ public abstract class IgniteUtils {
      */
     @Nullable public static Class<?> classForName(String cls, @Nullable Class<?> dflt) {
         try {
-            return Class.forName(cls);
+            return cls == null ? dflt : Class.forName(cls);
         }
-        catch (ClassNotFoundException e) {
+        catch (ClassNotFoundException ignore) {
             return dflt;
         }
     }
@@ -1995,6 +2217,29 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * @return ClassLoader at IgniteConfiguration in case it is not null or
+     * ClassLoader used to start Ignite.
+     */
+    public static ClassLoader resolveClassLoader(IgniteConfiguration cfg) {
+        return resolveClassLoader(null, cfg);
+    }
+
+    /**
+     * @return ClassLoader passed as param in case it is not null or
+     * ClassLoader at IgniteConfiguration in case it is not null or
+     * ClassLoader used to start Ignite.
+     */
+    public static ClassLoader resolveClassLoader(ClassLoader ldr, IgniteConfiguration cfg) {
+        assert cfg != null;
+
+        return (ldr != null && ldr != gridClassLoader) ?
+            ldr :
+            cfg.getClassLoader() != null ?
+                cfg.getClassLoader() :
+                gridClassLoader;
+    }
+
+    /**
      * @param parent Parent to find.
      * @param ldr Loader to check.
      * @return {@code True} if parent found.
@@ -2281,6 +2526,16 @@ public abstract class IgniteUtils {
         }
 
         return bytes;
+    }
+
+    /**
+     * Gets a hex string representation of the given long value.
+     *
+     * @param val Value to convert to string.
+     * @return Hex string.
+     */
+    public static String hexLong(long val) {
+        return new SB().appendHex(val).toString();
     }
 
     /**
@@ -3106,7 +3361,7 @@ public abstract class IgniteUtils {
                 return ggHome0;
         }
 
-        URI uri;
+        URI classesUri;
 
         Class<IgniteUtils> cls = IgniteUtils.class;
 
@@ -3121,11 +3376,11 @@ public abstract class IgniteUtils {
             }
 
             // Resolve path to class-file.
-            uri = domain.getCodeSource().getLocation().toURI();
+            classesUri = domain.getCodeSource().getLocation().toURI();
 
             // Overcome UNC path problem on Windows (http://www.tomergabel.com/JavaMishandlesUNCPathsOnWindows.aspx)
-            if (isWindows() && uri.getAuthority() != null)
-                uri = new URI(uri.toString().replace("file://", "file:/"));
+            if (isWindows() && classesUri.getAuthority() != null)
+                classesUri = new URI(classesUri.toString().replace("file://", "file:/"));
         }
         catch (URISyntaxException | SecurityException e) {
             logResolveFailed(cls, e);
@@ -3133,7 +3388,18 @@ public abstract class IgniteUtils {
             return null;
         }
 
-        return findProjectHome(new File(uri));
+        File classesFile;
+
+        try {
+            classesFile = new File(classesUri);
+        }
+        catch (IllegalArgumentException e) {
+            logResolveFailed(cls, e);
+
+            return null;
+        }
+
+        return findProjectHome(classesFile);
     }
 
     /**
@@ -3308,12 +3574,28 @@ public abstract class IgniteUtils {
             url = U.resolveIgniteUrl(springCfgPath);
 
             if (url == null)
+                url = resolveInClasspath(springCfgPath);
+
+            if (url == null)
                 throw new IgniteCheckedException("Spring XML configuration path is invalid: " + springCfgPath +
                     ". Note that this path should be either absolute or a relative local file system path, " +
                     "relative to META-INF in classpath or valid URL to IGNITE_HOME.", e);
         }
 
         return url;
+    }
+
+    /**
+     * @param path Resource path.
+     * @return Resource URL inside classpath or {@code null}.
+     */
+    @Nullable private static URL resolveInClasspath(String path) {
+        ClassLoader clsLdr = Thread.currentThread().getContextClassLoader();
+
+        if (clsLdr == null)
+            return null;
+
+        return clsLdr.getResource(path.replaceAll("\\\\", "/"));
     }
 
     /**
@@ -3997,9 +4279,11 @@ public abstract class IgniteUtils {
      * @param sb Sb.
      */
     private static void appendClassLoaderHash(SB sb) {
-        String clsLdrHash = Integer.toHexString(Ignite.class.getClassLoader().hashCode());
+        if (getBoolean(IGNITE_MBEAN_APPEND_CLASS_LOADER_ID, true)) {
+            String clsLdrHash = Integer.toHexString(Ignite.class.getClassLoader().hashCode());
 
-        sb.a("clsLdr=").a(clsLdrHash).a(',');
+            sb.a("clsLdr=").a(clsLdrHash).a(',');
+        }
     }
 
     /**
@@ -4016,11 +4300,11 @@ public abstract class IgniteUtils {
     /**
      * Mask component name to make sure that it is not {@code null}.
      *
-     * @param cacheName Component name to mask, possibly {@code null}.
+     * @param name Component name to mask, possibly {@code null}.
      * @return Component name.
      */
-    public static String maskName(@Nullable String cacheName) {
-        return cacheName == null ? "default" : cacheName;
+    public static String maskName(@Nullable String name) {
+        return name == null ? "default" : name;
     }
 
     /**
@@ -4046,7 +4330,10 @@ public abstract class IgniteUtils {
 
         cacheName = maskName(cacheName);
 
-        sb.a("group=").a(cacheName).a(',');
+        if (!MBEAN_CACHE_NAME_PATTERN.matcher(cacheName).matches())
+            sb.a("group=").a('\"').a(cacheName).a('\"').a(',');
+        else
+            sb.a("group=").a(cacheName).a(',');
 
         sb.a("name=").a(name);
 
@@ -4754,6 +5041,31 @@ public abstract class IgniteUtils {
      */
     public static String readUTFStringNullable(DataInput in) throws IOException {
         return in.readBoolean() ? in.readUTF() : null;
+    }
+
+    /**
+     * Read hash map.
+     *
+     * @param in Input.
+     * @return Read map.
+     * @throws IOException If de-serialization failed.
+     * @throws ClassNotFoundException If deserialized class could not be found.
+     */
+    @SuppressWarnings({"unchecked"})
+    @Nullable public static <K, V> HashMap<K, V> readHashMap(ObjectInput in)
+        throws IOException, ClassNotFoundException {
+        int size = in.readInt();
+
+        // Check null flag.
+        if (size == -1)
+            return null;
+
+        HashMap<K, V> map = U.newHashMap(size);
+
+        for (int i = 0; i < size; i++)
+            map.put((K)in.readObject(), (V)in.readObject());
+
+        return map;
     }
 
     /**
@@ -5534,7 +5846,7 @@ public abstract class IgniteUtils {
                 Iterable<Field> fields = cached ? tup.get2() : Arrays.asList(cls.getDeclaredFields());
 
                 if (!cached) {
-                    tup = F.t2();
+                    tup = new IgniteBiTuple<>();
 
                     tup.set1(cls);
                 }
@@ -5612,7 +5924,9 @@ public abstract class IgniteUtils {
      * @return {@code True} if given class is of {@code Ignite} type.
      */
     public static boolean isIgnite(Class<?> cls) {
-        return cls.getName().startsWith("org.apache.ignite");
+        String name = cls.getName();
+
+        return name.startsWith("org.apache.ignite") || name.startsWith("org.jsr166");
     }
 
     /**
@@ -6213,7 +6527,7 @@ public abstract class IgniteUtils {
      * @return Short string representing the node.
      */
     public static String toShortString(ClusterNode n) {
-        return "GridNode [id=" + n.id() + ", order=" + n.order() + ", addr=" + n.addresses() +
+        return "ClusterNode [id=" + n.id() + ", order=" + n.order() + ", addr=" + n.addresses() +
             ", daemon=" + n.isDaemon() + ']';
     }
 
@@ -7415,6 +7729,30 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * Gets object field offset.
+     *
+     * @param cls Object class.
+     * @param fieldName Field name.
+     * @return Field offset.
+     */
+    public static long fieldOffset(Class<?> cls, String fieldName) {
+        try {
+            return objectFieldOffset(cls.getDeclaredField(fieldName));
+        }
+        catch (NoSuchFieldException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * @param cls Class to check.
+     * @return {@code True} if class is final.
+     */
+    public static boolean isFinal(Class<?> cls) {
+        return Modifier.isFinal(cls.getModifiers());
+    }
+
+    /**
      * Gets field value.
      *
      * @param cls Class.
@@ -7872,9 +8210,10 @@ public abstract class IgniteUtils {
         if (cls == null)
             return null;
 
-        Class<?> boxed = boxedClsMap.get(cls);
+        if (!cls.isPrimitive())
+            return cls;
 
-        return boxed != null ? boxed : cls;
+        return boxedClsMap.get(cls);
     }
 
     /**
@@ -7947,15 +8286,15 @@ public abstract class IgniteUtils {
      * @return Hash value.
      */
     public static int hash(int h) {
-        // Apply base step of MurmurHash; see http://code.google.com/p/smhasher/
-        // Despite two multiplies, this is often faster than others
-        // with comparable bit-spread properties.
-        h ^= h >>> 16;
-        h *= 0x85ebca6b;
-        h ^= h >>> 13;
-        h *= 0xc2b2ae35;
+        // Spread bits to regularize both segment and index locations,
+        // using variant of single-word Wang/Jenkins hash.
+        h += (h <<  15) ^ 0xffffcd7d;
+        h ^= (h >>> 10);
+        h += (h <<   3);
+        h ^= (h >>>  6);
+        h += (h <<   2) + (h << 14);
 
-        return (h >>> 16) ^ h;
+        return h ^ (h >>> 16);
     }
 
     /**
@@ -8010,7 +8349,7 @@ public abstract class IgniteUtils {
     @SuppressWarnings("TypeParameterExtendsFinalClass")
     private static boolean unsafeByteArrayCopyAvailable() {
         try {
-            Class<? extends Unsafe> unsafeCls = UNSAFE.getClass();
+            Class<? extends Unsafe> unsafeCls = Unsafe.class;
 
             unsafeCls.getMethod("copyMemory", Object.class, long.class, Object.class, long.class, long.class);
 
@@ -8033,7 +8372,7 @@ public abstract class IgniteUtils {
         assert resBuf.length >= resOff + len;
 
         if (UNSAFE_BYTE_ARR_CP)
-            UNSAFE.copyMemory(src, BYTE_ARRAY_DATA_OFFSET + off, resBuf, BYTE_ARRAY_DATA_OFFSET + resOff, len);
+            GridUnsafe.copyMemory(src, GridUnsafe.BYTE_ARR_OFF + off, resBuf, GridUnsafe.BYTE_ARR_OFF + resOff, len);
         else
             System.arraycopy(src, off, resBuf, resOff, len);
 
@@ -8043,7 +8382,7 @@ public abstract class IgniteUtils {
     /**
      * @param addrs Node's addresses.
      * @param port Port discovery number.
-     * @return A string compatible with {@link org.apache.ignite.cluster.ClusterNode#consistentId()} requirements.
+     * @return A string compatible with {@link ClusterNode#consistentId()} requirements.
      */
     public static String consistentId(Collection<String> addrs, int port) {
         assert !F.isEmpty(addrs);
@@ -8231,7 +8570,7 @@ public abstract class IgniteUtils {
             throw new IgniteCheckedException("Addresses can not be resolved [addr=" + addrs +
                 ", hostNames=" + hostNames + ']');
 
-        return F.viewListReadOnly(res, F.<InetAddress>identity());
+        return Collections.unmodifiableList(res);
     }
 
     /**
@@ -8278,7 +8617,7 @@ public abstract class IgniteUtils {
             res.add(new InetSocketAddress(addr, port));
         }
 
-        return F.viewListReadOnly(res, F.<InetSocketAddress>identity());
+        return Collections.unmodifiableList(res);
     }
 
     /**
@@ -8566,18 +8905,18 @@ public abstract class IgniteUtils {
      * @return Offset.
      */
     public static long writeGridUuid(byte[] arr, long off, @Nullable IgniteUuid uid) {
-        UNSAFE.putBoolean(arr, off++, uid != null);
+        GridUnsafe.putBoolean(arr, off++, uid != null);
 
         if (uid != null) {
-            UNSAFE.putLong(arr, off, uid.globalId().getMostSignificantBits());
+            GridUnsafe.putLong(arr, off, uid.globalId().getMostSignificantBits());
 
             off += 8;
 
-            UNSAFE.putLong(arr, off, uid.globalId().getLeastSignificantBits());
+            GridUnsafe.putLong(arr, off, uid.globalId().getLeastSignificantBits());
 
             off += 8;
 
-            UNSAFE.putLong(arr, off, uid.localId());
+            GridUnsafe.putLong(arr, off, uid.localId());
 
             off += 8;
         }
@@ -8591,18 +8930,18 @@ public abstract class IgniteUtils {
      * @return UUID.
      */
     @Nullable public static IgniteUuid readGridUuid(byte[] arr, long off) {
-        if (UNSAFE.getBoolean(arr, off++)) {
-            long most = UNSAFE.getLong(arr, off);
+        if (GridUnsafe.getBoolean(arr, off++)) {
+            long most = GridUnsafe.getLong(arr, off);
 
             off += 8;
 
-            long least = UNSAFE.getLong(arr, off);
+            long least = GridUnsafe.getLong(arr, off);
 
             off += 8;
 
             UUID globalId = new UUID(most, least);
 
-            long locId = UNSAFE.getLong(arr, off);
+            long locId = GridUnsafe.getLong(arr, off);
 
             return new IgniteUuid(globalId, locId);
         }
@@ -8615,18 +8954,18 @@ public abstract class IgniteUtils {
      * @return UUID.
      */
     @Nullable public static IgniteUuid readGridUuid(long ptr) {
-        if (UNSAFE.getBoolean(null, ptr++)) {
-            long most = UNSAFE.getLong(ptr);
+        if (GridUnsafe.getBoolean(null, ptr++)) {
+            long most = GridUnsafe.getLong(ptr);
 
             ptr += 8;
 
-            long least = UNSAFE.getLong(ptr);
+            long least = GridUnsafe.getLong(ptr);
 
             ptr += 8;
 
             UUID globalId = new UUID(most, least);
 
-            long locId = UNSAFE.getLong(ptr);
+            long locId = GridUnsafe.getLong(ptr);
 
             return new IgniteUuid(globalId, locId);
         }
@@ -8643,43 +8982,43 @@ public abstract class IgniteUtils {
     public static long writeVersion(byte[] arr, long off, GridCacheVersion ver) {
         boolean verEx = ver instanceof GridCacheVersionEx;
 
-        UNSAFE.putBoolean(arr, off++, verEx);
+        GridUnsafe.putBoolean(arr, off++, verEx);
 
         if (verEx) {
             GridCacheVersion drVer = ver.conflictVersion();
 
             assert drVer != null;
 
-            UNSAFE.putInt(arr, off, drVer.topologyVersion());
+            GridUnsafe.putInt(arr, off, drVer.topologyVersion());
 
             off += 4;
 
-            UNSAFE.putInt(arr, off, drVer.nodeOrderAndDrIdRaw());
+            GridUnsafe.putInt(arr, off, drVer.nodeOrderAndDrIdRaw());
 
             off += 4;
 
-            UNSAFE.putLong(arr, off, drVer.globalTime());
+            GridUnsafe.putLong(arr, off, drVer.globalTime());
 
             off += 8;
 
-            UNSAFE.putLong(arr, off, drVer.order());
+            GridUnsafe.putLong(arr, off, drVer.order());
 
             off += 8;
         }
 
-        UNSAFE.putInt(arr, off, ver.topologyVersion());
+        GridUnsafe.putInt(arr, off, ver.topologyVersion());
 
         off += 4;
 
-        UNSAFE.putInt(arr, off, ver.nodeOrderAndDrIdRaw());
+        GridUnsafe.putInt(arr, off, ver.nodeOrderAndDrIdRaw());
 
         off += 4;
 
-        UNSAFE.putLong(arr, off, ver.globalTime());
+        GridUnsafe.putLong(arr, off, ver.globalTime());
 
         off += 8;
 
-        UNSAFE.putLong(arr, off, ver.order());
+        GridUnsafe.putLong(arr, off, ver.order());
 
         off += 8;
 
@@ -8692,18 +9031,18 @@ public abstract class IgniteUtils {
      * @return Version.
      */
     public static GridCacheVersion readVersion(long ptr, boolean verEx) {
-        GridCacheVersion ver = new GridCacheVersion(UNSAFE.getInt(ptr),
-            UNSAFE.getInt(ptr + 4),
-            UNSAFE.getLong(ptr + 8),
-            UNSAFE.getLong(ptr + 16));
+        GridCacheVersion ver = new GridCacheVersion(GridUnsafe.getInt(ptr),
+            GridUnsafe.getInt(ptr + 4),
+            GridUnsafe.getLong(ptr + 8),
+            GridUnsafe.getLong(ptr + 16));
 
         if (verEx) {
             ptr += 24;
 
-            ver = new GridCacheVersionEx(UNSAFE.getInt(ptr),
-                UNSAFE.getInt(ptr + 4),
-                UNSAFE.getLong(ptr + 8),
-                UNSAFE.getLong(ptr + 16),
+            ver = new GridCacheVersionEx(GridUnsafe.getInt(ptr),
+                GridUnsafe.getInt(ptr + 4),
+                GridUnsafe.getLong(ptr + 8),
+                GridUnsafe.getLong(ptr + 16),
                 ver);
         }
 
@@ -8717,38 +9056,38 @@ public abstract class IgniteUtils {
      * @return Version.
      */
     public static GridCacheVersion readVersion(byte[] arr, long off, boolean verEx) {
-        int topVer = UNSAFE.getInt(arr, off);
+        int topVer = GridUnsafe.getInt(arr, off);
 
         off += 4;
 
-        int nodeOrderDrId = UNSAFE.getInt(arr, off);
+        int nodeOrderDrId = GridUnsafe.getInt(arr, off);
 
         off += 4;
 
-        long globalTime = UNSAFE.getLong(arr, off);
+        long globalTime = GridUnsafe.getLong(arr, off);
 
         off += 8;
 
-        long order = UNSAFE.getLong(arr, off);
+        long order = GridUnsafe.getLong(arr, off);
 
         off += 8;
 
         GridCacheVersion ver = new GridCacheVersion(topVer, nodeOrderDrId, globalTime, order);
 
         if (verEx) {
-            topVer = UNSAFE.getInt(arr, off);
+            topVer = GridUnsafe.getInt(arr, off);
 
             off += 4;
 
-            nodeOrderDrId = UNSAFE.getInt(arr, off);
+            nodeOrderDrId = GridUnsafe.getInt(arr, off);
 
             off += 4;
 
-            globalTime = UNSAFE.getLong(arr, off);
+            globalTime = GridUnsafe.getLong(arr, off);
 
             off += 8;
 
-            order = UNSAFE.getLong(arr, off);
+            order = GridUnsafe.getLong(arr, off);
 
             ver = new GridCacheVersionEx(topVer, nodeOrderDrId, globalTime, order, ver);
         }
@@ -8764,7 +9103,7 @@ public abstract class IgniteUtils {
     public static byte[] copyMemory(long ptr, int size) {
         byte[] res = new byte[size];
 
-        UNSAFE.copyMemory(null, ptr, res, BYTE_ARRAY_DATA_OFFSET, size);
+        GridUnsafe.copyMemory(null, ptr, res, GridUnsafe.BYTE_ARR_OFF, size);
 
         return res;
     }
@@ -8913,6 +9252,31 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * @param cls The class to search.
+     * @param name Name of a field to get.
+     * @return Field or {@code null}.
+     */
+    @Nullable public static Field findField(Class<?> cls, String name) {
+        while (cls != null) {
+            try {
+                Field fld = cls.getDeclaredField(name);
+
+                if (!fld.isAccessible())
+                    fld.setAccessible(true);
+
+                return fld;
+            }
+            catch (NoSuchFieldException e) {
+                // No-op.
+            }
+
+            cls = cls.getSuperclass();
+        }
+
+        return null;
+    }
+
+    /**
      * @param c Collection.
      * @param p Optional filters.
      * @return Resulting array list.
@@ -9012,6 +9376,9 @@ public abstract class IgniteUtils {
         assert buf != null;
         assert buf.hasArray();
 
+        if (writer != null)
+            writer.setCurrentWriteClass(msg.getClass());
+
         boolean finished = false;
         int cnt = 0;
 
@@ -9060,5 +9427,87 @@ public abstract class IgniteUtils {
         }
 
         return hasShmem;
+    }
+
+    /**
+     * @param lock Lock.
+     * @throws IgniteInterruptedCheckedException If interrupted.
+     */
+    public static void writeLock(ReadWriteLock lock) throws IgniteInterruptedCheckedException {
+        try {
+            lock.writeLock().lockInterruptibly();
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+
+            throw new IgniteInterruptedCheckedException(e);
+        }
+    }
+
+    /**
+     * Defines which protocol version to use for
+     * communication with the provided node.
+     *
+     * @param ctx Context.
+     * @param nodeId Node ID.
+     * @return Protocol version.
+     * @throws IgniteCheckedException If node doesn't exist.
+     */
+    public static byte directProtocolVersion(GridKernalContext ctx, UUID nodeId) throws IgniteCheckedException {
+        assert nodeId != null;
+
+        ClusterNode node = ctx.discovery().node(nodeId);
+
+        if (node == null)
+            throw new IgniteCheckedException("Failed to define communication protocol version " +
+                "(has node left topology?): " + nodeId);
+
+        assert !node.isLocal();
+
+        Byte attr = node.attribute(GridIoManager.DIRECT_PROTO_VER_ATTR);
+
+        byte rmtProtoVer = attr != null ? attr : 1;
+
+        if (rmtProtoVer < GridIoManager.DIRECT_PROTO_VER)
+            return rmtProtoVer;
+        else
+            return GridIoManager.DIRECT_PROTO_VER;
+    }
+
+    /**
+     * @return Whether provided method is {@code Object.hashCode()}.
+     */
+    public static boolean isHashCodeMethod(Method mtd) {
+        return hashCodeMtd.equals(mtd);
+    }
+
+    /**
+     * @return Whether provided method is {@code Object.equals(...)}.
+     */
+    public static boolean isEqualsMethod(Method mtd) {
+        return equalsMtd.equals(mtd);
+    }
+
+    /**
+     * @return Whether provided method is {@code Object.toString()}.
+     */
+    public static boolean isToStringMethod(Method mtd) {
+        return toStringMtd.equals(mtd);
+    }
+
+    /**
+     * @param threadId Thread ID.
+     * @return Thread name if found.
+     */
+    public static String threadName(long threadId) {
+        Thread[] threads = new Thread[Thread.activeCount()];
+
+        int cnt = Thread.enumerate(threads);
+
+        for (int i = 0; i < cnt; i++)
+            if (threads[i].getId() == threadId)
+                return threads[i].getName();
+
+        return "<failed to find active thread " + threadId + '>';
     }
 }

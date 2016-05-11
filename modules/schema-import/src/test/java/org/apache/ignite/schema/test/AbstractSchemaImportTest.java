@@ -17,17 +17,25 @@
 
 package org.apache.ignite.schema.test;
 
-import junit.framework.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import junit.framework.TestCase;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.schema.model.PojoDescriptor;
 import org.apache.ignite.schema.parser.DatabaseMetadataParser;
-import org.apache.ignite.schema.ui.*;
+import org.apache.ignite.schema.ui.ConfirmCallable;
+import org.apache.ignite.schema.ui.MessageBox;
 
-import java.io.*;
-import java.sql.*;
-import java.util.List;
-
-import static org.apache.ignite.schema.ui.MessageBox.Result.*;
+import static org.apache.ignite.schema.ui.MessageBox.Result.YES_TO_ALL;
 
 /**
  * Base functional for Ignite Schema Import utility tests.
@@ -40,7 +48,7 @@ public abstract class AbstractSchemaImportTest extends TestCase {
     protected static final String OUT_DIR_PATH = System.getProperty("java.io.tmpdir") + "/ignite-schema-import/out";
 
     /** Auto confirmation of file conflicts. */
-    protected ConfirmCallable askOverwrite = new ConfirmCallable(null, "") {
+    protected final ConfirmCallable askOverwrite = new ConfirmCallable(null, "") {
         @Override public MessageBox.Result confirm(String msg) {
             return YES_TO_ALL;
         }
@@ -71,7 +79,8 @@ public abstract class AbstractSchemaImportTest extends TestCase {
             " dateCol DATE," +
             " timeCol TIME," +
             " tsCol TIMESTAMP, " +
-            " arrCol BINARY(10))");
+            " arrCol BINARY(10)," +
+            " FIELD_WITH_ALIAS VARCHAR(10))");
 
         stmt.executeUpdate("CREATE TABLE IF NOT EXISTS OBJECTS (pk INTEGER PRIMARY KEY, " +
             " boolCol BOOLEAN," +
@@ -87,13 +96,35 @@ public abstract class AbstractSchemaImportTest extends TestCase {
             " dateCol DATE," +
             " timeCol TIME," +
             " tsCol TIMESTAMP," +
-            " arrCol BINARY(10))");
+            " arrCol BINARY(10)," +
+            " FIELD_WITH_ALIAS VARCHAR(10))");
+
+        stmt.executeUpdate("CREATE SCHEMA IF NOT EXISTS TESTSCHEMA");
+
+        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS TESTSCHEMA.TST(pk INTEGER PRIMARY KEY, " +
+            " boolCol BOOLEAN NOT NULL," +
+            " byteCol TINYINT NOT NULL," +
+            " shortCol SMALLINT NOT NULL," +
+            " intCol INTEGER NOT NULL, " +
+            " longCol BIGINT NOT NULL," +
+            " floatCol REAL NOT NULL," +
+            " doubleCol DOUBLE NOT NULL," +
+            " doubleCol2 DOUBLE NOT NULL, " +
+            " bigDecimalCol DECIMAL(10, 0)," +
+            " strCol VARCHAR(10)," +
+            " dateCol DATE," +
+            " timeCol TIME," +
+            " tsCol TIMESTAMP, " +
+            " arrCol BINARY(10)," +
+            " FIELD_WITH_ALIAS VARCHAR(10))");
 
         conn.commit();
 
         U.closeQuiet(stmt);
 
-        pojos = DatabaseMetadataParser.parse(conn, false);
+        List<String> schemas = new ArrayList<>();
+
+        pojos = DatabaseMetadataParser.parse(conn, schemas, false);
 
         U.closeQuiet(conn);
     }
@@ -116,6 +147,7 @@ public abstract class AbstractSchemaImportTest extends TestCase {
 
                     if (!baseLine.equals(generatedLine) && !baseLine.contains(excludePtrn)
                             && !generatedLine.contains(excludePtrn)) {
+                        System.out.println("Generated file: " + generated.toString());
                         System.out.println("Expected: " + baseLine);
                         System.out.println("Generated: " + generatedLine);
 

@@ -32,7 +32,7 @@
 
     <groupId>org.apache.ignite</groupId>
     <artifactId>apache-ignite</artifactId>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>1.6.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -41,13 +41,14 @@
     </properties>
 
     <scm>
-        <url>https://git-wip-us.apache.org/repos/asf/incubator-ignite</url>
-        <connection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-ignite</connection>
-        <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-ignite</developerConnection>
+        <url>https://git-wip-us.apache.org/repos/asf/ignite</url>
+        <connection>scm:git:https://git-wip-us.apache.org/repos/asf/ignite</connection>
+        <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/ignite</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
     <modules>
+        <module>modules/apache-license-gen</module>
         <module>modules/tools</module>
         <module>modules/core</module>
         <module>modules/hadoop</module>
@@ -64,12 +65,27 @@
         <module>modules/jta</module>
         <module>modules/aws</module>
         <module>modules/log4j</module>
+        <module>modules/log4j2</module>
         <module>modules/slf4j</module>
         <module>modules/jcl</module>
         <module>modules/codegen</module>
         <module>modules/gce</module>
         <module>modules/cloud</module>
         <module>modules/mesos</module>
+        <module>modules/kafka</module>
+        <module>modules/flume</module>
+        <module>modules/yarn</module>
+        <module>modules/jms11</module>
+        <module>modules/twitter</module>
+        <module>modules/mqtt</module>
+        <module>modules/zookeeper</module>
+        <module>modules/camel</module>
+        <module>modules/storm</module>
+        <module>modules/osgi-paxlogging</module>
+        <module>modules/osgi-karaf</module>
+        <module>modules/osgi</module>
+        <module>modules/web/ignite-weblogic-test</module>
+        <module>modules/flink</module>
     </modules>
 
     <profiles>
@@ -139,6 +155,15 @@
         </profile>
 
         <profile>
+            <id>lgpl</id>
+            <modules>
+                <module>modules/hibernate</module>
+                <module>modules/geospatial</module>
+                <module>modules/schedule</module>
+            </modules>
+        </profile>
+
+        <profile>
             <id>release</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -146,6 +171,24 @@
             </activation>
             <build>
                 <plugins>
+                    <plugin><!-- skipping generation of dependencies licenses
+                     to keep clean /maven-shared-archive-resources/META-INF
+                     to prevent license.txt moving to sources.zip -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-remote-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>ignite-dependencies</id>
+                                <goals>
+                                    <goal>process</goal>
+                                </goals>
+                                <configuration>
+                                   <skip>true</skip>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
@@ -292,6 +335,11 @@
                                             <substitution expression="${project.version}" />
                                         </replaceregexp>
 
+                                        <replaceregexp file="${basedir}/target/release-package/examples/schema-import/pom.xml" byline="true">
+                                            <regexp pattern="to_be_replaced_by_ignite_version" />
+                                            <substitution expression="${project.version}" />
+                                        </replaceregexp>
+
                                         <chmod dir="${basedir}/target/release-package" perm="755" includes="**/*.sh" />
 
                                         <zip destfile="${basedir}/target/bin/${ignite.zip.pattern}.zip" encoding="UTF-8">
@@ -401,6 +449,7 @@
         <profile>
             <id>benchmarks</id>
             <modules>
+                <module>modules/benchmarks</module>
                 <module>modules/yardstick</module>
             </modules>
         </profile>
@@ -435,20 +484,11 @@
             </modules>
         </profile>
 
-
-        <profile>
-            <id>lgpl</id>
-            <modules>
-                <module>modules/hibernate</module>
-                <module>modules/geospatial</module>
-                <module>modules/schedule</module>
-            </modules>
-        </profile>
-
         <profile>
             <id>examples</id>
             <modules>
                 <module>examples</module>
+                <module>examples/schema-import</module>
             </modules>
         </profile>
 
@@ -458,25 +498,28 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.apache.apache.resources</groupId>
-                                <artifactId>apache-source-release-assembly-descriptor</artifactId>
-                                <version>1.0.4</version>
-                            </dependency>
-                        </dependencies>
                         <executions>
                             <execution>
+                                <!-- skip default -->
                                 <id>source-release-assembly</id>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <skipAssembly>true</skipAssembly>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>source-release-assembly-ignite</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
                                 <configuration>
                                     <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
-                                    <descriptorRefs>
-                                        <descriptorRef>${sourceReleaseAssemblyDescriptor}</descriptorRef>
-                                    </descriptorRefs>
+                                    <descriptors>
+                                        <descriptor>assembly/release-sources.xml</descriptor>
+                                    </descriptors>
                                     <tarLongFileMode>gnu</tarLongFileMode>
                                     <finalName>${project.artifactId}-${project.version}-src</finalName>
                                     <appendAssemblyId>false</appendAssemblyId>
@@ -603,15 +646,21 @@
                                             </fileset>
                                         </copy>
 
-                                        <!-- appending filename to md5 and sha1 files. to be improved. -->
+                                        <!-- appending filename to md5 and sha1 files. to be improved!! -->
+                                        <!-- update versions task will replace "  " to " ", so additional echo added. -->
+                                        <echo file="${basedir}/target/site/${project.artifactId}-fabric-${project.version}-bin.zip.md5" append="true" message=" " />
+                                        <echo file="${basedir}/target/site/${project.artifactId}-fabric-${project.version}-bin.zip.sha1" append="true" message=" " />
+                                        <echo file="${basedir}/target/site/${project.artifactId}-hadoop-${project.version}-bin.zip.md5" append="true" message=" " />
+                                        <echo file="${basedir}/target/site/${project.artifactId}-hadoop-${project.version}-bin.zip.sha1" append="true" message=" " />
+                                        <echo file="${basedir}/target/site/${project.artifactId}-${project.version}-src.zip.md5" append="true" message=" " />
+                                        <echo file="${basedir}/target/site/${project.artifactId}-${project.version}-src.zip.sha1" append="true" message=" " />
+
                                         <echo file="${basedir}/target/site/${project.artifactId}-fabric-${project.version}-bin.zip.md5" append="true" message=" ${project.artifactId}-fabric-${project.version}-bin.zip" />
                                         <echo file="${basedir}/target/site/${project.artifactId}-fabric-${project.version}-bin.zip.sha1" append="true" message=" ${project.artifactId}-fabric-${project.version}-bin.zip" />
                                         <echo file="${basedir}/target/site/${project.artifactId}-hadoop-${project.version}-bin.zip.md5" append="true" message=" ${project.artifactId}-hadoop-${project.version}-bin.zip" />
                                         <echo file="${basedir}/target/site/${project.artifactId}-hadoop-${project.version}-bin.zip.sha1" append="true" message=" ${project.artifactId}-hadoop-${project.version}-bin.zip" />
                                         <echo file="${basedir}/target/site/${project.artifactId}-${project.version}-src.zip.md5" append="true" message=" ${project.artifactId}-${project.version}-src.zip" />
                                         <echo file="${basedir}/target/site/${project.artifactId}-${project.version}-src.zip.sha1" append="true" message=" ${project.artifactId}-${project.version}-src.zip" />
-
-                                        <copy file="${basedir}/KEYS" todir="${basedir}/target/site" failonerror="false" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -677,7 +726,6 @@
             </build>
         </profile>
 
-
         <profile>
             <id>schema-import</id>
             <activation>
@@ -726,6 +774,140 @@
                                     <outputDirectory>target/release-package</outputDirectory>
                                     <finalName>bin</finalName>
                                     <appendAssemblyId>false</appendAssemblyId>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>update-versions</id>
+            <!-- updates dotnet & cpp versions -->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.7</version>
+                        <executions>
+                            <execution>
+                                <id>update-versions</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>validate</phase>
+                                <configuration>
+                                    <target>
+                                        <script language="javascript">
+                                            function setClientVersion(ggVer, clientVer) {
+                                                var p = project.getProperty(ggVer);
+
+                                                var digitVer = /\d+\.\d+\.\d+/.exec(p);
+
+                                                if (digitVer != null)
+                                                {
+                                                    // Date of the last major release
+                                                    var startDate = new Date(2015,1,1);
+
+                                                    // Number of hours since the last major release
+                                                    var buildNum = Math.round((new Date() - startDate)/(3600*1000));
+                                                    var ver = digitVer[0] + "." + buildNum;
+
+                                                    project.setProperty(clientVer, ver);
+                                                }
+                                                else
+                                                    project.setProperty(clientVer, p);
+                                            }
+
+                                            function fix(dest, source) {
+                                                project.setProperty(dest, project.getProperty(source).replace("-SNAPSHOT",
+                                                ""));
+                                            }
+
+                                            fix('ignite.version.fixed', 'project.version');
+                                            fix('new.ignite.version.fixed', 'new.ignite.version');
+                                            setClientVersion('ignite.version.fixed', 'old.client.version');
+                                            setClientVersion('new.ignite.version.fixed', 'new.client.version');
+                                        </script>
+
+                                        <echo message="Update ignite.version in dotnet client" />
+                                        <echo message="${new.client.version}" />
+
+                                        <replaceregexp byline="true" encoding="UTF-8">
+                                            <regexp pattern="(\[assembly:\s*Assembly\w*Version\w*\(&quot;)\d+\.\d+\.\d+(\.\d+)?(&quot;\)\])" />
+                                            <substitution expression="\1${new.client.version}\3" />
+                                            <fileset dir="${basedir}/">
+                                                <include name="**/AssemblyInfo.cs" />
+                                                <include name="**/AssemblyInfo.cpp" />
+                                            </fileset>
+                                        </replaceregexp>
+
+                                        <replaceregexp byline="true" encoding="UTF-8">
+                                            <regexp pattern="(\[assembly:\s*AssemblyInformationalVersion\w*\(&quot;).*?(&quot;\)\])" />
+                                            <substitution expression="\1${new.ignite.version.fixed}\2" />
+                                            <fileset dir="${basedir}/">
+                                                <include name="**/AssemblyInfo.cs" />
+                                                <include name="**/AssemblyInfo.cpp" />
+                                            </fileset>
+                                        </replaceregexp>
+
+                                        <echo message="Update ignite.version in cpp client" />
+                                        <replaceregexp byline="true" encoding="UTF-8">
+                                            <regexp pattern="(AC_INIT.+\[)\d+\.\d+\.\d+.*?(\].+)" />
+                                            <substitution expression="\1${new.client.version}\2" />
+                                            <fileset dir="${basedir}/">
+                                                <include name="**/configure.ac" />
+                                            </fileset>
+                                        </replaceregexp>
+
+                                        <replaceregexp byline="true" encoding="UTF-8">
+                                            <regexp pattern="(define GG_VERSION_STR_WIN &quot;)\d+\.\d+\.\d+(\.\d+)?(&quot;)" />
+                                            <substitution expression="\1${new.client.version}\3" />
+                                            <fileset dir="${basedir}/">
+                                                <include name="**/resource.h" />
+                                            </fileset>
+                                        </replaceregexp>
+
+                                        <replaceregexp byline="true" encoding="UTF-16">
+                                            <regexp pattern="(Version&quot;, &quot;)\d+\.\d+\.\d+\.\d+(&quot;)" />
+                                            <substitution expression="\1${new.client.version}\2" />
+                                            <fileset dir="${basedir}/">
+                                                <include name="**/Resource.rc" />
+                                            </fileset>
+                                        </replaceregexp>
+
+                                        <script language="javascript">
+                                            function setBinVersion(clientVer, binVer) {
+                                            var p = project.getProperty(clientVer).replace(".", ",");
+
+                                            if (p.split(',').length == 3)
+                                            project.setProperty(binVer, p + ',0');
+                                            else
+                                            project.setProperty(binVer, p);
+                                            }
+
+                                            setBinVersion('old.client.version', 'old.bin.version');
+                                            setBinVersion('new.client.version', 'new.bin.version');
+                                        </script>
+
+                                        <replaceregexp byline="true" encoding="UTF-8">
+                                            <regexp pattern="(define GG_VERSION_BIN_WIN )\d,\d,\d,\d" />
+                                            <substitution expression="\1${new.bin.version}" />
+                                            <fileset dir="${basedir}/">
+                                                <include name="**/resource.h" />
+                                            </fileset>
+                                        </replaceregexp>
+
+                                        <replaceregexp byline="true" encoding="UTF-16">
+                                            <regexp pattern="(VERSION )\d,\d,\d,\d" />
+                                            <substitution expression="\1${new.bin.version}" />
+                                            <fileset dir="${basedir}/">
+                                                <include name="**/Resource.rc" />
+                                            </fileset>
+                                        </replaceregexp>
+                                    </target>
                                 </configuration>
                             </execution>
                         </executions>

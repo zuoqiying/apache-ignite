@@ -17,20 +17,27 @@
 
 package org.apache.ignite.spi.discovery.tcp.ipfinder.sharedfs;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.resources.*;
-import org.apache.ignite.spi.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.*;
-
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.IgniteInterruptedCheckedException;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.SB;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.resources.LoggerResource;
+import org.apache.ignite.spi.IgniteSpiConfiguration;
+import org.apache.ignite.spi.IgniteSpiException;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinderAdapter;
 
 /**
  * Shared filesystem-based IP finder.
@@ -63,6 +70,12 @@ public class TcpDiscoverySharedFsIpFinder extends TcpDiscoveryIpFinderAdapter {
 
     /** Delimiter to use between address and port tokens in file names. */
     public static final String DELIM = "#";
+
+    /** IPv6 colon delimiter. */
+    private static final String COLON_DELIM = ":";
+
+    /** IPv6 colon substitute. */
+    private static final String COLON_SUBST = "_";
 
     /** Grid logger. */
     @LoggerResource
@@ -191,7 +204,7 @@ public class TcpDiscoverySharedFsIpFinder extends TcpDiscoveryIpFinderAdapter {
                     try {
                         int port = Integer.parseInt(portStr);
 
-                        addr = new InetSocketAddress(addrStr, port);
+                        addr = new InetSocketAddress(denormalizeAddress(addrStr), port);
                     }
                     catch (IllegalArgumentException e) {
                         U.error(log, "Failed to parse file entry: " + fileName, e);
@@ -233,7 +246,8 @@ public class TcpDiscoverySharedFsIpFinder extends TcpDiscoveryIpFinderAdapter {
             for (InetSocketAddress addr : addrs) {
                 File file = new File(folder, name(addr));
 
-                file.delete();
+                if (!file.delete())
+                    throw new IgniteSpiException("Failed to delete file " + file.getName());
             }
         }
         catch (SecurityException e) {
@@ -252,11 +266,31 @@ public class TcpDiscoverySharedFsIpFinder extends TcpDiscoveryIpFinderAdapter {
 
         SB sb = new SB();
 
-        sb.a(addr.getAddress().getHostAddress())
+        sb.a(normalizeAddress(addr.getAddress().getHostAddress()))
             .a(DELIM)
             .a(addr.getPort());
 
         return sb.toString();
+    }
+
+    /**
+     * Normalizes the host address by substituting colon delimiter with underscore.
+     *
+     * @param hostAddress Host address.
+     * @return Normalized host address that can be safely used in file names.
+     */
+    private String normalizeAddress(String hostAddress){
+        return hostAddress.replaceAll(COLON_DELIM, COLON_SUBST);
+    }
+
+    /**
+     * Reverts changes done with {@link TcpDiscoverySharedFsIpFinder#normalizeAddress}.
+     *
+     * @param hostAddress Host address.
+     * @return Standard host address.
+     */
+    private String denormalizeAddress(String hostAddress){
+        return hostAddress.replaceAll(COLON_SUBST, COLON_DELIM);
     }
 
     /** {@inheritDoc} */

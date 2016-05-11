@@ -17,11 +17,18 @@
 
 package org.apache.ignite.mesos;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
-import java.util.regex.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Cluster settings.
@@ -167,6 +174,12 @@ public class ClusterProperties {
 
     /** URL to users libs. */
     private String userLibsUrl = null;
+
+    /** */
+    public static final String LICENCE_URL = "LICENCE_URL";
+
+    /** Licence url. */
+    private String licenceUrl = null;
 
     /** */
     public static final String IGNITE_CONFIG_XML = "IGNITE_XML_CONFIG";
@@ -398,6 +411,13 @@ public class ClusterProperties {
     }
 
     /**
+     * @return Url to licence.
+     */
+    public String licenceUrl() {
+        return licenceUrl;
+    }
+
+    /**
      * @return Host name constraint.
      */
     public Pattern hostnameConstraint() {
@@ -436,6 +456,7 @@ public class ClusterProperties {
 
             prop.userLibsUrl = getStringProperty(IGNITE_USERS_LIBS_URL, props, null);
             prop.ignitePackageUrl = getStringProperty(IGNITE_PACKAGE_URL, props, null);
+            prop.licenceUrl = getStringProperty(LICENCE_URL, props, null);
             prop.igniteCfgUrl = getStringProperty(IGNITE_CONFIG_XML_URL, props, null);
 
             prop.cpu = getDoubleProperty(IGNITE_TOTAL_CPU, props, UNLIMITED);

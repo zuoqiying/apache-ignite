@@ -17,20 +17,35 @@
 
 package org.apache.ignite.internal.processors.cache.datastructures;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cache.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.testframework.*;
+import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteAtomicLong;
+import org.apache.ignite.IgniteAtomicReference;
+import org.apache.ignite.IgniteAtomicSequence;
+import org.apache.ignite.IgniteAtomicStamped;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteCountDownLatch;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteQueue;
+import org.apache.ignite.IgniteLock;
+import org.apache.ignite.IgniteSemaphore;
+import org.apache.ignite.IgniteSet;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cache.CacheMemoryMode;
+import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.configuration.AtomicConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.lang.IgniteUuid;
+import org.apache.ignite.testframework.GridTestUtils;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.apache.ignite.cache.CacheAtomicityMode.*;
-import static org.apache.ignite.cache.CacheMemoryMode.*;
-import static org.apache.ignite.cache.CacheMode.*;
+import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
+import static org.apache.ignite.cache.CacheMemoryMode.ONHEAP_TIERED;
+import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 
 /**
  *
@@ -227,7 +242,7 @@ public class IgniteDataStructureUniqueNameTest extends IgniteCollectionAbstractT
     private void testUniqueName(final boolean singleGrid) throws Exception {
         final String name = IgniteUuid.randomUuid().toString();
 
-        final int DS_TYPES = 7;
+        final int DS_TYPES = 9;
 
         final int THREADS = DS_TYPES * 3;
 
@@ -302,6 +317,19 @@ public class IgniteDataStructureUniqueNameTest extends IgniteCollectionAbstractT
 
                                     break;
 
+                                case 7:
+                                    log.info("Create atomic semaphore, grid: " + ignite.name());
+
+                                    res = ignite.semaphore(name, 0, false, true);
+
+                                    break;
+
+                                case 8:
+                                    log.info("Create atomic reentrant lock, grid: " + ignite.name());
+
+                                    res = ignite.reentrantLock(name, true, true, true);
+
+                                    break;
                                 default:
                                     fail();
 
@@ -330,7 +358,7 @@ public class IgniteDataStructureUniqueNameTest extends IgniteCollectionAbstractT
             for (IgniteInternalFuture<Object> fut : futs) {
                 Object res = fut.get();
 
-                if (res instanceof IgniteException)
+                if (res instanceof IgniteException || res instanceof IgniteCheckedException)
                     continue;
 
                 assertTrue("Unexpected object: " + res,
@@ -340,7 +368,9 @@ public class IgniteDataStructureUniqueNameTest extends IgniteCollectionAbstractT
                         res instanceof IgniteAtomicStamped ||
                         res instanceof IgniteCountDownLatch ||
                         res instanceof IgniteQueue ||
-                        res instanceof IgniteSet);
+                        res instanceof IgniteSet ||
+                        res instanceof IgniteSemaphore ||
+                        res instanceof IgniteLock);
 
                 log.info("Data structure created: " + dataStructure);
 

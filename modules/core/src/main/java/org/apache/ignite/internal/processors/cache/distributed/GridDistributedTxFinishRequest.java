@@ -17,18 +17,15 @@
 
 package org.apache.ignite.internal.processors.cache.distributed;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.managers.communication.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.processors.cache.version.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.plugin.extensions.communication.*;
-import org.jetbrains.annotations.*;
-
-import java.io.*;
-import java.nio.*;
-import java.util.*;
+import java.io.Externalizable;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.util.tostring.GridToStringBuilder;
+import org.apache.ignite.lang.IgniteUuid;
+import org.apache.ignite.plugin.extensions.communication.MessageReader;
+import org.apache.ignite.plugin.extensions.communication.MessageWriter;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Transaction completion message.
@@ -53,9 +50,11 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
     private boolean commit;
 
     /** Sync commit flag. */
+    @Deprecated
     private boolean syncCommit;
 
     /** Sync commit flag. */
+    @Deprecated
     private boolean syncRollback;
 
     /** Min version used as base for completed versions. */
@@ -68,7 +67,7 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
     private boolean sys;
 
     /** IO policy. */
-    private GridIoPolicy plc;
+    private byte plc;
 
     /**
      * Empty constructor required by {@link Externalizable}.
@@ -86,10 +85,13 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
      * @param invalidate Invalidate flag.
      * @param sys System transaction flag.
      * @param plc IO policy.
+     * @param syncCommit Sync commit flag.
+     * @param syncRollback Sync rollback flag.
      * @param baseVer Base version.
      * @param committedVers Committed versions.
      * @param rolledbackVers Rolled back versions.
      * @param txSize Expected transaction size.
+     * @param addDepInfo Deployment info flag.
      */
     public GridDistributedTxFinishRequest(
         GridCacheVersion xidVer,
@@ -99,15 +101,16 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
         boolean commit,
         boolean invalidate,
         boolean sys,
-        GridIoPolicy plc,
+        byte plc,
         boolean syncCommit,
         boolean syncRollback,
         GridCacheVersion baseVer,
         Collection<GridCacheVersion> committedVers,
         Collection<GridCacheVersion> rolledbackVers,
-        int txSize
+        int txSize,
+        boolean addDepInfo
     ) {
-        super(xidVer, 0);
+        super(xidVer, 0, addDepInfo);
         assert xidVer != null;
 
         this.futId = futId;
@@ -135,7 +138,7 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
     /**
      * @return IO policy.
      */
-    public GridIoPolicy policy() {
+    public byte policy() {
         return plc;
     }
 
@@ -183,6 +186,13 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
     }
 
     /**
+     * @param syncCommit Sync commit flag.
+     */
+    public void syncCommit(boolean syncCommit) {
+        this.syncCommit = syncCommit;
+    }
+
+    /**
      * @return Sync rollback flag.
      */
     public boolean syncRollback() {
@@ -209,17 +219,6 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
      */
     public boolean replyRequired() {
         return commit ? syncCommit : syncRollback;
-    }
-
-    /** {@inheritDoc}
-     * @param ctx*/
-    @Override public void prepareMarshal(GridCacheSharedContext ctx) throws IgniteCheckedException {
-        super.prepareMarshal(ctx);
-    }
-
-    /** {@inheritDoc} */
-    @Override public void finishUnmarshal(GridCacheSharedContext ctx, ClassLoader ldr) throws IgniteCheckedException {
-        super.finishUnmarshal(ctx, ldr);
     }
 
     /** {@inheritDoc} */
@@ -268,7 +267,7 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
                 writer.incrementState();
 
             case 12:
-                if (!writer.writeByte("plc", plc != null ? (byte)plc.ordinal() : -1))
+                if (!writer.writeByte("plc", plc))
                     return false;
 
                 writer.incrementState();
@@ -360,14 +359,10 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
                 reader.incrementState();
 
             case 12:
-                byte plcOrd;
-
-                plcOrd = reader.readByte("plc");
+                plc = reader.readByte("plc");
 
                 if (!reader.isLastRead())
                     return false;
-
-                plc = GridIoPolicy.fromOrdinal(plcOrd);
 
                 reader.incrementState();
 
@@ -413,7 +408,7 @@ public class GridDistributedTxFinishRequest extends GridDistributedBaseMessage {
 
         }
 
-        return true;
+        return reader.afterMessageRead(GridDistributedTxFinishRequest.class);
     }
 
     /** {@inheritDoc} */

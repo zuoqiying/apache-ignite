@@ -71,7 +71,11 @@ RESTART_SUCCESS_OPT="-DIGNITE_SUCCESS_FILE=${RESTART_SUCCESS_FILE}"
 #
 # You can specify IGNITE_JMX_PORT environment variable for overriding automatically found JMX port
 #
-findAvailableJmxPort
+# This is executed when -nojmx is not specified
+#
+if [ "${NOJMX}" == "0" ] ; then
+    findAvailableJmxPort
+fi
 
 # Mac OS specific support to display correct name in the dock.
 osname=`uname`
@@ -86,7 +90,11 @@ fi
 # ADD YOUR/CHANGE ADDITIONAL OPTIONS HERE
 #
 if [ -z "$JVM_OPTS" ] ; then
-    JVM_OPTS="-Xms1g -Xmx1g -server -XX:+AggressiveOpts -XX:MaxPermSize=256m"
+    if [[ `"$JAVA" -version 2>&1 | egrep "1\.[7]\."` ]]; then
+        JVM_OPTS="-Xms1g -Xmx1g -server -XX:+AggressiveOpts -XX:MaxPermSize=256m"
+    else
+        JVM_OPTS="-Xms1g -Xmx1g -server -XX:+AggressiveOpts -XX:MaxMetaspaceSize=256m"
+    fi
 fi
 
 #

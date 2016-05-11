@@ -17,15 +17,18 @@
 
 package org.apache.ignite.internal.processors.cache.transactions;
 
-import org.apache.ignite.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.transactions.*;
-import org.jetbrains.annotations.*;
-
-import static org.apache.ignite.transactions.TransactionIsolation.*;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.configuration.TransactionConfiguration;
+import org.apache.ignite.internal.IgniteTransactionsEx;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
+import org.apache.ignite.internal.util.typedef.internal.A;
+import org.apache.ignite.internal.util.typedef.internal.CU;
+import org.apache.ignite.transactions.Transaction;
+import org.apache.ignite.transactions.TransactionConcurrency;
+import org.apache.ignite.transactions.TransactionIsolation;
+import org.apache.ignite.transactions.TransactionMetrics;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Grid transactions implementation.
@@ -43,7 +46,7 @@ public class IgniteTransactionsImpl<K, V> implements IgniteTransactionsEx {
 
     /** {@inheritDoc} */
     @Override public Transaction txStart() throws IllegalStateException {
-        TransactionConfiguration cfg = cctx.gridConfig().getTransactionConfiguration();
+        TransactionConfiguration cfg = CU.transactionConfiguration(null, cctx.kernalContext().config());
 
         return txStart0(
             cfg.getDefaultTxConcurrency(),
@@ -59,7 +62,7 @@ public class IgniteTransactionsImpl<K, V> implements IgniteTransactionsEx {
         A.notNull(concurrency, "concurrency");
         A.notNull(isolation, "isolation");
 
-        TransactionConfiguration cfg = cctx.gridConfig().getTransactionConfiguration();
+        TransactionConfiguration cfg = CU.transactionConfiguration(null, cctx.kernalContext().config());
 
         return txStart0(
             concurrency,
@@ -120,7 +123,7 @@ public class IgniteTransactionsImpl<K, V> implements IgniteTransactionsEx {
 
         checkTransactional(ctx);
 
-        TransactionConfiguration cfg = cctx.gridConfig().getTransactionConfiguration();
+        TransactionConfiguration cfg = CU.transactionConfiguration(ctx, cctx.kernalContext().config());
 
         return txStart0(concurrency,
             isolation,
@@ -138,34 +141,39 @@ public class IgniteTransactionsImpl<K, V> implements IgniteTransactionsEx {
      * @return Transaction.
      */
     @SuppressWarnings("unchecked")
-    private IgniteInternalTx txStart0(TransactionConcurrency concurrency, TransactionIsolation isolation,
-        long timeout, int txSize, @Nullable GridCacheContext sysCacheCtx) {
-        TransactionConfiguration cfg = cctx.gridConfig().getTransactionConfiguration();
+    private IgniteInternalTx txStart0(
+        TransactionConcurrency concurrency,
+        TransactionIsolation isolation,
+        long timeout,
+        int txSize,
+        @Nullable GridCacheContext sysCacheCtx
+    ) {
+        cctx.kernalContext().gateway().readLock();
 
-        if (!cfg.isTxSerializableEnabled() && isolation == SERIALIZABLE)
-            throw new IllegalArgumentException("SERIALIZABLE isolation level is disabled (to enable change " +
-                "'txSerializableEnabled' configuration property)");
+        try {
+            IgniteInternalTx tx = cctx.tm().userTx(sysCacheCtx);
 
-        IgniteInternalTx tx = cctx.tm().userTx(sysCacheCtx);
+            if (tx != null)
+                throw new IllegalStateException("Failed to start new transaction " +
+                    "(current thread already has a transaction): " + tx);
+            tx = cctx.tm().newTx(
+                false,
+                false,
+                sysCacheCtx,
+                concurrency,
+                isolation,
+                timeout,
+                true,
+                txSize
+            );
 
-        if (tx != null)
-            throw new IllegalStateException("Failed to start new transaction " +
-                "(current thread already has a transaction): " + tx);
+            assert tx != null;
 
-        tx = cctx.tm().newTx(
-            false,
-            false,
-            sysCacheCtx,
-            concurrency,
-            isolation,
-            timeout,
-            true,
-            txSize
-        );
-
-        assert tx != null;
-
-        return tx;
+            return tx;
+        }
+        finally {
+            cctx.kernalContext().gateway().readUnlock();
+        }
     }
 
     /** {@inheritDoc} */

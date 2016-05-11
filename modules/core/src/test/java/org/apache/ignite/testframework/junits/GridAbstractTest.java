@@ -17,44 +17,95 @@
 
 package org.apache.ignite.testframework.junits;
 
-import junit.framework.*;
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.events.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.resource.*;
-import org.apache.ignite.internal.util.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.marshaller.*;
-import org.apache.ignite.marshaller.jdk.*;
-import org.apache.ignite.spi.checkpoint.sharedfs.*;
-import org.apache.ignite.spi.communication.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.*;
-import org.apache.ignite.testframework.*;
-import org.apache.ignite.testframework.config.*;
-import org.apache.ignite.testframework.junits.logger.*;
-import org.apache.log4j.*;
-import org.jetbrains.annotations.*;
-import org.springframework.beans.*;
-import org.springframework.context.*;
-import org.springframework.context.support.*;
-
-import javax.cache.configuration.*;
-import java.io.*;
-import java.lang.reflect.*;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.cache.configuration.Factory;
+import javax.cache.configuration.FactoryBuilder;
+import junit.framework.TestCase;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.IgniteSystemProperties;
+import org.apache.ignite.Ignition;
+import org.apache.ignite.binary.BinaryBasicNameMapper;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.BinaryConfiguration;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.NearCacheConfiguration;
+import org.apache.ignite.events.EventType;
+import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.IgniteKernal;
+import org.apache.ignite.internal.IgnitionEx;
+import org.apache.ignite.internal.binary.BinaryEnumCache;
+import org.apache.ignite.internal.binary.BinaryMarshaller;
+import org.apache.ignite.internal.processors.resource.GridSpringResourceContext;
+import org.apache.ignite.internal.util.GridClassLoaderCache;
+import org.apache.ignite.internal.util.GridTestClockTimer;
+import org.apache.ignite.internal.util.GridUnsafe;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.G;
+import org.apache.ignite.internal.util.typedef.internal.LT;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteCallable;
+import org.apache.ignite.lang.IgniteClosure;
+import org.apache.ignite.marshaller.Marshaller;
+import org.apache.ignite.marshaller.MarshallerExclusions;
+import org.apache.ignite.marshaller.jdk.JdkMarshaller;
+import org.apache.ignite.resources.IgniteInstanceResource;
+import org.apache.ignite.spi.checkpoint.sharedfs.SharedFsCheckpointSpi;
+import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.TestTcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.testframework.GridTestUtils;
+import org.apache.ignite.testframework.config.GridTestProperties;
+import org.apache.ignite.testframework.junits.logger.GridTestLog4jLogger;
+import org.apache.ignite.testframework.junits.multijvm.IgniteCacheProcessProxy;
+import org.apache.ignite.testframework.junits.multijvm.IgniteNodeRunner;
+import org.apache.ignite.testframework.junits.multijvm.IgniteProcessProxy;
+import org.apache.ignite.thread.IgniteThread;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.Priority;
+import org.apache.log4j.RollingFileAppender;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
 
-import static org.apache.ignite.cache.CacheAtomicWriteOrderMode.*;
-import static org.apache.ignite.cache.CacheAtomicityMode.*;
-import static org.apache.ignite.cache.CacheWriteSynchronizationMode.*;
+import static org.apache.ignite.cache.CacheAtomicWriteOrderMode.PRIMARY;
+import static org.apache.ignite.cache.CacheAtomicityMode.TRANSACTIONAL;
+import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
+import static org.apache.ignite.testframework.config.GridTestProperties.BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER;
 
 /**
  * Common abstract test for Ignite tests.
@@ -71,6 +122,14 @@ public abstract class GridAbstractTest extends TestCase {
      **************************************************************/
     /** Null name for execution map. */
     private static final String NULL_NAME = UUID.randomUUID().toString();
+
+    /** */
+    private static final boolean BINARY_MARSHALLER = false;
+
+    /** Ip finder for TCP discovery. */
+    public static final TcpDiscoveryIpFinder LOCAL_IP_FINDER = new TcpDiscoveryVmIpFinder(false) {{
+        setAddresses(Collections.singleton("127.0.0.1:47500..47509"));
+    }};
 
     /** */
     private static final long DFLT_TEST_TIMEOUT = 5 * 60 * 1000;
@@ -94,7 +153,7 @@ public abstract class GridAbstractTest extends TestCase {
     private static long ts = System.currentTimeMillis();
 
     /** Starting grid name. */
-    protected static ThreadLocal<String> startingGrid = new ThreadLocal<>();
+    protected static final ThreadLocal<String> startingGrid = new ThreadLocal<>();
 
     /**
      *
@@ -102,6 +161,9 @@ public abstract class GridAbstractTest extends TestCase {
     static {
         System.setProperty(IgniteSystemProperties.IGNITE_ATOMIC_CACHE_DELETE_HISTORY_SIZE, "10000");
         System.setProperty(IgniteSystemProperties.IGNITE_UPDATE_NOTIFIER, "false");
+
+        if (BINARY_MARSHALLER)
+            GridTestProperties.setProperty(GridTestProperties.MARSH_CLASS_NAME, BinaryMarshaller.class.getName());
 
         Thread timer = new Thread(new GridTestClockTimer(), "ignite-clock-for-tests");
 
@@ -144,7 +206,7 @@ public abstract class GridAbstractTest extends TestCase {
      * @throws Exception If failed.
      */
     protected <T> T allocateInstance(Class<T> cls) throws Exception {
-        return (T)GridUnsafe.unsafe().allocateInstance(cls);
+        return (T)GridUnsafe.allocateInstance(cls);
     }
 
     /**
@@ -153,7 +215,7 @@ public abstract class GridAbstractTest extends TestCase {
      */
     @Nullable protected <T> T allocateInstance0(Class<T> cls) {
         try {
-            return (T)GridUnsafe.unsafe().allocateInstance(cls);
+            return (T)GridUnsafe.allocateInstance(cls);
         }
         catch (InstantiationException e) {
             e.printStackTrace();
@@ -203,6 +265,9 @@ public abstract class GridAbstractTest extends TestCase {
      * @return logger.
      */
     protected IgniteLogger log() {
+        if (isRemoteJvm())
+            return IgniteNodeRunner.startedInstance().log();
+
         return log;
     }
 
@@ -387,6 +452,14 @@ public abstract class GridAbstractTest extends TestCase {
     }
 
     /**
+     * @param cfg Configuration to use in Test
+     * @return Test kernal context.
+     */
+    protected GridTestKernalContext newContext(IgniteConfiguration cfg) throws IgniteCheckedException {
+        return new GridTestKernalContext(log(), cfg);
+    }
+
+    /**
      * Called before execution of every test method in class.
      *
      * @throws Exception If failed. {@link #afterTest()} will be called in this case.
@@ -411,7 +484,8 @@ public abstract class GridAbstractTest extends TestCase {
      * @throws Exception If failed. {@link #afterTestsStopped()} will be called in this case.
      */
     protected void beforeTestsStarted() throws Exception {
-        // No-op.
+        // Will clean and re-create marshaller directory from scratch.
+        U.resolveWorkDirectory("marshaller", true);
     }
 
     /**
@@ -455,7 +529,7 @@ public abstract class GridAbstractTest extends TestCase {
         }
 
         if (isFirstTest()) {
-            info(">>> Starting test class: " + GridTestUtils.fullSimpleName(getClass()) + " <<<");
+            info(">>> Starting test class: " + testClassDescription() + " <<<");
 
             if (startGrid) {
                 IgniteConfiguration cfg = optimize(getConfiguration());
@@ -464,6 +538,11 @@ public abstract class GridAbstractTest extends TestCase {
             }
 
             try {
+                List<Integer> jvmIds = IgniteNodeRunner.killAll();
+
+                if (!jvmIds.isEmpty())
+                    log.info("Next processes of IgniteNodeRunner were killed: " + jvmIds);
+
                 beforeTestsStarted();
             }
             catch (Exception | Error t) {
@@ -483,7 +562,7 @@ public abstract class GridAbstractTest extends TestCase {
             }
         }
 
-        info(">>> Starting test: " + getName() + " <<<");
+        info(">>> Starting test: " + testDescription() + " <<<");
 
         try {
             beforeTest();
@@ -500,6 +579,20 @@ public abstract class GridAbstractTest extends TestCase {
         }
 
         ts = System.currentTimeMillis();
+    }
+
+    /**
+     * @return Test description.
+     */
+    protected String testDescription() {
+        return GridTestUtils.fullSimpleName(getClass()) + "#" + getName();
+    }
+
+    /**
+     * @return Test class description.
+     */
+    protected String testClassDescription() {
+        return GridTestUtils.fullSimpleName(getClass());
     }
 
     /**
@@ -556,6 +649,9 @@ public abstract class GridAbstractTest extends TestCase {
      * @throws Exception If failed.
      */
     protected final Ignite startGridsMultiThreaded(int init, int cnt) throws Exception {
+        if (isMultiJvm())
+            fail("https://issues.apache.org/jira/browse/IGNITE-648");
+
         assert init >= 0;
         assert cnt > 0;
 
@@ -657,14 +753,58 @@ public abstract class GridAbstractTest extends TestCase {
      * @throws Exception If failed.
      */
     protected Ignite startGrid(String gridName, GridSpringResourceContext ctx) throws Exception {
-        startingGrid.set(gridName);
+        return startGrid(gridName, optimize(getConfiguration(gridName)), ctx);
+    }
+    /**
+     * Starts new grid with given name.
+     *
+     * @param gridName Grid name.
+     * @param ctx Spring context.
+     * @return Started grid.
+     * @throws Exception If failed.
+     */
+    protected Ignite startGrid(String gridName, IgniteConfiguration cfg, GridSpringResourceContext ctx)
+        throws Exception {
+        if (!isRemoteJvm(gridName)) {
+            startingGrid.set(gridName);
 
-        try {
-            return IgnitionEx.start(optimize(getConfiguration(gridName)), ctx);
+            try {
+                Ignite node = IgnitionEx.start(cfg, ctx);
+
+                IgniteConfiguration nodeCfg = node.configuration();
+
+                log.info("Node started with the following configuration [id=" + node.cluster().localNode().id()
+                    + ", marshaller=" + nodeCfg.getMarshaller()
+                    + ", binaryCfg=" + nodeCfg.getBinaryConfiguration()
+                    + ", lateAff=" + nodeCfg.isLateAffinityAssignment() + "]");
+
+                return node;
+            }
+            finally {
+                startingGrid.set(null);
+            }
         }
-        finally {
-            startingGrid.set(null);
-        }
+        else
+            return startRemoteGrid(gridName, null, ctx);
+    }
+
+    /**
+     * Starts new grid at another JVM with given name.
+     *
+     * @param gridName Grid name.
+     * @param ctx Spring context.
+     * @return Started grid.
+     * @throws Exception If failed.
+     */
+    protected Ignite startRemoteGrid(String gridName, IgniteConfiguration cfg, GridSpringResourceContext ctx)
+        throws Exception {
+        if (ctx != null)
+            throw new UnsupportedOperationException("Starting of grid at another jvm by context doesn't supported.");
+
+        if (cfg == null)
+            cfg = optimize(getConfiguration(gridName));
+
+        return new IgniteProcessProxy(cfg, log, grid(0));
     }
 
     /**
@@ -707,13 +847,17 @@ public abstract class GridAbstractTest extends TestCase {
     @SuppressWarnings({"deprecation"})
     protected void stopGrid(@Nullable String gridName, boolean cancel) {
         try {
-            Ignite ignite = G.ignite(gridName);
+            Ignite ignite = grid(gridName);
 
             assert ignite != null : "Ignite returned null grid for name: " + gridName;
 
-            info(">>> Stopping grid [name=" + ignite.name() + ", id=" + ignite.cluster().localNode().id() + ']');
+            info(">>> Stopping grid [name=" + ignite.name() + ", id=" +
+                ((IgniteKernal)ignite).context().localNodeId() + ']');
 
-            G.stop(gridName, cancel);
+            if (!isRemoteJvm(gridName))
+                G.stop(gridName, cancel);
+            else
+                IgniteProcessProxy.stop(gridName, cancel);
         }
         catch (IllegalStateException ignored) {
             // Ignore error if grid already stopped.
@@ -736,23 +880,28 @@ public abstract class GridAbstractTest extends TestCase {
      * @param cancel Cancel flag.
      */
     protected void stopAllGrids(boolean cancel) {
-        Collection<Ignite> clients = new ArrayList<>();
-        Collection<Ignite> srvs = new ArrayList<>();
+        try {
+            Collection<Ignite> clients = new ArrayList<>();
+            Collection<Ignite> srvs = new ArrayList<>();
 
-        for (Ignite g : G.allGrids()) {
-            if (g.configuration().getDiscoverySpi().isClientMode())
-                clients.add(g);
-            else
-                srvs.add(g);
+            for (Ignite g : G.allGrids()) {
+                if (g.configuration().getDiscoverySpi().isClientMode())
+                    clients.add(g);
+                else
+                    srvs.add(g);
+            }
+
+            for (Ignite g : clients)
+                stopGrid(g.name(), cancel);
+
+            for (Ignite g : srvs)
+                stopGrid(g.name(), cancel);
+
+            assert G.allGrids().isEmpty();
         }
-
-        for (Ignite g : clients)
-            stopGrid(g.name(), cancel);
-
-        for (Ignite g : srvs)
-            stopGrid(g.name(), cancel);
-
-        assert G.allGrids().isEmpty();
+        finally {
+            IgniteProcessProxy.killAll(); // In multi-JVM case.
+        }
     }
 
     /**
@@ -762,7 +911,7 @@ public abstract class GridAbstractTest extends TestCase {
         List<Ignite> ignites = G.allGrids();
 
         for (Ignite g : ignites) {
-            if (g.cluster().localNode().isClient())
+            if (g.configuration().getDiscoverySpi().isClientMode())
                 stopGrid(g.name(), cancel);
         }
     }
@@ -774,7 +923,7 @@ public abstract class GridAbstractTest extends TestCase {
         List<Ignite> ignites = G.allGrids();
 
         for (Ignite g : ignites) {
-            if (!g.cluster().localNode().isClient())
+            if (!g.configuration().getDiscoverySpi().isClientMode())
                 stopGrid(g.name(), cancel);
         }
     }
@@ -821,7 +970,14 @@ public abstract class GridAbstractTest extends TestCase {
      * @return Grid instance.
      */
     protected IgniteEx grid(String name) {
-        return (IgniteEx)G.ignite(name);
+        if (!isRemoteJvm(name))
+            return (IgniteEx)G.ignite(name);
+        else {
+            if (isRemoteJvm())
+                return IgniteNodeRunner.startedInstance();
+            else
+                return IgniteProcessProxy.ignite(name);
+        }
     }
 
     /**
@@ -831,7 +987,7 @@ public abstract class GridAbstractTest extends TestCase {
      * @return Grid instance.
      */
     protected IgniteEx grid(int idx) {
-        return (IgniteEx)G.ignite(getTestGridName(idx));
+        return grid(getTestGridName(idx));
     }
 
     /**
@@ -839,7 +995,7 @@ public abstract class GridAbstractTest extends TestCase {
      * @return Ignite instance.
      */
     protected Ignite ignite(int idx) {
-        return G.ignite(getTestGridName(idx));
+        return grid(idx);
     }
 
     /**
@@ -848,7 +1004,10 @@ public abstract class GridAbstractTest extends TestCase {
      * @return Grid for given test.
      */
     protected IgniteEx grid() {
-        return (IgniteEx)G.ignite(getTestGridName());
+        if (!isMultiJvm())
+            return (IgniteEx)G.ignite(getTestGridName());
+        else
+            throw new UnsupportedOperationException("Operation doesn't supported yet.");
     }
 
     /**
@@ -856,7 +1015,17 @@ public abstract class GridAbstractTest extends TestCase {
      * @return Ignite instance with given local node.
      */
     protected final Ignite grid(ClusterNode node) {
-        return G.ignite(node.id());
+        if (!isMultiJvm())
+            return G.ignite(node.id());
+        else {
+            try {
+                return IgniteProcessProxy.ignite(node.id());
+            }
+            catch (Exception ignore) {
+                // A hack if it is local grid.
+                return G.ignite(node.id());
+            }
+        }
     }
 
     /**
@@ -886,7 +1055,10 @@ public abstract class GridAbstractTest extends TestCase {
     protected Ignite startGrid(String gridName, IgniteConfiguration cfg) throws Exception {
         cfg.setGridName(gridName);
 
-        return G.start(cfg);
+        if (!isRemoteJvm(gridName))
+            return G.start(cfg);
+        else
+            return startRemoteGrid(gridName, cfg, null);
     }
 
     /**
@@ -899,6 +1071,9 @@ public abstract class GridAbstractTest extends TestCase {
     @SuppressWarnings("deprecation")
     protected IgniteConfiguration loadConfiguration(String springCfgPath) throws IgniteCheckedException {
         URL cfgLocation = U.resolveIgniteUrl(springCfgPath);
+
+        if (cfgLocation == null)
+            cfgLocation = U.resolveIgniteUrl(springCfgPath, false);
 
         assert cfgLocation != null;
 
@@ -1000,20 +1175,64 @@ public abstract class GridAbstractTest extends TestCase {
 
         cfg.setNodeId(null);
 
+        if (GridTestProperties.getProperty(GridTestProperties.BINARY_COMPACT_FOOTERS) != null) {
+            if (!Boolean.valueOf(GridTestProperties.getProperty(GridTestProperties.BINARY_COMPACT_FOOTERS))) {
+                BinaryConfiguration bCfg = cfg.getBinaryConfiguration();
+
+                if (bCfg == null) {
+                    bCfg = new BinaryConfiguration();
+
+                    cfg.setBinaryConfiguration(bCfg);
+                }
+
+                bCfg.setCompactFooter(false);
+            }
+        }
+
+        if (Boolean.valueOf(GridTestProperties.getProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER))) {
+            BinaryConfiguration bCfg = cfg.getBinaryConfiguration();
+
+            if (bCfg == null) {
+                bCfg = new BinaryConfiguration();
+
+                cfg.setBinaryConfiguration(bCfg);
+            }
+
+            bCfg.setNameMapper(new BinaryBasicNameMapper(true));
+        }
+
         if (gridName != null && gridName.matches(".*\\d")) {
             String idStr = UUID.randomUUID().toString();
 
-            char[] chars = idStr.toCharArray();
+            if (gridName.startsWith(getTestGridName())) {
+                String idxStr = String.valueOf(getTestGridIndex(gridName));
 
-            chars[0] = gridName.charAt(gridName.length() - 1);
-            chars[1] = '0';
+                while (idxStr.length() < 5)
+                    idxStr = '0' + idxStr;
 
-            chars[chars.length - 3] = '0';
-            chars[chars.length - 2] = '0';
-            chars[chars.length - 1] = gridName.charAt(gridName.length() - 1);
+                char[] chars = idStr.toCharArray();
 
-            cfg.setNodeId(UUID.fromString(new String(chars)));
+                for (int i = 0; i < idxStr.length(); i++)
+                    chars[chars.length - idxStr.length() + i] = idxStr.charAt(i);
+
+                cfg.setNodeId(UUID.fromString(new String(chars)));
+            }
+            else {
+                char[] chars = idStr.toCharArray();
+
+                chars[0] = gridName.charAt(gridName.length() - 1);
+                chars[1] = '0';
+
+                chars[chars.length - 3] = '0';
+                chars[chars.length - 2] = '0';
+                chars[chars.length - 1] = gridName.charAt(gridName.length() - 1);
+
+                cfg.setNodeId(UUID.fromString(new String(chars)));
+            }
         }
+
+        if (isMultiJvm())
+            ((TcpDiscoverySpi)cfg.getDiscoverySpi()).setIpFinder(LOCAL_IP_FINDER);
 
         return cfg;
     }
@@ -1109,11 +1328,11 @@ public abstract class GridAbstractTest extends TestCase {
 
         cfg.setCommunicationSpi(commSpi);
 
-        TcpDiscoverySpi discoSpi = new TcpDiscoverySpi();
+        TcpDiscoverySpi discoSpi = new TestTcpDiscoverySpi();
 
         if (isDebug()) {
             discoSpi.setMaxMissedHeartbeats(Integer.MAX_VALUE);
-            cfg.setNetworkTimeout(Long.MAX_VALUE);
+            cfg.setNetworkTimeout(Long.MAX_VALUE / 3);
         }
         else {
             // Set network timeout to 10 sec to avoid unexpected p2p class loading errors.
@@ -1128,14 +1347,16 @@ public abstract class GridAbstractTest extends TestCase {
 
         String mcastAddr = GridTestUtils.getNextMulticastGroup(getClass());
 
-        if (!F.isEmpty(mcastAddr)) {
-            TcpDiscoveryMulticastIpFinder ipFinder = new TcpDiscoveryMulticastIpFinder();
+        TcpDiscoveryMulticastIpFinder ipFinder = new TcpDiscoveryMulticastIpFinder();
 
+        ipFinder.setAddresses(Collections.singleton("127.0.0.1:" + TcpDiscoverySpi.DFLT_PORT));
+
+        if (!F.isEmpty(mcastAddr)) {
             ipFinder.setMulticastGroup(mcastAddr);
             ipFinder.setMulticastPort(GridTestUtils.getNextMulticastPort(getClass()));
-
-            discoSpi.setIpFinder(ipFinder);
         }
+
+        discoSpi.setIpFinder(ipFinder);
 
         cfg.setDiscoverySpi(discoSpi);
 
@@ -1190,7 +1411,7 @@ public abstract class GridAbstractTest extends TestCase {
     @Override protected void tearDown() throws Exception {
         long dur = System.currentTimeMillis() - ts;
 
-        info(">>> Stopping test: " + getName() + " in " + dur + " ms <<<");
+        info(">>> Stopping test: " + testDescription() + " in " + dur + " ms <<<");
 
         TestCounters cntrs = getTestCounters();
 
@@ -1205,7 +1426,7 @@ public abstract class GridAbstractTest extends TestCase {
             serializedObj.clear();
 
             if (isLastTest()) {
-                info(">>> Stopping test class: " + GridTestUtils.fullSimpleName(getClass()) + " <<<");
+                info(">>> Stopping test class: " + testClassDescription() + " <<<");
 
                 TestCounters counters = getTestCounters();
 
@@ -1230,7 +1451,7 @@ public abstract class GridAbstractTest extends TestCase {
                 GridClassLoaderCache.clear();
                 U.clearClassCache();
                 MarshallerExclusions.clearCache();
-                GridEnumCache.clear();
+                BinaryEnumCache.clear();
             }
 
             Thread.currentThread().setContextClassLoader(clsLdr);
@@ -1286,6 +1507,175 @@ public abstract class GridAbstractTest extends TestCase {
     }
 
     /**
+     * Gets flag whether nodes will run in one JVM or in separate JVMs.
+     *
+     * @return <code>True</code> to run nodes in separate JVMs.
+     * @see IgniteNodeRunner
+     * @see IgniteProcessProxy
+     * @see #isRemoteJvm()
+     * @see #isRemoteJvm(int)
+     * @see #isRemoteJvm(String)
+     * @see #executeOnLocalOrRemoteJvm(int, TestIgniteIdxCallable)
+     * @see #executeOnLocalOrRemoteJvm(Ignite, TestIgniteCallable)
+     * @see #executeOnLocalOrRemoteJvm(IgniteCache, TestCacheCallable)
+     */
+    protected boolean isMultiJvm() {
+        return false;
+    }
+
+    /**
+     * @param gridName Grid name.
+     * @return <code>True</code> if test was run in multi-JVM mode and grid with this name was started at another JVM.
+     */
+    protected boolean isRemoteJvm(String gridName) {
+        return isMultiJvm() && !"0".equals(gridName.substring(getTestGridName().length()));
+    }
+
+    /**
+     * @param idx Grid index.
+     * @return <code>True</code> if test was run in multi-JVM mode and grid with this ID was started at another JVM.
+     */
+    protected boolean isRemoteJvm(int idx) {
+        return isMultiJvm() && idx != 0;
+    }
+
+    /**
+     * @return <code>True</code> if current JVM contains remote started node
+     * (It differs from JVM where tests executing).
+     */
+    protected boolean isRemoteJvm() {
+        return IgniteNodeRunner.hasStartedInstance();
+    }
+
+    /**
+     * @param cache Cache.
+     * @return <code>True</code> if cache is an instance of {@link IgniteCacheProcessProxy}
+     */
+    public static boolean isMultiJvmObject(IgniteCache cache) {
+        return cache instanceof IgniteCacheProcessProxy;
+    }
+
+    /**
+     * @param ignite Ignite.
+     * @return <code>True</code> if cache is an instance of {@link IgniteProcessProxy}
+     */
+    public static boolean isMultiJvmObject(Ignite ignite) {
+        return ignite instanceof IgniteProcessProxy;
+    }
+
+    /**
+     * Calls job on local JVM or on remote JVM in multi-JVM case.
+     *
+     * @param idx Grid index.
+     * @param job Job.
+     */
+    public <R> R executeOnLocalOrRemoteJvm(final int idx, final TestIgniteIdxCallable<R> job) {
+        IgniteEx ignite = grid(idx);
+
+        if (!isMultiJvmObject(ignite))
+            try {
+                job.setIgnite(ignite);
+
+                return job.call(idx);
+            }
+            catch (Exception e) {
+                throw new IgniteException(e);
+            }
+        else
+            return executeRemotely(idx, job);
+    }
+
+    /**
+     * Calls job on local JVM or on remote JVM in multi-JVM case.
+     *
+     * @param ignite Ignite.
+     * @param job Job.
+     */
+    public static <R> R executeOnLocalOrRemoteJvm(Ignite ignite, final TestIgniteCallable<R> job) {
+        if (!isMultiJvmObject(ignite))
+            try {
+                return job.call(ignite);
+            }
+            catch (Exception e) {
+                throw new IgniteException(e);
+            }
+        else
+            return executeRemotely((IgniteProcessProxy)ignite, job);
+    }
+
+    /**
+     * Calls job on local JVM or on remote JVM in multi-JVM case.
+     *
+     * @param cache Cache.
+     * @param job Job.
+     */
+    public static <K,V,R> R executeOnLocalOrRemoteJvm(IgniteCache<K,V> cache, TestCacheCallable<K,V,R> job) {
+        Ignite ignite = cache.unwrap(Ignite.class);
+
+        if (!isMultiJvmObject(ignite))
+            try {
+                return job.call(ignite, cache);
+            }
+            catch (Exception e) {
+                throw new IgniteException(e);
+            }
+        else
+            return executeRemotely((IgniteCacheProcessProxy<K, V>)cache, job);
+    }
+
+    /**
+     * Calls job on remote JVM.
+     *
+     * @param idx Grid index.
+     * @param job Job.
+     */
+    public <R> R executeRemotely(final int idx, final TestIgniteIdxCallable<R> job) {
+        IgniteEx ignite = grid(idx);
+
+        if (!isMultiJvmObject(ignite))
+            throw new IllegalArgumentException("Ignite have to be process proxy.");
+
+        IgniteProcessProxy proxy = (IgniteProcessProxy)ignite;
+
+        return proxy.remoteCompute().call(new ExecuteRemotelyTask<>(job, idx));
+    }
+
+    /**
+     * Calls job on remote JVM.
+     *
+     * @param proxy Ignite.
+     * @param job Job.
+     */
+    public static <R> R executeRemotely(IgniteProcessProxy proxy, final TestIgniteCallable<R> job) {
+        return proxy.remoteCompute().call(new TestRemoteTask<>(proxy.getId(), job));
+    }
+
+    /**
+     * Runs job on remote JVM.
+     *
+     * @param cache Cache.
+     * @param job Job.
+     */
+    public static <K, V, R> R executeRemotely(IgniteCacheProcessProxy<K, V> cache,
+        final TestCacheCallable<K, V, R> job) {
+        IgniteProcessProxy proxy = (IgniteProcessProxy)cache.unwrap(Ignite.class);
+
+        final UUID id = proxy.getId();
+        final String cacheName = cache.getName();
+
+        return proxy.remoteCompute().call(new IgniteCallable<R>() {
+            private static final long serialVersionUID = -3868429485920845137L;
+
+            @Override public R call() throws Exception {
+                Ignite ignite = Ignition.ignite(id);
+                IgniteCache<K,V> cache = ignite.cache(cacheName);
+
+                return job.call(ignite, cache);
+            }
+        });
+    }
+
+    /**
      * @return Test counters.
      */
     protected synchronized TestCounters getTestCounters() throws IgniteCheckedException {
@@ -1302,7 +1692,7 @@ public abstract class GridAbstractTest extends TestCase {
     @Override protected void runTest() throws Throwable {
         final AtomicReference<Throwable> ex = new AtomicReference<>();
 
-        Thread runner = new Thread("test-runner") {
+        Thread runner = new IgniteThread(getTestGridName(), "test-runner", new Runnable() {
             @Override public void run() {
                 try {
                     runTestInternal();
@@ -1313,7 +1703,7 @@ public abstract class GridAbstractTest extends TestCase {
                     ex.set(hnd != null ? hnd.apply(e) : e);
                 }
             }
-        };
+        });
 
         runner.start();
 
@@ -1323,6 +1713,11 @@ public abstract class GridAbstractTest extends TestCase {
             U.error(log,
                 "Test has been timed out and will be interrupted (threads dump will be taken before interruption) [" +
                 "test=" + getName() + ", timeout=" + getTestTimeout() + ']');
+
+            List<Ignite> nodes = IgnitionEx.allGridsx();
+
+            for (Ignite node : nodes)
+                ((IgniteKernal)node).dumpDebugInfo();
 
             // We dump threads to stdout, because we can loose logs in case
             // the build is cancelled on TeamCity.
@@ -1445,6 +1840,22 @@ public abstract class GridAbstractTest extends TestCase {
     }
 
     /**
+     * @param name Name.
+     * @param remote Remote.
+     * @param thisRemote This remote.
+     */
+    public static IgniteEx grid(String name, boolean remote, boolean thisRemote) {
+        if (!remote)
+            return (IgniteEx)G.ignite(name);
+        else {
+            if (thisRemote)
+                return IgniteNodeRunner.startedInstance();
+            else
+                return IgniteProcessProxy.ignite(name);
+        }
+    }
+
+    /**
      *
      */
     private static interface WriteReplaceOwner {
@@ -1477,6 +1888,67 @@ public abstract class GridAbstractTest extends TestCase {
             assert res != null;
 
             return res;
+        }
+    }
+
+    /**
+     * Remote computation task.
+     */
+    private static class TestRemoteTask<R> implements IgniteCallable<R> {
+        /** */
+        private static final long serialVersionUID = 0L;
+
+        /** Node ID. */
+        private final UUID id;
+
+        /** Job. */
+        private final TestIgniteCallable<R> job;
+
+        /**
+         * @param id Id.
+         * @param job Job.
+         */
+        public TestRemoteTask(UUID id, TestIgniteCallable<R> job) {
+            this.id = id;
+            this.job = job;
+        }
+
+        /** {@inheritDoc} */
+        @Override public R call() throws Exception {
+            Ignite ignite = Ignition.ignite(id);
+
+            return job.call(ignite);
+        }
+    }
+
+    /**
+     *
+     */
+    private static class ExecuteRemotelyTask<R> implements IgniteCallable<R> {
+        /** Ignite. */
+        @IgniteInstanceResource
+        protected Ignite ignite;
+
+        /** Job. */
+        private final TestIgniteIdxCallable<R> job;
+
+        /** Index. */
+        private final int idx;
+
+        /**
+         * @param job Job.
+         * @param idx Index.
+         */
+        public ExecuteRemotelyTask(TestIgniteIdxCallable<R> job, int idx) {
+            this.job = job;
+            this.idx = idx;
+        }
+
+        /** {@inheritDoc} */
+        @Override public R call() throws Exception {
+            job.setIgnite(ignite);
+
+            return job.call(idx);
         }
     }
 
@@ -1597,5 +2069,86 @@ public abstract class GridAbstractTest extends TestCase {
 
             return numOfTests;
         }
+    }
+
+    /** */
+    public static interface TestIgniteCallable<R> extends Serializable {
+        /**
+         * @param ignite Ignite.
+         */
+        R call(Ignite ignite) throws Exception;
+    }
+
+    /** */
+    public abstract static class TestIgniteRunnable implements TestIgniteCallable<Object> {
+        /** {@inheritDoc} */
+        @Override public Object call(Ignite ignite) throws Exception {
+            run(ignite);
+
+            return null;
+        }
+
+        /**
+         * @param ignite Ignite.
+         */
+        public abstract void run(Ignite ignite) throws Exception;
+    }
+
+    /** */
+    public static abstract class TestIgniteIdxCallable<R> implements Serializable {
+        @IgniteInstanceResource
+        protected Ignite ignite;
+
+        /**
+         * @param ignite Ignite.
+         */
+        public void setIgnite(Ignite ignite) {
+            this.ignite = ignite;
+        }
+
+        /**
+         * @param idx Grid index.
+         */
+        protected abstract R call(int idx) throws Exception;
+    }
+
+    /** */
+    public abstract static class TestIgniteIdxRunnable extends TestIgniteIdxCallable<Void> {
+        /** {@inheritDoc} */
+        @Override public Void call(int idx) throws Exception {
+            run(idx);
+
+            return null;
+        }
+
+        /**
+         * @param idx Index.
+         */
+        public abstract void run(int idx) throws Exception;
+    }
+
+    /** */
+    public static interface TestCacheCallable<K, V, R> extends Serializable {
+        /**
+         * @param ignite Ignite.
+         * @param cache Cache.
+         */
+        R call(Ignite ignite, IgniteCache<K, V> cache) throws Exception;
+    }
+
+    /** */
+    public abstract static class TestCacheRunnable<K, V> implements TestCacheCallable<K, V, Object> {
+        /** {@inheritDoc} */
+        @Override public Object call(Ignite ignite, IgniteCache cache) throws Exception {
+            run(ignite, cache);
+
+            return null;
+        }
+
+        /**
+         * @param ignite Ignite.
+         * @param cache Cache.
+         */
+        public abstract void run(Ignite ignite, IgniteCache<K, V> cache) throws Exception;
     }
 }

@@ -17,21 +17,26 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cache.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.events.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.spi.discovery.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.*;
-import org.apache.ignite.testframework.*;
-import org.apache.ignite.testframework.junits.common.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.cache.CacheExistsException;
+import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.events.Event;
+import org.apache.ignite.events.EventType;
+import org.apache.ignite.lang.IgnitePredicate;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.testframework.GridTestUtils;
+import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-
-import static org.apache.ignite.cache.CacheAtomicityMode.*;
+import static org.apache.ignite.cache.CacheAtomicityMode.TRANSACTIONAL;
 
 /**
  *
@@ -361,6 +366,36 @@ public class IgniteCacheConfigurationTemplateTest extends GridCommonAbstractTest
     }
 
     /**
+     * @throws Exception If failed.
+     */
+    public void testTemplateCleanup() throws Exception {
+        startGridsMultiThreaded(3);
+
+        try {
+            CacheConfiguration ccfg = new CacheConfiguration("affTemplate-*");
+
+            ccfg.setAffinity(new RendezvousAffinityFunction());
+
+            ignite(0).addCacheConfiguration(ccfg);
+
+            ignite(0).getOrCreateCache("affTemplate-1");
+
+            IgniteCache<Object, Object> cache = ignite(0).getOrCreateCache("affTemplate-2");
+
+            ignite(0).destroyCache("affTemplate-1");
+
+            startGrid(3);
+
+            cache.put(1, 1);
+
+            assertEquals(1, cache.get(1));
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    /**
      * @param ignite Ignite.
      * @param name Cache name.
      * @param expBackups Expected number of backups.
@@ -420,29 +455,9 @@ public class IgniteCacheConfigurationTemplateTest extends GridCommonAbstractTest
                 }
             }, IllegalStateException.class, null);
 
-            GridTestUtils.assertThrows(log, new Callable<Void>() {
-                @Override public Void call() throws Exception {
-                    ignite.cache(TEMPLATE1);
-
-                    return null;
-                }
-            }, IllegalArgumentException.class, null);
-
-            GridTestUtils.assertThrows(log, new Callable<Void>() {
-                @Override public Void call() throws Exception {
-                    ignite.cache(TEMPLATE2);
-
-                    return null;
-                }
-            }, IllegalArgumentException.class, null);
-
-            GridTestUtils.assertThrows(log, new Callable<Void>() {
-                @Override public Void call() throws Exception {
-                    ignite.cache(TEMPLATE3);
-
-                    return null;
-                }
-            }, IllegalArgumentException.class, null);
+            assertNull(ignite.cache(TEMPLATE1));
+            assertNull(ignite.cache(TEMPLATE2));
+            assertNull(ignite.cache(TEMPLATE3));
         }
     }
 }

@@ -17,16 +17,20 @@
 
 package org.apache.ignite.internal.processors.cache.distributed;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.plugin.extensions.communication.*;
-
-import java.io.*;
-import java.nio.*;
-import java.util.*;
+import java.io.Externalizable;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.GridDirectCollection;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
+import org.apache.ignite.internal.processors.cache.KeyCacheObject;
+import org.apache.ignite.internal.util.tostring.GridToStringInclude;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.plugin.extensions.communication.MessageCollectionItemType;
+import org.apache.ignite.plugin.extensions.communication.MessageReader;
+import org.apache.ignite.plugin.extensions.communication.MessageWriter;
 
 /**
  * Lock request message.
@@ -40,6 +44,10 @@ public class GridDistributedUnlockRequest extends GridDistributedBaseMessage {
     @GridDirectCollection(KeyCacheObject.class)
     private List<KeyCacheObject> keys;
 
+    /** Partition IDs. */
+    @GridDirectCollection(int.class)
+    protected List<Integer> partIds;
+
     /**
      * Empty constructor required by {@link Externalizable}.
      */
@@ -50,9 +58,10 @@ public class GridDistributedUnlockRequest extends GridDistributedBaseMessage {
     /**
      * @param cacheId Cache ID.
      * @param keyCnt Key count.
+     * @param addDepInfo Deployment info flag.
      */
-    public GridDistributedUnlockRequest(int cacheId, int keyCnt) {
-        super(keyCnt);
+    public GridDistributedUnlockRequest(int cacheId, int keyCnt, boolean addDepInfo) {
+        super(keyCnt, addDepInfo);
 
         this.cacheId = cacheId;
     }
@@ -70,10 +79,13 @@ public class GridDistributedUnlockRequest extends GridDistributedBaseMessage {
      * @throws IgniteCheckedException If failed.
      */
     public void addKey(KeyCacheObject key, GridCacheContext ctx) throws IgniteCheckedException {
-        if (keys == null)
+        if (keys == null) {
             keys = new ArrayList<>(keysCount());
+            partIds = new ArrayList<>(keysCount());
+        }
 
         keys.add(key);
+        partIds.add(key.partition());
     }
 
     /** {@inheritDoc}
@@ -89,6 +101,13 @@ public class GridDistributedUnlockRequest extends GridDistributedBaseMessage {
         super.finishUnmarshal(ctx, ldr);
 
         finishUnmarshalCacheObjects(keys, ctx.cacheContext(cacheId), ldr);
+
+        if (partIds != null && !partIds.isEmpty()) {
+            assert partIds.size() == keys.size();
+
+            for (int i = 0; i < keys.size(); i++)
+                keys.get(i).partition(partIds.get(i));
+        }
     }
 
     /** {@inheritDoc} */
@@ -138,7 +157,7 @@ public class GridDistributedUnlockRequest extends GridDistributedBaseMessage {
 
         }
 
-        return true;
+        return reader.afterMessageRead(GridDistributedUnlockRequest.class);
     }
 
     /** {@inheritDoc} */

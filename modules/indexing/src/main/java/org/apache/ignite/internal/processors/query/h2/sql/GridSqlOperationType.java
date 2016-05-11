@@ -17,7 +17,8 @@
 
 package org.apache.ignite.internal.processors.query.h2.sql;
 
-import org.h2.util.*;
+import org.h2.util.StatementBuilder;
+import org.h2.util.StringUtils;
 
 /**
  * Operation type.
@@ -70,6 +71,8 @@ public enum GridSqlOperationType {
      * @param sqlGenerator sqlGenerator.
      */
     GridSqlOperationType(int childrenCnt, SqlGenerator sqlGenerator) {
+        assert childrenCnt > 0 || sqlGenerator instanceof ConditionInSqlGenerator : childrenCnt;
+
         this.childrenCnt = childrenCnt;
         this.sqlGenerator = sqlGenerator;
     }

@@ -17,14 +17,15 @@
 
 package org.apache.ignite.internal;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.plugin.*;
-import org.apache.ignite.spi.*;
-import org.jetbrains.annotations.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.Serializable;
+import java.util.UUID;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.lang.IgniteFuture;
+import org.apache.ignite.plugin.PluginProvider;
+import org.apache.ignite.plugin.PluginValidationException;
+import org.apache.ignite.spi.IgniteNodeValidationResult;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -61,6 +62,16 @@ public class GridPluginComponent implements GridComponent {
     /** {@inheritDoc} */
     @Override public void onKernalStart() throws IgniteCheckedException {
         plugin.onIgniteStart();
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onDisconnected(IgniteFuture<?> reconnectFut) {
+        // No-op.
+    }
+
+    /** {@inheritDoc} */
+    @Override public IgniteInternalFuture<?> onReconnected(boolean clusterRestarted) {
+        return null;
     }
 
     /** {@inheritDoc} */

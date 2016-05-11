@@ -17,20 +17,23 @@
 
 package org.apache.ignite.internal;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cache.affinity.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.processors.cache.distributed.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.spi.discovery.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.*;
-import org.apache.ignite.testframework.junits.common.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.cache.affinity.AffinityKeyMapper;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.processors.cache.distributed.GridCacheModuloAffinityFunction;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
-import java.util.*;
-
-import static org.apache.ignite.cache.CacheMode.*;
+import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 
 /**
  * Tests affinity mapping when {@link AffinityKeyMapper} is used.
@@ -106,18 +109,18 @@ public class GridAffinityMappedTest extends GridCommonAbstractTest {
         //Key 0 is mapped to partition 0, first node.
         //Key 1 is mapped to partition 1, second node.
         //key 2 is mapped to partition 0, first node because mapper substitutes key 2 with affinity key 0.
-        Map<ClusterNode, Collection<Integer>> map = g1.cluster().mapKeysToNodes(null, F.asList(0));
+        Map<ClusterNode, Collection<Integer>> map = g1.<Integer>affinity(null).mapKeysToNodes(F.asList(0));
 
         assertNotNull(map);
         assertEquals("Invalid map size: " + map.size(), 1, map.size());
         assertEquals(F.first(map.keySet()), first);
 
-        UUID id1 = g1.cluster().mapKeyToNode(null, 1).id();
+        UUID id1 = g1.affinity(null).mapKeyToNode(1).id();
 
         assertNotNull(id1);
         assertEquals(second.id(),  id1);
 
-        UUID id2 = g1.cluster().mapKeyToNode(null, 2).id();
+        UUID id2 = g1.affinity(null).mapKeyToNode(2).id();
 
         assertNotNull(id2);
         assertEquals(first.id(),  id2);

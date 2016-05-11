@@ -17,14 +17,16 @@
 
 package org.apache.ignite.spi.discovery;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.spi.*;
-import org.apache.ignite.spi.discovery.tcp.*;
-import org.jetbrains.annotations.*;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.lang.IgniteProductVersion;
+import org.apache.ignite.spi.IgniteSpi;
+import org.apache.ignite.spi.IgniteSpiException;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Grid discovery SPI allows to discover remote nodes in grid.
@@ -102,6 +104,7 @@ public interface DiscoverySpi extends IgniteSpi {
      * Sets a handler for initial data exchange between Ignite nodes.
      *
      * @param exchange Discovery data exchange handler.
+     * @return {@code this} for chaining.
      */
     public TcpDiscoverySpi setDataExchange(DiscoverySpiDataExchange exchange);
 
@@ -111,6 +114,7 @@ public interface DiscoverySpi extends IgniteSpi {
      * dynamic metrics between nodes.
      *
      * @param metricsProvider Provider of metrics data.
+     * @return {@code this} for chaining.
      */
     public TcpDiscoverySpi setMetricsProvider(DiscoveryMetricsProvider metricsProvider);
 

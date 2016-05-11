@@ -17,25 +17,31 @@
 
 package org.apache.ignite.internal.processors.igfs;
 
-import org.apache.ignite.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.igfs.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.spi.discovery.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.*;
-import org.apache.ignite.testframework.*;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteFileSystem;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.FileSystemConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.igfs.IgfsGroupDataBlocksKeyMapper;
+import org.apache.ignite.igfs.IgfsPath;
+import org.apache.ignite.internal.IgniteKernal;
+import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.internal.util.typedef.G;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.testframework.GridTestUtils;
 
-import java.io.*;
-import java.util.concurrent.*;
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.util.concurrent.Callable;
 
-import static org.apache.ignite.cache.CacheAtomicityMode.*;
-import static org.apache.ignite.cache.CacheMode.*;
-import static org.apache.ignite.cache.CacheWriteSynchronizationMode.*;
-import static org.apache.ignite.igfs.IgfsMode.*;
-import static org.apache.ignite.internal.managers.communication.GridIoPolicy.*;
+import static org.apache.ignite.cache.CacheAtomicityMode.TRANSACTIONAL;
+import static org.apache.ignite.cache.CacheMode.PARTITIONED;
+import static org.apache.ignite.cache.CacheMode.REPLICATED;
+import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
+import static org.apache.ignite.igfs.IgfsMode.PRIMARY;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SYSTEM_POOL;
 
 /**
  *
@@ -80,7 +86,7 @@ public class IgfsStartCacheTest extends IgfsCommonAbstractTest {
             metaCacheCfg.setName("metaCache");
             metaCacheCfg.setCacheMode(REPLICATED);
             metaCacheCfg.setAtomicityMode(TRANSACTIONAL);
-            dataCacheCfg.setWriteSynchronizationMode(FULL_SYNC);
+            metaCacheCfg.setWriteSynchronizationMode(FULL_SYNC);
 
             cfg.setCacheConfiguration(dataCacheCfg, metaCacheCfg);
             cfg.setFileSystemConfiguration(igfsCfg);
@@ -152,7 +158,7 @@ public class IgfsStartCacheTest extends IgfsCommonAbstractTest {
     private void checkCache(GridCacheAdapter cache) {
         assertNotNull(cache);
         assertFalse(cache.context().userCache());
-        assertFalse(cache.context().systemTx());
+        assertTrue(cache.context().systemTx());
         assertEquals(SYSTEM_POOL, cache.context().ioPolicy());
     }
 }

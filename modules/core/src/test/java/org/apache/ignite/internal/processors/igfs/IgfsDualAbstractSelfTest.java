@@ -17,20 +17,28 @@
 
 package org.apache.ignite.internal.processors.igfs;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cache.*;
-import org.apache.ignite.igfs.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.testframework.*;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.igfs.IgfsFile;
+import org.apache.ignite.igfs.IgfsInputStream;
+import org.apache.ignite.igfs.IgfsMode;
+import org.apache.ignite.igfs.IgfsPath;
+import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystem;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.util.typedef.T2;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.testframework.GridTestUtils;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
 
-import static org.apache.ignite.igfs.IgfsMode.*;
-import static org.apache.ignite.internal.processors.igfs.IgfsEx.*;
+import static org.apache.ignite.igfs.IgfsMode.DUAL_ASYNC;
+import static org.apache.ignite.igfs.IgfsMode.DUAL_SYNC;
 
 /**
  * Tests for IGFS working in mode when remote file system exists: DUAL_SYNC, DUAL_ASYNC.
@@ -964,10 +972,12 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
         checkExist(igfs, igfsSecondary, SUBSUBDIR);
 
         // Check only permissions because user and group will always be present in Hadoop secondary filesystem.
-        assertEquals(props.get(PROP_PERMISSION), igfsSecondary.properties(SUBSUBDIR.toString()).get(PROP_PERMISSION));
+        assertEquals(props.get(IgfsUtils.PROP_PERMISSION),
+            igfsSecondary.properties(SUBSUBDIR.toString()).get(IgfsUtils.PROP_PERMISSION));
 
         // We check only permission because IGFS client adds username and group name explicitly.
-        assertEquals(props.get(PROP_PERMISSION), igfs.info(SUBSUBDIR).properties().get(PROP_PERMISSION));
+        assertEquals(props.get(IgfsUtils.PROP_PERMISSION),
+            igfs.info(SUBSUBDIR).properties().get(IgfsUtils.PROP_PERMISSION));
     }
 
     /**
@@ -989,10 +999,12 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
         checkExist(igfs, igfsSecondary, SUBSUBDIR);
 
         // Check only permission because in case of Hadoop secondary Fs user and group will always be present:
-        assertEquals(props.get(PROP_PERMISSION), igfsSecondary.properties(SUBSUBDIR.toString()).get(PROP_PERMISSION));
+        assertEquals(props.get(IgfsUtils.PROP_PERMISSION),
+            igfsSecondary.properties(SUBSUBDIR.toString()).get(IgfsUtils.PROP_PERMISSION));
 
         // We check only permission because IGFS client adds username and group name explicitly.
-        assertEquals(props.get(PROP_PERMISSION), igfs.info(SUBSUBDIR).properties().get(PROP_PERMISSION));
+        assertEquals(props.get(IgfsUtils.PROP_PERMISSION),
+            igfs.info(SUBSUBDIR).properties().get(IgfsUtils.PROP_PERMISSION));
     }
 
     /**
@@ -1123,7 +1135,7 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
         create(igfsSecondary, paths(DIR, SUBDIR), null);
         create(igfs, null, null);
 
-        createFile(igfsSecondary, FILE, true, chunk);
+        createFile(igfsSecondary, FILE, chunk);
 
         checkFileContent(igfs, FILE, chunk);
     }
@@ -1133,6 +1145,7 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
      *
      * @throws Exception If failed.
      */
+    @SuppressWarnings({"ResultOfMethodCallIgnored", "ThrowableResultOfMethodCallIgnored"})
     public void testOpenNoPrefetch() throws Exception {
         create(igfsSecondary, paths(DIR, SUBDIR), paths(FILE));
 
@@ -1195,7 +1208,8 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
 
                 try {
                     in0.read(readBuf);
-                } finally {
+                }
+                finally {
                     U.closeQuiet(in0);
                 }
 
@@ -1210,6 +1224,7 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
      *
      * @throws Exception If failed.
      */
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void testOpenPrefetch() throws Exception {
         create(igfsSecondary, paths(DIR, SUBDIR), paths(FILE));
 
@@ -1243,7 +1258,9 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
         // Wait for a while for prefetch to finish.
         IgfsMetaManager meta = igfs.context().meta();
 
-        IgfsFileInfo info = meta.info(meta.fileId(FILE));
+        IgfsEntryInfo info = meta.info(meta.fileId(FILE));
+
+        assert info != null;
 
         IgfsBlockKey key = new IgfsBlockKey(info.id(), info.affinityKey(), info.evictExclude(), 2);
 
@@ -1338,7 +1355,7 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
 
         igfsSecondaryFileSystem.update(SUBDIR, props);
 
-        createFile(igfsSecondary, FILE, true, /*BLOCK_SIZE,*/ chunk);
+        createFile(igfsSecondary, FILE, /*BLOCK_SIZE,*/ chunk);
 
         appendFile(igfs, FILE, chunk);
 
@@ -1365,7 +1382,7 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
         igfsSecondaryFileSystem.update(DIR, propsDir);
         igfsSecondaryFileSystem.update(SUBDIR, propsSubDir);
 
-        createFile(igfsSecondary, FILE, true, /*BLOCK_SIZE,*/ chunk);
+        createFile(igfsSecondary, FILE, /*BLOCK_SIZE,*/ chunk);
 
         appendFile(igfs, FILE, chunk);
 
@@ -1595,5 +1612,74 @@ public abstract class IgfsDualAbstractSelfTest extends IgfsAbstractSelfTest {
 
             clear(igfs, igfsSecondary);
         }
+    }
+
+    /**
+     * Checks file access & modification time equality in the file itself and in the same file found through
+     * the listing of its parent.
+     *
+     * @param fs The file system.
+     * @param p The file path.
+     *
+     * @return Tuple of access and modification times of the file.
+     */
+    private T2<Long, Long> checkParentListingTime(IgfsSecondaryFileSystem fs, IgfsPath p) {
+        IgfsFile f0 = fs.info(p);
+
+        T2<Long, Long> t0 = new T2<>(f0.accessTime(), f0.modificationTime());
+
+        // Root cannot be seen through the parent listing:
+        if (!p.isSame(p.root())) {
+
+            assertNotNull(f0);
+
+            Collection<IgfsFile> listing = fs.listFiles(p.parent());
+
+            IgfsFile f1 = null;
+
+            for (IgfsFile fi : listing) {
+                if (fi.path().isSame(p)) {
+                    f1 = fi;
+
+                    break;
+                }
+            }
+
+            assertNotNull(f1); // file should be found in parent listing.
+
+            T2<Long, Long> t1 = new T2<>(f1.accessTime(), f1.modificationTime());
+
+            assertEquals(t0, t1);
+        }
+
+        return t0;
+    }
+
+    /**
+     * Test for file modification time upwards propagation when files are
+     * created on the secondary file system and initially
+     * unknown on the primary file system.
+     *
+     * @throws Exception On error.
+     */
+    public void testAccessAndModificationTimeUpwardsPropagation() throws Exception {
+        create(igfsSecondary, paths(DIR, SUBDIR), paths(FILE, FILE2));
+
+        T2<Long,Long> timesDir0 = checkParentListingTime(igfsSecondaryFileSystem, DIR);
+        T2<Long,Long> timesSubDir0 = checkParentListingTime(igfsSecondaryFileSystem, SUBDIR);
+        T2<Long,Long> timesFile0 = checkParentListingTime(igfsSecondaryFileSystem, FILE);
+        T2<Long,Long> timesFile20 = checkParentListingTime(igfsSecondaryFileSystem, FILE2);
+
+        Thread.sleep(500L);
+
+        T2<Long,Long> timesDir1 = checkParentListingTime(igfs.asSecondary(), DIR);
+        T2<Long,Long> timesSubDir1 = checkParentListingTime(igfs.asSecondary(), SUBDIR);
+        T2<Long,Long> timesFile1 = checkParentListingTime(igfs.asSecondary(), FILE);
+        T2<Long,Long> timesFile21 = checkParentListingTime(igfs.asSecondary(), FILE2);
+
+        assertEquals(timesDir0, timesDir1);
+        assertEquals(timesSubDir0, timesSubDir1);
+        assertEquals(timesFile0, timesFile1);
+        assertEquals(timesFile20, timesFile21);
     }
 }

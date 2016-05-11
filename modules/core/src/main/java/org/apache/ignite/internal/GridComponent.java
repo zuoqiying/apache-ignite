@@ -17,13 +17,13 @@
 
 package org.apache.ignite.internal;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.spi.*;
-import org.jetbrains.annotations.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.Serializable;
+import java.util.UUID;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.lang.IgniteFuture;
+import org.apache.ignite.spi.IgniteNodeValidationResult;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for all main internal Ignite components (managers and processors).
@@ -40,7 +40,10 @@ public interface GridComponent {
         CACHE_PROC,
 
         /** */
-        PLUGIN
+        PLUGIN,
+
+        /** */
+        CLUSTER_PROC
     }
 
     /**
@@ -87,6 +90,7 @@ public interface GridComponent {
     /**
      * Receives discovery data object from remote nodes (called
      * on new node during discovery process).
+     *
      * @param joiningNodeId Joining node ID.
      * @param rmtNodeId Remote node ID for which data is provided.
      * @param data Discovery data object or {@code null} if nothing was
@@ -116,4 +120,21 @@ public interface GridComponent {
      * @return Unique component type for discovery data exchange.
      */
     @Nullable public DiscoveryDataExchangeType discoveryDataType();
+
+    /**
+     * Client disconnected callback.
+     *
+     * @param reconnectFut Reconnect future.
+     * @throws IgniteCheckedException If failed.
+     */
+    public void onDisconnected(IgniteFuture<?> reconnectFut) throws IgniteCheckedException;
+
+    /**
+     * Client reconnected callback.
+     *
+     * @param clusterRestarted Cluster restarted flag.
+     * @throws IgniteCheckedException If failed.
+     * @return Future to wait before completing reconnect future.
+     */
+    @Nullable public IgniteInternalFuture<?> onReconnected(boolean clusterRestarted) throws IgniteCheckedException;
 }

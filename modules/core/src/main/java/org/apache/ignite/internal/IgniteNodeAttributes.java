@@ -34,6 +34,12 @@ public final class IgniteNodeAttributes {
     public static final String ATTR_MARSHALLER = ATTR_PREFIX + ".marshaller";
 
     /** Internal attribute name constant. */
+    public static final String ATTR_MARSHALLER_USE_DFLT_SUID = ATTR_PREFIX + ".marshaller.useDefaultSUID";
+
+    /** Attribute for marshaller compact footers. */
+    public static final String ATTR_MARSHALLER_COMPACT_FOOTER = ATTR_PREFIX + ".marshaller.compactFooter";
+
+    /** Internal attribute name constant. */
     public static final String ATTR_JIT_NAME = ATTR_PREFIX + ".jit.name";
 
     /** Internal attribute name constant. */
@@ -131,6 +137,21 @@ public final class IgniteNodeAttributes {
 
     /** Configuration consistency check disabled flag. */
     public static final String ATTR_CONSISTENCY_CHECK_SKIPPED = ATTR_PREFIX + ".consistency.check.skipped";
+
+    /** Node consistent id. */
+    public static final String ATTR_NODE_CONSISTENT_ID = ATTR_PREFIX + ".consistent.id";
+
+    /** Binary protocol version. */
+    public static final String ATTR_BINARY_PROTO_VER = ATTR_PREFIX + ".binary.proto.ver";
+
+    /** Update notifier enabled. */
+    public static final String ATTR_UPDATE_NOTIFIER_ENABLED = ATTR_PREFIX + ".update.notifier.enabled";
+
+    /** Binary configuration. */
+    public static final String ATTR_BINARY_CONFIGURATION = ATTR_PREFIX + ".binary.config";
+
+    /** Late affinity assignment mode. */
+    public static final String ATTR_LATE_AFFINITY_ASSIGNMENT = ATTR_PREFIX + ".cache.lateAffinity";
 
     /**
      * Enforces singleton.

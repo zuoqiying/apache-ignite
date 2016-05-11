@@ -17,12 +17,12 @@
 
 package org.apache.ignite.schema.test.generator;
 
-import org.apache.ignite.schema.generator.*;
-import org.apache.ignite.schema.test.*;
-import org.apache.ignite.schema.model.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import org.apache.ignite.schema.generator.XmlGenerator;
+import org.apache.ignite.schema.model.PojoDescriptor;
+import org.apache.ignite.schema.test.AbstractSchemaImportTest;
 
 /**
  * Tests for XML generator.
@@ -40,7 +40,7 @@ public class XmlGeneratorTest extends AbstractSchemaImportTest {
 
         String fileName = "ignite-type-metadata.xml";
 
-        XmlGenerator.generate("org.apache.ignite.schema.test.model", all, true, new File(OUT_DIR_PATH, fileName),
+        XmlGenerator.generate("org.apache.ignite.schema.test.model", all, true, true, new File(OUT_DIR_PATH, fileName),
             askOverwrite);
 
         assertTrue("Generated XML file content is differ from expected one",

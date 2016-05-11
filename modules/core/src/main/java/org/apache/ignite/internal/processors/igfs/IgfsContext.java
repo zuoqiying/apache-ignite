@@ -17,17 +17,17 @@
 
 package org.apache.ignite.internal.processors.igfs;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.managers.communication.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.jetbrains.annotations.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.FileSystemConfiguration;
+import org.apache.ignite.internal.GridKernalContext;
+import org.apache.ignite.internal.util.typedef.F;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
-import static org.apache.ignite.internal.IgniteNodeAttributes.*;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_IGFS;
 
 /**
  * IGFS context holding all required components for IGFS instance.
@@ -148,7 +148,7 @@ public class IgfsContext {
      * @param plc Policy.
      * @throws IgniteCheckedException In case of error.
      */
-    public void send(UUID nodeId, Object topic, IgfsCommunicationMessage msg, GridIoPolicy plc)
+    public void send(UUID nodeId, Object topic, IgfsCommunicationMessage msg, byte plc)
         throws IgniteCheckedException {
         if (!kernalContext().localNodeId().equals(nodeId))
             msg.prepareMarshal(kernalContext().config().getMarshaller());
@@ -163,7 +163,7 @@ public class IgfsContext {
      * @param plc Policy.
      * @throws IgniteCheckedException In case of error.
      */
-    public void send(ClusterNode node, Object topic, IgfsCommunicationMessage msg, GridIoPolicy plc)
+    public void send(ClusterNode node, Object topic, IgfsCommunicationMessage msg, byte plc)
         throws IgniteCheckedException {
         if (!kernalContext().localNodeId().equals(node.id()))
             msg.prepareMarshal(kernalContext().config().getMarshaller());

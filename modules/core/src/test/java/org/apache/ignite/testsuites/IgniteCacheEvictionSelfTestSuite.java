@@ -17,14 +17,27 @@
 
 package org.apache.ignite.testsuites;
 
-import junit.framework.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.processors.cache.distributed.near.*;
-import org.apache.ignite.internal.processors.cache.eviction.*;
-import org.apache.ignite.internal.processors.cache.eviction.fifo.*;
-import org.apache.ignite.internal.processors.cache.eviction.lru.*;
-import org.apache.ignite.internal.processors.cache.eviction.random.*;
-import org.apache.ignite.internal.processors.cache.eviction.sorted.*;
+import junit.framework.TestSuite;
+import org.apache.ignite.internal.processors.cache.GridCacheMemoryModeSelfTest;
+import org.apache.ignite.internal.processors.cache.GridCachePreloadingEvictionsSelfTest;
+import org.apache.ignite.internal.processors.cache.distributed.near.GridCacheAtomicNearEvictionSelfTest;
+import org.apache.ignite.internal.processors.cache.distributed.near.GridCacheNearEvictionSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheBatchEvictUnswapSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheConcurrentEvictionConsistencySelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheConcurrentEvictionsSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheDistributedEvictionsSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheEmptyEntriesLocalSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheEmptyEntriesPartitionedSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheEvictableEntryEqualsSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheEvictionFilterSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheEvictionLockUnlockSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheEvictionTouchSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.GridCacheSynchronousEvictionsFailoverSelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.fifo.FifoEvictionPolicySelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.lru.LruEvictionPolicySelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.lru.LruNearEvictionPolicySelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.lru.LruNearOnlyNearEvictionPolicySelfTest;
+import org.apache.ignite.internal.processors.cache.eviction.sorted.SortedEvictionPolicySelfTest;
 
 /**
  * Test suite for cache eviction.
@@ -42,8 +55,6 @@ public class IgniteCacheEvictionSelfTestSuite extends TestSuite {
         suite.addTest(new TestSuite(LruEvictionPolicySelfTest.class));
         suite.addTest(new TestSuite(LruNearEvictionPolicySelfTest.class));
         suite.addTest(new TestSuite(LruNearOnlyNearEvictionPolicySelfTest.class));
-        suite.addTest(new TestSuite(RandomEvictionPolicySelfTest.class));
-        suite.addTest(new TestSuite(RandomEvictionPolicyCacheSizeSelfTest.class));
         suite.addTest(new TestSuite(GridCacheNearEvictionSelfTest.class));
         suite.addTest(new TestSuite(GridCacheAtomicNearEvictionSelfTest.class));
         suite.addTest(new TestSuite(GridCacheEvictionFilterSelfTest.class));
@@ -58,6 +69,7 @@ public class IgniteCacheEvictionSelfTestSuite extends TestSuite {
         suite.addTest(new TestSuite(GridCacheEmptyEntriesLocalSelfTest.class));
         suite.addTest(new TestSuite(GridCacheMemoryModeSelfTest.class));
         suite.addTest(new TestSuite(GridCacheSynchronousEvictionsFailoverSelfTest.class));
+        suite.addTest(new TestSuite(GridCacheEvictableEntryEqualsSelfTest.class));
 
         return suite;
     }

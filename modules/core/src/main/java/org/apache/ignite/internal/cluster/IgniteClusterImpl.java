@@ -17,26 +17,54 @@
 
 package org.apache.ignite.internal.cluster;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.util.future.*;
-import org.apache.ignite.internal.util.nodestart.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.jetbrains.annotations.*;
+import java.io.Externalizable;
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.ObjectStreamException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteCluster;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.cluster.ClusterGroup;
+import org.apache.ignite.cluster.ClusterGroupEmptyException;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.cluster.ClusterStartNodeResult;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.GridKernalContext;
+import org.apache.ignite.internal.IgniteComponentType;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.util.future.GridCompoundFuture;
+import org.apache.ignite.internal.util.future.GridFinishedFuture;
+import org.apache.ignite.internal.util.nodestart.IgniteRemoteStartSpecification;
+import org.apache.ignite.internal.util.nodestart.IgniteSshHelper;
+import org.apache.ignite.internal.util.nodestart.StartNodeCallable;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
+import org.apache.ignite.internal.util.typedef.CI1;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.A;
+import org.apache.ignite.internal.util.typedef.internal.CU;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgniteFuture;
+import org.apache.ignite.lang.IgnitePredicate;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-
-import static org.apache.ignite.internal.IgniteNodeAttributes.*;
-import static org.apache.ignite.internal.util.nodestart.IgniteNodeStartUtils.*;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_IPS;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_MACS;
+import static org.apache.ignite.internal.util.nodestart.IgniteNodeStartUtils.parseFile;
+import static org.apache.ignite.internal.util.nodestart.IgniteNodeStartUtils.specifications;
 
 /**
  *
@@ -51,6 +79,9 @@ public class IgniteClusterImpl extends ClusterGroupAdapter implements IgniteClus
     /** Node local store. */
     @GridToStringExclude
     private ConcurrentMap nodeLoc;
+
+    /** Client reconnect future. */
+    private IgniteFuture<?> reconnecFut;
 
     /**
      * Required by {@link Externalizable}.
@@ -119,6 +150,9 @@ public class IgniteClusterImpl extends ClusterGroupAdapter implements IgniteClus
 
         try {
             return ctx.discovery().pingNode(nodeId);
+        }
+        catch (IgniteCheckedException e) {
+            throw U.convertException(e);
         }
         finally {
             unguard();
@@ -499,6 +533,18 @@ public class IgniteClusterImpl extends ClusterGroupAdapter implements IgniteClus
      */
     public void clearNodeMap() {
         nodeLoc.clear();
+    }
+
+    /**
+     * @param reconnecFut Reconnect future.
+     */
+    public void clientReconnectFuture(IgniteFuture<?> reconnecFut) {
+        this.reconnecFut = reconnecFut;
+    }
+
+    /** {@inheritDoc} */
+    @Nullable @Override public IgniteFuture<?> clientReconnectFuture() {
+        return reconnecFut;
     }
 
     /** {@inheritDoc} */

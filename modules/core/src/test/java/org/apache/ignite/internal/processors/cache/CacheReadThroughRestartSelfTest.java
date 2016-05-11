@@ -17,16 +17,22 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cache.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.spi.discovery.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.*;
-import org.apache.ignite.transactions.*;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.TransactionConfiguration;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.transactions.Transaction;
+import org.apache.ignite.transactions.TransactionConcurrency;
+import org.apache.ignite.transactions.TransactionIsolation;
 
-import static org.apache.ignite.cache.CacheAtomicityMode.*;
-import static org.apache.ignite.cache.CacheMode.*;
+import static org.apache.ignite.cache.CacheAtomicityMode.TRANSACTIONAL;
+import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 
 /**
  * Test for read through store.
@@ -79,6 +85,20 @@ public class CacheReadThroughRestartSelfTest extends GridCacheAbstractSelfTest {
      * @throws Exception If failed.
      */
     public void testReadThroughInTx() throws Exception {
+        testReadThroughInTx(false);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testReadEntryThroughInTx() throws Exception {
+        testReadThroughInTx(true);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    private void testReadThroughInTx(boolean needVer) throws Exception {
         IgniteCache<String, Integer> cache = grid(1).cache(null);
 
         for (int k = 0; k < 1000; k++)
@@ -87,6 +107,8 @@ public class CacheReadThroughRestartSelfTest extends GridCacheAbstractSelfTest {
         stopAllGrids();
 
         startGrids(2);
+
+        awaitPartitionMapExchange();
 
         Ignite ignite = grid(1);
 
@@ -98,7 +120,14 @@ public class CacheReadThroughRestartSelfTest extends GridCacheAbstractSelfTest {
                     for (int k = 0; k < 1000; k++) {
                         String key = "key" + k;
 
-                        assertNotNull("Null value for key: " + key, cache.get(key));
+                        if (needVer) {
+                            assertNotNull("Null value for key: " + key, cache.getEntry(key));
+                            assertNotNull("Null value for key: " + key, cache.getEntry(key));
+                        }
+                        else {
+                            assertNotNull("Null value for key: " + key, cache.get(key));
+                            assertNotNull("Null value for key: " + key, cache.get(key));
+                        }
                     }
 
                     tx.commit();
@@ -111,6 +140,20 @@ public class CacheReadThroughRestartSelfTest extends GridCacheAbstractSelfTest {
      * @throws Exception If failed.
      */
     public void testReadThrough() throws Exception {
+        testReadThrough(false);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testReadEntryThrough() throws Exception {
+        testReadThrough(true);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    private void testReadThrough(boolean needVer) throws Exception {
         IgniteCache<String, Integer> cache = grid(1).cache(null);
 
         for (int k = 0; k < 1000; k++)
@@ -126,8 +169,10 @@ public class CacheReadThroughRestartSelfTest extends GridCacheAbstractSelfTest {
 
         for (int k = 0; k < 1000; k++) {
             String key = "key" + k;
-
-            assertNotNull("Null value for key: " + key, cache.get(key));
+            if (needVer)
+                assertNotNull("Null value for key: " + key, cache.getEntry(key));
+            else
+                assertNotNull("Null value for key: " + key, cache.get(key));
         }
     }
 }

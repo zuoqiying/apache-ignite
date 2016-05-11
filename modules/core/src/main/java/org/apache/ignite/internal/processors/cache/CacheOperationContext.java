@@ -17,13 +17,12 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.jetbrains.annotations.*;
-
-import javax.cache.expiry.*;
-import java.io.*;
-import java.util.*;
+import java.io.Serializable;
+import java.util.UUID;
+import javax.cache.expiry.ExpiryPolicy;
+import org.apache.ignite.internal.util.tostring.GridToStringInclude;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Cache operation context.
@@ -36,14 +35,21 @@ public class CacheOperationContext implements Serializable {
     @GridToStringInclude
     private final boolean skipStore;
 
+    /** No retries flag. */
+    @GridToStringInclude
+    private final boolean noRetries;
+
     /** Client ID which operates over this projection. */
     private final UUID subjId;
 
-    /** Keep portable flag. */
-    private final boolean keepPortable;
+    /** Keep binary flag. */
+    private final boolean keepBinary;
 
     /** Expiry policy. */
     private final ExpiryPolicy expiryPlc;
+
+    /** Data center Id. */
+    private final Byte dataCenterId;
 
     /**
      * Constructor with default values.
@@ -53,49 +59,69 @@ public class CacheOperationContext implements Serializable {
 
         subjId = null;
 
-        keepPortable = false;
+        keepBinary = false;
 
         expiryPlc = null;
+
+        noRetries = false;
+
+        dataCenterId = null;
     }
 
     /**
      * @param skipStore Skip store flag.
      * @param subjId Subject ID.
-     * @param keepPortable Keep portable flag.
+     * @param keepBinary Keep binary flag.
      * @param expiryPlc Expiry policy.
+     * @param dataCenterId Data center id.
      */
     public CacheOperationContext(
         boolean skipStore,
         @Nullable UUID subjId,
-        boolean keepPortable,
-        @Nullable ExpiryPolicy expiryPlc) {
+        boolean keepBinary,
+        @Nullable ExpiryPolicy expiryPlc,
+        boolean noRetries,
+        @Nullable Byte dataCenterId) {
         this.skipStore = skipStore;
 
         this.subjId = subjId;
 
-        this.keepPortable = keepPortable;
+        this.keepBinary = keepBinary;
 
         this.expiryPlc = expiryPlc;
+
+        this.noRetries = noRetries;
+
+        this.dataCenterId = dataCenterId;
     }
 
     /**
-     * @return Keep portable flag.
+     * @return Keep binary flag.
      */
-    public boolean isKeepPortable() {
-        return keepPortable;
+    public boolean isKeepBinary() {
+        return keepBinary;
     }
 
     /**
-     * See {@link IgniteInternalCache#keepPortable()}.
+     * @return {@code True} if data center id is set otherwise {@code false}.
+     */
+    public boolean hasDataCenterId() {
+        return dataCenterId != null;
+    }
+
+    /**
+     * See {@link IgniteInternalCache#keepBinary()}.
      *
-     * @return New instance of CacheOperationContext with keep portable flag.
+     * @return New instance of CacheOperationContext with keep binary flag.
      */
-    public CacheOperationContext keepPortable() {
+    public CacheOperationContext keepBinary() {
         return new CacheOperationContext(
             skipStore,
             subjId,
             true,
-            expiryPlc);
+            expiryPlc,
+            noRetries,
+            dataCenterId);
     }
 
     /**
@@ -108,6 +134,15 @@ public class CacheOperationContext implements Serializable {
     }
 
     /**
+     * Gets data center ID.
+     *
+     * @return Client ID.
+     */
+    @Nullable public Byte dataCenterId() {
+        return dataCenterId;
+    }
+
+    /**
      * See {@link IgniteInternalCache#forSubjectId(UUID)}.
      *
      * @param subjId Subject id.
@@ -117,8 +152,10 @@ public class CacheOperationContext implements Serializable {
         return new CacheOperationContext(
             skipStore,
             subjId,
-            keepPortable,
-            expiryPlc);
+            keepBinary,
+            expiryPlc,
+            noRetries,
+            dataCenterId);
     }
 
     /**
@@ -138,8 +175,10 @@ public class CacheOperationContext implements Serializable {
         return new CacheOperationContext(
             skipStore,
             subjId,
-            keepPortable,
-            expiryPlc);
+            keepBinary,
+            expiryPlc,
+            noRetries,
+            dataCenterId);
     }
 
     /**
@@ -160,7 +199,30 @@ public class CacheOperationContext implements Serializable {
             skipStore,
             subjId,
             true,
-            plc);
+            plc,
+            noRetries,
+            dataCenterId);
+    }
+
+    /**
+     * @param noRetries No retries flag.
+     * @return Operation context.
+     */
+    public CacheOperationContext setNoRetries(boolean noRetries) {
+        return new CacheOperationContext(
+            skipStore,
+            subjId,
+            keepBinary,
+            expiryPlc,
+            noRetries,
+            dataCenterId);
+    }
+
+    /**
+     * @return No retries flag.
+     */
+    public boolean noRetries() {
+        return noRetries;
     }
 
     /** {@inheritDoc} */

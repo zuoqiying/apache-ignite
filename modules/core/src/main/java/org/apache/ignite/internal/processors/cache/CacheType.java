@@ -17,9 +17,9 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.internal.managers.communication.*;
-
-import static org.apache.ignite.internal.managers.communication.GridIoPolicy.*;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.MARSH_CACHE_POOL;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SYSTEM_POOL;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.UTILITY_CACHE_POOL;
 
 /**
  *
@@ -49,13 +49,13 @@ public enum CacheType {
     private final boolean userCache;
 
     /** */
-    private final GridIoPolicy ioPlc;
+    private final byte ioPlc;
 
     /**
      * @param userCache {@code True} if cache created by user.
      * @param ioPlc Cache IO policy.
      */
-    CacheType(boolean userCache, GridIoPolicy ioPlc) {
+    CacheType(boolean userCache, byte ioPlc) {
         this.userCache = userCache;
         this.ioPlc = ioPlc;
     }
@@ -63,7 +63,7 @@ public enum CacheType {
     /**
      * @return Cache IO policy.
      */
-    public GridIoPolicy ioPolicy() {
+    public byte ioPolicy() {
         return ioPlc;
     }
 
@@ -74,4 +74,3 @@ public enum CacheType {
         return userCache;
     }
 }
-

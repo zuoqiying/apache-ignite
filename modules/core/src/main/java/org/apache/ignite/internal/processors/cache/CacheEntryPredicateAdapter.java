@@ -17,16 +17,20 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.*;
-import org.apache.ignite.plugin.extensions.communication.*;
-import org.jetbrains.annotations.*;
-
-import java.nio.*;
+import java.nio.ByteBuffer;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.plugin.extensions.communication.MessageReader;
+import org.apache.ignite.plugin.extensions.communication.MessageWriter;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
  */
 public abstract class CacheEntryPredicateAdapter implements CacheEntryPredicate {
+    /** */
+    private static final long serialVersionUID = 4647110502545358709L;
+
     /** */
     protected transient boolean locked;
 
@@ -64,7 +68,7 @@ public abstract class CacheEntryPredicateAdapter implements CacheEntryPredicate 
         if (!reader.beforeMessageRead())
             return false;
 
-        return true;
+        return reader.afterMessageRead(CacheEntryPredicateAdapter.class);
     }
 
     /** {@inheritDoc} */
@@ -92,5 +96,10 @@ public abstract class CacheEntryPredicateAdapter implements CacheEntryPredicate 
         catch (IgniteCheckedException e) {
             throw new IgniteException(e);
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onAckReceived() {
+        // No-op.
     }
 }

@@ -17,17 +17,16 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import org.apache.ignite.cache.store.*;
-import org.apache.ignite.cache.store.jdbc.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.jetbrains.annotations.*;
+import java.io.Serializable;
+import org.apache.ignite.cache.store.CacheStore;
+import org.apache.ignite.cache.store.jdbc.CacheAbstractJdbcStore;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.processors.cache.IgniteCacheProxy;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-
-import static org.apache.ignite.internal.visor.util.VisorTaskUtils.*;
+import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 
 /**
  * Data transfer object for cache store configuration properties.
@@ -71,28 +70,26 @@ public class VisorCacheStoreConfiguration implements Serializable {
      * @param ccfg Cache configuration.
      * @return Data transfer object for cache store configuration properties.
      */
-    public static VisorCacheStoreConfiguration from(IgniteEx ignite, CacheConfiguration ccfg) {
-        VisorCacheStoreConfiguration cfg = new VisorCacheStoreConfiguration();
-
+    public VisorCacheStoreConfiguration from(IgniteEx ignite, CacheConfiguration ccfg) {
         IgniteCacheProxy<Object, Object> c = ignite.context().cache().jcache(ccfg.getName());
 
-        CacheStore store = c != null && c.context().started() ? c.context().store().configuredStore() : null;
+        CacheStore cstore = c != null && c.context().started() ? c.context().store().configuredStore() : null;
 
-        cfg.jdbcStore = store instanceof CacheAbstractJdbcStore;
+        jdbcStore = cstore instanceof CacheAbstractJdbcStore;
 
-        cfg.store = compactClass(store);
-        cfg.storeFactory = compactClass(ccfg.getCacheStoreFactory());
+        store = compactClass(cstore);
+        storeFactory = compactClass(ccfg.getCacheStoreFactory());
 
-        cfg.readThrough = ccfg.isReadThrough();
-        cfg.writeThrough = ccfg.isWriteThrough();
+        readThrough = ccfg.isReadThrough();
+        writeThrough = ccfg.isWriteThrough();
 
-        cfg.writeBehindEnabled = ccfg.isWriteBehindEnabled();
-        cfg.batchSz = ccfg.getWriteBehindBatchSize();
-        cfg.flushFreq = ccfg.getWriteBehindFlushFrequency();
-        cfg.flushSz = ccfg.getWriteBehindFlushSize();
-        cfg.flushThreadCnt = ccfg.getWriteBehindFlushThreadCount();
+        writeBehindEnabled = ccfg.isWriteBehindEnabled();
+        batchSz = ccfg.getWriteBehindBatchSize();
+        flushFreq = ccfg.getWriteBehindFlushFrequency();
+        flushSz = ccfg.getWriteBehindFlushSize();
+        flushThreadCnt = ccfg.getWriteBehindFlushThreadCount();
 
-        return cfg;
+        return this;
     }
 
     /**

@@ -17,26 +17,25 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.internal.processors.affinity.*;
-
-import java.util.*;
+import java.util.Collection;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 
 /**
  * Update future for atomic cache.
  */
 public interface GridCacheAtomicFuture<R> extends GridCacheFuture<R> {
     /**
-     * @return {@code True} if partition exchange should wait for this future to complete.
+     * @return Future version.
      */
-    public boolean waitForPartitionExchange();
+    public GridCacheVersion version();
 
     /**
-     * @return Future topology version.
+     * Gets future that will be completed when it is safe when update is finished on the given version of topology.
+     *
+     * @param topVer Topology version to finish.
+     * @return Future or {@code null} if no need to wait.
      */
-    public AffinityTopologyVersion topologyVersion();
-
-    /**
-     * @return Future keys.
-     */
-    public Collection<?> keys();
+    public IgniteInternalFuture<Void> completeFuture(AffinityTopologyVersion topVer);
 }

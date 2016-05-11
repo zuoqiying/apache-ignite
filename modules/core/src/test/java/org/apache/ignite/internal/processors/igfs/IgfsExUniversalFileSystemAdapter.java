@@ -17,16 +17,17 @@
 
 package org.apache.ignite.internal.processors.igfs;
 
-import org.apache.ignite.igfs.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
+import org.apache.ignite.igfs.IgfsOutputStream;
+import org.apache.ignite.igfs.IgfsPath;
 
 /**
  * Universal adapter over {@link IgfsEx} filesystem.
  */
 public class IgfsExUniversalFileSystemAdapter implements UniversalFileSystemAdapter {
-
     /** The wrapped igfs. */
     private final IgfsEx igfsEx;
 
@@ -67,18 +68,14 @@ public class IgfsExUniversalFileSystemAdapter implements UniversalFileSystemAdap
     @Override public boolean delete(String path, boolean recursive) throws IOException {
         IgfsPath igfsPath = new IgfsPath(path);
 
-        boolean del = igfsEx.delete(igfsPath, recursive);
-
-        return del;
+        return igfsEx.delete(igfsPath, recursive);
     }
 
     /** {@inheritDoc} */
     @Override public InputStream openInputStream(String path) throws IOException {
         IgfsPath igfsPath = new IgfsPath(path);
 
-        IgfsInputStreamAdapter adapter = igfsEx.open(igfsPath);
-
-        return adapter;
+        return igfsEx.open(igfsPath);
     }
 
     /** {@inheritDoc} */
@@ -95,7 +92,7 @@ public class IgfsExUniversalFileSystemAdapter implements UniversalFileSystemAdap
     }
 
     /** {@inheritDoc} */
-    @Override public <T> T getAdapter(Class<T> clazz) {
+    @Override public <T> T unwrap(Class<T> clazz) {
         if (clazz == IgfsEx.class)
             return (T)igfsEx;
 

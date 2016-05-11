@@ -71,6 +71,7 @@ class VisorConsole {
         org.apache.ignite.visor.commands.gc.VisorGcCommand
         org.apache.ignite.visor.commands.kill.VisorKillCommand
         org.apache.ignite.visor.commands.node.VisorNodeCommand
+        org.apache.ignite.visor.commands.open.VisorOpenCommand
         org.apache.ignite.visor.commands.ping.VisorPingCommand
         org.apache.ignite.visor.commands.start.VisorStartCommand
         org.apache.ignite.visor.commands.tasks.VisorTasksCommand
@@ -83,13 +84,14 @@ class VisorConsole {
 
         if (hasArgFlag("?", argLst) || hasArgFlag("help", argLst)) {
             println("Usage:")
-            println(s"    $progName [?]|[{-v}{-np}]|[{-b=<batch commands file path>} {-e=command1;command2}]")
+            println(s"    $progName [? | -help]|[{-v}{-np} {-cfg=<path>}]|[{-b=<path>} {-e=command1;command2;...}]")
             println("    Where:")
-            println("        ?, /help, -help - show this message.")
-            println("        -v              - verbose mode (quiet by default).")
-            println("        -np             - no pause on exit (pause by default)")
-            println("        -b              - batch mode with file)")
-            println("        -e              - batch mode with commands)")
+            println("        ?, /help, -help      - show this message.")
+            println("        -v                   - verbose mode (quiet by default).")
+            println("        -np                  - no pause on exit (pause by default).")
+            println("        -cfg=<path>          - connect with specified configuration.")
+            println("        -b=<path>            - batch mode with file.")
+            println("        -e=cmd1;cmd2;...     - batch mode with commands.")
 
             visor.quit()
         }
@@ -98,14 +100,28 @@ class VisorConsole {
     }
 
     protected def buildReader(argLst: ArgList) = {
+        val cfgFile = argValue("cfg", argLst)
         val batchFile = argValue("b", argLst)
         val batchCommand = argValue("e", argLst)
 
+        cfgFile.foreach(cfg => {
+            if (cfg.trim.isEmpty) {
+                visor.warn("Expected path to configuration after \"-cfg\" option.")
+
+                visor.quit()
+            }
+
+            if (batchFile.isDefined || batchCommand.isDefined) {
+                visor.warn("Options can't contains both -cfg and one of -b or -e options.")
+
+                visor.quit()
+            }
+
+            visor.searchCmd("open").foreach(_.withArgs("-cpath=" + cfg))
+        })
+
         if (batchFile.isDefined && batchCommand.isDefined) {
-            visor.warn(
-                "Illegal options can't contains both command file and commands",
-                s"Usage: $progName {-b=<batch commands file path>} {-e=command1;command2}"
-            )
+            visor.warn("Options can't contains both command file and commands.")
 
             visor.quit()
         }
@@ -178,7 +194,7 @@ class VisorConsole {
                     buf.append(line.dropRight(1))
                 }
                 else {
-                    if (buf.size != 0) {
+                    if (buf.nonEmpty) {
                         buf.append(line)
 
                         line = buf.toString()
@@ -302,7 +318,7 @@ object VisorConsole extends VisorConsole with App {
     addCommands()
 
     private val argLst = parse(args.mkString(" "))
-    
+
     private val reader = buildReader(argLst)
 
     visor.reader(reader)

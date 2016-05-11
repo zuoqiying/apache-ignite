@@ -17,13 +17,16 @@
 
 package org.apache.ignite.internal.processors.cache.version;
 
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.plugin.extensions.communication.*;
-
-import java.io.*;
-import java.nio.*;
-import java.util.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.nio.ByteBuffer;
+import java.util.UUID;
+import org.apache.ignite.lang.IgniteUuid;
+import org.apache.ignite.plugin.extensions.communication.Message;
+import org.apache.ignite.plugin.extensions.communication.MessageReader;
+import org.apache.ignite.plugin.extensions.communication.MessageWriter;
 
 /**
  * Grid unique version.
@@ -68,10 +71,10 @@ public class GridCacheVersion implements Message, Comparable<GridCacheVersion>, 
      * @param dataCenterId Replication data center ID.
      */
     public GridCacheVersion(int topVer, long globalTime, long order, int nodeOrder, int dataCenterId) {
-        assert topVer >= 0;
-        assert order >= 0;
-        assert nodeOrder >= 0;
-        assert dataCenterId < 32 && dataCenterId >= 0;
+        assert topVer >= 0 : topVer;
+        assert order >= 0 : order;
+        assert nodeOrder >= 0 : nodeOrder;
+        assert dataCenterId < 32 && dataCenterId >= 0 : dataCenterId;
 
         if (nodeOrder > NODE_ORDER_MASK)
             throw new IllegalArgumentException("Node order overflow: " + nodeOrder);
@@ -85,7 +88,7 @@ public class GridCacheVersion implements Message, Comparable<GridCacheVersion>, 
 
 
     /**
-     * @param topVer Topology version.
+     * @param topVer Topology version plus number of seconds from the start time of the first grid node.
      * @param nodeOrderDrId Node order and DR ID.
      * @param globalTime Globally adjusted time.
      * @param order Version order.
@@ -185,6 +188,11 @@ public class GridCacheVersion implements Message, Comparable<GridCacheVersion>, 
      */
     public IgniteUuid asGridUuid() {
         return new IgniteUuid(new UUID(((long)topVer << 32) | nodeOrderDrId, globalTime), order);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onAckReceived() {
+        // No-op.
     }
 
     /** {@inheritDoc} */
@@ -326,7 +334,7 @@ public class GridCacheVersion implements Message, Comparable<GridCacheVersion>, 
 
         }
 
-        return true;
+        return reader.afterMessageRead(GridCacheVersion.class);
     }
 
     /** {@inheritDoc} */
@@ -341,6 +349,9 @@ public class GridCacheVersion implements Message, Comparable<GridCacheVersion>, 
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(GridCacheVersion.class, this);
+        return "GridCacheVersion [topVer=" + topologyVersion() +
+            ", time=" + globalTime() +
+            ", order=" + order() +
+            ", nodeOrder=" + nodeOrder() + ']';
     }
 }

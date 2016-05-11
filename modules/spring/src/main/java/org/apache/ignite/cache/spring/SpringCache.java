@@ -17,9 +17,9 @@
 
 package org.apache.ignite.cache.spring;
 
-import org.apache.ignite.*;
-import org.springframework.cache.*;
-import org.springframework.cache.support.*;
+import org.apache.ignite.IgniteCache;
+import org.springframework.cache.Cache;
+import org.springframework.cache.support.SimpleValueWrapper;
 
 /**
  * Spring cache implementation.
@@ -48,7 +48,7 @@ class SpringCache implements Cache {
     }
 
     /** {@inheritDoc} */
-    @Override public Cache.ValueWrapper get(Object key) {
+    @Override public ValueWrapper get(Object key) {
         Object val = cache.get(key);
 
         return val != null ? new SimpleValueWrapper(val) : null;

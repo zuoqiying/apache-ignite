@@ -17,11 +17,16 @@
 
 package org.apache.ignite.internal.processors.hadoop.examples;
 
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.Iterator;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.ignite.internal.processors.hadoop.HadoopErrorSimulator;
 
 /**
  * Combiner and Reducer phase of WordCount job.
@@ -41,11 +46,16 @@ public class HadoopWordCount1Reduce extends MapReduceBase implements Reducer<Tex
             sum += values.next().get();
 
         output.collect(key, new IntWritable(sum));
+
+        HadoopErrorSimulator.instance().onReduce();
     }
 
+    /** {@inheritDoc} */
     @Override public void configure(JobConf job) {
         super.configure(job);
 
         wasConfigured = true;
+
+        HadoopErrorSimulator.instance().onReduceConfigure();
     }
 }

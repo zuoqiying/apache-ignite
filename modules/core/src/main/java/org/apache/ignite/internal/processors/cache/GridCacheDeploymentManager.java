@@ -17,30 +17,49 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.events.*;
-import org.apache.ignite.internal.managers.deployment.*;
-import org.apache.ignite.internal.managers.eventstorage.*;
-import org.apache.ignite.internal.processors.cache.distributed.near.*;
-import org.apache.ignite.internal.processors.cache.query.*;
-import org.apache.ignite.internal.util.*;
-import org.apache.ignite.internal.util.lang.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.jetbrains.annotations.*;
-import org.jsr166.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.binary.BinaryInvalidTypeException;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.DeploymentMode;
+import org.apache.ignite.events.DiscoveryEvent;
+import org.apache.ignite.events.Event;
+import org.apache.ignite.internal.managers.deployment.GridDeployment;
+import org.apache.ignite.internal.managers.deployment.GridDeploymentInfo;
+import org.apache.ignite.internal.managers.deployment.GridDeploymentInfoBean;
+import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
+import org.apache.ignite.internal.processors.cache.distributed.near.GridNearCacheAdapter;
+import org.apache.ignite.internal.processors.cache.query.GridCacheQueryManager;
+import org.apache.ignite.internal.util.IgniteUtils;
+import org.apache.ignite.internal.util.lang.GridPeerDeployAware;
+import org.apache.ignite.internal.util.tostring.GridToStringInclude;
+import org.apache.ignite.internal.util.typedef.CA;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.X;
+import org.apache.ignite.internal.util.typedef.internal.CU;
+import org.apache.ignite.internal.util.typedef.internal.LT;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteUuid;
+import org.jetbrains.annotations.Nullable;
+import org.jsr166.ConcurrentHashMap8;
+import org.jsr166.ConcurrentLinkedHashMap;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.concurrent.locks.*;
-
-import static org.apache.ignite.configuration.DeploymentMode.*;
-import static org.apache.ignite.events.EventType.*;
+import static org.apache.ignite.configuration.DeploymentMode.CONTINUOUS;
+import static org.apache.ignite.configuration.DeploymentMode.ISOLATED;
+import static org.apache.ignite.configuration.DeploymentMode.PRIVATE;
+import static org.apache.ignite.events.EventType.EVT_NODE_FAILED;
+import static org.apache.ignite.events.EventType.EVT_NODE_LEFT;
 
 /**
  * Deployment manager for cache.
@@ -146,7 +165,7 @@ public class GridCacheDeploymentManager<K, V> extends GridCacheSharedManagerAdap
      * Callback on method enter.
      */
     public void onEnter() {
-        if (!locDepOwner && depEnabled && !ignoreOwnership.get()
+        if (depEnabled && !locDepOwner && !ignoreOwnership.get()
             && !cctx.kernalContext().job().internal()) {
             ClassLoader ldr = Thread.currentThread().getContextClassLoader();
 
@@ -161,8 +180,12 @@ public class GridCacheDeploymentManager<K, V> extends GridCacheSharedManagerAdap
     /**
      * @param ignore {@code True} to ignore.
      */
-    public void ignoreOwnership(boolean ignore) {
+    public boolean ignoreOwnership(boolean ignore) {
+        boolean old = ignoreOwnership.get();
+
         ignoreOwnership.set(ignore);
+
+        return old;
     }
 
     /**
@@ -281,7 +304,7 @@ public class GridCacheDeploymentManager<K, V> extends GridCacheSharedManagerAdap
     private void addEntries(ClassLoader ldr, Collection<KeyCacheObject> keys, GridCacheAdapter cache) {
         GridCacheContext cacheCtx = cache.context();
 
-        for (GridCacheEntryEx e : (Collection<GridCacheEntryEx>)cache.entries()) {
+        for (GridCacheEntryEx e : (Iterable<GridCacheEntryEx>)cache.entries()) {
             boolean undeploy = cacheCtx.isNear() ?
                 undeploy(ldr, e, cacheCtx.near()) || undeploy(ldr, e, cacheCtx.near().dht()) :
                 undeploy(ldr, e, cacheCtx.cache());
@@ -318,6 +341,11 @@ public class GridCacheDeploymentManager<K, V> extends GridCacheSharedManagerAdap
             val0 = CU.value(v, cache.context(), false);
         }
         catch (GridCacheEntryRemovedException ignore) {
+            return false;
+        }
+        catch (BinaryInvalidTypeException ignore) {
+            log.error("An attempt to undeploy cache with binary objects.", ignore);
+
             return false;
         }
         catch (IgniteCheckedException | IgniteException ignore) {
@@ -826,6 +854,11 @@ public class GridCacheDeploymentManager<K, V> extends GridCacheSharedManagerAdap
                         return cls;
                 }
             }
+
+            Class cls = getParent().loadClass(name);
+
+            if (cls != null)
+                return cls;
 
             throw new ClassNotFoundException("Failed to load class [name=" + name+ ", ctx=" + deps + ']');
         }

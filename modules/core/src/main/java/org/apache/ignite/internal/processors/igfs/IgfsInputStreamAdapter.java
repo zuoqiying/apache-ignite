@@ -17,10 +17,10 @@
 
 package org.apache.ignite.internal.processors.igfs;
 
-import org.apache.ignite.igfs.*;
-import org.apache.ignite.igfs.secondary.*;
+import org.apache.ignite.igfs.IgfsInputStream;
+import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystemPositionedReadable;
 
-import java.io.*;
+import java.io.IOException;
 
 /**
  * Implementation adapter providing necessary methods.
@@ -37,7 +37,7 @@ public abstract class IgfsInputStreamAdapter extends IgfsInputStream
      *
      * @return File info.
      */
-    public abstract IgfsFileInfo fileInfo();
+    public abstract IgfsEntryInfo fileInfo();
 
     /**
      * Reads bytes from given position.

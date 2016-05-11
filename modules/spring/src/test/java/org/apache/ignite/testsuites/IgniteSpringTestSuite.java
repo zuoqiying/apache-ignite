@@ -17,12 +17,19 @@
 
 package org.apache.ignite.testsuites;
 
-import junit.framework.*;
-import org.apache.ignite.cache.store.jdbc.*;
-import org.apache.ignite.cache.store.spring.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.p2p.*;
-import org.apache.ignite.spring.*;
+import junit.framework.TestSuite;
+import org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactorySelfTest;
+import org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactorySelfTest;
+import org.apache.ignite.cache.store.spring.CacheSpringStoreSessionListenerSelfTest;
+import org.apache.ignite.internal.GridFactorySelfTest;
+import org.apache.ignite.internal.GridSpringBeanSerializationSelfTest;
+import org.apache.ignite.internal.IgniteDynamicCacheConfigTest;
+import org.apache.ignite.p2p.GridP2PUserVersionChangeSelfTest;
+import org.apache.ignite.spring.GridSpringCacheManagerSelfTest;
+import org.apache.ignite.spring.IgniteExcludeInConfigurationTest;
+import org.apache.ignite.spring.IgniteStartFromStreamConfigurationTest;
+import org.apache.ignite.spring.injection.GridServiceInjectionSpringResourceTest;
+import org.apache.ignite.transactions.spring.GridSpringTransactionManagerSelfTest;
 
 /**
  * Spring tests.
@@ -40,6 +47,8 @@ public class IgniteSpringTestSuite extends TestSuite {
 
         suite.addTest(IgniteResourceSelfTestSuite.suite());
 
+        suite.addTest(new TestSuite(IgniteExcludeInConfigurationTest.class));
+
         // Tests moved to this suite since they require Spring functionality.
         suite.addTest(new TestSuite(GridP2PUserVersionChangeSelfTest.class));
 
@@ -54,6 +63,10 @@ public class IgniteSpringTestSuite extends TestSuite {
         suite.addTestSuite(CacheJdbcBlobStoreFactorySelfTest.class);
 
         suite.addTestSuite(CacheJdbcPojoStoreFactorySelfTest.class);
+
+        suite.addTest(new TestSuite(GridSpringTransactionManagerSelfTest.class));
+
+        suite.addTestSuite(GridServiceInjectionSpringResourceTest.class);
 
         return suite;
     }

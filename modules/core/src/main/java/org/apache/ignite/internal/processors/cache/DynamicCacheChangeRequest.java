@@ -17,13 +17,15 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.Serializable;
+import java.util.UUID;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.NearCacheConfiguration;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.lang.IgniteUuid;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Cache start/stop request.
@@ -57,34 +59,61 @@ public class DynamicCacheChangeRequest implements Serializable {
     /** Stop flag. */
     private boolean stop;
 
+    /** Close flag. */
+    private boolean close;
+
     /** Fail if exists flag. */
     private boolean failIfExists;
 
     /** Template configuration flag. */
     private boolean template;
 
+    /** */
+    private UUID rcvdFrom;
+
+    /** */
+    private transient boolean exchangeNeeded;
+
+    /** */
+    private transient AffinityTopologyVersion cacheFutTopVer;
+
     /**
      * Constructor creates cache stop request.
      *
      * @param cacheName Cache stop name.
      * @param initiatingNodeId Initiating node ID.
-     * @param stop Stop flag.
      */
-    public DynamicCacheChangeRequest(String cacheName, UUID initiatingNodeId, boolean stop) {
+    public DynamicCacheChangeRequest(String cacheName, UUID initiatingNodeId) {
         this.cacheName = cacheName;
         this.initiatingNodeId = initiatingNodeId;
-
-        this.stop = stop;
     }
 
     /**
-     * Constructor means for start requests.
-     *
-     * @param cacheName Cache name.
-     * @param initiatingNodeId Initiating node ID.
+     * @return {@code True} if request should trigger partition exchange.
      */
-    public DynamicCacheChangeRequest(String cacheName, UUID initiatingNodeId) {
-        this(cacheName, initiatingNodeId, false);
+    public boolean exchangeNeeded() {
+        return exchangeNeeded;
+    }
+
+    /**
+     * @param cacheFutTopVer Ready topology version when dynamic cache future should be completed.
+     */
+    public void cacheFutureTopologyVersion(AffinityTopologyVersion cacheFutTopVer) {
+        this.cacheFutTopVer = cacheFutTopVer;
+    }
+
+    /**
+     * @return Ready topology version when dynamic cache future should be completed.
+     */
+    @Nullable public AffinityTopologyVersion cacheFutureTopologyVersion() {
+        return cacheFutTopVer;
+    }
+
+    /**
+     * @param exchangeNeeded {@code True} if request should trigger partition exchange.
+     */
+    public void exchangeNeeded(boolean exchangeNeeded) {
+        this.exchangeNeeded = exchangeNeeded;
     }
 
     /**
@@ -127,6 +156,13 @@ public class DynamicCacheChangeRequest implements Serializable {
      */
     public boolean stop() {
         return stop;
+    }
+
+    /**
+     * @param stop New stop flag.
+     */
+    public void stop(boolean stop) {
+        this.stop = stop;
     }
 
     /**
@@ -218,6 +254,34 @@ public class DynamicCacheChangeRequest implements Serializable {
      */
     public void failIfExists(boolean failIfExists) {
         this.failIfExists = failIfExists;
+    }
+
+    /**
+     * @return Close flag.
+     */
+    public boolean close() {
+        return close;
+    }
+
+    /**
+     * @param close New close flag.
+     */
+    public void close(boolean close) {
+        this.close = close;
+    }
+
+    /**
+     * @param nodeId ID of node provided cache configuration in discovery data.
+     */
+    public void receivedFrom(UUID nodeId) {
+        rcvdFrom = nodeId;
+    }
+
+    /**
+     * @return ID of node provided cache configuration in discovery data.
+     */
+    @Nullable public UUID receivedFrom() {
+        return rcvdFrom;
     }
 
     /** {@inheritDoc} */

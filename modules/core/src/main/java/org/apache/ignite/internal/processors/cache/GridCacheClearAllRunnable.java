@@ -17,16 +17,17 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.processors.affinity.*;
-import org.apache.ignite.internal.processors.cache.version.*;
-import org.apache.ignite.internal.processors.query.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-
-import java.util.*;
+import java.util.Iterator;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.processors.query.GridQueryProcessor;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
- * Base runnable for {@link GridCacheAdapter#clearLocally()} routine.
+ * Base runnable for {@link IgniteInternalCache#clearLocally(boolean, boolean, boolean)} routine.
  */
 public class GridCacheClearAllRunnable<K, V> implements Runnable {
     /** Cache to be cleared. */
@@ -40,6 +41,9 @@ public class GridCacheClearAllRunnable<K, V> implements Runnable {
 
     /** Mods count across all spawned clearLocally runnables. */
     protected final int totalCnt;
+
+    /** Whether to clear readers. */
+    protected final boolean readers;
 
     /** Cache context. */
     protected final GridCacheContext<K, V> ctx;
@@ -55,7 +59,8 @@ public class GridCacheClearAllRunnable<K, V> implements Runnable {
      * @param id Mod for the given runnable.
      * @param totalCnt Mods count across all spawned clearLocally runnables.
      */
-    public GridCacheClearAllRunnable(GridCacheAdapter<K, V> cache, GridCacheVersion obsoleteVer, int id, int totalCnt) {
+    public GridCacheClearAllRunnable(GridCacheAdapter<K, V> cache, GridCacheVersion obsoleteVer,
+        int id, int totalCnt, boolean readers) {
         assert cache != null;
         assert obsoleteVer != null;
         assert id >= 0;
@@ -66,14 +71,15 @@ public class GridCacheClearAllRunnable<K, V> implements Runnable {
         this.obsoleteVer = obsoleteVer;
         this.id = id;
         this.totalCnt = totalCnt;
+        this.readers = readers;
 
         ctx = cache.context();
-        log = ctx.gridConfig().getGridLogger().getLogger(getClass());
+        log = ctx.logger(getClass());
     }
 
     /** {@inheritDoc} */
     @Override public void run() {
-        Iterator<GridCacheEntryEx> iter = cache.map().stripedEntryIterator(id, totalCnt);
+        Iterator<? extends GridCacheEntryEx> iter = cache.entries().iterator();
 
         while (iter.hasNext())
             clearEntry(iter.next());
@@ -136,7 +142,7 @@ public class GridCacheClearAllRunnable<K, V> implements Runnable {
      */
     protected void clearEntry(GridCacheEntryEx e) {
         try {
-            e.clear(obsoleteVer, false, CU.empty0());
+            e.clear(obsoleteVer, readers);
         }
         catch (IgniteCheckedException ex) {
             U.error(log, "Failed to clearLocally entry from cache (will continue to clearLocally other entries): " + e, ex);
@@ -168,6 +174,13 @@ public class GridCacheClearAllRunnable<K, V> implements Runnable {
      */
     public int totalCount() {
         return totalCnt;
+    }
+
+    /**
+     * @return Whether to clean readers.
+     */
+    public boolean readers() {
+        return readers;
     }
 
     /** {@inheritDoc} */

@@ -17,8 +17,8 @@
 
 package org.apache.ignite.internal.processors.cache.version;
 
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.jetbrains.annotations.*;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Plain versioned entry.
@@ -111,7 +111,7 @@ public class GridCachePlainVersionedEntry<K, V> implements GridCacheVersionedEnt
 
     /** {@inheritDoc} */
     @Override public long globalTime() {
-        return ver.globalTime();
+        return isStartVer ? 0L : ver.globalTime();
     }
 
     /** {@inheritDoc} */

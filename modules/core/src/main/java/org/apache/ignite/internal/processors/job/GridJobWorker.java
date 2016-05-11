@@ -17,29 +17,56 @@
 
 package org.apache.ignite.internal.processors.job;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.compute.*;
-import org.apache.ignite.events.*;
-import org.apache.ignite.igfs.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.managers.deployment.*;
-import org.apache.ignite.internal.processors.task.*;
-import org.apache.ignite.internal.processors.timeout.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.internal.util.worker.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.marshaller.*;
-import org.jetbrains.annotations.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.compute.ComputeExecutionRejectedException;
+import org.apache.ignite.compute.ComputeJob;
+import org.apache.ignite.compute.ComputeJobContext;
+import org.apache.ignite.compute.ComputeJobMasterLeaveAware;
+import org.apache.ignite.compute.ComputeUserUndeclaredException;
+import org.apache.ignite.events.JobEvent;
+import org.apache.ignite.igfs.IgfsOutOfSpaceException;
+import org.apache.ignite.internal.GridInternalException;
+import org.apache.ignite.internal.GridJobContextImpl;
+import org.apache.ignite.internal.GridJobExecuteResponse;
+import org.apache.ignite.internal.GridJobSessionImpl;
+import org.apache.ignite.internal.GridKernalContext;
+import org.apache.ignite.internal.IgniteInterruptedCheckedException;
+import org.apache.ignite.internal.managers.deployment.GridDeployment;
+import org.apache.ignite.internal.processors.task.GridInternal;
+import org.apache.ignite.internal.processors.timeout.GridTimeoutObject;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.X;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.util.worker.GridWorker;
+import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgniteRunnable;
+import org.apache.ignite.lang.IgniteUuid;
+import org.apache.ignite.marshaller.Marshaller;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-
-import static org.apache.ignite.events.EventType.*;
-import static org.apache.ignite.internal.GridTopic.*;
-import static org.apache.ignite.internal.managers.communication.GridIoPolicy.*;
+import static org.apache.ignite.events.EventType.EVT_JOB_CANCELLED;
+import static org.apache.ignite.events.EventType.EVT_JOB_FAILED;
+import static org.apache.ignite.events.EventType.EVT_JOB_FINISHED;
+import static org.apache.ignite.events.EventType.EVT_JOB_QUEUED;
+import static org.apache.ignite.events.EventType.EVT_JOB_REJECTED;
+import static org.apache.ignite.events.EventType.EVT_JOB_STARTED;
+import static org.apache.ignite.events.EventType.EVT_JOB_TIMEDOUT;
+import static org.apache.ignite.internal.GridTopic.TOPIC_JOB;
+import static org.apache.ignite.internal.GridTopic.TOPIC_TASK;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.MANAGEMENT_POOL;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SYSTEM_POOL;
 
 /**
  * Job worker.
@@ -152,7 +179,7 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
         boolean internal,
         GridJobEventListener evtLsnr,
         GridJobHoldListener holdLsnr) {
-        super(ctx.gridName(), "grid-job-worker", ctx.log());
+        super(ctx.gridName(), "grid-job-worker", ctx.log(GridJobWorker.class));
 
         assert ctx != null;
         assert ses != null;
@@ -379,7 +406,7 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
 
         try {
             if (job == null) {
-                job = marsh.unmarshal(jobBytes, dep.classLoader());
+                job = marsh.unmarshal(jobBytes, U.resolveClassLoader(dep.classLoader(), ctx.config()));
 
                 // No need to hold reference any more.
                 jobBytes = null;
@@ -822,11 +849,11 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
                     ((ComputeJobMasterLeaveAware)job).onMasterNodeLeft(ses.session());
 
                     if (log.isDebugEnabled())
-                        log.debug("Successfully executed GridComputeJobMasterLeaveAware.onMasterNodeLeft() callback " +
+                        log.debug("Successfully executed ComputeJobMasterLeaveAware.onMasterNodeLeft() callback " +
                             "[nodeId=" + taskNode.id() + ", jobId=" + ses.getJobId() + ", job=" + job + ']');
                 }
                 catch (Exception e) {
-                    U.error(log, "Failed to execute GridComputeJobMasterLeaveAware.onMasterNodeLeft() callback " +
+                    U.error(log, "Failed to execute ComputeJobMasterLeaveAware.onMasterNodeLeft() callback " +
                         "[nodeId=" + taskNode.id() + ", jobId=" + ses.getJobId() + ", job=" + job + ']', e);
                 }
             }
@@ -863,7 +890,7 @@ public class GridJobWorker extends GridWorker implements GridTimeoutObject {
      * @return {@code true} if node is dead, {@code false} is node is alive.
      */
     private boolean isDeadNode(UUID uid) {
-        return ctx.discovery().node(uid) == null || !ctx.discovery().pingNode(uid);
+        return ctx.discovery().node(uid) == null || !ctx.discovery().pingNodeNoError(uid);
     }
 
     /** {@inheritDoc} */

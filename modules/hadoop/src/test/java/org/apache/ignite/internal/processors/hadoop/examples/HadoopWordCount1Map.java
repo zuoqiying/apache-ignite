@@ -17,11 +17,17 @@
 
 package org.apache.ignite.internal.processors.hadoop.examples;
 
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.StringTokenizer;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.ignite.internal.processors.hadoop.HadoopErrorSimulator;
 
 /**
  * Mapper phase of WordCount job.
@@ -51,6 +57,8 @@ public class HadoopWordCount1Map extends MapReduceBase implements Mapper<LongWri
 
             output.collect(word, one);
         }
+
+        HadoopErrorSimulator.instance().onMap();
     }
 
     /** {@inheritDoc} */
@@ -58,5 +66,14 @@ public class HadoopWordCount1Map extends MapReduceBase implements Mapper<LongWri
         super.configure(job);
 
         wasConfigured = true;
+
+        HadoopErrorSimulator.instance().onMapConfigure();
+    }
+
+    /** {@inheritDoc} */
+    @Override public void close() throws IOException {
+        super.close();
+
+        HadoopErrorSimulator.instance().onMapClose();
     }
 }

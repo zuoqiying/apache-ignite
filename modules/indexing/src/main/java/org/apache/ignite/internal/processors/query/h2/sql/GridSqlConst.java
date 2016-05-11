@@ -17,7 +17,8 @@
 
 package org.apache.ignite.internal.processors.query.h2.sql;
 
-import org.h2.value.*;
+import java.util.Collections;
+import org.h2.value.Value;
 
 /**
  * Constant value.
@@ -30,6 +31,8 @@ public class GridSqlConst extends GridSqlElement implements GridSqlValue {
      * @param val Value.
      */
     public GridSqlConst(Value val) {
+        super(Collections.<GridSqlElement>emptyList());
+
         this.val = val;
     }
 

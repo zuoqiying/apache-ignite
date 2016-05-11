@@ -17,14 +17,15 @@
 
 package org.apache.ignite.internal.processors.query.h2.sql;
 
-import org.h2.util.*;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import org.h2.util.StatementBuilder;
+import org.h2.util.StringUtils;
 
 /**
  * Select query.
  */
-public abstract class GridSqlQuery implements Cloneable {
+public abstract class GridSqlQuery {
     /** */
     protected boolean distinct;
 
@@ -134,7 +135,7 @@ public abstract class GridSqlQuery implements Cloneable {
      * @param col Column index.
      * @return Expression for column index.
      */
-    protected abstract GridSqlElement expression(int col);
+    protected abstract GridSqlElement column(int col);
 
     /**
      * @param buff Statement builder.
@@ -145,13 +146,10 @@ public abstract class GridSqlQuery implements Cloneable {
 
             int visibleCols = visibleColumns();
 
-            boolean first = true;
+            buff.resetCount();
 
             for (GridSqlSortColumn col : sort) {
-                if (first)
-                    first = false;
-                else
-                    buff.append(", ");
+                buff.appendExceptFirst(", ");
 
                 int idx = col.column();
 
@@ -160,10 +158,13 @@ public abstract class GridSqlQuery implements Cloneable {
                 if (idx < visibleCols)
                     buff.append(idx + 1);
                 else {
-                    GridSqlElement expr = expression(idx);
+                    GridSqlElement expr = column(idx);
 
                     if (expr == null) // For plain select should never be null, for union H2 itself can't parse query.
                         throw new IllegalStateException("Failed to build query: " + buff.toString());
+
+                    if (expr instanceof GridSqlAlias)
+                        expr = expr.child();
 
                     buff.append('=').append(StringUtils.unEnclose(expr.getSQL()));
                 }
@@ -183,21 +184,5 @@ public abstract class GridSqlQuery implements Cloneable {
 
         if (offset != null)
             buff.append(" OFFSET ").append(StringUtils.unEnclose(offset.getSQL()));
-
-    }
-
-    /** {@inheritDoc} */
-    @SuppressWarnings({"CloneCallsConstructors", "CloneDoesntDeclareCloneNotSupportedException"})
-    @Override public GridSqlQuery clone() {
-        try {
-            GridSqlQuery res = (GridSqlQuery)super.clone();
-
-            res.sort = new ArrayList<>(sort);
-
-            return res;
-        }
-        catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e); // Never thrown.
-        }
     }
 }

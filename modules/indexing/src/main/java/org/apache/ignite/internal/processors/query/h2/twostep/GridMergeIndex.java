@@ -17,20 +17,34 @@
 
 package org.apache.ignite.internal.processors.query.h2.twostep;
 
-import org.apache.ignite.*;
-import org.h2.engine.*;
-import org.h2.index.*;
-import org.h2.message.*;
-import org.h2.result.*;
-import org.h2.table.*;
-import org.jetbrains.annotations.*;
-import org.jsr166.*;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.cache.CacheException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.internal.GridKernalContext;
+import org.h2.engine.Constants;
+import org.h2.engine.Session;
+import org.h2.index.BaseIndex;
+import org.h2.index.Cursor;
+import org.h2.index.IndexType;
+import org.h2.message.DbException;
+import org.h2.result.Row;
+import org.h2.result.SearchRow;
+import org.h2.result.SortOrder;
+import org.h2.table.IndexColumn;
+import org.h2.table.TableFilter;
+import org.jetbrains.annotations.Nullable;
+import org.jsr166.ConcurrentHashMap8;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-
-import static org.apache.ignite.IgniteSystemProperties.*;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_SQL_MERGE_TABLE_MAX_SIZE;
+import static org.apache.ignite.IgniteSystemProperties.getInteger;
 
 /**
  * Merge index.
@@ -40,7 +54,7 @@ public abstract class GridMergeIndex extends BaseIndex {
     private static final int MAX_FETCH_SIZE = getInteger(IGNITE_SQL_MERGE_TABLE_MAX_SIZE, 10_000);
 
     /** All rows number. */
-    private final AtomicInteger expectedRowsCnt = new AtomicInteger(0);
+    private final AtomicInteger expRowsCnt = new AtomicInteger(0);
 
     /** Remaining rows per source node ID. */
     private final ConcurrentMap<UUID, Counter> remainingRows = new ConcurrentHashMap8<>();
@@ -56,14 +70,51 @@ public abstract class GridMergeIndex extends BaseIndex {
     /** */
     private int fetchedCnt;
 
+    /** */
+    private final GridKernalContext ctx;
+
     /**
+     * @param ctx Context.
      * @param tbl Table.
      * @param name Index name.
      * @param type Type.
      * @param cols Columns.
      */
-    public GridMergeIndex(GridMergeTable tbl, String name, IndexType type, IndexColumn[] cols) {
+    public GridMergeIndex(GridKernalContext ctx,
+        GridMergeTable tbl,
+        String name,
+        IndexType type,
+        IndexColumn[] cols) {
+        this.ctx = ctx;
+
         initBaseIndex(tbl, 0, name, cols, type);
+    }
+
+    /**
+     * @param ctx Context.
+     */
+    protected GridMergeIndex(GridKernalContext ctx) {
+        this.ctx = ctx;
+    }
+
+    /**
+     * @return Return source nodes for this merge index.
+     */
+    public Set<UUID> sources() {
+        return remainingRows.keySet();
+    }
+
+    /**
+     * Fails index if any source node is left.
+     */
+    protected final void checkSourceNodesAlive() {
+        for (UUID nodeId : sources()) {
+            if (!ctx.discovery().alive(nodeId)) {
+                fail(nodeId);
+
+                return;
+            }
+        }
     }
 
     /**
@@ -75,8 +126,8 @@ public abstract class GridMergeIndex extends BaseIndex {
     }
 
     /** {@inheritDoc} */
-    @Override public long getRowCount(Session session) {
-        return expectedRowsCnt.get();
+    @Override public long getRowCount(Session ses) {
+        return expRowsCnt.get();
     }
 
     /** {@inheritDoc} */
@@ -90,6 +141,23 @@ public abstract class GridMergeIndex extends BaseIndex {
     public void addSource(UUID nodeId) {
         if (remainingRows.put(nodeId, new Counter()) != null)
             throw new IllegalStateException();
+    }
+
+    /**
+     * @param e Error.
+     */
+    public void fail(final CacheException e) {
+        for (UUID nodeId0 : remainingRows.keySet()) {
+            addPage0(new GridResultPage(null, nodeId0, null) {
+                @Override public boolean isFail() {
+                    return true;
+                }
+
+                @Override public void fetchNextPage() {
+                    throw e;
+                }
+            });
+        }
     }
 
     /**
@@ -120,7 +188,7 @@ public abstract class GridMergeIndex extends BaseIndex {
             assert !cnt.initialized : "Counter is already initialized.";
 
             cnt.addAndGet(allRows);
-            expectedRowsCnt.addAndGet(allRows);
+            expRowsCnt.addAndGet(allRows);
 
             // We need this separate flag to handle case when the first source contains only one page
             // and it will signal that all remaining counters are zero and fetch is finished.
@@ -162,7 +230,7 @@ public abstract class GridMergeIndex extends BaseIndex {
     }
 
     /** {@inheritDoc} */
-    @Override public Cursor find(Session session, SearchRow first, SearchRow last) {
+    @Override public Cursor find(Session ses, SearchRow first, SearchRow last) {
         if (fetched == null)
             throw new IgniteException("Fetched result set was too large.");
 
@@ -176,7 +244,7 @@ public abstract class GridMergeIndex extends BaseIndex {
      * @return {@code true} If we have fetched all the remote rows.
      */
     public boolean fetchedAll() {
-        return fetchedCnt == expectedRowsCnt.get();
+        return fetchedCnt == expRowsCnt.get();
     }
 
     /**
@@ -200,32 +268,32 @@ public abstract class GridMergeIndex extends BaseIndex {
     }
 
     /** {@inheritDoc} */
-    @Override public void close(Session session) {
+    @Override public void close(Session ses) {
         // No-op.
     }
 
     /** {@inheritDoc} */
-    @Override public void add(Session session, Row row) {
+    @Override public void add(Session ses, Row row) {
         throw DbException.getUnsupportedException("add");
     }
 
     /** {@inheritDoc} */
-    @Override public void remove(Session session, Row row) {
+    @Override public void remove(Session ses, Row row) {
         throw DbException.getUnsupportedException("remove row");
     }
 
     /** {@inheritDoc} */
-    @Override public double getCost(Session session, int[] masks, TableFilter filter, SortOrder sortOrder) {
+    @Override public double getCost(Session ses, int[] masks, TableFilter filter, SortOrder sortOrder) {
         return getRowCountApproximation() + Constants.COST_ROW_OFFSET;
     }
 
     /** {@inheritDoc} */
-    @Override public void remove(Session session) {
+    @Override public void remove(Session ses) {
         throw DbException.getUnsupportedException("remove index");
     }
 
     /** {@inheritDoc} */
-    @Override public void truncate(Session session) {
+    @Override public void truncate(Session ses) {
         throw DbException.getUnsupportedException("truncate");
     }
 
@@ -235,7 +303,7 @@ public abstract class GridMergeIndex extends BaseIndex {
     }
 
     /** {@inheritDoc} */
-    @Override public Cursor findFirstOrLast(Session session, boolean first) {
+    @Override public Cursor findFirstOrLast(Session ses, boolean first) {
         throw DbException.getUnsupportedException("findFirstOrLast");
     }
 
@@ -299,6 +367,7 @@ public abstract class GridMergeIndex extends BaseIndex {
         private Iterator<Row> stream;
 
         /**
+         * @param stream Iterator.
          */
         public FetchingCursor(Iterator<Row> stream) {
             super(new FetchedIterator());

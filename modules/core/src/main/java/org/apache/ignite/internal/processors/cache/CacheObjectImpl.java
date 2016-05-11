@@ -17,8 +17,9 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.*;
-import org.jetbrains.annotations.*;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -43,6 +44,11 @@ public class CacheObjectImpl extends CacheObjectAdapter {
 
         this.val = val;
         this.valBytes = valBytes;
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean isPlatformType() {
+        return true;
     }
 
     /** {@inheritDoc} */
@@ -77,7 +83,6 @@ public class CacheObjectImpl extends CacheObjectAdapter {
         catch (IgniteCheckedException e) {
             throw new IgniteException("Failed to unmarshall object.", e);
         }
-
     }
 
     /** {@inheritDoc} */
@@ -102,6 +107,11 @@ public class CacheObjectImpl extends CacheObjectAdapter {
 
         if (val == null && ctx.storeValue())
             val = ctx.processor().unmarshal(ctx, valBytes, ldr);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onAckReceived() {
+        // No-op.
     }
 
     /** {@inheritDoc} */

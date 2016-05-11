@@ -17,23 +17,33 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cache.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.affinity.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.processors.cache.distributed.dht.*;
-import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.*;
-import org.apache.ignite.internal.processors.cache.distributed.near.*;
-import org.apache.ignite.internal.util.lang.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.jetbrains.annotations.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
+import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtCacheAdapter;
+import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtLocalPartition;
+import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState;
+import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionTopology;
+import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionMap;
+import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionMap2;
+import org.apache.ignite.internal.processors.cache.distributed.near.GridNearCacheAdapter;
+import org.apache.ignite.internal.util.lang.IgnitePair;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.lang.IgniteUuid;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Data transfer object for {@link IgniteCache}.
@@ -147,8 +157,11 @@ public class VisorCache implements Serializable {
             if (dca != null) {
                 GridDhtPartitionTopology top = dca.topology();
 
-                if (cfg.getCacheMode() != CacheMode.LOCAL && cfg.getBackups() > 0)
-                    partitionsMap = top.localPartitionMap();
+                if (cfg.getCacheMode() != CacheMode.LOCAL && cfg.getBackups() > 0) {
+                    GridDhtPartitionMap2 map2 = top.localPartitionMap();
+
+                    partitionsMap = new GridDhtPartitionMap(map2.nodeId(), map2.updateSequence(), map2.map());
+                }
 
                 List<GridDhtLocalPartition> parts = top.localPartitions();
 
@@ -163,7 +176,7 @@ public class VisorCache implements Serializable {
                     // Pass -1 as topology version in order not to wait for topology version.
                     if (part.primary(AffinityTopologyVersion.NONE))
                         primaryPartitions.add(new IgnitePair<>(p, sz));
-                    else
+                    else if (part.state() == GridDhtPartitionState.OWNING && part.backup(AffinityTopologyVersion.NONE))
                         backupPartitions.add(new IgnitePair<>(p, sz));
                 }
             }
@@ -202,7 +215,7 @@ public class VisorCache implements Serializable {
         offHeapAllocatedSize = ca.offHeapAllocatedSize();
         offHeapEntriesCnt = ca.offHeapEntriesCount();
         partitions = ca.affinity().partitions();
-        metrics = VisorCacheMetrics.from(ignite, cacheName);
+        metrics = new VisorCacheMetrics().from(ignite, cacheName);
 
         estimateMemorySize(ignite, ca, sample);
 
@@ -220,7 +233,9 @@ public class VisorCache implements Serializable {
     protected void estimateMemorySize(IgniteEx ignite, GridCacheAdapter ca, int sample) throws IgniteCheckedException {
         int size = ca.size();
 
-        Set<GridCacheEntryEx> set = ca.map().entries0();
+        Iterable<GridCacheEntryEx> set = ca.context().isNear()
+            ? ((GridNearCacheAdapter)ca).dht().entries()
+            : ca.entries();
 
         long memSz = 0;
 
@@ -243,29 +258,39 @@ public class VisorCache implements Serializable {
     }
 
     /**
+     * Fill values that should be stored in history;
+     *
+     * @param c Source cache.
+     * @return Cache.
+     */
+    protected VisorCache initHistory(VisorCache c) {
+        if (c != null) {
+            c.name = name;
+            c.mode = mode;
+            c.memorySize = memorySize;
+            c.indexesSize = indexesSize;
+            c.size = size;
+            c.nearSize = nearSize;
+            c.dhtSize = dhtSize;
+            c.primarySize = primarySize;
+            c.offHeapAllocatedSize = offHeapAllocatedSize;
+            c.offHeapEntriesCnt = offHeapEntriesCnt;
+            c.swapSize = swapSize;
+            c.swapKeys = swapKeys;
+            c.partitions = partitions;
+            c.primaryPartitions = Collections.emptyList();
+            c.backupPartitions = Collections.emptyList();
+            c.metrics = metrics;
+        }
+
+        return c;
+    }
+
+    /**
      * @return New instance suitable to store in history.
      */
     public VisorCache history() {
-        VisorCache c = new VisorCache();
-
-        c.name = name;
-        c.mode = mode;
-        c.memorySize = memorySize;
-        c.indexesSize = indexesSize;
-        c.size = size;
-        c.nearSize = nearSize;
-        c.dhtSize = dhtSize;
-        c.primarySize = primarySize;
-        c.offHeapAllocatedSize = offHeapAllocatedSize;
-        c.offHeapEntriesCnt = offHeapEntriesCnt;
-        c.swapSize = swapSize;
-        c.swapKeys = swapKeys;
-        c.partitions = partitions;
-        c.primaryPartitions = Collections.emptyList();
-        c.backupPartitions = Collections.emptyList();
-        c.metrics = metrics;
-
-        return c;
+        return initHistory(new VisorCache());
     }
 
     /**
@@ -273,6 +298,15 @@ public class VisorCache implements Serializable {
      */
     public String name() {
         return name;
+    }
+
+    /**
+     * Sets new value for cache name.
+     *
+     * @param name New cache name.
+     */
+    public void name(String name) {
+        this.name = name;
     }
 
     /**

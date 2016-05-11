@@ -17,27 +17,89 @@
 
 package org.apache.ignite.marshaller.optimized;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.util.*;
-import org.apache.ignite.internal.util.io.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.marshaller.*;
-import sun.misc.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.NotActiveException;
+import java.io.ObjectInputStream;
+import java.io.ObjectInputValidation;
+import java.io.ObjectStreamClass;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.util.GridUnsafe;
+import org.apache.ignite.internal.util.io.GridDataInput;
+import org.apache.ignite.internal.util.typedef.internal.SB;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.marshaller.MarshallerContext;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.*;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.ARRAY_LIST;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.BOOLEAN;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.BOOLEAN_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.BYTE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.BYTE_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.CHAR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.CHAR_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.CLS;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.DATE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.DOUBLE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.DOUBLE_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.ENUM;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.EXTERNALIZABLE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.FLOAT;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.FLOAT_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.HANDLE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.HASH_MAP;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.HASH_SET;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.HASH_SET_MAP_OFF;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.INT;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.INT_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.JDK;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.JDK_MARSH;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LINKED_HASH_MAP;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LINKED_HASH_SET;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LINKED_LIST;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LONG;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.LONG_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.NULL;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.OBJ_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.PROPS;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.PROXY;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.SERIALIZABLE;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.SHORT;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.SHORT_ARR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.STR;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.UUID;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.classDescriptor;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setBoolean;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setByte;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setChar;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setDouble;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setFloat;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setInt;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setLong;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setObject;
+import static org.apache.ignite.marshaller.optimized.OptimizedMarshallerUtils.setShort;
 
 /**
  * Optimized object input stream.
  */
 class OptimizedObjectInputStream extends ObjectInputStream {
-    /** Unsafe. */
-    private static final Unsafe UNSAFE = GridUnsafe.unsafe();
-
     /** Dummy object for HashSet. */
     private static final Object DUMMY = new Object();
 
@@ -237,6 +299,16 @@ class OptimizedObjectInputStream extends ObjectInputStream {
 
             case CLS:
                 return readClass();
+
+            case PROXY:
+                Class<?>[] intfs = new Class<?>[readInt()];
+
+                for (int i = 0; i < intfs.length; i++)
+                    intfs[i] = readClass();
+
+                InvocationHandler ih = (InvocationHandler)readObject();
+
+                return Proxy.newProxyInstance(clsLdr != null ? clsLdr : U.gridClassLoader(), intfs, ih);
 
             case ENUM:
             case EXTERNALIZABLE:
@@ -481,7 +553,7 @@ class OptimizedObjectInputStream extends ObjectInputStream {
         Object obj;
 
         try {
-            obj = UNSAFE.allocateInstance(cls);
+            obj = GridUnsafe.allocateInstance(cls);
         }
         catch (InstantiationException e) {
             throw new IOException(e);
@@ -579,7 +651,7 @@ class OptimizedObjectInputStream extends ObjectInputStream {
     @SuppressWarnings("unchecked")
     HashSet<?> readHashSet(long mapFieldOff) throws ClassNotFoundException, IOException {
         try {
-            HashSet<Object> set = (HashSet<Object>)UNSAFE.allocateInstance(HashSet.class);
+            HashSet<Object> set = (HashSet<Object>)GridUnsafe.allocateInstance(HashSet.class);
 
             handles.assign(set);
 
@@ -651,7 +723,7 @@ class OptimizedObjectInputStream extends ObjectInputStream {
     @SuppressWarnings("unchecked")
     LinkedHashSet<?> readLinkedHashSet(long mapFieldOff) throws ClassNotFoundException, IOException {
         try {
-            LinkedHashSet<Object> set = (LinkedHashSet<Object>)UNSAFE.allocateInstance(LinkedHashSet.class);
+            LinkedHashSet<Object> set = (LinkedHashSet<Object>)GridUnsafe.allocateInstance(LinkedHashSet.class);
 
             handles.assign(set);
 

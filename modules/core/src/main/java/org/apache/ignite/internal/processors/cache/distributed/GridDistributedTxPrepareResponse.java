@@ -17,15 +17,17 @@
 
 package org.apache.ignite.internal.processors.cache.distributed;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.processors.cache.version.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.plugin.extensions.communication.*;
-
-import java.io.*;
-import java.nio.*;
+import java.io.Externalizable;
+import java.nio.ByteBuffer;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.GridDirectTransient;
+import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.util.tostring.GridToStringBuilder;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.plugin.extensions.communication.MessageReader;
+import org.apache.ignite.plugin.extensions.communication.MessageWriter;
 
 /**
  * Response to prepare request.
@@ -51,25 +53,25 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
 
     /**
      * @param xid Transaction ID.
+     * @param addDepInfo Deployment info flag.
      */
-    public GridDistributedTxPrepareResponse(GridCacheVersion xid) {
-        super(xid, 0);
+    public GridDistributedTxPrepareResponse(GridCacheVersion xid, boolean addDepInfo) {
+        super(xid, 0, addDepInfo);
     }
 
     /**
      * @param xid Lock ID.
      * @param err Error.
+     * @param addDepInfo Deployment info flag.
      */
-    public GridDistributedTxPrepareResponse(GridCacheVersion xid, Throwable err) {
-        super(xid, 0);
+    public GridDistributedTxPrepareResponse(GridCacheVersion xid, Throwable err, boolean addDepInfo) {
+        super(xid, 0, addDepInfo);
 
         this.err = err;
     }
 
-    /**
-     * @return Error.
-     */
-    public Throwable error() {
+    /** {@inheritDoc} */
+    @Override public Throwable error() {
         return err;
     }
 
@@ -92,7 +94,7 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
     @Override public void prepareMarshal(GridCacheSharedContext ctx) throws IgniteCheckedException {
         super.prepareMarshal(ctx);
 
-        if (err != null)
+        if (err != null && errBytes == null)
             errBytes = ctx.marshaller().marshal(err);
     }
 
@@ -100,8 +102,8 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
     @Override public void finishUnmarshal(GridCacheSharedContext ctx, ClassLoader ldr) throws IgniteCheckedException {
         super.finishUnmarshal(ctx, ldr);
 
-        if (errBytes != null)
-            err = ctx.marshaller().unmarshal(errBytes, ldr);
+        if (errBytes != null && err == null)
+            err = ctx.marshaller().unmarshal(errBytes, U.resolveClassLoader(ldr, ctx.gridConfig()));
     }
 
     /** {@inheritDoc} */
@@ -151,7 +153,7 @@ public class GridDistributedTxPrepareResponse extends GridDistributedBaseMessage
 
         }
 
-        return true;
+        return reader.afterMessageRead(GridDistributedTxPrepareResponse.class);
     }
 
     /** {@inheritDoc} */

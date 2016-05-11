@@ -17,13 +17,15 @@
 
 package org.apache.ignite.internal.processors.igfs;
 
-import org.apache.ignite.*;
-import org.apache.ignite.igfs.*;
-import org.apache.ignite.igfs.secondary.*;
-import org.jetbrains.annotations.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.igfs.IgfsFile;
+import org.apache.ignite.igfs.IgfsPath;
+import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystem;
+import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystemPositionedReadable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Secondary file system over native IGFS.
@@ -112,15 +114,5 @@ class IgfsSecondaryFileSystemImpl implements IgfsSecondaryFileSystem {
     /** {@inheritDoc} */
     @Override public long usedSpaceSize() throws IgniteException {
         return igfs.usedSpaceSize();
-    }
-
-    /** {@inheritDoc} */
-    @Override public Map<String, String> properties() {
-        return Collections.emptyMap();
-    }
-
-    /** {@inheritDoc} */
-    @Override public void close() throws IgniteException {
-        // No-op.
     }
 }

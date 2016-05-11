@@ -17,10 +17,11 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.processors.task.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.internal.visor.*;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.internal.processors.task.GridInternal;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.visor.VisorJob;
+import org.apache.ignite.internal.visor.VisorOneNodeTask;
 
 /**
  * Task that stop specified caches on specified node.
@@ -56,7 +57,7 @@ public class VisorCacheStopTask extends VisorOneNodeTask<String, Void> {
         @Override protected Void run(String cacheName) {
             IgniteCache cache = ignite.cache(cacheName);
 
-            cache.close();
+            cache.destroy();
 
             return null;
         }

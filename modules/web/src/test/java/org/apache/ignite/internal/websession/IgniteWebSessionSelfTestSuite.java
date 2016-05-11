@@ -17,10 +17,10 @@
 
 package org.apache.ignite.internal.websession;
 
-import junit.framework.*;
-import org.apache.ignite.testframework.*;
+import junit.framework.TestSuite;
+import org.apache.ignite.testframework.GridTestUtils;
 
-import static org.apache.ignite.IgniteSystemProperties.*;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_OVERRIDE_MCAST_GRP;
 
 /**
  * Test suite for web sessions caching functionality.
@@ -55,6 +55,16 @@ public class IgniteWebSessionSelfTestSuite extends TestSuite {
 
         /** {@inheritDoc} */
         @Override public void testRestarts() throws Exception {
+            fail("https://issues.apache.org/jira/browse/IGNITE-810");
+        }
+
+        /** {@inheritDoc} */
+        @Override public void testInvalidatedSession() throws Exception {
+            fail("https://issues.apache.org/jira/browse/IGNITE-810");
+        }
+
+        /** {@inheritDoc} */
+        @Override public void testClientReconnectRequest() throws Exception {
             fail("https://issues.apache.org/jira/browse/IGNITE-810");
         }
     }

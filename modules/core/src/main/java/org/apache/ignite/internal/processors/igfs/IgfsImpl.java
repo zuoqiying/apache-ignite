@@ -17,42 +17,99 @@
 
 package org.apache.ignite.internal.processors.igfs;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cache.eviction.*;
-import org.apache.ignite.cache.eviction.igfs.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.compute.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.events.*;
-import org.apache.ignite.igfs.*;
-import org.apache.ignite.igfs.mapreduce.*;
-import org.apache.ignite.igfs.secondary.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.managers.communication.*;
-import org.apache.ignite.internal.managers.eventstorage.*;
-import org.apache.ignite.internal.processors.task.*;
-import org.apache.ignite.internal.util.*;
-import org.apache.ignite.internal.util.future.*;
-import org.apache.ignite.internal.util.typedef.*;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteFileSystem;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.cache.eviction.EvictionPolicy;
+import org.apache.ignite.cache.eviction.igfs.IgfsPerBlockLruEvictionPolicy;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.compute.ComputeJob;
+import org.apache.ignite.compute.ComputeJobAdapter;
+import org.apache.ignite.compute.ComputeJobResult;
+import org.apache.ignite.compute.ComputeJobResultPolicy;
+import org.apache.ignite.compute.ComputeTaskSplitAdapter;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.FileSystemConfiguration;
+import org.apache.ignite.events.DiscoveryEvent;
+import org.apache.ignite.events.Event;
+import org.apache.ignite.events.IgfsEvent;
+import org.apache.ignite.igfs.IgfsBlockLocation;
+import org.apache.ignite.igfs.IgfsFile;
+import org.apache.ignite.igfs.IgfsInvalidPathException;
+import org.apache.ignite.igfs.IgfsMetrics;
+import org.apache.ignite.igfs.IgfsMode;
+import org.apache.ignite.igfs.IgfsOutputStream;
+import org.apache.ignite.igfs.IgfsPath;
+import org.apache.ignite.igfs.IgfsPathIsDirectoryException;
+import org.apache.ignite.igfs.IgfsPathNotFoundException;
+import org.apache.ignite.igfs.IgfsPathSummary;
+import org.apache.ignite.igfs.mapreduce.IgfsRecordResolver;
+import org.apache.ignite.igfs.mapreduce.IgfsTask;
+import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystem;
+import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystemPositionedReadable;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.IgniteKernal;
+import org.apache.ignite.internal.managers.communication.GridMessageListener;
+import org.apache.ignite.internal.managers.eventstorage.GridEventStorageManager;
+import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
+import org.apache.ignite.internal.processors.hadoop.HadoopPayloadAware;
+import org.apache.ignite.internal.processors.task.GridInternal;
+import org.apache.ignite.internal.util.GridSpinBusyLock;
+import org.apache.ignite.internal.util.future.GridCompoundFuture;
+import org.apache.ignite.internal.util.future.GridFinishedFuture;
+import org.apache.ignite.internal.util.future.GridFutureAdapter;
+import org.apache.ignite.internal.util.typedef.C1;
+import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.resources.*;
-import org.apache.ignite.thread.*;
-import org.jetbrains.annotations.*;
-import org.jsr166.*;
+import org.apache.ignite.internal.util.typedef.internal.A;
+import org.apache.ignite.internal.util.typedef.internal.LT;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgniteFuture;
+import org.apache.ignite.lang.IgniteUuid;
+import org.apache.ignite.lifecycle.LifecycleAware;
+import org.apache.ignite.resources.IgniteInstanceResource;
+import org.apache.ignite.thread.IgniteThreadPoolExecutor;
+import org.jetbrains.annotations.Nullable;
+import org.jsr166.ConcurrentHashMap8;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
-import static org.apache.ignite.events.EventType.*;
-import static org.apache.ignite.igfs.IgfsMode.*;
-import static org.apache.ignite.internal.GridTopic.*;
-import static org.apache.ignite.internal.IgniteNodeAttributes.*;
-import static org.apache.ignite.internal.processors.igfs.IgfsFileInfo.*;
+import static org.apache.ignite.events.EventType.EVT_IGFS_DIR_DELETED;
+import static org.apache.ignite.events.EventType.EVT_IGFS_FILE_CLOSED_READ;
+import static org.apache.ignite.events.EventType.EVT_IGFS_FILE_CLOSED_WRITE;
+import static org.apache.ignite.events.EventType.EVT_IGFS_FILE_DELETED;
+import static org.apache.ignite.events.EventType.EVT_IGFS_FILE_OPENED_READ;
+import static org.apache.ignite.events.EventType.EVT_IGFS_FILE_OPENED_WRITE;
+import static org.apache.ignite.events.EventType.EVT_IGFS_META_UPDATED;
+import static org.apache.ignite.events.EventType.EVT_NODE_FAILED;
+import static org.apache.ignite.events.EventType.EVT_NODE_LEFT;
+import static org.apache.ignite.igfs.IgfsMode.DUAL_ASYNC;
+import static org.apache.ignite.igfs.IgfsMode.DUAL_SYNC;
+import static org.apache.ignite.igfs.IgfsMode.PRIMARY;
+import static org.apache.ignite.igfs.IgfsMode.PROXY;
+import static org.apache.ignite.internal.GridTopic.TOPIC_IGFS;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_IGFS;
 
 /**
  * Cache-based IGFS implementation.
@@ -62,7 +119,7 @@ public final class IgfsImpl implements IgfsEx {
     private static final String PERMISSION_DFLT_VAL = "0777";
 
     /** Default directory metadata. */
-    private static final Map<String, String> DFLT_DIR_META = F.asMap(PROP_PERMISSION, PERMISSION_DFLT_VAL);
+    static final Map<String, String> DFLT_DIR_META = F.asMap(IgfsUtils.PROP_PERMISSION, PERMISSION_DFLT_VAL);
 
     /** Handshake message. */
     private final IgfsPaths secondaryPaths;
@@ -143,6 +200,9 @@ public final class IgfsImpl implements IgfsEx {
         data = igfsCtx.data();
         secondaryFs = cfg.getSecondaryFileSystem();
 
+        if (secondaryFs instanceof LifecycleAware)
+            ((LifecycleAware) secondaryFs).start();
+
         /* Default IGFS mode. */
         IgfsMode dfltMode;
 
@@ -158,12 +218,14 @@ public final class IgfsImpl implements IgfsEx {
         Map<String, IgfsMode> cfgModes = new LinkedHashMap<>();
         Map<String, IgfsMode> dfltModes = new LinkedHashMap<>(4, 1.0f);
 
-        dfltModes.put("/ignite/primary", PRIMARY);
+        if (cfg.isInitializeDefaultPathModes()) {
+            dfltModes.put("/ignite/primary", PRIMARY);
 
-        if (secondaryFs != null) {
-            dfltModes.put("/ignite/proxy", PROXY);
-            dfltModes.put("/ignite/sync", DUAL_SYNC);
-            dfltModes.put("/ignite/async", DUAL_ASYNC);
+            if (secondaryFs != null) {
+                dfltModes.put("/ignite/proxy", PROXY);
+                dfltModes.put("/ignite/sync", DUAL_SYNC);
+                dfltModes.put("/ignite/async", DUAL_ASYNC);
+            }
         }
 
         cfgModes.putAll(dfltModes);
@@ -197,8 +259,12 @@ public final class IgfsImpl implements IgfsEx {
 
         modeRslvr = new IgfsModeResolver(dfltMode, modes);
 
-        secondaryPaths = new IgfsPaths(secondaryFs == null ? null : secondaryFs.properties(), dfltMode,
-            modeRslvr.modesOrdered());
+        Object secondaryFsPayload = null;
+
+        if (secondaryFs instanceof HadoopPayloadAware)
+            secondaryFsPayload = ((HadoopPayloadAware) secondaryFs).getPayload();
+
+        secondaryPaths = new IgfsPaths(secondaryFsPayload, dfltMode, modeRslvr.modesOrdered());
 
         // Check whether IGFS LRU eviction policy is set on data cache.
         String dataCacheName = igfsCtx.configuration().getDataCacheName();
@@ -246,7 +312,8 @@ public final class IgfsImpl implements IgfsEx {
                 batch.cancel();
 
             try {
-                secondaryFs.close();
+                if (secondaryFs instanceof LifecycleAware)
+                    ((LifecycleAware)secondaryFs).stop();
             }
             catch (Exception e) {
                 log.error("Failed to close secondary file system.", e);
@@ -410,8 +477,7 @@ public final class IgfsImpl implements IgfsEx {
     @SuppressWarnings("ConstantConditions")
     @Override public IgfsStatus globalSpace() {
         return safeOp(new Callable<IgfsStatus>() {
-            @Override
-            public IgfsStatus call() throws Exception {
+            @Override public IgfsStatus call() throws Exception {
                 IgniteBiTuple<Long, Long> space = igfsCtx.kernalContext().grid().compute().execute(
                     new IgfsGlobalSpaceTask(name()), null);
 
@@ -498,7 +564,7 @@ public final class IgfsImpl implements IgfsEx {
     }
 
     /** {@inheritDoc} */
-    @Override public IgfsFile info(final IgfsPath path) {
+    @Override @Nullable public IgfsFile info(final IgfsPath path) {
         A.notNull(path, "path");
 
         return safeOp(new Callable<IgfsFile>() {
@@ -508,12 +574,7 @@ public final class IgfsImpl implements IgfsEx {
 
                 IgfsMode mode = resolveMode(path);
 
-                IgfsFileInfo info = resolveFileInfo(path, mode);
-
-                if (info == null)
-                    return null;
-
-                return new IgfsFileImpl(path, info, data.groupBlockSize());
+                return resolveFileInfo(path, mode);
             }
         });
     }
@@ -559,7 +620,7 @@ public final class IgfsImpl implements IgfsEx {
 
                     await(path);
 
-                    IgfsFileInfo info = meta.updateDual(secondaryFs, path, props);
+                    IgfsEntryInfo info = meta.updateDual(secondaryFs, path, props);
 
                     if (info == null)
                         return null;
@@ -574,9 +635,7 @@ public final class IgfsImpl implements IgfsEx {
                 if (fileId == null)
                     return null;
 
-                IgniteUuid parentId = fileIds.size() > 1 ? fileIds.get(fileIds.size() - 2) : null;
-
-                IgfsFileInfo info = meta.updateProperties(parentId, fileId, path.name(), props);
+                IgfsEntryInfo info = meta.updateProperties(fileId, props);
 
                 if (info != null) {
                     if (evts.isRecordable(EVT_IGFS_META_UPDATED))
@@ -630,64 +689,7 @@ public final class IgfsImpl implements IgfsEx {
                     return null;
                 }
 
-                IgfsPath destParent = dest.parent();
-
-                // Resolve source file info.
-                FileDescriptor srcDesc = getFileDescriptor(src);
-
-                // File not found.
-                if (srcDesc == null || srcDesc.parentId == null) {
-                    if (mode == PRIMARY)
-                        checkConflictWithPrimary(src);
-
-                    throw new IgfsPathNotFoundException("Failed to rename (source path not found): " + src);
-                }
-
-                String srcFileName = src.name();
-
-                // Resolve destination file info.
-                FileDescriptor destDesc = getFileDescriptor(dest);
-
-                String destFileName;
-
-                boolean newDest = destDesc == null;
-
-                if (newDest) {
-                    assert destParent != null;
-
-                    // Use parent directory for destination parent and destination path name as destination name.
-                    destDesc = getFileDescriptor(destParent);
-
-                    // Destination directory doesn't exist.
-                    if (destDesc == null)
-                        throw new IgfsPathNotFoundException("Failed to rename (destination directory does not " +
-                            "exist): " + dest);
-
-                    destFileName = dest.name();
-                }
-                else
-                    // Use destination directory for destination parent and source path name as destination name.
-                    destFileName = srcFileName;
-
-                // Can move only into directory, but not into file.
-                if (destDesc.isFile)
-                    throw new IgfsParentNotDirectoryException("Failed to rename (destination is not a directory): "
-                        + dest);
-
-                meta.move(srcDesc.fileId, srcFileName, srcDesc.parentId, destFileName, destDesc.fileId);
-
-                if (srcDesc.isFile) { // Renamed a file.
-                    if (evts.isRecordable(EVT_IGFS_FILE_RENAMED))
-                        evts.record(new IgfsEvent(
-                            src,
-                            newDest ? dest : new IgfsPath(dest, destFileName),
-                            localNode(),
-                            EVT_IGFS_FILE_RENAMED));
-                }
-                else { // Renamed a directory.
-                    if (evts.isRecordable(EVT_IGFS_DIR_RENAMED))
-                        evts.record(new IgfsEvent(src, dest, localNode(), EVT_IGFS_DIR_RENAMED));
-                }
+                meta.move(src, dest);
 
                 return null;
             }
@@ -703,6 +705,9 @@ public final class IgfsImpl implements IgfsEx {
                 if (log.isDebugEnabled())
                     log.debug("Deleting file [path=" + path + ", recursive=" + recursive + ']');
 
+                if (IgfsPath.SLASH.equals(path.toString()))
+                    return false;
+
                 IgfsMode mode = resolveMode(path);
 
                 Set<IgfsMode> childrenModes = modeRslvr.resolveChildrenModes(path);
@@ -712,8 +717,11 @@ public final class IgfsImpl implements IgfsEx {
                 FileDescriptor desc = getFileDescriptor(path);
 
                 if (childrenModes.contains(PRIMARY)) {
-                    if (desc != null)
-                        res = delete0(desc, path.parent(), recursive);
+                    if (desc != null) {
+                        IgniteUuid deletedId = meta.softDelete(path, recursive);
+
+                        res = deletedId != null;
+                    }
                     else if (mode == PRIMARY)
                         checkConflictWithPrimary(path);
                 }
@@ -727,60 +735,13 @@ public final class IgfsImpl implements IgfsEx {
                 }
 
                 // Record event if needed.
-                if (res && desc != null) {
-                    if (desc.isFile) {
-                        if (evts.isRecordable(EVT_IGFS_FILE_DELETED))
-                            evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_DELETED));
-                    }
-                    else if (evts.isRecordable(EVT_IGFS_DIR_DELETED))
-                        evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_DIR_DELETED));
-                }
+                if (res && desc != null)
+                    IgfsUtils.sendEvents(igfsCtx.kernalContext(), path,
+                            desc.isFile ? EVT_IGFS_FILE_DELETED : EVT_IGFS_DIR_DELETED);
 
                 return res;
             }
         });
-    }
-
-    /**
-     * Internal procedure for (optionally) recursive file and directory deletion.
-     *
-     * @param desc File descriptor of file or directory to delete.
-     * @param parentPath Parent path. If specified, events will be fired for each deleted file
-     *      or directory. If not specified, events will not be fired.
-     * @param recursive Recursive deletion flag.
-     * @return {@code True} if file was successfully deleted. If directory is not empty and
-     *      {@code recursive} flag is false, will return {@code false}.
-     * @throws IgniteCheckedException In case of error.
-     */
-    private boolean delete0(FileDescriptor desc, @Nullable IgfsPath parentPath, boolean recursive)
-        throws IgniteCheckedException {
-        IgfsPath curPath = parentPath == null ? new IgfsPath() : new IgfsPath(parentPath, desc.fileName);
-
-        if (desc.isFile) {
-            deleteFile(curPath, desc, true);
-
-            return true;
-        }
-        else {
-            if (recursive) {
-                meta.softDelete(desc.parentId, desc.fileName, desc.fileId);
-
-                return true;
-            }
-            else {
-                Map<String, IgfsListingEntry> infoMap = meta.directoryListing(desc.fileId);
-
-                if (F.isEmpty(infoMap)) {
-                    deleteFile(curPath, desc, true);
-
-                    return true;
-                }
-                else
-                    // Throw exception if not empty and not recursive.
-                    throw new IgfsDirectoryNotEmptyException("Failed to remove directory (directory is not empty " +
-                        "and recursive flag is not set)");
-            }
-        }
     }
 
     /** {@inheritDoc} */
@@ -797,71 +758,18 @@ public final class IgfsImpl implements IgfsEx {
                 if (log.isDebugEnabled())
                     log.debug("Make directories: " + path);
 
-                Map<String, String> props0 = props == null ? DFLT_DIR_META : props;
+                final Map<String, String> props0 = props == null ? DFLT_DIR_META : new HashMap<>(props);
 
                 IgfsMode mode = resolveMode(path);
 
-                if (mode != PRIMARY) {
+                if (mode == PRIMARY)
+                    meta.mkdirs(path, props0);
+                else {
                     assert mode == DUAL_SYNC || mode == DUAL_ASYNC;
 
                     await(path);
 
                     meta.mkdirsDual(secondaryFs, path, props0);
-
-                    return null;
-                }
-
-                List<IgniteUuid> ids = meta.fileIds(path);
-                List<String> components = path.components();
-
-                assert ids.size() == components.size() + 1 : "Components doesn't contain ROOT element" +
-                    " [ids=" + ids + ", components=" + components + ']';
-
-                IgniteUuid parentId = ROOT_ID;
-
-                IgfsPath curPath = path.root();
-
-                for (int step = 0, size = components.size(); step < size; step++) {
-                    IgniteUuid fileId = ids.get(step + 1); // Skip the first ROOT element.
-
-                    if (fileId == null) {
-                        IgfsFileInfo fileInfo = new IgfsFileInfo(true, props0); // Create new directory.
-
-                        String fileName = components.get(step); // Get current component name.
-
-                        curPath = new IgfsPath(curPath, fileName);
-
-                        try {
-                            // Fails only if parent is not a directory or if modified concurrently.
-                            IgniteUuid oldId = meta.putIfAbsent(parentId, fileName, fileInfo);
-
-                            fileId = oldId == null ? fileInfo.id() : oldId; // Update node ID.
-
-                            if (oldId == null && evts.isRecordable(EVT_IGFS_DIR_CREATED))
-                                evts.record(new IgfsEvent(curPath, localNode(), EVT_IGFS_DIR_CREATED));
-                        }
-                        catch (IgniteCheckedException e) {
-                            if (log.isDebugEnabled())
-                                log.debug("Failed to create directory [path=" + path + ", parentId=" + parentId +
-                                    ", fileName=" + fileName + ", step=" + step + ", e=" + e.getMessage() + ']');
-
-                            // Check directory with such name already exists.
-                            IgfsFileInfo stored = meta.info(meta.fileId(parentId, fileName));
-
-                            if (stored == null)
-                                throw e;
-
-                            if (!stored.isDirectory())
-                                throw new IgfsParentNotDirectoryException("Failed to create directory (parent " +
-                                    "element is not a directory)");
-
-                            fileId = stored.id(); // Update node ID.
-                        }
-                    }
-
-                    assert fileId != null;
-
-                    parentId = fileId;
                 }
 
                 return null;
@@ -905,8 +813,7 @@ public final class IgfsImpl implements IgfsEx {
                 }
 
                 return F.viewReadOnly(files, new C1<String, IgfsPath>() {
-                    @Override
-                    public IgfsPath apply(String e) {
+                    @Override public IgfsPath apply(String e) {
                         return new IgfsPath(path, e);
                     }
                 });
@@ -919,8 +826,7 @@ public final class IgfsImpl implements IgfsEx {
         A.notNull(path, "path");
 
         return safeOp(new Callable<Collection<IgfsFile>>() {
-            @Override
-            public Collection<IgfsFile> call() throws Exception {
+            @Override public Collection<IgfsFile> call() throws Exception {
                 if (log.isDebugEnabled())
                     log.debug("List directory details: " + path);
 
@@ -936,17 +842,16 @@ public final class IgfsImpl implements IgfsEx {
                     Collection<IgfsFile> children = secondaryFs.listFiles(path);
 
                     for (IgfsFile child : children) {
-                        IgfsFileInfo fsInfo = new IgfsFileInfo(
-                            child.blockSize(), child.length(), evictExclude(path, false), child.properties());
+                        IgfsFileImpl impl = new IgfsFileImpl(child, data.groupBlockSize());
 
-                        files.add(new IgfsFileImpl(child.path(), fsInfo, data.groupBlockSize()));
+                        files.add(impl);
                     }
                 }
 
                 IgniteUuid fileId = meta.fileId(path);
 
                 if (fileId != null) {
-                    IgfsFileInfo info = meta.info(fileId);
+                    IgfsEntryInfo info = meta.info(fileId);
 
                     // Handle concurrent deletion.
                     if (info != null) {
@@ -957,9 +862,13 @@ public final class IgfsImpl implements IgfsEx {
 
                         // Perform the listing.
                         for (Map.Entry<String, IgfsListingEntry> e : info.listing().entrySet()) {
-                            IgfsPath p = new IgfsPath(path, e.getKey());
+                            IgfsEntryInfo childInfo = meta.info(e.getValue().fileId());
 
-                            files.add(new IgfsFileImpl(p, e.getValue(), data.groupBlockSize()));
+                            if (childInfo != null) {
+                                IgfsPath childPath = new IgfsPath(path, e.getKey());
+
+                                files.add(new IgfsFileImpl(childPath, childInfo, data.groupBlockSize()));
+                            }
                         }
                     }
                 } else if (mode == PRIMARY) {
@@ -996,8 +905,7 @@ public final class IgfsImpl implements IgfsEx {
         A.ensure(seqReadsBeforePrefetch >= 0, "seqReadsBeforePrefetch >= 0");
 
         return safeOp(new Callable<IgfsInputStreamAdapter>() {
-            @Override
-            public IgfsInputStreamAdapter call() throws Exception {
+            @Override public IgfsInputStreamAdapter call() throws Exception {
                 if (log.isDebugEnabled())
                     log.debug("Open file for reading [path=" + path + ", bufSize=" + bufSize + ']');
 
@@ -1013,13 +921,12 @@ public final class IgfsImpl implements IgfsEx {
                     IgfsEventAwareInputStream os = new IgfsEventAwareInputStream(igfsCtx, path, desc.info(),
                         cfg.getPrefetchBlocks(), seqReadsBeforePrefetch, desc.reader(), metrics);
 
-                    if (evts.isRecordable(EVT_IGFS_FILE_OPENED_READ))
-                        evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_OPENED_READ));
+                    IgfsUtils.sendEvents(igfsCtx.kernalContext(), path, EVT_IGFS_FILE_OPENED_READ);
 
                     return os;
                 }
 
-                IgfsFileInfo info = meta.info(meta.fileId(path));
+                IgfsEntryInfo info = meta.info(meta.fileId(path));
 
                 if (info == null) {
                     checkConflictWithPrimary(path);
@@ -1034,8 +941,7 @@ public final class IgfsImpl implements IgfsEx {
                 IgfsEventAwareInputStream os = new IgfsEventAwareInputStream(igfsCtx, path, info,
                     cfg.getPrefetchBlocks(), seqReadsBeforePrefetch, null, metrics);
 
-                if (evts.isRecordable(EVT_IGFS_FILE_OPENED_READ))
-                    evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_OPENED_READ));
+                IgfsUtils.sendEvents(igfsCtx.kernalContext(), path, EVT_IGFS_FILE_OPENED_READ);
 
                 return os;
             }
@@ -1084,13 +990,12 @@ public final class IgfsImpl implements IgfsEx {
         A.ensure(bufSize >= 0, "bufSize >= 0");
 
         return safeOp(new Callable<IgfsOutputStream>() {
-            @Override
-            public IgfsOutputStream call() throws Exception {
+            @Override public IgfsOutputStream call() throws Exception {
                 if (log.isDebugEnabled())
                     log.debug("Open file for writing [path=" + path + ", bufSize=" + bufSize + ", overwrite=" +
                         overwrite + ", props=" + props + ']');
 
-                IgfsMode mode = resolveMode(path);
+                final IgfsMode mode = resolveMode(path);
 
                 IgfsFileWorkerBatch batch;
 
@@ -1104,74 +1009,37 @@ public final class IgfsImpl implements IgfsEx {
 
                     batch = newBatch(path, desc.out());
 
-                    IgfsEventAwareOutputStream os = new IgfsEventAwareOutputStream(path, desc.info(), desc.parentId(),
-                        bufSize == 0 ? cfg.getStreamBufferSize() : bufSize, mode, batch);
+                    IgfsEventAwareOutputStream os = new IgfsEventAwareOutputStream(path, desc.info(),
+                        bufferSize(bufSize), mode, batch);
 
-                    if (evts.isRecordable(EVT_IGFS_FILE_OPENED_WRITE))
-                        evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_OPENED_WRITE));
+                    IgfsUtils.sendEvents(igfsCtx.kernalContext(), path, EVT_IGFS_FILE_OPENED_WRITE);
 
                     return os;
                 }
 
-                // Re-create parents when working in PRIMARY mode. In DUAL mode this is done by MetaManager.
-                IgfsPath parent = path.parent();
+                final Map<String, String> dirProps, fileProps;
 
-                // Create missing parent directories if necessary.
-                if (parent != null)
-                    mkdirs(parent, props);
+                if (props == null) {
+                    dirProps = DFLT_DIR_META;
 
-                List<IgniteUuid> ids = meta.fileIds(path);
-
-                // Resolve parent ID for file.
-                IgniteUuid parentId = ids.size() >= 2 ? ids.get(ids.size() - 2) : null;
-
-                if (parentId == null)
-                    throw new IgfsPathNotFoundException("Failed to resolve parent directory: " + parent);
-
-                String fileName = path.name();
-
-                // Constructs new file info.
-                IgfsFileInfo info = new IgfsFileInfo(cfg.getBlockSize(), affKey, evictExclude(path, true), props);
-
-                // Add new file into tree structure.
-                while (true) {
-                    IgniteUuid oldId = meta.putIfAbsent(parentId, fileName, info);
-
-                    if (oldId == null)
-                        break;
-
-                    if (!overwrite)
-                        throw new IgfsPathAlreadyExistsException("Failed to create file (file already exists): " +
-                            path);
-
-                    IgfsFileInfo oldInfo = meta.info(oldId);
-
-                    assert oldInfo != null;
-
-                    if (oldInfo.isDirectory())
-                        throw new IgfsPathAlreadyExistsException("Failed to create file (path points to a " +
-                            "directory): " + path);
-
-                    // Remove old file from the tree.
-                    // Only one file is deleted, so we use internal data streamer.
-                    deleteFile(path, new FileDescriptor(parentId, fileName, oldId, oldInfo.isFile()), false);
-
-                    if (evts.isRecordable(EVT_IGFS_FILE_DELETED))
-                        evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_DELETED));
+                    fileProps = null;
                 }
+                else
+                    dirProps = fileProps = new HashMap<>(props);
 
-                if (evts.isRecordable(EVT_IGFS_FILE_CREATED))
-                    evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_CREATED));
+                IgfsEntryInfo res = meta.create(
+                    path,
+                    dirProps,
+                    overwrite,
+                    cfg.getBlockSize(),
+                    affKey,
+                    evictExclude(path, true),
+                    fileProps
+                );
 
-                info = meta.lock(info.id());
+                assert res != null;
 
-                IgfsEventAwareOutputStream os = new IgfsEventAwareOutputStream(path, info, parentId,
-                    bufSize == 0 ? cfg.getStreamBufferSize() : bufSize, mode, null);
-
-                if (evts.isRecordable(EVT_IGFS_FILE_OPENED_WRITE))
-                    evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_OPENED_WRITE));
-
-                return os;
+                return new IgfsEventAwareOutputStream(path, res, bufferSize(bufSize), mode, null);
             }
         });
     }
@@ -1188,13 +1056,12 @@ public final class IgfsImpl implements IgfsEx {
         A.ensure(bufSize >= 0, "bufSize >= 0");
 
         return safeOp(new Callable<IgfsOutputStream>() {
-            @Override
-            public IgfsOutputStream call() throws Exception {
+            @Override public IgfsOutputStream call() throws Exception {
                 if (log.isDebugEnabled())
                     log.debug("Open file for appending [path=" + path + ", bufSize=" + bufSize + ", create=" + create +
                         ", props=" + props + ']');
 
-                IgfsMode mode = resolveMode(path);
+                final IgfsMode mode = resolveMode(path);
 
                 IgfsFileWorkerBatch batch;
 
@@ -1203,54 +1070,52 @@ public final class IgfsImpl implements IgfsEx {
 
                     await(path);
 
-                    IgfsSecondaryOutputStreamDescriptor desc = meta.appendDual(secondaryFs, path, bufSize);
+                    IgfsSecondaryOutputStreamDescriptor desc = meta.appendDual(secondaryFs, path, bufSize, create);
 
                     batch = newBatch(path, desc.out());
 
-                    return new IgfsEventAwareOutputStream(path, desc.info(), desc.parentId(),
-                        bufSize == 0 ? cfg.getStreamBufferSize() : bufSize, mode, batch);
+                    return new IgfsEventAwareOutputStream(path, desc.info(), bufferSize(bufSize), mode, batch);
                 }
 
-                List<IgniteUuid> ids = meta.fileIds(path);
+                final List<IgniteUuid> ids = meta.fileIds(path);
 
-                IgfsFileInfo info = meta.info(ids.get(ids.size() - 1));
+                final IgniteUuid id = ids.get(ids.size() - 1);
 
-                // Resolve parent ID for the file.
-                IgniteUuid parentId = ids.size() >= 2 ? ids.get(ids.size() - 2) : null;
-
-                if (info == null) {
+                if (id == null) {
                     if (!create) {
                         checkConflictWithPrimary(path);
 
                         throw new IgfsPathNotFoundException("File not found: " + path);
                     }
-
-                    if (parentId == null)
-                        throw new IgfsPathNotFoundException("Failed to resolve parent directory: " + path.parent());
-
-                    info = new IgfsFileInfo(cfg.getBlockSize(), /**affinity key*/null, evictExclude(path, true), props);
-
-                    IgniteUuid oldId = meta.putIfAbsent(parentId, path.name(), info);
-
-                    if (oldId != null)
-                        info = meta.info(oldId);
-
-                    if (evts.isRecordable(EVT_IGFS_FILE_CREATED))
-                        evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_CREATED));
                 }
 
-                assert info != null;
-
-                if (!info.isFile())
+                // Prevent attempt to append to ROOT in early stage:
+                if (ids.size() == 1)
                     throw new IgfsPathIsDirectoryException("Failed to open file (not a file): " + path);
 
-                info = meta.lock(info.id());
+                final Map<String, String> dirProps, fileProps;
 
-                if (evts.isRecordable(EVT_IGFS_FILE_OPENED_WRITE))
-                    evts.record(new IgfsEvent(path, localNode(), EVT_IGFS_FILE_OPENED_WRITE));
+                if (props == null) {
+                    dirProps = DFLT_DIR_META;
 
-                return new IgfsEventAwareOutputStream(path, info, parentId, bufSize == 0 ?
-                    cfg.getStreamBufferSize() : bufSize, mode, null);
+                    fileProps = null;
+                }
+                else
+                    dirProps = fileProps = new HashMap<>(props);
+
+                IgfsEntryInfo res = meta.append(
+                    path,
+                    dirProps,
+                    create,
+                    cfg.getBlockSize(),
+                    null/*affKey*/,
+                    evictExclude(path, true),
+                    fileProps
+                );
+
+                assert res != null;
+
+                return new IgfsEventAwareOutputStream(path, res, bufferSize(bufSize), mode, null);
             }
         });
     }
@@ -1311,8 +1176,7 @@ public final class IgfsImpl implements IgfsEx {
         A.ensure(len >= 0, "len >= 0");
 
         return safeOp(new Callable<Collection<IgfsBlockLocation>>() {
-            @Override
-            public Collection<IgfsBlockLocation> call() throws Exception {
+            @Override public Collection<IgfsBlockLocation> call() throws Exception {
                 if (log.isDebugEnabled())
                     log.debug("Get affinity for file block [path=" + path + ", start=" + start + ", len=" + len + ']');
 
@@ -1320,7 +1184,7 @@ public final class IgfsImpl implements IgfsEx {
 
                 // Check memory first.
                 IgniteUuid fileId = meta.fileId(path);
-                IgfsFileInfo info = meta.info(fileId);
+                IgfsEntryInfo info = meta.info(fileId);
 
                 if (info == null && mode != PRIMARY) {
                     assert mode == DUAL_SYNC || mode == DUAL_ASYNC;
@@ -1345,11 +1209,10 @@ public final class IgfsImpl implements IgfsEx {
     /** {@inheritDoc} */
     @Override public IgfsMetrics metrics() {
         return safeOp(new Callable<IgfsMetrics>() {
-            @Override
-            public IgfsMetrics call() throws Exception {
+            @Override public IgfsMetrics call() throws Exception {
                 IgfsPathSummary sum = new IgfsPathSummary();
 
-                summary0(ROOT_ID, sum);
+                summary0(IgfsUtils.ROOT_ID, sum);
 
                 long secondarySpaceSize = 0;
 
@@ -1418,11 +1281,11 @@ public final class IgfsImpl implements IgfsEx {
     private void summary0(IgniteUuid fileId, IgfsPathSummary sum) throws IgniteCheckedException {
         assert sum != null;
 
-        IgfsFileInfo info = meta.info(fileId);
+        IgfsEntryInfo info = meta.info(fileId);
 
         if (info != null) {
             if (info.isDirectory()) {
-                if (!ROOT_ID.equals(info.id()))
+                if (!IgfsUtils.ROOT_ID.equals(info.id()))
                     sum.directoriesCount(sum.directoriesCount() + 1);
 
                 for (IgfsListingEntry entry : info.listing().values())
@@ -1452,7 +1315,7 @@ public final class IgfsImpl implements IgfsEx {
      */
     IgniteInternalFuture<?> formatAsync() {
         try {
-            IgniteUuid id = meta.softDelete(null, null, ROOT_ID);
+            IgniteUuid id = meta.format();
 
             if (id == null)
                 return new GridFinishedFuture<Object>();
@@ -1524,8 +1387,11 @@ public final class IgfsImpl implements IgfsEx {
      * @throws IgniteCheckedException If failed.
      */
     @Nullable private FileDescriptor getFileDescriptor(IgfsPath path) throws IgniteCheckedException {
+        assert path != null;
+
         List<IgniteUuid> ids = meta.fileIds(path);
-        IgfsFileInfo fileInfo = meta.info(ids.get(ids.size() - 1));
+
+        IgfsEntryInfo fileInfo = meta.info(ids.get(ids.size() - 1));
 
         if (fileInfo == null)
             return null; // File does not exist.
@@ -1534,30 +1400,6 @@ public final class IgfsImpl implements IgfsEx {
         IgniteUuid parentId = ids.size() >= 2 ? ids.get(ids.size() - 2) : null;
 
         return new FileDescriptor(parentId, path.name(), fileInfo.id(), fileInfo.isFile());
-    }
-
-    /**
-     * Remove file from the file system (structure and data).
-     *
-     * @param path Path of the deleted file.
-     * @param desc Detailed file descriptor to remove.
-     * @param rmvLocked Whether to remove this entry in case it is has explicit lock.
-     * @throws IgniteCheckedException If failed.
-     */
-    private void deleteFile(IgfsPath path, FileDescriptor desc, boolean rmvLocked) throws IgniteCheckedException {
-        IgniteUuid parentId = desc.parentId;
-        IgniteUuid fileId = desc.fileId;
-
-        if (parentId == null || ROOT_ID.equals(fileId)) {
-            assert parentId == null && ROOT_ID.equals(fileId) : "Invalid file descriptor: " + desc;
-
-            return; // Never remove the root directory!
-        }
-
-        if (TRASH_ID.equals(fileId))
-            return; // Never remove trash directory.
-
-        meta.removeIfEmpty(parentId, desc.fileName, fileId, path, rmvLocked);
     }
 
     /**
@@ -1715,11 +1557,11 @@ public final class IgfsImpl implements IgfsEx {
      * @return File info or {@code null} in case file is not found.
      * @throws IgniteCheckedException If failed.
      */
-    private IgfsFileInfo resolveFileInfo(IgfsPath path, IgfsMode mode) throws IgniteCheckedException {
+    private IgfsFileImpl resolveFileInfo(IgfsPath path, IgfsMode mode) throws IgniteCheckedException {
         assert path != null;
         assert mode != null;
 
-        IgfsFileInfo info = null;
+        IgfsEntryInfo info = null;
 
         switch (mode) {
             case PRIMARY:
@@ -1735,9 +1577,7 @@ public final class IgfsImpl implements IgfsEx {
                     IgfsFile status = secondaryFs.info(path);
 
                     if (status != null)
-                        info = status.isDirectory() ? new IgfsFileInfo(true, status.properties()) :
-                            new IgfsFileInfo(status.blockSize(), status.length(), null, null, false,
-                            status.properties());
+                        return new IgfsFileImpl(status, data.groupBlockSize());
                 }
 
                 break;
@@ -1746,7 +1586,10 @@ public final class IgfsImpl implements IgfsEx {
                 assert false : "Unknown mode: " + mode;
         }
 
-        return info;
+        if (info == null)
+            return null;
+
+        return new IgfsFileImpl(path, info, data.groupBlockSize());
     }
 
     /** {@inheritDoc} */
@@ -1840,14 +1683,13 @@ public final class IgfsImpl implements IgfsEx {
          *
          * @param path Path to stored file.
          * @param fileInfo File info.
-         * @param parentId Parent ID.
          * @param bufSize The size of the buffer to be used.
          * @param mode IGFS mode.
          * @param batch Optional secondary file system batch.
          */
-        IgfsEventAwareOutputStream(IgfsPath path, IgfsFileInfo fileInfo,
-            IgniteUuid parentId, int bufSize, IgfsMode mode, @Nullable IgfsFileWorkerBatch batch) {
-            super(igfsCtx, path, fileInfo, parentId, bufSize, mode, batch, metrics);
+        IgfsEventAwareOutputStream(IgfsPath path, IgfsEntryInfo fileInfo, int bufSize, IgfsMode mode,
+            @Nullable IgfsFileWorkerBatch batch) {
+            super(igfsCtx, path, fileInfo, bufSize, mode, batch, metrics);
 
             metrics.incrementFilesOpenedForWrite();
         }
@@ -1884,7 +1726,7 @@ public final class IgfsImpl implements IgfsEx {
          * @param secReader Optional secondary file system reader.
          * @param metrics Metrics.
          */
-        IgfsEventAwareInputStream(IgfsContext igfsCtx, IgfsPath path, IgfsFileInfo fileInfo,
+        IgfsEventAwareInputStream(IgfsContext igfsCtx, IgfsPath path, IgfsEntryInfo fileInfo,
             int prefetchBlocks, int seqReadsBeforePrefetch, @Nullable IgfsSecondaryFileSystemPositionedReadable secReader,
             IgfsLocalMetrics metrics) {
             super(igfsCtx, path, fileInfo, prefetchBlocks, seqReadsBeforePrefetch, secReader, metrics);
@@ -2091,13 +1933,13 @@ public final class IgfsImpl implements IgfsEx {
     /**
      * Perform IGFS operation in safe context.
      *
-     * @param action Action.
+     * @param act Action.
      * @return Result.
      */
-    private <T> T safeOp(Callable<T> action) {
+    private <T> T safeOp(Callable<T> act) {
         if (enterBusy()) {
             try {
-                return action.call();
+                return act.call();
             }
             catch (Exception e) {
                 throw IgfsUtils.toIgfsException(e);
@@ -2108,6 +1950,16 @@ public final class IgfsImpl implements IgfsEx {
         }
         else
             throw new IllegalStateException("Failed to perform IGFS action because grid is stopping.");
+    }
+
+    /**
+     * Get buffer size.
+     *
+     * @param bufSize Original buffer size.
+     * @return Real buffer size.
+     */
+    private int bufferSize(int bufSize) {
+        return bufSize == 0 ? cfg.getStreamBufferSize() : bufSize;
     }
 
     /**

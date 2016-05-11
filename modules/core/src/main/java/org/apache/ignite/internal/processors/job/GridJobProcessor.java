@@ -17,37 +17,83 @@
 
 package org.apache.ignite.internal.processors.job;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cluster.*;
-import org.apache.ignite.compute.*;
-import org.apache.ignite.events.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.managers.collision.*;
-import org.apache.ignite.internal.managers.communication.*;
-import org.apache.ignite.internal.managers.deployment.*;
-import org.apache.ignite.internal.managers.eventstorage.*;
-import org.apache.ignite.internal.processors.*;
-import org.apache.ignite.internal.processors.jobmetrics.*;
-import org.apache.ignite.internal.util.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.marshaller.*;
-import org.jetbrains.annotations.*;
-import org.jsr166.*;
+import java.io.Serializable;
+import java.util.AbstractCollection;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteDeploymentException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.compute.ComputeExecutionRejectedException;
+import org.apache.ignite.compute.ComputeJobSibling;
+import org.apache.ignite.compute.ComputeTaskSession;
+import org.apache.ignite.events.DiscoveryEvent;
+import org.apache.ignite.events.Event;
+import org.apache.ignite.events.JobEvent;
+import org.apache.ignite.events.TaskEvent;
+import org.apache.ignite.internal.GridJobCancelRequest;
+import org.apache.ignite.internal.GridJobContextImpl;
+import org.apache.ignite.internal.GridJobExecuteRequest;
+import org.apache.ignite.internal.GridJobExecuteResponse;
+import org.apache.ignite.internal.GridJobSessionImpl;
+import org.apache.ignite.internal.GridJobSiblingsRequest;
+import org.apache.ignite.internal.GridJobSiblingsResponse;
+import org.apache.ignite.internal.GridKernalContext;
+import org.apache.ignite.internal.GridTaskSessionImpl;
+import org.apache.ignite.internal.GridTaskSessionRequest;
+import org.apache.ignite.internal.SkipDaemon;
+import org.apache.ignite.internal.managers.collision.GridCollisionJobContextAdapter;
+import org.apache.ignite.internal.managers.communication.GridIoManager;
+import org.apache.ignite.internal.managers.communication.GridMessageListener;
+import org.apache.ignite.internal.managers.deployment.GridDeployment;
+import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
+import org.apache.ignite.internal.processors.GridProcessorAdapter;
+import org.apache.ignite.internal.processors.jobmetrics.GridJobMetricsSnapshot;
+import org.apache.ignite.internal.util.GridAtomicLong;
+import org.apache.ignite.internal.util.GridBoundedConcurrentLinkedHashMap;
+import org.apache.ignite.internal.util.GridBoundedConcurrentLinkedHashSet;
+import org.apache.ignite.internal.util.GridConcurrentHashSet;
+import org.apache.ignite.internal.util.GridSpinReadWriteLock;
+import org.apache.ignite.internal.util.typedef.P1;
+import org.apache.ignite.internal.util.typedef.X;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgnitePredicate;
+import org.apache.ignite.lang.IgniteUuid;
+import org.apache.ignite.marshaller.Marshaller;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jsr166.ConcurrentHashMap8;
+import org.jsr166.ConcurrentLinkedHashMap;
+import org.jsr166.LongAdder8;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.concurrent.locks.*;
-
-import static java.util.concurrent.TimeUnit.*;
-import static org.apache.ignite.IgniteSystemProperties.*;
-import static org.apache.ignite.events.EventType.*;
-import static org.apache.ignite.internal.GridTopic.*;
-import static org.apache.ignite.internal.managers.communication.GridIoPolicy.*;
-import static org.jsr166.ConcurrentLinkedHashMap.QueuePolicy.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_JOBS_HISTORY_SIZE;
+import static org.apache.ignite.events.EventType.EVT_JOB_FAILED;
+import static org.apache.ignite.events.EventType.EVT_NODE_FAILED;
+import static org.apache.ignite.events.EventType.EVT_NODE_LEFT;
+import static org.apache.ignite.events.EventType.EVT_NODE_METRICS_UPDATED;
+import static org.apache.ignite.events.EventType.EVT_TASK_SESSION_ATTR_SET;
+import static org.apache.ignite.internal.GridTopic.TOPIC_JOB;
+import static org.apache.ignite.internal.GridTopic.TOPIC_JOB_CANCEL;
+import static org.apache.ignite.internal.GridTopic.TOPIC_JOB_SIBLINGS;
+import static org.apache.ignite.internal.GridTopic.TOPIC_TASK;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.MANAGEMENT_POOL;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SYSTEM_POOL;
+import static org.jsr166.ConcurrentLinkedHashMap.QueuePolicy.PER_SEGMENT_Q;
 
 /**
  * Responsible for all grid job execution and communication.
@@ -154,7 +200,7 @@ public class GridJobProcessor extends GridProcessorAdapter {
     };
 
     /** Current session. */
-    private final ThreadLocal<ComputeTaskSession> currentSess = new ThreadLocal<>();
+    private final ThreadLocal<ComputeTaskSession> currSess = new ThreadLocal<>();
 
     /**
      * @param ctx Kernal context.
@@ -385,7 +431,7 @@ public class GridJobProcessor extends GridProcessorAdapter {
             throw new IgniteCheckedException("Node that originated task execution has left grid: " + taskNodeId);
 
         // Tuple: error message-response.
-        final IgniteBiTuple<String, GridJobSiblingsResponse> t = F.t2();
+        final IgniteBiTuple<String, GridJobSiblingsResponse> t = new IgniteBiTuple<>();
 
         final Lock lock = new ReentrantLock();
         final Condition cond = lock.newCondition();
@@ -400,18 +446,19 @@ public class GridJobProcessor extends GridProcessorAdapter {
                 else if (!nodeId.equals(taskNodeId))
                     err = "Received job siblings response from unexpected node [taskNodeId=" + taskNodeId +
                         ", nodeId=" + nodeId + ']';
-                else
+                else {
                     // Sender and message type are fine.
                     res = (GridJobSiblingsResponse)msg;
 
-                if (res.jobSiblings() == null) {
-                    try {
-                        res.unmarshalSiblings(marsh);
-                    }
-                    catch (IgniteCheckedException e) {
-                        U.error(log, "Failed to unmarshal job siblings.", e);
+                    if (res.jobSiblings() == null) {
+                        try {
+                            res.unmarshalSiblings(marsh);
+                        }
+                        catch (IgniteCheckedException e) {
+                            U.error(log, "Failed to unmarshal job siblings.", e);
 
-                        err = e.getMessage();
+                            err = e.getMessage();
+                        }
                     }
                 }
 
@@ -560,19 +607,15 @@ public class GridJobProcessor extends GridProcessorAdapter {
             // If we don't have jobId then we have to iterate
             if (jobId == null) {
                 if (!jobAlwaysActivate) {
-                    // If job gets removed from passive jobs it never gets activated.
-                    F.forEach(passiveJobs.values(), new CI1<GridJobWorker>() {
-                        @Override public void apply(GridJobWorker job) {
+                    for (GridJobWorker job : passiveJobs.values()) {
+                        if (idsMatch.apply(job))
                             cancelPassiveJob(job);
-                        }
-                    }, idsMatch);
-                }
-
-                F.forEach(activeJobs.values(), new CI1<GridJobWorker>() {
-                    @Override public void apply(GridJobWorker job) {
-                        cancelActiveJob(job, sys);
                     }
-                }, idsMatch);
+                }
+                for (GridJobWorker job : activeJobs.values()) {
+                    if (idsMatch.apply(job))
+                        cancelActiveJob(job, sys);
+                }
             }
             else {
                 if (!jobAlwaysActivate) {
@@ -782,7 +825,8 @@ public class GridJobProcessor extends GridProcessorAdapter {
                                 if (w == null)
                                     throw new NoSuchElementException();
 
-                                org.apache.ignite.spi.collision.CollisionJobContext ret = new CollisionJobContext(w, false);
+                                org.apache.ignite.spi.collision.CollisionJobContext ret =
+                                    new CollisionJobContext(w, false);
 
                                 w = null;
 
@@ -905,16 +949,14 @@ public class GridJobProcessor extends GridProcessorAdapter {
 
         GridJobWorker job = null;
 
-        rwLock.readLock();
+        if (!rwLock.tryReadLock()) {
+            if (log.isDebugEnabled())
+                log.debug("Received job execution request while stopping this node (will ignore): " + req);
+
+            return;
+        }
 
         try {
-            if (stopping) {
-                if (log.isDebugEnabled())
-                    log.debug("Received job execution request while stopping this node (will ignore): " + req);
-
-                return;
-            }
-
             long endTime = req.getCreateTime() + req.getTimeout();
 
             // Account for overflow.
@@ -970,7 +1012,7 @@ public class GridJobProcessor extends GridProcessorAdapter {
                             if (siblings0 == null) {
                                 assert req.getSiblingsBytes() != null;
 
-                                siblings0 = marsh.unmarshal(req.getSiblingsBytes(), null);
+                                siblings0 = marsh.unmarshal(req.getSiblingsBytes(), U.resolveClassLoader(ctx.config()));
                             }
 
                             siblings = new ArrayList<>(siblings0);
@@ -983,7 +1025,7 @@ public class GridJobProcessor extends GridProcessorAdapter {
 
                             if (sesAttrs == null)
                                 sesAttrs = marsh.unmarshal(req.getSessionAttributesBytes(),
-                                    dep.classLoader());
+                                    U.resolveClassLoader(dep.classLoader(), ctx.config()));
                         }
 
                         // Note that we unmarshal session/job attributes here with proper class loader.
@@ -1009,7 +1051,8 @@ public class GridJobProcessor extends GridProcessorAdapter {
                         Map<? extends Serializable, ? extends Serializable> jobAttrs = req.getJobAttributes();
 
                         if (jobAttrs == null)
-                            jobAttrs = marsh.unmarshal(req.getJobAttributesBytes(), dep.classLoader());
+                            jobAttrs = marsh.unmarshal(req.getJobAttributesBytes(),
+                                U.resolveClassLoader(dep.classLoader(), ctx.config()));
 
                         jobCtx = new GridJobContextImpl(ctx, req.getJobId(), jobAttrs);
                     }
@@ -1124,7 +1167,7 @@ public class GridJobProcessor extends GridProcessorAdapter {
      * @param ses Session.
      */
     public void currentTaskSession(ComputeTaskSession ses) {
-        currentSess.set(ses);
+        currSess.set(ses);
     }
 
     /**
@@ -1147,7 +1190,7 @@ public class GridJobProcessor extends GridProcessorAdapter {
         if (!ctx.security().enabled())
             return null;
 
-        ComputeTaskSession ses = currentSess.get();
+        ComputeTaskSession ses = currSess.get();
 
         if (ses == null)
             return null;
@@ -1356,16 +1399,14 @@ public class GridJobProcessor extends GridProcessorAdapter {
      */
     @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "RedundantCast"})
     private void processTaskSessionRequest(UUID nodeId, GridTaskSessionRequest req) {
-        rwLock.readLock();
+        if (!rwLock.tryReadLock()) {
+            if (log.isDebugEnabled())
+                log.debug("Received job session request while stopping grid (will ignore): " + req);
+
+            return;
+        }
 
         try {
-            if (stopping) {
-                if (log.isDebugEnabled())
-                    log.debug("Received job session request while stopping grid (will ignore): " + req);
-
-                return;
-            }
-
             GridTaskSessionImpl ses = ctx.session().getSession(req.getSessionId());
 
             if (ses == null) {
@@ -1378,7 +1419,8 @@ public class GridJobProcessor extends GridProcessorAdapter {
             boolean loc = ctx.localNodeId().equals(nodeId) && !ctx.config().isMarshalLocalJobs();
 
             Map<?, ?> attrs = loc ? req.getAttributes() :
-                (Map<?, ?>)marsh.unmarshal(req.getAttributesBytes(), ses.getClassLoader());
+                (Map<?, ?>)marsh.unmarshal(req.getAttributesBytes(),
+                    U.resolveClassLoader(ses.getClassLoader(), ctx.config()));
 
             if (ctx.event().isRecordable(EVT_TASK_SESSION_ATTR_SET)) {
                 Event evt = new TaskEvent(
@@ -1413,7 +1455,7 @@ public class GridJobProcessor extends GridProcessorAdapter {
      * @return {@code true} if node is dead, {@code false} is node is alive.
      */
     private boolean isDeadNode(UUID uid) {
-        return ctx.discovery().node(uid) == null || !ctx.discovery().pingNode(uid);
+        return ctx.discovery().node(uid) == null || !ctx.discovery().pingNodeNoError(uid);
     }
 
     /** {@inheritDoc} */
@@ -1509,16 +1551,14 @@ public class GridJobProcessor extends GridProcessorAdapter {
             if (log.isDebugEnabled())
                 log.debug("Received external collision event.");
 
-            rwLock.readLock();
+            if (!rwLock.tryReadLock()) {
+                if (log.isDebugEnabled())
+                    log.debug("Received external collision notification while stopping grid (will ignore).");
+
+                return;
+            }
 
             try {
-                if (stopping) {
-                    if (log.isDebugEnabled())
-                        log.debug("Received external collision notification while stopping grid (will ignore).");
-
-                    return;
-                }
-
                 handleCollisions();
             }
             finally {
@@ -1605,16 +1645,14 @@ public class GridJobProcessor extends GridProcessorAdapter {
                         updateJobMetrics();
                 }
                 else {
-                    rwLock.readLock();
+                    if (!rwLock.tryReadLock()) {
+                        if (log.isDebugEnabled())
+                            log.debug("Skipping collision handling on job finish (node is stopping).");
+
+                        return;
+                    }
 
                     try {
-                        if (stopping) {
-                            if (log.isDebugEnabled())
-                                log.debug("Skipping collision handling on job finish (node is stopping).");
-
-                            return;
-                        }
-
                         handleCollisions();
                     }
                     finally {
@@ -1803,16 +1841,14 @@ public class GridJobProcessor extends GridProcessorAdapter {
             }
 
             if (handleCollisions) {
-                rwLock.readLock();
+                if (!rwLock.tryReadLock()) {
+                    if (log.isDebugEnabled())
+                        log.debug("Skipped collision handling on discovery event (node is stopping): " + evt);
+
+                    return;
+                }
 
                 try {
-                    if (stopping) {
-                        if (log.isDebugEnabled())
-                            log.debug("Skipped collision handling on discovery event (node is stopping): " + evt);
-
-                        return;
-                    }
-
                     if (!jobAlwaysActivate)
                         handleCollisions();
                     else if (metricsUpdateFreq > -1L)

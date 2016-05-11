@@ -17,8 +17,9 @@
 
 package org.apache.ignite.internal.processors.query.h2.sql;
 
-import org.h2.command.*;
-import org.jetbrains.annotations.*;
+import java.util.Collections;
+import org.h2.command.Parser;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Table with optional schema.
@@ -35,6 +36,8 @@ public class GridSqlTable extends GridSqlElement {
      * @param tblName Table name.
      */
     public GridSqlTable(@Nullable String schema, String tblName) {
+        super(Collections.<GridSqlElement>emptyList());
+
         this.schema = schema;
         this.tblName = tblName;
     }

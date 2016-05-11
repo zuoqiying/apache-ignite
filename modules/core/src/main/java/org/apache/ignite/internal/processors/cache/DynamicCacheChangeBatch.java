@@ -17,13 +17,14 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import org.apache.ignite.internal.managers.discovery.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.jetbrains.annotations.*;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import org.apache.ignite.internal.managers.discovery.DiscoveryCustomMessage;
+import org.apache.ignite.internal.util.tostring.GridToStringInclude;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.lang.IgniteUuid;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Cache change batch.
@@ -42,6 +43,9 @@ public class DynamicCacheChangeBatch implements DiscoveryCustomMessage {
 
     /** Custom message ID. */
     private IgniteUuid id = IgniteUuid.randomUuid();
+
+    /** */
+    private boolean clientReconnect;
 
     /**
      * @param reqs Requests.
@@ -79,11 +83,6 @@ public class DynamicCacheChangeBatch implements DiscoveryCustomMessage {
     }
 
     /** {@inheritDoc} */
-    @Override public boolean incrementMinorTopologyVersion() {
-        return true;
-    }
-
-    /** {@inheritDoc} */
     @Nullable @Override public DiscoveryCustomMessage ackMessage() {
         return null;
     }
@@ -91,6 +90,20 @@ public class DynamicCacheChangeBatch implements DiscoveryCustomMessage {
     /** {@inheritDoc} */
     @Override public boolean isMutable() {
         return false;
+    }
+
+    /**
+     * @param clientReconnect {@code True} if this is discovery data sent on client reconnect.
+     */
+    public void clientReconnect(boolean clientReconnect) {
+        this.clientReconnect = clientReconnect;
+    }
+
+    /**
+     * @return {@code True} if this is discovery data sent on client reconnect.
+     */
+    public boolean clientReconnect() {
+        return clientReconnect;
     }
 
     /** {@inheritDoc} */

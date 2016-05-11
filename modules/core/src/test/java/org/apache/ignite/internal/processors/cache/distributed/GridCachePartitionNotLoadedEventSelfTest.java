@@ -17,24 +17,32 @@
 
 package org.apache.ignite.internal.processors.cache.distributed;
 
-import org.apache.ignite.*;
-import org.apache.ignite.cache.*;
-import org.apache.ignite.cache.affinity.*;
-import org.apache.ignite.configuration.*;
-import org.apache.ignite.events.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.spi.discovery.tcp.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.*;
-import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.*;
-import org.apache.ignite.testframework.*;
-import org.apache.ignite.testframework.junits.common.*;
-import org.apache.ignite.util.*;
-import org.eclipse.jetty.util.*;
+import java.util.Collection;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.cache.affinity.Affinity;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.events.CacheRebalancingEvent;
+import org.apache.ignite.events.Event;
+import org.apache.ignite.events.EventType;
+import org.apache.ignite.internal.IgniteFutureTimeoutCheckedException;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsFullMessage;
+import org.apache.ignite.internal.util.lang.GridAbsPredicate;
+import org.apache.ignite.lang.IgnitePredicate;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.testframework.GridTestUtils;
+import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
+import org.apache.ignite.util.TestTcpCommunicationSpi;
+import org.eclipse.jetty.util.ConcurrentHashSet;
 
-import java.util.*;
-import java.util.concurrent.*;
+import static org.apache.ignite.cache.CacheMode.PARTITIONED;
+import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
 
 /**
  *
@@ -70,8 +78,9 @@ public class GridCachePartitionNotLoadedEventSelfTest extends GridCommonAbstract
 
         CacheConfiguration<Integer, Integer> cacheCfg = new CacheConfiguration<>();
 
-        cacheCfg.setCacheMode(CacheMode.PARTITIONED);
+        cacheCfg.setCacheMode(PARTITIONED);
         cacheCfg.setBackups(backupCnt);
+        cacheCfg.setWriteSynchronizationMode(FULL_SYNC);
 
         cfg.setCacheConfiguration(cacheCfg);
 
@@ -84,7 +93,7 @@ public class GridCachePartitionNotLoadedEventSelfTest extends GridCommonAbstract
     }
 
     /**
-     *
+     * @throws Exception If failed.
      */
     public void testPrimaryAndBackupDead() throws Exception {
         backupCnt = 1;
@@ -93,7 +102,7 @@ public class GridCachePartitionNotLoadedEventSelfTest extends GridCommonAbstract
         startGrid(1);
         startGrid(2);
 
-        PartitionNotFullyLoadedListener lsnr = new PartitionNotFullyLoadedListener();
+        final PartitionNotFullyLoadedListener lsnr = new PartitionNotFullyLoadedListener();
 
         ignite(2).events().localListen(lsnr, EventType.EVT_CACHE_REBALANCE_PART_DATA_LOST);
 
@@ -122,17 +131,23 @@ public class GridCachePartitionNotLoadedEventSelfTest extends GridCommonAbstract
 
         assert !cache.containsKey(key);
 
-        assert !lsnr.lostParts.isEmpty();
+        GridTestUtils.waitForCondition(new GridAbsPredicate() {
+            @Override public boolean apply() {
+                return !lsnr.lostParts.isEmpty();
+            }
+        }, getTestTimeout());
     }
 
     /**
-     *
+     * @throws Exception If failed.
      */
     public void testPrimaryDead() throws Exception {
         startGrid(0);
         startGrid(1);
 
-        PartitionNotFullyLoadedListener lsnr = new PartitionNotFullyLoadedListener();
+        awaitPartitionMapExchange();
+
+        final PartitionNotFullyLoadedListener lsnr = new PartitionNotFullyLoadedListener();
 
         ignite(1).events().localListen(lsnr, EventType.EVT_CACHE_REBALANCE_PART_DATA_LOST);
 
@@ -150,7 +165,11 @@ public class GridCachePartitionNotLoadedEventSelfTest extends GridCommonAbstract
 
         assert !jcache(1).containsKey(key);
 
-        assert !lsnr.lostParts.isEmpty();
+        GridTestUtils.waitForCondition(new GridAbsPredicate() {
+            @Override public boolean apply() {
+                return !lsnr.lostParts.isEmpty();
+            }
+        }, getTestTimeout());
     }
 
     /**
@@ -165,7 +184,7 @@ public class GridCachePartitionNotLoadedEventSelfTest extends GridCommonAbstract
 
         startGrid(0);
 
-        PartitionNotFullyLoadedListener lsnr = new PartitionNotFullyLoadedListener();
+        final PartitionNotFullyLoadedListener lsnr = new PartitionNotFullyLoadedListener();
 
         grid(1).events().localListen(lsnr, EventType.EVT_CACHE_REBALANCE_PART_DATA_LOST);
 
@@ -199,7 +218,7 @@ public class GridCachePartitionNotLoadedEventSelfTest extends GridCommonAbstract
 
         startGrid(1);
 
-        PartitionNotFullyLoadedListener lsnr = new PartitionNotFullyLoadedListener();
+        final PartitionNotFullyLoadedListener lsnr = new PartitionNotFullyLoadedListener();
 
         grid(1).events().localListen(lsnr, EventType.EVT_CACHE_REBALANCE_PART_DATA_LOST);
 
@@ -228,7 +247,11 @@ public class GridCachePartitionNotLoadedEventSelfTest extends GridCommonAbstract
 
         awaitPartitionMapExchange();
 
-        assert !lsnr.lostParts.isEmpty();
+        GridTestUtils.waitForCondition(new GridAbsPredicate() {
+            @Override public boolean apply() {
+                return !lsnr.lostParts.isEmpty();
+            }
+        }, getTestTimeout());
     }
 
     /**

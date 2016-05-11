@@ -17,37 +17,51 @@
 
 package org.apache.ignite.internal.processors.cache.distributed.near;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.processors.cache.distributed.*;
-import org.apache.ignite.internal.processors.cache.distributed.dht.*;
-import org.apache.ignite.internal.processors.cache.distributed.dht.colocated.*;
-import org.apache.ignite.internal.processors.cache.transactions.*;
-import org.apache.ignite.internal.processors.cache.version.*;
-import org.apache.ignite.internal.util.future.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import javax.cache.expiry.ExpiryPolicy;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.GridCacheEntryRemovedException;
+import org.apache.ignite.internal.processors.cache.GridCacheMvccFuture;
+import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
+import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
+import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTxMapping;
+import org.apache.ignite.internal.processors.cache.distributed.dht.colocated.GridDhtDetachedCacheEntry;
+import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
+import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
+import org.apache.ignite.internal.processors.cache.transactions.IgniteTxKey;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.util.future.GridCompoundFuture;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
+import org.apache.ignite.internal.util.tostring.GridToStringInclude;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.CU;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteReducer;
+import org.apache.ignite.lang.IgniteUuid;
 
-import javax.cache.expiry.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
-
-import static org.apache.ignite.internal.processors.cache.GridCacheOperation.*;
+import static org.apache.ignite.internal.processors.cache.GridCacheOperation.NOOP;
 
 /**
  * Common code for tx prepare in optimistic and pessimistic modes.
  */
-public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentityFuture<IgniteInternalTx>
-    implements GridCacheFuture<IgniteInternalTx> {
+public abstract class GridNearTxPrepareFutureAdapter extends
+    GridCompoundFuture<GridNearTxPrepareResponse, IgniteInternalTx> implements GridCacheMvccFuture<IgniteInternalTx> {
     /** Logger reference. */
     protected static final AtomicReference<IgniteLogger> logRef = new AtomicReference<>();
 
+    /** Error updater. */
+    protected static final AtomicReferenceFieldUpdater<GridNearTxPrepareFutureAdapter, Throwable> ERR_UPD =
+        AtomicReferenceFieldUpdater.newUpdater(GridNearTxPrepareFutureAdapter.class, Throwable.class, "err");
+
     /** */
-    private static final IgniteReducer<IgniteInternalTx, IgniteInternalTx> REDUCER =
-        new IgniteReducer<IgniteInternalTx, IgniteInternalTx>() {
-            @Override public boolean collect(IgniteInternalTx e) {
+    private static final IgniteReducer<GridNearTxPrepareResponse, IgniteInternalTx> REDUCER =
+        new IgniteReducer<GridNearTxPrepareResponse, IgniteInternalTx>() {
+            @Override public boolean collect(GridNearTxPrepareResponse e) {
                 return true;
             }
 
@@ -64,6 +78,7 @@ public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentit
     protected GridCacheSharedContext<?, ?> cctx;
 
     /** Future ID. */
+    @GridToStringInclude
     protected IgniteUuid futId;
 
     /** Transaction. */
@@ -72,7 +87,7 @@ public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentit
 
     /** Error. */
     @GridToStringExclude
-    protected AtomicReference<Throwable> err = new AtomicReference<>(null);
+    protected volatile Throwable err;
 
     /** Trackable flag. */
     protected boolean trackable = true;
@@ -85,7 +100,7 @@ public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentit
      * @param tx Transaction.
      */
     public GridNearTxPrepareFutureAdapter(GridCacheSharedContext cctx, final GridNearTxLocal tx) {
-        super(cctx.kernalContext(), REDUCER);
+        super(REDUCER);
 
         assert cctx != null;
         assert tx != null;
@@ -141,7 +156,7 @@ public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentit
         Map<UUID, Collection<UUID>> map = txMapping.transactionNodes();
 
         if (map.size() == 1) {
-            Map.Entry<UUID, Collection<UUID>> entry = F.firstEntry(map);
+            Map.Entry<UUID, Collection<UUID>> entry = map.entrySet().iterator().next();
 
             assert entry != null;
 
@@ -156,12 +171,15 @@ public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentit
      * @param m Mapping.
      * @param res Response.
      */
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     protected final void onPrepareResponse(GridDistributedTxMapping m, GridNearTxPrepareResponse res) {
         if (res == null)
             return;
 
         assert res.error() == null : res;
         assert F.isEmpty(res.invalidPartitions()) : res;
+
+        UUID nodeId = m.node().id();
 
         for (Map.Entry<IgniteTxKey, CacheVersionedValue> entry : res.ownedValues().entrySet()) {
             IgniteTxEntry txEntry = tx.entry(entry.getKey());
@@ -178,7 +196,7 @@ public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentit
                         CacheVersionedValue tup = entry.getValue();
 
                         nearEntry.resetFromPrimary(tup.value(), tx.xidVersion(),
-                            tup.version(), m.node().id(), tx.topologyVersion());
+                            tup.version(), nodeId, tx.topologyVersion());
                     }
                     else if (txEntry.cached().detached()) {
                         GridDhtDetachedCacheEntry detachedEntry = (GridDhtDetachedCacheEntry)txEntry.cached();
@@ -192,6 +210,7 @@ public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentit
                 }
                 catch (GridCacheEntryRemovedException ignored) {
                     // Retry.
+                    txEntry.cached(cacheCtx.cache().entryEx(txEntry.key(), tx.topologyVersion()));
                 }
             }
         }
@@ -219,10 +238,16 @@ public abstract class GridNearTxPrepareFutureAdapter extends GridCompoundIdentit
             if (writeVer == null)
                 writeVer = res.dhtVersion();
 
-            // Register DHT version.
-            tx.addDhtVersion(m.node().id(), res.dhtVersion(), writeVer);
+            // This step is very important as near and DHT versions grow separately.
+            cctx.versions().onReceived(nodeId, res.dhtVersion());
 
+            // Register DHT version.
             m.dhtVersion(res.dhtVersion(), writeVer);
+
+            GridDistributedTxMapping map = tx.mappings().get(nodeId);
+
+            if (map != null)
+                map.dhtVersion(res.dhtVersion(), writeVer);
 
             if (m.near())
                 tx.readyNearLocks(m, res.pending(), res.committedVersions(), res.rolledbackVersions());

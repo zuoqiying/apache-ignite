@@ -17,12 +17,14 @@
 
 package org.apache.ignite.internal.processors.hadoop.examples;
 
-import org.apache.hadoop.conf.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapreduce.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.StringTokenizer;
+import org.apache.hadoop.conf.Configurable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.ignite.internal.processors.hadoop.HadoopErrorSimulator;
 
 /**
  * Mapper phase of WordCount job.
@@ -52,17 +54,31 @@ public class HadoopWordCount2Mapper extends Mapper<Object, Text, Text, IntWritab
 
             ctx.write(word, one);
         }
+
+        HadoopErrorSimulator.instance().onMap();
     }
 
     /** {@inheritDoc} */
-    @Override protected void setup(Context context) throws IOException, InterruptedException {
-        super.setup(context);
+    @Override protected void setup(Context ctx) throws IOException, InterruptedException {
+        super.setup(ctx);
+
         wasSetUp = true;
+
+        HadoopErrorSimulator.instance().onMapSetup();
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void cleanup(Context ctx) throws IOException, InterruptedException {
+        super.cleanup(ctx);
+
+        HadoopErrorSimulator.instance().onMapCleanup();
     }
 
     /** {@inheritDoc} */
     @Override public void setConf(Configuration conf) {
         wasConfigured = true;
+
+        HadoopErrorSimulator.instance().onMapConfigure();
     }
 
     /** {@inheritDoc} */

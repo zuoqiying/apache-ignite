@@ -17,21 +17,31 @@
 
 package org.apache.ignite.internal.processors.datastructures;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.processors.cache.transactions.*;
-import org.apache.ignite.internal.util.typedef.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.jetbrains.annotations.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.ObjectStreamException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.GridKernalContext;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.IgniteInternalCache;
+import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
+import org.apache.ignite.internal.util.typedef.internal.A;
+import org.apache.ignite.internal.util.typedef.internal.CU;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteBiTuple;
 
-import java.io.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-
-import static org.apache.ignite.transactions.TransactionConcurrency.*;
-import static org.apache.ignite.transactions.TransactionIsolation.*;
+import static org.apache.ignite.internal.util.typedef.internal.CU.retryTopologySafe;
+import static org.apache.ignite.transactions.TransactionConcurrency.PESSIMISTIC;
+import static org.apache.ignite.transactions.TransactionIsolation.REPEATABLE_READ;
 
 /**
  * Cache count down latch implementation.
@@ -44,7 +54,7 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
     private static final ThreadLocal<IgniteBiTuple<GridKernalContext, String>> stash =
         new ThreadLocal<IgniteBiTuple<GridKernalContext, String>>() {
             @Override protected IgniteBiTuple<GridKernalContext, String> initialValue() {
-                return F.t2();
+                return new IgniteBiTuple<>();
             }
         };
 
@@ -65,9 +75,6 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
 
     /** Cache context. */
     private GridCacheContext ctx;
-
-    /** Current count. */
-    private int cnt;
 
     /** Initial count. */
     private int initCnt;
@@ -95,7 +102,6 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
      * Constructor.
      *
      * @param name Latch name.
-     * @param cnt Current count.
      * @param initCnt Initial count.
      * @param autoDel Auto delete flag.
      * @param key Latch key.
@@ -103,7 +109,6 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
      * @param ctx Cache context.
      */
     public GridCacheCountDownLatchImpl(String name,
-        int cnt,
         int initCnt,
         boolean autoDel,
         GridCacheInternalKey key,
@@ -111,21 +116,19 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
         GridCacheContext ctx)
     {
         assert name != null;
-        assert cnt >= 0;
         assert initCnt >= 0;
         assert key != null;
         assert latchView != null;
         assert ctx != null;
 
         this.name = name;
-        this.cnt = cnt;
         this.initCnt = initCnt;
         this.autoDel = autoDel;
         this.key = key;
         this.latchView = latchView;
         this.ctx = ctx;
 
-        log = ctx.gridConfig().getGridLogger().getLogger(getClass());
+        log = ctx.logger(getClass());
     }
 
     /** {@inheritDoc} */
@@ -135,7 +138,12 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
 
     /** {@inheritDoc} */
     @Override public int count() {
-        return cnt;
+        try {
+            return CU.outTx(new GetCountCallable(), ctx);
+        }
+        catch (IgniteCheckedException e) {
+            throw U.convertException(e);
+        }
     }
 
     /** {@inheritDoc} */
@@ -179,12 +187,7 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
 
     /** {@inheritDoc} */
     @Override public int countDown() {
-        try {
-            return CU.outTx(new CountDownCallable(1), ctx);
-        }
-        catch (IgniteCheckedException e) {
-            throw U.convertException(e);
-        }
+        return countDown(1);
     }
 
     /** {@inheritDoc} */
@@ -192,7 +195,7 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
         A.ensure(val > 0, "val should be positive");
 
         try {
-            return CU.outTx(new CountDownCallable(val), ctx);
+            return CU.outTx(retryTopologySafe(new CountDownCallable(val)), ctx);
         }
         catch (IgniteCheckedException e) {
             throw U.convertException(e);
@@ -202,7 +205,7 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
     /** {@inheritDoc}*/
     @Override public void countDownAll() {
         try {
-            CU.outTx(new CountDownCallable(0), ctx);
+            CU.outTx(retryTopologySafe(new CountDownCallable(0)), ctx);
         }
         catch (IgniteCheckedException e) {
             throw U.convertException(e);
@@ -211,13 +214,11 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
 
     /** {@inheritDoc} */
     @Override public boolean onRemoved() {
-        assert cnt == 0;
-
         return rmvd = true;
     }
 
     /** {@inheritDoc} */
-    @Override public void onInvalid(@Nullable Exception err) {
+    @Override public void needCheckNotRemoved() {
         // No-op.
     }
 
@@ -235,8 +236,6 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
     @Override public void onUpdate(int cnt) {
         assert cnt >= 0;
 
-        this.cnt = cnt;
-
         while (internalLatch != null && internalLatch.getCount() > cnt)
             internalLatch.countDown();
     }
@@ -248,7 +247,7 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
         if (initGuard.compareAndSet(false, true)) {
             try {
                 internalLatch = CU.outTx(
-                    new Callable<CountDownLatch>() {
+                    retryTopologySafe(new Callable<CountDownLatch>() {
                         @Override public CountDownLatch call() throws Exception {
                             try (IgniteInternalTx tx = CU.txStartInternal(ctx, latchView, PESSIMISTIC, REPEATABLE_READ)) {
                                 GridCacheCountDownLatchValue val = latchView.get(key);
@@ -257,9 +256,7 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
                                     if (log.isDebugEnabled())
                                         log.debug("Failed to find count down latch with given name: " + name);
 
-                                    assert cnt == 0;
-
-                                    return new CountDownLatch(cnt);
+                                    return new CountDownLatch(0);
                                 }
 
                                 tx.commit();
@@ -267,7 +264,7 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
                                 return new CountDownLatch(val.get());
                             }
                         }
-                    },
+                    }),
                     ctx
                 );
 
@@ -288,14 +285,13 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
 
     /** {@inheritDoc} */
     @Override public void close() {
-        if (rmvd)
-            return;
-
-        try {
-            ctx.kernalContext().dataStructures().removeCountDownLatch(name);
-        }
-        catch (IgniteCheckedException e) {
-            throw U.convertException(e);
+        if (!rmvd) {
+            try {
+                ctx.kernalContext().dataStructures().removeCountDownLatch(name);
+            }
+            catch (IgniteCheckedException e) {
+                throw U.convertException(e);
+            }
         }
     }
 
@@ -342,6 +338,18 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
     /**
      *
      */
+    private class GetCountCallable implements Callable<Integer> {
+        /** {@inheritDoc} */
+        @Override public Integer call() throws Exception {
+            GridCacheCountDownLatchValue latchVal = latchView.get(key);
+
+            return latchVal == null ? 0 : latchVal.get();
+        }
+    }
+
+    /**
+     *
+     */
     private class CountDownCallable implements Callable<Integer> {
         /** Value to count down on (if 0 then latch is counted down to 0). */
         private final int val;
@@ -364,9 +372,7 @@ public final class GridCacheCountDownLatchImpl implements GridCacheCountDownLatc
                     if (log.isDebugEnabled())
                         log.debug("Failed to find count down latch with given name: " + name);
 
-                    assert cnt == 0;
-
-                    return cnt;
+                    return 0;
                 }
 
                 int retVal;

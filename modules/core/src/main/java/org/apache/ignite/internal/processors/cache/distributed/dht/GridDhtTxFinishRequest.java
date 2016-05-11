@@ -17,21 +17,24 @@
 
 package org.apache.ignite.internal.processors.cache.distributed.dht;
 
-import org.apache.ignite.internal.*;
-import org.apache.ignite.internal.processors.affinity.*;
-import org.apache.ignite.internal.managers.communication.*;
-import org.apache.ignite.internal.processors.cache.distributed.*;
-import org.apache.ignite.internal.processors.cache.version.*;
-import org.apache.ignite.internal.util.tostring.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.lang.*;
-import org.apache.ignite.plugin.extensions.communication.*;
-import org.apache.ignite.transactions.*;
-import org.jetbrains.annotations.*;
-
-import java.io.*;
-import java.nio.*;
-import java.util.*;
+import java.io.Externalizable;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.UUID;
+import org.apache.ignite.internal.GridDirectCollection;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxFinishRequest;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.util.GridLongList;
+import org.apache.ignite.internal.util.tostring.GridToStringInclude;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.lang.IgniteUuid;
+import org.apache.ignite.plugin.extensions.communication.MessageCollectionItemType;
+import org.apache.ignite.plugin.extensions.communication.MessageReader;
+import org.apache.ignite.plugin.extensions.communication.MessageWriter;
+import org.apache.ignite.transactions.TransactionIsolation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Near transaction finish request.
@@ -39,6 +42,9 @@ import java.util.*;
 public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
     /** */
     private static final long serialVersionUID = 0L;
+
+    /** */
+    public static final int WAIT_REMOTE_TX_FLAG_MASK = 0x01;
 
     /** Near node ID. */
     private UUID nearNodeId;
@@ -60,6 +66,14 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
     @GridDirectCollection(GridCacheVersion.class)
     private Collection<GridCacheVersion> pendingVers;
 
+    /** Check committed flag. */
+    private boolean checkCommitted;
+
+    /** Partition update counter. */
+    @GridToStringInclude
+    @GridDirectCollection(Long.class)
+    private GridLongList partUpdateCnt;
+
     /** One phase commit write version. */
     private GridCacheVersion writeVer;
 
@@ -68,6 +82,9 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
 
     /** Task name hash. */
     private int taskNameHash;
+
+    /** */
+    private byte flags;
 
     /**
      * Empty constructor required for {@link Externalizable}.
@@ -88,6 +105,7 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
      * @param commit Commit flag.
      * @param invalidate Invalidate flag.
      * @param sys System flag.
+     * @param plc IO policy.
      * @param sysInvalidate System invalidation flag.
      * @param syncCommit Synchronous commit flag.
      * @param syncRollback Synchronous rollback flag.
@@ -98,6 +116,7 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
      * @param txSize Expected transaction size.
      * @param subjId Subject ID.
      * @param taskNameHash Task name hash.
+     * @param addDepInfo Deployment info flag.
      */
     public GridDhtTxFinishRequest(
         UUID nearNodeId,
@@ -111,7 +130,7 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
         boolean commit,
         boolean invalidate,
         boolean sys,
-        GridIoPolicy plc,
+        byte plc,
         boolean sysInvalidate,
         boolean syncCommit,
         boolean syncRollback,
@@ -121,10 +140,25 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
         Collection<GridCacheVersion> pendingVers,
         int txSize,
         @Nullable UUID subjId,
-        int taskNameHash
+        int taskNameHash,
+        boolean addDepInfo
     ) {
-        super(xidVer, futId, commitVer, threadId, commit, invalidate, sys, plc, syncCommit, syncRollback, baseVer,
-            committedVers, rolledbackVers, txSize);
+        super(
+            xidVer,
+            futId,
+            commitVer,
+            threadId,
+            commit,
+            invalidate,
+            sys,
+            plc,
+            syncCommit,
+            syncRollback,
+            baseVer,
+            committedVers,
+            rolledbackVers,
+            txSize,
+            addDepInfo);
 
         assert miniId != null;
         assert nearNodeId != null;
@@ -140,9 +174,75 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
         this.taskNameHash = taskNameHash;
     }
 
-    /** {@inheritDoc} */
-    @Override public boolean allowForStartup() {
-        return true;
+    /**
+     * @param nearNodeId Near node ID.
+     * @param futId Future ID.
+     * @param miniId Mini future ID.
+     * @param topVer Topology version.
+     * @param xidVer Transaction ID.
+     * @param threadId Thread ID.
+     * @param commitVer Commit version.
+     * @param isolation Transaction isolation.
+     * @param commit Commit flag.
+     * @param invalidate Invalidate flag.
+     * @param sys System flag.
+     * @param plc IO policy.
+     * @param sysInvalidate System invalidation flag.
+     * @param syncCommit Synchronous commit flag.
+     * @param syncRollback Synchronous rollback flag.
+     * @param baseVer Base version.
+     * @param committedVers Committed versions.
+     * @param rolledbackVers Rolled back versions.
+     * @param pendingVers Pending versions.
+     * @param txSize Expected transaction size.
+     * @param subjId Subject ID.
+     * @param taskNameHash Task name hash.
+     * @param updateIdxs Partition update idxs.
+     * @param addDepInfo Deployment info flag.
+     */
+    public GridDhtTxFinishRequest(
+        UUID nearNodeId,
+        IgniteUuid futId,
+        IgniteUuid miniId,
+        @NotNull AffinityTopologyVersion topVer,
+        GridCacheVersion xidVer,
+        GridCacheVersion commitVer,
+        long threadId,
+        TransactionIsolation isolation,
+        boolean commit,
+        boolean invalidate,
+        boolean sys,
+        byte plc,
+        boolean sysInvalidate,
+        boolean syncCommit,
+        boolean syncRollback,
+        GridCacheVersion baseVer,
+        Collection<GridCacheVersion> committedVers,
+        Collection<GridCacheVersion> rolledbackVers,
+        Collection<GridCacheVersion> pendingVers,
+        int txSize,
+        @Nullable UUID subjId,
+        int taskNameHash,
+        boolean addDepInfo,
+        Collection<Long> updateIdxs
+    ) {
+        this(nearNodeId, futId, miniId, topVer, xidVer, commitVer, threadId, isolation, commit, invalidate, sys, plc,
+            sysInvalidate, syncCommit, syncRollback, baseVer, committedVers, rolledbackVers, pendingVers, txSize,
+            subjId, taskNameHash, addDepInfo);
+
+        if (updateIdxs != null && !updateIdxs.isEmpty()) {
+            partUpdateCnt = new GridLongList(updateIdxs.size());
+
+            for (Long idx : updateIdxs)
+                partUpdateCnt.add(idx);
+        }
+    }
+
+    /**
+     * @return Partition update counters.
+     */
+    public GridLongList partUpdateCounters(){
+        return partUpdateCnt;
     }
 
     /**
@@ -209,13 +309,34 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
     }
 
     /**
-     * Gets versions of not acquired locks with version less then one of transaction being committed.
-     *
-     * @return Versions of locks for entries participating in transaction that have not been acquired yet
-     *      have version less then one of transaction being committed.
+     * @return Check committed flag.
      */
-    public Collection<GridCacheVersion> pendingVersions() {
-        return pendingVers == null ? Collections.<GridCacheVersion>emptyList() : pendingVers;
+    public boolean checkCommitted() {
+        return checkCommitted;
+    }
+
+    /**
+     * @param checkCommitted Check committed flag.
+     */
+    public void checkCommitted(boolean checkCommitted) {
+        this.checkCommitted = checkCommitted;
+    }
+
+    /**
+     * @return {@code True}
+     */
+    public boolean waitRemoteTransactions() {
+        return (flags & WAIT_REMOTE_TX_FLAG_MASK) != 0;
+    }
+
+    /**
+     * @param waitRemoteTxs Wait remote transactions flag.
+     */
+    public void waitRemoteTransactions(boolean waitRemoteTxs) {
+        if (waitRemoteTxs)
+            flags = (byte)(flags | WAIT_REMOTE_TX_FLAG_MASK);
+        else
+            flags &= ~WAIT_REMOTE_TX_FLAG_MASK;
     }
 
     /** {@inheritDoc} */
@@ -239,54 +360,72 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
 
         switch (writer.state()) {
             case 18:
-                if (!writer.writeByte("isolation", isolation != null ? (byte)isolation.ordinal() : -1))
+                if (!writer.writeBoolean("checkCommitted", checkCommitted))
                     return false;
 
                 writer.incrementState();
 
             case 19:
-                if (!writer.writeIgniteUuid("miniId", miniId))
+                if (!writer.writeByte("flags", flags))
                     return false;
 
                 writer.incrementState();
 
             case 20:
-                if (!writer.writeUuid("nearNodeId", nearNodeId))
+                if (!writer.writeByte("isolation", isolation != null ? (byte)isolation.ordinal() : -1))
                     return false;
 
                 writer.incrementState();
 
             case 21:
-                if (!writer.writeCollection("pendingVers", pendingVers, MessageCollectionItemType.MSG))
+                if (!writer.writeIgniteUuid("miniId", miniId))
                     return false;
 
                 writer.incrementState();
 
             case 22:
-                if (!writer.writeUuid("subjId", subjId))
+                if (!writer.writeUuid("nearNodeId", nearNodeId))
                     return false;
 
                 writer.incrementState();
 
             case 23:
-                if (!writer.writeBoolean("sysInvalidate", sysInvalidate))
+                if (!writer.writeMessage("partUpdateCnt", partUpdateCnt))
                     return false;
 
                 writer.incrementState();
 
             case 24:
-                if (!writer.writeInt("taskNameHash", taskNameHash))
+                if (!writer.writeCollection("pendingVers", pendingVers, MessageCollectionItemType.MSG))
                     return false;
 
                 writer.incrementState();
 
             case 25:
-                if (!writer.writeMessage("topVer", topVer))
+                if (!writer.writeUuid("subjId", subjId))
                     return false;
 
                 writer.incrementState();
 
             case 26:
+                if (!writer.writeBoolean("sysInvalidate", sysInvalidate))
+                    return false;
+
+                writer.incrementState();
+
+            case 27:
+                if (!writer.writeInt("taskNameHash", taskNameHash))
+                    return false;
+
+                writer.incrementState();
+
+            case 28:
+                if (!writer.writeMessage("topVer", topVer))
+                    return false;
+
+                writer.incrementState();
+
+            case 29:
                 if (!writer.writeMessage("writeVer", writeVer))
                     return false;
 
@@ -309,6 +448,22 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
 
         switch (reader.state()) {
             case 18:
+                checkCommitted = reader.readBoolean("checkCommitted");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 19:
+                flags = reader.readByte("flags");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 20:
                 byte isolationOrd;
 
                 isolationOrd = reader.readByte("isolation");
@@ -320,7 +475,7 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
 
                 reader.incrementState();
 
-            case 19:
+            case 21:
                 miniId = reader.readIgniteUuid("miniId");
 
                 if (!reader.isLastRead())
@@ -328,7 +483,7 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
 
                 reader.incrementState();
 
-            case 20:
+            case 22:
                 nearNodeId = reader.readUuid("nearNodeId");
 
                 if (!reader.isLastRead())
@@ -336,24 +491,8 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
 
                 reader.incrementState();
 
-            case 21:
-                pendingVers = reader.readCollection("pendingVers", MessageCollectionItemType.MSG);
-
-                if (!reader.isLastRead())
-                    return false;
-
-                reader.incrementState();
-
-            case 22:
-                subjId = reader.readUuid("subjId");
-
-                if (!reader.isLastRead())
-                    return false;
-
-                reader.incrementState();
-
             case 23:
-                sysInvalidate = reader.readBoolean("sysInvalidate");
+                partUpdateCnt = reader.readMessage("partUpdateCnt");
 
                 if (!reader.isLastRead())
                     return false;
@@ -361,7 +500,7 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
                 reader.incrementState();
 
             case 24:
-                taskNameHash = reader.readInt("taskNameHash");
+                pendingVers = reader.readCollection("pendingVers", MessageCollectionItemType.MSG);
 
                 if (!reader.isLastRead())
                     return false;
@@ -369,7 +508,7 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
                 reader.incrementState();
 
             case 25:
-                topVer = reader.readMessage("topVer");
+                subjId = reader.readUuid("subjId");
 
                 if (!reader.isLastRead())
                     return false;
@@ -377,6 +516,30 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
                 reader.incrementState();
 
             case 26:
+                sysInvalidate = reader.readBoolean("sysInvalidate");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 27:
+                taskNameHash = reader.readInt("taskNameHash");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 28:
+                topVer = reader.readMessage("topVer");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 29:
                 writeVer = reader.readMessage("writeVer");
 
                 if (!reader.isLastRead())
@@ -386,7 +549,7 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
 
         }
 
-        return true;
+        return reader.afterMessageRead(GridDhtTxFinishRequest.class);
     }
 
     /** {@inheritDoc} */
@@ -396,6 +559,6 @@ public class GridDhtTxFinishRequest extends GridDistributedTxFinishRequest {
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 27;
+        return 30;
     }
 }

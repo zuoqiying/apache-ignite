@@ -17,20 +17,38 @@
 
 package org.apache.ignite.internal;
 
-import org.apache.ignite.*;
-import org.apache.ignite.internal.processors.cache.*;
-import org.apache.ignite.internal.util.typedef.internal.*;
-import org.apache.ignite.plugin.*;
-
-import javax.cache.event.*;
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.channels.FileLock;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.Lock;
+import javax.cache.event.CacheEntryEvent;
+import javax.cache.event.CacheEntryListenerException;
+import javax.cache.event.CacheEntryUpdatedListener;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.processors.cache.CachePartialUpdateCheckedException;
+import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.internal.processors.cache.GridCacheTryPutFailedException;
+import org.apache.ignite.internal.util.GridStripedLock;
+import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.plugin.PluginProvider;
 
 /**
  * Marshaller context implementation.
  */
 public class MarshallerContextImpl extends MarshallerContextAdapter {
+    /** */
+    private static final GridStripedLock fileLock = new GridStripedLock(32);
+
     /** */
     private final CountDownLatch latch = new CountDownLatch(1);
 
@@ -61,20 +79,17 @@ public class MarshallerContextImpl extends MarshallerContextAdapter {
      * @throws IgniteCheckedException In case of error.
      */
     public void onMarshallerCacheStarted(GridKernalContext ctx) throws IgniteCheckedException {
-        ctx.cache().marshallerCache().context().continuousQueries().executeInternalQuery(
-            new ContinuousQueryListener(log, workDir),
-            null,
-            ctx.cache().marshallerCache().context().affinityNode(),
-            true
-        );
-    }
-
-    /**
-     * @param ctx Kernal context.
-     * @throws IgniteCheckedException In case of error.
-     */
-    public void onMarshallerCachePreloaded(GridKernalContext ctx) throws IgniteCheckedException {
         assert ctx != null;
+
+        if (!ctx.isDaemon()) {
+            ctx.cache().marshallerCache().context().continuousQueries().executeInternalQuery(
+                new ContinuousQueryListener(ctx.log(MarshallerContextImpl.class), workDir),
+                null,
+                ctx.cache().marshallerCache().context().affinityNode(),
+                true,
+                false
+            );
+        }
 
         log = ctx.log(MarshallerContextImpl.class);
 
@@ -100,7 +115,7 @@ public class MarshallerContextImpl extends MarshallerContextAdapter {
         String old;
 
         try {
-            old = cache0.tryPutIfAbsent(id, clsName);
+            old = cache0.tryGetAndPut(id, clsName);
 
             if (old != null && !old.equals(clsName))
                 throw new IgniteCheckedException("Type ID collision detected [id=" + id + ", clsName1=" + clsName +
@@ -112,8 +127,9 @@ public class MarshallerContextImpl extends MarshallerContextAdapter {
         }
         catch (CachePartialUpdateCheckedException | GridCacheTryPutFailedException e) {
             if (++failedCnt > 10) {
-                U.quietAndWarn(log, e, "Failed to register marshalled class for more than 10 times in a row " +
-                    "(may affect performance).");
+                if (log.isQuiet())
+                    U.quiet(false, "Failed to register marshalled class for more than 10 times in a row " +
+                        "(may affect performance).");
 
                 failedCnt = 0;
             }
@@ -135,17 +151,35 @@ public class MarshallerContextImpl extends MarshallerContextAdapter {
                 throw new IllegalStateException("Failed to initialize marshaller context (grid is stopping).");
         }
 
-        String clsName = cache0.get(id);
+        String clsName = cache0.getTopologySafe(id);
 
         if (clsName == null) {
-            File file = new File(workDir, id + ".classname");
+            String fileName = id + ".classname";
 
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                clsName = reader.readLine();
+            Lock lock = fileLock(fileName);
+
+            lock.lock();
+
+            try {
+                File file = new File(workDir, fileName);
+
+                try (FileInputStream in = new FileInputStream(file)) {
+                    FileLock fileLock = in.getChannel().lock(0L, Long.MAX_VALUE, true);
+
+                    assert fileLock != null : fileName;
+
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+                        clsName = reader.readLine();
+                    }
+                }
+                catch (IOException e) {
+                    throw new IgniteCheckedException("Class definition was not found " +
+                        "at marshaller cache and local file. " +
+                        "[id=" + id + ", file=" + file.getAbsolutePath() + ']');
+                }
             }
-            catch (IOException e) {
-                throw new IgniteCheckedException("Failed to read class name from file [id=" + id +
-                    ", file=" + file.getAbsolutePath() + ']', e);
+            finally {
+                lock.unlock();
             }
 
             // Must explicitly put entry to cache to invoke other continuous queries.
@@ -153,6 +187,14 @@ public class MarshallerContextImpl extends MarshallerContextAdapter {
         }
 
         return clsName;
+    }
+
+    /**
+     * @param fileName File name.
+     * @return Lock instance.
+     */
+    private static Lock fileLock(String fileName) {
+        return fileLock.getLock(fileName.hashCode());
     }
 
     /**
@@ -174,21 +216,41 @@ public class MarshallerContextImpl extends MarshallerContextAdapter {
         }
 
         /** {@inheritDoc} */
-        @Override public void onUpdated(Iterable<CacheEntryEvent<? extends Integer, ? extends String>> events)
+        @Override public void onUpdated(Iterable<CacheEntryEvent<? extends Integer, ? extends String>> evts)
             throws CacheEntryListenerException {
-            for (CacheEntryEvent<? extends Integer, ? extends String> evt : events) {
-                assert evt.getOldValue() == null : "Received non-null old value for system marshaller cache: " + evt;
+            for (CacheEntryEvent<? extends Integer, ? extends String> evt : evts) {
+                assert evt.getOldValue() == null || F.eq(evt.getOldValue(), evt.getValue()):
+                    "Received cache entry update for system marshaller cache: " + evt;
 
-                File file = new File(workDir, evt.getKey() + ".classname");
+                if (evt.getOldValue() == null) {
+                    String fileName = evt.getKey() + ".classname";
 
-                try (Writer writer = new FileWriter(file)) {
-                    writer.write(evt.getValue());
+                    Lock lock = fileLock(fileName);
 
-                    writer.flush();
-                }
-                catch (IOException e) {
-                    U.error(log, "Failed to write class name to file [id=" + evt.getKey() +
-                        ", clsName=" + evt.getValue() + ", file=" + file.getAbsolutePath() + ']', e);
+                    lock.lock();
+
+                    try {
+                        File file = new File(workDir, fileName);
+
+                        try (FileOutputStream out = new FileOutputStream(file)) {
+                            FileLock fileLock = out.getChannel().lock(0L, Long.MAX_VALUE, false);
+
+                            assert fileLock != null : fileName;
+
+                            try (Writer writer = new OutputStreamWriter(out)) {
+                                writer.write(evt.getValue());
+
+                                writer.flush();
+                            }
+                        }
+                        catch (IOException e) {
+                            U.error(log, "Failed to write class name to file [id=" + evt.getKey() +
+                                ", clsName=" + evt.getValue() + ", file=" + file.getAbsolutePath() + ']', e);
+                        }
+                    }
+                    finally {
+                        lock.unlock();
+                    }
                 }
             }
         }
