@@ -593,7 +593,7 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
 
         GridCursor<? extends CacheDataRow> cur2 = indexingEnabled ? cctx.queries().pkIndex().find(null, null) : null;
 
-        return cur2 != null ? new CompoundCursor(cur1, cur2) : cur1;
+        return cur2 != null ? new CompoundCursor(cur1, cur2) : (GridCursor<CacheDataRow>) cur1;
     }
 
     /**

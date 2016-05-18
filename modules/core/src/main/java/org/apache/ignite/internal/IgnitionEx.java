@@ -1944,15 +1944,25 @@ public class IgnitionEx {
 
             initializeDefaultCacheConfiguration(myCfg);
 
-            if (myCfg.getDatabaseConfiguration() == null) {
-                DatabaseConfiguration dbCfg = new DatabaseConfiguration();
+            DatabaseConfiguration dbCfg = myCfg.getDatabaseConfiguration();
+
+            if (dbCfg == null) {
+                dbCfg = new DatabaseConfiguration();
 
                 dbCfg.setConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
                 dbCfg.setPageSize(32 * 1024);
                 dbCfg.setPageCacheSize(512 * 1024 * 1024);
-
-                myCfg.setDatabaseConfiguration(dbCfg);
             }
+            else
+                dbCfg = new DatabaseConfiguration(dbCfg);
+
+            if (dbCfg.getPageSize() <= 0)
+                dbCfg.setPageSize(DatabaseConfiguration.DFLT_PAGE_SIZE);
+
+            if (dbCfg.getPageCacheSize() <= 0)
+                dbCfg.setPageCacheSize(dbCfg.getPageSize() * 1024 * 16);
+
+            myCfg.setDatabaseConfiguration(dbCfg);
 
             return myCfg;
         }

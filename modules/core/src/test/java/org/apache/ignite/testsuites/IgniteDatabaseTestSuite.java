@@ -18,6 +18,7 @@
 package org.apache.ignite.testsuites;
 
 import junit.framework.TestSuite;
+import org.apache.ignite.internal.processors.database.IgniteDbConfigurationTest;
 import org.apache.ignite.internal.processors.database.IgniteDbMultiNodePutGetTest;
 import org.apache.ignite.internal.processors.database.IgniteDbSingleNodePutGetTest;
 
@@ -34,6 +35,7 @@ public class IgniteDatabaseTestSuite extends TestSuite {
 
         suite.addTestSuite(IgniteDbSingleNodePutGetTest.class);
         suite.addTestSuite(IgniteDbMultiNodePutGetTest.class);
+        suite.addTestSuite(IgniteDbConfigurationTest.class);
 
         return suite;
     }

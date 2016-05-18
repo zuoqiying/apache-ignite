@@ -48,6 +48,24 @@ public class DatabaseConfiguration implements Serializable {
     private boolean persistenceEnabled;
 
     /**
+     *
+     */
+    public DatabaseConfiguration() {
+    }
+
+    /**
+     * @param src Copy from.
+     */
+    public DatabaseConfiguration(final DatabaseConfiguration src) {
+        pageSize = src.getPageSize();
+        fileCacheAllocationPath = src.getFileCacheAllocationPath();
+        pageCacheSize = src.getPageCacheSize();
+        fragmentSize = src.getFragmentSize();
+        concLvl = src.getConcurrencyLevel();
+        persistenceEnabled = src.isPersistenceEnabled();
+    }
+
+    /**
      * @return Page size.
      */
     public int getPageSize() {
