@@ -151,6 +151,9 @@ public class IgniteBenchmarkArguments {
     /** */
     @Parameter(names = {"-pp", "--printPartitionStats"}, description = "Print partition statistics")
     private boolean printPartStats;
+    /** */
+    @Parameter(names = {"-sqloc", "--scanQueryLocal"}, description = "Scan query local flag")
+    private boolean scanQueryLocal;
 
     /** */
     @Parameter(names = {"-ltops", "--allowedLoadTestOperations"}, variableArity = true, description = "List of enabled load test operations")
@@ -371,6 +374,13 @@ public class IgniteBenchmarkArguments {
      */
     public int cacheOperationTimeoutMillis() {
         return cacheOpTimeout * 1000;
+    }
+
+    /**
+     * @return {@code True} if local scan query should be used.
+     */
+    public boolean scanQueryIsLocal() {
+        return scanQueryLocal;
     }
 
     /**
