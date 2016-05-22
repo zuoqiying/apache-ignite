@@ -76,6 +76,9 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
     /** */
     private ReuseList reuseList;
 
+    /** */
+    private PageMemory pageMem;
+
     /**
      * @param indexingEnabled {@code True} if indexing is enabled for cache.
      */
@@ -96,7 +99,8 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
 
             int cpus = Runtime.getRuntime().availableProcessors();
 
-            reuseList = new ReuseList(cctx.cacheId(), dbMgr.pageMemory(), cpus * 2, dbMgr.meta());
+            pageMem = dbMgr.pageMemory();
+            reuseList = new ReuseList(cctx.cacheId(), pageMem, cpus * 2, dbMgr.meta());
             freeList = new FreeList(cctx, reuseList);
 
             rowStore = new CacheDataRowStore(cctx, freeList);
@@ -125,6 +129,15 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
     }
 
     /**
+     * @param pageId Page ID.
+     * @return Page.
+     * @throws IgniteCheckedException If failed.
+     */
+    private Page page(long pageId) throws IgniteCheckedException {
+        return pageMem.page(new FullPageId(pageId, cctx.cacheId()));
+    }
+
+    /**
      * @param key  Key.
      * @param val  Value.
      * @param ver  Version.
@@ -146,7 +159,7 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
                 return;
         }
 
-        DataRow dataRow = new DataRow(key, val, ver, part, 0);
+        DataRow dataRow = new DataRow(key.hashCode(), key, val, ver, part);
 
         rowStore.addRow(dataRow);
 
@@ -171,7 +184,7 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
                 return;
         }
 
-        DataRow dataRow = dataTree.remove(new KeySearchRow(key, 0));
+        DataRow dataRow = dataTree.remove(new KeySearchRow(key.hashCode(), key, 0));
 
         if (dataRow != null) {
             assert dataRow.link != 0 : dataRow;
@@ -196,9 +209,9 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
                 return t.get1() != null ? t : null;
         }
 
-        DataRow dataRow = dataTree.findOne(new KeySearchRow(key, 0));
+        DataRow dataRow = dataTree.findOne(new KeySearchRow(key.hashCode(), key, 0));
 
-        return dataRow != null ? F.t(dataRow.val, dataRow.ver) : null;
+        return dataRow != null ? F.t(dataRow.value(), dataRow.version()) : null;
     }
 
     /**
@@ -635,20 +648,72 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
     /**
      *
      */
-    private static class KeySearchRow {
+    private class KeySearchRow {
         /** */
-        protected final KeyCacheObject key;
+        int hash;
 
         /** */
-        protected long link;
+        KeyCacheObject key;
+
+        /** */
+        long link;
 
         /**
+         * @param hash Hash code.
          * @param key Key.
          * @param link Link.
          */
-        KeySearchRow(KeyCacheObject key, long link) {
+        KeySearchRow(int hash, KeyCacheObject key, long link) {
+            this.hash = hash;
             this.key = key;
             this.link = link;
+        }
+
+        /**
+         * @param buf Buffer.
+         * @throws IgniteCheckedException If failed.
+         */
+        protected void doInitData(ByteBuffer buf) throws IgniteCheckedException {
+            key = cctx.cacheObjects().toKeyCacheObject(cctx.cacheObjectContext(), buf);
+        }
+
+        /**
+         * Init data.
+         */
+        protected final void initData() {
+            if (key != null)
+                return;
+
+            assert link != 0;
+
+            try (Page page = page(pageId(link))) {
+                ByteBuffer buf = page.getForRead();
+
+                try {
+                    DataPageIO io = DataPageIO.VERSIONS.forPage(buf);
+
+                    int dataOff = io.getDataOffset(buf, dwordsOffset(link));
+
+                    buf.position(dataOff);
+
+                    // Skip entry size.
+                    buf.getShort();
+
+                    doInitData(buf);
+                }
+                finally {
+                    page.releaseRead();
+                }
+            }
+            catch (IgniteCheckedException e) {
+                throw new IgniteException(e);
+            }
+        }
+
+        public KeyCacheObject key() {
+            initData();
+
+            return key;
         }
 
         /** {@inheritDoc} */
@@ -660,7 +725,7 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
     /**
      *
      */
-    private static class DataRow extends KeySearchRow implements CacheDataRow {
+    private class DataRow extends KeySearchRow implements CacheDataRow {
         /** */
         private CacheObject val;
 
@@ -668,17 +733,27 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
         private GridCacheVersion ver;
 
         /** */
-        private int part;
+        private int part = -1;
 
         /**
+         * @param hash Hash code.
+         * @param link Link.
+         */
+        DataRow(int hash, long link) {
+            super(hash, null, link);
+
+            part = PageIdUtils.partId(link);
+        }
+
+        /**
+         * @param hash Hash code.
          * @param key Key.
          * @param val Value.
          * @param ver Version.
          * @param part Partition.
-         * @param link Link.
          */
-        DataRow(KeyCacheObject key, CacheObject val, GridCacheVersion ver, int part, long link) {
-            super(key, link);
+        DataRow(int hash, KeyCacheObject key, CacheObject val, GridCacheVersion ver, int part) {
+            super(hash, key, 0);
 
             this.val = val;
             this.ver = ver;
@@ -686,22 +761,36 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
         }
 
         /** {@inheritDoc} */
-        @Override public KeyCacheObject key() {
-            return key;
+        @Override protected void doInitData(ByteBuffer buf) throws IgniteCheckedException {
+            key = cctx.cacheObjects().toKeyCacheObject(cctx.cacheObjectContext(), buf);
+            val = cctx.cacheObjects().toCacheObject(cctx.cacheObjectContext(), buf);
+
+            int topVer = buf.getInt();
+            int nodeOrderDrId = buf.getInt();
+            long globalTime = buf.getLong();
+            long order = buf.getLong();
+
+            ver = new GridCacheVersion(topVer, nodeOrderDrId, globalTime, order);
         }
 
         /** {@inheritDoc} */
         @Override public CacheObject value() {
+            initData();
+
             return val;
         }
 
         /** {@inheritDoc} */
         @Override public GridCacheVersion version() {
+            initData();
+
             return ver;
         }
 
         /** {@inheritDoc} */
         @Override public int partition() {
+            assert part != -1;
+
             return part;
         }
 
@@ -763,15 +852,21 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
             throws IgniteCheckedException {
             KeySearchRow row0 = io.getLookupRow(this, buf, idx);
 
-            return compareKeys(row0.key, row.key);
+            int cmp = Integer.compare(row0.hash, row.hash);
+
+            if (cmp != 0)
+                return cmp;
+
+            return compareKeys(row0.key(), row.key());
         }
 
         /** {@inheritDoc} */
         @Override protected DataRow getRow(BPlusIO<KeySearchRow> io, ByteBuffer buf, int idx)
             throws IgniteCheckedException {
+            int hash = ((RowLinkIO)io).getHash(buf, idx);
             long link = ((RowLinkIO)io).getLink(buf, idx);
 
-            return rowStore.dataRow(link);
+            return rowStore.dataRow(hash, link);
         }
 
         /**
@@ -801,7 +896,7 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
     /**
      *
      */
-    private static class CacheDataRowStore extends RowStore {
+    private class CacheDataRowStore extends RowStore {
         /**
          * @param cctx Cache context.
          * @param freeList Free list.
@@ -811,112 +906,23 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
         }
 
         /**
+         * @param hash Hash code.
          * @param link Link.
          * @return Search row.
          * @throws IgniteCheckedException If failed.
          */
-        private KeySearchRow keySearchRow(long link) throws IgniteCheckedException {
-            return getRow(link, KeyRowClosure.INSTANCE);
+        private KeySearchRow keySearchRow(int hash, long link) throws IgniteCheckedException {
+            return new KeySearchRow(hash, null, link);
         }
 
         /**
+         * @param hash Hash code.
          * @param link Link.
          * @return Data row.
          * @throws IgniteCheckedException If failed.
          */
-        private DataRow dataRow(long link) throws IgniteCheckedException {
-            return getRow(link, DataRowClosure.INSTANCE);
-        }
-
-        /**
-         * @param link Link.
-         * @param c Row closure.
-         * @return Row.
-         * @throws IgniteCheckedException If failed.
-         */
-        private <T> T getRow(long link, RowClosure<T> c) throws IgniteCheckedException {
-            try (Page page = page(pageId(link))) {
-                ByteBuffer buf = page.getForRead();
-
-                try {
-                    DataPageIO io = DataPageIO.VERSIONS.forPage(buf);
-
-                    int dataOff = io.getDataOffset(buf, dwordsOffset(link));
-
-                    buf.position(dataOff);
-
-                    // Skip entry size.
-                    buf.getShort();
-
-                    T row;
-
-                    try {
-                        row = c.create(buf, link, cctx);
-                    }
-                    catch (IgniteCheckedException e) {
-                        throw new IgniteException(e);
-                    }
-
-                    return row;
-                }
-                finally {
-                    page.releaseRead();
-                }
-            }
-        }
-
-        /**
-         *
-         */
-        private interface RowClosure<T> {
-            /**
-             * @param buf Buffer.
-             * @param link Link.
-             * @param cctx Context.
-             * @return Row.
-             * @throws IgniteCheckedException If failed.
-             */
-            T create(ByteBuffer buf, long link, GridCacheContext cctx) throws IgniteCheckedException;
-        }
-
-        /**
-         *
-         */
-        private static class KeyRowClosure implements RowClosure<KeySearchRow> {
-            /** */
-            static final KeyRowClosure INSTANCE = new KeyRowClosure();
-
-            /** {@inheritDoc} */
-            @Override public KeySearchRow create(ByteBuffer buf, long link, GridCacheContext cctx)
-                throws IgniteCheckedException {
-                KeyCacheObject key = cctx.cacheObjects().toKeyCacheObject(cctx.cacheObjectContext(), buf);
-
-                return new KeySearchRow(key, link);
-            }
-        }
-
-        /**
-         *
-         */
-        private static class DataRowClosure implements RowClosure<DataRow> {
-            /** */
-            static final DataRowClosure INSTANCE = new DataRowClosure();
-
-            /** {@inheritDoc} */
-            @Override public DataRow create(ByteBuffer buf, long link, GridCacheContext cctx)
-                throws IgniteCheckedException {
-                KeyCacheObject key = cctx.cacheObjects().toKeyCacheObject(cctx.cacheObjectContext(), buf);
-                CacheObject val = cctx.cacheObjects().toCacheObject(cctx.cacheObjectContext(), buf);
-
-                int topVer = buf.getInt();
-                int nodeOrderDrId = buf.getInt();
-                long globalTime = buf.getLong();
-                long order = buf.getLong();
-
-                GridCacheVersion ver = new GridCacheVersion(topVer, nodeOrderDrId, globalTime, order);
-
-                return new DataRow(key, val, ver, PageIdUtils.partId(link), link);
-            }
+        private DataRow dataRow(int hash, long link) throws IgniteCheckedException {
+            return new DataRow(hash, link);
         }
     }
 
@@ -930,6 +936,13 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
          * @return Row link.
          */
         public long getLink(ByteBuffer buf, int idx);
+
+        /**
+         * @param buf Buffer.
+         * @param idx Index.
+         * @return Key hash code.
+         */
+        public int getHash(ByteBuffer buf, int idx);
     }
 
     /**
@@ -945,28 +958,32 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
          * @param ver Page format version.
          */
         DataInnerIO(int ver) {
-            super(T_DATA_REF_INNER, ver, true, 8);
+            super(T_DATA_REF_INNER, ver, true, 12);
         }
 
         /** {@inheritDoc} */
         @Override public void store(ByteBuffer buf, int idx, KeySearchRow row) {
             assert row.link != 0;
 
+            setHash(buf, idx, row.hash);
             setLink(buf, idx, row.link);
         }
 
         /** {@inheritDoc} */
         @Override public KeySearchRow getLookupRow(BPlusTree<KeySearchRow,?> tree, ByteBuffer buf, int idx)
             throws IgniteCheckedException {
+            int hash = getHash(buf, idx);
             long link = getLink(buf, idx);
 
-            return ((CacheDataTree)tree).rowStore.keySearchRow(link);
+            return ((CacheDataTree)tree).rowStore.keySearchRow(hash, link);
         }
 
         /** {@inheritDoc} */
         @Override public void store(ByteBuffer dst, int dstIdx, BPlusIO<KeySearchRow> srcIo, ByteBuffer src, int srcIdx) {
+            int hash = ((RowLinkIO)srcIo).getHash(src, srcIdx);
             long link = ((RowLinkIO)srcIo).getLink(src, srcIdx);
 
+            setHash(dst, dstIdx, hash);
             setLink(dst, dstIdx, link);
         }
 
@@ -987,6 +1004,21 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
 
             assert getLink(buf, idx) == link;
         }
+
+
+        /** {@inheritDoc} */
+        @Override public int getHash(ByteBuffer buf, int idx) {
+            return buf.getInt(offset(idx) + 8);
+        }
+
+        /**
+         * @param buf Buffer.
+         * @param idx Index.
+         * @param hash Hash.
+         */
+        private void setHash(ByteBuffer buf, int idx, int hash) {
+            buf.putInt(offset(idx) + 8, hash);
+        }
     }
 
     /**
@@ -1002,7 +1034,7 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
          * @param ver Page format version.
          */
         DataLeafIO(int ver) {
-            super(T_DATA_REF_LEAF, ver, 8);
+            super(T_DATA_REF_LEAF, ver, 12);
         }
 
         /** {@inheritDoc} */
@@ -1011,21 +1043,25 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
 
             assert row0.link != 0;
 
+            setHash(buf, idx, row0.hash);
             setLink(buf, idx, row0.link);
         }
 
         /** {@inheritDoc} */
         @Override public void store(ByteBuffer dst, int dstIdx, BPlusIO<KeySearchRow> srcIo, ByteBuffer src, int srcIdx)
             throws IgniteCheckedException {
+            setHash(dst, dstIdx, getHash(src, srcIdx));
             setLink(dst, dstIdx, getLink(src, srcIdx));
         }
 
         /** {@inheritDoc} */
         @Override public KeySearchRow getLookupRow(BPlusTree<KeySearchRow,?> tree, ByteBuffer buf, int idx)
             throws IgniteCheckedException {
+
+            int hash = getHash(buf, idx);
             long link = getLink(buf, idx);
 
-            return ((CacheDataTree)tree).rowStore.keySearchRow(link);
+            return ((CacheDataTree)tree).rowStore.keySearchRow(hash, link);
         }
 
         /** {@inheritDoc} */
@@ -1044,6 +1080,20 @@ public class IgniteCacheOffheapManager extends GridCacheManagerAdapter {
             buf.putLong(offset(idx), link);
 
             assert getLink(buf, idx) == link;
+        }
+
+        /** {@inheritDoc} */
+        @Override public int getHash(ByteBuffer buf, int idx) {
+            return buf.getInt(offset(idx) + 8);
+        }
+
+        /**
+         * @param buf Buffer.
+         * @param idx Index.
+         * @param hash Hash.
+         */
+        private void setHash(ByteBuffer buf, int idx, int hash) {
+            buf.putInt(offset(idx) + 8, hash);
         }
     }
 }
