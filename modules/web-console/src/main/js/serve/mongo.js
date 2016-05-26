@@ -596,6 +596,26 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
             Custom: {
                 class: String
             }
+        },
+        platform: {
+            kind: {type: String, enum: ['NET', 'CPP']},
+            NET: {
+                binary: {
+                    typesConfiguration: [{
+                        typeName: String,
+                        nameMapper: String,
+                        idMapper: String,
+                        serializer: String,
+                        keepDeserialized: Boolean
+                    }],
+                    types: [String],
+                    defaultNameMapper: String,
+                    defaultIdMapper: String,
+                    defaultSerializer: String,
+                    defaultKeepDeserialized: Boolean
+                },
+                assemblies: [String]
+            }
         }
     });
 

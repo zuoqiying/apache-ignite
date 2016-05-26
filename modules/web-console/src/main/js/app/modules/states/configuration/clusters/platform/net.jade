@@ -1,0 +1,84 @@
+//-
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+include ../../../../../../app/helpers/jade/mixins.jade
+
+-var model = 'backupItem.platform.NET'
+-var types = model + '.binary.typesConfiguration'
+-var binaryTypeConfigurationsForm = 'netBinaryTypeConfigurationsForm'
+
+//- Mixin for java name field with enabled condition.
+mixin net-binary-types-java-class(lbl, model, name, enabled, required, remove, autofocus, tip)
+    -var errLbl = lbl.substring(0, lbl.length - 1)
+
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+        if (remove)
+            +table-remove-button(types, 'Remove type configuration')
+        ignite-form-field-input-text(
+            data-id='{{#{name}}}'
+            data-name='{{#{name}}}'
+            data-ng-model=model
+            data-ng-disabled='!(#{enabled})'
+            data-ng-required=required
+            data-placeholder='Enter fully qualified class name'
+
+            data-ignite-form-field-input-autofocus=autofocus
+
+            data-java-identifier='true'
+            data-java-package-specified='true'
+            data-java-keywords='true'
+            data-java-built-in-class='true'
+        )
+            +error-feedback('form[ngModelName].$error.javaBuiltInClass', 'javaBuiltInClass', lbl + ' should not be the Java built-in class!', '{{' + name + '}}')
+            +error-feedback('form[ngModelName].$error.javaKeywords', 'javaKeywords', lbl + ' could not contains reserved Java keyword!', '{{' + name + '}}')
+            +error-feedback('form[ngModelName].$error.javaPackageSpecified', 'javaPackageSpecified', lbl + ' does not have package specified!', '{{' + name + '}}')
+            +error-feedback('form[ngModelName].$error.javaIdentifier', 'javaIdentifier', lbl + ' is invalid Java identifier!', '{{' + name + '}}')
+
+div
+    .details-row
+        +java-class('Name mapper:', model + '.nameMapper', 'netNameMapper', 'true', 'false', 'Default name mapper')
+    .details-row
+        +java-class('ID mapper:', model + '.idMapper', 'netIdMapper', 'true', 'false', 'Default ID mapper')
+    .details-row
+        +java-class('Serializer:', model + '.serializer', 'netSerializer', 'true', 'false', 'Default serializer')
+    .details-row
+        +checkbox('Keep deserialized', model + '.keepDeserialized', 'netKeepDeserialized', 'Default keep deserialized')
+    .details-row
+        ignite-form-group(ng-form='#{binaryTypeConfigurationsForm}TypeConfigurations' ng-model='#{types}')
+            ignite-form-field-label
+                | Type configurations
+            ignite-form-group-tooltip
+                | Configuration properties for binary types
+            ignite-form-group-add(ng-click='#{types}.push({})')
+                | Add new type configuration.
+            .group-content-empty(ng-if='!#{types}.length')
+                | Not defined
+            .group-content(ng-repeat='type in #{types} track by $index')
+                hr(ng-if='$index !== 0')
+                .settings-row
+                    +net-binary-types-java-class('Type name:', 'type.typeName', '"netTypeName" + $index', 'true', 'true', 'true', 'true', 'Type name')
+                .settings-row
+                    +java-class('Name mapper:', 'type.nameMapper', 'netNameMapper{{$index}}', 'true', 'false', 'Name mapper')
+                .settings-row
+                    +java-class('ID mapper:', 'type.idMapper', 'netIdMapper{{$index}}', 'true', 'false', 'Id mapper')
+                .settings-row
+                    +java-class('Serializer:', 'type.serializer', 'netSerializer{{$index}}', 'true', 'false', 'Serializer')
+                .settings-row
+                    +checkbox('Keep deserialized', 'type.keepDeserialized', 'netKeepDeserialized{{$index}}', 'Keep deserialized')

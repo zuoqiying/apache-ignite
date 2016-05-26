@@ -494,6 +494,25 @@ consoleModule.controller('clustersController', [
                 }
             }
 
+            const platformKind = _.get(item, 'platform.kind');
+
+            if (platformKind === 'NET' && item.platform.NET) {
+                const typeConfigurations = _.get(item, 'platform.NET.binary.typesConfiguration');
+
+                if (!_.isEmpty(typeConfigurations)) {
+                    for (let typeIx = 0; typeIx < typeConfigurations.length; typeIx++) {
+                        const type = typeConfigurations[typeIx];
+
+                        if ($common.isEmptyString(type.typeName))
+                            return showPopoverMessage($scope.ui, 'platform', 'netTypeName' + typeIx, 'Type name should be specified!');
+
+                        if (_.find(typeConfigurations, (t, ix) => ix < typeIx && t.typeName === type.typeName))
+                            return showPopoverMessage($scope.ui, 'platform', 'netTypeName' + typeIx, 'Type with such name is already specified!');
+                    }
+                }
+
+            }
+
             const swapKind = item.swapSpaceSpi && item.swapSpaceSpi.kind;
 
             if (swapKind && item.swapSpaceSpi[swapKind]) {

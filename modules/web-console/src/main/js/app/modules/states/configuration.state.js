@@ -59,6 +59,9 @@ import clustersUserAttributes from './configuration/clusters/attributes.directiv
 import clustersCollision from './configuration/clusters/collision.directive';
 import clustersFailover from './configuration/clusters/failover.directive';
 import clustersLogger from './configuration/clusters/logger.directive';
+import clustersPlatform from './configuration/clusters/platform.directive';
+
+import clustersPlatformNet from './configuration/clusters/platform/net.directive';
 
 import clustersCollisionJobStealing from './configuration/clusters/collision/job-stealing.directive';
 import clustersCollisionFifoQueue from './configuration/clusters/collision/fifo-queue.directive';
@@ -100,6 +103,8 @@ import summaryTabs from './configuration/summary/summary-tabs.directive';
 angular.module('ignite-console.states.configuration', ['ui.router'])
     // Clusters screen.
     .directive(...previewPanel)
+    .directive(...clustersPlatformNet)
+    .directive(...clustersPlatform)
     .directive(...clustersLoggerCustom)
     .directive(...clustersLoggerLog4j)
     .directive(...clustersLoggerLog4j2)
