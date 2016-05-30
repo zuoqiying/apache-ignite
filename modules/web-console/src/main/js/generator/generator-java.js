@@ -48,7 +48,7 @@ $generatorJava.toJavaCode = function(val, type) {
         return '"' + val.replace('"', '\\"') + '"';
 
     if (typeof (val) === 'number' || typeof (val) === 'boolean')
-        return '' + val;
+        return String(val);
 
     return 'Unknown type: ' + typeof (val) + ' (' + val + ')';
 };
@@ -786,7 +786,7 @@ $generatorJava.clusterCollision = function(collision, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    if (collision && collision.kind !== 'Noop') {
+    if (collision && collision.kind && collision.kind !== 'Noop') {
         const spi = collision[collision.kind];
 
         if (collision.kind !== 'Custom' || (spi && $generatorCommon.isDefinedAndNotEmpty(spi.class))) {
@@ -1141,15 +1141,14 @@ $generatorJava.clusterLogger = function(logger, res) {
                 break;
 
             case 'Log4j':
-                if (log.mode === 'Default' && !$generatorCommon.isDefinedAndNotEmpty(log.level))
+                if (log.mode === 'Default')
                     $generatorJava.declareVariable(res, varName, 'org.apache.ignite.logger.log4j.Log4JLogger');
-                else {
+                else
                     $generatorJava.declareVariableCustom(res, varName, 'org.apache.ignite.logger.log4j.Log4JLogger',
                         'new Log4JLogger("' + log.path + '")');
 
-                    if ($generatorCommon.isDefinedAndNotEmpty(log.level))
-                        res.line(varName + '.setLevel(' + res.importClass('org.apache.log4j.Level') + '.' + log.level + ');');
-                }
+                if ($generatorCommon.isDefinedAndNotEmpty(log.level))
+                    res.line(varName + '.setLevel(' + res.importClass('org.apache.log4j.Level') + '.' + log.level + ');');
 
                 break;
 
@@ -1377,7 +1376,7 @@ $generatorJava.cacheQuery = function(cache, varName, res) {
  * @param res Resulting output with generated code.
  */
 $generatorJava.cacheStoreDataSource = function(storeFactory, res) {
-    const dialect = storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect; // eslint-disable-line no-nested-ternary
+    const dialect = storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect;
 
     if (dialect) {
         const varName = 'dataSource';
@@ -2877,7 +2876,7 @@ $generatorJava.cluster = function(cluster, pkg, javaClass, clientNearCfg) {
  * @returns {*} Data source class name.
  */
 $generatorJava.dataSourceClassName = function(res, storeFactory) {
-    const dialect = storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect;  // eslint-disable-line no-nested-ternary
+    const dialect = storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect;
 
     if (dialect) {
         const dataSourceBean = storeFactory.dataSourceBean;

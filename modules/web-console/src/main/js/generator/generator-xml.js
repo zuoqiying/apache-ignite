@@ -560,7 +560,7 @@ $generatorXml.clusterCollision = function(collision, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    if (collision && collision.kind !== 'Noop') {
+    if (collision && collision.kind && collision.kind !== 'Noop') {
         const spi = collision[collision.kind];
 
         if (collision.kind !== 'Custom' || (spi && $generatorCommon.isDefinedAndNotEmpty(spi.class))) {
@@ -875,7 +875,10 @@ $generatorXml.clusterLogger = function(logger, res) {
                     res.line('<bean class="org.apache.ignite.logger.log4j.Log4JLogger"/>');
                 else {
                     res.startBlock('<bean class="org.apache.ignite.logger.log4j.Log4JLogger">');
-                    res.line('<constructor-arg value="' + $generatorXml.escape(log.path) + '"/>');
+
+                    if (log.mode === 'Path')
+                        res.line('<constructor-arg value="' + $generatorXml.escape(log.path) + '"/>');
+
                     $generatorXml.property(res, log, 'level');
                     res.endBlock('</bean>');
                 }
@@ -1207,7 +1210,7 @@ $generatorXml.cacheStore = function(cache, domains, res) {
             else
                 $generatorXml.beanProperty(res, storeFactory, 'cacheStoreFactory', $generatorCommon.STORE_FACTORIES[factoryKind], true);
 
-            if (storeFactory.dataSourceBean && (storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect)) {  // eslint-disable-line no-nested-ternary
+            if (storeFactory.dataSourceBean && (storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect)) {
                 if (_.findIndex(res.datasources, (ds) => ds.dataSourceBean === storeFactory.dataSourceBean) < 0) {
                     res.datasources.push({
                         dataSourceBean: storeFactory.dataSourceBean,

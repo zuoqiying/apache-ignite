@@ -41,16 +41,8 @@ consoleModule.controller('clustersController', [
         };
 
         const pairFields = {
-            fields: {
-                msg: 'Query field class',
-                id: 'QryField',
-                idPrefix: 'Key',
-                searchCol: 'name',
-                valueCol: 'key',
-                classValidation: true,
-                dupObjName: 'name'
-            },
-            aliases: {id: 'Alias', idPrefix: 'Value', searchCol: 'alias', valueCol: 'value', dupObjName: 'alias'}
+            attributes: {id: 'Attribute', idPrefix: 'Key', searchCol: 'name', valueCol: 'key', dupObjName: 'name', group: 'attributes'},
+            'collision.JobStealing.stealingAttributes': {id: 'CAttribute', idPrefix: 'Key', searchCol: 'name', valueCol: 'key', dupObjName: 'name', group: 'collision'}
         };
 
         const showPopoverMessage = $common.showPopoverMessage;
@@ -61,20 +53,17 @@ consoleModule.controller('clustersController', [
             const pairValue = $table.tablePairValue(field, index);
 
             if (pairField) {
-                const model = item[field.model];
+                const model = _.get(item, field.model);
 
                 if ($common.isDefined(model)) {
-                    const idx = _.findIndex(model, function(pair) {
+                    const idx = _.findIndex(model, (pair) => {
                         return pair[pairField.searchCol] === pairValue[pairField.valueCol];
                     });
 
                     // Found duplicate by key.
                     if (idx >= 0 && idx !== index)
-                        return showPopoverMessage($scope.ui, 'query', $table.tableFieldId(index, pairField.idPrefix + pairField.id), 'Field with such ' + pairField.dupObjName + ' already exists!');
+                        return showPopoverMessage($scope.ui, pairField.group, $table.tableFieldId(index, pairField.idPrefix + pairField.id), 'Attribute with such ' + pairField.dupObjName + ' already exists!');
                 }
-
-                if (pairField.classValidation && !$common.isValidJavaClass(pairField.msg, pairValue.value, true, $table.tableFieldId(index, 'Value' + pairField.id), false, $scope.ui, 'query'))
-                    return $table.tableFocusInvalidField(index, 'Value' + pairField.id);
             }
 
             return true;
@@ -141,7 +130,7 @@ consoleModule.controller('clustersController', [
         $scope.stealingAttributesTbl = {
             type: 'attributes',
             model: 'collision.JobStealing.stealingAttributes',
-            focusId: 'Attribute',
+            focusId: 'CAttribute',
             ui: 'table-pair',
             keyName: 'name',
             valueName: 'value',
@@ -205,7 +194,7 @@ consoleModule.controller('clustersController', [
         }
 
         function clusterCaches(item) {
-            return _.reduce($scope.caches, function(memo, cache) {
+            return _.reduce($scope.caches, (memo, cache) => {
                 if (item && _.includes(item.caches, cache.value))
                     memo.push(cache.cache);
 
@@ -219,15 +208,14 @@ consoleModule.controller('clustersController', [
         $http.post('/api/v1/configuration/clusters/list')
             .success(function(data) {
                 $scope.spaces = data.spaces;
-
-                _.forEach(data.clusters, function(cluster) {
-                    cluster.label = _clusterLbl(cluster);
-                });
-
                 $scope.clusters = data.clusters;
+                $scope.caches = _.map(data.caches, (cache) => ({value: cache._id, label: cache.name, cache}));
+                $scope.igfss = _.map(data.igfss, (igfs) => ({value: igfs._id, label: igfs.name, igfs}));
 
-                _.forEach($scope.clusters, function(cluster) {
-                    if (!cluster.collision)
+                _.forEach($scope.clusters, (cluster) => {
+                    cluster.label = _clusterLbl(cluster);
+
+                    if (!cluster.collision || !cluster.collision.kind)
                         cluster.collision = {kind: 'Noop', JobStealing: {stealingEnabled: true}, PriorityQueue: {starvationPreventionEnabled: true}};
 
                     if (!cluster.failoverSpi)
@@ -237,23 +225,13 @@ consoleModule.controller('clustersController', [
                         cluster.logger = {Log4j: { mode: 'Default'}};
                 });
 
-                $scope.caches = _.map(data.caches, function(cache) {
-                    return {value: cache._id, label: cache.name, cache};
-                });
-
-                $scope.igfss = _.map(data.igfss, function(igfs) {
-                    return {value: igfs._id, label: igfs.name, igfs};
-                });
-
                 if ($state.params.id)
                     $scope.createItem($state.params.id);
                 else {
                     const lastSelectedCluster = angular.fromJson(sessionStorage.lastSelectedCluster);
 
                     if (lastSelectedCluster) {
-                        const idx = _.findIndex($scope.clusters, function(cluster) {
-                            return cluster._id === lastSelectedCluster;
-                        });
+                        const idx = _.findIndex($scope.clusters, (cluster) => cluster._id === lastSelectedCluster);
 
                         if (idx >= 0)
                             $scope.selectItem($scope.clusters[idx]);
@@ -353,9 +331,7 @@ consoleModule.controller('clustersController', [
         };
 
         $scope.indexOfCache = function(cacheId) {
-            return _.findIndex($scope.caches, function(cache) {
-                return cache.value === cacheId;
-            });
+            return _.findIndex($scope.caches, (cache) => cache.value === cacheId);
         };
 
         // Check cluster logical consistency.
@@ -397,11 +373,8 @@ consoleModule.controller('clustersController', [
                 return showPopoverMessage($scope.ui, firstError.$name, errNameFull, msg);
             }
 
-            const caches = _.filter(_.map($scope.caches, function(scopeCache) {
-                return scopeCache.cache;
-            }), function(cache) {
-                return _.includes($scope.backupItem.caches, cache._id);
-            });
+            const caches = _.filter(_.map($scope.caches, (scopeCache) => scopeCache.cache),
+                (cache) => _.includes($scope.backupItem.caches, cache._id));
 
             const checkRes = $common.checkCachesDataSources(caches);
 
@@ -588,9 +561,7 @@ consoleModule.controller('clustersController', [
         };
 
         function _clusterNames() {
-            return _.map($scope.clusters, function(cluster) {
-                return cluster.name;
-            });
+            return _.map($scope.clusters, (cluster) => cluster.name);
         }
 
         // Clone cluster with new name.
@@ -621,9 +592,7 @@ consoleModule.controller('clustersController', [
 
                             const clusters = $scope.clusters;
 
-                            const idx = _.findIndex(clusters, function(cluster) {
-                                return cluster._id === _id;
-                            });
+                            const idx = _.findIndex(clusters, (cluster) => cluster._id === _id);
 
                             if (idx >= 0) {
                                 clusters.splice(idx, 1);
