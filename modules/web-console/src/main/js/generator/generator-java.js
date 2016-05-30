@@ -1143,9 +1143,10 @@ $generatorJava.clusterLogger = function(logger, res) {
             case 'Log4j':
                 if (log.mode === 'Default')
                     $generatorJava.declareVariable(res, varName, 'org.apache.ignite.logger.log4j.Log4JLogger');
-                else
+                else {
                     $generatorJava.declareVariableCustom(res, varName, 'org.apache.ignite.logger.log4j.Log4JLogger',
                         'new Log4JLogger("' + log.path + '")');
+                }
 
                 if ($generatorCommon.isDefinedAndNotEmpty(log.level))
                     res.line(varName + '.setLevel(' + res.importClass('org.apache.log4j.Level') + '.' + log.level + ');');
@@ -2453,6 +2454,116 @@ $generatorJava.javaTypeName = function(type) {
 };
 
 /**
+ * Java code generator for cluster's portable configuration.
+ *
+ * @param platform Cluster platform configuration to get SSL configuration.
+ * @param res Optional configuration presentation builder object.
+ * @returns Configuration presentation builder object
+ */
+$generatorJava.clusterPlatform = function(platform, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    const kind = _.get(platform, 'kind');
+
+    if (kind) {
+        const varName = 'platform';
+        const binaryVarName = 'netBinary';
+
+        const spi = platform[kind];
+
+        if (kind === 'NET') {
+            $generatorJava.declareVariable(res, varName, 'org.apache.ignite.platform.dotnet.PlatformDotNetConfiguration');
+            $generatorJava.declareVariable(res, binaryVarName, 'org.apache.ignite.platform.dotnet.PlatformDotNetBinaryConfiguration');
+
+            const binary = _.get(spi, 'binary');
+
+            if (binary) {
+                const types = _.get(binary, 'types');
+
+                if ($generatorCommon.isDefinedAndNotEmpty(types)) {
+                    const netTypesVar = 'netTypesList';
+
+                    $generatorJava.declareVariable(res, netTypesVar, 'java.util.List', 'java.util.ArrayList', 'java.lang.String');
+
+                    _.forEach(types, (type) => res.line(netTypesVar + '.add("' + type + '")'));
+
+                    res.needEmptyLine = true;
+
+                    res.line(binaryVarName + '.setTypes(' + netTypesVar + ');');
+
+                    res.needEmptyLine = true;
+                }
+
+                const typesCfg = _.get(binary, 'typesConfiguration');
+
+                if (_.find(typesCfg, (type) => $generatorCommon.isDefinedAndNotEmpty(type.typeName))) {
+                    const netTypesCfgVar = 'netTypesCfgList';
+                    const netTypeCfgVar = 'netTypeCfg';
+
+                    _.forEach(typesCfg, function(type) {
+                        if ($generatorCommon.isDefinedAndNotEmpty(type.typeName)) {
+                            $generatorJava.declareVariable(res, netTypeCfgVar, 'org.apache.ignite.platform.dotnet.PlatformDotNetBinaryTypeConfiguration');
+
+                            $generatorJava.property(res, netTypeCfgVar, type, 'typeName');
+                            $generatorJava.property(res, netTypeCfgVar, type, 'nameMapper');
+                            $generatorJava.property(res, netTypeCfgVar, type, 'idMapper');
+                            $generatorJava.property(res, netTypeCfgVar, type, 'affinityKeyFieldName');
+                            $generatorJava.property(res, netTypeCfgVar, type, 'serializer');
+                            $generatorJava.property(res, netTypeCfgVar, type, 'enum', null, null, false);
+                            $generatorJava.property(res, netTypeCfgVar, type, 'keepDeserialized', null, null, false);
+
+                            res.line(netTypesCfgVar + '.add(' + netTypeCfgVar + ');');
+
+                            res.needEmptyLine = true;
+                        }
+                    });
+
+                    res.line(binaryVarName + '.setTypesConfiguration(' + netTypesCfgVar + ');');
+
+                    res.needEmptyLine = true;
+                }
+
+                $generatorJava.property(res, binaryVarName, binary, 'defaultNameMapper');
+                $generatorJava.property(res, binaryVarName, binary, 'defaultIdMapper');
+                $generatorJava.property(res, binaryVarName, binary, 'defaultSerializer');
+                $generatorJava.property(res, binaryVarName, binary, 'defaultKeepDeserialized', null, null, false);
+
+                res.needEmptyLine = true;
+            }
+
+            res.line(varName + '.setBinaryConfiguration(' + binaryVarName + ');');
+
+            res.needEmptyLine = true;
+
+            const assemblies = _.get(spi, 'assemblies');
+
+            if ($generatorCommon.isDefinedAndNotEmpty(assemblies)) {
+                const assembliesVarName = 'assemblies';
+
+                $generatorJava.declareVariable(res, assembliesVarName, 'java.util.List', 'java.util.ArrayList', 'java.lang.String');
+
+                _.forEach(assemblies, (assembly) => res.line(assembliesVarName + '.add(' + assembly + ');'));
+
+                res.needEmptyLine = true;
+
+                res.line(varName + '.setAssemblies(' + assembliesVarName + ');');
+            }
+        }
+        else
+            $generatorJava.declareVariable(res, varName, 'org.apache.ignite.platform.cpp.PlatformCppConfiguration');
+
+        res.needEmptyLine = true;
+
+        res.line('cfg.setPlatformConfiguration(' + varName + ');');
+
+        res.needEmptyLine = true;
+    }
+
+    return res;
+};
+
+/**
  * Java code generator for cluster's SSL configuration.
  *
  * @param cluster Cluster to get SSL configuration.
@@ -2464,7 +2575,6 @@ $generatorJava.clusterSsl = function(cluster, res) {
         res = $generatorCommon.builder();
 
     if (cluster.sslEnabled && !_.isNil(cluster.sslContextFactory)) {
-
         cluster.sslContextFactory.keyStorePassword = $generatorCommon.isDefinedAndNotEmpty(cluster.sslContextFactory.keyStoreFilePath) ?
             'props.getProperty("ssl.key.storage.password").toCharArray()' : null;
 
@@ -2736,6 +2846,8 @@ $generatorJava.clusterConfiguration = function(cluster, clientNearCfg, res) {
     $generatorJava.clusterMarshaller(cluster, res);
 
     $generatorJava.clusterMetrics(cluster, res);
+
+    $generatorJava.clusterPlatform(cluster.platform, res);
 
     $generatorJava.clusterSwap(cluster, res);
 

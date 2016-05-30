@@ -1018,6 +1018,109 @@ $generatorXml.clusterUserAttributes = function(cluster, res) {
 };
 
 /**
+ * XML generator for cluster's portable configuration.
+ *
+ * @param platform Cluster platform configuration to get SSL configuration.
+ * @param res Optional configuration presentation builder object.
+ * @returns Configuration presentation builder object
+ */
+$generatorXml.clusterPlatform = function(platform, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    const kind = _.get(platform, 'kind');
+
+    if (kind) {
+        const spi = platform[kind];
+
+        res.startBlock('<property name="platformConfiguration">');
+
+        if (kind === 'NET') {
+            res.startBlock('<bean class="org.apache.ignite.platform.dotnet.PlatformDotNetConfiguration">');
+            res.startBlock('<property name="binaryConfiguration">');
+            res.startBlock('<bean class="org.apache.ignite.platform.dotnet.PlatformDotNetBinaryConfiguration">');
+
+            const binary = _.get(spi, 'binary');
+
+            if (binary) {
+                const types = _.get(binary, 'types');
+
+                if ($generatorCommon.isDefinedAndNotEmpty(types)) {
+                    res.startBlock('<property name="types">');
+                    res.startBlock('<list>');
+
+                    _.forEach(types, (type) => res.line('<value>' + type + '</value>'));
+
+                    res.endBlock('</list>');
+                    res.endBlock('</property>');
+
+                    res.needEmptyLine = true;
+                }
+
+                const typesCfg = _.get(binary, 'typesConfiguration');
+
+                if (_.find(typesCfg, (type) => $generatorCommon.isDefinedAndNotEmpty(type.typeName))) {
+                    res.startBlock('<property name="typesConfiguration">');
+                    res.startBlock('<list>');
+
+                    _.forEach(typesCfg, function(type) {
+                        if ($generatorCommon.isDefinedAndNotEmpty(type.typeName)) {
+                            res.startBlock('<bean class="org.apache.ignite.platform.dotnet.PlatformDotNetBinaryTypeConfiguration">');
+
+                            $generatorXml.property(res, type, 'typeName');
+                            $generatorXml.property(res, type, 'nameMapper');
+                            $generatorXml.property(res, type, 'idMapper');
+                            $generatorXml.property(res, type, 'affinityKeyFieldName');
+                            $generatorXml.property(res, type, 'serializer');
+                            $generatorXml.property(res, type, 'enum', null, false);
+                            $generatorXml.property(res, type, 'keepDeserialized', null, false);
+
+                            res.endBlock('</bean>');
+                        }
+                    });
+
+                    res.endBlock('</list>');
+                    res.endBlock('</property>');
+
+                    res.needEmptyLine = true;
+                }
+
+                $generatorXml.property(res, binary, 'defaultNameMapper');
+                $generatorXml.property(res, binary, 'defaultIdMapper');
+                $generatorXml.property(res, binary, 'defaultSerializer');
+                $generatorXml.property(res, binary, 'defaultKeepDeserialized', null, false);
+            }
+
+            res.endBlock('</bean>');
+            res.needEmptyLine = true;
+
+            const assemblies = _.get(spi, 'assemblies');
+
+            if ($generatorCommon.isDefinedAndNotEmpty(assemblies)) {
+                res.startBlock('<property name="assemblies">');
+                res.startBlock('<list>');
+
+                _.forEach(assemblies, (assembly) => res.line('<value>' + assembly + '</value>'));
+
+                res.endBlock('</list>');
+                res.endBlock('</property>');
+            }
+
+            res.endBlock('</property>');
+            res.endBlock('</bean>');
+        }
+        else
+            $generatorXml.element(res, 'bean', 'class', 'org.apache.ignite.platform.cpp.PlatformCppConfiguration');
+
+        res.endBlock('</property>');
+
+        res.needEmptyLine = true;
+    }
+
+    return res;
+};
+
+/**
  * XML generator for cluster's SSL configuration.
  *
  * @param cluster Cluster to get SSL configuration.
@@ -1892,6 +1995,8 @@ $generatorXml.clusterConfiguration = function(cluster, clientNearCfg, res) {
     $generatorXml.clusterMarshaller(cluster, res);
 
     $generatorXml.clusterMetrics(cluster, res);
+
+    $generatorXml.clusterPlatform(cluster, res);
 
     $generatorXml.clusterSwap(cluster, res);
 

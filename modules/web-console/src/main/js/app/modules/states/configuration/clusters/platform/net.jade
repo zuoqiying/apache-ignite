@@ -53,13 +53,58 @@ mixin net-binary-types-java-class(lbl, model, name, enabled, required, remove, a
 
 div
     .details-row
-        +java-class('Name mapper:', model + '.nameMapper', 'netNameMapper', 'true', 'false', 'Default name mapper')
+        +java-class('Name mapper:', model + '.binary.defaultNameMapper', 'netNameMapper', 'true', 'false', 'Default name mapper')
     .details-row
-        +java-class('ID mapper:', model + '.idMapper', 'netIdMapper', 'true', 'false', 'Default ID mapper')
+        +java-class('ID mapper:', model + '.binary.defaultIdMapper', 'netIdMapper', 'true', 'false', 'Default ID mapper')
     .details-row
-        +java-class('Serializer:', model + '.serializer', 'netSerializer', 'true', 'false', 'Default serializer')
+        +java-class('Serializer:', model + '.binary.defaultSerializer', 'netSerializer', 'true', 'false', 'Default serializer')
     .details-row
-        +checkbox('Keep deserialized', model + '.keepDeserialized', 'netKeepDeserialized', 'Default keep deserialized')
+        +checkbox('Keep deserialized', model + '.binary.defaultKeepDeserialized', 'netKeepDeserialized', 'Default keep deserialized')
+    .details-row
+        -var netTypesForm = 'netTypesForm';
+        -var netTypes = model + '.binary.types';
+
+        ignite-form-group(ng-model=netTypes ng-form=netTypesForm)
+            ignite-form-field-label
+                | Types
+            ignite-form-group-tooltip
+                | Types
+            ignite-form-group-add(ng-click='group.add = [{}]')
+                | Add new type
+
+            -var uniqueTip = 'Type with such class name already exists!'
+
+            .group-content(ng-if=netTypes + '.length')
+                -var field = 'edit'
+                -var valid = 'form[ngModelName].$valid'
+                -var unique = 'form[ngModelName].$error.igniteUnique'
+                -var save = netTypes + '[$index] = ' + field
+
+                ignite-form-field(ng-repeat='type in #{netTypes} track by $index' type='internal' name='Type')
+                    .indexField
+                        | {{ $index+1 }})
+                    +table-remove-button(netTypes, 'Remove user-defined function')
+
+                    span(ng-hide='field.edit')
+                        a.labelFormField(ng-click='field.edit = true') {{ type }}
+                    span(ng-if='field.edit' ng-init='#{field} = type')
+                        +table-java-class-field('Type', field, netTypes, valid, save, false)
+                            +table-save-button(valid, save, false)
+                            +unique-feedback(unique, uniqueTip)
+
+            .group-content(ng-repeat='field in group.add')
+                -var field = 'new'
+                -var valid = 'form[ngModelName].$valid'
+                -var unique = 'form[ngModelName].$error.igniteUnique'
+                -var save = netTypes + '.push(' + field + ')'
+
+                ignite-form-field(type='internal' name='type')
+                    +table-java-class-field('Type', field, netTypes, valid, save, true)
+                        +table-save-button(valid, save, true)
+                        +unique-feedback(unique, uniqueTip)
+
+            .group-content-empty(ng-if='!(#{netTypes}.length) && !group.add.length')
+                | Not defined
     .details-row
         ignite-form-group(ng-form='#{binaryTypeConfigurationsForm}TypeConfigurations' ng-model='#{types}')
             ignite-form-field-label
@@ -79,6 +124,54 @@ div
                 .settings-row
                     +java-class('ID mapper:', 'type.idMapper', 'netIdMapper{{$index}}', 'true', 'false', 'Id mapper')
                 .settings-row
+                    +java-field('Affinity key:', 'type.affinityKeyFieldName', 'netAffinityKeyFieldName{{$index}}', 'true', 'false', 'Affinity key field name')
+                .settings-row
                     +java-class('Serializer:', 'type.serializer', 'netSerializer{{$index}}', 'true', 'false', 'Serializer')
                 .settings-row
-                    +checkbox('Keep deserialized', 'type.keepDeserialized', 'netKeepDeserialized{{$index}}', 'Keep deserialized')
+                    +checkbox('Enum', 'type.enum', 'netEnum{{$index}}', 'Enum flag')
+                .settings-row
+                    +checkbox('Keep deserialized', "type.keepDeserialized", 'netKeepDeserialized{{$index}}', 'Keep deserialized')
+    .details-row
+        -var assembliesForm = 'assembliesForm';
+        -var assembliesModel = model + '.assemblies';
+
+        ignite-form-group(ng-model=assembliesModel ng-form=assembliesForm)
+            -var uniqueTip = 'Such assembly is already exists!'
+
+            ignite-form-field-label
+                | Assemblies
+            ignite-form-group-tooltip
+                | Assemblies
+            ignite-form-group-add(ng-click='group.add = [{}]')
+                | Add new assembly
+            .group-content(ng-if=assembliesModel + '.length')
+                -var field = 'edit'
+                -var valid = 'form[ngModelName].$valid'
+                -var unique = 'form[ngModelName].$error.igniteUnique'
+                -var save = assembliesModel + '[$index] = ' + field
+
+                ignite-form-field(ng-repeat='model in #{assembliesModel} track by $index' type='internal' name='Assembly')
+                    .indexField
+                        | {{ $index+1 }})
+                    +table-remove-button(assembliesModel, 'Remove assembly')
+
+                    span(ng-hide='field.edit')
+                        a.labelFormField(ng-click='field.edit = true') {{ model }}
+                    span(ng-if='field.edit' ng-init='#{field} = model')
+                        +table-text-field(field, assembliesModel, valid, save, 'Input assembly', false)
+                            +table-save-button(valid, save, false)
+                            +unique-feedback(unique, uniqueTip)
+
+            .group-content(ng-repeat='field in group.add')
+                -var field = 'new'
+                -var valid = 'form[ngModelName].$valid'
+                -var unique = 'form[ngModelName].$error.igniteUnique'
+                -var save = assembliesModel + '.push(' + field + ')'
+
+                ignite-form-field(type='internal' name='Assembly')
+                    +table-text-field(field, assembliesModel, valid, save, 'Input assembly', true)
+                        +table-save-button(valid, save, true)
+                        +unique-feedback(unique, uniqueTip)
+
+            .group-content-empty(ng-if='!(#{assembliesModel}.length) && !group.add.length')
+                | Not defined

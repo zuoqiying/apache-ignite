@@ -606,7 +606,9 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
                         nameMapper: String,
                         idMapper: String,
                         serializer: String,
-                        keepDeserialized: Boolean
+                        affinityKeyFieldName: String,
+                        keepDeserialized: Boolean,
+                        enum: Boolean
                     }],
                     types: [String],
                     defaultNameMapper: String,

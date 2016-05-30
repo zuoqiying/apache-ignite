@@ -143,6 +143,32 @@ mixin java-class(lbl, model, name, enabled, required, tip)
             +error-feedback('form[ngModelName].$error.javaPackageSpecified', 'javaPackageSpecified', errLbl + ' does not have package specified!', name)
             +error-feedback('form[ngModelName].$error.javaIdentifier', 'javaIdentifier', errLbl + ' is invalid Java identifier!', name)
 
+//- Mixin for java name field with enabled condition.
+mixin java-field(lbl, model, name, enabled, required, tip)
+    -var errLbl = lbl.substring(0, lbl.length - 1)
+
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+        ignite-form-field-input-text(
+            data-id=name
+            data-name=name
+            data-ng-model=model
+            data-ng-disabled='!(#{enabled})'
+            data-ng-required=required
+            data-placeholder='Enter fully qualified identifier'
+
+            data-java-identifier='true'
+            data-java-package-specified='false'
+            data-java-keywords='true'
+            data-java-built-in-class='true'
+        )
+            +error-feedback('form[ngModelName].$error.javaBuiltInClass', 'javaBuiltInClass', errLbl + ' should not be the Java built-in class!', name)
+            +error-feedback('form[ngModelName].$error.javaKeywords', 'javaKeywords', errLbl + ' could not contains reserved Java keyword!', name)
+            +error-feedback('form[ngModelName].$error.javaIdentifier', 'javaIdentifier', errLbl + ' is invalid Java identifier!', name)
+
 //- Mixin for text field with enabled condition with options.
 mixin java-class-typeahead(lbl, model, name, options, enabled, required, placeholder, tip)
     -var errLbl = lbl.substring(0, lbl.length - 1)
