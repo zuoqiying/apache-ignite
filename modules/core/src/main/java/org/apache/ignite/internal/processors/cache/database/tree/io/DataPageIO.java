@@ -583,7 +583,7 @@ public class DataPageIO extends PageIO {
      * @return Item ID.
      * @throws IgniteCheckedException If failed.
      */
-    public byte addRow(
+    public int addRow(
         CacheObjectContext coctx,
         ByteBuffer buf,
         CacheObject key,
@@ -592,7 +592,8 @@ public class DataPageIO extends PageIO {
         int entrySizeWithItem
     ) throws IgniteCheckedException {
         if (entrySizeWithItem > buf.capacity() - ITEMS_OFF) // TODO span multiple data pages with a single large entry
-            throw new IgniteException("Too big entry: " + key + " " + val);
+            throw new IgniteException("Too big entry [key=" + key + ", val=" + val +
+                ", entrySizeWithItem=" + entrySizeWithItem + ", activeCap=" + (buf.capacity() - ITEMS_OFF) + ']');
 
         int directCnt = getDirectCount(buf);
         int indirectCnt = getIndirectCount(buf);
@@ -622,7 +623,9 @@ public class DataPageIO extends PageIO {
 
         assert getFreeSpace(buf) >= 0;
 
-        return (byte)itemId;
+        assert (itemId & ~0xFF) == 0;
+
+        return itemId;
     }
 
     /**
