@@ -35,4 +35,13 @@
             </bean>
         </property>
     </bean>
+
+    <bean class="org.apache.ignite.yardstick.cache.model.Account">
+        <constructor-arg value="1000"/>
+    </bean>
+
+    <bean class="org.apache.ignite.yardstick.cache.model.Organization">
+        <property name="id" value="100"/>
+        <property name="name" value="Apache"/>
+    </bean>
 </beans>
