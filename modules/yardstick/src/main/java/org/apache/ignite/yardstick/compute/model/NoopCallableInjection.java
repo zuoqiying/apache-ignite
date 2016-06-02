@@ -17,14 +17,27 @@
 
 package org.apache.ignite.yardstick.compute.model;
 
+import org.apache.ignite.Ignite;
 import org.apache.ignite.lang.IgniteCallable;
+import org.apache.ignite.resources.IgniteInstanceResource;
+import org.apache.ignite.resources.SpringApplicationContextResource;
+import org.springframework.context.ApplicationContext;
 
 /**
  *
  */
-public class NoopCallable implements IgniteCallable<Object> {
+public class NoopCallableInjection implements IgniteCallable<Object> {
+    @IgniteInstanceResource
+    private Ignite ignite;
+
+    @SpringApplicationContextResource
+    private ApplicationContext ctx;
+
+    private Object bean1;
+    private Object bean2;
+
     /** {@inheritDoc} */
-    @Override public Object call() {
+    @Override public Object call() throws Exception {
         return null;
     }
 }
