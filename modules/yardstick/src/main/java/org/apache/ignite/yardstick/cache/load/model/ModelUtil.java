@@ -60,6 +60,25 @@ public class ModelUtil {
     };
 
     /**
+     * Primitive of classes.
+     * Upper approximate size of value 32 bytes.
+     */
+    private static Class[] simpleClasses = {
+        Account.class,
+        Person1.class,
+        Person2.class,
+    };
+
+    /**
+     * Primitive of classes.
+     * Upper approximate size of value 32 bytes.
+     */
+    private static Class[] fatClasses = {
+        Person.class,
+        Person8.class
+    };
+
+    /**
      * @param clazz Checked class.
      * @return Result.
      */
@@ -87,7 +106,7 @@ public class ModelUtil {
 
         switch (c.getSimpleName()) {
             case "Double":
-                res = Double.valueOf(id);
+                res = id;
                 break;
             case "Identifier":
                 res = new Identifier(id, "id " + id);
@@ -139,9 +158,23 @@ public class ModelUtil {
     }
 
     /**
-     * @return array of value chache classes
+     * @return array of value cache classes
      */
     public static Class[] valueClasses() {
         return valClasses;
+    }
+
+    /**
+     * @return Array of value simple cache classes.
+     */
+    public static Class[] simpleValueClasses() {
+        return simpleClasses;
+    }
+
+    /**
+     * @return Array of value simple fat classes.
+     */
+    public static Class[] fatValueClasses() {
+        return fatClasses;
     }
 }
