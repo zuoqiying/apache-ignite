@@ -28,6 +28,7 @@ import igniteFormFieldLabel from './field/label.directive';
 import igniteFormFieldTooltip from './field/tooltip.directive';
 import igniteFormFieldDropdown from './field/dropdown.directive';
 import igniteFormFieldInputNumber from './field/input/number.directive';
+import igniteFormFieldInputNumberAttr from './field/input/number.attr.directive';
 import igniteFormFieldInputText from './field/input/text.directive';
 import igniteFormFieldInputCheckbox from './field/input/checkbox.directive';
 import igniteFormFieldInputDatalist from './field/input/datalist.directive';
@@ -70,6 +71,7 @@ angular
 .directive(...igniteFormFieldTooltip)
 .directive(...igniteFormFieldDropdown)
 .directive(...igniteFormFieldInputNumber)
+.directive(...igniteFormFieldInputNumberAttr)
 .directive(...igniteFormFieldInputText)
 .directive(...igniteFormFieldInputCheckbox)
 .directive(...igniteFormFieldInputDatalist)
