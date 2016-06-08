@@ -20,19 +20,6 @@ export default ['igniteFormFieldInputNumber', ['$parse', 'IgniteFormGUID', '$tab
         const {id, name, ngModel} = attrs;
         const getter = $parse(ngModel);
 
-        // const field = form[name];
-
-        // scope.id = id || guid();
-        // scope.field = field;
-
-        // if (label) {
-        //     label.for = scope.id;
-
-        //     scope.$watch('required', (required) => {
-        //         label.required = required || false;
-        //     });
-        // }
-
         const setDefault = () => {
             const value = getter(scope);
 
@@ -57,23 +44,6 @@ export default ['igniteFormFieldInputNumber', ['$parse', 'IgniteFormGUID', '$tab
 
         scope.$watch(() => getter(scope), updateDefault);
         scope.$watch(() => formCtrl.$pristine, updateDefault);
-
-        // scope.$watch(() => formCtrl.$pristine, (pristine) => {
-        //     if (!pristine) return;
-        //     if (parseFloat(ngModelCtrl.$viewValue) === parseFloat(formCtrl.$defaults[name])) return;
-
-        //     console.log('attr');
-
-
-        // });
-        // scope.$watch('value', setAsDefault);
-
-        // // TODO LEGACY
-        // scope.tableReset = () => {
-        //     $table.tableSaveAndReset();
-        // };
-
-        // setDefault();
     };
 
     return {

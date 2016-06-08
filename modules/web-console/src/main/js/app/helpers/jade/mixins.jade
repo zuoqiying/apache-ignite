@@ -243,22 +243,35 @@ mixin text-options(lbl, model, name, options, enabled, required, placeholder, ti
             data-ng-required=required
         )
 
-mixin ignite-form-field()
+mixin ignite-form-field(lbl, model, name, enabled, required, placeholder, min, tip)
     block
 
     div
         div
-            label.col-xs-4.col-sm-4.col-md-4
-                span
-                    +ignite-form-field-label
-                        | Field label:
+            if required == 'true'
+                label.col-xs-4.col-sm-4.col-md-4(
+                    id='#{name}Label'
+                    for='#{name}'
+                    class='required'
+                )
+                    span
+                        +ignite-form-field-label
+                            | Field label:
+            else 
+                label.col-xs-4.col-sm-4.col-md-4(
+                    id='#{name}Label'
+                    for='#{name}'
+                )
+                    span
+                        +ignite-form-field-label
+                            | Field label:
 
             .col-xs-8.col-sm-8.col-md-8
                 +ignite-form-field-tooltip
                 +ignite-form-field-input-number
 
 mixin number-required(lbl, model, name, enabled, required, placeholder, min, tip)
-    +ignite-form-field
+    +ignite-form-field(lbl, model, name, enabled, required, placeholder, min, tip)
         mixin ignite-form-field-label
             | #{lbl}
         mixin ignite-form-field-tooltip
