@@ -91,7 +91,7 @@ public class IgniteCacheRandomOperationBenchmark extends IgniteAbstractBenchmark
     private static BenchmarkIgniteBiPredicate igniteBiPred = new BenchmarkIgniteBiPredicate();
 
     /** Amount partitions. */
-    private static final int SCAN_QUERY_PARTITIN_AMOUNT = 10;
+    private static final int SCAN_QUERY_PARTITION_AMOUNT = 10;
 
     /** List off all available cache. */
     private List<IgniteCache> availableCaches;
@@ -400,11 +400,11 @@ public class IgniteCacheRandomOperationBenchmark extends IgniteAbstractBenchmark
         // Building a list of all partitions numbers.
         List<Integer> randmPartitions = new ArrayList<>(10);
 
-        if (affinity.partitions() <= SCAN_QUERY_PARTITIN_AMOUNT)
+        if (affinity.partitions() <= SCAN_QUERY_PARTITION_AMOUNT)
             for (int i = 0; i < affinity.partitions(); i++)
                 randmPartitions.add(i);
         else {
-            for (int i = 0; i < SCAN_QUERY_PARTITIN_AMOUNT; i++) {
+            for (int i = 0; i < SCAN_QUERY_PARTITION_AMOUNT; i++) {
                 int partNum;
 
                 do
@@ -465,7 +465,7 @@ public class IgniteCacheRandomOperationBenchmark extends IgniteAbstractBenchmark
      * @return Set classes for cache.
      */
     private Class[] determineValueClasses(@NotNull String cacheName) {
-        return cacheName.toLowerCase().contains("-fat-values") ? ModelUtil.fatValueClasses() :
+        return cacheName.toLowerCase().contains("fat-values") ? ModelUtil.fatValueClasses() :
             ModelUtil.simpleValueClasses();
     }
 

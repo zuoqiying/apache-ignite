@@ -60,8 +60,8 @@ public class ModelUtil {
     };
 
     /**
-     * Primitive of classes.
-     * Upper approximate size of value 32 bytes.
+     * Simple of classes.
+     * Upper approximate size of value 24 bytes.
      */
     private static Class[] simpleClasses = {
         Account.class,
@@ -70,12 +70,13 @@ public class ModelUtil {
     };
 
     /**
-     * Primitive of classes.
-     * Upper approximate size of value 32 bytes.
+     * Fat of classes.
+     * Upper approximate size of value 128 bytes.
      */
     private static Class[] fatClasses = {
         Person.class,
-        Person8.class
+        Person8.class,
+        Organization.class
     };
 
     /**
