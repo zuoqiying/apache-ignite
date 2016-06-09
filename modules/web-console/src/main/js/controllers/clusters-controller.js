@@ -310,6 +310,7 @@ consoleModule.controller('clustersController', [
             return angular.merge({}, blank, {
                 space: $scope.spaces[0]._id,
                 discovery: {kind: 'Multicast', Vm: {addresses: ['127.0.0.1:47500..47510']}, Multicast: {addresses: ['127.0.0.1:47500..47510']}},
+                atomicConfiguration: {},
                 binaryConfiguration: {typeConfigurations: [], compactFooter: true},
                 communication: {tcpNoDelay: true},
                 connector: {noDelay: true},

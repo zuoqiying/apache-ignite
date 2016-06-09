@@ -20,6 +20,8 @@ export default ['igniteFormFieldInputNumber', ['$parse', '$table', ($parse, $tab
         const {name, ngModel} = attrs;
         const getter = $parse(ngModel);
 
+        scope.name = name;
+
         const setDefault = () => {
             const value = getter(scope);
 
@@ -29,7 +31,12 @@ export default ['igniteFormFieldInputNumber', ['$parse', '$table', ($parse, $tab
             if (parseFloat(ngModelCtrl.$viewValue) === parseFloat(value))
                 return;
 
-            ngModelCtrl.$setViewValue(formCtrl.$defaults[name]);
+            // ngModelCtrl.$setViewValue(formCtrl.$defaults[name]);
+            // 
+
+            ngModelCtrl.$viewValue = formCtrl.$defaults[name];
+            ngModelCtrl.$error = {};
+            ngModelCtrl.$setPristine();
             ngModelCtrl.$render();
 
             formCtrl.$setPristine();
@@ -49,7 +56,6 @@ export default ['igniteFormFieldInputNumber', ['$parse', '$table', ($parse, $tab
         scope.tableReset = () => {
             $table.tableSaveAndReset();
         };
-
     };
 
     return {
