@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-export default ['igniteFormFieldInputNumber', ['$parse', 'IgniteFormGUID', '$table', ($parse, guid, $table) => {
+export default ['igniteFormFieldInputNumber', ['$parse', '$table', ($parse, $table) => {
     const link = (scope, el, attrs, [formCtrl, ngModelCtrl]) => {
-        const {id, name, ngModel} = attrs;
+        const {name, ngModel} = attrs;
         const getter = $parse(ngModel);
 
         const setDefault = () => {
@@ -35,7 +35,7 @@ export default ['igniteFormFieldInputNumber', ['$parse', 'IgniteFormGUID', '$tab
             formCtrl.$setPristine();
         };
 
-        const updateDefault = (newV, oldV) => {
+        const updateDefault = () => {
             if (!formCtrl.$pristine)
                 return;
 
@@ -44,6 +44,12 @@ export default ['igniteFormFieldInputNumber', ['$parse', 'IgniteFormGUID', '$tab
 
         scope.$watch(() => getter(scope), updateDefault);
         scope.$watch(() => formCtrl.$pristine, updateDefault);
+
+        // TODO LEGACY
+        scope.tableReset = () => {
+            $table.tableSaveAndReset();
+        };
+
     };
 
     return {

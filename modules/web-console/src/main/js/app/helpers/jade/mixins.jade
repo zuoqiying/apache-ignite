@@ -247,28 +247,18 @@ mixin ignite-form-field(lbl, model, name, enabled, required, placeholder, min, t
     block
 
     div
-        div
-            if required == 'true'
-                label.col-xs-4.col-sm-4.col-md-4(
-                    id='#{name}Label'
-                    for='#{name}'
-                    class='required'
-                )
-                    span
-                        +ignite-form-field-label
-                            | Field label:
-            else 
-                label.col-xs-4.col-sm-4.col-md-4(
-                    id='#{name}Label'
-                    for='#{name}'
-                )
-                    span
-                        +ignite-form-field-label
-                            | Field label:
+        label.col-xs-4.col-sm-4.col-md-4(
+            id='#{name}Label'
+            for=name
+            class=required === 'true' ? 'required' : null
+        )
+            span
+                +ignite-form-field-label
+                    | Field label:
 
-            .col-xs-8.col-sm-8.col-md-8
-                +ignite-form-field-tooltip
-                +ignite-form-field-input-number
+        .col-xs-8.col-sm-8.col-md-8
+            +ignite-form-field-tooltip
+            +ignite-form-field-input-number
 
 mixin number-required(lbl, model, name, enabled, required, placeholder, min, tip)
     +ignite-form-field(lbl, model, name, enabled, required, placeholder, min, tip)
@@ -282,7 +272,7 @@ mixin number-required(lbl, model, name, enabled, required, placeholder, min, tip
 
                 i.fa.fa-exclamation-triangle.form-control-feedback(
                     ng-if='#{checkPristine}#{form}["#{name}"].$error.#{error}'
-                    bs-tooltip
+                    bs-tooltip=''
                     data-title=errorMessage
                     ignite-error=error
                     ignite-error-message=errorMessage
