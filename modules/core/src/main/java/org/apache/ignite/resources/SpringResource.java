@@ -122,6 +122,8 @@ public @interface SpringResource {
      */
     Class<?> resourceClass() default DEFAULT.class;
 
-    /** Dummy class to compensate for impossibility of having default null value for annotation method */
-    final class DEFAULT {}
+    /** Dummy class to compensate for impossibility of having default null value for annotation method. */
+    final class DEFAULT {
+        // No-op.
+    }
 }

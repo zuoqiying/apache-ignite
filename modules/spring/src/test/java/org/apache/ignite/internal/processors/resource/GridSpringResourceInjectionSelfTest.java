@@ -55,10 +55,10 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     public void testClosureFieldByResourceName() throws Exception {
         grid.compute().call(new IgniteCallable<Object>() {
             @SpringResource(resourceName = DUMMY_BEAN)
-            private transient DummyResourceBean dummyResourceBean;
+            private transient DummyResourceBean dummyRsrcBean;
 
             @Override public Object call() throws Exception {
-                assertNotNull(dummyResourceBean);
+                assertNotNull(dummyRsrcBean);
 
                 return null;
             }
@@ -71,10 +71,10 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     public void testClosureFieldByResourceClass() throws Exception {
         grid.compute().call(new IgniteCallable<Object>() {
             @SpringResource(resourceClass = DummyResourceBean.class)
-            private transient DummyResourceBean dummyResourceBean;
+            private transient DummyResourceBean dummyRsrcBean;
 
             @Override public Object call() throws Exception {
-                assertNotNull(dummyResourceBean);
+                assertNotNull(dummyRsrcBean);
 
                 return null;
             }
@@ -84,13 +84,13 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * Resource injection with non-existing resource name.
      */
-    public void testClosureFieldWithWrongResourceName() throws Exception {
+    public void testClosureFieldWithWrongResourceName() {
         assertError(new IgniteCallable<Object>() {
             @SpringResource(resourceName = "nonExistentResource")
-            private transient DummyResourceBean dummyResourceBean;
+            private transient DummyResourceBean dummyRsrcBean;
 
             @Override public Object call() throws Exception {
-                assertNull(dummyResourceBean);
+                assertNull(dummyRsrcBean);
 
                 return null;
             }
@@ -100,13 +100,13 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * Resource injection with non-existing resource class.
      */
-    public void testClosureFieldWithWrongResourceClass() throws Exception {
+    public void testClosureFieldWithWrongResourceClass() {
         assertError(new IgniteCallable<Object>() {
             @SpringResource(resourceClass = AnotherDummyResourceBean.class)
-            private transient AnotherDummyResourceBean dummyResourceBean;
+            private transient AnotherDummyResourceBean dummyRsrcBean;
 
             @Override public Object call() throws Exception {
-                assertNull(dummyResourceBean);
+                assertNull(dummyRsrcBean);
 
                 return null;
             }
@@ -117,13 +117,13 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * Resource injection with both resource and class set (ambiguity).
      */
-    public void testClosureFieldByResourceClassAndName() throws Exception {
+    public void testClosureFieldByResourceClassAndName() {
         assertError(new IgniteCallable<Object>() {
             @SpringResource(resourceClass = DummyResourceBean.class, resourceName = DUMMY_BEAN)
-            private transient DummyResourceBean dummyResourceBean;
+            private transient DummyResourceBean dummyRsrcBean;
 
             @Override public Object call() throws Exception {
-                assertNull(dummyResourceBean);
+                assertNull(dummyRsrcBean);
 
                 return null;
             }
@@ -133,13 +133,13 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * Resource injection with no name and class set.
      */
-    public void testClosureFieldWithNoParams() throws Exception {
+    public void testClosureFieldWithNoParams() {
         assertError(new IgniteCallable<Object>() {
             @SpringResource
-            private transient DummyResourceBean dummyResourceBean;
+            private transient DummyResourceBean dummyRsrcBean;
 
             @Override public Object call() throws Exception {
-                assertNull(dummyResourceBean);
+                assertNull(dummyRsrcBean);
 
                 return null;
             }
@@ -151,16 +151,18 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
      */
     public void testClosureMethodWithResourceName() throws Exception {
         grid.compute().call(new IgniteCallable<Object>() {
-            private DummyResourceBean dummyResourceBean;
+            private DummyResourceBean dummyRsrcBean;
 
             @SpringResource(resourceName = DUMMY_BEAN)
-            private void setDummyResourceBean(DummyResourceBean dummyResourceBean) {
-                assertNotNull(dummyResourceBean);
+            private void setDummyResourceBean(DummyResourceBean dummyRsrcBean) {
+                assertNotNull(dummyRsrcBean);
 
-                this.dummyResourceBean = dummyResourceBean;
+                this.dummyRsrcBean = dummyRsrcBean;
             }
 
             @Override public Object call() throws Exception {
+                assertNotNull(dummyRsrcBean);
+
                 return null;
             }
         });
@@ -171,16 +173,18 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
      */
     public void testClosureMethodWithResourceClass() throws Exception {
         grid.compute().call(new IgniteCallable<Object>() {
-            private DummyResourceBean dummyResourceBean;
+            private DummyResourceBean dummyRsrcBean;
 
             @SpringResource(resourceClass = DummyResourceBean.class)
-            private void setDummyResourceBean(DummyResourceBean dummyResourceBean) {
-                assertNotNull(dummyResourceBean);
+            private void setDummyResourceBean(DummyResourceBean dummyRsrcBean) {
+                assertNotNull(dummyRsrcBean);
 
-                this.dummyResourceBean = dummyResourceBean;
+                this.dummyRsrcBean = dummyRsrcBean;
             }
 
             @Override public Object call() throws Exception {
+                assertNotNull(dummyRsrcBean);
+
                 return null;
             }
         });
@@ -189,16 +193,17 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * Resource injection with non-existing resource name.
      */
-    public void testClosureMethodWithWrongResourceName() throws Exception {
+    public void testClosureMethodWithWrongResourceName() {
         assertError(new IgniteCallable<Object>() {
-            private DummyResourceBean dummyResourceBean;
+            private DummyResourceBean dummyRsrcBean;
 
             @SpringResource(resourceName = "nonExistentResource")
-            private void setDummyResourceBean(DummyResourceBean dummyResourceBean) {
+            private void setDummyResourceBean(DummyResourceBean dummyRsrcBean) {
+                // No-op.
             }
 
             @Override public Object call() throws Exception {
-                assertNull(dummyResourceBean);
+                assertNull(dummyRsrcBean);
 
                 return null;
             }
@@ -208,16 +213,17 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * Resource injection with non-existing resource class.
      */
-    public void testClosureMethodWithWrongResourceClass() throws Exception {
+    public void testClosureMethodWithWrongResourceClass() {
         assertError(new IgniteCallable<Object>() {
-            private AnotherDummyResourceBean dummyResourceBean;
+            private AnotherDummyResourceBean dummyRsrcBean;
 
             @SpringResource(resourceClass = AnotherDummyResourceBean.class)
-            private void setDummyResourceBean(AnotherDummyResourceBean dummyResourceBean) {
+            private void setDummyResourceBean(AnotherDummyResourceBean dummyRsrcBean) {
+                // No-op.
             }
 
             @Override public Object call() throws Exception {
-                assertNull(dummyResourceBean);
+                assertNull(dummyRsrcBean);
 
                 return null;
             }
@@ -228,13 +234,13 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * Resource injection with both resource and class set (ambiguity).
      */
-    public void testClosureMethodByResourceClassAndName() throws Exception {
+    public void testClosureMethodByResourceClassAndName() {
         assertError(new IgniteCallable<Object>() {
             @SpringResource(resourceClass = DummyResourceBean.class, resourceName = DUMMY_BEAN)
-            private transient DummyResourceBean dummyResourceBean;
+            private transient DummyResourceBean dummyRsrcBean;
 
             @Override public Object call() throws Exception {
-                assertNull(dummyResourceBean);
+                assertNull(dummyRsrcBean);
 
                 return null;
             }
@@ -244,13 +250,13 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * Resource injection with no params.
      */
-    public void testClosureMethodWithNoParams() throws Exception {
+    public void testClosureMethodWithNoParams() {
         assertError(new IgniteCallable<Object>() {
             @SpringResource
-            private transient DummyResourceBean dummyResourceBean;
+            private transient DummyResourceBean dummyRsrcBean;
 
             @Override public Object call() throws Exception {
-                assertNull(dummyResourceBean);
+                assertNull(dummyRsrcBean);
 
                 return null;
             }
@@ -259,23 +265,27 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
 
     /**
      * @param job {@link IgniteCallable} to be run
-     * @param expectedExceptionMessage Message that {@link IgniteException} thrown from <tt>job</tt> should bear
+     * @param expEMsg Message that {@link IgniteException} thrown from <tt>job</tt> should bear
      */
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void assertError(final IgniteCallable<?> job, String expectedExceptionMessage) {
+    private void assertError(final IgniteCallable<?> job, String expEMsg) {
         GridTestUtils.assertThrows(log, new Callable<Object>() {
             @Override public Object call() throws Exception {
                 grid.compute().call(job);
                 return null;
             }
-        }, IgniteException.class, expectedExceptionMessage);
+        }, IgniteException.class, expEMsg);
     }
 
     /**
      * Dummy resource bean.
      */
     public static class DummyResourceBean {
+        /**
+         *
+         */
         public DummyResourceBean() {
+            // No-op.
         }
     }
 
@@ -283,7 +293,11 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
      * Another dummy resource bean.
      */
     private static class AnotherDummyResourceBean {
+        /**
+         *
+         */
         public AnotherDummyResourceBean() {
+            // No-op.
         }
     }
 }

@@ -95,30 +95,31 @@ public class GridResourceSpringBeanInjector implements GridResourceInjector {
     }
 
     /**
-     * Retrieve from {@link #springCtx} the bean specified by {@link SpringResource} annotation
-     * @param annotation {@link SpringResource} annotation instance from field or method
-     * @return bean object retrieved from
-     * @throws IgniteCheckedException
+     * Retrieves from {@link #springCtx} the bean specified by {@link SpringResource} annotation.
+     *
+     * @param annotation {@link SpringResource} annotation instance from field or method.
+     * @return Bean object retrieved from spring context.
+     * @throws IgniteCheckedException If failed.
      */
     private Object getBeanByResourceAnnotation(SpringResource annotation) throws IgniteCheckedException {
         assert springCtx != null;
 
         String beanName = annotation.resourceName();
-        Class<?> beanClass = annotation.resourceClass();
+        Class<?> beanCls = annotation.resourceClass();
 
-        boolean oneParamSet = !StringUtils.isEmpty(beanName) ^ beanClass != SpringResource.DEFAULT.class;
+        boolean oneParamSet = !StringUtils.isEmpty(beanName) ^ beanCls != SpringResource.DEFAULT.class;
+
         if (!oneParamSet) {
             throw new IgniteCheckedException("Either bean name or its class must be specified in @SpringResource, " +
                 "but not both");
         }
 
         Object bean;
-        if (!StringUtils.isEmpty(beanName)) {
+
+        if (!StringUtils.isEmpty(beanName))
             bean = springCtx.getBean(beanName);
-        }
-        else {
-            bean = springCtx.getBean(beanClass);
-        }
+        else
+            bean = springCtx.getBean(beanCls);
 
         return bean;
     }
