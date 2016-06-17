@@ -159,21 +159,21 @@ public class ModelUtil {
     }
 
     /**
-     * @return array of value cache classes
+     * @return Array of cache value classes
      */
     public static Class[] valueClasses() {
         return valClasses;
     }
 
     /**
-     * @return Array of value simple cache classes.
+     * @return Array of cache value simple classes.
      */
     public static Class[] simpleValueClasses() {
         return simpleClasses;
     }
 
     /**
-     * @return Array of value simple fat classes.
+     * @return Array of cache value fat classes.
      */
     public static Class[] fatValueClasses() {
         return fatClasses;
