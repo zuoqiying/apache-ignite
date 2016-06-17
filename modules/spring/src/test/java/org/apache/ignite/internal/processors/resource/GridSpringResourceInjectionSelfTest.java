@@ -21,6 +21,8 @@ import java.util.concurrent.Callable;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteSpring;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.util.typedef.G;
 import org.apache.ignite.lang.IgniteCallable;
 import org.apache.ignite.resources.SpringResource;
 import org.apache.ignite.testframework.GridTestUtils;
@@ -79,6 +81,32 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
                 return null;
             }
         });
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testClosureFieldByResourceClassWithMultipleBeans() throws Exception {
+        IgniteConfiguration anotherConfig = new IgniteConfiguration();
+        anotherConfig.setGridName("anotherGrid");
+
+        Ignite anotherGrid = IgniteSpring.start(anotherConfig, new ClassPathXmlApplicationContext(
+            "/org/apache/ignite/internal/processors/resource/spring-resource-with-duplicate-beans.xml"));
+
+        assertError(new IgniteCallable<Object>() {
+            @SpringResource(resourceClass = DummyResourceBean.class)
+            private transient DummyResourceBean dummyRsrcBean;
+
+            @Override public Object call() throws Exception {
+                assertNotNull(dummyRsrcBean);
+
+                return null;
+            }
+        }, anotherGrid, "No qualifying bean of type [org.apache.ignite.internal.processors.resource." +
+            "GridSpringResourceInjectionSelfTest$DummyResourceBean] is defined: expected single matching bean " +
+            "but found 2: dummyBean2,dummyBean1");
+
+        G.stop("anotherGrid", false);
     }
 
     /**
@@ -191,6 +219,38 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     }
 
     /**
+     * @throws Exception If failed.
+     */
+    public void testClosureMethodWithResourceClassWithMultipleBeans() throws Exception {
+        IgniteConfiguration anotherConfig = new IgniteConfiguration();
+        anotherConfig.setGridName("anotherGrid");
+
+        Ignite anotherGrid = IgniteSpring.start(anotherConfig, new ClassPathXmlApplicationContext(
+            "/org/apache/ignite/internal/processors/resource/spring-resource-with-duplicate-beans.xml"));
+
+        assertError(new IgniteCallable<Object>() {
+            private DummyResourceBean dummyRsrcBean;
+
+            @SpringResource(resourceClass = DummyResourceBean.class)
+            private void setDummyResourceBean(DummyResourceBean dummyRsrcBean) {
+                assertNotNull(dummyRsrcBean);
+
+                this.dummyRsrcBean = dummyRsrcBean;
+            }
+
+            @Override public Object call() throws Exception {
+                assertNotNull(dummyRsrcBean);
+
+                return null;
+            }
+        }, anotherGrid, "No qualifying bean of type [org.apache.ignite.internal.processors.resource." +
+            "GridSpringResourceInjectionSelfTest$DummyResourceBean] is defined: expected single matching bean " +
+            "but found 2: dummyBean2,dummyBean1");
+
+        G.stop("anotherGrid", false);
+    }
+
+    /**
      * Resource injection with non-existing resource name.
      */
     public void testClosureMethodWithWrongResourceName() {
@@ -268,13 +328,22 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
      * @param expEMsg Message that {@link IgniteException} thrown from <tt>job</tt> should bear
      */
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void assertError(final IgniteCallable<?> job, String expEMsg) {
+    private void assertError(final IgniteCallable<?> job, final Ignite grid, String expEMsg) {
         GridTestUtils.assertThrows(log, new Callable<Object>() {
             @Override public Object call() throws Exception {
                 grid.compute().call(job);
                 return null;
             }
         }, IgniteException.class, expEMsg);
+    }
+
+    /**
+     * @param job {@link IgniteCallable} to be run
+     * @param expEMsg Message that {@link IgniteException} thrown from <tt>job</tt> should bear
+     */
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    private void assertError(final IgniteCallable<?> job, String expEMsg) {
+        assertError(job, grid, expEMsg);
     }
 
     /**
