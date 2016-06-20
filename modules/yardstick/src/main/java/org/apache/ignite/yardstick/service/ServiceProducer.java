@@ -36,7 +36,7 @@ class ServiceProducer extends NoopService {
     private static final String INNER_SERVICE = "inner-service-";
 
     /** */
-    private transient List<String> srvcNames = new ArrayList<>();
+    private transient List<String> srvcNames;
 
     /** */
     @IgniteInstanceResource
@@ -46,8 +46,10 @@ class ServiceProducer extends NoopService {
     @Override public void init(ServiceContext ctx) throws Exception {
         super.init(ctx);
 
+        srvcNames = new ArrayList<>();
+
         for (int i = 0; i < 10; i++)
-            srvcNames.add(INNER_SERVICE + UUID.randomUUID() + "-" + ctx.name());
+            srvcNames.add(INNER_SERVICE + UUID.randomUUID());
     }
 
     /** {@inheritDoc} */
