@@ -18,32 +18,19 @@
 package org.apache.ignite.yardstick.service;
 
 import java.util.concurrent.ThreadLocalRandom;
-import org.apache.ignite.services.Service;
 import org.apache.ignite.services.ServiceContext;
 
 /**
  * Noop service.
  */
-public class NoopService implements Service {
+class NoopService extends ServiceProducer {
     /** {@inheritDoc} */
-    @Override public void cancel(ServiceContext ctx) {
-        // No-op.
-    }
-
-    /** {@inheritDoc} */
-    @Override public void init(ServiceContext ctx) throws Exception {
-        // No-op.
+    protected int randomInt() {
+        return -ThreadLocalRandom.current().nextInt();
     }
 
     /** {@inheritDoc} */
     @Override public void execute(ServiceContext ctx) throws Exception {
         // No-op.
-    }
-
-    /**
-     * @return Random integer.
-     */
-    protected int randomInt() {
-        return ThreadLocalRandom.current().nextInt();
     }
 }

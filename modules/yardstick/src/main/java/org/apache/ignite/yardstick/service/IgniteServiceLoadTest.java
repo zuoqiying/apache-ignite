@@ -45,13 +45,13 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
             srvCfg.setMaxPerNodeCount(nextRandom(1, 2));
             srvCfg.setTotalCount(nextRandom(1, ignite().cluster().nodes().size()));
             srvCfg.setName(srvName);
-            srvCfg.setService(ThreadLocalRandom.current().nextBoolean() ? new NoopService() : new NoopService2());
+            srvCfg.setService(ThreadLocalRandom.current().nextBoolean() ? new ServiceProducer() : new NoopService());
 
             igniteSrvs.deploy(srvCfg);
 
             executeTask();
 
-            NoopService srvc = igniteSrvs.service(srvName);
+            ServiceProducer srvc = igniteSrvs.service(srvName);
 
             if (srvc != null)
                 srvc.randomInt();
@@ -75,7 +75,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
      * Execute noop task.
      */
     private void executeTask() {
-        ignite().compute().execute(new NoopTask(ignite().cluster().nodes().size()), null);
+        ignite().compute().execute(new NoopTask(1), null);
     }
 
     /**
