@@ -17,9 +17,10 @@
 
 package org.apache.ignite.yardstick.service;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteServices;
@@ -28,59 +29,47 @@ import org.apache.ignite.services.Service;
 import org.apache.ignite.services.ServiceContext;
 
 /**
- * Noop service.
+ * Service which starts another services.
  */
-class ServiceProducer implements Service {
+class ServiceProducer extends NoopService {
     /** */
     private static final String INNER_SERVICE = "inner-service-";
 
     /** */
-    private Set<String> srvcNames = new HashSet<>();
-
-    /** */
-    private final Object mux = new Object();
+    private transient List<String> srvcNames = new ArrayList<>();
 
     /** */
     @IgniteInstanceResource
     private Ignite ignite;
 
     /** {@inheritDoc} */
-    @Override public void cancel(ServiceContext ctx) {
-        synchronized (mux) {
-            IgniteServices igniteSrvcs = ignite.services();
-
-            for (String srvc : srvcNames)
-                igniteSrvcs.cancel(srvc);
-
-            srvcNames.clear();
-            srvcNames = null;
-        }
-    }
-
-    /** {@inheritDoc} */
     @Override public void init(ServiceContext ctx) throws Exception {
-        // No-op.
+        super.init(ctx);
+
+        for (int i = 0; i < 10; i++)
+            srvcNames.add(INNER_SERVICE + UUID.randomUUID() + "-" + ctx.name());
     }
 
     /** {@inheritDoc} */
     @Override public void execute(ServiceContext ctx) throws Exception {
-        synchronized (mux) {
-            IgniteServices igniteSrvcs = ignite.services();
+        Ignite ignite0 = this.ignite;
 
-            for (int i = 0; i < 10; i++) {
-                String srvName = INNER_SERVICE + UUID.randomUUID();
+        if (ignite0 != null) {
+            IgniteServices igniteSrvcs = ignite0.services();
 
-                srvcNames.add(srvName);
-
-                igniteSrvcs.deployClusterSingleton(srvName, new NoopService());
-            }
+            for (String name : srvcNames)
+                igniteSrvcs.deployClusterSingleton(name, new NoopService());
         }
+
+        super.execute(ctx);
     }
 
     /**
      * @return Random integer.
      */
-    protected int randomInt() {
+    protected int randomInt() throws InterruptedException {
+        latch.await();
+
         return ThreadLocalRandom.current().nextInt();
     }
 }

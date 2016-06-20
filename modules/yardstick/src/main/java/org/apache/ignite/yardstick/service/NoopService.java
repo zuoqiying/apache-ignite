@@ -17,20 +17,37 @@
 
 package org.apache.ignite.yardstick.service;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
+import org.apache.ignite.services.Service;
 import org.apache.ignite.services.ServiceContext;
 
 /**
  * Noop service.
  */
-class NoopService extends ServiceProducer {
+class NoopService implements Service {
+    /** */
+    protected transient CountDownLatch latch;
+
     /** {@inheritDoc} */
-    protected int randomInt() {
+    protected int randomInt() throws InterruptedException {
+        latch.await();
+
         return -ThreadLocalRandom.current().nextInt();
     }
 
     /** {@inheritDoc} */
+    @Override public void init(ServiceContext ctx) throws Exception {
+        latch = new CountDownLatch(1);
+    }
+
+    /** {@inheritDoc} */
     @Override public void execute(ServiceContext ctx) throws Exception {
-        // No-op.
+        latch.countDown();
+    }
+
+    /** {@inheritDoc} */
+    @Override public void cancel(ServiceContext ctx) {
+        latch.countDown();
     }
 }
