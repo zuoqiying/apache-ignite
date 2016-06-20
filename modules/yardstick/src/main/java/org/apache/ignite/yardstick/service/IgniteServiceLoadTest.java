@@ -45,8 +45,8 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
             ServiceConfiguration srvCfg = new ServiceConfiguration();
 
-            srvCfg.setMaxPerNodeCount(nextRandom(1, 2));
-            srvCfg.setTotalCount(nextRandom(1, ignite().cluster().nodes().size()));
+            srvCfg.setMaxPerNodeCount(1);
+            srvCfg.setTotalCount(nextRandom(1, 2));
             srvCfg.setName(srvName);
             srvCfg.setService(ThreadLocalRandom.current().nextBoolean() ? new ServiceProducer() : new NoopService());
 
