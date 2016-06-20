@@ -178,6 +178,8 @@ public class IgniteNode implements BenchmarkServer {
             }
         });
 
+        dumpThread.setName("bench-dump-thread");
+
         dumpThread.start();
 
         BenchmarkUtils.println("Server log dump startup.");
