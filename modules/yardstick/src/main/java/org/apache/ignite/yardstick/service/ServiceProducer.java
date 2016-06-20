@@ -48,10 +48,10 @@ class ServiceProducer extends NoopService {
         if (ignite0 != null) {
             IgniteServices igniteSrvcs = ignite0.services();
 
-            for (String name : srvcNames) {
+            for (int i = 0; i < 10; ++i) {
                 String srvsName = INNER_SERVICE + UUID.randomUUID();
 
-                igniteSrvcs.deployClusterSingleton(name, new NoopService());
+                igniteSrvcs.deployClusterSingleton(srvsName, new NoopService());
 
                 srvcNames.add(srvsName);
             }
