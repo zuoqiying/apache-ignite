@@ -36,47 +36,31 @@ class ServiceProducer extends NoopService {
     private static final String INNER_SERVICE = "inner-service-";
 
     /** */
-    private transient List<String> srvcNames;
-
-    /** */
     @IgniteInstanceResource
     private Ignite ignite;
-
-    /** {@inheritDoc} */
-    @Override public void init(ServiceContext ctx) throws Exception {
-        super.init(ctx);
-
-        srvcNames = new ArrayList<>();
-
-        for (int i = 0; i < 10; i++)
-            srvcNames.add(INNER_SERVICE + UUID.randomUUID());
-    }
 
     /** {@inheritDoc} */
     @Override public void execute(ServiceContext ctx) throws Exception {
         Ignite ignite0 = this.ignite;
 
+        List<String> srvcNames = new ArrayList<>();
+
         if (ignite0 != null) {
             IgniteServices igniteSrvcs = ignite0.services();
 
-            for (String name : srvcNames)
+            for (String name : srvcNames) {
+                String srvsName = INNER_SERVICE + UUID.randomUUID();
+
                 igniteSrvcs.deployClusterSingleton(name, new NoopService());
-        }
 
-        super.execute(ctx);
-    }
+                srvcNames.add(srvsName);
+            }
 
-    /** {@inheritDoc} */
-    @Override public void cancel(ServiceContext ctx) {
-        Ignite ignite0 = ignite;
-        if (ignite0 != null && srvcNames != null) {
-            List<String> names = new ArrayList<>(srvcNames);
-
-            for (String name : names)
+            for (String name : srvcNames)
                 ignite0.services().cancel(name);
         }
 
-        super.cancel(ctx);
+        super.execute(ctx);
     }
 
     /**
