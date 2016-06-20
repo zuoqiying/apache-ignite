@@ -64,7 +64,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
                 throw new IgniteException("Service wan't deployed.");
             }
 
-            ServiceProducer srvc = igniteSrvs.service(srvName);
+            NoopService srvc = igniteSrvs.service(srvName);
 
             srvc.randomInt();
 
