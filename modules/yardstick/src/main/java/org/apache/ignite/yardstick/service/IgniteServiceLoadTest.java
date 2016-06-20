@@ -53,7 +53,8 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
             NoopService srvc = igniteSrvs.service(srvName);
 
-            srvc.randomInt();
+            if (srvc != null)
+                srvc.randomInt();
 
             igniteSrvs.cancel(srvName);
 
