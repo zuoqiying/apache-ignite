@@ -56,8 +56,8 @@ class ServiceProducer extends NoopService {
                 srvcNames.add(srvsName);
             }
 
-//            for (String name : srvcNames)
-//                ignite0.services().cancel(name);
+            for (String name : srvcNames)
+                ignite0.services().cancel(name);
         }
 
         super.execute(ctx);

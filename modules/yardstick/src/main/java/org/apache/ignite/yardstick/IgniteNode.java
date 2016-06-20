@@ -238,9 +238,11 @@ public class IgniteNode implements BenchmarkServer {
 
     /** {@inheritDoc} */
     @Override public void stop() throws Exception {
-        dumpThread.interrupt();
+        if (dumpThread != null) {
+            dumpThread.interrupt();
 
-        dumpThread.join();
+            dumpThread.join();
+        }
 
         Ignition.stopAll(true);
     }
