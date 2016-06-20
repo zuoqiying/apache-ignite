@@ -20,12 +20,10 @@ package org.apache.ignite.yardstick.service;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteServices;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
 import org.apache.ignite.internal.util.lang.GridAbsPredicate;
-import org.apache.ignite.internal.util.typedef.PA;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.services.ServiceConfiguration;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
@@ -56,7 +54,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
             executeTask();
 
-            NoopService srvc = igniteSrvs.serviceProxy(srvName, NoopService.class, false);
+            TestService srvc = igniteSrvs.serviceProxy(srvName, TestService.class, false);
 
             srvc.randomInt();
 

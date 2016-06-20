@@ -25,12 +25,12 @@ import org.apache.ignite.services.ServiceContext;
 /**
  * Noop service.
  */
-class NoopService implements Service {
+class NoopService implements Service, TestService {
     /** */
     protected transient CountDownLatch latch;
 
     /** {@inheritDoc} */
-    protected int randomInt() throws InterruptedException {
+    @Override public int randomInt() throws InterruptedException {
         latch.await();
 
         return -ThreadLocalRandom.current().nextInt();

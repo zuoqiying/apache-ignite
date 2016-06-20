@@ -82,7 +82,7 @@ class ServiceProducer extends NoopService {
     /**
      * @return Random integer.
      */
-    protected int randomInt() throws InterruptedException {
+    @Override public int randomInt() throws InterruptedException {
         latch.await();
 
         return ThreadLocalRandom.current().nextInt();
