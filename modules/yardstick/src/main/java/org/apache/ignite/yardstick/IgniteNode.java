@@ -20,6 +20,7 @@ package org.apache.ignite.yardstick;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteSpring;
@@ -30,6 +31,7 @@ import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.NearCacheConfiguration;
 import org.apache.ignite.configuration.TransactionConfiguration;
+import org.apache.ignite.internal.IgniteKernal;
 import org.apache.ignite.internal.util.IgniteUtils;
 import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
@@ -54,6 +56,9 @@ public class IgniteNode implements BenchmarkServer {
 
     /** Client mode. */
     private boolean clientMode;
+
+    /** Dump thread. */
+    private Thread dumpThread;
 
     /** */
     public IgniteNode() {
@@ -153,6 +158,27 @@ public class IgniteNode implements BenchmarkServer {
         ignite = IgniteSpring.start(c, appCtx);
 
         BenchmarkUtils.println("Configured marshaller: " + ignite.cluster().localNode().attribute(ATTR_MARSHALLER));
+
+        final IgniteKernal ignite0 = (IgniteKernal)ignite;
+
+        dumpThread = new Thread(new Runnable() {
+            @Override public void run() {
+                while (!Thread.currentThread().isInterrupted()) {
+                    try {
+                        ignite0.dumpDebugInfo();
+
+                        TimeUnit.MINUTES.sleep(1);
+                    }
+                    catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+
+                        BenchmarkUtils.println("Dump thread is stopped.");
+                    }
+                }
+            }
+        });
+
+        BenchmarkUtils.println("Server log dump startup.");
     }
 
     /**
@@ -208,6 +234,10 @@ public class IgniteNode implements BenchmarkServer {
 
     /** {@inheritDoc} */
     @Override public void stop() throws Exception {
+        dumpThread.interrupt();
+
+        dumpThread.join();
+
         Ignition.stopAll(true);
     }
 
