@@ -43,7 +43,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
         if (isStartService()) {
             final IgniteServices igniteSrvs = ignite().services();
 
-            final String srvName = SERVICE_NAME + UUID.randomUUID();
+            final String srvName = SERVICE_NAME + UUID.randomUUID() + "-" + UUID.randomUUID();
 
             ServiceConfiguration srvCfg = new ServiceConfiguration();
 
@@ -61,7 +61,11 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
                     return igniteSrvs.service(srvName) != null;
                 }
             }, TimeUnit.SECONDS.toMillis(60))) {
-                throw new IgniteException("Service wan't deployed.");
+                System.err.println("Service wan't deployed: " + srvName);
+
+                igniteSrvs.cancel(srvName);
+
+                return true;
             }
 
             NoopService srvc = igniteSrvs.service(srvName);
