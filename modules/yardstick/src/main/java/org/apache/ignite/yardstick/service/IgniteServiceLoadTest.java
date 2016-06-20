@@ -60,7 +60,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
                 @Override public boolean apply() {
                     return igniteSrvs.service(srvName) != null;
                 }
-            }, TimeUnit.SECONDS.toMillis(3))) {
+            }, TimeUnit.SECONDS.toMillis(60))) {
                 throw new IgniteException("Service wan't deployed.");
             }
 
