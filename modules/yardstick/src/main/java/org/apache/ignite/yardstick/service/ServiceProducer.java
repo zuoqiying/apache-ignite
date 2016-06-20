@@ -35,7 +35,7 @@ class ServiceProducer implements Service {
     private static final String INNER_SERVICE = "inner-service-";
 
     /** */
-    private Set<String> srvcs = new HashSet<>();
+    private Set<String> srvcNames = new HashSet<>();
 
     /** */
     private final Object mux = new Object();
@@ -49,11 +49,11 @@ class ServiceProducer implements Service {
         synchronized (mux) {
             IgniteServices igniteSrvcs = ignite.services();
 
-            for (String srvc : srvcs)
+            for (String srvc : srvcNames)
                 igniteSrvcs.cancel(srvc);
 
-            srvcs.clear();
-            srvcs = null;
+            srvcNames.clear();
+            srvcNames = null;
         }
     }
 
@@ -70,7 +70,7 @@ class ServiceProducer implements Service {
             for (int i = 0; i < 10; i++) {
                 String srvName = INNER_SERVICE + UUID.randomUUID();
 
-                srvcs.add(srvName);
+                srvcNames.add(srvName);
 
                 igniteSrvcs.deployClusterSingleton(srvName, new NoopService());
             }
