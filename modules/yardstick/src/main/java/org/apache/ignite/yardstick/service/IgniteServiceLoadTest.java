@@ -56,19 +56,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
             executeTask();
 
-            if (!waitForCondition(new PA() {
-                @Override public boolean apply() {
-                    return igniteSrvs.service(srvName) != null;
-                }
-            }, TimeUnit.SECONDS.toMillis(60))) {
-                System.err.println("Service wan't deployed: " + srvName);
-
-                igniteSrvs.cancel(srvName);
-
-                return true;
-            }
-
-            NoopService srvc = igniteSrvs.service(srvName);
+            NoopService srvc = igniteSrvs.serviceProxy(srvName, NoopService.class, false);
 
             srvc.randomInt();
 

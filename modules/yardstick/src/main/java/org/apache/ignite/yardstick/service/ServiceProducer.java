@@ -66,6 +66,19 @@ class ServiceProducer extends NoopService {
         super.execute(ctx);
     }
 
+    /** {@inheritDoc} */
+    @Override public void cancel(ServiceContext ctx) {
+        Ignite ignite0 = ignite;
+        if (ignite0 != null && srvcNames != null) {
+            List<String> names = new ArrayList<>(srvcNames);
+
+            for (String name : names)
+                ignite0.services().cancel(name);
+        }
+
+        super.cancel(ctx);
+    }
+
     /**
      * @return Random integer.
      */
