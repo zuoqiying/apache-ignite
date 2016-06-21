@@ -492,6 +492,41 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
     }
 
     /**
+     * @throws IgniteCheckedException If failed.
+     */
+    public void testRemovalFromPageMemory() throws IgniteCheckedException{
+        int cnt = 1; // TestTree.rnd.nextInt(5) + 10;
+        TestTree[] trees = new TestTree[cnt];
+
+        for (int i = 0; i < cnt; i++) {
+            trees[i] = createTestTree(false);
+
+            for (long j = 1; j <= 100_000; j++)
+                trees[i].put(j);
+        }
+
+        int dropIdx = TestTree.rnd.nextInt(cnt);
+
+        trees[dropIdx].removeFromPageMemory();
+
+        for (int i = 0; i < cnt; i++) {
+            if (i == dropIdx) {
+                assertFalse(trees[i].find(null, null).next());
+                assertEquals(0, trees[i].size());
+                assertEquals(0, trees[i].rootLevel());
+
+                continue;
+            }
+
+            for (long j = 1; j <= 100_000; j++) {
+                Long one = trees[i].findOne(j);
+
+                assertEquals("Value not found", j, one.longValue());
+            }
+        }
+    }
+
+    /**
      * @param canGetRow Can get row from inner page.
      * @throws IgniteCheckedException If failed.
      */
