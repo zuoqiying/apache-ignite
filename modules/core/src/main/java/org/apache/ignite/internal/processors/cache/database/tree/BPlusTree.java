@@ -1539,14 +1539,12 @@ public abstract class BPlusTree<L, T extends L> {
      * Fast-path tree removal from page memory.
      */
     public void removeFromPageMemory() throws IgniteCheckedException {
-        // Traverse leaf nodes and remove data.
-        long pageId;
-
         try (Page meta = page(metaPageId)) {
-            pageId = getFirstPageId(meta, 0); // Level 0 is always at the bottom.
+            long pageId = getFirstPageId(meta, 0);
 
             BPlusIO<L> io = null;
 
+            // Traverse leaf nodes and remove data.
             while (pageId != 0) {
                 try (Page page = page(pageId)) {
                     ByteBuffer buf = page.getForRead(); // No correctness guaranties.
@@ -1569,7 +1567,6 @@ public abstract class BPlusTree<L, T extends L> {
                     pageMem.freePage(page.fullId().cacheId(), pageId);
 
                     // TODO destroy data.
-
                     pageId = nextPageId;
                 }
             }
