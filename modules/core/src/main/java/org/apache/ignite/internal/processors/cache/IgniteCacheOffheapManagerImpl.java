@@ -18,8 +18,10 @@
 package org.apache.ignite.internal.processors.cache;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCheckedException;
@@ -69,6 +71,9 @@ import static org.apache.ignite.internal.pagemem.PageIdUtils.pageId;
  *
  */
 public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter implements IgniteCacheOffheapManager {
+    /** Remove buffer size. */
+    private static final int REMOVE_BUFFER_SIZE = 512;
+
     /** */
     private boolean indexingEnabled;
 
@@ -334,6 +339,44 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             catch (IgniteCheckedException e) {
                 U.error(log, "Failed to clear cache entry: " + key, e);
             }
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override public void destroy(GridDhtLocalPartition part) throws IgniteCheckedException {
+        CacheDataStore store = dataStore(part);
+
+        // Buffer entries for removal.
+        int cap = REMOVE_BUFFER_SIZE;
+
+        List<CacheDataRow> buf = new ArrayList<>(cap);
+
+        // Retry until no rows left.
+        while(true) {
+            GridCursor<? extends CacheDataRow> cursor = store.cursor();
+
+            while (buf.size() < cap) {
+                if (cursor.next())
+                    buf.add(cursor.get());
+            }
+
+            // No rows left.
+            if (buf.size() == 0)
+                break;
+
+            for (CacheDataRow row : buf) {
+                store.remove(row.key());
+
+                if (indexingEnabled) {
+                    GridCacheQueryManager qryMgr = cctx.queries();
+
+                    assert qryMgr.enabled();
+
+                    qryMgr.remove(row.key(), part.id(), row.value(), row.version());
+                }
+            }
+
+            buf.clear();
         }
     }
 
