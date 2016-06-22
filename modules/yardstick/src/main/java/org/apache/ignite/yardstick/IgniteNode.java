@@ -223,7 +223,10 @@ public class IgniteNode implements BenchmarkServer {
 
     /** {@inheritDoc} */
     @Override public void stop() throws Exception {
-        Ignition.stopAll(true);
+        if (gridName != null)
+            Ignition.stop(gridName, true);
+        else
+            Ignition.stopAll(true);
     }
 
     /** {@inheritDoc} */
