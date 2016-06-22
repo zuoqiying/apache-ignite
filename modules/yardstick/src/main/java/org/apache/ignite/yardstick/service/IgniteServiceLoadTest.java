@@ -20,6 +20,8 @@ package org.apache.ignite.yardstick.service;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteServices;
@@ -29,6 +31,7 @@ import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.services.ServiceConfiguration;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
+import org.apache.ignite.yardstick.IgniteNode;
 import org.apache.ignite.yardstick.compute.model.NoopTask;
 import org.yardstickframework.BenchmarkUtils;
 
@@ -39,8 +42,37 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
     /** Test service name. */
     private static String SERVICE_NAME = "test-service-name-";
 
+    /** */
+    final AtomicBoolean restarter = new AtomicBoolean(false);
+
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
+        if (!restarter.get() && restarter.compareAndSet(false, true)) {
+            BenchmarkUtils.println(cfg, "The thread is restarter. Thread id: " + Thread.currentThread().getName());
+
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    TimeUnit.SECONDS.sleep(10);
+
+                    IgniteNode node = new IgniteNode(false);
+
+                    node.start(cfg);
+
+                    TimeUnit.SECONDS.sleep(10);
+
+                    node.stop();
+                }
+                catch (InterruptedException e) {
+                    BenchmarkUtils.println(cfg, "Restarter thread was interrupted: "
+                        + Thread.currentThread().getName());
+
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            return true;
+        }
+
         if (isStartService()) {
             final IgniteServices igniteSrvs = ignite().services();
 
