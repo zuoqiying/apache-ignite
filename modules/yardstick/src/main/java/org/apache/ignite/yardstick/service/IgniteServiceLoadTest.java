@@ -20,14 +20,17 @@ package org.apache.ignite.yardstick.service;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteServices;
-import org.apache.ignite.internal.IgniteInterruptedCheckedException;
-import org.apache.ignite.internal.util.lang.GridAbsPredicate;
-import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
+import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.services.ServiceConfiguration;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
 import org.apache.ignite.yardstick.compute.model.NoopTask;
+import org.yardstickframework.BenchmarkUtils;
 
 /**
  *
@@ -45,10 +48,10 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
             ServiceConfiguration srvCfg = new ServiceConfiguration();
 
-            srvCfg.setMaxPerNodeCount(1);
+            srvCfg.setMaxPerNodeCount(nextRandom(1, 2));
             srvCfg.setTotalCount(nextRandom(1, 2));
             srvCfg.setName(srvName);
-            srvCfg.setService(ThreadLocalRandom.current().nextBoolean() ? new ServiceProducer() : new NoopService());
+            srvCfg.setService(new ServiceProducer());
 
             igniteSrvs.deploy(srvCfg);
 
@@ -56,7 +59,12 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
             TestService srvc = igniteSrvs.serviceProxy(srvName, TestService.class, false);
 
-            srvc.randomInt();
+            try {
+                srvc.randomInt();
+            }
+            catch (Exception e) {
+                BenchmarkUtils.println(cfg, "");
+            }
 
             igniteSrvs.cancel(srvName);
 
@@ -66,8 +74,15 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
                 throw new IgniteException("Service wasn't cancelled.");
         }
         else {
-            for (int i = 0; i < args.jobs(); i++)
-                executeTask();
+            CacheConfiguration cfg = cacheConfiguration();
+
+            IgniteCache cache = ignite().createCache(cfg);
+
+            cache.put(1, 1);
+
+            executeTask();
+
+            ignite().destroyCache(cfg.getName());
         }
 
         return true;
@@ -84,35 +99,17 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
      * @return {@code True} if need to start/stop service or perform cache operation.
      */
     private boolean isStartService() {
-        return ThreadLocalRandom.current().nextDouble() < 0.8;
+        return ThreadLocalRandom.current().nextBoolean();
     }
 
-
     /**
-     * Waits for condition, polling in busy wait loop.
-     *
-     * @param cond Condition to wait for.
-     * @param timeout Max time to wait in milliseconds.
-     * @return {@code true} if condition was achieved, {@code false} otherwise.
-     * @throws org.apache.ignite.internal.IgniteInterruptedCheckedException If interrupted.
+     * @return Cache configuration.
      */
-    public static boolean waitForCondition(GridAbsPredicate cond, long timeout)
-        throws IgniteInterruptedCheckedException {
-        long curTime = U.currentTimeMillis();
-        long endTime = curTime + timeout;
-
-        if (endTime < 0)
-            endTime = Long.MAX_VALUE;
-
-        while (curTime < endTime) {
-            if (cond.apply())
-                return true;
-
-            U.sleep(200);
-
-            curTime = U.currentTimeMillis();
-        }
-
-        return false;
+    private CacheConfiguration<Integer, Integer> cacheConfiguration() {
+        return new CacheConfiguration<Integer, Integer>("test-cache-name-" + UUID.randomUUID())
+            .setCacheMode(CacheMode.PARTITIONED)
+            .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+            .setBackups(0)
+            .setAffinity(new RendezvousAffinityFunction(true, 256));
     }
 }
