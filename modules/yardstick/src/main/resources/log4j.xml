@@ -98,7 +98,7 @@
         <level value="INFO"/>
     </category>
 
-    <category name="org.apache.ignite.cache.tx.msg">
+    <category name="org.apache.ignite.cache.tx.msg" additivity="false">
         <level value="DEBUG"/>
         <appender-ref ref="TX_MESSAGE_LOG_FILE"/>
     </category>
