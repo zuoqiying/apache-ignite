@@ -121,6 +121,8 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
             }
             catch (Exception e) {
                 BenchmarkUtils.println(cfg, "Failed to start/stop cache.");
+
+                e.printStackTrace();
             }
         }
 
