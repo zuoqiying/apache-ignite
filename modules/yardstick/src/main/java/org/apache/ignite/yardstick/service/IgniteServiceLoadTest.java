@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteServices;
@@ -43,23 +44,20 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
     private static String SERVICE_NAME = "test-service-name-";
 
     /** */
-    private final AtomicBoolean restarter = new AtomicBoolean(false);
+    private final AtomicReference<String> threadRef = new AtomicReference<>();
 
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
-        if (!restarter.get() && restarter.compareAndSet(false, true)) {
+        if (threadRef.get() == null && threadRef.compareAndSet(null, Thread.currentThread().getName()))
             BenchmarkUtils.println(cfg, "The thread is restarter. Thread id: " + Thread.currentThread().getName());
 
-            ctx.put(1, 1);
-        }
-
-        if (ctx.containsKey(1)) {
+        if (threadRef.get().equals(Thread.currentThread().getName())) {
             try {
                 TimeUnit.SECONDS.sleep(args.batch());
 
                 IgniteNode node = new IgniteNode(false);
 
-                node.setGridName("restart-grid-name");
+                node.setGridName("restart-grid-name-" + UUID.randomUUID());
 
                 node.start(cfg);
 
