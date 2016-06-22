@@ -84,8 +84,8 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
                 ServiceConfiguration srvCfg = new ServiceConfiguration();
 
-                srvCfg.setMaxPerNodeCount(nextRandom(1, 2));
-                srvCfg.setTotalCount(nextRandom(1, 2));
+                srvCfg.setMaxPerNodeCount(1);
+                srvCfg.setTotalCount(nextRandom(2, 5));
                 srvCfg.setName(srvName);
                 srvCfg.setService(new ServiceProducer());
 
@@ -106,6 +106,8 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
             }
             catch (Exception e) {
                 BenchmarkUtils.println(cfg, "Failed to perform operation.");
+
+                e.printStackTrace();
             }
         }
         else {
