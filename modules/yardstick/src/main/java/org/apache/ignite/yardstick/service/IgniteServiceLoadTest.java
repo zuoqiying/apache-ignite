@@ -19,10 +19,16 @@ package org.apache.ignite.yardstick.service;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteServices;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
+import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.services.ServiceConfiguration;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
 import org.apache.ignite.yardstick.IgniteNode;
@@ -101,24 +107,35 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
                 e.printStackTrace();
             }
         }
-//        else {
-//            try {
-//                CacheConfiguration cfg = cacheConfiguration();
-//
-//                IgniteCache cache = ignite().createCache(cfg);
-//
-//                cache.put(1, 1);
-//
-//                executeTask();
-//
-//                ignite().destroyCache(cfg.getName());
-//            }
-//            catch (Exception e) {
-//                BenchmarkUtils.println(cfg, "Failed to start/stop cache.");
-//            }
-//        }
+        else {
+            try {
+                CacheConfiguration cfg = cacheConfiguration();
+
+                IgniteCache cache = ignite().createCache(cfg);
+
+                cache.put(1, 1);
+
+                executeTask();
+
+                ignite().destroyCache(cfg.getName());
+            }
+            catch (Exception e) {
+                BenchmarkUtils.println(cfg, "Failed to start/stop cache.");
+            }
+        }
 
         return true;
+    }
+
+    /**
+     * @return Cache configuration.
+     */
+    private CacheConfiguration<Integer, Integer> cacheConfiguration() {
+        return new CacheConfiguration<Integer, Integer>("test-cache-name-" + UUID.randomUUID())
+            .setCacheMode(CacheMode.PARTITIONED)
+            .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+            .setBackups(0)
+            .setAffinity(new RendezvousAffinityFunction(true, 256));
     }
 
     /**
@@ -132,6 +149,6 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
      * @return {@code True} if need to start/stop service or perform cache operation.
      */
     private boolean isStartService() {
-        return true;
+        return ThreadLocalRandom.current().nextDouble() < 0.9;
     }
 }
