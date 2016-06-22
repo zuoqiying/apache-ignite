@@ -56,6 +56,8 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
                     IgniteNode node = new IgniteNode(false);
 
+                    node.setGridName("restart-grid-name");
+
                     node.start(cfg);
 
                     TimeUnit.SECONDS.sleep(10);
@@ -95,7 +97,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
                 srvc.randomInt();
             }
             catch (Exception e) {
-                BenchmarkUtils.println(cfg, "");
+                BenchmarkUtils.println(cfg, "Failed to perform operation.");
             }
 
             igniteSrvs.cancel(srvName);
