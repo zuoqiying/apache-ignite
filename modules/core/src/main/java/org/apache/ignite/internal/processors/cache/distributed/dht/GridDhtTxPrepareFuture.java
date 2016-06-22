@@ -101,6 +101,9 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
     /** Logger reference. */
     private static final AtomicReference<IgniteLogger> logRef = new AtomicReference<>();
 
+    /** Logger reference. */
+    protected static final AtomicReference<IgniteLogger> txMsgLogRef = new AtomicReference<>();
+
     /** */
     private static final IgniteReducer<IgniteInternalTx, GridNearTxPrepareResponse> REDUCER =
         new IgniteReducer<IgniteInternalTx, GridNearTxPrepareResponse>() {
@@ -116,6 +119,9 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
 
     /** Logger. */
     private static IgniteLogger log;
+
+    /** Logger. */
+    private static IgniteLogger txMsgLog;
 
     /** Context. */
     private GridCacheSharedContext<?, ?> cctx;
@@ -212,8 +218,11 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
 
         this.nearMiniId = nearMiniId;
 
-        if (log == null)
+        if (log == null) {
+            txMsgLog = U.logger(cctx.kernalContext(), txMsgLogRef, CU.TX_MSG_PREPARE_LOG_CATEGORY);
+
             log = U.logger(cctx.kernalContext(), logRef, GridDhtTxPrepareFuture.class);
+        }
 
         dhtMap = tx.dhtMap();
         nearMap = tx.nearMap();
@@ -268,7 +277,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
     /**
      * @return Transaction.
      */
-    GridDhtTxLocalAdapter tx() {
+    public GridDhtTxLocalAdapter tx() {
         return tx;
     }
 
@@ -464,12 +473,35 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
      */
     public void onResult(UUID nodeId, GridDhtTxPrepareResponse res) {
         if (!isDone()) {
+            boolean found = false;
+
             MiniFuture mini = miniFuture(res.miniId());
 
             if (mini != null) {
+                found = true;
+
                 assert mini.node().id().equals(nodeId);
 
                 mini.onResult(res);
+            }
+
+            if (!found) {
+                if (txMsgLog.isDebugEnabled()) {
+                    txMsgLog.debug("DTH prepare fut, failed to find mini future [txId=" + tx.nearXidVersion() +
+                        ", dhtTxId=" + tx.xidVersion() +
+                        ", nodeId=" + nodeId +
+                        ", res=" + res +
+                        ", fut=" + this + ']');
+                }
+            }
+        }
+        else {
+            if (txMsgLog.isDebugEnabled()) {
+                txMsgLog.debug("DTH prepare fut, response for finished future [txId=" + tx.nearXidVersion() +
+                    ", dhtTxId=" + tx.xidVersion() +
+                    ", nodeId=" + nodeId +
+                    ", res=" + res +
+                    ", fut=" + this + ']');
             }
         }
     }
@@ -639,7 +671,12 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
                                         sendPrepareResponse(res);
                                 }
                                 catch (IgniteCheckedException e) {
-                                    U.error(log, "Failed to send prepare response for transaction: " + tx, e);
+                                    U.error(log, "Failed to send prepare response [txId=" + tx.nearXidVersion() + "," +
+                                        ", dhtTxId=" + tx.xidVersion() +
+                                        ", nodeId=" + tx.nearNodeId() +
+                                        ", res=" + res,
+                                        ", tx=" + tx,
+                                        e);
                                 }
                             }
                         };
@@ -677,7 +714,12 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
                         sendPrepareResponse(res);
                 }
                 catch (IgniteCheckedException e) {
-                    U.error(log, "Failed to send prepare response for transaction: " + tx, e);
+                    U.error(log, "Failed to send prepare response [txId=" + tx.nearXidVersion() + "," +
+                        ", dhtTxId=" + tx.xidVersion() +
+                        ", nodeId=" + tx.nearNodeId() +
+                        ", res=" + res,
+                        ", tx=" + tx,
+                        e);
                 }
             }
 
@@ -691,7 +733,12 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
                     sendPrepareResponse(res);
                 }
                 catch (IgniteCheckedException e) {
-                    U.error(log, "Failed to send prepare response for transaction: " + tx, e);
+                    U.error(log, "Failed to send prepare response [txId=" + tx.nearXidVersion() + "," +
+                        ", dhtTxId=" + tx.xidVersion() +
+                        ", nodeId=" + tx.nearNodeId() +
+                        ", res=" + res,
+                        ", tx=" + tx,
+                        e);
                 }
                 finally {
                     // Will call super.onDone().
@@ -726,10 +773,26 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
         if (!tx.nearNodeId().equals(cctx.localNodeId())) {
             Throwable err = this.err.get();
 
-            if (err != null && err instanceof IgniteFutureCancelledException)
+            if (err != null && err instanceof IgniteFutureCancelledException) {
+                if (txMsgLog.isDebugEnabled()) {
+                    txMsgLog.debug("DTH prepare fut, skip send response [txId=" + tx.nearXidVersion() +
+                        ", dhtTxId=" + tx.xidVersion() +
+                        ", nodeId=" + tx.nearNodeId() +
+                        ", err=" + err +
+                        ", res=" + res + ']');
+                }
+
                 return;
+            }
 
             cctx.io().send(tx.nearNodeId(), res, tx.ioPolicy());
+
+            if (txMsgLog.isDebugEnabled()) {
+                txMsgLog.debug("DTH prepare fut, sent response [txId=" + tx.nearXidVersion() +
+                    ", dhtTxId=" + tx.xidVersion() +
+                    ", nodeId=" + tx.nearNodeId() +
+                    ", res=" + res + ']');
+            }
         }
     }
 
@@ -1179,13 +1242,34 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
 
                     try {
                         cctx.io().send(n, req, tx.ioPolicy());
+
+                        if (txMsgLog.isDebugEnabled()) {
+                            txMsgLog.debug("DTH prepare fut, sent request dht [txId=" + tx.nearXidVersion() +
+                                ", dhtTxId=" + tx.xidVersion() +
+                                ", nodeId=" + n.id() + ']');
+                        }
                     }
                     catch (ClusterTopologyCheckedException e) {
                         fut.onNodeLeft(e);
                     }
                     catch (IgniteCheckedException e) {
-                        if (!cctx.kernalContext().isStopping())
+                        if (!cctx.kernalContext().isStopping()) {
+                            if (txMsgLog.isDebugEnabled()) {
+                                txMsgLog.debug("DTH prepare fut, failed to send request dht [txId=" + tx.nearXidVersion() +
+                                    ", dhtTxId=" + tx.xidVersion() +
+                                    ", nodeId=" + n.id() + ']');
+                            }
+
                             fut.onResult(e);
+                        }
+                        else {
+                            if (txMsgLog.isDebugEnabled()) {
+                                txMsgLog.debug("DTH prepare fut, failed to send request dht, ignore [txId=" + tx.nearXidVersion() +
+                                    ", dhtTxId=" + tx.xidVersion() +
+                                    ", nodeId=" + n.id() +
+                                    ", err=" + e + ']');
+                            }
+                        }
                     }
                 }
 
@@ -1237,13 +1321,34 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
 
                         try {
                             cctx.io().send(nearMapping.node(), req, tx.ioPolicy());
+
+                            if (txMsgLog.isDebugEnabled()) {
+                                txMsgLog.debug("DTH prepare fut, sent request near [txId=" + tx.nearXidVersion() +
+                                    ", dhtTxId=" + tx.xidVersion() +
+                                    ", nodeId=" + nearMapping.node().id() + ']');
+                            }
                         }
                         catch (ClusterTopologyCheckedException e) {
                             fut.onNodeLeft(e);
                         }
                         catch (IgniteCheckedException e) {
-                            if (!cctx.kernalContext().isStopping())
+                            if (!cctx.kernalContext().isStopping()) {
+                                if (txMsgLog.isDebugEnabled()) {
+                                    txMsgLog.debug("DTH prepare fut, failed to send request near [txId=" + tx.nearXidVersion() +
+                                        ", dhtTxId=" + tx.xidVersion() +
+                                        ", nodeId=" + nearMapping.node().id() + ']');
+                                }
+
                                 fut.onResult(e);
+                            }
+                            else {
+                                if (txMsgLog.isDebugEnabled()) {
+                                    txMsgLog.debug("DTH prepare fut, failed to send request near, ignore [txId=" + tx.nearXidVersion() +
+                                        ", dhtTxId=" + tx.xidVersion() +
+                                        ", nodeId=" + nearMapping.node().id() +
+                                        ", err=" + e + ']');
+                                }
+                            }
                         }
                     }
                 }
@@ -1459,8 +1564,11 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
          * @param e Node failure.
          */
         void onNodeLeft(ClusterTopologyCheckedException e) {
-            if (log.isDebugEnabled())
-                log.debug("Remote node left grid while sending or waiting for reply (will ignore): " + this);
+            if (txMsgLog.isDebugEnabled()) {
+                txMsgLog.debug("DTH prepare fut, mini future node left [txId=" + tx.nearXidVersion() +
+                    ", dhtTxId=" + tx.xidVersion() +
+                    ", nodeId=" + node().id() + ']');
+            }
 
             if (tx != null)
                 tx.removeMapping(nodeId);
