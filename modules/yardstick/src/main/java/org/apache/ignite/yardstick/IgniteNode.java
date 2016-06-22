@@ -57,9 +57,6 @@ public class IgniteNode implements BenchmarkServer {
     /** Client mode. */
     private boolean clientMode;
 
-    /** Dump thread. */
-    private Thread dumpThread;
-
     /** */
     public IgniteNode() {
         // No-op.
@@ -158,31 +155,6 @@ public class IgniteNode implements BenchmarkServer {
         ignite = IgniteSpring.start(c, appCtx);
 
         BenchmarkUtils.println("Configured marshaller: " + ignite.cluster().localNode().attribute(ATTR_MARSHALLER));
-
-        final IgniteKernal ignite0 = (IgniteKernal)ignite;
-
-        dumpThread = new Thread(new Runnable() {
-            @Override public void run() {
-                while (!Thread.currentThread().isInterrupted()) {
-                    try {
-                        ignite0.dumpDebugInfo();
-
-                        TimeUnit.MINUTES.sleep(1);
-                    }
-                    catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-
-                        BenchmarkUtils.println("Dump thread is stopped.");
-                    }
-                }
-            }
-        });
-
-        dumpThread.setName("bench-dump-thread");
-
-        dumpThread.start();
-
-        BenchmarkUtils.println("Server log dump startup.");
     }
 
     /**
@@ -238,12 +210,6 @@ public class IgniteNode implements BenchmarkServer {
 
     /** {@inheritDoc} */
     @Override public void stop() throws Exception {
-        if (dumpThread != null) {
-            dumpThread.interrupt();
-
-            dumpThread.join();
-        }
-
         Ignition.stopAll(true);
     }
 
