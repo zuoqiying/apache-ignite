@@ -109,15 +109,20 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
             }
         }
         else {
-            CacheConfiguration cfg = cacheConfiguration();
+            try {
+                CacheConfiguration cfg = cacheConfiguration();
 
-            IgniteCache cache = ignite().createCache(cfg);
+                IgniteCache cache = ignite().createCache(cfg);
 
-            cache.put(1, 1);
+                cache.put(1, 1);
 
-            executeTask();
+                executeTask();
 
-            ignite().destroyCache(cfg.getName());
+                ignite().destroyCache(cfg.getName());
+            }
+            catch (Exception e) {
+                BenchmarkUtils.println(cfg, "Failed to start/stop cache.");
+            }
         }
 
         return true;
