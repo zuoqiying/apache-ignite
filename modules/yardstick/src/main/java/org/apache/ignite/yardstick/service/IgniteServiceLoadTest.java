@@ -50,62 +50,63 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
         if (!restarter.get() && restarter.compareAndSet(false, true)) {
             BenchmarkUtils.println(cfg, "The thread is restarter. Thread id: " + Thread.currentThread().getName());
 
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    TimeUnit.SECONDS.sleep(10);
+            ctx.put(1, 1);
+        }
 
-                    IgniteNode node = new IgniteNode(false);
+        if (ctx.containsKey(1)) {
+            try {
+                TimeUnit.SECONDS.sleep(10);
 
-                    node.setGridName("restart-grid-name");
+                IgniteNode node = new IgniteNode(false);
 
-                    node.start(cfg);
+                node.setGridName("restart-grid-name");
 
-                    TimeUnit.SECONDS.sleep(10);
+                node.start(cfg);
 
-                    node.stop();
-                }
-                catch (InterruptedException e) {
-                    BenchmarkUtils.println(cfg, "Restarter thread was interrupted: "
-                        + Thread.currentThread().getName());
+                TimeUnit.SECONDS.sleep(10);
 
-                    Thread.currentThread().interrupt();
-                }
+                node.stop();
+            }
+            catch (InterruptedException e) {
+                BenchmarkUtils.println(cfg, "Restarter thread was interrupted: " + Thread.currentThread().getName());
+
+                Thread.currentThread().interrupt();
             }
 
             return true;
         }
 
         if (isStartService()) {
-            final IgniteServices igniteSrvs = ignite().services();
-
-            final String srvName = SERVICE_NAME + UUID.randomUUID() + "-" + UUID.randomUUID();
-
-            ServiceConfiguration srvCfg = new ServiceConfiguration();
-
-            srvCfg.setMaxPerNodeCount(nextRandom(1, 2));
-            srvCfg.setTotalCount(nextRandom(1, 2));
-            srvCfg.setName(srvName);
-            srvCfg.setService(new ServiceProducer());
-
-            igniteSrvs.deploy(srvCfg);
-
-            executeTask();
-
-            TestService srvc = igniteSrvs.serviceProxy(srvName, TestService.class, false);
-
             try {
+                final IgniteServices igniteSrvs = ignite().services();
+
+                final String srvName = SERVICE_NAME + UUID.randomUUID() + "-" + UUID.randomUUID();
+
+                ServiceConfiguration srvCfg = new ServiceConfiguration();
+
+                srvCfg.setMaxPerNodeCount(nextRandom(1, 2));
+                srvCfg.setTotalCount(nextRandom(1, 2));
+                srvCfg.setName(srvName);
+                srvCfg.setService(new ServiceProducer());
+
+                igniteSrvs.deploy(srvCfg);
+
+                executeTask();
+
+                TestService srvc = igniteSrvs.serviceProxy(srvName, TestService.class, false);
+
                 srvc.randomInt();
+
+                igniteSrvs.cancel(srvName);
+
+                srvc = igniteSrvs.service(srvName);
+
+                if (srvc != null)
+                    throw new IgniteException("Service wasn't cancelled.");
             }
             catch (Exception e) {
                 BenchmarkUtils.println(cfg, "Failed to perform operation.");
             }
-
-            igniteSrvs.cancel(srvName);
-
-            srvc = igniteSrvs.service(srvName);
-
-            if (srvc != null)
-                throw new IgniteException("Service wasn't cancelled.");
         }
         else {
             CacheConfiguration cfg = cacheConfiguration();
