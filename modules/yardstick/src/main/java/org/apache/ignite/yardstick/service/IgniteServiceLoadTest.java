@@ -55,7 +55,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
         if (ctx.containsKey(1)) {
             try {
-                TimeUnit.SECONDS.sleep(10);
+                TimeUnit.SECONDS.sleep(args.batch());
 
                 IgniteNode node = new IgniteNode(false);
 
@@ -63,7 +63,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
                 node.start(cfg);
 
-                TimeUnit.SECONDS.sleep(10);
+                TimeUnit.SECONDS.sleep(args.range());
 
                 node.stop();
             }
@@ -139,7 +139,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
      * @return {@code True} if need to start/stop service or perform cache operation.
      */
     private boolean isStartService() {
-        return ThreadLocalRandom.current().nextBoolean();
+        return ThreadLocalRandom.current().nextDouble() < 0.8;
     }
 
     /**
