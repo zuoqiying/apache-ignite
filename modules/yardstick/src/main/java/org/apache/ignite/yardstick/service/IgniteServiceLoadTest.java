@@ -43,7 +43,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
     private static String SERVICE_NAME = "test-service-name-";
 
     /** */
-    final AtomicBoolean restarter = new AtomicBoolean(false);
+    private final AtomicBoolean restarter = new AtomicBoolean(false);
 
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
@@ -110,22 +110,22 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
                 e.printStackTrace();
             }
         }
-        else {
-            try {
-                CacheConfiguration cfg = cacheConfiguration();
-
-                IgniteCache cache = ignite().createCache(cfg);
-
-                cache.put(1, 1);
-
-                executeTask();
-
-                ignite().destroyCache(cfg.getName());
-            }
-            catch (Exception e) {
-                BenchmarkUtils.println(cfg, "Failed to start/stop cache.");
-            }
-        }
+//        else {
+//            try {
+//                CacheConfiguration cfg = cacheConfiguration();
+//
+//                IgniteCache cache = ignite().createCache(cfg);
+//
+//                cache.put(1, 1);
+//
+//                executeTask();
+//
+//                ignite().destroyCache(cfg.getName());
+//            }
+//            catch (Exception e) {
+//                BenchmarkUtils.println(cfg, "Failed to start/stop cache.");
+//            }
+//        }
 
         return true;
     }
@@ -141,17 +141,6 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
      * @return {@code True} if need to start/stop service or perform cache operation.
      */
     private boolean isStartService() {
-        return ThreadLocalRandom.current().nextDouble() < 0.8;
-    }
-
-    /**
-     * @return Cache configuration.
-     */
-    private CacheConfiguration<Integer, Integer> cacheConfiguration() {
-        return new CacheConfiguration<Integer, Integer>("test-cache-name-" + UUID.randomUUID())
-            .setCacheMode(CacheMode.PARTITIONED)
-            .setAtomicityMode(CacheAtomicityMode.ATOMIC)
-            .setBackups(0)
-            .setAffinity(new RendezvousAffinityFunction(true, 256));
+        return true;
     }
 }
