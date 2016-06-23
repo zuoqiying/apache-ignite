@@ -117,7 +117,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
                 executeTask();
 
-                ignite().destroyCache(cfg.getName());
+                //ignite().destroyCache(cfg.getName());
             }
             catch (Exception e) {
                 BenchmarkUtils.println(cfg, "Failed to start/stop cache.");
@@ -137,7 +137,8 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
             .setCacheMode(CacheMode.PARTITIONED)
             .setAtomicityMode(CacheAtomicityMode.ATOMIC)
             .setBackups(0)
-            .setAffinity(new RendezvousAffinityFunction(true, 256));
+            .setAffinity(new RendezvousAffinityFunction(true, 256))
+            .setStartSize(8);
     }
 
     /**
