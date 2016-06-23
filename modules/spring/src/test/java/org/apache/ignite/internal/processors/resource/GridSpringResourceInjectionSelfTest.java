@@ -87,13 +87,13 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
      * @throws Exception If failed.
      */
     public void testClosureFieldByResourceClassWithMultipleBeans() throws Exception {
-        IgniteConfiguration anotherConfig = new IgniteConfiguration();
-        anotherConfig.setGridName("anotherGrid");
+        IgniteConfiguration anotherCfg = new IgniteConfiguration();
+        anotherCfg.setGridName("anotherGrid");
 
-        Ignite anotherGrid = IgniteSpring.start(anotherConfig, new ClassPathXmlApplicationContext(
+        Ignite anotherGrid = IgniteSpring.start(anotherCfg, new ClassPathXmlApplicationContext(
             "/org/apache/ignite/internal/processors/resource/spring-resource-with-duplicate-beans.xml"));
 
-        assertError(new IgniteCallable<Object>() {
+        Throwable err = assertError(new IgniteCallable<Object>() {
             @SpringResource(resourceClass = DummyResourceBean.class)
             private transient DummyResourceBean dummyRsrcBean;
 
@@ -102,9 +102,11 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
 
                 return null;
             }
-        }, anotherGrid, "No qualifying bean of type [org.apache.ignite.internal.processors.resource." +
-            "GridSpringResourceInjectionSelfTest$DummyResourceBean] is defined: expected single matching bean " +
-            "but found 2: dummyBean2,dummyBean1");
+        }, anotherGrid, null);
+
+        assertTrue("Unexpected message: " + err.getMessage(), err.getMessage().startsWith("No qualifying bean of type " +
+            "[org.apache.ignite.internal.processors.resource.GridSpringResourceInjectionSelfTest$DummyResourceBean]" +
+            " is defined: expected single matching bean but found 2:"));
 
         G.stop("anotherGrid", false);
     }
@@ -221,33 +223,39 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
     /**
      * @throws Exception If failed.
      */
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     public void testClosureMethodWithResourceClassWithMultipleBeans() throws Exception {
-        IgniteConfiguration anotherConfig = new IgniteConfiguration();
-        anotherConfig.setGridName("anotherGrid");
+        IgniteConfiguration anotherCfg = new IgniteConfiguration();
+        anotherCfg.setGridName("anotherGrid");
 
-        Ignite anotherGrid = IgniteSpring.start(anotherConfig, new ClassPathXmlApplicationContext(
+        Ignite anotherGrid = IgniteSpring.start(anotherCfg, new ClassPathXmlApplicationContext(
             "/org/apache/ignite/internal/processors/resource/spring-resource-with-duplicate-beans.xml"));
 
-        assertError(new IgniteCallable<Object>() {
-            private DummyResourceBean dummyRsrcBean;
+        try {
+            Throwable err = assertError(new IgniteCallable<Object>() {
+                private DummyResourceBean dummyRsrcBean;
 
-            @SpringResource(resourceClass = DummyResourceBean.class)
-            private void setDummyResourceBean(DummyResourceBean dummyRsrcBean) {
-                assertNotNull(dummyRsrcBean);
+                @SpringResource(resourceClass = DummyResourceBean.class)
+                private void setDummyResourceBean(DummyResourceBean dummyRsrcBean) {
+                    assertNotNull(dummyRsrcBean);
 
-                this.dummyRsrcBean = dummyRsrcBean;
-            }
+                    this.dummyRsrcBean = dummyRsrcBean;
+                }
 
-            @Override public Object call() throws Exception {
-                assertNotNull(dummyRsrcBean);
+                @Override public Object call() throws Exception {
+                    assertNotNull(dummyRsrcBean);
 
-                return null;
-            }
-        }, anotherGrid, "No qualifying bean of type [org.apache.ignite.internal.processors.resource." +
-            "GridSpringResourceInjectionSelfTest$DummyResourceBean] is defined: expected single matching bean " +
-            "but found 2: dummyBean2,dummyBean1");
+                    return null;
+                }
+            }, anotherGrid, null);
 
-        G.stop("anotherGrid", false);
+            assertTrue("Unexpected message: " + err.getMessage(), err.getMessage().startsWith("No qualifying bean of type " +
+                "[org.apache.ignite.internal.processors.resource.GridSpringResourceInjectionSelfTest$DummyResourceBean]" +
+                " is defined: expected single matching bean but found 2:"));
+        }
+        finally {
+            G.stop("anotherGrid", false);
+        }
     }
 
     /**
@@ -325,13 +333,15 @@ public class GridSpringResourceInjectionSelfTest extends GridCommonAbstractTest 
 
     /**
      * @param job {@link IgniteCallable} to be run
+     * @param grid Node.
      * @param expEMsg Message that {@link IgniteException} thrown from <tt>job</tt> should bear
+     * @return Thrown error.
      */
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void assertError(final IgniteCallable<?> job, final Ignite grid, String expEMsg) {
-        GridTestUtils.assertThrows(log, new Callable<Object>() {
+    private Throwable assertError(final IgniteCallable<?> job, final Ignite grid, String expEMsg) {
+        return GridTestUtils.assertThrows(log, new Callable<Object>() {
             @Override public Object call() throws Exception {
-                grid.compute().call(job);
+                grid.compute(grid.cluster().forLocal()).call(job);
                 return null;
             }
         }, IgniteException.class, expEMsg);
