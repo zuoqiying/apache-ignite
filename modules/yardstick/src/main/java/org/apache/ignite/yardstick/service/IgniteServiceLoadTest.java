@@ -151,6 +151,6 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
      * @return {@code True} if need to start/stop service or perform cache operation.
      */
     private boolean isStartService() {
-        return ThreadLocalRandom.current().nextDouble() < 0.9;
+        return ThreadLocalRandom.current().nextDouble() < 0.5;
     }
 }
