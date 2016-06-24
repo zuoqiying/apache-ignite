@@ -346,27 +346,24 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     @Override public void destroy(GridDhtLocalPartition part) throws IgniteCheckedException {
         CacheDataStore store = dataStore(part);
 
-        // Buffer entries for removal.
-        int cap = REMOVE_BUFFER_SIZE;
-
-        List<CacheDataRow> buf = new ArrayList<>(cap);
+        List<CacheDataRow> buf = new ArrayList<>(REMOVE_BUFFER_SIZE);
 
         // Retry until no rows left.
         while(true) {
             GridCursor<? extends CacheDataRow> cursor = store.cursor();
 
-            while (buf.size() < cap) {
+            while (buf.size() < REMOVE_BUFFER_SIZE) {
                 if (cursor.next())
                     buf.add(cursor.get());
+                else
+                    break;
             }
 
-            // No rows left.
+            // Return if no rows left.
             if (buf.size() == 0)
-                break;
+                return;
 
             for (CacheDataRow row : buf) {
-                store.remove(row.key());
-
                 if (indexingEnabled) {
                     GridCacheQueryManager qryMgr = cctx.queries();
 
@@ -374,6 +371,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
                     qryMgr.remove(row.key(), part.id(), row.value(), row.version());
                 }
+
+                store.remove(row.key());
             }
 
             buf.clear();

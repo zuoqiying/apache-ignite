@@ -17,36 +17,105 @@
 
 package org.apache.ignite.internal.processors.database;
 
+import java.util.Random;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cache.CacheRebalanceMode;
+import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.DatabaseConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
-import org.apache.ignite.internal.util.typedef.G;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.IgniteCacheOffheapManager;
+import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
+import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtLocalPartition;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 /**
  * Partitions drop test.
  */
 public class IgniteDbPartitionDropTest extends GridCommonAbstractTest {
-    @Override protected void afterTestsStopped() throws Exception {
-        stopAllGrids();
+    /** */
+    private static final TcpDiscoveryIpFinder IP_FINDER = new TcpDiscoveryVmIpFinder(true);
 
-        super.afterTestsStopped();
+    /** {@inheritDoc} */
+    @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
+        IgniteConfiguration cfg = super.getConfiguration(gridName);
+
+        DatabaseConfiguration dbCfg = new DatabaseConfiguration();
+
+        dbCfg.setConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
+
+        dbCfg.setPageSize(1024);
+
+        dbCfg.setPageCacheSize(200 * 1024 * 1024);
+
+        cfg.setDatabaseConfiguration(dbCfg);
+
+        CacheConfiguration ccfg = new CacheConfiguration();
+
+        ccfg.setIndexedTypes(Integer.class, String.class);
+        ccfg.setAffinity(new RendezvousAffinityFunction(false, 10));
+        ccfg.setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
+        ccfg.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
+        ccfg.setRebalanceMode(CacheRebalanceMode.SYNC);
+
+        cfg.setCacheConfiguration(ccfg);
+
+        TcpDiscoverySpi discoSpi = new TcpDiscoverySpi();
+
+        discoSpi.setIpFinder(IP_FINDER);
+
+        cfg.setDiscoverySpi(discoSpi);
+        cfg.setMarshaller(null);
+
+        return cfg;
     }
 
-    public void testDrop() throws Exception {
+    /**
+     * Tests partition destruction.
+     */
+    public void testPartitionDestroy() throws Exception {
         IgniteEx grid = startGrid(0);
 
-        CacheConfiguration<Integer, String> cfg = new CacheConfiguration<>();
-        cfg.setAffinity(new RendezvousAffinityFunction(false, 10));
+        IgniteCache<Integer, String> cache = grid.cache(null);
 
-        IgniteCache<Integer, String> cache = grid.createCache(cfg);
+        int total = 10_000;
 
-        for(int i = 0; i < 10_000; i++)
-            cache.put(i, "val" + i);
+        for(int i = 0; i < total; i++)
+            cache.put(i, String.valueOf(i));
+
+        assertEquals(total, cache.size());
 
         int partToDestroy = 1;
 
+        GridCacheContext<Object, Object> ctx = grid.context().cache().cache().context();
 
+        IgniteCacheOffheapManager offheapMgr = ctx.offheap();
+
+        GridDhtLocalPartition part = ctx.topology().localPartition(partToDestroy, AffinityTopologyVersion.NONE, false);
+
+        offheapMgr.destroy(part);
+
+        // Validate if the data was actually deleted.
+        for(int i = 0; i < total; i++) {
+            int keyPart = grid.affinity(null).partition(i);
+
+            if (partToDestroy == keyPart) {
+                assertFalse(cache.containsKey(i));
+
+                assertNull(cache.get(i));
+            } else {
+                assertTrue(cache.containsKey(i));
+
+                assertNotNull(cache.get(i));
+            }
+        }
     }
 }

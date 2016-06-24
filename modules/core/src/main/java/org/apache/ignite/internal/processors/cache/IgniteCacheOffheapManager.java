@@ -174,7 +174,7 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
     public void clear(boolean readers);
 
     /**
-     * Destroys partition.
+     * Destroys partition data.
      * @param part partition.
      */
     public void destroy(GridDhtLocalPartition part) throws IgniteCheckedException;
