@@ -36,6 +36,7 @@ import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
+import org.jsr166.ThreadLocalRandom8;
 
 /**
  * Partitions drop test.
@@ -43,6 +44,9 @@ import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 public class IgniteDbPartitionDropTest extends GridCommonAbstractTest {
     /** */
     private static final TcpDiscoveryIpFinder IP_FINDER = new TcpDiscoveryVmIpFinder(true);
+
+    /** */
+    public static final int MAX_PARTITIONS = 10;
 
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
@@ -61,7 +65,7 @@ public class IgniteDbPartitionDropTest extends GridCommonAbstractTest {
         CacheConfiguration ccfg = new CacheConfiguration();
 
         ccfg.setIndexedTypes(Integer.class, String.class);
-        ccfg.setAffinity(new RendezvousAffinityFunction(false, 10));
+        ccfg.setAffinity(new RendezvousAffinityFunction(false, MAX_PARTITIONS));
         ccfg.setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
         ccfg.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
         ccfg.setRebalanceMode(CacheRebalanceMode.SYNC);
@@ -93,7 +97,7 @@ public class IgniteDbPartitionDropTest extends GridCommonAbstractTest {
 
         assertEquals(total, cache.size());
 
-        int partToDestroy = 1;
+        int partToDestroy = ThreadLocalRandom8.current().nextInt(MAX_PARTITIONS);
 
         GridCacheContext<Object, Object> ctx = grid.context().cache().cache().context();
 
@@ -108,13 +112,13 @@ public class IgniteDbPartitionDropTest extends GridCommonAbstractTest {
             int keyPart = grid.affinity(null).partition(i);
 
             if (partToDestroy == keyPart) {
-                assertFalse(cache.containsKey(i));
+                assertFalse("Deleted partition data not empty", cache.containsKey(i));
 
-                assertNull(cache.get(i));
+                assertNull("Deleted partition cache entry not null", cache.get(i));
             } else {
-                assertTrue(cache.containsKey(i));
+                assertTrue("Other partition data is empty", cache.containsKey(i));
 
-                assertNotNull(cache.get(i));
+                assertNotNull("Other partition cache entry is null", cache.get(i));
             }
         }
     }
