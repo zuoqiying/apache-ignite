@@ -90,16 +90,16 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
                 executeTask();
 
-                TestService srvc = igniteSrvs.serviceProxy(srvName, TestService.class, false);
-
-                srvc.randomInt();
-
-                igniteSrvs.cancel(srvName);
-
-                srvc = igniteSrvs.service(srvName);
-
-                if (srvc != null)
-                    throw new IgniteException("Service wasn't cancelled.");
+//                TestService srvc = igniteSrvs.serviceProxy(srvName, TestService.class, false);
+//
+//                srvc.randomInt();
+//
+//                igniteSrvs.cancel(srvName);
+//
+//                srvc = igniteSrvs.service(srvName);
+//
+//                if (srvc != null)
+//                    throw new IgniteException("Service wasn't cancelled.");
             }
             catch (Exception e) {
                 BenchmarkUtils.println(cfg, "Failed to perform operation.");
