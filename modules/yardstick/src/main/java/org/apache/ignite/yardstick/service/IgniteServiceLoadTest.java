@@ -20,18 +20,13 @@ package org.apache.ignite.yardstick.service;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteServices;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.services.ServiceConfiguration;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
-import org.apache.ignite.yardstick.IgniteNode;
 import org.apache.ignite.yardstick.compute.model.NoopTask;
 import org.yardstickframework.BenchmarkUtils;
 
