@@ -79,14 +79,14 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
                 final String srvName = SERVICE_NAME + UUID.randomUUID() + "-" + UUID.randomUUID();
 
-                ServiceConfiguration srvCfg = new ServiceConfiguration();
+//                ServiceConfiguration srvCfg = new ServiceConfiguration();
+//
+//                srvCfg.setMaxPerNodeCount(1);
+//                srvCfg.setTotalCount(nextRandom(2, 5));
+//                srvCfg.setName(srvName);
+//                srvCfg.setService(new NoopService());
 
-                srvCfg.setMaxPerNodeCount(1);
-                srvCfg.setTotalCount(nextRandom(2, 5));
-                srvCfg.setName(srvName);
-                srvCfg.setService(new NoopService());
-
-                igniteSrvs.deploy(srvCfg);
+                igniteSrvs.deployClusterSingleton(srvName, new NoopService());
 
                 executeTask();
 
