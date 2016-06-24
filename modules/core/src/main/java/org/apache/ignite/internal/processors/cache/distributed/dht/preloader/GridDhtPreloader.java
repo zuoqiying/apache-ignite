@@ -72,6 +72,7 @@ import static org.apache.ignite.events.EventType.EVT_NODE_FAILED;
 import static org.apache.ignite.events.EventType.EVT_NODE_JOINED;
 import static org.apache.ignite.events.EventType.EVT_NODE_LEFT;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.AFFINITY_POOL;
+import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState.EVICTED;
 import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState.MOVING;
 import static org.apache.ignite.internal.util.GridConcurrentFactory.newMap;
 
@@ -761,8 +762,13 @@ public class GridDhtPreloader extends GridCachePreloaderAdapter {
                         try {
                             GridDhtLocalPartition part = partsToEvict.poll();
 
-                            if (part != null)
+                            if (part != null) {
                                 part.tryEvict();
+
+                                // If failed to evict, retry later.
+                                if (part.state() != EVICTED)
+                                    partsToEvict.add(part);
+                            }
                         }
                         finally {
                             if (!partsToEvict.isEmptyx())
