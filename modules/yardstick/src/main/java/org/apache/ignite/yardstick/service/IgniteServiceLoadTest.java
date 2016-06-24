@@ -43,35 +43,35 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
     private static String SERVICE_NAME = "test-service-name-";
 
     /** */
-    private final AtomicReference<String> threadRef = new AtomicReference<>();
+//    private final AtomicReference<String> threadRef = new AtomicReference<>();
 
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
-        if (threadRef.get() == null && threadRef.compareAndSet(null, Thread.currentThread().getName()))
-            BenchmarkUtils.println(cfg, "The thread is restarter. Thread id: " + Thread.currentThread().getName());
-
-        if (threadRef.get().equals(Thread.currentThread().getName())) {
-            try {
-                TimeUnit.SECONDS.sleep(args.batch());
-
-                IgniteNode node = new IgniteNode(false);
-
-                node.setGridName("restart-grid-name-" + UUID.randomUUID());
-
-                node.start(cfg);
-
-                TimeUnit.SECONDS.sleep(args.range());
-
-                node.stop();
-            }
-            catch (InterruptedException e) {
-                BenchmarkUtils.println(cfg, "Restarter thread was interrupted: " + Thread.currentThread().getName());
-
-                Thread.currentThread().interrupt();
-            }
-
-            return true;
-        }
+//        if (threadRef.get() == null && threadRef.compareAndSet(null, Thread.currentThread().getName()))
+//            BenchmarkUtils.println(cfg, "The thread is restarter. Thread id: " + Thread.currentThread().getName());
+//
+//        if (threadRef.get().equals(Thread.currentThread().getName())) {
+//            try {
+//                TimeUnit.SECONDS.sleep(args.batch());
+//
+//                IgniteNode node = new IgniteNode(false);
+//
+//                node.setGridName("restart-grid-name-" + UUID.randomUUID());
+//
+//                node.start(cfg);
+//
+//                TimeUnit.SECONDS.sleep(args.range());
+//
+//                node.stop();
+//            }
+//            catch (InterruptedException e) {
+//                BenchmarkUtils.println(cfg, "Restarter thread was interrupted: " + Thread.currentThread().getName());
+//
+//                Thread.currentThread().interrupt();
+//            }
+//
+//            return true;
+//        }
 
         if (isStartService()) {
             try {
@@ -117,7 +117,7 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
 
                 executeTask();
 
-                //ignite().destroyCache(cfg.getName());
+                ignite().destroyCache(cfg.getName());
             }
             catch (Exception e) {
                 BenchmarkUtils.println(cfg, "Failed to start/stop cache.");
@@ -152,6 +152,6 @@ public class IgniteServiceLoadTest extends IgniteAbstractBenchmark {
      * @return {@code True} if need to start/stop service or perform cache operation.
      */
     private boolean isStartService() {
-        return ThreadLocalRandom.current().nextDouble() < 0.5;
+        return ThreadLocalRandom.current().nextDouble() < 0.8;
     }
 }
