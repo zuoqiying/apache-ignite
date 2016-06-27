@@ -19,8 +19,8 @@
 import consoleModule from 'controllers/common-module';
 
 consoleModule.controller('cachesController', [
-    '$scope', '$http', '$state', '$filter', '$timeout', '$common', '$confirm', '$clone', '$loading', '$cleanup', '$unsavedChangesGuard',
-    function($scope, $http, $state, $filter, $timeout, $common, $confirm, $clone, $loading, $cleanup, $unsavedChangesGuard) {
+    '$scope', '$http', '$state', '$filter', '$timeout', '$modal', '$common', '$confirm', '$clone', '$loading', '$cleanup', '$unsavedChangesGuard',
+    function($scope, $http, $state, $filter, $timeout, $modal, $common, $confirm, $clone, $loading, $cleanup, $unsavedChangesGuard) {
         $unsavedChangesGuard.install($scope);
 
         const emptyCache = {empty: true};
@@ -399,7 +399,17 @@ consoleModule.controller('cachesController', [
 
                     item.name = newName;
 
-                    delete item.sqlSchema;
+                    if (!_.isNil(item.sqlSchema)) {
+                        delete item.sqlSchema;
+
+                        const scope = $scope.$new();
+
+                        scope.title = 'Warning';
+                        scope.content = ['Use the same SQL schema name in one cluster in not allowed. SQL schema name will be reset.'];
+
+                        // Show a basic modal from a controller
+                        $modal({scope, template: '/templates/message.html', placement: 'center', show: true});
+                    }
 
                     save(item);
                 });
