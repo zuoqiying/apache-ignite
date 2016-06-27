@@ -33,6 +33,7 @@ import org.apache.ignite.configuration.TransactionConfiguration;
 import org.apache.ignite.internal.util.IgniteUtils;
 import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.ApplicationContext;
@@ -56,6 +57,9 @@ public class IgniteNode implements BenchmarkServer {
     private boolean clientMode;
 
     /** */
+    private String gridName;
+
+    /** */
     public IgniteNode() {
         // No-op.
     }
@@ -71,6 +75,13 @@ public class IgniteNode implements BenchmarkServer {
         this.ignite = ignite;
     }
 
+    /**
+     * @param gridName Grid name.
+     */
+    public void setGridName(String gridName) {
+        this.gridName = gridName;
+    }
+
     /** {@inheritDoc} */
     @Override public void start(BenchmarkConfiguration cfg) throws Exception {
         IgniteBenchmarkArguments args = new IgniteBenchmarkArguments();
@@ -82,6 +93,13 @@ public class IgniteNode implements BenchmarkServer {
         IgniteConfiguration c = tup.get1();
 
         assert c != null;
+
+        if (gridName != null)
+            c.setGridName(gridName);
+
+        TcpDiscoverySpi spi = (TcpDiscoverySpi)c.getDiscoverySpi();
+
+        spi.setStatisticsPrintFrequency(30_000);
 
         ApplicationContext appCtx = tup.get2();
 
@@ -208,7 +226,10 @@ public class IgniteNode implements BenchmarkServer {
 
     /** {@inheritDoc} */
     @Override public void stop() throws Exception {
-        Ignition.stopAll(true);
+        if (gridName != null)
+            Ignition.stop(gridName, true);
+        else
+            Ignition.stopAll(true);
     }
 
     /** {@inheritDoc} */
