@@ -20,32 +20,44 @@ export default ['IgniteMessages', ['$alert', ($alert) => {
     // Common instance of alert modal.
     let msgModal;
 
-    function _showMessage(msg, type, duration, icon) {
+    const errorMessage = (prefix, err) => {
+        prefix = prefix || '';
+
+        if (err) {
+            if (err.hasOwnProperty('message'))
+                return prefix + err.message;
+
+            return prefix + err;
+        }
+
+        return prefix + 'Internal error.';
+    };
+
+    const hideAlert = () => {
         if (msgModal)
             msgModal.hide();
+    };
 
-        const title = msg ? msg.toString() : 'Internal error.';
+    const _showMessage = (err, type, duration, icon) => {
+        hideAlert();
+
+        const title = errorMessage(null, err);
 
         msgModal = $alert({type, title, duration});
 
         msgModal.$scope.icon = icon;
-    }
+    };
 
     return {
-        errorMessage(prefix, err) {
-            return prefix + (err ? err.toString() : 'Internal error.');
-        },
-        showError(msg) {
-            _showMessage(msg, 'danger', 10, 'fa-exclamation-triangle');
+        errorMessage,
+        hideAlert,
+        showError(err) {
+            _showMessage(err, 'danger', 10, 'fa-exclamation-triangle');
 
             return false;
         },
-        showInfo(msg) {
-            _showMessage(msg, 'success', 3, 'fa-check-circle-o');
-        },
-        hideAlert() {
-            if (msgModal)
-                msgModal.hide();
+        showInfo(err) {
+            _showMessage(err, 'success', 3, 'fa-check-circle-o');
         }
     };
 }]];

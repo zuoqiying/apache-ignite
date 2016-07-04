@@ -44,7 +44,7 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteLega
             forgotPassword(userInfo) {
                 return $http.post('/api/v1/password/forgot', userInfo)
                     .success(() => $state.go('password.send'))
-                    .error((err) => LegacyUtils.showPopoverMessage(null, null, 'forgot_email', Messages.errorMessage(err)));
+                    .error((err) => LegacyUtils.showPopoverMessage(null, null, 'forgot_email', Messages.errorMessage(null, err)));
             },
             auth(action, userInfo) {
                 return $http.post('/api/v1/' + action, userInfo)
@@ -61,7 +61,7 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteLega
                             agentMonitor.init();
                         });
                     })
-                    .error((err) => LegacyUtils.showPopoverMessage(null, null, action + '_email', Messages.errorMessage(err)));
+                    .error((err) => LegacyUtils.showPopoverMessage(null, null, action + '_email', Messages.errorMessage(null, err)));
             },
             logout() {
                 return $http.post('/api/v1/logout')
