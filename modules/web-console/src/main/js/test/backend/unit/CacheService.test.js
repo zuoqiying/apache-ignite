@@ -117,7 +117,7 @@ suite('CacheServiceTestsSuite', () => {
             .catch(done);
     });
 
-    test('Remove missed cache', (done) => {
+    test('Remove cache without identifier', (done) => {
         cacheService.merge(testCaches[0])
             .then(() => cacheService.remove())
             .catch((err) => {
@@ -127,9 +127,16 @@ suite('CacheServiceTestsSuite', () => {
             });
     });
 
-    test('Remove cache without identifier', (done) => {
-        // TODO IGNITE-3262 Add test.
-        done();
+    test('Remove missed cache', (done) => {
+        const validNoExistingId = 'FFFFFFFFFFFFFFFFFFFFFFFF';
+
+        cacheService.merge(testCaches[0])
+            .then(() => cacheService.remove(validNoExistingId))
+            .then(({rowsAffected}) => {
+                assert.equal(rowsAffected, 0);
+            })
+            .then(done)
+            .catch(done);
     });
 
     test('Remove all caches in space', (done) => {
