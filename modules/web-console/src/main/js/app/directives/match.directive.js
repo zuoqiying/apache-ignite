@@ -20,7 +20,7 @@ export default ['igniteMatch', ['$parse', ($parse) => {
     return {
         require: 'ngModel',
         link(scope, elem, attrs, ctrl) {
-            scope.$watch(() => $parse(attrs.match)(scope) === ctrl.$modelValue,
+            scope.$watch(() => $parse(attrs.igniteMatch)(scope) === ctrl.$modelValue,
                 (currentValue) => ctrl.$setValidity('mismatch', currentValue));
         }
     };
