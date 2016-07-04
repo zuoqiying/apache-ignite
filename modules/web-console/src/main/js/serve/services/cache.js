@@ -34,7 +34,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
     /**
      * Update existing cache
      * @param {Object} cache - The cache for updating
-     * @returns {Promise.<Number>} that resolves cache id
+     * @returns {Promise.<mongo.ObjectId>} that resolves cache id
      */
     const update = (cache) => {
         const cacheId = cache._id;
@@ -50,7 +50,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
     /**
      * Create new cache.
      * @param {Object} cache - The cache for creation.
-     * @returns {Promise.<Number>} that resolves cache id.
+     * @returns {Promise.<mongo.ObjectId>} that resolves cache id.
      */
     const create = (cache) => {
         return mongo.Cache.create(cache)
@@ -68,12 +68,12 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
     /**
      * Remove all caches by space ids.
      * @param {Number[]} spaceIds - The space ids for cache deletion.
-     * @returns {Promise.<Number>} that resolves number of affected rows.
+     * @returns {Promise.<RemoveResult>} - that resolves results of remove operation.
      */
     const removeAllBySpaces = (spaceIds) => {
         return mongo.Cluster.update({space: {$in: spaceIds}}, {caches: []}, {multi: true}).exec()
             .then(() => mongo.DomainModel.update({space: {$in: spaceIds}}, {caches: []}, {multi: true}).exec())
-            .then(() => mongo.Cache.remove({space: {$in: spaceIds}}).exec())
+            .then(() => mongo.Cache.remove({space: {$in: spaceIds}}).exec());
     };
 
     /**
@@ -83,7 +83,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
         /**
          * Create or update cache.
          * @param {Object} cache - The cache.
-         * @returns {Promise.<Number>} that resolves cache id of merge operation.
+         * @returns {Promise.<mongo.ObjectId>} that resolves cache id of merge operation.
          */
         static merge(cache) {
             if (cache._id)
