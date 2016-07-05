@@ -40,6 +40,7 @@ module.exports.factory = function(publicRoutes, adminRoutes, profileRoutes, demo
     clusterRoutes, domainRoutes, cacheRoutes, igfsRoutes, notebookRoutes, agentRoutes, pluginRoutes) {
     return {
         register: (app) => {
+            // TODO Extract this to separate middleware.
             app.all('*', (req, res, next) => {
                 req.currentUserId = () => {
                     if (!req.user)
