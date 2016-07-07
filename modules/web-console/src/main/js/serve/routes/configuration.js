@@ -21,33 +21,18 @@
 
 module.exports = {
     implements: 'configuration-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/space', 'services/cache']
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/configuration']
 };
 
-module.exports.factory = function(_, express, mongo, spaceService, cacheService) {
+module.exports.factory = function(_, express, mongo, configurationService) {
 
     return new Promise((factoryResolve) => {
         const router = new express.Router();
-
         /**
-         * Get spaces and caches accessed for user account.
+         * Get all user configuration in current space.
          */
-
         router.get('/list', (req, res) => {
-            let spaces;
-
-            spaceService.spaces(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((_spaces) => {
-                    spaces = _spaces;
-                    return spaces.map((space) => space._id);
-                })
-                .then((spacesIds) => Promise.all([
-                    cacheService.listBySpaces(spacesIds),
-                    mongo.DomainModel.find({space: {$in: spacesIds}}).sort('name').lean().exec(),
-                    mongo.Igfs.find({space: {$in: spacesIds}}).sort('name').lean().exec(),
-                    mongo.Cluster.find({space: {$in: spacesIds}}).sort('name').deepPopulate(mongo.ClusterDefaultPopulate).lean().exec()
-                ]))
-                .then(([caches, domains, igfss, clusters]) => ({caches, domains, igfss, clusters, spaces}))
+            configurationService.list(req.currentUserId(), req.header('IgniteDemoMode'))
                 .then(res.api.ok)
                 .catch(res.api.error);
         });

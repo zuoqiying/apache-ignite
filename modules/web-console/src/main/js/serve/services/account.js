@@ -62,7 +62,6 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
         static remove(accountId) {
 
         }
-        
 
         /**
          * Get account information.

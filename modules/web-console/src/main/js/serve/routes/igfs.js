@@ -27,7 +27,7 @@ module.exports = {
 module.exports.factory = function(_, express, mongo, spaceService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
-        
+
         /**
          * Save IGFS.
          */
