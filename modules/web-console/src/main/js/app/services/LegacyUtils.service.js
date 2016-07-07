@@ -172,7 +172,13 @@ export default ['IgniteLegacyUtils', [
 
                 popover = newPopover;
 
-                $timeout(() => newPopover.$promise.then(newPopover.show), 400);
+                $timeout(() => newPopover.$promise.then(() => {
+                    newPopover.show();
+
+                    // Workaround to fix popover location when content is longer than content template.
+                    // https://github.com/mgcrea/angular-strap/issues/1497
+                    $timeout(newPopover.$applyPlacement);
+                }), 400);
                 $timeout(() => newPopover.hide(), showTime || 5000);
             }
         };
