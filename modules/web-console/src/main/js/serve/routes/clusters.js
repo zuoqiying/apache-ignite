@@ -27,56 +27,7 @@ module.exports = {
 module.exports.factory = function(_, express, mongo, spaceService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
-
-        /**
-         * Get spaces and clusters accessed for user account.
-         *
-         * @param req Request.
-         * @param res Response.
-         */
-        router.post('/list', (req, res) => {
-            const result = {};
-            let spaceIds = [];
-            let domains = {};
-
-            spaceService.spaces(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((spaces) => {
-                    result.spaces = spaces;
-                    spaceIds = spaces.map((space) => space._id);
-
-                    return mongo.DomainModel.find({space: {$in: spaceIds}}).lean().exec();
-                })
-                .then((_domains) => {
-                    domains = _domains.reduce((map, obj) => {
-                        map[obj._id] = obj;
-
-                        return map;
-                    }, {});
-
-                    return mongo.Cache.find({space: {$in: spaceIds}}).sort('name').lean().exec();
-                })
-                .then((caches) => {
-                    _.forEach(caches, (cache) => {
-                        cache.domains = _.map(cache.domains, (domainId) => domains[domainId]);
-                    });
-
-                    result.caches = caches;
-
-                    return mongo.Igfs.find({space: {$in: spaceIds}}).sort('name').lean().exec();
-                })
-                .then((igfss) => {
-                    result.igfss = igfss;
-
-                    return mongo.Cluster.find({space: {$in: spaceIds}}).sort('name').deepPopulate(mongo.ClusterDefaultPopulate).lean().exec();
-                })
-                .then((clusters) => {
-                    result.clusters = clusters;
-
-                    res.json(result);
-                })
-                .catch((err) => mongo.handleError(res, err));
-        });
-
+        
         /**
          * Save cluster.
          */

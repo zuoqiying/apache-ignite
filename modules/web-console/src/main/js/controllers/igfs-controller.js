@@ -135,7 +135,7 @@ export default ['igfsController', [
         Loading.start('loadingIgfsScreen');
 
         // When landing on the page, get IGFSs and show them.
-        $http.post('/api/v1/configuration/igfs/list')
+        $http.get('/api/v1/configuration/list')
             .success(function(data) {
                 $scope.spaces = data.spaces;
 

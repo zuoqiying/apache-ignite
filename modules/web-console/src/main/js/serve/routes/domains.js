@@ -28,41 +28,6 @@ module.exports.factory = (_, express, mongo, spaceService) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
-        /**
-         * Get spaces and domain models accessed for user account.
-         *
-         * @param req Request.
-         * @param res Response.
-         */
-        router.post('/list', (req, res) => {
-            const result = {};
-            let spacesIds = [];
-
-            spaceService.spaces(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((spaces) => {
-                    result.spaces = spaces;
-                    spacesIds = spaces.map((space) => space._id);
-
-                    return mongo.Cluster.find({space: {$in: spacesIds}}, '_id name').sort('name').lean().exec();
-                })
-                .then((clusters) => {
-                    result.clusters = clusters;
-
-                    return mongo.Cache.find({space: {$in: spacesIds}}).sort('name').lean().exec();
-                })
-                .then((caches) => {
-                    result.caches = caches;
-
-                    return mongo.DomainModel.find({space: {$in: spacesIds}}).sort('valueType').lean().exec();
-                })
-                .then((domains) => {
-                    result.domains = domains;
-
-                    res.json(result);
-                })
-                .catch((err) => mongo.handleError(res, err));
-        });
-
         function _updateCacheStore(cacheStoreChanges) {
             const promises = [];
 

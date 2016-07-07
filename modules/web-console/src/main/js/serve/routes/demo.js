@@ -30,11 +30,12 @@ module.exports = {
         'require(./demo/caches.json)',
         'require(./demo/igfss.json)',
         'require(./demo/clusters.json)',
-        'services/space'
+        'services/space',
+        'errors'
     ]
 };
 
-module.exports.factory = (_, express, settings, mongo, domains, caches, igfss, clusters, spaceService) => {
+module.exports.factory = (_, express, settings, mongo, domains, caches, igfss, clusters, spaceService, errors) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -54,8 +55,10 @@ module.exports.factory = (_, express, settings, mongo, domains, caches, igfss, c
                             mongo.Igfs.remove({space: {$in: spaceIds}}).exec()
                         ]).then(() => spaces[0]);
                     }
-
-                    return new mongo.Space({name: 'Demo space', owner: req.user._id, demo: true}).save();
+                })
+                .catch((err) => {
+                    if (err instanceof errors.NotFoundException)
+                        return spaceService.createDemoSpace(req.user._id);
                 })
                 .then((space) => {
                     return Promise.all(_.map(clusters, (cluster) => {

@@ -1057,7 +1057,7 @@ export default ['domainsController', [
         // When landing on the page, get domain models and show them.
         Loading.start('loadingDomainModelsScreen');
 
-        $http.post('/api/v1/configuration/domains/list')
+        $http.get('/api/v1/configuration/list')
             .success(function(data) {
                 $scope.spaces = data.spaces;
                 $scope.clusters = _.map(data.clusters, function(cluster) {
@@ -1067,7 +1067,7 @@ export default ['domainsController', [
                     };
                 });
                 $scope.caches = _mapCaches(data.caches);
-                $scope.domains = data.domains;
+                $scope.domains = _.sortBy(data.domains, 'valueType');
 
                 _.forEach($scope.clusters, function(cluster) {
                     $scope.ui.generatedCachesClusters.push(cluster.value);

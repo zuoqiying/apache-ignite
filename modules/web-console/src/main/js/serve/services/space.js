@@ -54,6 +54,15 @@ module.exports.factory = (mongo, errors) => {
             return this.spaces(userId, demo)
                 .then((spaces) => spaces.map((space) => space._id));
         }
+
+        /**
+         * Create demo space for user
+         * @param userId - user id
+         * @returns {Promise<mongo.Space>} that resolves created demo space for user
+         */
+        static createDemoSpace(userId) {
+            return new mongo.Space({name: 'Demo space', owner: userId, demo: true}).save();
+        }
     }
 
     return SpaceService;

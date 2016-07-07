@@ -93,24 +93,12 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
         }
 
         /**
-         * Get caches and linked objects by user.
-         * @param {mongo.ObjectId|String} userId - The user id that own caches.
-         * @param {Boolean} demo - The flag indicates that need lookup in demo space.
-         * @returns {Promise.<[mongo.Cache[], mongo.Cluster[], mongo.DomainModel[], mongo.Space[]]>} - contains requested caches and array of linked objects: clusters, domains, spaces.
+         * Get caches by spaces.
+         * @param {mongo.ObjectId|String} spaceIds - The spaces ids that own caches.
+         * @returns {Promise.<mongo.Cache[]>} - contains requested caches.
          */
-        static listByUser(userId, demo) {
-            // Get owned space and all accessed space.
-            return spaceService.spaces(userId, demo)
-                .then((spaces) => {
-                    const spaceIds = spaces.map((space) => space._id);
-
-                    return Promise.all([
-                        mongo.Cluster.find({space: {$in: spaceIds}}).sort('name').lean().exec(),
-                        mongo.DomainModel.find({space: {$in: spaceIds}}).sort('name').lean().exec(),
-                        mongo.Cache.find({space: {$in: spaceIds}}).sort('name').lean().exec()
-                    ])
-                        .then(([clusters, domains, caches]) => ({caches, clusters, domains, spaces}));
-                });
+        static listBySpaces(spaceIds) {
+            return mongo.Cache.find({space: {$in: spaceIds}}).sort('name').lean().exec();
         }
 
         /**

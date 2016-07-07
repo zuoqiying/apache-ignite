@@ -32,12 +32,13 @@ module.exports = {
         'igfs-routes',
         'notebooks-routes',
         'agent-routes',
+        'configuration-routes',
         'ignite_modules/routes:*' // Loads all routes modules of all plugins
     ]
 };
 
 module.exports.factory = function(publicRoutes, adminRoutes, profileRoutes, demoRoutes,
-    clusterRoutes, domainRoutes, cacheRoutes, igfsRoutes, notebookRoutes, agentRoutes, pluginRoutes) {
+    clusterRoutes, domainRoutes, cacheRoutes, igfsRoutes, notebookRoutes, agentRoutes, configurationRoutes, pluginRoutes) {
     return {
         register: (app) => {
             // TODO Extract this to separate middleware.
@@ -67,6 +68,7 @@ module.exports.factory = function(publicRoutes, adminRoutes, profileRoutes, demo
 
             app.all('/configuration/*', _mustAuthenticated);
 
+            app.use('/configuration', _mustAuthenticated, configurationRoutes);
             app.use('/configuration/clusters', clusterRoutes);
             app.use('/configuration/domains', domainRoutes);
             app.use('/configuration/caches', cacheRoutes);

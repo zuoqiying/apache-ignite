@@ -27,16 +27,7 @@ module.exports = {
 module.exports.factory = function(_, express, mongo, cacheService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
-
-        /**
-         * Get spaces and caches accessed for user account.
-         */
-        router.post('/list', (req, res) => {
-            cacheService.listByUser(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then(res.api.ok)
-                .catch(res.api.error);
-        });
-
+        
         /**
          * Save cache.
          */

@@ -194,7 +194,7 @@ export default ['clustersController', [
         Loading.start('loadingClustersScreen');
 
         // When landing on the page, get clusters and show them.
-        $http.post('/api/v1/configuration/clusters/list')
+        $http.get('/api/v1/configuration/list')
             .success(function(data) {
                 $scope.spaces = data.spaces;
                 $scope.clusters = data.clusters;
