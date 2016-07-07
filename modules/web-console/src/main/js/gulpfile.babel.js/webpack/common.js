@@ -16,6 +16,7 @@
  */
 
 import path from 'path';
+import fs from 'fs';
 import webpack from 'webpack';
 import autoprefixer from 'autoprefixer-core';
 import jade from 'jade';
@@ -32,6 +33,16 @@ const development = NODE_ENV === 'development';
 const node_modules_path = path.resolve('node_modules');
 const cssLoader = 'css-loader?sourceMap!postcss-loader';
 const stylesLoader = cssLoader + '!sass-loader?outputStyle=expanded&sourceMap=true&sourceMapContents=true';
+
+let favicon;
+
+try {
+    fs.accessSync('build/ignite_modules/favicon.ico', fs.F_OK);
+
+    favicon = 'build/ignite_modules/favicon.ico';
+} catch (ignore) {
+    favicon = 'build/favicon.ico';
+}
 
 export default () => {
     return {
@@ -173,7 +184,7 @@ export default () => {
                 templateContent: () => {
                     return jade.renderFile(path.join(rootDir, 'views', 'index.jade'));
                 },
-                title: 'Ignite Web Console'
+                favicon
             }),
             progressPlugin
         ]

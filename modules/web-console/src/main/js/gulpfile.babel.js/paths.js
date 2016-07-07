@@ -50,7 +50,8 @@ const appModulePaths = [
 ];
 
 const resourceModulePaths = [
-    igniteModulesDir + '/**/images/*.png'
+    igniteModulesDir + '/**/images/*.png',
+    igniteModulesDir + '/*.ico'
 ];
 
 export {
