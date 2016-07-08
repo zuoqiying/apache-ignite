@@ -85,7 +85,7 @@ export default ['profileController', [
 
                     Focus.move('profile-username');
                 })
-                .catch((err) => Messages.showError(Messages.errorMessage('Failed to save profile: ', err)));
+                .catch(({data}) => Messages.showError(Messages.errorMessage('Failed to save profile: ', data)));
         };
     }
 ]];
