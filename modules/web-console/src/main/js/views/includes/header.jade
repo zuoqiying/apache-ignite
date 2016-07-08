@@ -28,12 +28,14 @@ header#header.header
                             span.caret
 
                 ul.nav.navbar-nav(ng-controller='notebooks')
-                    li.sql-notebooks(ng-if='!notebooks.length' ng-class='{active: $state.includes("base.sql")}' )
-                        a(ng-if='IgniteDemoMode' ui-sref='base.sql.demo') SQL
-                        a(ng-if='!IgniteDemoMode' ng-click='inputNotebookName()') SQL
+                    li.sql-notebooks(ng-if='IgniteDemoMode' ng-class='{active: $state.includes("base.sql")}')
+                        a(ui-sref='base.sql.demo') SQL
 
-                    li.sql-notebooks(ng-if='notebooks.length' ng-class='{active: $state.includes("base.sql")}' bs-dropdown='notebookDropdown' data-placement='bottom-left' data-trigger='hover focus' data-container='self' data-animation='')
-                        a.dropdown-toggle() SQL
+                    li.sql-notebooks(ng-if='!IgniteDemoMode && !notebooks.length' ng-class='{active: $state.includes("base.sql")}')
+                        a(ng-click='inputNotebookName()') SQL
+
+                    li.sql-notebooks(ng-if='!IgniteDemoMode && notebooks.length' ng-class='{active: $state.includes("base.sql")}' bs-dropdown='notebookDropdown' data-placement='bottom-left' data-trigger='hover focus' data-container='self' data-animation='')
+                        a.dropdown-toggle SQL
                             span.caret
 
                     li(ui-sref-active='active'  ng-repeat='item in navbar.items')
