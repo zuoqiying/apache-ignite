@@ -881,7 +881,8 @@ export default ['IgniteLegacyUtils', [
                             CacheJdbcPojoStoreFactory: {
                                 dataSourceBean: toJavaName('ds', cache.name),
                                 dialect: 'Generic'
-                            }
+                            },
+                            CacheJdbcBlobStoreFactory: { connectVia: 'DataSource' }
                         },
                         readThrough: dflt || cache.readThrough,
                         writeThrough: dflt || cache.writeThrough

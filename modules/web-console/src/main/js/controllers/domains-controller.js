@@ -882,7 +882,11 @@ export default ['domainsController', [
                         if (!newCache.cacheStoreFactory || newCache.cacheStoreFactory.kind !== 'CacheJdbcPojoStoreFactory') {
                             const dialect = $scope.importDomain.demo ? 'H2' : $scope.selectedPreset.db;
 
-                            newCache.cacheStoreFactory = {kind: 'CacheJdbcPojoStoreFactory', CacheJdbcPojoStoreFactory: {dataSourceBean: 'ds' + dialect, dialect}};
+                            newCache.cacheStoreFactory = {
+                                kind: 'CacheJdbcPojoStoreFactory',
+                                CacheJdbcPojoStoreFactory: {dataSourceBean: 'ds' + dialect, dialect},
+                                CacheJdbcBlobStoreFactory: { connectVia: 'DataSource' }
+                            };
                         }
 
                         if (!newCache.readThrough && !newCache.writeThrough) {

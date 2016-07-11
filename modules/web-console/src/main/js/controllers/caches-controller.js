@@ -153,6 +153,9 @@ export default ['cachesController', [
             function selectItem() {
                 $scope.selectedItem = item;
 
+                if (item && !_.get(item.cacheStoreFactory.CacheJdbcBlobStoreFactory, 'connectVia'))
+                    _.set(item.cacheStoreFactory, 'CacheJdbcBlobStoreFactory.connectVia', 'DataSource');
+
                 try {
                     if (item && item._id)
                         sessionStorage.lastSelectedCache = angular.toJson(item._id);
