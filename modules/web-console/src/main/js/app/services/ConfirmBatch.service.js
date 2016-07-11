@@ -19,31 +19,38 @@
 export default ['IgniteConfirmBatch', ['$rootScope', '$q', '$modal', ($root, $q, $modal) => {
     const scope = $root.$new();
 
-    scope.confirmModal = $modal({templateUrl: '/templates/batch-confirm.html', scope, placement: 'center', show: false});
+    scope.confirmModal = $modal({
+        templateUrl: '/templates/batch-confirm.html',
+        scope,
+        placement: 'center',
+        show: false,
+        backdrop: 'static',
+        keyboard: false
+    });
 
-    function _done(cancel) {
+    const _done = (cancel) => {
         scope.confirmModal.hide();
 
         if (cancel)
             scope.deferred.reject('cancelled');
         else
             scope.deferred.resolve();
-    }
+    };
 
-    function _nextElement(skip) {
+    const _nextElement = (skip) => {
         scope.items[scope.curIx++].skip = skip;
 
         if (scope.curIx < scope.items.length)
             scope.content = scope.contentGenerator(scope.items[scope.curIx]);
         else
             _done();
-    }
+    };
 
-    scope.cancel = function() {
+    scope.cancel = () => {
         _done(true);
     };
 
-    scope.skip = function(applyToAll) {
+    scope.skip = (applyToAll) => {
         if (applyToAll) {
             for (let i = scope.curIx; i < scope.items.length; i++)
                 scope.items[i].skip = true;
@@ -54,7 +61,7 @@ export default ['IgniteConfirmBatch', ['$rootScope', '$q', '$modal', ($root, $q,
             _nextElement(true);
     };
 
-    scope.overwrite = function(applyToAll) {
+    scope.overwrite = (applyToAll) => {
         if (applyToAll)
             _done();
         else
