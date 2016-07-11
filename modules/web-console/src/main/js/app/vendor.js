@@ -41,6 +41,7 @@ import 'brace/mode/dockerfile';
 import 'brace/mode/snippets';
 import 'brace/theme/chrome';
 import 'brace/ext/language_tools';
+import 'brace/ext/searchbox';
 import 'file-saver';
 import 'jszip';
 import 'nvd3';
