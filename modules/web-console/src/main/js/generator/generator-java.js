@@ -1806,6 +1806,8 @@ $generatorJava.domainModelQueryIndexes = function(res, domain) {
                 $generatorJava.property(res, 'index', index, 'name');
                 $generatorJava.enumProperty(res, 'index', index, 'indexType', 'org.apache.ignite.cache.QueryIndexType');
 
+                res.needEmptyLine = true;
+
                 if (fields && fields.length > 0) {
                     $generatorJava.declareVariable(res, 'indFlds', 'java.util.LinkedHashMap', 'java.util.LinkedHashMap', 'String', 'Boolean');
 
