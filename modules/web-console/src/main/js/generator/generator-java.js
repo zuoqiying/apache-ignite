@@ -1319,10 +1319,9 @@ $generatorJava.cacheGeneral = function(cache, varName, res) {
     $generatorJava.enumProperty(res, varName, cache, 'cacheMode', 'org.apache.ignite.cache.CacheMode');
     $generatorJava.enumProperty(res, varName, cache, 'atomicityMode', 'org.apache.ignite.cache.CacheAtomicityMode');
 
-    if (cache.cacheMode === 'PARTITIONED')
-        $generatorJava.property(res, varName, cache, 'backups');
+    if (cache.cacheMode === 'PARTITIONED' && $generatorJava.property(res, varName, cache, 'backups'))
+        $generatorJava.property(res, varName, cache, 'readFromBackup');
 
-    $generatorJava.property(res, varName, cache, 'readFromBackup');
     $generatorJava.property(res, varName, cache, 'copyOnRead');
 
     if (cache.cacheMode === 'PARTITIONED' && cache.atomicityMode === 'TRANSACTIONAL')
