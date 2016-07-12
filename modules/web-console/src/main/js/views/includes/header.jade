@@ -23,7 +23,7 @@ header#header.header
                 ignite-header-logo
             td(ng-if='$root.user' style='padding-top: 20px')
                 ul.nav.navbar-nav(ignite-sidebar ignite-navbar)
-                    li(ng-class='{active: $state.includes("base.configuration")}' bs-dropdown='sidebar.items' data-placement='bottom-right' data-trigger='hover focus' data-container='self' data-animation='')
+                    li(ng-class='{active: $state.includes("base.configuration")}' bs-dropdown='sidebar.items' data-placement='bottom-right' data-trigger='hover focus' data-container='self' data-animation='' ng-click='$event.stopPropagation()')
                         a.dropdown-toggle Configuration
                             span.caret
 
@@ -34,7 +34,7 @@ header#header.header
                     li.sql-notebooks(ng-if='!IgniteDemoMode && !notebooks.length' ng-class='{active: $state.includes("base.sql")}')
                         a(ng-click='inputNotebookName()') SQL
 
-                    li.sql-notebooks(ng-if='!IgniteDemoMode && notebooks.length' ng-class='{active: $state.includes("base.sql")}' bs-dropdown='notebookDropdown' data-placement='bottom-left' data-trigger='hover focus' data-container='self' data-animation='')
+                    li.sql-notebooks(ng-if='!IgniteDemoMode && notebooks.length' ng-class='{active: $state.includes("base.sql")}' bs-dropdown='notebookDropdown' data-placement='bottom-left' data-trigger='hover focus' data-container='self' data-animation='' ng-click='$event.stopPropagation()')
                         a.dropdown-toggle SQL
                             span.caret
 
@@ -46,6 +46,6 @@ header#header.header
                     button.btn.btn-info(ng-if='!IgniteDemoMode' ng-click='startDemo()') Start demo
 
                 ul.nav.navbar-nav.pull-right(ignite-userbar)
-                    li(bs-dropdown='userbar.items' data-placement='bottom-right' data-trigger='hover focus' data-container='self' data-animation='' ng-class='{active: $state.includes("settings")}')
+                    li(bs-dropdown='userbar.items' data-placement='bottom-right' data-trigger='hover focus' data-container='self' data-animation='' ng-class='{active: $state.includes("settings")}' ng-click='$event.stopPropagation()')
                         a.dropdown-toggle {{user.firstName}} {{user.lastName}}
                             span.caret
