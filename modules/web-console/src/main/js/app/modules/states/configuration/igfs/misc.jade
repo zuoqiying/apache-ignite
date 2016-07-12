@@ -75,10 +75,10 @@ form.panel.panel-default(name=form novalidate)
                 .settings-row
                     +checkbox('Colocate metadata', model + '.colocateMetadata', 'colocateMetadata', 'Whether to co-locate metadata on a single node')
                 .settings-row
-                    +checkbox('Relaxed consistency ', model + '.relaxedConsistency', 'relaxedConsistency',
-                        'If value of this flag is <b>true</b>, IGFS will skip expensive consistency checks. It is recommended to set\
-                        this flag to <b>false</b>b> if your application has conflicting operations, or you do not how exactly users will\
-                        use your system.')
+                    +checkbox('Relaxed consistency', model + '.relaxedConsistency', 'relaxedConsistency',
+                        'If value of this flag is <b>true</b>, IGFS will skip expensive consistency checks<br/>\
+                        It is recommended to set this flag to <b>false</b> if your application has conflicting\
+                        operations, or you do not know how exactly users will use your system')
                 .settings-row
                     ignite-form-group(ng-model=pathModes ng-form=pathModesForm)
                         ignite-form-field-label
