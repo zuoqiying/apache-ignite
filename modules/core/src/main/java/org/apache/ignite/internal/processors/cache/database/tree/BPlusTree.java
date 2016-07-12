@@ -3127,6 +3127,20 @@ public abstract class BPlusTree<L, T extends L> {
      * Reuse bag for destroy.
      */
     private static final class DestroyBag extends GridLongList implements ReuseBag {
+
+        private static final long serialVersionUID = 0L;
+
+        public DestroyBag() {
+        }
+
+        public DestroyBag(int size) {
+            super(size);
+        }
+
+        public DestroyBag(long[] arr) {
+            super(arr);
+        }
+
         /** {@inheritDoc} */
         @Override public void addFreePage(long pageId) {
             add(pageId);
