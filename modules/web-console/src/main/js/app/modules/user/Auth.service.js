@@ -68,6 +68,8 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteLega
                     .then(() => {
                         User.clean();
 
+                        _authorized(false);
+
                         $window.open($state.href('signin'), '_self');
                     })
                     .catch(Messages.showError);
