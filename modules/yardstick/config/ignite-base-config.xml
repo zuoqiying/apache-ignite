@@ -140,9 +140,9 @@
                                         <bean class="org.apache.ignite.cache.QueryIndex">
                                             <constructor-arg value="id"/>
                                         </bean>
-                                        <!--<bean class="org.apache.ignite.cache.QueryIndex">-->
-                                            <!--<constructor-arg value="orgId"/>-->
-                                        <!--</bean>-->
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <constructor-arg value="orgId"/>
+                                        </bean>
                                         <bean class="org.apache.ignite.cache.QueryIndex">
                                             <constructor-arg value="salary"/>
                                         </bean>
