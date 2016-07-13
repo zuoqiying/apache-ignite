@@ -21,43 +21,12 @@
 
 module.exports = {
     implements: 'igfs-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo']
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/space']
 };
 
-module.exports.factory = function(_, express, mongo) {
+module.exports.factory = function(_, express, mongo, spaceService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
-
-        /**
-         * Get spaces and IGFSs accessed for user account.
-         *
-         * @param req Request.
-         * @param res Response.
-         */
-        router.post('/list', (req, res) => {
-            const result = {};
-            let spaceIds = [];
-
-            // Get owned space and all accessed space.
-            mongo.spaces(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((spaces) => {
-                    result.spaces = spaces;
-                    spaceIds = spaces.map((space) => space._id);
-
-                    return mongo.Cluster.find({space: {$in: spaceIds}}, '_id name').sort('name').lean().exec();
-                })
-                .then((clusters) => {
-                    result.clusters = clusters;
-
-                    return mongo.Igfs.find({space: {$in: spaceIds}}).sort('name').lean().exec();
-                })
-                .then((igfss) => {
-                    result.igfss = igfss;
-
-                    res.json(result);
-                })
-                .catch((err) => mongo.handleError(res, err));
-        });
 
         /**
          * Save IGFS.
@@ -107,7 +76,7 @@ module.exports.factory = function(_, express, mongo) {
          */
         router.post('/remove/all', (req, res) => {
             // Get owned space and all accessed space.
-            mongo.spaceIds(req.currentUserId(), req.header('IgniteDemoMode'))
+            spaceService.spaceIds(req.currentUserId(), req.header('IgniteDemoMode'))
                 .then((spaceIds) =>
                     mongo.Cluster.update({space: {$in: spaceIds}}, {igfss: []}, {multi: true}).exec()
                         .then(() => mongo.Igfs.remove({space: {$in: spaceIds}}).exec())

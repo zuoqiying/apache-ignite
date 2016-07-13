@@ -24,12 +24,10 @@
  */
 module.exports = {
     implements: 'mongo',
-    inject: ['require(mongoose-deep-populate)', 'require(passport-local-mongoose)', 'settings', 'ignite_modules/mongo:*']
+    inject: ['require(mongoose-deep-populate)', 'require(passport-local-mongoose)', 'settings', 'ignite_modules/mongo:*', 'require(mongoose)']
 };
 
-module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, pluginMongo) {
-    const mongoose = require('mongoose');
-
+module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, pluginMongo, mongoose) {
     // Use native promises
     mongoose.Promise = global.Promise;
 
@@ -80,6 +78,10 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         }
     });
 
+    result.errCodes = {
+        DUPLICATE_KEY_ERROR: 11000,
+        DUPLICATE_KEY_UPDATE_ERROR: 11001
+    };
     // Define Account model.
     result.Account = mongoose.model('Account', AccountSchema);
 
@@ -132,7 +134,7 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
     // Define Cache schema.
     const CacheSchema = new Schema({
         space: {type: ObjectId, ref: 'Space', index: true},
-        name: String,
+        name: {type: String},
         clusters: [{type: ObjectId, ref: 'Cluster'}],
         domains: [{type: ObjectId, ref: 'DomainModel'}],
         cacheMode: {type: String, enum: ['PARTITIONED', 'REPLICATED', 'LOCAL']},
@@ -254,6 +256,8 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         },
         demo: Boolean
     });
+
+    CacheSchema.index({name: 1, space: 1}, {unique: true});
 
     // Install deep populate plugin.
     CacheSchema.plugin(deepPopulate, {
@@ -643,28 +647,6 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         res.status(err.code || 500).send(err.message);
     };
 
-    /**
-     * Query for user spaces.
-     *
-     * @param userId User ID.
-     * @param {Boolean} demo Is need use demo space.
-     * @returns {Promise}
-     */
-    result.spaces = function(userId, demo) {
-        return result.Space.find({owner: userId, demo: !!demo}).lean().exec();
-    };
-
-    /**
-     * Extract IDs from user spaces.
-     *
-     * @param userId User ID.
-     * @param {Boolean} demo Is need use demo space.
-     * @returns {Promise}
-     */
-    result.spaceIds = function(userId, demo) {
-        return result.spaces(userId, demo)
-            .then((spaces) => spaces.map((space) => space._id));
-    };
 
     // Registering the routes of all plugin modules
     for (const name in pluginMongo) {

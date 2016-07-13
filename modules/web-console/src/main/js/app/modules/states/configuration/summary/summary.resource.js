@@ -16,16 +16,20 @@
  */
 
 export default ['ConfigurationSummaryResource', ['$q', '$http', ($q, $http) => {
-    const api = '/api/v1/configuration/clusters/list';
+    const api = '/api/v1/configuration/list';
 
     return {
         read() {
             return $http
-                .post(api)
+                .get(api)
                 .then(({data}) => data)
-                .then(({clusters, caches, igfss}) => {
+                .then(({clusters, caches, igfss, domains}) => {
                     if (!clusters || !clusters.length)
                         return {};
+
+                    _.forEach(caches, (cache) => {
+                        cache.domains = _.filter(domains, ({_id}) => _.includes(cache.domains, _id));
+                    });
 
                     _.forEach(clusters, (cluster) => {
                         cluster.igfss = _.filter(igfss, ({_id}) => _.includes(cluster.igfss, _id));

@@ -21,47 +21,12 @@
 
 module.exports = {
     implements: 'domains-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo']
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/space']
 };
 
-module.exports.factory = (_, express, mongo) => {
+module.exports.factory = (_, express, mongo, spaceService) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
-
-        /**
-         * Get spaces and domain models accessed for user account.
-         *
-         * @param req Request.
-         * @param res Response.
-         */
-        router.post('/list', (req, res) => {
-            const result = {};
-            let spacesIds = [];
-
-            mongo.spaces(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((spaces) => {
-                    result.spaces = spaces;
-                    spacesIds = spaces.map((space) => space._id);
-
-                    return mongo.Cluster.find({space: {$in: spacesIds}}, '_id name').sort('name').lean().exec();
-                })
-                .then((clusters) => {
-                    result.clusters = clusters;
-
-                    return mongo.Cache.find({space: {$in: spacesIds}}).sort('name').lean().exec();
-                })
-                .then((caches) => {
-                    result.caches = caches;
-
-                    return mongo.DomainModel.find({space: {$in: spacesIds}}).sort('valueType').lean().exec();
-                })
-                .then((domains) => {
-                    result.domains = domains;
-
-                    res.json(result);
-                })
-                .catch((err) => mongo.handleError(res, err));
-        });
 
         function _updateCacheStore(cacheStoreChanges) {
             const promises = [];
@@ -182,7 +147,7 @@ module.exports.factory = (_, express, mongo) => {
          * Remove all domain models.
          */
         router.post('/remove/all', (req, res) => {
-            mongo.spaceIds(req.currentUserId(), req.header('IgniteDemoMode'))
+            spaceService.spaceIds(req.currentUserId(), req.header('IgniteDemoMode'))
                 .then((spaceIds) => mongo.Cache.update({space: {$in: spaceIds}}, {domains: []}, {multi: true}).exec()
                         .then(() => mongo.DomainModel.remove({space: {$in: spaceIds}}).exec()))
                 .then(() => res.sendStatus(200))

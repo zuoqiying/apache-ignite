@@ -1,0 +1,19 @@
+{
+    "server": {
+        "port": 3000,
+        "static": "./build"
+    },
+    "mongoDB": {
+        "url": "mongodb://localhost/console-test"
+    },
+    "agent-server": {
+        "port": 3001
+    },
+    "smtp": {
+        "service": "localhost",
+        "username": "Apache Ignite Web Console",
+        "sign": "Kind regards,<br>Apache Ignite Team",
+        "email": "m@m.test",
+        "password": "test"
+    }
+}

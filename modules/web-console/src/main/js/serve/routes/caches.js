@@ -21,109 +21,42 @@
 
 module.exports = {
     implements: 'caches-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo']
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/cache']
 };
 
-module.exports.factory = function(_, express, mongo) {
+module.exports.factory = function(_, express, mongo, cacheService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
-
-        /**
-         * Get spaces and caches accessed for user account.
-         *
-         * @param req Request.
-         * @param res Response.
-         */
-        router.post('/list', (req, res) => {
-            const result = {};
-            let spaceIds = [];
-
-            // Get owned space and all accessed space.
-            mongo.spaces(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((spaces) => {
-                    result.spaces = spaces;
-                    spaceIds = spaces.map((space) => space._id);
-
-                    return mongo.Cluster.find({space: {$in: spaceIds}}).sort('name').lean().exec();
-                })
-                .then((clusters) => {
-                    result.clusters = clusters;
-
-                    return mongo.DomainModel.find({space: {$in: spaceIds}}).sort('name').lean().exec();
-                })
-                .then((domains) => {
-                    result.domains = domains;
-
-                    return mongo.Cache.find({space: {$in: spaceIds}}).sort('name').lean().exec();
-                })
-                .then((caches) => {
-                    result.caches = caches;
-
-                    res.json(result);
-                })
-                .catch((err) => mongo.handleError(res, err));
-        });
 
         /**
          * Save cache.
          */
         router.post('/save', (req, res) => {
-            const params = req.body;
-            const clusters = params.clusters;
-            const domains = params.domains;
+            const cache = req.body;
 
-            mongo.Cache.findOne({space: params.space, name: params.name}).exec()
-                .then((existingCache) => {
-                    const cacheId = params._id;
-
-                    if (existingCache && cacheId !== existingCache._id.toString())
-                        return res.status(500).send('Cache with name: "' + existingCache.name + '" already exist.');
-
-                    if (cacheId) {
-                        return mongo.Cache.update({_id: cacheId}, params, {upsert: true}).exec()
-                            .then(() => mongo.Cluster.update({_id: {$in: clusters}}, {$addToSet: {caches: cacheId}}, {multi: true}).exec())
-                            .then(() => mongo.Cluster.update({_id: {$nin: clusters}}, {$pull: {caches: cacheId}}, {multi: true}).exec())
-                            .then(() => mongo.DomainModel.update({_id: {$in: domains}}, {$addToSet: {caches: cacheId}}, {multi: true}).exec())
-                            .then(() => mongo.DomainModel.update({_id: {$nin: domains}}, {$pull: {caches: cacheId}}, {multi: true}).exec())
-                            .then(() => res.send(cacheId));
-                    }
-
-                    return (new mongo.Cache(params)).save()
-                        .then((cache) =>
-                            mongo.Cluster.update({_id: {$in: clusters}}, {$addToSet: {caches: cache._id}}, {multi: true}).exec()
-                                .then(() => mongo.DomainModel.update({_id: {$in: domains}}, {$addToSet: {caches: cache._id}}, {multi: true}).exec())
-                                .then(() => res.send(cache._id))
-                        );
-                })
-                .catch((err) => mongo.handleError(res, err));
+            cacheService.merge(cache)
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         /**
          * Remove cache by ._id.
          */
         router.post('/remove', (req, res) => {
-            const params = req.body;
-            const cacheId = params._id;
+            const cache = req.body;
 
-            mongo.Cluster.update({caches: {$in: [cacheId]}}, {$pull: {caches: cacheId}}, {multi: true}).exec()
-                .then(() => mongo.DomainModel.update({caches: {$in: [cacheId]}}, {$pull: {caches: cacheId}}, {multi: true}).exec())
-                .then(() => mongo.Cache.remove(params).exec())
-                .then(() => res.sendStatus(200))
-                .catch((err) => mongo.handleError(res, err));
+            cacheService.remove(cache._id)
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         /**
          * Remove all caches.
          */
         router.post('/remove/all', (req, res) => {
-            mongo.spaceIds(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((spaceIds) =>
-                    mongo.Cluster.update({space: {$in: spaceIds}}, {caches: []}, {multi: true}).exec()
-                        .then(() => mongo.DomainModel.update({space: {$in: spaceIds}}, {caches: []}, {multi: true}).exec())
-                        .then(() => mongo.Cache.remove({space: {$in: spaceIds}}).exec())
-                )
-                .then(() => res.sendStatus(200))
-                .catch((err) => mongo.handleError(res, err));
+            cacheService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         factoryResolve(router);

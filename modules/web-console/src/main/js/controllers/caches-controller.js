@@ -80,7 +80,7 @@ export default ['cachesController', [
         Loading.start('loadingCachesScreen');
 
         // When landing on the page, get caches and show them.
-        $http.post('/api/v1/configuration/caches/list')
+        $http.get('/api/v1/configuration/list')
             .success(function(data) {
                 const validFilter = $filter('domainsValidation');
 
