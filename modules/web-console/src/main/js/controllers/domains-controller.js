@@ -732,11 +732,10 @@ export default ['domainsController', [
                 return false;
 
             const batch = [];
-            const tables = [];
             const checkedCaches = [];
 
-            let dupCnt = 0;
             let containKey = true;
+            let containDup = false;
 
             function queryField(name, jdbcType) {
                 return {name: toJavaName(name), className: jdbcType.javaType};
@@ -753,7 +752,7 @@ export default ['domainsController', [
                 };
             }
 
-            _.forEach($scope.importDomain.tables, function(table) {
+            _.forEach($scope.importDomain.tables, function(table, curIx) {
                 if (table.use) {
                     const qryFields = [];
                     const indexes = [];
@@ -762,13 +761,15 @@ export default ['domainsController', [
                     const aliases = [];
 
                     const tableName = table.tbl;
+                    let typeName = toJavaClassName(tableName);
 
-                    const dup = tables.indexOf(tableName) >= 0;
+                    if (_.findIndex($scope.importDomain.tables, function(tbl, ix) {
+                        return tbl.use && ix !== curIx && tableName === tbl.tbl;
+                    }) >= 0) {
+                        typeName = typeName + '_' + toJavaClassName(table.schema);
+                        containDup = true;
+                    }
 
-                    if (dup)
-                        dupCnt++;
-
-                    const typeName = toJavaClassName(tableName);
                     const valType = _toJavaPackage($scope.ui.packageName) + '.' + typeName;
 
                     let _containKey = false;
@@ -829,10 +830,8 @@ export default ['domainsController', [
                         newDomain.confirm = true;
                     }
 
-                    const dupSfx = (dup ? '_' + dupCnt : '');
-
-                    newDomain.keyType = valType + 'Key' + dupSfx;
-                    newDomain.valueType = valType + dupSfx;
+                    newDomain.keyType = valType + 'Key';
+                    newDomain.valueType = valType;
                     newDomain.queryMetadata = 'Configuration';
                     newDomain.databaseSchema = table.schema;
                     newDomain.databaseTable = tableName;
@@ -912,7 +911,6 @@ export default ['domainsController', [
                     }
 
                     batch.push(newDomain);
-                    tables.push(tableName);
                 }
             });
 
@@ -941,12 +939,22 @@ export default ['domainsController', [
                     _saveBatch(batch);
             }
 
+            function checkDuplicate() {
+                if (containDup) {
+                    Confirm.confirm('Some tables have the same name.<br/>' +
+                            'Name of types for that tables will contain schema name too.')
+                        .then(() => checkOverwrite());
+                }
+                else
+                    checkOverwrite()
+            }
+
             if (containKey)
-                checkOverwrite();
+                checkDuplicate();
             else {
                 Confirm.confirm('Some tables have no primary key.<br/>' +
                         'You will need to configure key type and key fields for such tables after import complete.')
-                    .then(() => checkOverwrite());
+                    .then(() => checkDuplicate());
             }
         }
 
