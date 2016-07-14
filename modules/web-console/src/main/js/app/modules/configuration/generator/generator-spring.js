@@ -16,10 +16,10 @@
  */
 
 // XML generation entry point.
-const $generatorXml = {};
+const $generatorSpring = {};
 
 // Do XML escape.
-$generatorXml.escape = function(s) {
+$generatorSpring.escape = function(s) {
     if (typeof (s) !== 'string')
         return s;
 
@@ -27,7 +27,7 @@ $generatorXml.escape = function(s) {
 };
 
 // Add constructor argument
-$generatorXml.constructorArg = function(res, ix, obj, propName, dflt, opt) {
+$generatorSpring.constructorArg = function(res, ix, obj, propName, dflt, opt) {
     const v = (obj ? obj[propName] : null) || dflt;
 
     if ($generatorCommon.isDefinedAndNotEmpty(v))
@@ -40,7 +40,7 @@ $generatorXml.constructorArg = function(res, ix, obj, propName, dflt, opt) {
 };
 
 // Add XML element.
-$generatorXml.element = function(res, tag, attr1, val1, attr2, val2) {
+$generatorSpring.element = function(res, tag, attr1, val1, attr2, val2) {
     let elem = '<' + tag;
 
     if (attr1)
@@ -56,7 +56,7 @@ $generatorXml.element = function(res, tag, attr1, val1, attr2, val2) {
 };
 
 // Add property.
-$generatorXml.property = function(res, obj, propName, setterName, dflt) {
+$generatorSpring.property = function(res, obj, propName, setterName, dflt) {
     if (!_.isNil(obj)) {
         const val = obj[propName];
 
@@ -65,7 +65,7 @@ $generatorXml.property = function(res, obj, propName, setterName, dflt) {
 
             // Add to result if no default provided or value not equals to default.
             if (missDflt || (!missDflt && val !== dflt)) {
-                $generatorXml.element(res, 'property', 'name', setterName ? setterName : propName, 'value', $generatorXml.escape(val));
+                $generatorSpring.element(res, 'property', 'name', setterName ? setterName : propName, 'value', $generatorSpring.escape(val));
 
                 return true;
             }
@@ -76,15 +76,15 @@ $generatorXml.property = function(res, obj, propName, setterName, dflt) {
 };
 
 // Add property for class name.
-$generatorXml.classNameProperty = function(res, obj, propName) {
+$generatorSpring.classNameProperty = function(res, obj, propName) {
     const val = obj[propName];
 
     if (!_.isNil(val))
-        $generatorXml.element(res, 'property', 'name', propName, 'value', $generatorCommon.JavaTypes.fullClassName(val));
+        $generatorSpring.element(res, 'property', 'name', propName, 'value', $generatorCommon.JavaTypes.fullClassName(val));
 };
 
 // Add list property.
-$generatorXml.listProperty = function(res, obj, propName, listType, rowFactory) {
+$generatorSpring.listProperty = function(res, obj, propName, listType, rowFactory) {
     const val = obj[propName];
 
     if (val && val.length > 0) {
@@ -94,7 +94,7 @@ $generatorXml.listProperty = function(res, obj, propName, listType, rowFactory) 
             listType = 'list';
 
         if (!rowFactory)
-            rowFactory = (v) => '<value>' + $generatorXml.escape(v) + '</value>';
+            rowFactory = (v) => '<value>' + $generatorSpring.escape(v) + '</value>';
 
         res.startBlock('<property name="' + propName + '">');
         res.startBlock('<' + listType + '>');
@@ -109,7 +109,7 @@ $generatorXml.listProperty = function(res, obj, propName, listType, rowFactory) 
 };
 
 // Add array property
-$generatorXml.arrayProperty = function(res, obj, propName, descr, rowFactory) {
+$generatorSpring.arrayProperty = function(res, obj, propName, descr, rowFactory) {
     const val = obj[propName];
 
     if (val && val.length > 0) {
@@ -137,7 +137,7 @@ $generatorXml.arrayProperty = function(res, obj, propName, descr, rowFactory) {
  * @param desc Bean metadata object.
  * @param createBeanAlthoughNoProps Always generate bean even it has no properties defined.
  */
-$generatorXml.beanProperty = function(res, bean, beanPropName, desc, createBeanAlthoughNoProps) {
+$generatorSpring.beanProperty = function(res, bean, beanPropName, desc, createBeanAlthoughNoProps) {
     const props = desc.fields;
 
     if (bean && $generatorCommon.hasProperty(bean, props)) {
@@ -159,12 +159,12 @@ $generatorXml.beanProperty = function(res, bean, beanPropName, desc, createBeanA
                 if (descr) {
                     switch (descr.type) {
                         case 'list':
-                            $generatorXml.listProperty(res, bean, propName, descr.setterName);
+                            $generatorSpring.listProperty(res, bean, propName, descr.setterName);
 
                             break;
 
                         case 'array':
-                            $generatorXml.arrayProperty(res, bean, propName, descr);
+                            $generatorSpring.arrayProperty(res, bean, propName, descr);
 
                             break;
 
@@ -178,8 +178,8 @@ $generatorXml.beanProperty = function(res, bean, beanPropName, desc, createBeanA
                                 _.forEach(val, function(nameAndValue) {
                                     const eqIndex = nameAndValue.indexOf('=');
                                     if (eqIndex >= 0) {
-                                        res.line('<prop key="' + $generatorXml.escape(nameAndValue.substring(0, eqIndex)) + '">' +
-                                            $generatorXml.escape(nameAndValue.substr(eqIndex + 1)) + '</prop>');
+                                        res.line('<prop key="' + $generatorSpring.escape(nameAndValue.substring(0, eqIndex)) + '">' +
+                                            $generatorSpring.escape(nameAndValue.substr(eqIndex + 1)) + '</prop>');
                                     }
                                 });
 
@@ -203,12 +203,12 @@ $generatorXml.beanProperty = function(res, bean, beanPropName, desc, createBeanA
                             break;
 
                         default:
-                            if ($generatorXml.property(res, bean, propName, descr.setterName, descr.dflt))
+                            if ($generatorSpring.property(res, bean, propName, descr.setterName, descr.dflt))
                                 hasData = true;
                     }
                 }
                 else
-                    if ($generatorXml.property(res, bean, propName))
+                    if ($generatorSpring.property(res, bean, propName))
                         hasData = true;
             }
         });
@@ -241,7 +241,7 @@ $generatorXml.beanProperty = function(res, bean, beanPropName, desc, createBeanA
  * @param obj Object to take bean class name.
  * @param propName Property name.
  */
-$generatorXml.simpleBeanProperty = function(res, obj, propName) {
+$generatorSpring.simpleBeanProperty = function(res, obj, propName) {
     if (!_.isNil(obj)) {
         const val = obj[propName];
 
@@ -256,20 +256,20 @@ $generatorXml.simpleBeanProperty = function(res, obj, propName) {
 };
 
 // Generate eviction policy.
-$generatorXml.evictionPolicy = function(res, evtPlc, propName) {
+$generatorSpring.evictionPolicy = function(res, evtPlc, propName) {
     if (evtPlc && evtPlc.kind) {
-        $generatorXml.beanProperty(res, evtPlc[evtPlc.kind.toUpperCase()], propName,
+        $generatorSpring.beanProperty(res, evtPlc[evtPlc.kind.toUpperCase()], propName,
             $generatorCommon.EVICTION_POLICIES[evtPlc.kind], true);
     }
 };
 
 // Generate discovery.
-$generatorXml.clusterGeneral = function(cluster, res) {
+$generatorSpring.clusterGeneral = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cluster, 'name', 'gridName');
-    $generatorXml.property(res, cluster, 'localHost');
+    $generatorSpring.property(res, cluster, 'name', 'gridName');
+    $generatorSpring.property(res, cluster, 'localHost');
 
     if (cluster.discovery) {
         res.startBlock('<property name="discoverySpi">');
@@ -283,12 +283,12 @@ $generatorXml.clusterGeneral = function(cluster, res) {
                 res.startBlock('<bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder">');
 
                 if (d.Multicast) {
-                    $generatorXml.property(res, d.Multicast, 'multicastGroup');
-                    $generatorXml.property(res, d.Multicast, 'multicastPort');
-                    $generatorXml.property(res, d.Multicast, 'responseWaitTime');
-                    $generatorXml.property(res, d.Multicast, 'addressRequestAttempts');
-                    $generatorXml.property(res, d.Multicast, 'localAddress');
-                    $generatorXml.listProperty(res, d.Multicast, 'addresses');
+                    $generatorSpring.property(res, d.Multicast, 'multicastGroup');
+                    $generatorSpring.property(res, d.Multicast, 'multicastPort');
+                    $generatorSpring.property(res, d.Multicast, 'responseWaitTime');
+                    $generatorSpring.property(res, d.Multicast, 'addressRequestAttempts');
+                    $generatorSpring.property(res, d.Multicast, 'localAddress');
+                    $generatorSpring.listProperty(res, d.Multicast, 'addresses');
                 }
 
                 res.endBlock('</bean>');
@@ -299,7 +299,7 @@ $generatorXml.clusterGeneral = function(cluster, res) {
                 res.startBlock('<bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder">');
 
                 if (d.Vm)
-                    $generatorXml.listProperty(res, d.Vm, 'addresses');
+                    $generatorSpring.listProperty(res, d.Vm, 'addresses');
 
                 res.endBlock('</bean>');
 
@@ -310,7 +310,7 @@ $generatorXml.clusterGeneral = function(cluster, res) {
 
                 if (d.S3) {
                     if (d.S3.bucketName)
-                        res.line('<property name="bucketName" value="' + $generatorXml.escape(d.S3.bucketName) + '"/>');
+                        res.line('<property name="bucketName" value="' + $generatorSpring.escape(d.S3.bucketName) + '"/>');
                 }
 
                 res.endBlock('</bean>');
@@ -321,12 +321,12 @@ $generatorXml.clusterGeneral = function(cluster, res) {
                 res.startBlock('<bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.cloud.TcpDiscoveryCloudIpFinder">');
 
                 if (d.Cloud) {
-                    $generatorXml.property(res, d.Cloud, 'credential');
-                    $generatorXml.property(res, d.Cloud, 'credentialPath');
-                    $generatorXml.property(res, d.Cloud, 'identity');
-                    $generatorXml.property(res, d.Cloud, 'provider');
-                    $generatorXml.listProperty(res, d.Cloud, 'regions');
-                    $generatorXml.listProperty(res, d.Cloud, 'zones');
+                    $generatorSpring.property(res, d.Cloud, 'credential');
+                    $generatorSpring.property(res, d.Cloud, 'credentialPath');
+                    $generatorSpring.property(res, d.Cloud, 'identity');
+                    $generatorSpring.property(res, d.Cloud, 'provider');
+                    $generatorSpring.listProperty(res, d.Cloud, 'regions');
+                    $generatorSpring.listProperty(res, d.Cloud, 'zones');
                 }
 
                 res.endBlock('</bean>');
@@ -337,10 +337,10 @@ $generatorXml.clusterGeneral = function(cluster, res) {
                 res.startBlock('<bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.gce.TcpDiscoveryGoogleStorageIpFinder">');
 
                 if (d.GoogleStorage) {
-                    $generatorXml.property(res, d.GoogleStorage, 'projectName');
-                    $generatorXml.property(res, d.GoogleStorage, 'bucketName');
-                    $generatorXml.property(res, d.GoogleStorage, 'serviceAccountP12FilePath');
-                    $generatorXml.property(res, d.GoogleStorage, 'serviceAccountId');
+                    $generatorSpring.property(res, d.GoogleStorage, 'projectName');
+                    $generatorSpring.property(res, d.GoogleStorage, 'bucketName');
+                    $generatorSpring.property(res, d.GoogleStorage, 'serviceAccountP12FilePath');
+                    $generatorSpring.property(res, d.GoogleStorage, 'serviceAccountId');
                 }
 
                 res.endBlock('</bean>');
@@ -361,7 +361,7 @@ $generatorXml.clusterGeneral = function(cluster, res) {
                 res.startBlock('<bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.sharedfs.TcpDiscoverySharedFsIpFinder">');
 
                 if (d.SharedFs)
-                    $generatorXml.property(res, d.SharedFs, 'path');
+                    $generatorSpring.property(res, d.SharedFs, 'path');
 
                 res.endBlock('</bean>');
 
@@ -377,7 +377,7 @@ $generatorXml.clusterGeneral = function(cluster, res) {
                         res.endBlock('</property>');
                     }
 
-                    $generatorXml.property(res, d.ZooKeeper, 'zkConnectionString');
+                    $generatorSpring.property(res, d.ZooKeeper, 'zkConnectionString');
 
                     if (d.ZooKeeper.retryPolicy && d.ZooKeeper.retryPolicy.kind) {
                         const kind = d.ZooKeeper.retryPolicy.kind;
@@ -390,48 +390,48 @@ $generatorXml.clusterGeneral = function(cluster, res) {
                         switch (kind) {
                             case 'ExponentialBackoff':
                                 res.startBlock('<bean class="org.apache.curator.retry.ExponentialBackoffRetry">');
-                                $generatorXml.constructorArg(res, 0, retryPolicy, 'baseSleepTimeMs', 1000);
-                                $generatorXml.constructorArg(res, 1, retryPolicy, 'maxRetries', 10);
-                                $generatorXml.constructorArg(res, 2, retryPolicy, 'maxSleepMs', null, true);
+                                $generatorSpring.constructorArg(res, 0, retryPolicy, 'baseSleepTimeMs', 1000);
+                                $generatorSpring.constructorArg(res, 1, retryPolicy, 'maxRetries', 10);
+                                $generatorSpring.constructorArg(res, 2, retryPolicy, 'maxSleepMs', null, true);
                                 res.endBlock('</bean>');
 
                                 break;
 
                             case 'BoundedExponentialBackoff':
                                 res.startBlock('<bean class="org.apache.curator.retry.BoundedExponentialBackoffRetry">');
-                                $generatorXml.constructorArg(res, 0, retryPolicy, 'baseSleepTimeMs', 1000);
-                                $generatorXml.constructorArg(res, 1, retryPolicy, 'maxSleepTimeMs', 2147483647);
-                                $generatorXml.constructorArg(res, 2, retryPolicy, 'maxRetries', 10);
+                                $generatorSpring.constructorArg(res, 0, retryPolicy, 'baseSleepTimeMs', 1000);
+                                $generatorSpring.constructorArg(res, 1, retryPolicy, 'maxSleepTimeMs', 2147483647);
+                                $generatorSpring.constructorArg(res, 2, retryPolicy, 'maxRetries', 10);
                                 res.endBlock('</bean>');
 
                                 break;
 
                             case 'UntilElapsed':
                                 res.startBlock('<bean class="org.apache.curator.retry.RetryUntilElapsed">');
-                                $generatorXml.constructorArg(res, 0, retryPolicy, 'maxElapsedTimeMs', 60000);
-                                $generatorXml.constructorArg(res, 1, retryPolicy, 'sleepMsBetweenRetries', 1000);
+                                $generatorSpring.constructorArg(res, 0, retryPolicy, 'maxElapsedTimeMs', 60000);
+                                $generatorSpring.constructorArg(res, 1, retryPolicy, 'sleepMsBetweenRetries', 1000);
                                 res.endBlock('</bean>');
 
                                 break;
 
                             case 'NTimes':
                                 res.startBlock('<bean class="org.apache.curator.retry.RetryNTimes">');
-                                $generatorXml.constructorArg(res, 0, retryPolicy, 'n', 10);
-                                $generatorXml.constructorArg(res, 1, retryPolicy, 'sleepMsBetweenRetries', 1000);
+                                $generatorSpring.constructorArg(res, 0, retryPolicy, 'n', 10);
+                                $generatorSpring.constructorArg(res, 1, retryPolicy, 'sleepMsBetweenRetries', 1000);
                                 res.endBlock('</bean>');
 
                                 break;
 
                             case 'OneTime':
                                 res.startBlock('<bean class="org.apache.curator.retry.RetryOneTime">');
-                                $generatorXml.constructorArg(res, 0, retryPolicy, 'sleepMsBetweenRetry', 1000);
+                                $generatorSpring.constructorArg(res, 0, retryPolicy, 'sleepMsBetweenRetry', 1000);
                                 res.endBlock('</bean>');
 
                                 break;
 
                             case 'Forever':
                                 res.startBlock('<bean class="org.apache.curator.retry.RetryForever">');
-                                $generatorXml.constructorArg(res, 0, retryPolicy, 'retryIntervalMs', 1000);
+                                $generatorSpring.constructorArg(res, 0, retryPolicy, 'retryIntervalMs', 1000);
                                 res.endBlock('</bean>');
 
                                 break;
@@ -449,9 +449,9 @@ $generatorXml.clusterGeneral = function(cluster, res) {
                             res.endBlock('</property>');
                     }
 
-                    $generatorXml.property(res, d.ZooKeeper, 'basePath', null, '/services');
-                    $generatorXml.property(res, d.ZooKeeper, 'serviceName', null, 'ignite');
-                    $generatorXml.property(res, d.ZooKeeper, 'allowDuplicateRegistrations', null, false);
+                    $generatorSpring.property(res, d.ZooKeeper, 'basePath', null, '/services');
+                    $generatorSpring.property(res, d.ZooKeeper, 'serviceName', null, 'ignite');
+                    $generatorSpring.property(res, d.ZooKeeper, 'allowDuplicateRegistrations', null, false);
                 }
 
                 res.endBlock('</bean>');
@@ -464,7 +464,7 @@ $generatorXml.clusterGeneral = function(cluster, res) {
 
         res.endBlock('</property>');
 
-        $generatorXml.clusterDiscovery(d, res);
+        $generatorSpring.clusterDiscovery(d, res);
 
         res.endBlock('</bean>');
         res.endBlock('</property>');
@@ -476,7 +476,7 @@ $generatorXml.clusterGeneral = function(cluster, res) {
 };
 
 // Generate atomics group.
-$generatorXml.clusterAtomics = function(atomics, res) {
+$generatorSpring.clusterAtomics = function(atomics, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -492,12 +492,12 @@ $generatorXml.clusterAtomics = function(atomics, res) {
 
         let hasData = cacheMode !== 'PARTITIONED';
 
-        $generatorXml.property(res, atomics, 'cacheMode', null, 'PARTITIONED');
+        $generatorSpring.property(res, atomics, 'cacheMode', null, 'PARTITIONED');
 
-        hasData = $generatorXml.property(res, atomics, 'atomicSequenceReserveSize', null, 1000) || hasData;
+        hasData = $generatorSpring.property(res, atomics, 'atomicSequenceReserveSize', null, 1000) || hasData;
 
         if (cacheMode === 'PARTITIONED')
-            hasData = $generatorXml.property(res, atomics, 'backups', null, 0) || hasData;
+            hasData = $generatorSpring.property(res, atomics, 'backups', null, 0) || hasData;
 
         res.endBlock('</bean>');
         res.endBlock('</property>');
@@ -512,7 +512,7 @@ $generatorXml.clusterAtomics = function(atomics, res) {
 };
 
 // Generate binary group.
-$generatorXml.clusterBinary = function(binary, res) {
+$generatorSpring.clusterBinary = function(binary, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -520,9 +520,9 @@ $generatorXml.clusterBinary = function(binary, res) {
         res.startBlock('<property name="binaryConfiguration">');
         res.startBlock('<bean class="org.apache.ignite.configuration.BinaryConfiguration">');
 
-        $generatorXml.simpleBeanProperty(res, binary, 'idMapper');
-        $generatorXml.simpleBeanProperty(res, binary, 'nameMapper');
-        $generatorXml.simpleBeanProperty(res, binary, 'serializer');
+        $generatorSpring.simpleBeanProperty(res, binary, 'idMapper');
+        $generatorSpring.simpleBeanProperty(res, binary, 'nameMapper');
+        $generatorSpring.simpleBeanProperty(res, binary, 'serializer');
 
         if ($generatorCommon.isDefinedAndNotEmpty(binary.typeConfigurations)) {
             res.startBlock('<property name="typeConfigurations">');
@@ -531,11 +531,11 @@ $generatorXml.clusterBinary = function(binary, res) {
             _.forEach(binary.typeConfigurations, function(type) {
                 res.startBlock('<bean class="org.apache.ignite.binary.BinaryTypeConfiguration">');
 
-                $generatorXml.property(res, type, 'typeName');
-                $generatorXml.simpleBeanProperty(res, type, 'idMapper');
-                $generatorXml.simpleBeanProperty(res, type, 'nameMapper');
-                $generatorXml.simpleBeanProperty(res, type, 'serializer');
-                $generatorXml.property(res, type, 'enum', null, false);
+                $generatorSpring.property(res, type, 'typeName');
+                $generatorSpring.simpleBeanProperty(res, type, 'idMapper');
+                $generatorSpring.simpleBeanProperty(res, type, 'nameMapper');
+                $generatorSpring.simpleBeanProperty(res, type, 'serializer');
+                $generatorSpring.property(res, type, 'enum', null, false);
 
                 res.endBlock('</bean>');
             });
@@ -544,7 +544,7 @@ $generatorXml.clusterBinary = function(binary, res) {
             res.endBlock('</property>');
         }
 
-        $generatorXml.property(res, binary, 'compactFooter', null, true);
+        $generatorSpring.property(res, binary, 'compactFooter', null, true);
 
         res.endBlock('</bean>');
         res.endBlock('</property>');
@@ -556,7 +556,7 @@ $generatorXml.clusterBinary = function(binary, res) {
 };
 
 // Generate collision group.
-$generatorXml.clusterCollision = function(collision, res) {
+$generatorSpring.clusterCollision = function(collision, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -569,11 +569,11 @@ $generatorXml.clusterCollision = function(collision, res) {
             switch (collision.kind) {
                 case 'JobStealing':
                     res.startBlock('<bean class="org.apache.ignite.spi.collision.jobstealing.JobStealingCollisionSpi">');
-                    $generatorXml.property(res, spi, 'activeJobsThreshold', null, 95);
-                    $generatorXml.property(res, spi, 'waitJobsThreshold', null, 0);
-                    $generatorXml.property(res, spi, 'messageExpireTime', null, 1000);
-                    $generatorXml.property(res, spi, 'maximumStealingAttempts', null, 5);
-                    $generatorXml.property(res, spi, 'stealingEnabled', null, true);
+                    $generatorSpring.property(res, spi, 'activeJobsThreshold', null, 95);
+                    $generatorSpring.property(res, spi, 'waitJobsThreshold', null, 0);
+                    $generatorSpring.property(res, spi, 'messageExpireTime', null, 1000);
+                    $generatorSpring.property(res, spi, 'maximumStealingAttempts', null, 5);
+                    $generatorSpring.property(res, spi, 'stealingEnabled', null, true);
 
                     if ($generatorCommon.isDefinedAndNotEmpty(spi.externalCollisionListener)) {
                         res.needEmptyLine = true;
@@ -590,7 +590,7 @@ $generatorXml.clusterCollision = function(collision, res) {
                         res.startBlock('<map>');
 
                         _.forEach(spi.stealingAttributes, function(attr) {
-                            $generatorXml.element(res, 'entry', 'key', attr.name, 'value', attr.value);
+                            $generatorSpring.element(res, 'entry', 'key', attr.name, 'value', attr.value);
                         });
 
                         res.endBlock('</map>');
@@ -603,21 +603,21 @@ $generatorXml.clusterCollision = function(collision, res) {
 
                 case 'FifoQueue':
                     res.startBlock('<bean class="org.apache.ignite.spi.collision.fifoqueue.FifoQueueCollisionSpi">');
-                    $generatorXml.property(res, spi, 'parallelJobsNumber');
-                    $generatorXml.property(res, spi, 'waitingJobsNumber');
+                    $generatorSpring.property(res, spi, 'parallelJobsNumber');
+                    $generatorSpring.property(res, spi, 'waitingJobsNumber');
                     res.endBlock('</bean>');
 
                     break;
 
                 case 'PriorityQueue':
                     res.startBlock('<bean class="org.apache.ignite.spi.collision.priorityqueue.PriorityQueueCollisionSpi">');
-                    $generatorXml.property(res, spi, 'parallelJobsNumber');
-                    $generatorXml.property(res, spi, 'waitingJobsNumber');
-                    $generatorXml.property(res, spi, 'priorityAttributeKey', null, 'grid.task.priority');
-                    $generatorXml.property(res, spi, 'jobPriorityAttributeKey', null, 'grid.job.priority');
-                    $generatorXml.property(res, spi, 'defaultPriority', null, 0);
-                    $generatorXml.property(res, spi, 'starvationIncrement', null, 1);
-                    $generatorXml.property(res, spi, 'starvationPreventionEnabled', null, true);
+                    $generatorSpring.property(res, spi, 'parallelJobsNumber');
+                    $generatorSpring.property(res, spi, 'waitingJobsNumber');
+                    $generatorSpring.property(res, spi, 'priorityAttributeKey', null, 'grid.task.priority');
+                    $generatorSpring.property(res, spi, 'jobPriorityAttributeKey', null, 'grid.job.priority');
+                    $generatorSpring.property(res, spi, 'defaultPriority', null, 0);
+                    $generatorSpring.property(res, spi, 'starvationIncrement', null, 1);
+                    $generatorSpring.property(res, spi, 'starvationPreventionEnabled', null, true);
                     res.endBlock('</bean>');
 
                     break;
@@ -638,18 +638,18 @@ $generatorXml.clusterCollision = function(collision, res) {
 };
 
 // Generate communication group.
-$generatorXml.clusterCommunication = function(cluster, res) {
+$generatorSpring.clusterCommunication = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.beanProperty(res, cluster.communication, 'communicationSpi', $generatorCommon.COMMUNICATION_CONFIGURATION);
+    $generatorSpring.beanProperty(res, cluster.communication, 'communicationSpi', $generatorCommon.COMMUNICATION_CONFIGURATION);
 
-    $generatorXml.property(res, cluster, 'networkTimeout', null, 5000);
-    $generatorXml.property(res, cluster, 'networkSendRetryDelay', null, 1000);
-    $generatorXml.property(res, cluster, 'networkSendRetryCount', null, 3);
-    $generatorXml.property(res, cluster, 'segmentCheckFrequency');
-    $generatorXml.property(res, cluster, 'waitForSegmentOnStart', null, false);
-    $generatorXml.property(res, cluster, 'discoveryStartupDelay', null, 60000);
+    $generatorSpring.property(res, cluster, 'networkTimeout', null, 5000);
+    $generatorSpring.property(res, cluster, 'networkSendRetryDelay', null, 1000);
+    $generatorSpring.property(res, cluster, 'networkSendRetryCount', null, 3);
+    $generatorSpring.property(res, cluster, 'segmentCheckFrequency');
+    $generatorSpring.property(res, cluster, 'waitForSegmentOnStart', null, false);
+    $generatorSpring.property(res, cluster, 'discoveryStartupDelay', null, 60000);
 
     res.needEmptyLine = true;
 
@@ -663,7 +663,7 @@ $generatorXml.clusterCommunication = function(cluster, res) {
  * @param res Optional configuration presentation builder object.
  * @returns Configuration presentation builder object
  */
-$generatorXml.clusterConnector = function(connector, res) {
+$generatorSpring.clusterConnector = function(connector, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -675,7 +675,7 @@ $generatorXml.clusterConnector = function(connector, res) {
             cfg.fields.sslFactory = {type: 'bean'};
         }
 
-        $generatorXml.beanProperty(res, connector, 'connectorConfiguration', cfg, true);
+        $generatorSpring.beanProperty(res, connector, 'connectorConfiguration', cfg, true);
 
         res.needEmptyLine = true;
     }
@@ -684,22 +684,22 @@ $generatorXml.clusterConnector = function(connector, res) {
 };
 
 // Generate deployment group.
-$generatorXml.clusterDeployment = function(cluster, res) {
+$generatorSpring.clusterDeployment = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    if ($generatorXml.property(res, cluster, 'deploymentMode', null, 'SHARED'))
+    if ($generatorSpring.property(res, cluster, 'deploymentMode', null, 'SHARED'))
         res.needEmptyLine = true;
 
     const p2pEnabled = cluster.peerClassLoadingEnabled;
 
     if (!_.isNil(p2pEnabled)) {
-        $generatorXml.property(res, cluster, 'peerClassLoadingEnabled', null, false);
+        $generatorSpring.property(res, cluster, 'peerClassLoadingEnabled', null, false);
 
         if (p2pEnabled) {
-            $generatorXml.property(res, cluster, 'peerClassLoadingMissedResourcesCacheSize', null, 100);
-            $generatorXml.property(res, cluster, 'peerClassLoadingThreadPoolSize', null, 2);
-            $generatorXml.listProperty(res, cluster, 'peerClassLoadingLocalClassPathExclude');
+            $generatorSpring.property(res, cluster, 'peerClassLoadingMissedResourcesCacheSize', null, 100);
+            $generatorSpring.property(res, cluster, 'peerClassLoadingThreadPoolSize', null, 2);
+            $generatorSpring.listProperty(res, cluster, 'peerClassLoadingLocalClassPathExclude');
         }
 
         res.needEmptyLine = true;
@@ -709,39 +709,39 @@ $generatorXml.clusterDeployment = function(cluster, res) {
 };
 
 // Generate discovery group.
-$generatorXml.clusterDiscovery = function(disco, res) {
+$generatorSpring.clusterDiscovery = function(disco, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     if (disco) {
-        $generatorXml.property(res, disco, 'localAddress');
-        $generatorXml.property(res, disco, 'localPort', null, 47500);
-        $generatorXml.property(res, disco, 'localPortRange', null, 100);
+        $generatorSpring.property(res, disco, 'localAddress');
+        $generatorSpring.property(res, disco, 'localPort', null, 47500);
+        $generatorSpring.property(res, disco, 'localPortRange', null, 100);
         if ($generatorCommon.isDefinedAndNotEmpty(disco.addressResolver))
-            $generatorXml.beanProperty(res, disco, 'addressResolver', {className: disco.addressResolver}, true);
-        $generatorXml.property(res, disco, 'socketTimeout', null, 5000);
-        $generatorXml.property(res, disco, 'ackTimeout', null, 5000);
-        $generatorXml.property(res, disco, 'maxAckTimeout', null, 600000);
-        $generatorXml.property(res, disco, 'networkTimeout', null, 5000);
-        $generatorXml.property(res, disco, 'joinTimeout', null, 0);
-        $generatorXml.property(res, disco, 'threadPriority', null, 10);
-        $generatorXml.property(res, disco, 'heartbeatFrequency', null, 2000);
-        $generatorXml.property(res, disco, 'maxMissedHeartbeats', null, 1);
-        $generatorXml.property(res, disco, 'maxMissedClientHeartbeats', null, 5);
-        $generatorXml.property(res, disco, 'topHistorySize', null, 1000);
+            $generatorSpring.beanProperty(res, disco, 'addressResolver', {className: disco.addressResolver}, true);
+        $generatorSpring.property(res, disco, 'socketTimeout', null, 5000);
+        $generatorSpring.property(res, disco, 'ackTimeout', null, 5000);
+        $generatorSpring.property(res, disco, 'maxAckTimeout', null, 600000);
+        $generatorSpring.property(res, disco, 'networkTimeout', null, 5000);
+        $generatorSpring.property(res, disco, 'joinTimeout', null, 0);
+        $generatorSpring.property(res, disco, 'threadPriority', null, 10);
+        $generatorSpring.property(res, disco, 'heartbeatFrequency', null, 2000);
+        $generatorSpring.property(res, disco, 'maxMissedHeartbeats', null, 1);
+        $generatorSpring.property(res, disco, 'maxMissedClientHeartbeats', null, 5);
+        $generatorSpring.property(res, disco, 'topHistorySize', null, 1000);
         if ($generatorCommon.isDefinedAndNotEmpty(disco.listener))
-            $generatorXml.beanProperty(res, disco, 'listener', {className: disco.listener}, true);
+            $generatorSpring.beanProperty(res, disco, 'listener', {className: disco.listener}, true);
         if ($generatorCommon.isDefinedAndNotEmpty(disco.dataExchange))
-            $generatorXml.beanProperty(res, disco, 'dataExchange', {className: disco.dataExchange}, true);
+            $generatorSpring.beanProperty(res, disco, 'dataExchange', {className: disco.dataExchange}, true);
         if ($generatorCommon.isDefinedAndNotEmpty(disco.metricsProvider))
-            $generatorXml.beanProperty(res, disco, 'metricsProvider', {className: disco.metricsProvider}, true);
-        $generatorXml.property(res, disco, 'reconnectCount', null, 10);
-        $generatorXml.property(res, disco, 'statisticsPrintFrequency', null, 0);
-        $generatorXml.property(res, disco, 'ipFinderCleanFrequency', null, 60000);
+            $generatorSpring.beanProperty(res, disco, 'metricsProvider', {className: disco.metricsProvider}, true);
+        $generatorSpring.property(res, disco, 'reconnectCount', null, 10);
+        $generatorSpring.property(res, disco, 'statisticsPrintFrequency', null, 0);
+        $generatorSpring.property(res, disco, 'ipFinderCleanFrequency', null, 60000);
         if ($generatorCommon.isDefinedAndNotEmpty(disco.authenticator))
-            $generatorXml.beanProperty(res, disco, 'authenticator', {className: disco.authenticator}, true);
-        $generatorXml.property(res, disco, 'forceServerMode', null, false);
-        $generatorXml.property(res, disco, 'clientReconnectDisabled', null, false);
+            $generatorSpring.beanProperty(res, disco, 'authenticator', {className: disco.authenticator}, true);
+        $generatorSpring.property(res, disco, 'forceServerMode', null, false);
+        $generatorSpring.property(res, disco, 'clientReconnectDisabled', null, false);
 
         res.needEmptyLine = true;
     }
@@ -750,7 +750,7 @@ $generatorXml.clusterDiscovery = function(disco, res) {
 };
 
 // Generate events group.
-$generatorXml.clusterEvents = function(cluster, res) {
+$generatorSpring.clusterEvents = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -794,7 +794,7 @@ $generatorXml.clusterEvents = function(cluster, res) {
 };
 
 // Generate failover group.
-$generatorXml.clusterFailover = function(cluster, res) {
+$generatorSpring.clusterFailover = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -811,7 +811,7 @@ $generatorXml.clusterFailover = function(cluster, res) {
                 if ((spi.kind === 'JobStealing' || spi.kind === 'Always') && $generatorCommon.isDefinedAndNotEmpty(maxAttempts) && maxAttempts !== 5) {
                     res.startBlock('<bean class="' + $generatorCommon.failoverSpiClass(spi) + '">');
 
-                    $generatorXml.property(res, spi[spi.kind], 'maximumFailoverAttempts', null, 5);
+                    $generatorSpring.property(res, spi[spi.kind], 'maximumFailoverAttempts', null, 5);
 
                     res.endBlock('</bean>');
                 }
@@ -832,7 +832,7 @@ $generatorXml.clusterFailover = function(cluster, res) {
 };
 
 // Generate marshaller group.
-$generatorXml.clusterLogger = function(logger, res) {
+$generatorSpring.clusterLogger = function(logger, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -844,8 +844,8 @@ $generatorXml.clusterLogger = function(logger, res) {
         switch (logger.kind) {
             case 'Log4j2':
                 res.startBlock('<bean class="org.apache.ignite.logger.log4j2.Log4J2Logger">');
-                res.line('<constructor-arg value="' + $generatorXml.escape(log.path) + '"/>');
-                $generatorXml.property(res, log, 'level');
+                res.line('<constructor-arg value="' + $generatorSpring.escape(log.path) + '"/>');
+                $generatorSpring.property(res, log, 'level');
                 res.endBlock('</bean>');
 
                 break;
@@ -877,9 +877,9 @@ $generatorXml.clusterLogger = function(logger, res) {
                     res.startBlock('<bean class="org.apache.ignite.logger.log4j.Log4JLogger">');
 
                     if (log.mode === 'Path')
-                        res.line('<constructor-arg value="' + $generatorXml.escape(log.path) + '"/>');
+                        res.line('<constructor-arg value="' + $generatorSpring.escape(log.path) + '"/>');
 
-                    $generatorXml.property(res, log, 'level');
+                    $generatorSpring.property(res, log, 'level');
                     res.endBlock('</bean>');
                 }
 
@@ -902,20 +902,20 @@ $generatorXml.clusterLogger = function(logger, res) {
 };
 
 // Generate marshaller group.
-$generatorXml.clusterMarshaller = function(cluster, res) {
+$generatorSpring.clusterMarshaller = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     const marshaller = cluster.marshaller;
 
     if (marshaller && marshaller.kind)
-        $generatorXml.beanProperty(res, marshaller[marshaller.kind], 'marshaller', $generatorCommon.MARSHALLERS[marshaller.kind], true);
+        $generatorSpring.beanProperty(res, marshaller[marshaller.kind], 'marshaller', $generatorCommon.MARSHALLERS[marshaller.kind], true);
 
     res.softEmptyLine();
 
-    $generatorXml.property(res, cluster, 'marshalLocalJobs', null, false);
-    $generatorXml.property(res, cluster, 'marshallerCacheKeepAliveTime', null, 10000);
-    $generatorXml.property(res, cluster, 'marshallerCacheThreadPoolSize', 'marshallerCachePoolSize');
+    $generatorSpring.property(res, cluster, 'marshalLocalJobs', null, false);
+    $generatorSpring.property(res, cluster, 'marshallerCacheKeepAliveTime', null, 10000);
+    $generatorSpring.property(res, cluster, 'marshallerCacheThreadPoolSize', 'marshallerCachePoolSize');
 
     res.needEmptyLine = true;
 
@@ -923,14 +923,14 @@ $generatorXml.clusterMarshaller = function(cluster, res) {
 };
 
 // Generate metrics group.
-$generatorXml.clusterMetrics = function(cluster, res) {
+$generatorSpring.clusterMetrics = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cluster, 'metricsExpireTime');
-    $generatorXml.property(res, cluster, 'metricsHistorySize', null, 10000);
-    $generatorXml.property(res, cluster, 'metricsLogFrequency', null, 60000);
-    $generatorXml.property(res, cluster, 'metricsUpdateFrequency', null, 2000);
+    $generatorSpring.property(res, cluster, 'metricsExpireTime');
+    $generatorSpring.property(res, cluster, 'metricsHistorySize', null, 10000);
+    $generatorSpring.property(res, cluster, 'metricsLogFrequency', null, 60000);
+    $generatorSpring.property(res, cluster, 'metricsUpdateFrequency', null, 2000);
 
     res.needEmptyLine = true;
 
@@ -938,12 +938,12 @@ $generatorXml.clusterMetrics = function(cluster, res) {
 };
 
 // Generate swap group.
-$generatorXml.clusterSwap = function(cluster, res) {
+$generatorSpring.clusterSwap = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     if (cluster.swapSpaceSpi && cluster.swapSpaceSpi.kind === 'FileSwapSpaceSpi') {
-        $generatorXml.beanProperty(res, cluster.swapSpaceSpi.FileSwapSpaceSpi, 'swapSpaceSpi',
+        $generatorSpring.beanProperty(res, cluster.swapSpaceSpi.FileSwapSpaceSpi, 'swapSpaceSpi',
             $generatorCommon.SWAP_SPACE_SPI, true);
 
         res.needEmptyLine = true;
@@ -953,14 +953,14 @@ $generatorXml.clusterSwap = function(cluster, res) {
 };
 
 // Generate time group.
-$generatorXml.clusterTime = function(cluster, res) {
+$generatorSpring.clusterTime = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cluster, 'clockSyncSamples', null, 8);
-    $generatorXml.property(res, cluster, 'clockSyncFrequency', null, 120000);
-    $generatorXml.property(res, cluster, 'timeServerPortBase', null, 31100);
-    $generatorXml.property(res, cluster, 'timeServerPortRange', null, 100);
+    $generatorSpring.property(res, cluster, 'clockSyncSamples', null, 8);
+    $generatorSpring.property(res, cluster, 'clockSyncFrequency', null, 120000);
+    $generatorSpring.property(res, cluster, 'timeServerPortBase', null, 31100);
+    $generatorSpring.property(res, cluster, 'timeServerPortRange', null, 100);
 
     res.needEmptyLine = true;
 
@@ -968,15 +968,15 @@ $generatorXml.clusterTime = function(cluster, res) {
 };
 
 // Generate thread pools group.
-$generatorXml.clusterPools = function(cluster, res) {
+$generatorSpring.clusterPools = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cluster, 'publicThreadPoolSize');
-    $generatorXml.property(res, cluster, 'systemThreadPoolSize');
-    $generatorXml.property(res, cluster, 'managementThreadPoolSize');
-    $generatorXml.property(res, cluster, 'igfsThreadPoolSize');
-    $generatorXml.property(res, cluster, 'rebalanceThreadPoolSize');
+    $generatorSpring.property(res, cluster, 'publicThreadPoolSize');
+    $generatorSpring.property(res, cluster, 'systemThreadPoolSize');
+    $generatorSpring.property(res, cluster, 'managementThreadPoolSize');
+    $generatorSpring.property(res, cluster, 'igfsThreadPoolSize');
+    $generatorSpring.property(res, cluster, 'rebalanceThreadPoolSize');
 
     res.needEmptyLine = true;
 
@@ -984,11 +984,11 @@ $generatorXml.clusterPools = function(cluster, res) {
 };
 
 // Generate transactions group.
-$generatorXml.clusterTransactions = function(transactionConfiguration, res) {
+$generatorSpring.clusterTransactions = function(transactionConfiguration, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.beanProperty(res, transactionConfiguration, 'transactionConfiguration', $generatorCommon.TRANSACTION_CONFIGURATION, false);
+    $generatorSpring.beanProperty(res, transactionConfiguration, 'transactionConfiguration', $generatorCommon.TRANSACTION_CONFIGURATION, false);
 
     res.needEmptyLine = true;
 
@@ -996,7 +996,7 @@ $generatorXml.clusterTransactions = function(transactionConfiguration, res) {
 };
 
 // Generate user attributes group.
-$generatorXml.clusterUserAttributes = function(cluster, res) {
+$generatorSpring.clusterUserAttributes = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1005,7 +1005,7 @@ $generatorXml.clusterUserAttributes = function(cluster, res) {
         res.startBlock('<map>');
 
         _.forEach(cluster.attributes, function(attr) {
-            $generatorXml.element(res, 'entry', 'key', attr.name, 'value', attr.value);
+            $generatorSpring.element(res, 'entry', 'key', attr.name, 'value', attr.value);
         });
 
         res.endBlock('</map>');
@@ -1024,7 +1024,7 @@ $generatorXml.clusterUserAttributes = function(cluster, res) {
  * @param res Optional configuration presentation builder object.
  * @returns Configuration presentation builder object
  */
-$generatorXml.clusterSsl = function(cluster, res) {
+$generatorSpring.clusterSsl = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1044,7 +1044,7 @@ $generatorXml.clusterSsl = function(cluster, res) {
             $generatorCommon.SSL_CONFIGURATION_TRUST_MANAGER_FACTORY :
             $generatorCommon.SSL_CONFIGURATION_TRUST_FILE_FACTORY;
 
-        $generatorXml.beanProperty(res, sslFactory, 'sslContextFactory', propsDesc, true);
+        $generatorSpring.beanProperty(res, sslFactory, 'sslContextFactory', propsDesc, true);
 
         res.needEmptyLine = true;
     }
@@ -1053,22 +1053,22 @@ $generatorXml.clusterSsl = function(cluster, res) {
 };
 
 // Generate cache general group.
-$generatorXml.cacheGeneral = function(cache, res) {
+$generatorSpring.cacheGeneral = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cache, 'name');
+    $generatorSpring.property(res, cache, 'name');
 
-    $generatorXml.property(res, cache, 'cacheMode');
-    $generatorXml.property(res, cache, 'atomicityMode');
+    $generatorSpring.property(res, cache, 'cacheMode');
+    $generatorSpring.property(res, cache, 'atomicityMode');
 
-    if (cache.cacheMode === 'PARTITIONED' && $generatorXml.property(res, cache, 'backups'))
-        $generatorXml.property(res, cache, 'readFromBackup');
+    if (cache.cacheMode === 'PARTITIONED' && $generatorSpring.property(res, cache, 'backups'))
+        $generatorSpring.property(res, cache, 'readFromBackup');
 
-    $generatorXml.property(res, cache, 'copyOnRead');
+    $generatorSpring.property(res, cache, 'copyOnRead');
 
     if (cache.cacheMode === 'PARTITIONED' && cache.atomicityMode === 'TRANSACTIONAL')
-        $generatorXml.property(res, cache, 'invalidate');
+        $generatorSpring.property(res, cache, 'invalidate');
 
     res.needEmptyLine = true;
 
@@ -1076,21 +1076,21 @@ $generatorXml.cacheGeneral = function(cache, res) {
 };
 
 // Generate cache memory group.
-$generatorXml.cacheMemory = function(cache, res) {
+$generatorSpring.cacheMemory = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cache, 'memoryMode', null, 'ONHEAP_TIERED');
-    $generatorXml.property(res, cache, 'offHeapMaxMemory', null, -1);
+    $generatorSpring.property(res, cache, 'memoryMode', null, 'ONHEAP_TIERED');
+    $generatorSpring.property(res, cache, 'offHeapMaxMemory', null, -1);
 
     res.softEmptyLine();
 
-    $generatorXml.evictionPolicy(res, cache.evictionPolicy, 'evictionPolicy');
+    $generatorSpring.evictionPolicy(res, cache.evictionPolicy, 'evictionPolicy');
 
     res.softEmptyLine();
 
-    $generatorXml.property(res, cache, 'startSize', null, 1500000);
-    $generatorXml.property(res, cache, 'swapEnabled', null, false);
+    $generatorSpring.property(res, cache, 'startSize', null, 1500000);
+    $generatorSpring.property(res, cache, 'swapEnabled', null, false);
 
     res.needEmptyLine = true;
 
@@ -1098,13 +1098,13 @@ $generatorXml.cacheMemory = function(cache, res) {
 };
 
 // Generate cache query & indexing group.
-$generatorXml.cacheQuery = function(cache, res) {
+$generatorSpring.cacheQuery = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cache, 'sqlSchema');
-    $generatorXml.property(res, cache, 'sqlOnheapRowCacheSize', null, 10240);
-    $generatorXml.property(res, cache, 'longQueryWarningTimeout', null, 3000);
+    $generatorSpring.property(res, cache, 'sqlSchema');
+    $generatorSpring.property(res, cache, 'sqlOnheapRowCacheSize', null, 10240);
+    $generatorSpring.property(res, cache, 'longQueryWarningTimeout', null, 3000);
 
     const indexedTypes = _.filter(cache.domains, (domain) => domain.queryMetadata === 'Annotations');
 
@@ -1123,12 +1123,12 @@ $generatorXml.cacheQuery = function(cache, res) {
 
     res.softEmptyLine();
 
-    $generatorXml.listProperty(res, cache, 'sqlFunctionClasses');
+    $generatorSpring.listProperty(res, cache, 'sqlFunctionClasses');
 
     res.softEmptyLine();
 
-    $generatorXml.property(res, cache, 'snapshotableIndex', null, false);
-    $generatorXml.property(res, cache, 'sqlEscapeAll', null, false);
+    $generatorSpring.property(res, cache, 'snapshotableIndex', null, false);
+    $generatorSpring.property(res, cache, 'sqlEscapeAll', null, false);
 
     res.needEmptyLine = true;
 
@@ -1136,7 +1136,7 @@ $generatorXml.cacheQuery = function(cache, res) {
 };
 
 // Generate cache store group.
-$generatorXml.cacheStore = function(cache, domains, res) {
+$generatorSpring.cacheStore = function(cache, domains, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1150,7 +1150,7 @@ $generatorXml.cacheStore = function(cache, domains, res) {
                 res.startBlock('<property name="cacheStoreFactory">');
                 res.startBlock('<bean class="org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory">');
 
-                $generatorXml.property(res, storeFactory, 'dataSourceBean');
+                $generatorSpring.property(res, storeFactory, 'dataSourceBean');
 
                 res.startBlock('<property name="dialect">');
                 res.line('<bean class="' + $generatorCommon.jdbcDialectClassName(storeFactory.dialect) + '"/>');
@@ -1167,12 +1167,12 @@ $generatorXml.cacheStore = function(cache, domains, res) {
                     _.forEach(domainConfigs, function(domain) {
                         res.startBlock('<bean class="org.apache.ignite.cache.store.jdbc.JdbcType">');
 
-                        $generatorXml.property(res, cache, 'name', 'cacheName');
+                        $generatorSpring.property(res, cache, 'name', 'cacheName');
 
-                        $generatorXml.classNameProperty(res, domain, 'keyType');
-                        $generatorXml.property(res, domain, 'valueType');
+                        $generatorSpring.classNameProperty(res, domain, 'keyType');
+                        $generatorSpring.property(res, domain, 'valueType');
 
-                        $generatorXml.domainStore(domain, res);
+                        $generatorSpring.domainStore(domain, res);
 
                         res.endBlock('</bean>');
                     });
@@ -1189,25 +1189,25 @@ $generatorXml.cacheStore = function(cache, domains, res) {
                 res.startBlock('<bean class="org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory">');
 
                 if (storeFactory.connectVia === 'DataSource')
-                    $generatorXml.property(res, storeFactory, 'dataSourceBean');
+                    $generatorSpring.property(res, storeFactory, 'dataSourceBean');
                 else {
-                    $generatorXml.property(res, storeFactory, 'connectionUrl');
-                    $generatorXml.property(res, storeFactory, 'user');
+                    $generatorSpring.property(res, storeFactory, 'connectionUrl');
+                    $generatorSpring.property(res, storeFactory, 'user');
                     res.line('<property name="password" value="${ds.' + storeFactory.user + '.password}"/>');
                 }
 
-                $generatorXml.property(res, storeFactory, 'initSchema');
-                $generatorXml.property(res, storeFactory, 'createTableQuery');
-                $generatorXml.property(res, storeFactory, 'loadQuery');
-                $generatorXml.property(res, storeFactory, 'insertQuery');
-                $generatorXml.property(res, storeFactory, 'updateQuery');
-                $generatorXml.property(res, storeFactory, 'deleteQuery');
+                $generatorSpring.property(res, storeFactory, 'initSchema');
+                $generatorSpring.property(res, storeFactory, 'createTableQuery');
+                $generatorSpring.property(res, storeFactory, 'loadQuery');
+                $generatorSpring.property(res, storeFactory, 'insertQuery');
+                $generatorSpring.property(res, storeFactory, 'updateQuery');
+                $generatorSpring.property(res, storeFactory, 'deleteQuery');
 
                 res.endBlock('</bean>');
                 res.endBlock('</property>');
             }
             else
-                $generatorXml.beanProperty(res, storeFactory, 'cacheStoreFactory', $generatorCommon.STORE_FACTORIES[factoryKind], true);
+                $generatorSpring.beanProperty(res, storeFactory, 'cacheStoreFactory', $generatorCommon.STORE_FACTORIES[factoryKind], true);
 
             if (storeFactory.dataSourceBean && (storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect)) {
                 if (_.findIndex(res.datasources, (ds) => ds.dataSourceBean === storeFactory.dataSourceBean) < 0) {
@@ -1223,19 +1223,19 @@ $generatorXml.cacheStore = function(cache, domains, res) {
 
     res.softEmptyLine();
 
-    $generatorXml.property(res, cache, 'storeKeepBinary', null, false);
-    $generatorXml.property(res, cache, 'loadPreviousValue', null, false);
-    $generatorXml.property(res, cache, 'readThrough', null, false);
-    $generatorXml.property(res, cache, 'writeThrough', null, false);
+    $generatorSpring.property(res, cache, 'storeKeepBinary', null, false);
+    $generatorSpring.property(res, cache, 'loadPreviousValue', null, false);
+    $generatorSpring.property(res, cache, 'readThrough', null, false);
+    $generatorSpring.property(res, cache, 'writeThrough', null, false);
 
     res.softEmptyLine();
 
     if (cache.writeBehindEnabled) {
-        $generatorXml.property(res, cache, 'writeBehindEnabled', null, false);
-        $generatorXml.property(res, cache, 'writeBehindBatchSize', null, 512);
-        $generatorXml.property(res, cache, 'writeBehindFlushSize', null, 10240);
-        $generatorXml.property(res, cache, 'writeBehindFlushFrequency', null, 5000);
-        $generatorXml.property(res, cache, 'writeBehindFlushThreadCount', null, 1);
+        $generatorSpring.property(res, cache, 'writeBehindEnabled', null, false);
+        $generatorSpring.property(res, cache, 'writeBehindBatchSize', null, 512);
+        $generatorSpring.property(res, cache, 'writeBehindFlushSize', null, 10240);
+        $generatorSpring.property(res, cache, 'writeBehindFlushFrequency', null, 5000);
+        $generatorSpring.property(res, cache, 'writeBehindFlushThreadCount', null, 1);
     }
 
     res.needEmptyLine = true;
@@ -1244,14 +1244,14 @@ $generatorXml.cacheStore = function(cache, domains, res) {
 };
 
 // Generate cache concurrency group.
-$generatorXml.cacheConcurrency = function(cache, res) {
+$generatorSpring.cacheConcurrency = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cache, 'maxConcurrentAsyncOperations', null, 500);
-    $generatorXml.property(res, cache, 'defaultLockTimeout', null, 0);
-    $generatorXml.property(res, cache, 'atomicWriteOrderMode');
-    $generatorXml.property(res, cache, 'writeSynchronizationMode', null, 'PRIMARY_SYNC');
+    $generatorSpring.property(res, cache, 'maxConcurrentAsyncOperations', null, 500);
+    $generatorSpring.property(res, cache, 'defaultLockTimeout', null, 0);
+    $generatorSpring.property(res, cache, 'atomicWriteOrderMode');
+    $generatorSpring.property(res, cache, 'writeSynchronizationMode', null, 'PRIMARY_SYNC');
 
     res.needEmptyLine = true;
 
@@ -1259,19 +1259,19 @@ $generatorXml.cacheConcurrency = function(cache, res) {
 };
 
 // Generate cache rebalance group.
-$generatorXml.cacheRebalance = function(cache, res) {
+$generatorSpring.cacheRebalance = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     if (cache.cacheMode !== 'LOCAL') {
-        $generatorXml.property(res, cache, 'rebalanceMode', null, 'ASYNC');
-        $generatorXml.property(res, cache, 'rebalanceThreadPoolSize', null, 1);
-        $generatorXml.property(res, cache, 'rebalanceBatchSize', null, 524288);
-        $generatorXml.property(res, cache, 'rebalanceBatchesPrefetchCount', null, 2);
-        $generatorXml.property(res, cache, 'rebalanceOrder', null, 0);
-        $generatorXml.property(res, cache, 'rebalanceDelay', null, 0);
-        $generatorXml.property(res, cache, 'rebalanceTimeout', null, 10000);
-        $generatorXml.property(res, cache, 'rebalanceThrottle', null, 0);
+        $generatorSpring.property(res, cache, 'rebalanceMode', null, 'ASYNC');
+        $generatorSpring.property(res, cache, 'rebalanceThreadPoolSize', null, 1);
+        $generatorSpring.property(res, cache, 'rebalanceBatchSize', null, 524288);
+        $generatorSpring.property(res, cache, 'rebalanceBatchesPrefetchCount', null, 2);
+        $generatorSpring.property(res, cache, 'rebalanceOrder', null, 0);
+        $generatorSpring.property(res, cache, 'rebalanceDelay', null, 0);
+        $generatorSpring.property(res, cache, 'rebalanceTimeout', null, 10000);
+        $generatorSpring.property(res, cache, 'rebalanceThrottle', null, 0);
     }
 
     res.softEmptyLine();
@@ -1279,7 +1279,7 @@ $generatorXml.cacheRebalance = function(cache, res) {
     if (cache.igfsAffinnityGroupSize) {
         res.startBlock('<property name="affinityMapper">');
         res.startBlock('<bean class="org.apache.ignite.igfs.IgfsGroupDataBlocksKeyMapper">');
-        $generatorXml.constructorArg(res, -1, cache, 'igfsAffinnityGroupSize');
+        $generatorSpring.constructorArg(res, -1, cache, 'igfsAffinnityGroupSize');
         res.endBlock('</bean>');
         res.endBlock('</property>');
     }
@@ -1288,7 +1288,7 @@ $generatorXml.cacheRebalance = function(cache, res) {
 };
 
 // Generate cache server near cache group.
-$generatorXml.cacheServerNearCache = function(cache, res) {
+$generatorSpring.cacheServerNearCache = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1300,9 +1300,9 @@ $generatorXml.cacheServerNearCache = function(cache, res) {
 
         if (cache.nearConfiguration) {
             if (cache.nearConfiguration.nearStartSize)
-                $generatorXml.property(res, cache.nearConfiguration, 'nearStartSize', null, 375000);
+                $generatorSpring.property(res, cache.nearConfiguration, 'nearStartSize', null, 375000);
 
-            $generatorXml.evictionPolicy(res, cache.nearConfiguration.nearEvictionPolicy, 'nearEvictionPolicy');
+            $generatorSpring.evictionPolicy(res, cache.nearConfiguration.nearEvictionPolicy, 'nearEvictionPolicy');
         }
 
         res.endBlock('</bean>');
@@ -1315,12 +1315,12 @@ $generatorXml.cacheServerNearCache = function(cache, res) {
 };
 
 // Generate cache statistics group.
-$generatorXml.cacheStatistics = function(cache, res) {
+$generatorSpring.cacheStatistics = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, cache, 'statisticsEnabled', null, false);
-    $generatorXml.property(res, cache, 'managementEnabled', null, false);
+    $generatorSpring.property(res, cache, 'statisticsEnabled', null, false);
+    $generatorSpring.property(res, cache, 'managementEnabled', null, false);
 
     res.needEmptyLine = true;
 
@@ -1328,7 +1328,7 @@ $generatorXml.cacheStatistics = function(cache, res) {
 };
 
 // Generate domain model query fields.
-$generatorXml.domainModelQueryFields = function(res, domain) {
+$generatorSpring.domainModelQueryFields = function(res, domain) {
     const fields = domain.fields;
 
     if (fields && fields.length > 0) {
@@ -1338,7 +1338,7 @@ $generatorXml.domainModelQueryFields = function(res, domain) {
         res.startBlock('<map>');
 
         _.forEach(fields, function(field) {
-            $generatorXml.element(res, 'entry', 'key', field.name, 'value', $generatorCommon.JavaTypes.fullClassName(field.className));
+            $generatorSpring.element(res, 'entry', 'key', field.name, 'value', $generatorCommon.JavaTypes.fullClassName(field.className));
         });
 
         res.endBlock('</map>');
@@ -1349,7 +1349,7 @@ $generatorXml.domainModelQueryFields = function(res, domain) {
 };
 
 // Generate domain model query fields.
-$generatorXml.domainModelQueryAliases = function(res, domain) {
+$generatorSpring.domainModelQueryAliases = function(res, domain) {
     const aliases = domain.aliases;
 
     if (aliases && aliases.length > 0) {
@@ -1359,7 +1359,7 @@ $generatorXml.domainModelQueryAliases = function(res, domain) {
         res.startBlock('<map>');
 
         _.forEach(aliases, function(alias) {
-            $generatorXml.element(res, 'entry', 'key', alias.field, 'value', alias.alias);
+            $generatorSpring.element(res, 'entry', 'key', alias.field, 'value', alias.alias);
         });
 
         res.endBlock('</map>');
@@ -1370,7 +1370,7 @@ $generatorXml.domainModelQueryAliases = function(res, domain) {
 };
 
 // Generate domain model indexes.
-$generatorXml.domainModelQueryIndexes = function(res, domain) {
+$generatorSpring.domainModelQueryIndexes = function(res, domain) {
     const indexes = domain.indexes;
 
     if (indexes && indexes.length > 0) {
@@ -1382,8 +1382,8 @@ $generatorXml.domainModelQueryIndexes = function(res, domain) {
         _.forEach(indexes, function(index) {
             res.startBlock('<bean class="org.apache.ignite.cache.QueryIndex">');
 
-            $generatorXml.property(res, index, 'name');
-            $generatorXml.property(res, index, 'indexType');
+            $generatorSpring.property(res, index, 'name');
+            $generatorSpring.property(res, index, 'indexType');
 
             const fields = index.fields;
 
@@ -1392,7 +1392,7 @@ $generatorXml.domainModelQueryIndexes = function(res, domain) {
                 res.startBlock('<map>');
 
                 _.forEach(fields, function(field) {
-                    $generatorXml.element(res, 'entry', 'key', field.name, 'value', field.direction);
+                    $generatorSpring.element(res, 'entry', 'key', field.name, 'value', field.direction);
                 });
 
                 res.endBlock('</map>');
@@ -1410,7 +1410,7 @@ $generatorXml.domainModelQueryIndexes = function(res, domain) {
 };
 
 // Generate domain model db fields.
-$generatorXml.domainModelDatabaseFields = function(res, domain, fieldProp) {
+$generatorSpring.domainModelDatabaseFields = function(res, domain, fieldProp) {
     const fields = domain[fieldProp];
 
     if (fields && fields.length > 0) {
@@ -1423,15 +1423,15 @@ $generatorXml.domainModelDatabaseFields = function(res, domain, fieldProp) {
         _.forEach(fields, function(field) {
             res.startBlock('<bean class="org.apache.ignite.cache.store.jdbc.JdbcTypeField">');
 
-            $generatorXml.property(res, field, 'databaseFieldName');
+            $generatorSpring.property(res, field, 'databaseFieldName');
 
             res.startBlock('<property name="databaseFieldType">');
             res.line('<util:constant static-field="java.sql.Types.' + field.databaseFieldType + '"/>');
             res.endBlock('</property>');
 
-            $generatorXml.property(res, field, 'javaFieldName');
+            $generatorSpring.property(res, field, 'javaFieldName');
 
-            $generatorXml.classNameProperty(res, field, 'javaFieldType');
+            $generatorSpring.classNameProperty(res, field, 'javaFieldType');
 
             res.endBlock('</bean>');
         });
@@ -1444,7 +1444,7 @@ $generatorXml.domainModelDatabaseFields = function(res, domain, fieldProp) {
 };
 
 // Generate domain model general group.
-$generatorXml.domainModelGeneral = function(domain, res) {
+$generatorSpring.domainModelGeneral = function(domain, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1471,8 +1471,8 @@ $generatorXml.domainModelGeneral = function(domain, res) {
             break;
 
         case 'Configuration':
-            $generatorXml.classNameProperty(res, domain, 'keyType');
-            $generatorXml.property(res, domain, 'valueType');
+            $generatorSpring.classNameProperty(res, domain, 'keyType');
+            $generatorSpring.property(res, domain, 'valueType');
 
             break;
 
@@ -1485,14 +1485,14 @@ $generatorXml.domainModelGeneral = function(domain, res) {
 };
 
 // Generate domain model for query group.
-$generatorXml.domainModelQuery = function(domain, res) {
+$generatorSpring.domainModelQuery = function(domain, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     if ($generatorCommon.domainQueryMetadata(domain) === 'Configuration') {
-        $generatorXml.domainModelQueryFields(res, domain);
-        $generatorXml.domainModelQueryAliases(res, domain);
-        $generatorXml.domainModelQueryIndexes(res, domain);
+        $generatorSpring.domainModelQueryFields(res, domain);
+        $generatorSpring.domainModelQueryAliases(res, domain);
+        $generatorSpring.domainModelQueryIndexes(res, domain);
 
         res.needEmptyLine = true;
     }
@@ -1501,33 +1501,33 @@ $generatorXml.domainModelQuery = function(domain, res) {
 };
 
 // Generate domain model for store group.
-$generatorXml.domainStore = function(domain, res) {
+$generatorSpring.domainStore = function(domain, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, domain, 'databaseSchema');
-    $generatorXml.property(res, domain, 'databaseTable');
+    $generatorSpring.property(res, domain, 'databaseSchema');
+    $generatorSpring.property(res, domain, 'databaseTable');
 
     res.softEmptyLine();
 
-    $generatorXml.domainModelDatabaseFields(res, domain, 'keyFields');
-    $generatorXml.domainModelDatabaseFields(res, domain, 'valueFields');
+    $generatorSpring.domainModelDatabaseFields(res, domain, 'keyFields');
+    $generatorSpring.domainModelDatabaseFields(res, domain, 'valueFields');
 
     res.needEmptyLine = true;
 
     return res;
 };
 
-$generatorXml.cacheQueryMetadata = function(domain, res) {
+$generatorSpring.cacheQueryMetadata = function(domain, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     res.startBlock('<bean class="org.apache.ignite.cache.QueryEntity">');
 
-    $generatorXml.classNameProperty(res, domain, 'keyType');
-    $generatorXml.property(res, domain, 'valueType');
+    $generatorSpring.classNameProperty(res, domain, 'keyType');
+    $generatorSpring.property(res, domain, 'valueType');
 
-    $generatorXml.domainModelQuery(domain, res);
+    $generatorSpring.domainModelQuery(domain, res);
 
     res.endBlock('</bean>');
 
@@ -1537,7 +1537,7 @@ $generatorXml.cacheQueryMetadata = function(domain, res) {
 };
 
 // Generate domain models configs.
-$generatorXml.cacheDomains = function(domains, res) {
+$generatorSpring.cacheDomains = function(domains, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1553,7 +1553,7 @@ $generatorXml.cacheDomains = function(domains, res) {
         res.startBlock('<list>');
 
         _.forEach(domainConfigs, function(domain) {
-            $generatorXml.cacheQueryMetadata(domain, res);
+            $generatorSpring.cacheQueryMetadata(domain, res);
         });
 
         res.endBlock('</list>');
@@ -1564,13 +1564,13 @@ $generatorXml.cacheDomains = function(domains, res) {
 };
 
 // Generate cache configs.
-$generatorXml.cache = function(cache, res) {
+$generatorSpring.cache = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     res.startBlock('<bean class="org.apache.ignite.configuration.CacheConfiguration">');
 
-    $generatorXml.cacheConfiguration(cache, res);
+    $generatorSpring.cacheConfiguration(cache, res);
 
     res.endBlock('</bean>');
 
@@ -1578,25 +1578,25 @@ $generatorXml.cache = function(cache, res) {
 };
 
 // Generate cache configs.
-$generatorXml.cacheConfiguration = function(cache, res) {
+$generatorSpring.cacheConfiguration = function(cache, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.cacheGeneral(cache, res);
-    $generatorXml.cacheMemory(cache, res);
-    $generatorXml.cacheQuery(cache, res);
-    $generatorXml.cacheStore(cache, cache.domains, res);
-    $generatorXml.cacheConcurrency(cache, res);
-    $generatorXml.cacheRebalance(cache, res);
-    $generatorXml.cacheServerNearCache(cache, res);
-    $generatorXml.cacheStatistics(cache, res);
-    $generatorXml.cacheDomains(cache.domains, res);
+    $generatorSpring.cacheGeneral(cache, res);
+    $generatorSpring.cacheMemory(cache, res);
+    $generatorSpring.cacheQuery(cache, res);
+    $generatorSpring.cacheStore(cache, cache.domains, res);
+    $generatorSpring.cacheConcurrency(cache, res);
+    $generatorSpring.cacheRebalance(cache, res);
+    $generatorSpring.cacheServerNearCache(cache, res);
+    $generatorSpring.cacheStatistics(cache, res);
+    $generatorSpring.cacheDomains(cache.domains, res);
 
     return res;
 };
 
 // Generate caches configs.
-$generatorXml.clusterCaches = function(caches, igfss, isSrvCfg, res) {
+$generatorSpring.clusterCaches = function(caches, igfss, isSrvCfg, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1607,18 +1607,18 @@ $generatorXml.clusterCaches = function(caches, igfss, isSrvCfg, res) {
         res.startBlock('<list>');
 
         _.forEach(caches, function(cache) {
-            $generatorXml.cache(cache, res);
+            $generatorSpring.cache(cache, res);
 
             res.needEmptyLine = true;
         });
 
         if (isSrvCfg) {
             _.forEach(igfss, (igfs) => {
-                $generatorXml.cache($generatorCommon.igfsDataCache(igfs), res);
+                $generatorSpring.cache($generatorCommon.igfsDataCache(igfs), res);
 
                 res.needEmptyLine = true;
 
-                $generatorXml.cache($generatorCommon.igfsMetaCache(igfs), res);
+                $generatorSpring.cache($generatorCommon.igfsMetaCache(igfs), res);
 
                 res.needEmptyLine = true;
             });
@@ -1634,7 +1634,7 @@ $generatorXml.clusterCaches = function(caches, igfss, isSrvCfg, res) {
 };
 
 // Generate IGFSs configs.
-$generatorXml.igfss = function(igfss, res) {
+$generatorSpring.igfss = function(igfss, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1647,12 +1647,12 @@ $generatorXml.igfss = function(igfss, res) {
         _.forEach(igfss, function(igfs) {
             res.startBlock('<bean class="org.apache.ignite.configuration.FileSystemConfiguration">');
 
-            $generatorXml.igfsGeneral(igfs, res);
-            $generatorXml.igfsIPC(igfs, res);
-            $generatorXml.igfsFragmentizer(igfs, res);
-            $generatorXml.igfsDualMode(igfs, res);
-            $generatorXml.igfsSecondFS(igfs, res);
-            $generatorXml.igfsMisc(igfs, res);
+            $generatorSpring.igfsGeneral(igfs, res);
+            $generatorSpring.igfsIPC(igfs, res);
+            $generatorSpring.igfsFragmentizer(igfs, res);
+            $generatorSpring.igfsDualMode(igfs, res);
+            $generatorSpring.igfsSecondFS(igfs, res);
+            $generatorSpring.igfsMisc(igfs, res);
 
             res.endBlock('</bean>');
 
@@ -1669,12 +1669,12 @@ $generatorXml.igfss = function(igfss, res) {
 };
 
 // Generate IGFS IPC configuration.
-$generatorXml.igfsIPC = function(igfs, res) {
+$generatorSpring.igfsIPC = function(igfs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     if (igfs.ipcEndpointEnabled) {
-        $generatorXml.beanProperty(res, igfs.ipcEndpointConfiguration, 'ipcEndpointConfiguration', $generatorCommon.IGFS_IPC_CONFIGURATION, true);
+        $generatorSpring.beanProperty(res, igfs.ipcEndpointConfiguration, 'ipcEndpointConfiguration', $generatorCommon.IGFS_IPC_CONFIGURATION, true);
 
         res.needEmptyLine = true;
     }
@@ -1683,29 +1683,29 @@ $generatorXml.igfsIPC = function(igfs, res) {
 };
 
 // Generate IGFS fragmentizer configuration.
-$generatorXml.igfsFragmentizer = function(igfs, res) {
+$generatorSpring.igfsFragmentizer = function(igfs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
     if (igfs.fragmentizerEnabled) {
-        $generatorXml.property(res, igfs, 'fragmentizerConcurrentFiles', null, 0);
-        $generatorXml.property(res, igfs, 'fragmentizerThrottlingBlockLength', null, 16777216);
-        $generatorXml.property(res, igfs, 'fragmentizerThrottlingDelay', null, 200);
+        $generatorSpring.property(res, igfs, 'fragmentizerConcurrentFiles', null, 0);
+        $generatorSpring.property(res, igfs, 'fragmentizerThrottlingBlockLength', null, 16777216);
+        $generatorSpring.property(res, igfs, 'fragmentizerThrottlingDelay', null, 200);
 
         res.needEmptyLine = true;
     }
     else
-        $generatorXml.property(res, igfs, 'fragmentizerEnabled');
+        $generatorSpring.property(res, igfs, 'fragmentizerEnabled');
 
     return res;
 };
 
 // Generate IGFS dual mode configuration.
-$generatorXml.igfsDualMode = function(igfs, res) {
+$generatorSpring.igfsDualMode = function(igfs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, igfs, 'dualModeMaxPendingPutsSize', null, 0);
+    $generatorSpring.property(res, igfs, 'dualModeMaxPendingPutsSize', null, 0);
 
     if ($generatorCommon.isDefinedAndNotEmpty(igfs.dualModePutExecutorService)) {
         res.startBlock('<property name="dualModePutExecutorService">');
@@ -1713,14 +1713,14 @@ $generatorXml.igfsDualMode = function(igfs, res) {
         res.endBlock('</property>');
     }
 
-    $generatorXml.property(res, igfs, 'dualModePutExecutorServiceShutdown', null, false);
+    $generatorSpring.property(res, igfs, 'dualModePutExecutorServiceShutdown', null, false);
 
     res.needEmptyLine = true;
 
     return res;
 };
 
-$generatorXml.igfsSecondFS = function(igfs, res) {
+$generatorSpring.igfsSecondFS = function(igfs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1734,12 +1734,12 @@ $generatorXml.igfsSecondFS = function(igfs, res) {
         const nameDefined = $generatorCommon.isDefinedAndNotEmpty(secondFs.userName);
         const cfgDefined = $generatorCommon.isDefinedAndNotEmpty(secondFs.cfgPath);
 
-        $generatorXml.constructorArg(res, 0, secondFs, 'uri');
+        $generatorSpring.constructorArg(res, 0, secondFs, 'uri');
 
         if (cfgDefined || nameDefined)
-            $generatorXml.constructorArg(res, 1, secondFs, 'cfgPath');
+            $generatorSpring.constructorArg(res, 1, secondFs, 'cfgPath');
 
-        $generatorXml.constructorArg(res, 2, secondFs, 'userName', null, true);
+        $generatorSpring.constructorArg(res, 2, secondFs, 'userName', null, true);
 
         res.endBlock('</bean>');
         res.endBlock('</property>');
@@ -1751,7 +1751,7 @@ $generatorXml.igfsSecondFS = function(igfs, res) {
 };
 
 // Generate IGFS general configuration.
-$generatorXml.igfsGeneral = function(igfs, res) {
+$generatorSpring.igfsGeneral = function(igfs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1759,10 +1759,10 @@ $generatorXml.igfsGeneral = function(igfs, res) {
         igfs.dataCacheName = $generatorCommon.igfsDataCache(igfs).name;
         igfs.metaCacheName = $generatorCommon.igfsMetaCache(igfs).name;
 
-        $generatorXml.property(res, igfs, 'name');
-        $generatorXml.property(res, igfs, 'dataCacheName');
-        $generatorXml.property(res, igfs, 'metaCacheName');
-        $generatorXml.property(res, igfs, 'defaultMode', null, 'DUAL_ASYNC');
+        $generatorSpring.property(res, igfs, 'name');
+        $generatorSpring.property(res, igfs, 'dataCacheName');
+        $generatorSpring.property(res, igfs, 'metaCacheName');
+        $generatorSpring.property(res, igfs, 'defaultMode', null, 'DUAL_ASYNC');
 
         res.needEmptyLine = true;
     }
@@ -1771,22 +1771,22 @@ $generatorXml.igfsGeneral = function(igfs, res) {
 };
 
 // Generate IGFS misc configuration.
-$generatorXml.igfsMisc = function(igfs, res) {
+$generatorSpring.igfsMisc = function(igfs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    $generatorXml.property(res, igfs, 'blockSize', null, 65536);
-    $generatorXml.property(res, igfs, 'streamBufferSize', null, 65536);
-    $generatorXml.property(res, igfs, 'maxSpaceSize', null, 0);
-    $generatorXml.property(res, igfs, 'maximumTaskRangeLength', null, 0);
-    $generatorXml.property(res, igfs, 'managementPort', null, 11400);
-    $generatorXml.property(res, igfs, 'perNodeBatchSize', null, 100);
-    $generatorXml.property(res, igfs, 'perNodeParallelBatchCount', null, 8);
-    $generatorXml.property(res, igfs, 'prefetchBlocks', null, 0);
-    $generatorXml.property(res, igfs, 'sequentialReadsBeforePrefetch', null, 0);
-    $generatorXml.property(res, igfs, 'trashPurgeTimeout', null, 1000);
-    $generatorXml.property(res, igfs, 'colocateMetadata', null, true);
-    $generatorXml.property(res, igfs, 'relaxedConsistency', null, true);
+    $generatorSpring.property(res, igfs, 'blockSize', null, 65536);
+    $generatorSpring.property(res, igfs, 'streamBufferSize', null, 65536);
+    $generatorSpring.property(res, igfs, 'maxSpaceSize', null, 0);
+    $generatorSpring.property(res, igfs, 'maximumTaskRangeLength', null, 0);
+    $generatorSpring.property(res, igfs, 'managementPort', null, 11400);
+    $generatorSpring.property(res, igfs, 'perNodeBatchSize', null, 100);
+    $generatorSpring.property(res, igfs, 'perNodeParallelBatchCount', null, 8);
+    $generatorSpring.property(res, igfs, 'prefetchBlocks', null, 0);
+    $generatorSpring.property(res, igfs, 'sequentialReadsBeforePrefetch', null, 0);
+    $generatorSpring.property(res, igfs, 'trashPurgeTimeout', null, 1000);
+    $generatorSpring.property(res, igfs, 'colocateMetadata', null, true);
+    $generatorSpring.property(res, igfs, 'relaxedConsistency', null, true);
 
     res.softEmptyLine();
 
@@ -1806,7 +1806,7 @@ $generatorXml.igfsMisc = function(igfs, res) {
 };
 
 // Generate DataSource beans.
-$generatorXml.generateDataSources = function(datasources, res) {
+$generatorSpring.generateDataSources = function(datasources, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1859,7 +1859,7 @@ $generatorXml.generateDataSources = function(datasources, res) {
     return res;
 };
 
-$generatorXml.clusterConfiguration = function(cluster, clientNearCfg, res) {
+$generatorSpring.clusterConfiguration = function(cluster, clientNearCfg, res) {
     const isSrvCfg = _.isNil(clientNearCfg);
 
     if (!isSrvCfg) {
@@ -1868,51 +1868,51 @@ $generatorXml.clusterConfiguration = function(cluster, clientNearCfg, res) {
         res.needEmptyLine = true;
     }
 
-    $generatorXml.clusterGeneral(cluster, res);
+    $generatorSpring.clusterGeneral(cluster, res);
 
-    $generatorXml.clusterAtomics(cluster.atomicConfiguration, res);
+    $generatorSpring.clusterAtomics(cluster.atomicConfiguration, res);
 
-    $generatorXml.clusterBinary(cluster.binaryConfiguration, res);
+    $generatorSpring.clusterBinary(cluster.binaryConfiguration, res);
 
-    $generatorXml.clusterCollision(cluster.collision, res);
+    $generatorSpring.clusterCollision(cluster.collision, res);
 
-    $generatorXml.clusterCommunication(cluster, res);
+    $generatorSpring.clusterCommunication(cluster, res);
 
-    $generatorXml.clusterConnector(cluster.connector, res);
+    $generatorSpring.clusterConnector(cluster.connector, res);
 
-    $generatorXml.clusterDeployment(cluster, res);
+    $generatorSpring.clusterDeployment(cluster, res);
 
-    $generatorXml.clusterEvents(cluster, res);
+    $generatorSpring.clusterEvents(cluster, res);
 
-    $generatorXml.clusterFailover(cluster, res);
+    $generatorSpring.clusterFailover(cluster, res);
 
-    $generatorXml.clusterLogger(cluster.logger, res);
+    $generatorSpring.clusterLogger(cluster.logger, res);
 
-    $generatorXml.clusterMarshaller(cluster, res);
+    $generatorSpring.clusterMarshaller(cluster, res);
 
-    $generatorXml.clusterMetrics(cluster, res);
+    $generatorSpring.clusterMetrics(cluster, res);
 
-    $generatorXml.clusterSwap(cluster, res);
+    $generatorSpring.clusterSwap(cluster, res);
 
-    $generatorXml.clusterTime(cluster, res);
+    $generatorSpring.clusterTime(cluster, res);
 
-    $generatorXml.clusterPools(cluster, res);
+    $generatorSpring.clusterPools(cluster, res);
 
-    $generatorXml.clusterTransactions(cluster.transactionConfiguration, res);
+    $generatorSpring.clusterTransactions(cluster.transactionConfiguration, res);
 
-    $generatorXml.clusterCaches(cluster.caches, cluster.igfss, isSrvCfg, res);
+    $generatorSpring.clusterCaches(cluster.caches, cluster.igfss, isSrvCfg, res);
 
-    $generatorXml.clusterSsl(cluster, res);
+    $generatorSpring.clusterSsl(cluster, res);
 
     if (isSrvCfg)
-        $generatorXml.igfss(cluster.igfss, res);
+        $generatorSpring.igfss(cluster.igfss, res);
 
-    $generatorXml.clusterUserAttributes(cluster, res);
+    $generatorSpring.clusterUserAttributes(cluster, res);
 
     return res;
 };
 
-$generatorXml.cluster = function(cluster, clientNearCfg) {
+$generatorSpring.cluster = function(cluster, clientNearCfg) {
     if (cluster) {
         const res = $generatorCommon.builder(1);
 
@@ -1920,10 +1920,10 @@ $generatorXml.cluster = function(cluster, clientNearCfg) {
             res.startBlock('<bean id="nearCacheBean" class="org.apache.ignite.configuration.NearCacheConfiguration">');
 
             if (clientNearCfg.nearStartSize)
-                $generatorXml.property(res, clientNearCfg, 'nearStartSize');
+                $generatorSpring.property(res, clientNearCfg, 'nearStartSize');
 
             if (clientNearCfg.nearEvictionPolicy && clientNearCfg.nearEvictionPolicy.kind)
-                $generatorXml.evictionPolicy(res, clientNearCfg.nearEvictionPolicy, 'nearEvictionPolicy');
+                $generatorSpring.evictionPolicy(res, clientNearCfg.nearEvictionPolicy, 'nearEvictionPolicy');
 
             res.endBlock('</bean>');
 
@@ -1935,7 +1935,7 @@ $generatorXml.cluster = function(cluster, clientNearCfg) {
         // Generate Ignite Configuration.
         res.startBlock('<bean class="org.apache.ignite.configuration.IgniteConfiguration">');
 
-        $generatorXml.clusterConfiguration(cluster, clientNearCfg, res);
+        $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
 
         res.endBlock('</bean>');
 
@@ -1961,7 +1961,7 @@ $generatorXml.cluster = function(cluster, clientNearCfg) {
         }
 
         // 3. Add data sources.
-        xml += $generatorXml.generateDataSources(res.datasources, $generatorCommon.builder(1)).asString();
+        xml += $generatorSpring.generateDataSources(res.datasources, $generatorCommon.builder(1)).asString();
 
         // 3. Add main content.
         xml += res.asString();
@@ -1975,4 +1975,4 @@ $generatorXml.cluster = function(cluster, clientNearCfg) {
     return '';
 };
 
-export default $generatorXml;
+export default $generatorSpring;

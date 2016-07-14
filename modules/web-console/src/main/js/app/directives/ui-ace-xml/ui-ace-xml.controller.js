@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export default ['$scope', 'GeneratorXml', function($scope, generator) {
+export default ['$scope', 'SpringTransformer', function($scope, generator) {
     const ctrl = this;
 
     delete ctrl.data;

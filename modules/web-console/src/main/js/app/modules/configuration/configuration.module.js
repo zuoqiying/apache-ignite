@@ -20,8 +20,11 @@ import angular from 'angular';
 import igniteEventGroups from './EventGroups.provider';
 import igniteSidebar from './Sidebar.provider';
 
-import GeneratorXml from './generator/Xml.service';
-import GeneratorJava from './generator/Java.service';
+import ConfigurationGenerator from './generator/ConfigurationGenerator';
+import PlatformGenerator from './generator/PlatformGenerator';
+import GeneratorSpring from './generator/SpringTransformer.service';
+import GeneratorJava from './generator/JavaTransformer.service';
+import GeneratorSharp from './generator/NetTransformer.service';
 import GeneratorDocker from './generator/Docker.service';
 import GeneratorPom from './generator/Pom.service';
 
@@ -35,7 +38,10 @@ angular
 .provider(...igniteEventGroups)
 .provider(...igniteSidebar)
 .directive(...igniteSidebarDirective)
-.service(...GeneratorXml)
+.service(...ConfigurationGenerator)
+.service(...PlatformGenerator)
+.service(...GeneratorSpring)
 .service(...GeneratorJava)
+.service(...GeneratorSharp)
 .service(...GeneratorDocker)
 .service(...GeneratorPom);

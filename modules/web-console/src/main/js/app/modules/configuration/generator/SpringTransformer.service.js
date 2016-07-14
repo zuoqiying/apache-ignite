@@ -1,0 +1,269 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import _ from 'lodash';
+import AbstractTransformer from './AbstractTransformer';
+import StringBuilder from './StringBuilder';
+
+import $generatorCommon from './generator-common';
+import $generatorSpring from './generator-spring';
+
+export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (JavaTypes, generator) => {
+    return class SpringTransformer extends AbstractTransformer {
+        static comment(sb, ...lines) {
+            _.forEach(lines, (line) => sb.append(`<!-- ${line} -->`));
+        }
+
+        static commentBlock(sb, ...lines) {
+            sb.append('<!--');
+
+            _.forEach(lines, (line) => sb.append(`  ${line}`));
+
+            sb.append('-->');
+        }
+
+        static appendBean(sb, bean) {
+            const idProp = bean.id ? `id="${bean.id}"` : '';
+
+            sb.startBlock(`<bean ${idProp} class="${bean.clsName}">`);
+
+            this.setBeanProperties(sb, bean);
+
+            sb.endBlock('</bean>');
+        }
+
+        /**
+         *
+         * @param {StringBuilder} sb
+         * @param {Bean} bean
+         * @returns {Array}
+         */
+        static setBeanProperties(sb, bean) {
+            _.forEach(bean.properties, (prop) => {
+                switch (prop.type) {
+                    case 'BEAN':
+                        sb.startBlock(`<property name="${prop.name}">`);
+
+                        this.appendBean(sb, prop.value);
+
+                        sb.endBlock('</property>');
+
+                        break;
+
+                    default:
+                        sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
+                }
+            });
+
+            return sb;
+        }
+
+        /**
+         * @param {Bean} root
+         * @returns {String}
+         */
+        static generate(root) {
+            // Build final XML:
+            const sb = new StringBuilder();
+
+            // 0. Add header.
+            sb.append('<?xml version="1.0" encoding="UTF-8"?>');
+            sb.emptyLine();
+
+            this.mainComment(sb);
+            sb.emptyLine();
+
+            // 1. Start beans section.
+            sb.startBlock(
+                '<beans xmlns="http://www.springframework.org/schema/beans"',
+                '       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
+                '       xmlns:util="http://www.springframework.org/schema/util"',
+                '       xsi:schemaLocation="http://www.springframework.org/schema/beans',
+                '                           http://www.springframework.org/schema/beans/spring-beans.xsd',
+                '                           http://www.springframework.org/schema/util',
+                '                           http://www.springframework.org/schema/util/spring-util.xsd">');
+
+            // 2. Add external property file
+            // TODO
+
+            // 3. Add data sources.
+            // TODO
+
+            // 3. Add main content.
+            this.appendBean(sb, root);
+
+            // 4. Close beans section.
+            sb.endBlock('</beans>');
+
+            return sb.build();
+        }
+
+        /**
+         * @param {Bean} bean
+         * @param {Bean} deep
+         * @returns {String}
+         */
+        static generateSection(bean, deep = 0) {
+            const sb = [];
+
+            this.setBeanProperties(sb, deep, bean);
+
+            return sb.join('\n');
+        }
+
+        static cluster(cluster, clientNearCfg) {
+            return $generatorSpring.cluster(cluster, clientNearCfg);
+        }
+
+        static clusterAtomics(atomics, res = $generatorCommon.builder()) {
+            const cfg = generator.clusterAtomics(atomics);
+
+            this.setBeanProperties(res, 0, cfg);
+
+            return res;
+        }
+
+        static clusterBinary(binary, res) {
+            return $generatorSpring.clusterBinary(binary, res);
+        }
+
+        static clusterCaches(caches, igfss, isSrvCfg, res) {
+            return $generatorSpring.clusterCaches(caches, igfss, isSrvCfg, res);
+        }
+
+        static clusterCollision(collision, res) {
+            return $generatorSpring.clusterCollision(collision, res);
+        }
+
+        static clusterCommunication(cluster, res) {
+            return $generatorSpring.clusterCommunication(cluster, res);
+        }
+
+        static clusterConfiguration(cluster, clientNearCfg, res) {
+            return $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
+        }
+
+        static clusterConnector(connector, res) {
+            return $generatorSpring.clusterConnector(connector, res);
+        }
+
+        static clusterDeployment(cluster, res) {
+            return $generatorSpring.clusterDeployment(cluster, res);
+        }
+
+        static clusterDiscovery(disco, res) {
+            return $generatorSpring.clusterDiscovery(disco, res);
+        }
+
+        static clusterEvents(cluster, res) {
+            return $generatorSpring.clusterEvents(cluster, res);
+        }
+
+        static clusterFailover(cluster, res) {
+            return $generatorSpring.clusterFailover(cluster, res);
+        }
+
+        static clusterGeneral(cluster, res) {
+            return $generatorSpring.clusterGeneral(cluster, res);
+        }
+
+        // Generate logger group.
+        static clusterLogger(logger, res) {
+            return $generatorSpring.clusterLogger(logger, res);
+        }
+
+        // Generate marshaller group.
+        static clusterMarshaller(cluster, res) {
+            return $generatorSpring.clusterMarshaller(cluster, res);
+        }
+
+        // Generate metrics group.
+        static clusterMetrics(cluster, res) {
+            return $generatorSpring.clusterMetrics(cluster, res);
+        }
+
+        // Generate thread pools group.
+        static clusterPools(cluster, res) {
+            return $generatorSpring.clusterPools(cluster, res);
+        }
+
+        /**
+         * Generate cluster's SSL configuration.
+         *
+         * @param cluster Cluster to get SSL configuration.
+         * @param res Optional configuration presentation builder object.
+         * @returns Configuration presentation builder object
+         */
+        static clusterSsl(cluster, res) {
+            return $generatorSpring.clusterSsl(cluster, res);
+        }
+
+        // Generate swap group.
+        static clusterSwap(cluster, res) {
+            return $generatorSpring.clusterSwap(cluster, res);
+        }
+
+        // Generate time group.
+        static clusterTime(cluster, res) {
+            return $generatorSpring.clusterTime(cluster, res);
+        }
+
+        // Generate transactions group.
+        static clusterTransactions(transactionConfiguration, res) {
+            return $generatorSpring.clusterTransactions(transactionConfiguration, res);
+        }
+
+        // Generate user attributes group.
+        static clusterUserAttributes(cluster, res) {
+            return $generatorSpring.clusterUserAttributes(cluster, res);
+        }
+
+        // Generate IGFSs configs.
+        static igfss(igfss, res) {
+            return $generatorSpring.igfss(igfss, res);
+        }
+
+        // Generate IGFS dual mode configuration.
+        static igfsDualMode(igfs, res) {
+            return $generatorSpring.igfsDualMode(igfs, res);
+        }
+
+        // Generate IGFS IPC configuration.
+        static igfsIPC(igfs, res) {
+            return $generatorSpring.igfsIPC(igfs, res);
+        }
+
+        // Generate IGFS fragmentizer configuration.
+        static igfsFragmentizer(igfs, res) {
+            return $generatorSpring.igfsFragmentizer(igfs, res);
+        }
+
+        // Generate IGFS general configuration.
+        static igfsGeneral(igfs, res) {
+            return $generatorSpring.igfsGeneral(igfs, res);
+        }
+
+        // Generate IGFS misc configuration.
+        static igfsMisc(igfs, res) {
+            return $generatorSpring.igfsMisc(igfs, res);
+        }
+
+        static igfsSecondFS(igfs, res) {
+            return $generatorSpring.igfsSecondFS(igfs, res);
+        }
+    };
+}]];

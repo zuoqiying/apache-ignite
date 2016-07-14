@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import _ from 'lodash';
+
 // Java built-in class names.
 import JAVA_CLASSES from '../data/java-classes.json';
 

@@ -18,7 +18,7 @@
 import templateUrl from './ui-ace-java.jade';
 import controller from './ui-ace-java.controller';
 
-export default ['igniteUiAceJava', ['GeneratorJava', (generator) => {
+export default ['igniteUiAceJava', ['JavaTransformer', (generator) => {
     const link = (scope, $el, attrs, [ctrl, igniteUiAceTabs, formCtrl, ngModelCtrl]) => {
         if (formCtrl && ngModelCtrl)
             formCtrl.$removeControl(ngModelCtrl);

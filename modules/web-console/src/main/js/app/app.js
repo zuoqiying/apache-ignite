@@ -60,12 +60,13 @@ import igniteOnClickFocus from './directives/on-click-focus.directive.js';
 import igniteOnEnter from './directives/on-enter.directive.js';
 import igniteOnEnterFocusMove from './directives/on-enter-focus-move.directive.js';
 import igniteOnEscape from './directives/on-escape.directive.js';
-import igniteUiAceDocker from './directives/ui-ace-docker/ui-ace-docker.directive';
 import igniteUiAceJava from './directives/ui-ace-java/ui-ace-java.directive';
+import igniteUiAceSpring from './directives/ui-ace-xml/ui-ace-xml.directive';
+import igniteUiAceCSharp from './directives/ui-ace-csharp/ui-ace-csharp.directive';
 import igniteUiAcePojos from './directives/ui-ace-pojos/ui-ace-pojos.directive';
 import igniteUiAcePom from './directives/ui-ace-pom/ui-ace-pom.directive';
+import igniteUiAceDocker from './directives/ui-ace-docker/ui-ace-docker.directive';
 import igniteUiAceTabs from './directives/ui-ace-tabs.directive';
-import igniteUiAceXml from './directives/ui-ace-xml/ui-ace-xml.directive';
 
 // Services.
 import ChartColors from './services/ChartColors.service';
@@ -96,14 +97,14 @@ import $generatorJava from 'generator/generator-java';
 import $generatorOptional from 'generator/generator-optional';
 import $generatorProperties from 'generator/generator-properties';
 import $generatorReadme from 'generator/generator-readme';
-import $generatorXml from 'generator/generator-xml';
+import $generatorSpring from 'generator/generator-spring';
 
 window.$generatorCommon = $generatorCommon;
 window.$generatorJava = $generatorJava;
 window.$generatorOptional = $generatorOptional;
 window.$generatorProperties = $generatorProperties;
 window.$generatorReadme = $generatorReadme;
-window.$generatorXml = $generatorXml;
+window.$generatorSpring = $generatorSpring;
 
 // Controllers
 import admin from 'controllers/admin-controller';
@@ -184,12 +185,13 @@ angular
 .directive(...igniteOnEnter)
 .directive(...igniteOnEnterFocusMove)
 .directive(...igniteOnEscape)
-.directive(...igniteUiAceDocker)
+.directive(...igniteUiAceSpring)
 .directive(...igniteUiAceJava)
+.directive(...igniteUiAceCSharp)
 .directive(...igniteUiAcePojos)
 .directive(...igniteUiAcePom)
+.directive(...igniteUiAceDocker)
 .directive(...igniteUiAceTabs)
-.directive(...igniteUiAceXml)
 // Services.
 .service(...ChartColors)
 .service(...Clone)

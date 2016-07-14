@@ -15,7 +15,48 @@
  * limitations under the License.
  */
 
-// TODO IGNITE-2052: need move $generatorXml to services.
-export default ['GeneratorXml', () => {
-    return $generatorXml;
-}];
+import _ from 'lodash';
+
+export default class StringBuilder {
+    /**
+     * @param deep
+     * @param indent
+     */
+    constructor(deep = 0, indent = 4) {
+        this.indent = indent;
+        this.deep = deep;
+        this.lines = [];
+    }
+
+    emptyLine() {
+        this.lines.push('');
+
+        return this;
+    }
+
+    append(...lines) {
+        _.forEach(lines, (line) => this.lines.push(_.repeat(' ', this.indent * this.deep) + line));
+
+        return this;
+    }
+
+    startBlock(...lines) {
+        this.append(...lines);
+
+        this.deep++;
+
+        return this;
+    }
+
+    endBlock(line) {
+        this.deep--;
+
+        this.append(line);
+
+        return this;
+    }
+
+    build() {
+        return this.lines.join('\n');
+    }
+}
