@@ -976,6 +976,12 @@ export default ['domainsController', [
             if (act === 'drivers' && $scope.importDomain.jdbcDriversNotFound)
                 return 'Resolve issue with JDBC drivers<br>Close this dialog and try again';
 
+            if (act === 'connect' && _.isNil($scope.selectedPreset.jdbcDriverClass))
+                return 'Input valid JDBC driver class name';
+
+            if (act === 'connect' && _.isNil($scope.selectedPreset.jdbcUrl))
+                return 'Input valid JDBC URL';
+
             if (act === 'connect' || act === 'drivers')
                 return 'Click to load list of schemas from database';
 
@@ -1005,23 +1011,19 @@ export default ['domainsController', [
         };
 
         $scope.importDomainNextAvailable = function() {
-            let res = true;
-
             switch ($scope.importDomain.action) {
-                case 'schemas':
-                    res = _.isEmpty($scope.importDomain.schemas) || _.find($scope.importDomain.schemas, {use: true});
+                case 'connect':
+                    return !_.isNil($scope.selectedPreset.jdbcDriverClass) && !_.isNil($scope.selectedPreset.jdbcUrl);
 
-                    break;
+                case 'schemas':
+                    return _.isEmpty($scope.importDomain.schemas) || _.find($scope.importDomain.schemas, {use: true});
 
                 case 'tables':
-                    res = _.find($scope.importDomain.tables, {use: true});
-
-                    break;
+                    return _.find($scope.importDomain.tables, {use: true});
 
                 default:
+                    return true;
             }
-
-            return res;
         };
 
         $scope.importDomainPrev = function() {

@@ -55,23 +55,46 @@ mixin td-ellipses-lbl(w, lbl)
                 .import-domain-model-wizard-page(ng-show='importDomain.action == "connect" && !importDomain.demo')
                     form.form-horizontal(name='connectForm' novalidate)
                         .settings-row
-                            label.col-xs-4.col-sm-2.col-md-2 Driver JAR:
+                            label.col-xs-4.col-sm-2.col-md-2.required Driver JAR:
                             .col-xs-8.col-sm-10.col-md-10
                                 i.tipField.fa.fa-question-circle(bs-tooltip='' data-title='Select appropriate JAR with JDBC driver<br> To add another driver you need to place it into "/jdbc-drivers" folder of Ignite Web Agent<br> Refer to Ignite Web Agent README.txt for for more information')
                                 .input-tip
                                     button.select-toggle.form-control(id='jdbcDriverJar' bs-select data-container='.modal-domain-import' ng-model='ui.selectedJdbcDriverJar' ng-class='{placeholder: !(jdbcDriverJars && jdbcDriverJars.length > 0)}' placeholder='Choose JDBC driver' bs-options='item.value as item.label for item in jdbcDriverJars')
                         .settings-row
-                            label.col-xs-4.col-sm-2.col-md-2 JDBC Driver:
+                            label.col-xs-4.col-sm-2.col-md-2.required JDBC driver:
                             .col-xs-8.col-sm-10.col-md-10
                                 i.tipField.fa.fa-question-circle(bs-tooltip='' data-title='Fully qualified class name of JDBC driver that will be used to connect to database')
                                 .input-tip
-                                    input.form-control(id='jdbcDriverClass' type='text' ng-model='selectedPreset.jdbcDriverClass' placeholder='JDBC driver fully qualified class name' required=true)
+                                    ignite-form-field-input-text(
+                                        data-id='jdbcDriverClass'
+                                        data-name='jdbcDriverClass'
+                                        data-ng-model='selectedPreset.jdbcDriverClass'
+                                        data-ignite-label-name='JDBC driver'
+                                        data-ng-required='true'
+                                        data-placeholder='Enter fully qualified class name'
+
+                                        data-java-identifier='true'
+                                        data-java-package-specified='true'
+                                        data-java-keywords='true'
+                                        data-java-built-in-class='true'
+                                    )
+                                        +error-feedback('connectForm.$error.javaBuiltInClass', 'javaBuiltInClass', 'JDBC Driver should not be the Java built-in class!')
+                                        +error-feedback('connectForm.$error.javaKeywords', 'javaKeywords', 'JDBC Driver could not contains reserved Java keyword!')
+                                        +error-feedback('connectForm.$error.javaPackageSpecified', 'javaPackageSpecified', 'JDBC Driver does not have package specified!')
+                                        +error-feedback('connectForm.$error.javaIdentifier', 'javaIdentifier', 'JDBC Driver is invalid Java identifier!')
                         .settings-row
-                            label.col-xs-4.col-sm-2.col-md-2 JDBC URL:
+                            label.col-xs-4.col-sm-2.col-md-2.required JDBC URL:
                             .col-xs-8.col-sm-10.col-md-10
                                 i.tipField.fa.fa-question-circle(bs-tooltip='' data-title='JDBC URL for connecting to database<br>Refer to your database documentation for details')
                                 .input-tip
-                                    input.form-control(id='jdbcUrl' type='text' ng-model='selectedPreset.jdbcUrl' placeholder='JDBC URL' required=true)
+                                    ignite-form-field-input-text(
+                                        data-id='jdbcUrl'
+                                        data-name='jdbcUrl'
+                                        data-ng-model='selectedPreset.jdbcUrl'
+                                        data-ignite-label-name='JDBC URL'
+                                        data-ng-required='true'
+                                        data-placeholder='JDBC URL'
+                                    )
                         .settings-row
                             label.col-xs-4.col-sm-2.col-md-2 User:
                             .col-xs-8.col-sm-10.col-md-10
