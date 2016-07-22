@@ -45,6 +45,8 @@ try {
 }
 
 export default () => {
+    const assetsLoader = development ? 'url-loader' : 'file-loader';
+
     return {
         node: {
             fs: 'empty'
@@ -129,12 +131,12 @@ export default () => {
                 {
                     test: /\.(woff2|woff|ttf|eot|svg)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
                     loaders: [
-                        'file-loader?name=assets/fonts/[name].[ext]'
+                        `${assetsLoader}?name=assets/fonts/[name].[ext]`
                     ]
                 },
                 {
                     test: /\.(jpe?g|png|gif)$/i,
-                    loaders: ['file-loader?name=assets/images/[name]_[hash].[ext]']
+                    loaders: [`${assetsLoader}?name=assets/images/[name]_[hash].[ext]`]
                 },
                 {
                     test: require.resolve('jquery'),
@@ -178,6 +180,7 @@ export default () => {
                 chunks: ['vendor', 'app']
             }),
             new webpack.optimize.AggressiveMergingPlugin({moveToParents: true}),
+            new webpack.optimize.OccurenceOrderPlugin(),
             new ExtractTextPlugin('assets/css/[name]' + (development ? '' : '.[chunkhash]') + '.css', {allChunks: true}),
             new HtmlWebpackPlugin({
                 filename: 'index.html',

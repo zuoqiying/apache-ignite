@@ -46,6 +46,7 @@ const appModulePaths = [
     igniteModulesDir + '/**/app/modules/**/*.js',
     igniteModulesDir + '/**/app/modules/**/*.jade',
     igniteModulesDir + '/**/app/**/*.css',
+    igniteModulesDir + '/**/app/**/*.scss',
     igniteModulesDir + '/**/app/data/*.json'
 ];
 

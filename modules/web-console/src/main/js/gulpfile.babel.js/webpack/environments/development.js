@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import webpack from 'webpack';
-import {destDir, rootDir} from '../../paths';
+
+import {destDir, rootDir, srcDir} from '../../paths';
 
 export default () => {
     const plugins = [
@@ -24,11 +26,16 @@ export default () => {
     ];
 
     return {
+        entry: {
+            webpack: 'webpack-dev-server/client?http://localhost:9000/',
+            app: [path.join(srcDir, 'app.js'), 'webpack/hot/only-dev-server']
+        },
         context: rootDir,
         debug: true,
         devtool: 'source-map',
         watch: true,
         devServer: {
+            compress: true,
             historyApiFallback: true,
             publicPath: '/',
             contentBase: destDir,
