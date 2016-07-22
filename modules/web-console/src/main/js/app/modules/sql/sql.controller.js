@@ -16,9 +16,8 @@
  */
 
 // Controller for SQL notebook screen.
-export default ['sqlController', [
-    '$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'QueryNotebooks', 'uiGridConstants', 'uiGridExporterConstants',
-    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, QueryNotebooks, uiGridConstants, uiGridExporterConstants) {
+export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'uiGridConstants', 'uiGridExporterConstants',
+    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, uiGridConstants, uiGridExporterConstants) {
         let stopTopology = null;
 
         const _tryStopRefresh = function(paragraph) {
@@ -816,7 +815,7 @@ export default ['sqlController', [
             .then(_startTopologyRefresh);
         };
 
-        QueryNotebooks.read($state.params.noteId)
+        Notebook.find($state.params.noteId)
             .then(loadNotebook)
             .catch(() => {
                 $scope.notebookLoadFailed = true;
@@ -824,7 +823,7 @@ export default ['sqlController', [
                 Loading.finish('sqlLoading');
             });
 
-        $scope.renameNotebook = function(name) {
+        $scope.renameNotebook = (name) => {
             if (!name)
                 return;
 
@@ -833,20 +832,8 @@ export default ['sqlController', [
 
                 $scope.notebook.name = name;
 
-                QueryNotebooks.save($scope.notebook)
-                    .then(function() {
-                        const idx = _.findIndex($root.notebooks, function(item) {
-                            return item._id === $scope.notebook._id;
-                        });
-
-                        if (idx >= 0) {
-                            $root.notebooks[idx].name = name;
-
-                            $root.rebuildDropdown();
-                        }
-
-                        $scope.notebook.edit = false;
-                    })
+                Notebook.save($scope.notebook)
+                    .then(() => $scope.notebook.edit = false)
                     .catch((err) => {
                         $scope.notebook.name = prevName;
 
@@ -857,19 +844,7 @@ export default ['sqlController', [
                 $scope.notebook.edit = false;
         };
 
-        $scope.removeNotebook = function() {
-            Confirm.confirm('Are you sure you want to remove: "' + $scope.notebook.name + '"?')
-                .then(function() {
-                    return QueryNotebooks.remove($scope.notebook);
-                })
-                .then(function(notebook) {
-                    if (notebook)
-                        $state.go('base.sql.notebook', {noteId: notebook._id});
-                    else
-                        $state.go('base.configuration.clusters');
-                })
-                .catch(Messages.showError);
-        };
+        $scope.removeNotebook = (notebook) => Notebook.remove(notebook);
 
         $scope.renameParagraph = function(paragraph, newName) {
             if (!newName)
@@ -880,7 +855,7 @@ export default ['sqlController', [
 
                 $scope.rebuildScrollParagraphs();
 
-                QueryNotebooks.save($scope.notebook)
+                Notebook.save($scope.notebook)
                     .then(() => paragraph.edit = false)
                     .catch(Messages.showError);
             }
@@ -986,7 +961,7 @@ export default ['sqlController', [
 
                     $scope.rebuildScrollParagraphs();
 
-                    QueryNotebooks.save($scope.notebook)
+                    Notebook.save($scope.notebook)
                         .catch(Messages.showError);
                 });
         };
@@ -1241,7 +1216,7 @@ export default ['sqlController', [
         };
 
         $scope.execute = function(paragraph) {
-            QueryNotebooks.save($scope.notebook)
+            Notebook.save($scope.notebook)
                 .catch(Messages.showError);
 
             paragraph.prevQuery = paragraph.queryArgs ? paragraph.queryArgs.query : paragraph.query;
@@ -1290,7 +1265,7 @@ export default ['sqlController', [
         };
 
         $scope.explain = function(paragraph) {
-            QueryNotebooks.save($scope.notebook)
+            Notebook.save($scope.notebook)
                 .catch(Messages.showError);
 
             _cancelRefresh(paragraph);
@@ -1317,7 +1292,7 @@ export default ['sqlController', [
         };
 
         $scope.scan = function(paragraph) {
-            QueryNotebooks.save($scope.notebook)
+            Notebook.save($scope.notebook)
                 .catch(Messages.showError);
 
             _cancelRefresh(paragraph);
@@ -1585,4 +1560,4 @@ export default ['sqlController', [
             }
         };
     }
-]];
+];

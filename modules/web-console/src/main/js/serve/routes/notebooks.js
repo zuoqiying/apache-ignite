@@ -34,25 +34,12 @@ module.exports.factory = function(express, mongo, spaceService) {
          * @param req Request.
          * @param res Response.
          */
-        router.post('/list', (req, res) => {
+        router.get('/', (req, res) => {
             spaceService.spaces(req.currentUserId())
                 .then((spaces) => mongo.Notebook.find({space: {$in: spaces.map((value) => value._id)}}).select('_id name').sort('name').lean().exec())
                 .then((notebooks) => res.json(notebooks))
                 .catch((err) => mongo.handleError(res, err));
 
-        });
-
-        /**
-         * Get notebook accessed for user account.
-         *
-         * @param req Request.
-         * @param res Response.
-         */
-        router.post('/get', (req, res) => {
-            spaceService.spaces(req.currentUserId())
-                .then((spaces) => mongo.Notebook.findOne({space: {$in: spaces.map((value) => value._id)}, _id: req.body.noteId}).lean().exec())
-                .then((notebook) => res.json(notebook))
-                .catch((err) => mongo.handleError(res, err));
         });
 
         /**
@@ -64,23 +51,28 @@ module.exports.factory = function(express, mongo, spaceService) {
         router.post('/save', (req, res) => {
             const note = req.body;
 
-            mongo.Notebook.findOne({space: note.space, name: note.name}).exec()
-                .then((notebook) => {
-                    const noteId = note._id;
+            spaceService.spaceIds(req.currentUserId())
+                .then((spaceIds) => {
+                    note.space = note.space || spaceIds[0];
 
-                    if (notebook && noteId !== notebook._id.toString())
-                        throw new Error('Notebook with name: "' + notebook.name + '" already exist.');
+                    mongo.Notebook.findOne({space: note.space, name: note.name}).exec()
+                        .then((notebook) => {
+                            const noteId = note._id;
 
-                    if (noteId) {
-                        return mongo.Notebook.update({_id: noteId}, note, {upsert: true}).exec()
-                            .then(() => res.send(noteId))
-                            .catch((err) => mongo.handleError(res, err));
-                    }
+                            if (notebook && noteId !== notebook._id.toString())
+                                throw new Error('Notebook with name: "' + notebook.name + '" already exist.');
 
-                    return (new mongo.Notebook(req.body)).save();
-                })
-                .then((notebook) => res.send(notebook._id))
-                .catch((err) => mongo.handleError(res, err));
+                            if (noteId) {
+                                return mongo.Notebook.update({_id: noteId}, note, {upsert: true}).exec()
+                                    .then(() => note)
+                                    .catch((err) => mongo.handleError(res, err));
+                            }
+
+                            return mongo.Notebook.create(req.body);
+                        })
+                        .then((notebook) => res.send(notebook))
+                        .catch((err) => mongo.handleError(res, err));
+                });
         });
 
         /**

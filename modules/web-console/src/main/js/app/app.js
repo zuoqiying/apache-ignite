@@ -24,14 +24,13 @@ import './decorator/tooltip';
 
 import './modules/form/form.module';
 import './modules/agent/agent.module.js';
-import './modules/query-notebooks/query-notebooks.module';
+import './modules/sql/sql.module';
 import './modules/Demo/Demo.module.js';
 
 import './modules/states/signin.state';
 import './modules/states/logout.state';
 import './modules/states/password.state';
 import './modules/states/configuration.state';
-import './modules/states/sql.state';
 import './modules/states/profile.state';
 import './modules/states/admin.state';
 
@@ -112,9 +111,7 @@ import clusters from 'controllers/clusters-controller';
 import domains from 'controllers/domains-controller';
 import igfs from 'controllers/igfs-controller';
 import profile from 'controllers/profile-controller';
-import sql from 'controllers/sql-controller';
 import auth from './controllers/auth.controller';
-import notebooks from './controllers/notebooks.controller';
 import resetPassword from './controllers/reset-password.controller';
 
 // Inject external modules.
@@ -150,14 +147,13 @@ angular
     'ignite-console.branding',
     'ignite-console.socket',
     'ignite-console.agent',
-    'ignite-console.query-notebooks',
+    'ignite-console.sql',
     'ignite-console.demo',
     // States.
     'ignite-console.states.login',
     'ignite-console.states.logout',
     'ignite-console.states.password',
     'ignite-console.states.configuration',
-    'ignite-console.states.sql',
     'ignite-console.states.profile',
     'ignite-console.states.admin',
     // Common modules.
@@ -208,14 +204,12 @@ angular
 // Controllers.
 .controller(...admin)
 .controller(...auth)
-.controller(...notebooks)
 .controller(...resetPassword)
 .controller(...caches)
 .controller(...clusters)
 .controller(...domains)
 .controller(...igfs)
 .controller(...profile)
-.controller(...sql)
 // Filters.
 .filter(...hasPojo)
 .filter(...domainsValidation)

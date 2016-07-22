@@ -9,7 +9,7 @@
     "test": "karma start ./test/frontend/karma.conf.js",
     "ci-test-backend": "cross-env NODE_ENV=test CONFIG_PATH='./test/backend/config/settings.json' mocha -u tdd --require babel-core/register --reporter mocha-teamcity-reporter --recursive ./test/backend/unit",
     "test-backend": "cross-env NODE_ENV=test CONFIG_PATH='./test/backend/config/settings.json' mocha -u tdd --require babel-core/register  --recursive ./test/backend/unit",
-    "eslint": "eslint --env node --format node_modules/eslint-friendly-formatter gulpfile.babel.js/ serve/ app/ controllers/ generator/ ignite_modules/ ignite_modules_temp/"
+    "eslint": "eslint --env node --format node_modules/eslint-friendly-formatter gulpfile.babel.js/ serve/ app/ controllers/ generator/ ignite_modules/ ignite_modules_temp/ -- --eff-by-issue"
   },
   "author": "",
   "contributors": [
@@ -117,6 +117,8 @@
     "jasmine-core": "^2.4.1",
     "json-loader": "^0.5.4",
     "karma": "^0.13.22",
+    "karma-babel-preprocessor": "^6.0.1",
+    "karma-jasmine": "^1.0.2",
     "karma-mocha": "^1.0.1",
     "karma-phantomjs-launcher": "^1.0.0",
     "karma-teamcity-reporter": "^1.0.0",

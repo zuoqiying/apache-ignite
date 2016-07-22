@@ -183,11 +183,11 @@ ul.navbar-nav, .sidebar-nav {
     overflow: auto;
     overflow-x: hidden;
     outline-style: none;
+    margin-top: 0;
 
     li > a {
         display: block;
 
-        //cursor: default;
         padding: 3px 10px;
 
         overflow: hidden;
@@ -201,6 +201,60 @@ ul.navbar-nav, .sidebar-nav {
             line-height: $line-height-base;
             margin-left: 5px;
             margin-right: 0;
+        }
+    }
+
+    li > div {
+        display: block;
+        overflow: hidden;
+
+        i {
+            float: right;
+            color: $text-color;
+            background-color: transparent;
+            line-height: $line-height-base;
+            margin: 0 10px 0 0;
+            padding: 6px 0;
+        }
+
+        div {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    // Hover/Focus state
+    li > div a {
+        float: left;
+        display: block;
+        width: 100%;
+        padding: 3px 10px;
+        color: $dropdown-link-color;
+
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        
+        &:hover,
+        &:focus {
+            text-decoration: none;
+            color: $dropdown-link-hover-color;
+            background-color: $dropdown-link-hover-bg;
+        }
+    }
+
+    // Active state
+    .active > div a {
+        cursor: default;
+        pointer-events: none;
+
+        &,
+        &:hover,
+        &:focus {
+            color: $dropdown-link-active-color;
+            text-decoration: none;
+            outline: 0;
+            background-color: $dropdown-link-active-bg;
         }
     }
 
@@ -573,17 +627,6 @@ button.form-control {
             font-size: $font-size-base;
             margin-right: 5px;
         }
-    }
-}
-
-.theme-line .sql-notebooks {
-    li.custom > a {
-        color: $brand-info;
-        font-weight: bold;
-    }
-
-    li.custom > a:hover {
-        color: darken($brand-info, 15%);
     }
 }
 
