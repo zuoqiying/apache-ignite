@@ -48,6 +48,7 @@ export default () => {
     const assetsLoader = development ? 'url-loader' : 'file-loader';
 
     return {
+        cache: true,
         node: {
             fs: 'empty'
         },
@@ -102,11 +103,6 @@ export default () => {
                         'html-loader?attrs[]=img:src&attrs[]=img:data-src',
                         'jade-html-loader'
                     ]
-                },
-                {
-                    test: /\.js$/,
-                    exclude: [node_modules_path],
-                    loaders: ['ng-annotate-loader']
                 },
                 {
                     test: /\.js$/,

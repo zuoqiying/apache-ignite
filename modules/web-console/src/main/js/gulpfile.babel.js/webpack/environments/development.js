@@ -60,7 +60,7 @@ export default () => {
             },
             watchOptions: {
                 aggregateTimeout: 1000,
-                poll: 1000
+                poll: 2000
             },
             stats: {colors: true},
             port: 9000
