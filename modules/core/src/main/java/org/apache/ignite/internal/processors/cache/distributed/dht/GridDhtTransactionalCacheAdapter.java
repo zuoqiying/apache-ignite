@@ -74,6 +74,7 @@ import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.transactions.TransactionIsolation;
 import org.jetbrains.annotations.Nullable;
 
@@ -618,6 +619,10 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
         assert nodeId != null;
         assert req != null;
 
+        final boolean isStatisticsEnabled = ctx.config().isStatisticsEnabled();
+
+        final long start = isStatisticsEnabled ? System.nanoTime() : 0L;
+
         if (txLockMsgLog.isDebugEnabled()) {
             txLockMsgLog.debug("Received near lock request [txId=" + req.version() +
                 ", inTx=" + req.inTx() +
@@ -638,8 +643,15 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
 
         // Register listener just so we print out errors.
         // Exclude lock timeout exception since it's not a fatal exception.
-        f.listen(CU.errorLogger(log, GridCacheLockTimeoutException.class,
-            GridDistributedLockCancelledException.class));
+        f.listen(new IgniteInClosure<IgniteInternalFuture<?>>() {
+            @Override public void apply(IgniteInternalFuture<?> future) {
+                CU.errorLogger(log, GridCacheLockTimeoutException.class,
+                    GridDistributedLockCancelledException.class).apply(future);
+
+                if (isStatisticsEnabled)
+                    ctx.cache().metrics0().addGetTimeNanos(System.nanoTime() - start);
+            }
+        });
     }
 
     /**

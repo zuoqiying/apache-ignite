@@ -29,6 +29,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
 import javax.cache.expiry.ExpiryPolicy;
 import org.apache.ignite.IgniteCheckedException;
@@ -37,6 +38,7 @@ import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.NodeStoppingException;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.CacheMetricsImpl;
 import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.CacheOperationContext;
 import org.apache.ignite.internal.processors.cache.CachePeekModes;
@@ -49,6 +51,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheEntryInfo;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryRemovedException;
 import org.apache.ignite.internal.processors.cache.GridCacheMapEntry;
 import org.apache.ignite.internal.processors.cache.GridCacheMapEntryFactory;
+import org.apache.ignite.internal.processors.cache.GridCacheOperation;
 import org.apache.ignite.internal.processors.cache.GridCachePreloader;
 import org.apache.ignite.internal.processors.cache.IgniteCacheExpiryPolicy;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
@@ -728,6 +731,10 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
      * @param req Get request.
      */
     protected void processNearSingleGetRequest(final UUID nodeId, final GridNearSingleGetRequest req) {
+        final boolean isStatisticsEnabled = ctx.config().isStatisticsEnabled();
+
+        final long start = isStatisticsEnabled ? System.nanoTime() : 0L;
+
         assert ctx.affinityNode();
 
         long ttl = req.accessTtl();
@@ -823,6 +830,9 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
                 }
 
                 sendTtlUpdateRequest(expiryPlc);
+
+                if (isStatisticsEnabled)
+                    ctx.cache().metrics0().addGetTimeNanos(System.nanoTime() - start);
             }
         });
     }
@@ -832,6 +842,10 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
      * @param req Get request.
      */
     protected void processNearGetRequest(final UUID nodeId, final GridNearGetRequest req) {
+        final boolean isStatisticsEnabled = ctx.config().isStatisticsEnabled();
+
+        final long start = isStatisticsEnabled ? System.nanoTime() : 0L;
+
         assert ctx.affinityNode();
         assert !req.reload() : req;
 
@@ -889,6 +903,9 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
                 }
 
                 sendTtlUpdateRequest(expiryPlc);
+
+                if (isStatisticsEnabled)
+                    ctx.cache().metrics0().addGetTimeNanos(System.nanoTime() - start);
             }
         });
     }

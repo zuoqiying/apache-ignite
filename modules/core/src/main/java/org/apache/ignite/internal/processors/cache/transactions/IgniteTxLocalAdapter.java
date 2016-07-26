@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -149,6 +150,9 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter
 
     /** Flag indicating whether deployment is enabled for caches from this transaction or not. */
     private boolean depEnabled;
+
+    /** Start transaction time in nanoseconds. */
+    private long txStart = System.nanoTime();
 
     /** */
     @GridToStringInclude
@@ -1002,6 +1006,34 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter
                 assert !needsCompletedVersions || completedBase != null;
                 assert !needsCompletedVersions || committedVers != null;
                 assert !needsCompletedVersions || rolledbackVers != null;
+            }
+        }
+
+        updateOperationMetric(commitEntries);
+    }
+
+    /**
+     * Update duration metric of operation remove and put.
+     */
+    private void updateOperationMetric(Collection<IgniteTxEntry> commitEntries) {
+        Map<Integer, Boolean> cachePuts = new HashMap<>();
+        Map<Integer, Boolean> cacheRmvs = new HashMap<>();
+
+        for (IgniteTxEntry entry: commitEntries) {
+            GridCacheContext cacheCtx = cctx.cacheContext(entry.cacheId());
+
+            if (cacheCtx.config().isStatisticsEnabled()) {
+                if (cachePuts.get(entry.cacheId()) == null || !cachePuts.get(entry.cacheId())) {
+                    cacheCtx.cache().metrics0().addPutTimeNanos(System.nanoTime() - txStart);
+
+                    cachePuts.put(entry.cacheId(), true);
+                }
+
+                if (cacheRmvs.get(entry.cacheId()) == null || !cacheRmvs.get(entry.cacheId())) {
+                    cacheCtx.cache().metrics0().addRemoveTimeNanos(System.nanoTime() - txStart);
+
+                    cacheRmvs.put(entry.cacheId(), true);
+                }
             }
         }
     }

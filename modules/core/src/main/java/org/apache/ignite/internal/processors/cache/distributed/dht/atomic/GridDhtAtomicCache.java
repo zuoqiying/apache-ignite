@@ -1319,6 +1319,10 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         final GridNearAtomicUpdateRequest req,
         final CI2<GridNearAtomicUpdateRequest, GridNearAtomicUpdateResponse> completionCb
     ) {
+        final boolean isStatisticsEnabled = ctx.config().isStatisticsEnabled();
+
+        final long start = isStatisticsEnabled ? System.nanoTime() : 0L;
+
         IgniteInternalFuture<Object> forceFut = preldr.request(req.keys(), req.topologyVersion());
 
         if (forceFut.isDone()) {
@@ -1335,6 +1339,9 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             }
 
             updateAllAsyncInternal0(nodeId, req, completionCb);
+
+            if (isStatisticsEnabled)
+                updateDurationStatistic(ctx.cache().metrics0(), req.operation(), System.nanoTime() - start, req.returnValue());
         }
         else {
             forceFut.listen(new CI1<IgniteInternalFuture<Object>>() {
@@ -1352,8 +1359,42 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     }
 
                     updateAllAsyncInternal0(nodeId, req, completionCb);
+
+                    if (isStatisticsEnabled)
+                        updateDurationStatistic(ctx.cache().metrics0(), req.operation(), System.nanoTime() - start,
+                            req.returnValue());
                 }
             });
+        }
+    }
+
+    /**
+     * Update statistic by operation.
+     * @param cacheMetrics Cache metric.
+     * @param operation Operation.
+     * @param duration Duration.
+     */
+    private void updateDurationStatistic(CacheMetricsImpl cacheMetrics, GridCacheOperation operation, long duration,
+        boolean returnValue) {
+        switch (operation) {
+            case READ:
+                cacheMetrics.addGetTimeNanos(duration);
+
+                break;
+            case UPDATE:
+                cacheMetrics.addPutTimeNanos(duration);
+
+                if (returnValue)
+                    cacheMetrics.addGetTimeNanos(duration);
+
+                break;
+            case DELETE:
+                cacheMetrics.addRemoveTimeNanos(duration);
+
+                if (returnValue)
+                    cacheMetrics.addGetTimeNanos(duration);
+
+                break;
         }
     }
 
