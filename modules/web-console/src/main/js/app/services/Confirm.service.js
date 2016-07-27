@@ -18,10 +18,11 @@
 // Confirm popup service.
 export default ['IgniteConfirm', ['$rootScope', '$q', '$modal', '$animate', ($root, $q, $modal, $animate) => {
     const scope = $root.$new();
-
-    const modal = $modal({templateUrl: '/templates/confirm.html', scope, placement: 'center', show: false});
-
     let deferred;
+
+    const onHideHandler = () => scope.result === true ? deferred.resolve(scope.result) : deferred.reject(scope.result);
+
+    const modal = $modal({templateUrl: '/templates/confirm.html', scope, placement: 'center', show: false, backdrop: true, onHide: onHideHandler});
 
     const _hide = (animate) => {
         $animate.enabled(modal.$element, animate);
@@ -32,19 +33,19 @@ export default ['IgniteConfirm', ['$rootScope', '$q', '$modal', '$animate', ($ro
     scope.confirmYes = () => {
         _hide(scope.animate);
 
-        deferred.resolve(true);
+        scope.result = true;
     };
 
     scope.confirmNo = () => {
         _hide(scope.animate);
 
-        deferred.resolve(false);
+        scope.result = false;
     };
 
     scope.confirmCancel = () => {
-        _hide(true);
+        _hide(scope.animate);
 
-        deferred.reject('cancelled');
+        scope.result = 'cancelled';
     };
 
     /**
