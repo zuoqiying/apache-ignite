@@ -17,8 +17,8 @@
 
 // Controller for Clusters screen.
 export default ['clustersController', [
-    '$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteEventGroups', 'DemoInfo', 'IgniteLegacyTable',
-    function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable) {
+    '$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteEventGroups', 'DemoInfo', 'IgniteLegacyTable', 'igniteConfigurationResource',
+    function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable, Resource) {
         UnsavedChangesGuard.install($scope);
 
         const emptyCluster = {empty: true};
@@ -194,12 +194,13 @@ export default ['clustersController', [
         Loading.start('loadingClustersScreen');
 
         // When landing on the page, get clusters and show them.
-        $http.get('/api/v1/configuration/list')
-            .success(function(data) {
-                $scope.spaces = data.spaces;
-                $scope.clusters = data.clusters;
-                $scope.caches = _.map(data.caches, (cache) => ({value: cache._id, label: cache.name, cache}));
-                $scope.igfss = _.map(data.igfss, (igfs) => ({value: igfs._id, label: igfs.name, igfs}));
+        Resource.read()
+            .then(({spaces, clusters, caches, igfss}) => {
+                $scope.spaces = spaces;
+                $scope.clusters = clusters;
+
+                $scope.caches = _.map(caches, (cache) => ({value: cache._id, label: cache.name, cache}));
+                $scope.igfss = _.map(igfss, (igfs) => ({value: igfs._id, label: igfs.name, igfs}));
 
                 _.forEach($scope.clusters, (cluster) => {
                     cluster.label = _clusterLbl(cluster);
@@ -255,9 +256,10 @@ export default ['clustersController', [
                 }
             })
             .catch(Messages.showError)
-            .finally(function() {
+            .then(() => {
                 $scope.ui.ready = true;
                 $scope.ui.inputForm.$setPristine();
+
                 Loading.finish('loadingClustersScreen');
             });
 

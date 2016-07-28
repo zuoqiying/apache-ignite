@@ -17,8 +17,8 @@
 
 // Controller for Domain model screen.
 export default ['domainsController', [
-    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable',
-    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable) {
+    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource',
+    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource) {
         UnsavedChangesGuard.install($scope);
 
         const emptyDomain = {empty: true};
@@ -1071,21 +1071,17 @@ export default ['domainsController', [
         // When landing on the page, get domain models and show them.
         Loading.start('loadingDomainModelsScreen');
 
-        $http.get('/api/v1/configuration/list')
-            .success(function(data) {
-                $scope.spaces = data.spaces;
-                $scope.clusters = _.map(data.clusters, function(cluster) {
-                    return {
-                        value: cluster._id,
-                        label: cluster.name
-                    };
-                });
-                $scope.caches = _mapCaches(data.caches);
-                $scope.domains = _.sortBy(data.domains, 'valueType');
+        Resource.read()
+            .then(({spaces, clusters, caches, domains}) => {
+                $scope.spaces = spaces;
+                $scope.clusters = _.map(clusters, (cluster) => ({
+                    label: cluster.name,
+                    value: cluster._id
+                }));
+                $scope.caches = _mapCaches(caches);
+                $scope.domains = _.sortBy(domains, 'valueType');
 
-                _.forEach($scope.clusters, function(cluster) {
-                    $scope.ui.generatedCachesClusters.push(cluster.value);
-                });
+                _.forEach($scope.clusters, (cluster) => $scope.ui.generatedCachesClusters.push(cluster.value));
 
                 if (!_.isEmpty($scope.caches)) {
                     $scope.importActions.push({

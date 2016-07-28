@@ -25,24 +25,77 @@ module.exports = {
 };
 
 module.exports.factory = (_, mongo, spaceService, errors) => {
+    /**
+     * Convert remove status operation to own presentation.
+     * @param {RemoveResult} result - The results of remove operation.
+     */
+    const convertRemoveStatus = ({result}) => ({rowsAffected: result.n});
+
+    /**
+     * Update existing IGFS
+     * @param {Object} igfs - The IGFS for updating
+     * @returns {Promise.<mongo.ObjectId>} that resolves IGFS id
+     */
+    const update = (igfs) => {
+        const igfsId = igfs._id;
+
+        return mongo.Igfs.update({_id: igfsId}, igfs, {upsert: true}).exec()
+            .then(() => mongo.Cluster.update({_id: {$in: igfs.clusters}}, {$addToSet: {igfss: igfsId}}, {multi: true}).exec())
+            .then(() => mongo.Cluster.update({_id: {$nin: igfs.clusters}}, {$pull: {igfss: igfsId}}, {multi: true}).exec())
+            .then(() => igfs)
+            .catch((err) => {
+                if (err.code === mongo.errCodes.DUPLICATE_KEY_UPDATE_ERROR || err.code === mongo.errCodes.DUPLICATE_KEY_ERROR)
+                    throw new errors.DuplicateKeyException('IGFS with name: "' + igfs.name + '" already exist.');
+            });
+    };
+
+    /**
+     * Create new IGFS.
+     * @param {Object} igfs - The IGFS for creation.
+     * @returns {Promise.<mongo.ObjectId>} that resolves IGFS id.
+     */
+    const create = (igfs) => {
+        return mongo.Igfs.create(igfs)
+            .then((savedIgfs) =>
+                mongo.Cluster.update({_id: {$in: savedIgfs.clusters}}, {$addToSet: {igfss: savedIgfs._id}}, {multi: true}).exec()
+                    .then(() => savedIgfs)
+            )
+            .catch((err) => {
+                if (err.code === mongo.errCodes.DUPLICATE_KEY_ERROR)
+                    throw new errors.DuplicateKeyException('IGFS with name: "' + igfs.name + '" already exist.');
+            });
+    };
+
+    /**
+     * Remove all IGFSs by space ids.
+     * @param {Number[]} spaceIds - The space ids for IGFS deletion.
+     * @returns {Promise.<RemoveResult>} - that resolves results of remove operation.
+     */
+    const removeAllBySpaces = (spaceIds) => {
+        return mongo.Cluster.update({space: {$in: spaceIds}}, {igfss: []}, {multi: true}).exec()
+            .then(() => mongo.Igfs.remove({space: {$in: spaceIds}}).exec());
+    };
+
     class IgfsService {
         /**
          * Create or update IGFS.
-         * @param {Object} IGFS - The IGFS
+         * @param {Object} igfs - The IGFS
          * @returns {Promise.<mongo.ObjectId>} that resolves IGFS id of merge operation.
          */
         static merge(igfs) {
+            if (igfs._id)
+                return update(igfs);
 
+            return create(igfs);
         }
 
         /**
-         * Get IGFS and linked objects by user.
-         * @param {mongo.ObjectId|String} userId - The user id that own IGFS.
-         * @param {Boolean} demo - The flag indicates that need lookup in demo space.
-         * @returns {Promise.<[mongo.Cache[], mongo.Cluster[], mongo.DomainModel[], mongo.Space[]]>} - contains requested caches and array of linked objects: clusters, domains, spaces.
+         * Get IGFS by spaces.
+         * @param {mongo.ObjectId|String} spacesIds - The spaces ids that own IGFSs.
+         * @returns {Promise.<mongo.IGFS[]>} - contains requested IGFSs.
          */
-        static listByUser(userId, demo) {
-
+        static listBySpaces(spacesIds) {
+            return mongo.Igfs.find({space: {$in: spacesIds}}).sort('name').lean().exec();
         }
 
         /**
@@ -51,7 +104,12 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
          * @returns {Promise.<{rowsAffected}>} - The number of affected rows.
          */
         static remove(igfsId) {
+            if (_.isNil(igfsId))
+                return Promise.reject(new errors.IllegalArgumentException('IGFS id can not be undefined or null'));
 
+            return mongo.Cluster.update({igfss: {$in: [igfsId]}}, {$pull: {igfss: igfsId}}, {multi: true}).exec()
+                .then(() => mongo.Igfs.remove({_id: igfsId}).exec())
+                .then(convertRemoveStatus);
         }
 
         /**
@@ -61,7 +119,9 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
          * @returns {Promise.<{rowsAffected}>} - The number of affected rows.
          */
         static removeAll(userId, demo) {
-
+            return spaceService.spaceIds(userId, demo)
+                .then(removeAllBySpaces)
+                .then(convertRemoveStatus);
         }
     }
 

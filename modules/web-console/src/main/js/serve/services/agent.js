@@ -21,18 +21,50 @@
 
 module.exports = {
     implements: 'services/agent',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
+    inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'settings', 'agent-manager', 'errors']
 };
 
-module.exports.factory = (_, mongo, spaceService, errors) => {
+module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
     class AgentService {
-
         /**
          * Get agent archive with user agent configuration.
-         * @returns {stream.Readable} - readable stream for further piping. (http://stuk.github.io/jszip/documentation/api_jszip/generate_node_stream.html)
+         * @returns {*} - readable stream for further piping. (http://stuk.github.io/jszip/documentation/api_jszip/generate_node_stream.html)
          */
-        static getArchive(token, serverUrl) {
+        static getArchive(host, token) {
+            const latest = agentMgr.supportedAgents.latest;
 
+            if (_.isEmpty(latest))
+                throw new errors.NotFoundException('Missing agent zip on server. Please ask webmaster to upload agent zip!');
+
+            const filePath = latest.filePath;
+            const fileName = latest.fileName;
+
+            const folder = path.basename(latest.fileName, '.zip');
+
+            // Read a zip file.
+            return new Promise((resolve, reject) => {
+                fs.readFile(filePath, (errFs, data) => {
+                    if (errFs)
+                        reject(new errors.ServerErrorException(errFs));
+
+                    JSZip.loadAsync(data)
+                        .then((zip) => {
+                            const prop = [];
+
+                            prop.push('tokens=' + token);
+                            prop.push('server-uri=' + (settings.agent.SSLOptions ? 'https' : 'http') + '://' + host + ':' + settings.agent.port);
+                            prop.push('#Uncomment following options if needed:');
+                            prop.push('#node-uri=http://localhost:8080');
+                            prop.push('#driver-folder=./jdbc-drivers');
+
+                            zip.file(folder + '/default.properties', prop.join('\n'));
+
+                            return zip.generateAsync({type: 'nodebuffer', platform: 'UNIX'})
+                                .then((buffer) => resolve({filePath, fileName, buffer}));
+                        })
+                        .catch(reject);
+                });
+            });
         }
     }
 

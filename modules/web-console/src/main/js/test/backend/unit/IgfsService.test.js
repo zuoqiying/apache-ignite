@@ -18,14 +18,14 @@
 
 import {assert} from 'chai';
 import injector from '../injector';
-import testCaches from '../data/caches.json';
+import testIgfss from '../data/igfss.json';
 import testAccounts from '../data/accounts.json';
 
-let cacheService;
+let igfsService;
 let mongo;
 let errors;
 
-suite('CacheServiceTestsSuite', () => {
+suite('IgfsServiceTestsSuite', () => {
     const prepareUserSpaces = () => {
         return mongo.Account.create(testAccounts)
             .then((accounts) => {
@@ -39,59 +39,59 @@ suite('CacheServiceTestsSuite', () => {
     };
 
     suiteSetup(() => {
-        return Promise.all([injector('services/cache'),
+        return Promise.all([injector('services/igfs'),
             injector('mongo'),
             injector('errors')])
-            .then(([_cacheService, _mongo, _errors]) => {
+            .then(([_igfsService, _mongo, _errors]) => {
                 mongo = _mongo;
-                cacheService = _cacheService;
+                igfsService = _igfsService;
                 errors = _errors;
             });
     });
 
     setup(() => {
         return Promise.all([
-            mongo.Cache.remove().exec(),
+            mongo.Igfs.remove().exec(),
             mongo.Account.remove().exec(),
             mongo.Space.remove().exec()
         ]);
     });
 
-    test('Create new cache', (done) => {
-        cacheService.merge(testCaches[0])
-            .then((cache) => {
-                assert.isNotNull(cache._id);
+    test('Create new igfs', (done) => {
+        igfsService.merge(testIgfss[0])
+            .then((igfs) => {
+                assert.isNotNull(igfs._id);
 
-                return cache._id;
+                return igfs._id;
             })
-            .then((cacheId) => mongo.Cache.findById(cacheId))
-            .then((cache) => {
-                assert.isNotNull(cache);
+            .then((igfsId) => mongo.Igfs.findById(igfsId))
+            .then((igfs) => {
+                assert.isNotNull(igfs);
             })
             .then(done)
             .catch(done);
     });
 
-    test('Update existed cache', (done) => {
+    test('Update existed igfs', (done) => {
         const newName = 'NewUniqueName';
 
-        cacheService.merge(testCaches[0])
-            .then((cache) => {
-                const cacheBeforeMerge = {...testCaches[0], _id: cache._id, name: newName};
+        igfsService.merge(testIgfss[0])
+            .then((existIgfs) => {
+                const igfsBeforeMerge = {...testIgfss[0], _id: existIgfs._id, name: newName};
 
-                return cacheService.merge(cacheBeforeMerge);
+                return igfsService.merge(igfsBeforeMerge);
             })
-            .then((cache) => mongo.Cache.findById(cache._id))
-            .then((cacheAfterMerge) => {
-                assert.equal(cacheAfterMerge.name, newName);
+            .then((igfs) => mongo.Igfs.findById(igfs._id))
+            .then((igfsAfterMerge) => {
+                assert.equal(igfsAfterMerge.name, newName);
             })
             .then(done)
             .catch(done);
     });
 
-    test('Create duplicated cache', (done) => {
-        cacheService.merge(testCaches[0])
-            .then(() => cacheService.merge(testCaches[0]))
+    test('Create duplicated igfs', (done) => {
+        igfsService.merge(testIgfss[0])
+            .then(() => igfsService.merge(testIgfss[0]))
             .catch((err) => {
                 assert.instanceOf(err, errors.DuplicateKeyException);
 
@@ -99,27 +99,26 @@ suite('CacheServiceTestsSuite', () => {
             });
     });
 
-    test('Remove existed cache', (done) => {
-        cacheService.merge(testCaches[0])
-            .then((cache) => {
-                return mongo.Cache.findById(cache._id)
-                    .then((cache) => cache._id)
-                    .then(cacheService.remove)
+    test('Remove existed igfs', (done) => {
+        igfsService.merge(testIgfss[0])
+            .then((existIgfs) => {
+                return mongo.Igfs.findById(existIgfs._id)
+                    .then((foundIgfs) => igfsService.remove(foundIgfs._id))
                     .then(({rowsAffected}) => {
                         assert.equal(rowsAffected, 1);
                     })
-                    .then(() => mongo.Cache.findById(cache._id))
-                    .then((notFoundCache) => {
-                        assert.isNull(notFoundCache);
+                    .then(() => mongo.Igfs.findById(existIgfs._id))
+                    .then((notFoundIgfs) => {
+                        assert.isNull(notFoundIgfs);
                     });
             })
             .then(done)
             .catch(done);
     });
 
-    test('Remove cache without identifier', (done) => {
-        cacheService.merge(testCaches[0])
-            .then(() => cacheService.remove())
+    test('Remove igfs without identifier', (done) => {
+        igfsService.merge(testIgfss[0])
+            .then(() => igfsService.remove())
             .catch((err) => {
                 assert.instanceOf(err, errors.IllegalArgumentException);
 
@@ -127,11 +126,11 @@ suite('CacheServiceTestsSuite', () => {
             });
     });
 
-    test('Remove missed cache', (done) => {
+    test('Remove missed igfs', (done) => {
         const validNoExistingId = 'FFFFFFFFFFFFFFFFFFFFFFFF';
 
-        cacheService.merge(testCaches[0])
-            .then(() => cacheService.remove(validNoExistingId))
+        igfsService.merge(testIgfss[0])
+            .then(() => igfsService.remove(validNoExistingId))
             .then(({rowsAffected}) => {
                 assert.equal(rowsAffected, 0);
             })
@@ -139,14 +138,14 @@ suite('CacheServiceTestsSuite', () => {
             .catch(done);
     });
 
-    test('Remove all caches in space', (done) => {
+    test('Remove all igfss in space', (done) => {
         prepareUserSpaces()
             .then(([accounts, spaces]) => {
                 const currentUser = accounts[0];
-                const userCache = {...testCaches[0], space: spaces[0][0]._id};
+                const userIgfs = {...testIgfss[0], space: spaces[0][0]._id};
 
-                return cacheService.merge(userCache)
-                    .then(() => cacheService.removeAll(currentUser._id, false));
+                return igfsService.merge(userIgfs)
+                    .then(() => igfsService.removeAll(currentUser._id, false));
             })
             .then(({rowsAffected}) => {
                 assert.equal(rowsAffected, 1);
@@ -155,17 +154,17 @@ suite('CacheServiceTestsSuite', () => {
             .catch(done);
     });
 
-    test('Get all caches by space', (done) => {
+    test('Get all igfss by space', (done) => {
         prepareUserSpaces()
             .then(([accounts, spaces]) => {
-                const userCache = {...testCaches[0], space: spaces[0][0]._id};
+                const userIgfs = {...testIgfss[0], space: spaces[0][0]._id};
 
-                return cacheService.merge(userCache)
-                    .then((cache) => {
-                        return cacheService.listBySpaces(spaces[0][0]._id)
-                            .then((caches) => {
-                                assert.equal(caches.length, 1);
-                                assert.equal(caches[0]._id.toString(), cache._id.toString());
+                return igfsService.merge(userIgfs)
+                    .then((existIgfs) => {
+                        return igfsService.listBySpaces(spaces[0][0]._id)
+                            .then((igfss) => {
+                                assert.equal(igfss.length, 1);
+                                assert.equal(igfss[0]._id.toString(), existIgfs._id.toString());
                             });
                     });
             })
@@ -173,17 +172,17 @@ suite('CacheServiceTestsSuite', () => {
             .catch(done);
     });
 
-    test('Update linked entities on update cache', (done) => {
+    test('Update linked entities on update igfs', (done) => {
         // TODO IGNITE-3262 Add test.
         done();
     });
 
-    test('Update linked entities on remove cache', (done) => {
+    test('Update linked entities on remove igfs', (done) => {
         // TODO IGNITE-3262 Add test.
         done();
     });
 
-    test('Update linked entities on remove all caches in space', (done) => {
+    test('Update linked entities on remove all igfss in space', (done) => {
         // TODO IGNITE-3262 Add test.
         done();
     });

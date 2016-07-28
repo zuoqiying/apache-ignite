@@ -17,8 +17,8 @@
 
 // Controller for Caches screen.
 export default ['cachesController', [
-    '$scope', '$http', '$state', '$filter', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard',
-    function($scope, $http, $state, $filter, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard) {
+    '$scope', '$http', '$state', '$filter', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteConfigurationResource',
+    function($scope, $http, $state, $filter, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, Resource) {
         UnsavedChangesGuard.install($scope);
 
         const emptyCache = {empty: true};
@@ -80,31 +80,27 @@ export default ['cachesController', [
         Loading.start('loadingCachesScreen');
 
         // When landing on the page, get caches and show them.
-        $http.get('/api/v1/configuration/list')
-            .success(function(data) {
+        Resource.read()
+            .then(({spaces, clusters, caches, domains}) => {
                 const validFilter = $filter('domainsValidation');
 
-                $scope.spaces = data.spaces;
-                $scope.caches = data.caches;
+                $scope.spaces = spaces;
+                $scope.caches = caches;
 
                 _.forEach($scope.caches, (cache) => cache.label = _cacheLbl(cache));
 
-                $scope.clusters = _.map(data.clusters, function(cluster) {
-                    return {
-                        value: cluster._id,
-                        label: cluster.name,
-                        caches: cluster.caches
-                    };
-                });
+                $scope.clusters = _.map(clusters, (cluster) => ({
+                    label: cluster.name,
+                    value: cluster._id,
+                    caches: cluster.caches
+                }));
 
-                $scope.domains = _.sortBy(_.map(validFilter(data.domains, true, false), function(domain) {
-                    return {
-                        value: domain._id,
-                        label: domain.valueType,
-                        kind: domain.kind,
-                        meta: domain
-                    };
-                }), 'label');
+                $scope.domains = _.sortBy(_.map(validFilter(domains, true, false), (domain) => ({
+                    label: domain.valueType,
+                    value: domain._id,
+                    kind: domain.kind,
+                    meta: domain
+                })), 'label');
 
                 if ($state.params.linkId)
                     $scope.createItem($state.params.linkId);

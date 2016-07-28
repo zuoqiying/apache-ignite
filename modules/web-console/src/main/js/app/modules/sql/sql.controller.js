@@ -82,6 +82,33 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         // Row index X axis descriptor.
         const ROW_IDX = {value: -2, type: 'java.lang.Integer', label: 'ROW_IDX'};
 
+        const EXTENDED_PARAGRAPH = {
+            table() {
+                return this.result === 'table';
+            },
+            chart() {
+                return this.result !== 'table' && this.result !== 'none';
+            },
+            nonEmpty() {
+                return this.rows && this.rows.length > 0;
+            },
+            queryExecuted() {
+                return this.queryArgs && this.queryArgs.query && !this.queryArgs.query.startsWith('EXPLAIN ');
+            },
+            refreshExecuting() {
+                return this.rate && this.rate.stopTime;
+            },
+            timeLineSupported() {
+                return this.result !== 'pie';
+            },
+            chartColumnsConfigured() {
+                return !_.isEmpty(this.chartKeyCols) && !_.isEmpty(this.chartValCols);
+            },
+            chartTimeLineEnabled() {
+                return !_.isEmpty(this.chartKeyCols) && _.eq(this.chartKeyCols[0], TIME_LINE);
+            }
+        };
+
         // We need max 1800 items to hold history for 30 mins in case of refresh every second.
         const HISTORY_LENGTH = 1800;
 
@@ -641,36 +668,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         function enhanceParagraph(paragraph) {
-            paragraph.nonEmpty = function() {
-                return this.rows && this.rows.length > 0;
-            };
-
-            paragraph.chart = function() {
-                return this.result !== 'table' && this.result !== 'none';
-            };
-
-            paragraph.queryExecuted = () =>
-                paragraph.queryArgs && paragraph.queryArgs.query && !paragraph.queryArgs.query.startsWith('EXPLAIN ');
-
-            paragraph.table = function() {
-                return this.result === 'table';
-            };
-
-            paragraph.chartColumnsConfigured = function() {
-                return !_.isEmpty(this.chartKeyCols) && !_.isEmpty(this.chartValCols);
-            };
-
-            paragraph.chartTimeLineEnabled = function() {
-                return !_.isEmpty(this.chartKeyCols) && angular.equals(this.chartKeyCols[0], TIME_LINE);
-            };
-
-            paragraph.timeLineSupported = function() {
-                return this.result !== 'pie';
-            };
-
-            paragraph.refreshExecuting = function() {
-                return paragraph.rate && paragraph.rate.stopTime;
-            };
+            Object.assign(paragraph, EXTENDED_PARAGRAPH);
 
             Object.defineProperty(paragraph, 'gridOptions', { value: {
                 enableGridMenu: false,

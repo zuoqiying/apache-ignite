@@ -32,14 +32,17 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
          * @param {mongo.ObjectId|String} viewedUserId - id of user to become.
          */
         static become(session, viewedUserId) {
-
+            return mongo.Account.findById(viewedUserId).exec()
+                .then((viewedUser) => {
+                    session.viewedUser = viewedUser;
+                });
         }
 
         /**
          * Revert to your identity.
          */
         static revert(session) {
-
+            session.viewedUser = null;
         }
     }
 

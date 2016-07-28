@@ -21,10 +21,21 @@
 
 module.exports = {
     implements: 'admin-routes',
-    inject: ['require(lodash)', 'require(express)', 'settings', 'mail', 'mongo', 'services/space']
+    inject: ['require(lodash)', 'require(express)', 'settings', 'mongo', 'services/space', 'services/mail', 'services/session', 'services/user']
 };
 
-module.exports.factory = function(_, express, settings, mail, mongo, spaceService) {
+/**
+ * @param _
+ * @param express
+ * @param settings
+ * @param mongo
+ * @param spaceService
+ * @param mailService
+ * @param sessionService
+ * @param {UserService} userService
+ * @returns {Promise}
+ */
+module.exports.factory = function(_, express, settings, mongo, spaceService, mailService, sessionService, userService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -32,65 +43,16 @@ module.exports.factory = function(_, express, settings, mail, mongo, spaceServic
          * Get list of user accounts.
          */
         router.post('/list', (req, res) => {
-
-            Promise.all([
-                mongo.Space.aggregate([
-                    {$match: {demo: false}},
-                    {$lookup: {from: 'clusters', localField: '_id', foreignField: 'space', as: 'clusters'}},
-                    {$lookup: {from: 'caches', localField: '_id', foreignField: 'space', as: 'caches'}},
-                    {$lookup: {from: 'domainmodels', localField: '_id', foreignField: 'space', as: 'domainmodels'}},
-                    {$lookup: {from: 'igfs', localField: '_id', foreignField: 'space', as: 'igfs'}},
-                    {$project: {
-                        owner: 1,
-                        clusters: {$size: '$clusters'},
-                        models: {$size: '$domainmodels'},
-                        caches: {$size: '$caches'},
-                        igfs: {$size: '$igfs'}
-                    }}
-                ]).exec(),
-                mongo.Account.find({}).sort('firstName lastName').lean().exec()
-            ])
-            .then((values) => {
-                const counters = _.keyBy(values[0], 'owner');
-                const accounts = values[1];
-
-                return accounts.map((account) => {
-                    account.counters = _.omit(counters[account._id], '_id', 'owner');
-
-                    return account;
-                });
-            })
-            .then((users) => res.json(users))
-            .catch((err) => mongo.handleError(res, err));
+            userService.list()
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         // Remove user.
         router.post('/remove', (req, res) => {
-            const userId = req.body.userId;
-
-            mongo.Account.findByIdAndRemove(userId).exec()
-                .then((user) => {
-                    res.sendStatus(200);
-
-                    return spaceService.spaceIds(userId)
-                        .then((spaceIds) => Promise.all([
-                            mongo.Cluster.remove({space: {$in: spaceIds}}).exec(),
-                            mongo.Cache.remove({space: {$in: spaceIds}}).exec(),
-                            mongo.DomainModel.remove({space: {$in: spaceIds}}).exec(),
-                            mongo.Igfs.remove({space: {$in: spaceIds}}).exec(),
-                            mongo.Notebook.remove({space: {$in: spaceIds}}).exec(),
-                            mongo.Space.remove({owner: userId}).exec()
-                        ]))
-                        .then(() => user)
-                        .catch((err) => console.error(`Failed to cleanup spaces [user=${user.username}, err=${err}`));
-                })
-                .then((user) =>
-                    mail.send(user, 'Your account was deleted',
-                        `Hello ${user.firstName} ${user.lastName}!<br><br>` +
-                        `You are receiving this email because your account for <a href="http://${req.headers.host}">${settings.smtp.username}</a> was removed.`,
-                        'Account was removed, but failed to send email notification to user!')
-                )
-                .catch((err) => mongo.handleError(res, err));
+            userService.remove(req.headers.referer, req.body.userId)
+                .then(() => res.sendStatus(200))
+                .catch(res.api.error);
         });
 
         // Save user.
@@ -104,20 +66,16 @@ module.exports.factory = function(_, express, settings, mail, mongo, spaceServic
 
         // Become user.
         router.get('/become', (req, res) => {
-            mongo.Account.findById(req.query.viewedUserId).exec()
-                .then((viewedUser) => {
-                    req.session.viewedUser = viewedUser;
-
-                    res.sendStatus(200);
-                })
-                .catch(() => res.sendStatus(404));
+            sessionService.become(req.session, req.query.viewedUserId)
+                .then(() => res.sendStatus(200))
+                .catch(() => res.sendStatus(401));
         });
 
         // Revert to your identity.
         router.get('/revert/identity', (req, res) => {
-            req.session.viewedUser = null;
-
-            return res.sendStatus(200);
+            sessionService.become(req.session)
+                .then(() => res.sendStatus(200))
+                .catch(() => res.sendStatus(401));
         });
 
         factoryResolve(router);

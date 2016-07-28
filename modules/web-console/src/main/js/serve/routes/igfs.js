@@ -21,10 +21,10 @@
 
 module.exports = {
     implements: 'igfs-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/space']
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/igfs']
 };
 
-module.exports.factory = function(_, express, mongo, spaceService) {
+module.exports.factory = function(_, express, mongo, igfsService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -32,57 +32,31 @@ module.exports.factory = function(_, express, mongo, spaceService) {
          * Save IGFS.
          */
         router.post('/save', (req, res) => {
-            const params = req.body;
-            const clusters = params.clusters;
+            const igfs = req.body;
 
-            mongo.Igfs.findOne({space: params.space, name: params.name}).exec()
-                .then((_igfs) => {
-                    const igfsId = params._id;
-
-                    if (_igfs && igfsId !== _igfs._id.toString())
-                        return res.status(500).send('IGFS with name: "' + params.name + '" already exist.');
-
-                    if (params._id) {
-                        return mongo.Igfs.update({_id: igfsId}, params, {upsert: true}).exec()
-                            .then(() => mongo.Cluster.update({_id: {$in: clusters}}, {$addToSet: {igfss: igfsId}}, {multi: true}).exec())
-                            .then(() => mongo.Cluster.update({_id: {$nin: clusters}}, {$pull: {igfss: igfsId}}, {multi: true}).exec())
-                            .then(() => res.send(igfsId));
-                    }
-
-                    return (new mongo.Igfs(params)).save()
-                        .then((igfs) =>
-                            mongo.Cluster.update({_id: {$in: clusters}}, {$addToSet: {igfss: igfs._id}}, {multi: true}).exec()
-                                .then(() => res.send(igfs._id))
-                        );
-                })
-                .catch((err) => mongo.handleError(res, err));
+            igfsService.merge(igfs)
+                .then((savedIgfs) => res.api.ok(savedIgfs._id))
+                .catch(res.api.error);
         });
 
         /**
          * Remove IGFS by ._id.
          */
         router.post('/remove', (req, res) => {
-            const params = req.body;
-            const igfsId = params._id;
+            const igfs = req.body;
 
-            mongo.Cluster.update({igfss: {$in: [igfsId]}}, {$pull: {igfss: igfsId}}, {multi: true}).exec()
-                .then(() => mongo.Igfs.remove(params).exec())
-                .then(() => res.sendStatus(200))
-                .catch((err) => mongo.handleError(res, err));
+            igfsService.remove(igfs._id)
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         /**
          * Remove all IGFSs.
          */
         router.post('/remove/all', (req, res) => {
-            // Get owned space and all accessed space.
-            spaceService.spaceIds(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((spaceIds) =>
-                    mongo.Cluster.update({space: {$in: spaceIds}}, {igfss: []}, {multi: true}).exec()
-                        .then(() => mongo.Igfs.remove({space: {$in: spaceIds}}).exec())
-                )
-                .then(() => res.sendStatus(200))
-                .catch((err) => mongo.handleError(res, err));
+            igfsService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         factoryResolve(router);

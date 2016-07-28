@@ -64,7 +64,6 @@
     "jszip": "^3.0.0",
     "lodash": "^4.8.2",
     "mongoose": "^4.4.11",
-    "mongoose-deep-populate": "^3.0.0",
     "nconf": "^0.8.2",
     "nodemailer": "^2.3.0",
     "nvd3": "^1.8.3",

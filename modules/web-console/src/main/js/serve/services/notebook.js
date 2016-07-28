@@ -21,39 +21,66 @@
 
 module.exports = {
     implements: 'services/notebook',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
+    inject: ['require(lodash)',
+        'mongo',
+        'services/space',
+        'errors']
 };
 
 module.exports.factory = (_, mongo, spaceService, errors) => {
+    /**
+     * Convert remove status operation to own presentation.
+     * @param {RemoveResult} result - The results of remove operation.
+     */
+    const convertRemoveStatus = ({result}) => ({rowsAffected: result.n});
+
+    /**
+     * Update existing notebook
+     * @param {Object} notebook - The notebook for updating
+     * @returns {Promise.<mongo.ObjectId>} that resolves cache id
+     */
+    const update = (notebook) => {
+        return mongo.Notebook.update({_id: notebook._id}, notebook, {upsert: true}).exec()
+            .then(() => notebook)
+            .catch((err) => {
+                if (err.code === mongo.errCodes.DUPLICATE_KEY_UPDATE_ERROR || err.code === mongo.errCodes.DUPLICATE_KEY_ERROR)
+                    throw new errors.DuplicateKeyException('Notebook with name: "' + notebook.name + '" already exist.');
+            });
+    };
+
+    /**
+     * Create new notebook.
+     * @param {Object} notebook - The notebook for creation.
+     * @returns {Promise.<mongo.ObjectId>} that resolves cache id.
+     */
+    const create = (notebook) => {
+        return mongo.Notebook.create(notebook)
+            .catch((err) => {
+                if (err.code === mongo.errCodes.DUPLICATE_KEY_ERROR)
+                    throw new errors.DuplicateKeyException('Notebook with name: "' + notebook.name + '" already exist.');
+            });
+    };
+
     class NotebookService {
         /**
          * Create or update Notebook.
-         * @param {Object} Notebook - The Notebook
+         * @param {Object} notebook - The Notebook
          * @returns {Promise.<mongo.ObjectId>} that resolves Notebook id of merge operation.
          */
-        static merge(Notebook) {
+        static merge(notebook) {
+            if (notebook._id)
+                return update(notebook);
 
+            return create(notebook);
         }
 
         /**
-         * Get all Notebooks by user.
-         * @param {mongo.ObjectId|String} userId - The user id that own Notebook.
-         * @param {Boolean} demo - The flag indicates that need lookup in demo space.
-         * @returns {Promise.<mongo.Notebook[]>} - contains requested notebooks
+         * Get caches by spaces.
+         * @param {mongo.ObjectId|String} spaceIds - The spaces ids that own caches.
+         * @returns {Promise.<mongo.Cache[]>} - contains requested caches.
          */
-        static listByUser(userId) {
-
-        }
-
-        /**
-         * Get one Notebook.
-         * @param {mongo.ObjectId|String} userId - The user id that own Notebook.
-         * @param {mongo.ObjectId|String} notebookId - The notebook id .
-         * @param {Boolean} demo - The flag indicates that need lookup in demo space.
-         * @returns {Promise.<mongo.Notebook[]>} - contains requested notebooks
-         */
-        static findFirstByUser(userId, notebookId) {
-
+        static listBySpaces(spaceIds) {
+            return mongo.Notebook.find({space: {$in: spaceIds}}).sort('name').lean().exec();
         }
 
         /**
@@ -62,9 +89,12 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
          * @returns {Promise.<{rowsAffected}>} - The number of affected rows.
          */
         static remove(notebookId) {
+            if (_.isNil(notebookId))
+                return Promise.reject(new errors.IllegalArgumentException('Notebook id can not be undefined or null'));
 
+            return mongo.Notebook.remove({_id: notebookId}).exec()
+                .then(convertRemoveStatus);
         }
-
     }
 
     return NotebookService;

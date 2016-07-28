@@ -20,7 +20,7 @@ import JSZip from 'jszip';
 import saver from 'file-saver';
 
 export default [
-    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteLoading', '$filter', 'ConfigurationSummaryResource', 'JavaTypes', 'IgniteVersion', 'GeneratorDocker', 'GeneratorPom',
+    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteLoading', '$filter', 'igniteConfigurationResource', 'JavaTypes', 'IgniteVersion', 'GeneratorDocker', 'GeneratorPom',
     function($root, $scope, $http, LegacyUtils, Loading, $filter, Resource, JavaTypes, IgniteVersion, docker, pom) {
         const ctrl = this;
 
@@ -28,27 +28,29 @@ export default [
 
         Loading.start('summaryPage');
 
-        Resource.read().then(({clusters}) => {
-            $scope.clusters = clusters;
-            $scope.clustersMap = {};
-            $scope.clustersView = _.map(clusters, (item) => {
-                const { _id, name } = item;
+        Resource.read()
+            .then(Resource.populate)
+            .then(({clusters}) => {
+                $scope.clusters = clusters;
+                $scope.clustersMap = {};
+                $scope.clustersView = _.map(clusters, (item) => {
+                    const {_id, name} = item;
 
-                $scope.clustersMap[_id] = item;
+                    $scope.clustersMap[_id] = item;
 
-                return { _id, name };
+                    return {_id, name};
+                });
+
+                Loading.finish('summaryPage');
+
+                $scope.ui.ready = true;
+
+                if (!_.isEmpty(clusters)) {
+                    const idx = sessionStorage.summarySelectedId || 0;
+
+                    $scope.selectItem(clusters[idx]);
+                }
             });
-
-            Loading.finish('summaryPage');
-
-            $scope.ui.ready = true;
-
-            if (!_.isEmpty(clusters)) {
-                const idx = sessionStorage.summarySelectedId || 0;
-
-                $scope.selectItem(clusters[idx]);
-            }
-        });
 
         $scope.contentVisible = (rows, row) => {
             return !row || !row._id || _.findIndex(rows, (item) => item._id === row._id) >= 0;

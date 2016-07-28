@@ -18,14 +18,14 @@
 
 import {assert} from 'chai';
 import injector from '../injector';
-import testCaches from '../data/caches.json';
+import testClusters from '../data/clusters.json';
 import testAccounts from '../data/accounts.json';
 
-let cacheService;
+let clusterService;
 let mongo;
 let errors;
 
-suite('CacheServiceTestsSuite', () => {
+suite('ClusterServiceTestsSuite', () => {
     const prepareUserSpaces = () => {
         return mongo.Account.create(testAccounts)
             .then((accounts) => {
@@ -39,59 +39,59 @@ suite('CacheServiceTestsSuite', () => {
     };
 
     suiteSetup(() => {
-        return Promise.all([injector('services/cache'),
+        return Promise.all([injector('services/cluster'),
             injector('mongo'),
             injector('errors')])
-            .then(([_cacheService, _mongo, _errors]) => {
+            .then(([_clusterService, _mongo, _errors]) => {
                 mongo = _mongo;
-                cacheService = _cacheService;
+                clusterService = _clusterService;
                 errors = _errors;
             });
     });
 
     setup(() => {
         return Promise.all([
-            mongo.Cache.remove().exec(),
+            mongo.Cluster.remove().exec(),
             mongo.Account.remove().exec(),
             mongo.Space.remove().exec()
         ]);
     });
 
-    test('Create new cache', (done) => {
-        cacheService.merge(testCaches[0])
-            .then((cache) => {
-                assert.isNotNull(cache._id);
+    test('Create new cluster', (done) => {
+        clusterService.merge(testClusters[0])
+            .then((cluster) => {
+                assert.isNotNull(cluster._id);
 
-                return cache._id;
+                return cluster._id;
             })
-            .then((cacheId) => mongo.Cache.findById(cacheId))
-            .then((cache) => {
-                assert.isNotNull(cache);
+            .then((clusterId) => mongo.Cluster.findById(clusterId))
+            .then((cluster) => {
+                assert.isNotNull(cluster);
             })
             .then(done)
             .catch(done);
     });
 
-    test('Update existed cache', (done) => {
+    test('Update existed cluster', (done) => {
         const newName = 'NewUniqueName';
 
-        cacheService.merge(testCaches[0])
-            .then((cache) => {
-                const cacheBeforeMerge = {...testCaches[0], _id: cache._id, name: newName};
+        clusterService.merge(testClusters[0])
+            .then((cluster) => {
+                const clusterBeforeMerge = {...testClusters[0], _id: cluster._id, name: newName};
 
-                return cacheService.merge(cacheBeforeMerge);
+                return clusterService.merge(clusterBeforeMerge);
             })
-            .then((cache) => mongo.Cache.findById(cache._id))
-            .then((cacheAfterMerge) => {
-                assert.equal(cacheAfterMerge.name, newName);
+            .then((cluster) => mongo.Cluster.findById(cluster._id))
+            .then((clusterAfterMerge) => {
+                assert.equal(clusterAfterMerge.name, newName);
             })
             .then(done)
             .catch(done);
     });
 
-    test('Create duplicated cache', (done) => {
-        cacheService.merge(testCaches[0])
-            .then(() => cacheService.merge(testCaches[0]))
+    test('Create duplicated cluster', (done) => {
+        clusterService.merge(testClusters[0])
+            .then(() => clusterService.merge(testClusters[0]))
             .catch((err) => {
                 assert.instanceOf(err, errors.DuplicateKeyException);
 
@@ -99,27 +99,26 @@ suite('CacheServiceTestsSuite', () => {
             });
     });
 
-    test('Remove existed cache', (done) => {
-        cacheService.merge(testCaches[0])
-            .then((cache) => {
-                return mongo.Cache.findById(cache._id)
-                    .then((cache) => cache._id)
-                    .then(cacheService.remove)
+    test('Remove existed cluster', (done) => {
+        clusterService.merge(testClusters[0])
+            .then((existCluster) => {
+                return mongo.Cluster.findById(existCluster._id)
+                    .then((foundCluster) => clusterService.remove(foundCluster._id))
                     .then(({rowsAffected}) => {
                         assert.equal(rowsAffected, 1);
                     })
-                    .then(() => mongo.Cache.findById(cache._id))
-                    .then((notFoundCache) => {
-                        assert.isNull(notFoundCache);
+                    .then(() => mongo.Cluster.findById(existCluster._id))
+                    .then((notFoundCluster) => {
+                        assert.isNull(notFoundCluster);
                     });
             })
             .then(done)
             .catch(done);
     });
 
-    test('Remove cache without identifier', (done) => {
-        cacheService.merge(testCaches[0])
-            .then(() => cacheService.remove())
+    test('Remove cluster without identifier', (done) => {
+        clusterService.merge(testClusters[0])
+            .then(() => clusterService.remove())
             .catch((err) => {
                 assert.instanceOf(err, errors.IllegalArgumentException);
 
@@ -127,11 +126,11 @@ suite('CacheServiceTestsSuite', () => {
             });
     });
 
-    test('Remove missed cache', (done) => {
+    test('Remove missed cluster', (done) => {
         const validNoExistingId = 'FFFFFFFFFFFFFFFFFFFFFFFF';
 
-        cacheService.merge(testCaches[0])
-            .then(() => cacheService.remove(validNoExistingId))
+        clusterService.merge(testClusters[0])
+            .then(() => clusterService.remove(validNoExistingId))
             .then(({rowsAffected}) => {
                 assert.equal(rowsAffected, 0);
             })
@@ -139,14 +138,14 @@ suite('CacheServiceTestsSuite', () => {
             .catch(done);
     });
 
-    test('Remove all caches in space', (done) => {
+    test('Remove all clusters in space', (done) => {
         prepareUserSpaces()
             .then(([accounts, spaces]) => {
                 const currentUser = accounts[0];
-                const userCache = {...testCaches[0], space: spaces[0][0]._id};
+                const userCluster = {...testClusters[0], space: spaces[0][0]._id};
 
-                return cacheService.merge(userCache)
-                    .then(() => cacheService.removeAll(currentUser._id, false));
+                return clusterService.merge(userCluster)
+                    .then(() => clusterService.removeAll(currentUser._id, false));
             })
             .then(({rowsAffected}) => {
                 assert.equal(rowsAffected, 1);
@@ -155,17 +154,17 @@ suite('CacheServiceTestsSuite', () => {
             .catch(done);
     });
 
-    test('Get all caches by space', (done) => {
+    test('Get all clusters by space', (done) => {
         prepareUserSpaces()
             .then(([accounts, spaces]) => {
-                const userCache = {...testCaches[0], space: spaces[0][0]._id};
+                const userCluster = {...testClusters[0], space: spaces[0][0]._id};
 
-                return cacheService.merge(userCache)
-                    .then((cache) => {
-                        return cacheService.listBySpaces(spaces[0][0]._id)
-                            .then((caches) => {
-                                assert.equal(caches.length, 1);
-                                assert.equal(caches[0]._id.toString(), cache._id.toString());
+                return clusterService.merge(userCluster)
+                    .then((existCluster) => {
+                        return clusterService.listBySpaces(spaces[0][0]._id)
+                            .then((clusters) => {
+                                assert.equal(clusters.length, 1);
+                                assert.equal(clusters[0]._id.toString(), existCluster._id.toString());
                             });
                     });
             })
@@ -173,17 +172,17 @@ suite('CacheServiceTestsSuite', () => {
             .catch(done);
     });
 
-    test('Update linked entities on update cache', (done) => {
+    test('Update linked entities on update cluster', (done) => {
         // TODO IGNITE-3262 Add test.
         done();
     });
 
-    test('Update linked entities on remove cache', (done) => {
+    test('Update linked entities on remove cluster', (done) => {
         // TODO IGNITE-3262 Add test.
         done();
     });
 
-    test('Update linked entities on remove all caches in space', (done) => {
+    test('Update linked entities on remove all clusters in space', (done) => {
         // TODO IGNITE-3262 Add test.
         done();
     });

@@ -21,33 +21,109 @@
 
 module.exports = {
     implements: 'services/mail',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
+    inject: ['require(lodash)', 'require(nodemailer)', 'settings', 'mongo', 'services/space', 'errors']
 };
 
-module.exports.factory = (_, mongo, spaceService, errors) => {
+module.exports.factory = (_, nodemailer, settings, mongo, spaceService, errors) => {
+    /**
+     * Send mail to user.
+     *
+     * @param {Account} user
+     * @param {String} subject
+     * @param {String} html
+     * @param {String} sendErr
+     * @throws {Error}
+     * @return {Promise}
+     */
+    const send = (user, subject, html, sendErr) => {
+        return new Promise((resolve, reject) => {
+            const transporter = {
+                service: settings.smtp.service,
+                auth: {
+                    user: settings.smtp.email,
+                    pass: settings.smtp.password
+                }
+            };
 
-    // TODO extract here current send mail.
-    const send = () => {
+            if (_.isEmpty(transporter.service) || _.isEmpty(transporter.auth.user) || _.isEmpty(transporter.auth.pass))
+                throw new Error('Failed to send email. SMTP server is not configured. Please ask webmaster to setup SMTP server!');
 
+            const mailer = nodemailer.createTransport(transporter);
+
+            const sign = settings.smtp.sign ? `<br><br>--------------<br>${settings.smtp.sign}<br>` : '';
+
+            const mail = {
+                from: settings.smtp.address(settings.smtp.username, settings.smtp.email),
+                to: settings.smtp.address(`${user.firstName} ${user.lastName}`, user.email),
+                subject,
+                html: html + sign
+            };
+
+            mailer.sendMail(mail, (err) => {
+                if (err)
+                    return reject(sendErr ? new Error(sendErr) : err);
+
+                resolve(user);
+            });
+        });
     };
 
     class MailService {
-
         /**
          * Send email to user for password reset.
+         * @param host
          * @param user
-         * @param resetUrl
          */
-        static emailUserResetLink(user, resetUrl) {
+        static emailUserSignUp(host, user) {
+            const resetLink = `${host}password/reset?token=${user.resetPasswordToken}`;
 
+            return send(user, `Thanks for signing up for ${settings.smtp.username}.`,
+                `Hello ${user.firstName} ${user.lastName}!<br><br>` +
+                `You are receiving this email because you have signed up to use <a href="${host}">${settings.smtp.username}</a>.<br><br>` +
+                'If you have not done the sign up and do not know what this email is about, please ignore it.<br>' +
+                'You may reset the password by clicking on the following link, or paste this into your browser:<br><br>' +
+                `<a href="${resetLink}">${resetLink}</a>`);
         }
 
         /**
-         * Send emait to user when it was deleted.
+         * Send email to user for password reset.
+         * @param host
          * @param user
          */
-        static emailUserDeletion(user) {
+        static emailUserResetLink(host, user) {
+            const resetLink = `${host}password/reset?token=${user.resetPasswordToken}`;
 
+            return send(user, 'Password Reset',
+                `Hello ${user.firstName} ${user.lastName}!<br><br>` +
+                'You are receiving this because you (or someone else) have requested the reset of the password for your account.<br><br>' +
+                'Please click on the following link, or paste this into your browser to complete the process:<br><br>' +
+                `<a href="${resetLink}">${resetLink}</a><br><br>` +
+                'If you did not request this, please ignore this email and your password will remain unchanged.',
+                'Failed to send email with reset link!');
+        }
+
+        /**
+         * Send email to user for password reset.
+         * @param host
+         * @param user
+         */
+        static emailPasswordChanged(host, user) {
+            return send(user, 'Your password has been changed',
+                `Hello ${user.firstName} ${user.lastName}!<br><br>` +
+                `This is a confirmation that the password for your account on <a href="${host}">${settings.smtp.username}</a> has just been changed.<br><br>`,
+                'Password was changed, but failed to send confirmation email!');
+        }
+
+        /**
+         * Send email to user when it was deleted.
+         * @param host
+         * @param user
+         */
+        static emailUserDeletion(host, user) {
+            return send(user, 'Your account was deleted',
+                `Hello ${user.firstName} ${user.lastName}!<br><br>` +
+                `You are receiving this email because your account for <a href="${host}">${settings.smtp.username}</a> was removed.`,
+                'Account was removed, but failed to send email notification to user!');
         }
     }
 

@@ -15,12 +15,25 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import fireUp from 'fire-up';
+export default ['$http', ($http) => {
+    return {
+        read() {
+            return $http.get('/api/v1/configuration/list')
+                .then(({data}) => data);
 
-module.exports = fireUp.newInjector({
-    basePath: path.join(__dirname, '../../'),
-    modules: [
-        './serve/**/*.js'
-    ]
-});
+        },
+        populate({spaces, clusters, caches, igfss, domains}) {
+            _.forEach(clusters, (cluster) => {
+                cluster.caches = _.filter(caches, ({_id}) => _.includes(cluster.caches, _id));
+
+                _.forEach(cluster.caches, (cache) => {
+                    cache.domains = _.filter(domains, ({_id}) => _.includes(cache.domains, _id));
+                });
+
+                cluster.igfss = _.filter(igfss, ({_id}) => _.includes(cluster.igfss, _id));
+            });
+
+            return Promise.resolve({spaces, clusters, caches, igfss, domains});
+        }
+    };
+}];

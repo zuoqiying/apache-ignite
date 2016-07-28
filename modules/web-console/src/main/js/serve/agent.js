@@ -629,7 +629,7 @@ module.exports.factory = function(_, ws, fs, path, JSZip, socketio, settings, mo
                             cb();
                         })
                         // TODO IGNITE-1379 send error to web master.
-                        .catch((err) => cb('Agent is failed to authenticate. Please check agent\'s tokens'));
+                        .catch(() => cb('Agent is failed to authenticate. Please check agent\'s tokens'));
                 });
             });
         }

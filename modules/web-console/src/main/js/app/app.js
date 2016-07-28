@@ -42,7 +42,7 @@ import './modules/navbar/navbar.module';
 import './modules/configuration/configuration.module';
 import './modules/getting-started/GettingStarted.provider';
 import './modules/dialog/dialog.module';
-import './modules/Version/Version.provider';
+import './modules/version/Version.provider';
 import './modules/ace.module';
 import './modules/socket.module';
 import './modules/loading/loading.module';

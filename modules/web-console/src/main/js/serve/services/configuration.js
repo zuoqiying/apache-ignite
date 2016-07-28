@@ -21,10 +21,10 @@
 
 module.exports = {
     implements: 'services/configuration',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'services/cache']
+    inject: ['require(lodash)', 'mongo', 'services/space', 'services/cluster', 'services/cache', 'services/domain', 'services/igfs']
 };
 
-module.exports.factory = (_, mongo, spaceService, cacheService) => {
+module.exports.factory = (_, mongo, spaceService, clusterService, cacheService, domainService, igfsService) => {
     class ConfigurationService {
         static list(userId, demo) {
             let spaces;
@@ -32,15 +32,16 @@ module.exports.factory = (_, mongo, spaceService, cacheService) => {
             return spaceService.spaces(userId, demo)
                 .then((_spaces) => {
                     spaces = _spaces;
+
                     return spaces.map((space) => space._id);
                 })
-                .then((spacesIds) => Promise.all([
-                    cacheService.listBySpaces(spacesIds),
-                    mongo.DomainModel.find({space: {$in: spacesIds}}).sort('name').lean().exec(),
-                    mongo.Igfs.find({space: {$in: spacesIds}}).sort('name').lean().exec(),
-                    mongo.Cluster.find({space: {$in: spacesIds}}).sort('name').deepPopulate(mongo.ClusterDefaultPopulate).lean().exec()
+                .then((spaceIds) => Promise.all([
+                    clusterService.listBySpaces(spaceIds),
+                    domainService.listBySpaces(spaceIds),
+                    cacheService.listBySpaces(spaceIds),
+                    igfsService.listBySpaces(spaceIds)
                 ]))
-                .then(([caches, domains, igfss, clusters]) => ({caches, domains, igfss, clusters, spaces}));
+                .then(([clusters, domains, caches, igfss]) => ({clusters, domains, caches, igfss, spaces}));
         }
     }
 

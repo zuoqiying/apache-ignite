@@ -26,7 +26,6 @@ module.exports = {
 
 module.exports.factory = (_, mongo, spaceService, errors) => {
     class AuthService {
-
         // TODO move implementation from public router.
         static resetPassword() {
 
@@ -35,7 +34,6 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
         static validateResetToken() {
 
         }
-
     }
 
     return AuthService;

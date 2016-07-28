@@ -96,10 +96,12 @@ class NotebookData {
     find(_id) {
         return this.read()
             .then(() => {
-                if (this.demo)
-                    return _.cloneDeep(this.notebooks[0]);
+                const notebook = this.demo ? this.notebooks[0] : _.find(this.notebooks, {_id});
 
-                return _.find(this.notebooks, {_id});
+                if (_.isNil(notebook))
+                    return this.$q.reject('Failed to load notebook.');
+
+                return _.cloneDeep(notebook);
             });
     }
 

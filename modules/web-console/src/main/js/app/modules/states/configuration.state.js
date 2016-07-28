@@ -94,7 +94,7 @@ import igfsMisc from './configuration/igfs/misc.directive';
 
 // Summary screen.
 import ConfigurationSummaryCtrl from './configuration/summary/summary.controller';
-import ConfigurationSummaryResource from './configuration/summary/summary.resource';
+import ConfigurationResource from './configuration/Configuration.resource';
 import summaryTabs from './configuration/summary/summary-tabs.directive';
 
 angular.module('ignite-console.states.configuration', ['ui.router'])
@@ -165,7 +165,7 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
     // Summary screen
     .directive(...summaryTabs)
     // Services.
-    .service(...ConfigurationSummaryResource)
+    .service('igniteConfigurationResource', ConfigurationResource)
     // Configure state provider.
     .config(['$stateProvider', ($stateProvider) => {
         // Setup the states.
