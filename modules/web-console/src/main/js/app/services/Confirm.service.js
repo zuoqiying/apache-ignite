@@ -38,7 +38,7 @@ export default ['IgniteConfirm', ['$rootScope', '$q', '$modal', '$animate', ($ro
     scope.confirmNo = () => {
         _hide();
 
-        deferred.reject(false);
+        deferred.resolve(false);
     };
 
     scope.confirmCancel = () => {
