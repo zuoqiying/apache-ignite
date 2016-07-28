@@ -20,8 +20,8 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'profile-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/user', 'agent-manager']
+    implements: 'routes/profiles',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/users']
 };
 
 /**
@@ -29,10 +29,10 @@ module.exports = {
  * @param _ Lodash module
  * @param express Express module
  * @param mongo
- * @param {UserService} userService
+ * @param {UsersService} usersService
  * @returns {Promise}
  */
-module.exports.factory = function(_, express, mongo, userService) {
+module.exports.factory = function(_, express, mongo, usersService) {
     return new Promise((resolveFactory) => {
         const router = new express.Router();
 
@@ -43,7 +43,7 @@ module.exports.factory = function(_, express, mongo, userService) {
             if (req.body.password && _.isEmpty(req.body.password))
                 return res.status(500).send('Wrong value for new password!');
 
-            userService.save(req.body)
+            usersService.save(req.body)
                 .then((user) => {
                     const becomeUsed = req.session.viewedUser && user.admin;
 

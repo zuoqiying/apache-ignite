@@ -20,18 +20,18 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'configuration-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/configuration']
+    implements: 'routes/configurations',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/configurations']
 };
 
-module.exports.factory = function(_, express, mongo, configurationService) {
+module.exports.factory = function(_, express, mongo, configurationsService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
         /**
          * Get all user configuration in current space.
          */
         router.get('/list', (req, res) => {
-            configurationService.list(req.currentUserId(), req.header('IgniteDemoMode'))
+            configurationsService.list(req.currentUserId(), req.header('IgniteDemoMode'))
                 .then(res.api.ok)
                 .catch(res.api.error);
         });

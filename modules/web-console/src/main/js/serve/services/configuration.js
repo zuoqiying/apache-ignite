@@ -20,30 +20,40 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/configuration',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'services/cluster', 'services/cache', 'services/domain', 'services/igfs']
+    implements: 'services/configurations',
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'services/clusters', 'services/caches', 'services/domains', 'services/igfss']
 };
 
-module.exports.factory = (_, mongo, spaceService, clusterService, cacheService, domainService, igfsService) => {
-    class ConfigurationService {
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spacesService
+ * @param {ClustersService} clustersService
+ * @param {CachesService} cachesService
+ * @param {DomainsService} domainsService
+ * @param {IgfssService} igfssService
+ * @returns {ConfigurationsService}
+ */
+module.exports.factory = (_, mongo, spacesService, clustersService, cachesService, domainsService, igfssService) => {
+    class ConfigurationsService {
         static list(userId, demo) {
             let spaces;
 
-            return spaceService.spaces(userId, demo)
+            return spacesService.spaces(userId, demo)
                 .then((_spaces) => {
                     spaces = _spaces;
 
                     return spaces.map((space) => space._id);
                 })
                 .then((spaceIds) => Promise.all([
-                    clusterService.listBySpaces(spaceIds),
-                    domainService.listBySpaces(spaceIds),
-                    cacheService.listBySpaces(spaceIds),
-                    igfsService.listBySpaces(spaceIds)
+                    clustersService.listBySpaces(spaceIds),
+                    domainsService.listBySpaces(spaceIds),
+                    cachesService.listBySpaces(spaceIds),
+                    igfssService.listBySpaces(spaceIds)
                 ]))
                 .then(([clusters, domains, caches, igfss]) => ({clusters, domains, caches, igfss, spaces}));
         }
     }
 
-    return ConfigurationService;
+    return ConfigurationsService;
 };

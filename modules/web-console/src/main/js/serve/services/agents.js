@@ -20,12 +20,22 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/agent',
+    implements: 'services/agents',
     inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'settings', 'agent-manager', 'errors']
 };
 
+/**
+ * @param _
+ * @param fs
+ * @param path
+ * @param JSZip
+ * @param settings
+ * @param agentMgr
+ * @param errors
+ * @returns {AgentsService}
+ */
 module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
-    class AgentService {
+    class AgentsService {
         /**
          * Get agent archive with user agent configuration.
          * @returns {*} - readable stream for further piping. (http://stuk.github.io/jszip/documentation/api_jszip/generate_node_stream.html)
@@ -68,5 +78,5 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
         }
     }
 
-    return AgentService;
+    return AgentsService;
 };

@@ -20,11 +20,18 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/igfs',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
+    implements: 'services/igfss',
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'errors']
 };
 
-module.exports.factory = (_, mongo, spaceService, errors) => {
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spacesService
+ * @param errors
+ * @returns {IgfssService}
+ */
+module.exports.factory = (_, mongo, spacesService, errors) => {
     /**
      * Convert remove status operation to own presentation.
      * @param {RemoveResult} result - The results of remove operation.
@@ -76,7 +83,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
             .then(() => mongo.Igfs.remove({space: {$in: spaceIds}}).exec());
     };
 
-    class IgfsService {
+    class IgfssService {
         /**
          * Create or update IGFS.
          * @param {Object} igfs - The IGFS
@@ -119,11 +126,11 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
          * @returns {Promise.<{rowsAffected}>} - The number of affected rows.
          */
         static removeAll(userId, demo) {
-            return spaceService.spaceIds(userId, demo)
+            return spacesService.spaceIds(userId, demo)
                 .then(removeAllBySpaces)
                 .then(convertRemoveStatus);
         }
     }
 
-    return IgfsService;
+    return IgfssService;
 };

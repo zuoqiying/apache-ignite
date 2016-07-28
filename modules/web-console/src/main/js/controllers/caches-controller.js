@@ -139,7 +139,7 @@ export default ['cachesController', [
                 }, true);
             })
             .catch(Messages.showError)
-            .finally(function() {
+            .then(() => {
                 $scope.ui.ready = true;
                 $scope.ui.inputForm.$setPristine();
                 Loading.finish('loadingCachesScreen');

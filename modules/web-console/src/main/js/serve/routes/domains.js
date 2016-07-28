@@ -20,11 +20,11 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'domains-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/domain']
+    implements: 'routes/domains',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/domains']
 };
 
-module.exports.factory = (_, express, mongo, domainService) => {
+module.exports.factory = (_, express, mongo, domainsService) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -34,7 +34,7 @@ module.exports.factory = (_, express, mongo, domainService) => {
         router.post('/save', (req, res) => {
             const domain = req.body;
 
-            domainService.batchMerge([domain])
+            domainsService.batchMerge([domain])
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -45,7 +45,7 @@ module.exports.factory = (_, express, mongo, domainService) => {
         router.post('/save/batch', (req, res) => {
             const domains = req.body;
 
-            domainService.batchMerge(domains)
+            domainsService.batchMerge(domains)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -56,7 +56,7 @@ module.exports.factory = (_, express, mongo, domainService) => {
         router.post('/remove', (req, res) => {
             const domainId = req.body;
 
-            domainService.remove(domainId)
+            domainsService.remove(domainId)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -65,7 +65,7 @@ module.exports.factory = (_, express, mongo, domainService) => {
          * Remove all domain models.
          */
         router.post('/remove/all', (req, res) => {
-            domainService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
+            domainsService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
                 .then(res.api.ok)
                 .catch(res.api.error);
         });

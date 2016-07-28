@@ -20,14 +20,18 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/notebook',
-    inject: ['require(lodash)',
-        'mongo',
-        'services/space',
-        'errors']
+    implements: 'services/notebooks',
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'errors']
 };
 
-module.exports.factory = (_, mongo, spaceService, errors) => {
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spacesService
+ * @param errors
+ * @returns {NotebooksService}
+ */
+module.exports.factory = (_, mongo, spacesService, errors) => {
     /**
      * Convert remove status operation to own presentation.
      * @param {RemoveResult} result - The results of remove operation.
@@ -61,7 +65,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
             });
     };
 
-    class NotebookService {
+    class NotebooksService {
         /**
          * Create or update Notebook.
          * @param {Object} notebook - The Notebook
@@ -97,5 +101,5 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
         }
     }
 
-    return NotebookService;
+    return NotebooksService;
 };

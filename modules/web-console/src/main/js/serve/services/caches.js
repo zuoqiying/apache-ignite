@@ -20,10 +20,17 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/cache',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
+    implements: 'services/caches',
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'errors']
 };
 
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spaceService
+ * @param errors
+ * @returns {CachesService}
+ */
 module.exports.factory = (_, mongo, spaceService, errors) => {
     /**
      * Convert remove status operation to own presentation.
@@ -83,7 +90,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
     /**
      * Service for manipulate Cache entities.
      */
-    class CacheService {
+    class CachesService {
         /**
          * Create or update cache.
          * @param {Object} cache - The cache.
@@ -133,5 +140,5 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
         }
     }
 
-    return CacheService;
+    return CachesService;
 };

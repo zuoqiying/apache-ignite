@@ -105,6 +105,11 @@ class NotebookData {
             });
     }
 
+    findIndex(notebook) {
+        return this.read()
+            .then(() => _.findIndex(this.notebooks, {_id: notebook._id}));
+    }
+
     save(notebook) {
         if (this.demo)
             return this.$q.when(DEMO_NOTEBOOK);

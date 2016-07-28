@@ -20,11 +20,17 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/mail',
-    inject: ['require(lodash)', 'require(nodemailer)', 'settings', 'mongo', 'services/space', 'errors']
+    implements: 'services/mails',
+    inject: ['require(lodash)', 'require(nodemailer)', 'settings']
 };
 
-module.exports.factory = (_, nodemailer, settings, mongo, spaceService, errors) => {
+/**
+ * @param _
+ * @param nodemailer
+ * @param settings
+ * @returns {MailsService}
+ */
+module.exports.factory = (_, nodemailer, settings) => {
     /**
      * Send mail to user.
      *
@@ -68,7 +74,7 @@ module.exports.factory = (_, nodemailer, settings, mongo, spaceService, errors) 
         });
     };
 
-    class MailService {
+    class MailsService {
         /**
          * Send email to user for password reset.
          * @param host
@@ -127,5 +133,5 @@ module.exports.factory = (_, nodemailer, settings, mongo, spaceService, errors) 
         }
     }
 
-    return MailService;
+    return MailsService;
 };

@@ -20,11 +20,18 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/cluster',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
+    implements: 'services/clusters',
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'errors']
 };
 
-module.exports.factory = (_, mongo, spaceService, errors) => {
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spacesService
+ * @param errors
+ * @returns {ClustersService}
+ */
+module.exports.factory = (_, mongo, spacesService, errors) => {
     /**
      * Convert remove status operation to own presentation.
      * @param {RemoveResult} result - The results of remove operation.
@@ -80,7 +87,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
             .then(() => mongo.Cluster.remove({space: {$in: spaceIds}}).exec());
     };
 
-    class ClusterService {
+    class ClustersService {
         /**
          * Create or update cluster.
          * @param {Object} cluster - The cluster
@@ -124,11 +131,11 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
          * @returns {Promise.<{rowsAffected}>} - The number of affected rows.
          */
         static removeAll(userId, demo) {
-            return spaceService.spaceIds(userId, demo)
+            return spacesService.spaceIds(userId, demo)
                 .then(removeAllBySpaces)
                 .then(convertRemoveStatus);
         }
     }
 
-    return ClusterService;
+    return ClustersService;
 };

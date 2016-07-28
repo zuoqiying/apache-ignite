@@ -448,7 +448,7 @@ export default ['domainsController', [
                                     $scope.importDomain.button = 'Cancel';
                                 }
                             })
-                            .finally(function() {
+                            .then(() => {
                                 $scope.importDomain.info = INFO_CONNECT_TO_DB;
 
                                 Loading.finish('importDomainFromDb');

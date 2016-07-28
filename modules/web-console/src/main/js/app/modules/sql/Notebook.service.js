@@ -41,17 +41,29 @@ class Notebook {
         return this.NotebookData.find(_id);
     }
 
+    _openNotebook(idx) {
+        return this.NotebookData.read()
+            .then((notebooks) => {
+                const nextNotebook = notebooks.length > idx ? notebooks[idx] : _.last(notebooks);
+
+                if (nextNotebook)
+                    this.$state.go('base.sql.notebook', {noteId: nextNotebook._id});
+                else
+                    this.$state.go('base.configuration.clusters');
+            });
+    }
+
     remove(notebook) {
         return this.confirmModal.confirm(`Are you sure you want to remove: "${notebook.name}"?`)
-            .then(() => this.NotebookData.remove(notebook)
-                .then((nextNotebook) => {
-                    if (nextNotebook && this.$state.includes('base.sql.notebook'))
-                        this.$state.go('base.sql.notebook', {noteId: nextNotebook._id});
-                    else
-                        this.$state.go('base.configuration.clusters');
-                })
-                .catch(this.Messages.showError)
-            );
+            .then(() => this.NotebookData.findIndex(notebook))
+            .then((idx) => {
+                this.NotebookData.remove(notebook)
+                    .then(() => {
+                        if (this.$state.includes('base.sql.notebook') && this.$state.params.noteId === notebook._id)
+                            return this._openNotebook(idx);
+                    })
+                    .catch(this.Messages.showError);
+            });
     }
 }
 

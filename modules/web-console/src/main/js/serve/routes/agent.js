@@ -20,17 +20,17 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'agent-routes',
-    inject: ['require(lodash)', 'require(express)', 'services/agent']
+    implements: 'routes/agents',
+    inject: ['require(lodash)', 'require(express)', 'services/agents']
 };
 
 /**
  * @param _
  * @param express
- * @param agentService
+ * @param {AgentsService} agentsService
  * @returns {Promise}
  */
-module.exports.factory = function(_, express, agentService) {
+module.exports.factory = function(_, express, agentsService) {
     return new Promise((resolveFactory) => {
         const router = new express.Router();
 
@@ -38,7 +38,7 @@ module.exports.factory = function(_, express, agentService) {
         router.get('/download/zip', (req, res) => {
             const host = req.hostname.match(/:/g) ? req.hostname.slice(0, req.hostname.indexOf(':')) : req.hostname;
 
-            agentService.getArchive(host, req.user.token)
+            agentsService.getArchive(host, req.user.token)
                 .then(({fileName, buffer}) => {
                     // Set the archive name.
                     res.attachment(fileName);

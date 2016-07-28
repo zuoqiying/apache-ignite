@@ -19,23 +19,17 @@
 
 // Fire me up!
 
+import clusters from './demo/clusters.json';
+import caches from './demo/caches.json';
+import domains from './demo/domains.json';
+import igfss from './demo/igfss.json';
+
 module.exports = {
-    implements: 'demo-routes',
-    inject: [
-        'require(lodash)',
-        'require(express)',
-        'settings',
-        'mongo',
-        'require(./demo/domains.json)',
-        'require(./demo/caches.json)',
-        'require(./demo/igfss.json)',
-        'require(./demo/clusters.json)',
-        'services/space',
-        'errors'
-    ]
+    implements: 'routes/demo',
+    inject: ['require(lodash)', 'require(express)', 'settings', 'mongo', 'services/spaces', 'errors']
 };
 
-module.exports.factory = (_, express, settings, mongo, domains, caches, igfss, clusters, spaceService, errors) => {
+module.exports.factory = (_, express, settings, mongo, spacesService, errors) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -43,7 +37,7 @@ module.exports.factory = (_, express, settings, mongo, domains, caches, igfss, c
          * Reset demo configuration.
          */
         router.post('/reset', (req, res) => {
-            spaceService.spaces(req.user._id, true)
+            spacesService.spaces(req.user._id, true)
                 .then((spaces) => {
                     if (spaces.length) {
                         const spaceIds = spaces.map((space) => space._id);
@@ -58,7 +52,7 @@ module.exports.factory = (_, express, settings, mongo, domains, caches, igfss, c
                 })
                 .catch((err) => {
                     if (err instanceof errors.NotFoundException)
-                        return spaceService.createDemoSpace(req.user._id);
+                        return spacesService.createDemoSpace(req.user._id);
                 })
                 .then((space) => {
                     return Promise.all(_.map(clusters, (cluster) => {

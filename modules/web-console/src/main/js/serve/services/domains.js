@@ -20,11 +20,19 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/domain',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'services/cache', 'errors']
+    implements: 'services/domains',
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'services/caches', 'errors']
 };
 
-module.exports.factory = (_, mongo, spaceService, cacheService, errors) => {
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spacesService
+ * @param {CachesService} cachesService
+ * @param errors
+ * @returns {DomainsService}
+ */
+module.exports.factory = (_, mongo, spacesService, cachesService, errors) => {
     /**
      * Convert remove status operation to own presentation.
      * @param {RemoveResult} result - The results of remove operation.
@@ -104,7 +112,7 @@ module.exports.factory = (_, mongo, spaceService, cacheService, errors) => {
                         const newCache = domain.newCache;
                         newCache.space = domain.space;
 
-                        return cacheService.merge(newCache);
+                        return cachesService.merge(newCache);
                     })
                     .then((cache) => {
                         domain.caches = [cache._id];
@@ -129,7 +137,7 @@ module.exports.factory = (_, mongo, spaceService, cacheService, errors) => {
             .then(() => mongo.DomainModel.remove({space: {$in: spaceIds}}).exec());
     };
 
-    class DomainService {
+    class DomainsService {
         /**
          * Batch merging domains.
          * @param {Array.<mongo.DomainModel>} domains
@@ -169,11 +177,11 @@ module.exports.factory = (_, mongo, spaceService, cacheService, errors) => {
          * @returns {Promise.<{rowsAffected}>} - The number of affected rows.
          */
         static removeAll(userId, demo) {
-            return spaceService.spaceIds(userId, demo)
+            return spacesService.spaceIds(userId, demo)
                 .then(removeAllBySpaces)
                 .then(convertRemoveStatus);
         }
     }
 
-    return DomainService;
+    return DomainsService;
 };

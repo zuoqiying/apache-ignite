@@ -20,11 +20,11 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'clusters-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/cluster']
+    implements: 'routes/clusters',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/clusters']
 };
 
-module.exports.factory = function(_, express, mongo, clusterService) {
+module.exports.factory = function(_, express, mongo, clustersService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -34,7 +34,7 @@ module.exports.factory = function(_, express, mongo, clusterService) {
         router.post('/save', (req, res) => {
             const cluster = req.body;
 
-            clusterService.merge(cluster)
+            clustersService.merge(cluster)
                 .then((savedCluster) => res.api.ok(savedCluster._id))
                 .catch(res.api.error);
         });
@@ -45,7 +45,7 @@ module.exports.factory = function(_, express, mongo, clusterService) {
         router.post('/remove', (req, res) => {
             const clusterId = req.body;
 
-            clusterService.remove(clusterId)
+            clustersService.remove(clusterId)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -54,7 +54,7 @@ module.exports.factory = function(_, express, mongo, clusterService) {
          * Remove all clusters.
          */
         router.post('/remove/all', (req, res) => {
-            clusterService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
+            clustersService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
                 .then(res.api.ok)
                 .catch(res.api.error);
         });

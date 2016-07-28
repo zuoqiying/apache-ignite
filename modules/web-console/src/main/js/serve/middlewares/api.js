@@ -19,29 +19,23 @@
 
 // Fire me up!
 
-function sendServerError(err) {
-    err.httpCode = 500;
-
-    this.api.error(err);
-}
-
-function sendError(err) {
-    // TODO: removed code from error
-    this.status(err.httpCode || err.code || 500).send(err.message);
-}
-
-function sendOk(data) {
-    this.status(200).json(data);
-}
-
 module.exports = {
-    implements: 'middlewares/api',
+    implements: 'middlewares:api',
     factory: () => {
         return (req, res, next) => {
             res.api = {
-                error: sendError.bind(res),
-                ok: sendOk.bind(res),
-                serverError: sendServerError.bind(res)
+                error(err) {
+                    // TODO: removed code from error
+                    res.status(err.httpCode || err.code || 500).send(err.message);
+                },
+                ok(data) {
+                    res.status(200).json(data);
+                },
+                serverError(err) {
+                    err.httpCode = 500;
+
+                    res.api.error(err);
+                }
             };
 
             next();

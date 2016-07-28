@@ -20,11 +20,11 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'igfs-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/igfs']
+    implements: 'routes/igfss',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/igfss']
 };
 
-module.exports.factory = function(_, express, mongo, igfsService) {
+module.exports.factory = function(_, express, mongo, igfssService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -34,7 +34,7 @@ module.exports.factory = function(_, express, mongo, igfsService) {
         router.post('/save', (req, res) => {
             const igfs = req.body;
 
-            igfsService.merge(igfs)
+            igfssService.merge(igfs)
                 .then((savedIgfs) => res.api.ok(savedIgfs._id))
                 .catch(res.api.error);
         });
@@ -45,7 +45,7 @@ module.exports.factory = function(_, express, mongo, igfsService) {
         router.post('/remove', (req, res) => {
             const igfs = req.body;
 
-            igfsService.remove(igfs._id)
+            igfssService.remove(igfs._id)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -54,7 +54,7 @@ module.exports.factory = function(_, express, mongo, igfsService) {
          * Remove all IGFSs.
          */
         router.post('/remove/all', (req, res) => {
-            igfsService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
+            igfssService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
                 .then(res.api.ok)
                 .catch(res.api.error);
         });

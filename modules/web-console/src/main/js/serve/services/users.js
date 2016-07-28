@@ -20,11 +20,21 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/user',
-    inject: ['require(lodash)', 'mongo', 'settings', 'services/space', 'services/mail', 'agent-manager', 'errors']
+    implements: 'services/users',
+    inject: ['require(lodash)', 'mongo', 'settings', 'services/spaces', 'services/mails', 'agent-manager', 'errors']
 };
 
-module.exports.factory = (_, mongo, settings, spaceService, mailService, agentMgr, errors) => {
+/**
+ * @param _
+ * @param mongo
+ * @param settings
+ * @param {SpacesService} spacesService
+ * @param {MailsService} mailsService
+ * @param agentMgr
+ * @param errors
+ * @returns {UsersService}
+ */
+module.exports.factory = (_, mongo, settings, spacesService, mailsService, agentMgr, errors) => {
     const _randomString = () => {
         const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const possibleLen = possible.length;
@@ -37,7 +47,7 @@ module.exports.factory = (_, mongo, settings, spaceService, mailService, agentMg
         return res;
     };
 
-    class UserService {
+    class UsersService {
         /**
          * Save profile information.
          * @param {String} host - The host
@@ -72,7 +82,7 @@ module.exports.factory = (_, mongo, settings, spaceService, mailService, agentMg
                     return registered.save()
                         .then(() => mongo.Space.create({name: 'Personal space', owner: registered._id}))
                         .then(() => {
-                            mailService.emailUserSignUp(host, registered)
+                            mailsService.emailUserSignUp(host, registered)
                                 .catch((err) => console.error(err));
 
                             return registered;
@@ -173,7 +183,7 @@ module.exports.factory = (_, mongo, settings, spaceService, mailService, agentMg
         static remove(host, userId) {
             return mongo.Account.findByIdAndRemove(userId).exec()
                 .then((user) => {
-                    return spaceService.spaceIds(userId)
+                    return spacesService.spaceIds(userId)
                         .then((spaceIds) => Promise.all([
                             mongo.Cluster.remove({space: {$in: spaceIds}}).exec(),
                             mongo.Cache.remove({space: {$in: spaceIds}}).exec(),
@@ -185,7 +195,7 @@ module.exports.factory = (_, mongo, settings, spaceService, mailService, agentMg
                         .catch((err) => console.error(`Failed to cleanup spaces [user=${user.username}, err=${err}`))
                         .then(() => user);
                 })
-                .then((user) => mailService.emailUserDeletion(host, user));
+                .then((user) => mailsService.emailUserDeletion(host, user));
         }
 
         /**
@@ -215,5 +225,5 @@ module.exports.factory = (_, mongo, settings, spaceService, mailService, agentMg
         }
     }
 
-    return UserService;
+    return UsersService;
 };

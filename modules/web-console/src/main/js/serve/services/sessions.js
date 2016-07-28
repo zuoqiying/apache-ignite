@@ -20,28 +20,36 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/auth',
-    inject: ['require(lodash)', 'mongo', 'services/spaces', 'errors']
+    implements: 'services/sessions',
+    inject: ['require(lodash)', 'mongo']
 };
 
 /**
  * @param _
  * @param mongo
- * @param {SpacesService} spacesService
- * @param errors
- * @returns {AuthService}
+ * @returns {SessionsService}
  */
-module.exports.factory = (_, mongo, spacesService, errors) => {
-    class AuthService {
-        // TODO move implementation from public router.
-        static resetPassword() {
-
+module.exports.factory = (_, mongo) => {
+    class SessionsService {
+        /**
+         * Become user.
+         * @param {Session} session - current session of user.
+         * @param {mongo.ObjectId|String} viewedUserId - id of user to become.
+         */
+        static become(session, viewedUserId) {
+            return mongo.Account.findById(viewedUserId).exec()
+                .then((viewedUser) => {
+                    session.viewedUser = viewedUser;
+                });
         }
 
-        static validateResetToken() {
-
+        /**
+         * Revert to your identity.
+         */
+        static revert(session) {
+            session.viewedUser = null;
         }
     }
 
-    return AuthService;
+    return SessionsService;
 };

@@ -20,12 +20,17 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/space',
+    implements: 'services/spaces',
     inject: ['mongo', 'errors']
 };
 
+/**
+ * @param mongo
+ * @param errors
+ * @returns {SpacesService}
+ */
 module.exports.factory = (mongo, errors) => {
-    class SpaceService {
+    class SpacesService {
         /**
          * Query for user spaces.
          *
@@ -65,6 +70,6 @@ module.exports.factory = (mongo, errors) => {
         }
     }
 
-    return SpaceService;
+    return SpacesService;
 };
 

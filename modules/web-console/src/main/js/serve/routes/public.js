@@ -20,8 +20,8 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'public-routes',
-    inject: ['require(express)', 'require(passport)', 'settings', 'mongo', 'services/mail', 'services/user']
+    implements: 'routes/public',
+    inject: ['require(express)', 'require(passport)', 'settings', 'mongo', 'services/mails', 'services/users']
 };
 
 /**
@@ -30,11 +30,11 @@ module.exports = {
  * @param passport
  * @param settings
  * @param mongo
- * @param mailService
- * @param {UserService} userService
+ * @param mailsService
+ * @param {UsersService} usersService
  * @returns {Promise}
  */
-module.exports.factory = function(express, passport, settings, mongo, mailService, userService) {
+module.exports.factory = function(express, passport, settings, mongo, mailsService, usersService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -52,7 +52,7 @@ module.exports.factory = function(express, passport, settings, mongo, mailServic
 
         // GET user.
         router.post('/user', (req, res) => {
-            userService.get(req.user, req.session.viewedUser)
+            usersService.get(req.user, req.session.viewedUser)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -61,7 +61,7 @@ module.exports.factory = function(express, passport, settings, mongo, mailServic
          * Register new account.
          */
         router.post('/signup', (req, res) => {
-            userService.create(req.headers.referer, req.body)
+            usersService.create(req.headers.referer, req.body)
                 .then((user) => new Promise((resolve, reject) => {
                     req.logIn(user, {}, (err) => {
                         if (err)
@@ -116,7 +116,7 @@ module.exports.factory = function(express, passport, settings, mongo, mailServic
 
                     return user.save();
                 })
-                .then((user) => mailService.emailUserResetLink(req.headers.referer, user))
+                .then((user) => mailsService.emailUserResetLink(req.headers.referer, user))
                 .then(() => res.status(200).send('An email has been sent with further instructions.'))
                 .catch((err) => {
                     // TODO IGNITE-843 Send email to admin
@@ -144,7 +144,7 @@ module.exports.factory = function(express, passport, settings, mongo, mailServic
                         });
                     });
                 })
-                .then((user) => mailService.emailPasswordChanged(req.headers.referer, user))
+                .then((user) => mailsService.emailPasswordChanged(req.headers.referer, user))
                 .then((user) => res.status(200).send(user.email))
                 .catch((err) => res.status(401).send(err.message));
         });

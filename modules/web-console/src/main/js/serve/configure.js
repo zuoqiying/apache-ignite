@@ -24,11 +24,11 @@
  */
 module.exports = {
     implements: 'configure',
-    inject: ['require(morgan)', 'require(cookie-parser)', 'require(body-parser)',
-        'require(express-session)', 'require(connect-mongo)', 'require(passport)', 'require(passport.socketio)', 'settings', 'mongo', 'middlewares/api']
+    inject: ['require(lodash)', 'require(morgan)', 'require(cookie-parser)', 'require(body-parser)',
+        'require(express-session)', 'require(connect-mongo)', 'require(passport)', 'require(passport.socketio)', 'settings', 'mongo', 'middlewares:*']
 };
 
-module.exports.factory = function(logger, cookieParser, bodyParser, session, connectMongo, passport, passportSocketIo, settings, mongo, api) {
+module.exports.factory = function(_, logger, cookieParser, bodyParser, session, connectMongo, passport, passportSocketIo, settings, mongo, apis) {
     const _sessionStore = new (connectMongo(session))({mongooseConnection: mongo.connection});
 
     return {
@@ -37,7 +37,7 @@ module.exports.factory = function(logger, cookieParser, bodyParser, session, con
                 skip: (req, res) => res.statusCode < 400
             }));
 
-            app.use(api);
+            _.forEach(apis, (api) => app.use(api));
 
             app.use(cookieParser(settings.sessionSecret));
 

@@ -20,11 +20,11 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'notebooks-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/space', 'services/notebook']
+    implements: 'routes/notebooks',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/spaces', 'services/notebooks']
 };
 
-module.exports.factory = (_, express, mongo, spaceService, notebookService) => {
+module.exports.factory = (_, express, mongo, spacesService, notebooksService) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -35,9 +35,9 @@ module.exports.factory = (_, express, mongo, spaceService, notebookService) => {
          * @param res Response.
          */
         router.get('/', (req, res) => {
-            return spaceService.spaces(req.currentUserId())
+            return spacesService.spaces(req.currentUserId())
                 .then((spaces) => _.map(spaces, (space) => space._id))
-                .then((spaceIds) => notebookService.listBySpaces(spaceIds))
+                .then((spaceIds) => notebooksService.listBySpaces(spaceIds))
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -51,11 +51,11 @@ module.exports.factory = (_, express, mongo, spaceService, notebookService) => {
         router.post('/save', (req, res) => {
             const notebook = req.body;
 
-            spaceService.spaceIds(req.currentUserId())
+            spacesService.spaceIds(req.currentUserId())
                 .then((spaceIds) => {
                     notebook.space = notebook.space || spaceIds[0];
 
-                    return notebookService.merge(notebook);
+                    return notebooksService.merge(notebook);
                 })
                 .then(res.api.ok)
                 .catch(res.api.error);
@@ -70,7 +70,7 @@ module.exports.factory = (_, express, mongo, spaceService, notebookService) => {
         router.post('/remove', (req, res) => {
             const notebookId = req.body;
 
-            notebookService.remove(notebookId)
+            notebooksService.remove(notebookId)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });

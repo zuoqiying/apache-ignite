@@ -20,8 +20,8 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'admin-routes',
-    inject: ['require(lodash)', 'require(express)', 'settings', 'mongo', 'services/space', 'services/mail', 'services/session', 'services/user']
+    implements: 'routes/admin',
+    inject: ['require(lodash)', 'require(express)', 'settings', 'mongo', 'services/spaces', 'services/mails', 'services/sessions', 'services/users']
 };
 
 /**
@@ -29,13 +29,13 @@ module.exports = {
  * @param express
  * @param settings
  * @param mongo
- * @param spaceService
- * @param mailService
- * @param sessionService
- * @param {UserService} userService
+ * @param spacesService
+ * @param {MailsService} mailsService
+ * @param {SessionsService} sessionsService
+ * @param {UsersService} usersService
  * @returns {Promise}
  */
-module.exports.factory = function(_, express, settings, mongo, spaceService, mailService, sessionService, userService) {
+module.exports.factory = function(_, express, settings, mongo, spacesService, mailsService, sessionsService, usersService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -43,14 +43,14 @@ module.exports.factory = function(_, express, settings, mongo, spaceService, mai
          * Get list of user accounts.
          */
         router.post('/list', (req, res) => {
-            userService.list()
+            usersService.list()
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
 
         // Remove user.
         router.post('/remove', (req, res) => {
-            userService.remove(req.headers.referer, req.body.userId)
+            usersService.remove(req.headers.referer, req.body.userId)
                 .then(() => res.sendStatus(200))
                 .catch(res.api.error);
         });
@@ -66,14 +66,14 @@ module.exports.factory = function(_, express, settings, mongo, spaceService, mai
 
         // Become user.
         router.get('/become', (req, res) => {
-            sessionService.become(req.session, req.query.viewedUserId)
+            sessionsService.become(req.session, req.query.viewedUserId)
                 .then(() => res.sendStatus(200))
                 .catch(() => res.sendStatus(401));
         });
 
         // Revert to your identity.
         router.get('/revert/identity', (req, res) => {
-            sessionService.become(req.session)
+            sessionsService.become(req.session)
                 .then(() => res.sendStatus(200))
                 .catch(() => res.sendStatus(401));
         });
