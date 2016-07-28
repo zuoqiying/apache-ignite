@@ -101,7 +101,7 @@ class NotebookData {
                 if (_.isNil(notebook))
                     return this.$q.reject('Failed to load notebook.');
 
-                return _.cloneDeep(notebook);
+                return notebook;
             });
     }
 

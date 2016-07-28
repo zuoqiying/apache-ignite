@@ -779,7 +779,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         const loadNotebook = function(notebook) {
-            $scope.notebook = notebook;
+            $scope.notebook = _.cloneDeep(notebook);
 
             $scope.notebook_name = notebook.name;
 

@@ -29,6 +29,10 @@ class Notebook {
         this.NotebookData = NotebookData;
     }
 
+    read() {
+        return this.NotebookData.read();
+    }
+
     create(name) {
         return this.NotebookData.save({name});
     }

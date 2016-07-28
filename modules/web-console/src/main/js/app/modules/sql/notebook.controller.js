@@ -16,8 +16,8 @@
  */
 
 // Controller that load notebooks in navigation bar .
-export default ['$scope', '$modal', '$state', 'IgniteMessages', 'IgniteNotebookData', 'IgniteNotebook',
-    (scope, $modal, $state, Messages, NotebookData, Notebook) => {
+export default ['$scope', '$modal', '$state', 'IgniteMessages', 'IgniteNotebook',
+    (scope, $modal, $state, Messages, Notebook) => {
         // Pre-fetch modal dialogs.
         const nameModal = $modal({scope, templateUrl: '/sql/notebook-new.html', show: false});
 
@@ -33,10 +33,10 @@ export default ['$scope', '$modal', '$state', 'IgniteMessages', 'IgniteNotebookD
 
         scope.createNotebook = () => nameModal.$promise.then(nameModal.show);
 
-        NotebookData.read()
-            .then(() => {
-                scope.$watchCollection(() => NotebookData.notebooks, (notebooks) => {
-                    if (!notebooks.length)
+        Notebook.read()
+            .then((notebooks) => {
+                scope.$watchCollection(() => notebooks, (changed) => {
+                    if (!changed.length)
                         return scope.notebooks = [];
 
                     scope.notebooks = [
@@ -44,7 +44,7 @@ export default ['$scope', '$modal', '$state', 'IgniteMessages', 'IgniteNotebookD
                         {divider: true}
                     ];
 
-                    _.forEach(notebooks, (notebook) => scope.notebooks.push({
+                    _.forEach(changed, (notebook) => scope.notebooks.push({
                         data: notebook,
                         action: {
                             icon: 'fa-trash',
