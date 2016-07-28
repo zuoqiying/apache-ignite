@@ -768,7 +768,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             agentMonitor.awaitAgent()
                 .then(_updateTopology)
-                .finally(() => {
+                .then(() => {
                     if ($root.IgniteDemoMode)
                         _.forEach($scope.notebook.paragraphs, $scope.execute);
 
@@ -1243,7 +1243,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     $scope.stopRefresh(paragraph);
                 })
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         $scope.queryExecuted = function(paragraph) {
@@ -1286,7 +1286,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     _showLoading(paragraph, false);
                 })
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         $scope.scan = function(paragraph) {
@@ -1312,7 +1312,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     _showLoading(paragraph, false);
                 })
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         function _updatePieChartsWithData(paragraph, newDatum) {
@@ -1364,7 +1364,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     _showLoading(paragraph, false);
                 })
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         const _export = (fileName, columnFilter, meta, rows) => {
@@ -1427,7 +1427,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             agentMonitor.queryGetAll(args.cacheName, args.query)
                 .then((res) => _export(paragraph.name + '-all.csv', paragraph.columnFilter, res.fieldsMetadata, res.items))
                 .catch(Messages.showError)
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         // $scope.exportPdfAll = function(paragraph) {
@@ -1533,7 +1533,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     }), 'name');
                 })
                 .catch(Messages.showError)
-                .finally(() => Loading.finish('loadingCacheMetadata'));
+                .then(() => Loading.finish('loadingCacheMetadata'));
         };
 
         $scope.showResultQuery = function(paragraph) {

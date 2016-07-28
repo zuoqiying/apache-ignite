@@ -488,7 +488,7 @@ export default ['domainsController', [
                     $scope.importDomain.info = INFO_SELECT_SCHEMAS;
                 })
                 .catch(Messages.showError)
-                .finally(() => Loading.finish('importDomainFromDb'));
+                .then(() => Loading.finish('importDomainFromDb'));
         }
 
         const DFLT_PARTITIONED_CACHE = {
@@ -625,7 +625,7 @@ export default ['domainsController', [
                     $scope.importDomain.info = INFO_SELECT_TABLES;
                 })
                 .catch(Messages.showError)
-                .finally(() => Loading.finish('importDomainFromDb'));
+                .then(() => Loading.finish('importDomainFromDb'));
         }
 
         $scope.applyDefaults = function() {
@@ -1132,7 +1132,7 @@ export default ['domainsController', [
                 }, true);
             })
             .catch(Messages.showError)
-            .finally(() => {
+            .then(() => {
                 $scope.ui.ready = true;
                 $scope.ui.inputForm.$setPristine();
 

@@ -20,8 +20,8 @@ import JSZip from 'jszip';
 import saver from 'file-saver';
 
 export default [
-    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteLoading', '$filter', 'igniteConfigurationResource', 'JavaTypes', 'IgniteVersion', 'GeneratorDocker', 'GeneratorPom',
-    function($root, $scope, $http, LegacyUtils, Loading, $filter, Resource, JavaTypes, IgniteVersion, docker, pom) {
+    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteLoading', '$filter', 'igniteConfigurationResource', 'JavaTypes', 'IgniteVersion', 'GeneratorDocker', 'GeneratorPom',
+    function($root, $scope, $http, LegacyUtils, Messages, Loading, $filter, Resource, JavaTypes, IgniteVersion, docker, pom) {
         const ctrl = this;
 
         $scope.ui = { ready: false };
@@ -50,7 +50,8 @@ export default [
 
                     $scope.selectItem(clusters[idx]);
                 }
-            });
+            })
+            .catch(Messages.showError);
 
         $scope.contentVisible = (rows, row) => {
             return !row || !row._id || _.findIndex(rows, (item) => item._id === row._id) >= 0;
