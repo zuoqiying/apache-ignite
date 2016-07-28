@@ -18,45 +18,42 @@
 // Confirm popup service.
 export default ['IgniteConfirm', ['$rootScope', '$q', '$modal', '$animate', ($root, $q, $modal, $animate) => {
     const scope = $root.$new();
-    let deferred;
 
-    const onHideHandler = () => scope.result === true ? deferred.resolve(scope.result) : deferred.reject(scope.result);
+    const modal = $modal({templateUrl: '/templates/confirm.html', scope, placement: 'center', show: false, backdrop: true});
 
-    const modal = $modal({templateUrl: '/templates/confirm.html', scope, placement: 'center', show: false, backdrop: true, onHide: onHideHandler});
-
-    const _hide = (animate) => {
-        $animate.enabled(modal.$element, animate);
+    const _hide = () => {
+        $animate.enabled(modal.$element, false);
 
         modal.hide();
     };
 
-    scope.confirmYes = () => {
-        _hide(scope.animate);
+    let deferred;
 
-        scope.result = true;
+    scope.confirmYes = () => {
+        _hide();
+
+        deferred.resolve(true);
     };
 
     scope.confirmNo = () => {
-        _hide(scope.animate);
+        _hide();
 
-        scope.result = false;
+        deferred.reject(false);
     };
 
     scope.confirmCancel = () => {
-        _hide(scope.animate);
+        _hide();
 
-        scope.result = 'cancelled';
+        deferred.reject('cancelled');
     };
 
     /**
      *
      * @param {String } content
      * @param {Boolean} [yesNo]
-     * @param {Boolean} [animate]
      * @returns {Promise}
      */
-    modal.confirm = (content, yesNo, animate) => {
-        scope.animate = !!animate;
+    modal.confirm = (content, yesNo) => {
         scope.content = content || 'Confirm?';
         scope.yesNo = !!yesNo;
 
