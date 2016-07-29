@@ -47,10 +47,22 @@ module.exports.factory = function(_, express, mongo, usersService) {
                 .then((user) => {
                     const becomeUsed = req.session.viewedUser && user.admin;
 
-                    if (becomeUsed)
+                    if (becomeUsed) {
                         req.session.viewedUser = user;
 
-                    return user;
+                        return user;
+                    }
+
+                    return new Promise((resolve, reject) => {
+                        req.logout();
+
+                        req.logIn(user, {}, (errLogIn) => {
+                            if (errLogIn)
+                                return reject(errLogIn);
+
+                            return resolve(user);
+                        });
+                    });
                 })
                 .then(res.api.ok)
                 .catch(res.api.error);

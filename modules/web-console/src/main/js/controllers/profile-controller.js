@@ -84,6 +84,8 @@ export default ['profileController', [
                     Messages.showInfo('Profile saved.');
 
                     Focus.move('profile-username');
+
+                    $root.$broadcast('user', $scope.user);
                 })
                 .catch(({data}) => Messages.showError(Messages.errorMessage('Failed to save profile: ', data)));
         };
