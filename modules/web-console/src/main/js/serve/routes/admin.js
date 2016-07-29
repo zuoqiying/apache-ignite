@@ -51,7 +51,7 @@ module.exports.factory = function(_, express, settings, mongo, spacesService, ma
         // Remove user.
         router.post('/remove', (req, res) => {
             usersService.remove(req.headers.referer, req.body.userId)
-                .then(() => res.sendStatus(200))
+                .then(res.api.ok)
                 .catch(res.api.error);
         });
 
@@ -60,22 +60,22 @@ module.exports.factory = function(_, express, settings, mongo, spacesService, ma
             const params = req.body;
 
             mongo.Account.findByIdAndUpdate(params.userId, {admin: params.adminFlag}).exec()
-                .then(() => res.sendStatus(200))
-                .catch((err) => mongo.handleError(res, err));
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         // Become user.
         router.get('/become', (req, res) => {
             sessionsService.become(req.session, req.query.viewedUserId)
-                .then(() => res.sendStatus(200))
-                .catch(() => res.sendStatus(401));
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         // Revert to your identity.
         router.get('/revert/identity', (req, res) => {
-            sessionsService.become(req.session)
-                .then(() => res.sendStatus(200))
-                .catch(() => res.sendStatus(401));
+            sessionsService.revert(req.session)
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         factoryResolve(router);

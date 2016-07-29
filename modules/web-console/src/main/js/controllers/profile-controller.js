@@ -73,6 +73,7 @@ export default ['profileController', [
 
         $scope.saveUser = () => {
             $http.post('/api/v1/profile/save', $scope.user)
+                .catch(({data}) => Promise.reject(data))
                 .then(User.read)
                 .then(() => {
                     if ($scope.expandedPassword)
@@ -87,7 +88,7 @@ export default ['profileController', [
 
                     $root.$broadcast('user', $scope.user);
                 })
-                .catch(({data}) => Messages.showError(Messages.errorMessage('Failed to save profile: ', data)));
+                .catch((err) => Messages.showError(Messages.errorMessage('Failed to save profile: ', err)));
         };
     }
 ]];

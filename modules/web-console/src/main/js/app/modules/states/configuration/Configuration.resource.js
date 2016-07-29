@@ -19,8 +19,8 @@ export default ['$http', ($http) => {
     return {
         read() {
             return $http.get('/api/v1/configuration/list')
-                .then(({data}) => data);
-
+                .then(({data}) => data)
+                .catch(({data}) => Promise.reject(data));
         },
         populate({spaces, clusters, caches, igfss, domains}) {
             _.forEach(clusters, (cluster) => {

@@ -90,7 +90,7 @@ class NotebookData {
 
         return this.initLatch = this.$http.get('/api/v1/notebooks')
             .then(({data}) => this.notebooks = data)
-            .catch(({data}) => this.$q.reject(data));
+            .catch(({data}) => Promise.reject(data));
     }
 
     find(_id) {
@@ -125,7 +125,7 @@ class NotebookData {
 
                 return data;
             })
-            .catch(({data}) => this.$q.reject(data));
+            .catch(({data}) => Promise.reject(data));
     }
 
     remove(notebook) {
@@ -150,7 +150,7 @@ class NotebookData {
 
                 return null;
             })
-            .catch(({data}) => this.$q.reject(data));
+            .catch(({data}) => Promise.reject(data));
     }
 }
 
