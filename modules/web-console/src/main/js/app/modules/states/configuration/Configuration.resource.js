@@ -28,6 +28,9 @@ export default ['$http', ($http) => {
 
                 _.forEach(cluster.caches, (cache) => {
                     cache.domains = _.filter(domains, ({_id}) => _.includes(cache.domains, _id));
+
+                    if (_.get(cache, 'nodeFilter.kind') === 'IGFS')
+                        cache.nodeFilter.IGFS.instance = _.find(igfss, {_id: cache.nodeFilter.IGFS.igfs});
                 });
 
                 cluster.igfss = _.filter(igfss, ({_id}) => _.includes(cluster.igfss, _id));

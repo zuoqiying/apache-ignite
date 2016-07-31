@@ -61,6 +61,15 @@ export default ['JavaTypes', function() {
         },
         /**
          * @param {String} value text to check.
+         * @returns boolean 'true' if given text is valid Java UUID value.
+         */
+        validUUID(value) {
+            const regexp = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/igm;
+
+            return value === '' || regexp.test(value);
+        },
+        /**
+         * @param {String} value text to check.
          * @returns boolean 'true' if given text is a Java type with package.
          */
         packageSpecified(value) {

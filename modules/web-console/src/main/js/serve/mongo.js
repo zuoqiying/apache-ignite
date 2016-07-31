@@ -140,6 +140,22 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         cacheMode: {type: String, enum: ['PARTITIONED', 'REPLICATED', 'LOCAL']},
         atomicityMode: {type: String, enum: ['ATOMIC', 'TRANSACTIONAL']},
 
+        nodeFilter: {
+            kind: {type: String, enum: ['Default', 'Exclude', 'IGFS', 'OnNodes', 'Custom']},
+            Exclude: {
+                nodeId: String
+            },
+            IGFS: {
+                igfs: {type: ObjectId, ref: 'Igfs'}
+            },
+            OnNodes: {
+                nodeIds: [String]
+            },
+            Custom: {
+                className: String
+            }
+        },
+
         backups: Number,
         memoryMode: {type: String, enum: ['ONHEAP_TIERED', 'OFFHEAP_TIERED', 'OFFHEAP_VALUES']},
         offHeapMaxMemory: Number,

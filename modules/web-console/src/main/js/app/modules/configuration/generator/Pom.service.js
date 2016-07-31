@@ -155,6 +155,9 @@ class GeneratorPom {
                     this.addDependency(storeDeps, dep.groupId, dep.artifactId, dep.version, dep.jar);
                 }
             }
+
+            if (_.get(cache, 'nodeFilter.kind') === 'Exclude')
+                this.addDependency(deps, 'org.apache.ignite', 'ignite-extdata-p2p', igniteVersion);
         });
 
         res.line('<?xml version="1.0" encoding="UTF-8"?>');

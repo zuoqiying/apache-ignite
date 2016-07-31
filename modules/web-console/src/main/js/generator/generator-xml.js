@@ -1243,6 +1243,76 @@ $generatorXml.cacheStore = function(cache, domains, res) {
     return res;
 };
 
+// Generate cache node filter group.
+$generatorXml.cacheNodeFilter = function(cache, igfss, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    switch (_.get(cache, 'nodeFilter.kind')) {
+        case 'Exclude':
+            res.startBlock('<property name="nodeFilter">');
+            res.startBlock('<bean class="org.apache.ignite.tests.p2p.ExcludeNodeFilter" >');
+            res.startBlock('<constructor-arg>');
+            res.startBlock('<bean class="java.util.UUID" factory-method="fromString">');
+            res.line('<constructor-arg value="' + cache.nodeFilter.Exclude.nodeId + '"/>');
+            res.endBlock('</bean>');
+            res.endBlock('</constructor-arg>');
+            res.endBlock('</bean>');
+            res.endBlock('</property>');
+
+            break;
+
+        case 'IGFS':
+            const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
+
+            if (foundIgfs) {
+                res.startBlock('<property name="nodeFilter">');
+                res.startBlock('<bean class="org.apache.ignite.internal.processors.igfs.IgfsNodePredicate">');
+                res.line('<constructor-arg value="' + foundIgfs.name + '"/>');
+                res.endBlock('</bean>');
+                res.endBlock('</property>');
+            }
+
+            break;
+
+        case 'OnNodes':
+            const nodes = cache.nodeFilter.OnNodes.nodeIds;
+
+            if ($generatorCommon.isDefinedAndNotEmpty(nodes)) {
+                res.startBlock('<property name="nodeFilter">');
+                res.startBlock('<bean class="org.apache.ignite.internal.util.lang.GridNodePredicate">');
+                res.startBlock('<constructor-arg>');
+                res.startBlock('<list>');
+
+                _.forEach(nodes, (nodeId) => {
+                    res.startBlock('<bean class="java.util.UUID" factory-method="fromString">');
+                    res.line('<constructor-arg value="' + nodeId + '"/>');
+                    res.endBlock('</bean>');
+                });
+
+                res.endBlock('</list>');
+                res.endBlock('</constructor-arg>');
+                res.endBlock('</bean>');
+                res.endBlock('</property>');
+            }
+
+            break;
+
+        case 'Custom':
+            res.startBlock('<property name="nodeFilter">');
+            res.line('<bean class="' + cache.nodeFilter.Custom.className + '"/>');
+            res.endBlock('</property>');
+
+            break;
+
+        default: break;
+    }
+
+    res.needEmptyLine = true;
+
+    return res;
+};
+
 // Generate cache concurrency group.
 $generatorXml.cacheConcurrency = function(cache, res) {
     if (!res)
@@ -1586,6 +1656,10 @@ $generatorXml.cacheConfiguration = function(cache, res) {
     $generatorXml.cacheMemory(cache, res);
     $generatorXml.cacheQuery(cache, res);
     $generatorXml.cacheStore(cache, cache.domains, res);
+
+    const igfs = _.get(cache, 'nodeFilter.IGFS.instance');
+
+    $generatorXml.cacheNodeFilter(cache, igfs ? [igfs] : [], res);
     $generatorXml.cacheConcurrency(cache, res);
     $generatorXml.cacheRebalance(cache, res);
     $generatorXml.cacheServerNearCache(cache, res);

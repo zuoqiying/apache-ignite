@@ -49,6 +49,7 @@ import javaPackageName from './validator/java-package-name.directive';
 import propertyValueSpecified from './validator/property-value-specified.directive';
 import propertyUnique from './validator/property-unique.directive';
 import unique from './validator/unique.directive';
+import uuid from './validator/uuid.directive';
 
 // Helpers.
 import igniteFormFieldInputAutofocus from './field/input/autofocus.directive';
@@ -88,6 +89,7 @@ angular
 .directive(...propertyValueSpecified)
 .directive(...propertyUnique)
 .directive(...unique)
+.directive(...uuid)
 // Helpers.
 .directive(...igniteFormFieldInputAutofocus)
 .directive(...igniteFormFieldUp)

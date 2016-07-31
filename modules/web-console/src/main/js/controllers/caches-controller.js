@@ -81,11 +81,12 @@ export default ['cachesController', [
 
         // When landing on the page, get caches and show them.
         Resource.read()
-            .then(({spaces, clusters, caches, domains}) => {
+            .then(({spaces, clusters, caches, domains, igfss}) => {
                 const validFilter = $filter('domainsValidation');
 
                 $scope.spaces = spaces;
                 $scope.caches = caches;
+                $scope.igfss = igfss;
 
                 _.forEach($scope.caches, (cache) => cache.label = _cacheLbl(cache));
 

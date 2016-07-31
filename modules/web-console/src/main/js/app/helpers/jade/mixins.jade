@@ -91,6 +91,10 @@ mixin ipaddress-port-feedback(visible, name)
 mixin ipaddress-port-range-feedback(visible, name)
     +error-feedback(visible, 'ipaddressPortRange', 'Invalid port range!', name)
 
+//- Mixin for feedback on UUID violation.
+mixin uuid-feedback(visible, name)
+    +error-feedback(visible, 'uuid', 'Invalid node ID!', name)
+
 //- Mixin for checkbox.
 mixin checkbox(lbl, model, name, tip)
     ignite-form-field.checkbox
@@ -115,6 +119,27 @@ mixin checkbox-enabled(lbl, model, name, enabled, tip)
         | #{lbl}
         ignite-form-field-tooltip
             | !{tip}
+
+//- Mixin for uuid field with enabled condition.
+mixin uuid(lbl, model, name, enabled, required, tip)
+    -var errLbl = lbl.substring(0, lbl.length - 1)
+
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+        ignite-form-field-input-text(
+            data-id=name
+            data-name=name
+            data-ng-model=model
+            data-ng-disabled='!(#{enabled})'
+            data-ng-required=required
+            data-placeholder='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+
+            data-uuid='true'
+        )
+            +error-feedback('form[ngModelName].$error.uuid', 'uuid', errLbl + ' should not be valid UUID!', name)
 
 //- Mixin for java name field with enabled condition.
 mixin java-class(lbl, model, name, enabled, required, tip)
@@ -443,6 +468,30 @@ mixin table-address-field(field, items, valid, save, newItem, portRange)
         data-ipaddress='true'
         data-ipaddress-with-port='true'
         data-ipaddress-with-port-range=portRange ? 'true' : null
+        data-ignite-unique=items
+        data-ignite-form-field-input-autofocus='true'
+        ignite-on-enter=onEnter
+        ignite-on-escape=onEscape
+        ng-blur=onBlur
+    )
+        block
+
+//- Mixin for table UUID field.
+mixin table-uuid-field(field, items, valid, save, newItem, portRange)
+    -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
+    -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
+
+    -var onEscape = newItem ? 'group.add = []' : 'field.edit = false'
+
+    -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
+    -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
+
+    ignite-form-field-input-text(
+        data-name='#{field}{{ $index || "" }}'
+        data-ng-model=field
+        data-ng-required='true'
+        data-placeholder='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+        data-uuid='true'
         data-ignite-unique=items
         data-ignite-form-field-input-autofocus='true'
         ignite-on-enter=onEnter
