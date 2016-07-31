@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-export default ['igniteFormFieldInputAutofocus', [() => {
+export default ['igniteFormFieldInputAutofocus', ['$timeout', ($timeout) => {
     const link = (scope, el, attrs) => {
         if (_.isUndefined(attrs.igniteFormFieldInputAutofocus) || attrs.igniteFormFieldInputAutofocus !== 'true')
             return;
 
-        el.focus();
+        $timeout(() => el.focus(), 100);
     };
 
     return {
