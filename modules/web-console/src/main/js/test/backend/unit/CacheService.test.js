@@ -39,7 +39,7 @@ suite('CacheServiceTestsSuite', () => {
     };
 
     suiteSetup(() => {
-        return Promise.all([injector('services/cache'),
+        return Promise.all([injector('services/caches'),
             injector('mongo'),
             injector('errors')])
             .then(([_cacheService, _mongo, _errors]) => {

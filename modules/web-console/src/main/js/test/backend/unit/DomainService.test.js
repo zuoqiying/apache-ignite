@@ -39,7 +39,7 @@ suite('DomainsServiceTestsSuite', () => {
     };
 
     suiteSetup(() => {
-        return Promise.all([injector('services/domain'),
+        return Promise.all([injector('services/domains'),
             injector('mongo'),
             injector('errors')])
             .then(([_domainService, _mongo, _errors]) => {

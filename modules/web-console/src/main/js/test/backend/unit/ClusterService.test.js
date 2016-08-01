@@ -39,7 +39,7 @@ suite('ClusterServiceTestsSuite', () => {
     };
 
     suiteSetup(() => {
-        return Promise.all([injector('services/cluster'),
+        return Promise.all([injector('services/clusters'),
             injector('mongo'),
             injector('errors')])
             .then(([_clusterService, _mongo, _errors]) => {

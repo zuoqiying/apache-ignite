@@ -39,7 +39,7 @@ suite('IgfsServiceTestsSuite', () => {
     };
 
     suiteSetup(() => {
-        return Promise.all([injector('services/igfs'),
+        return Promise.all([injector('services/igfss'),
             injector('mongo'),
             injector('errors')])
             .then(([_igfsService, _mongo, _errors]) => {
