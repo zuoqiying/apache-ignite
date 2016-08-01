@@ -20,6 +20,7 @@ package org.apache.ignite.internal.pagemem;
 import org.apache.ignite.internal.util.typedef.internal.U;
 
 import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_DATA;
+import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_PART_IDX;
 
 /**
  * Utility class for page ID parts manipulation.
@@ -155,7 +156,8 @@ public final class PageIdUtils {
      * @return Effective page id.
      */
     public static long effectivePageId(long link) {
-        return flag(link) == FLAG_DATA ? pageId(link) : link & EFFECTIVE_NON_DATA_PAGE_ID_MASK;
+        return flag(link) == FLAG_DATA || flag(link) == FLAG_PART_IDX ?
+            pageId(link) : link & EFFECTIVE_NON_DATA_PAGE_ID_MASK;
     }
 
     /**

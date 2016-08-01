@@ -613,6 +613,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         CacheDataRowStore rowStore = new CacheDataRowStore(cctx, freeList);
 
         CacheDataTree dataTree = new CacheDataTree(idxName,
+                p,
                 reuseList,
                 rowStore,
                 cctx,
@@ -734,7 +735,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         /** {@inheritDoc} */
         @Override public void destroy() throws IgniteCheckedException {
-            dataTree.destroy();
+            // TODO
+//            dataTree.destroy();
 
             metaStore.dropRootPage(name);
         }
@@ -921,6 +923,9 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         /** */
         private final GridCacheContext cctx;
 
+        /** */
+        private final int partId;
+
         /**
          * @param name Tree name.
          * @param reuseList Reuse list.
@@ -933,6 +938,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          */
         CacheDataTree(
             String name,
+            int partId,
             ReuseList reuseList,
             CacheDataRowStore rowStore,
             GridCacheContext cctx,
@@ -947,6 +953,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             this.rowStore = rowStore;
             this.cctx = cctx;
+            this.partId = partId;
 
             if (initNew)
                 initNew();
@@ -972,6 +979,11 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             long link = ((RowLinkIO)io).getLink(buf, idx);
 
             return rowStore.dataRow(hash, link);
+        }
+
+        /** {@inheritDoc} */
+        @Override protected long allocatePage0() throws IgniteCheckedException {
+            return pageMem.allocatePage(cctx.cacheId(), partId, PageIdAllocator.FLAG_PART_IDX);
         }
 
         /**

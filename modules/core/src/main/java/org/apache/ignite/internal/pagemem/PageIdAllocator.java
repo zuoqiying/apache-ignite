@@ -29,6 +29,9 @@ public interface PageIdAllocator {
     /** */
     public static final byte FLAG_IDX = 2;
 
+    /** */
+    public static final byte FLAG_PART_IDX = 3;
+
     /**
      * Allocates a page from the space for the given partition ID and the given flags.
      *
