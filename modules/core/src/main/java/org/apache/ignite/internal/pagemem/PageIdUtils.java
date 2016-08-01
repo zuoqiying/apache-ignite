@@ -224,6 +224,11 @@ public final class PageIdUtils {
      * @return New page ID.
      */
     public static long rotatePageId(long pageId) {
+        // TODO
+
+        if (flag(pageId) == FLAG_PART_IDX)
+            return pageId;
+
         assert flag(pageId) == PageIdAllocator.FLAG_IDX : flag(pageId); // Possible only for index pages.
 
         int partId = partId(pageId);

@@ -735,8 +735,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         /** {@inheritDoc} */
         @Override public void destroy() throws IgniteCheckedException {
-            // TODO
-//            dataTree.destroy();
+            dataTree.destroy();
 
             metaStore.dropRootPage(name);
         }
