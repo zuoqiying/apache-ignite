@@ -26,7 +26,7 @@ module.exports = {
 };
 
 module.exports.factory = function(publicRoute, adminRoute, profilesRoute, demoRoute,
-    clustersRoute, domainsRoute, cachesRoute, igfssRoute, notebooksRoute, agentsRoute, configurationsRoute, pluginsRoute) {
+    clustersRoute, domainsRoute, cachesRoute, igfssRoute, notebooksRoute, agentsRoute, configurationsRoute) {
     return {
         register: (app) => {
             const _mustAuthenticated = (req, res, next) => req.isAuthenticated() ? next() : res.redirect('/');
@@ -41,7 +41,7 @@ module.exports.factory = function(publicRoute, adminRoute, profilesRoute, demoRo
 
             app.all('/configuration/*', _mustAuthenticated);
 
-            app.use('/configuration', _mustAuthenticated, configurationsRoute);
+            app.use('/configuration', configurationsRoute);
             app.use('/configuration/clusters', clustersRoute);
             app.use('/configuration/domains', domainsRoute);
             app.use('/configuration/caches', cachesRoute);
