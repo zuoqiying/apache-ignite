@@ -15,32 +15,23 @@
  * limitations under the License.
  */
 
-import angular from 'angular';
+export default ['uuid', ['JavaTypes', (JavaTypes) => {
+    const link = (scope, el, attrs, [ngModel]) => {
+        const isEmpty = (modelValue) => {
+            return ngModel.$isEmpty(modelValue) || _.isUndefined(attrs.uuid) || attrs.uuid !== 'true';
+        };
 
-angular
-.module('ignite-console.states.sql', [
-    'ui.router'
-])
-.config(['$stateProvider', function($stateProvider) {
-    // set up the states
-    $stateProvider
-    .state('base.sql', {
-        url: '/sql',
-        abstract: true,
-        template: '<ui-view></ui-view>'
-    })
-    .state('base.sql.notebook', {
-        url: '/notebook/{noteId}',
-        templateUrl: '/sql/sql.html',
-        metaTags: {
-            title: 'Query notebook'
-        }
-    })
-    .state('base.sql.demo', {
-        url: '/demo',
-        templateUrl: '/sql/sql.html',
-        metaTags: {
-            title: 'SQL demo'
-        }
-    });
-}]);
+        ngModel.$validators.uuid = (modelValue) => {
+            if (isEmpty(modelValue))
+                return true;
+
+            return JavaTypes.validUUID(modelValue);
+        };
+    };
+
+    return {
+        restrict: 'A',
+        link,
+        require: ['ngModel']
+    };
+}]];

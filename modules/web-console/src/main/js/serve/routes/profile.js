@@ -20,8 +20,8 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'profile-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'agent-manager']
+    implements: 'routes/profiles',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/users']
 };
 
 /**
@@ -29,10 +29,10 @@ module.exports = {
  * @param _ Lodash module
  * @param express Express module
  * @param mongo
- * @param {AgentManager} agentMgr
+ * @param {UsersService} usersService
  * @returns {Promise}
  */
-module.exports.factory = function(_, express, mongo, agentMgr) {
+module.exports.factory = function(_, express, mongo, usersService) {
     return new Promise((resolveFactory) => {
         const router = new express.Router();
 
@@ -40,61 +40,32 @@ module.exports.factory = function(_, express, mongo, agentMgr) {
          * Save user profile.
          */
         router.post('/save', (req, res) => {
-            const params = req.body;
-
-            if (params.password && _.isEmpty(params.password))
+            if (req.body.password && _.isEmpty(req.body.password))
                 return res.status(500).send('Wrong value for new password!');
 
-            mongo.Account.findById(params._id).exec()
+            usersService.save(req.body)
                 .then((user) => {
-                    if (!params.password)
-                        return Promise.resolve(user);
+                    const becomeUsed = req.session.viewedUser && user.admin;
 
-                    return new Promise((resolve, reject) => {
-                        user.setPassword(params.password, (err, _user) => {
-                            if (err)
-                                return reject(err);
-
-                            delete params.password;
-
-                            resolve(_user);
-                        });
-                    });
-                })
-                .then((user) => {
-                    if (!params.email || user.email === params.email)
-                        return Promise.resolve(user);
-
-                    return new Promise((resolve, reject) => {
-                        mongo.Account.findOne({email: params.email}, (err, _user) => {
-                            // TODO send error to admin
-                            if (err)
-                                reject(new Error('Failed to check email!'));
-
-                            if (_user && _user._id !== user._id)
-                                reject(new Error('User with this email already registered!'));
-
-                            resolve(user);
-                        });
-                    });
-                })
-                .then((user) => {
-                    if (params.token && user.token !== params.token)
-                        agentMgr.close(user._id, user.token);
-
-                    _.extend(user, params);
-
-                    return user.save();
-                })
-                .then((user) => {
-                    const becomeUsed = req.session.viewedUser && req.user.admin;
-
-                    if (becomeUsed)
+                    if (becomeUsed) {
                         req.session.viewedUser = user;
 
-                    res.sendStatus(200);
+                        return user;
+                    }
+
+                    return new Promise((resolve, reject) => {
+                        req.logout();
+
+                        req.logIn(user, {}, (errLogIn) => {
+                            if (errLogIn)
+                                return reject(errLogIn);
+
+                            return resolve(user);
+                        });
+                    });
                 })
-                .catch((err) => mongo.handleError(res, err));
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         resolveFactory(router);

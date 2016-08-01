@@ -17,8 +17,8 @@
 
 // Controller for Domain model screen.
 export default ['domainsController', [
-    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable',
-    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable) {
+    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource',
+    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource) {
         UnsavedChangesGuard.install($scope);
 
         const emptyDomain = {empty: true};
@@ -448,7 +448,7 @@ export default ['domainsController', [
                                     $scope.importDomain.button = 'Cancel';
                                 }
                             })
-                            .finally(function() {
+                            .then(() => {
                                 $scope.importDomain.info = INFO_CONNECT_TO_DB;
 
                                 Loading.finish('importDomainFromDb');
@@ -488,7 +488,7 @@ export default ['domainsController', [
                     $scope.importDomain.info = INFO_SELECT_SCHEMAS;
                 })
                 .catch(Messages.showError)
-                .finally(() => Loading.finish('importDomainFromDb'));
+                .then(() => Loading.finish('importDomainFromDb'));
         }
 
         const DFLT_PARTITIONED_CACHE = {
@@ -625,7 +625,7 @@ export default ['domainsController', [
                     $scope.importDomain.info = INFO_SELECT_TABLES;
                 })
                 .catch(Messages.showError)
-                .finally(() => Loading.finish('importDomainFromDb'));
+                .then(() => Loading.finish('importDomainFromDb'));
         }
 
         $scope.applyDefaults = function() {
@@ -732,11 +732,10 @@ export default ['domainsController', [
                 return false;
 
             const batch = [];
-            const tables = [];
             const checkedCaches = [];
 
-            let dupCnt = 0;
             let containKey = true;
+            let containDup = false;
 
             function queryField(name, jdbcType) {
                 return {name: toJavaName(name), className: jdbcType.javaType};
@@ -753,7 +752,7 @@ export default ['domainsController', [
                 };
             }
 
-            _.forEach($scope.importDomain.tables, function(table) {
+            _.forEach($scope.importDomain.tables, function(table, curIx) {
                 if (table.use) {
                     const qryFields = [];
                     const indexes = [];
@@ -762,13 +761,15 @@ export default ['domainsController', [
                     const aliases = [];
 
                     const tableName = table.tbl;
+                    let typeName = toJavaClassName(tableName);
 
-                    const dup = tables.indexOf(tableName) >= 0;
+                    if (_.find($scope.importDomain.tables,
+                            (tbl, ix) => tbl.use && ix !== curIx && tableName === tbl.tbl)) {
+                        typeName = typeName + '_' + toJavaClassName(table.schema);
 
-                    if (dup)
-                        dupCnt++;
+                        containDup = true;
+                    }
 
-                    const typeName = toJavaClassName(tableName);
                     const valType = _toJavaPackage($scope.ui.packageName) + '.' + typeName;
 
                     let _containKey = false;
@@ -829,10 +830,8 @@ export default ['domainsController', [
                         newDomain.confirm = true;
                     }
 
-                    const dupSfx = (dup ? '_' + dupCnt : '');
-
-                    newDomain.keyType = valType + 'Key' + dupSfx;
-                    newDomain.valueType = valType + dupSfx;
+                    newDomain.keyType = valType + 'Key';
+                    newDomain.valueType = valType;
                     newDomain.queryMetadata = 'Configuration';
                     newDomain.databaseSchema = table.schema;
                     newDomain.databaseTable = tableName;
@@ -912,7 +911,6 @@ export default ['domainsController', [
                     }
 
                     batch.push(newDomain);
-                    tables.push(tableName);
                 }
             });
 
@@ -941,12 +939,22 @@ export default ['domainsController', [
                     _saveBatch(batch);
             }
 
+            function checkDuplicate() {
+                if (containDup) {
+                    Confirm.confirm('Some tables have the same name.<br/>' +
+                            'Name of types for that tables will contain schema name too.')
+                        .then(() => checkOverwrite());
+                }
+                else
+                    checkOverwrite();
+            }
+
             if (containKey)
-                checkOverwrite();
+                checkDuplicate();
             else {
                 Confirm.confirm('Some tables have no primary key.<br/>' +
                         'You will need to configure key type and key fields for such tables after import complete.')
-                    .then(() => checkOverwrite());
+                    .then(() => checkDuplicate());
             }
         }
 
@@ -1063,21 +1071,17 @@ export default ['domainsController', [
         // When landing on the page, get domain models and show them.
         Loading.start('loadingDomainModelsScreen');
 
-        $http.get('/api/v1/configuration/list')
-            .success(function(data) {
-                $scope.spaces = data.spaces;
-                $scope.clusters = _.map(data.clusters, function(cluster) {
-                    return {
-                        value: cluster._id,
-                        label: cluster.name
-                    };
-                });
-                $scope.caches = _mapCaches(data.caches);
-                $scope.domains = _.sortBy(data.domains, 'valueType');
+        Resource.read()
+            .then(({spaces, clusters, caches, domains}) => {
+                $scope.spaces = spaces;
+                $scope.clusters = _.map(clusters, (cluster) => ({
+                    label: cluster.name,
+                    value: cluster._id
+                }));
+                $scope.caches = _mapCaches(caches);
+                $scope.domains = _.sortBy(domains, 'valueType');
 
-                _.forEach($scope.clusters, function(cluster) {
-                    $scope.ui.generatedCachesClusters.push(cluster.value);
-                });
+                _.forEach($scope.clusters, (cluster) => $scope.ui.generatedCachesClusters.push(cluster.value));
 
                 if (!_.isEmpty($scope.caches)) {
                     $scope.importActions.push({
@@ -1128,7 +1132,7 @@ export default ['domainsController', [
                 }, true);
             })
             .catch(Messages.showError)
-            .finally(() => {
+            .then(() => {
                 $scope.ui.ready = true;
                 $scope.ui.inputForm.$setPristine();
 

@@ -20,11 +20,11 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'caches-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/cache']
+    implements: 'routes/caches',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/caches']
 };
 
-module.exports.factory = function(_, express, mongo, cacheService) {
+module.exports.factory = function(_, express, mongo, cachesService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -34,8 +34,8 @@ module.exports.factory = function(_, express, mongo, cacheService) {
         router.post('/save', (req, res) => {
             const cache = req.body;
 
-            cacheService.merge(cache)
-                .then(res.api.ok)
+            cachesService.merge(cache)
+                .then((savedCache) => res.api.ok(savedCache._id))
                 .catch(res.api.error);
         });
 
@@ -43,9 +43,9 @@ module.exports.factory = function(_, express, mongo, cacheService) {
          * Remove cache by ._id.
          */
         router.post('/remove', (req, res) => {
-            const cache = req.body;
+            const cacheId = req.body;
 
-            cacheService.remove(cache._id)
+            cachesService.remove(cacheId)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -54,7 +54,7 @@ module.exports.factory = function(_, express, mongo, cacheService) {
          * Remove all caches.
          */
         router.post('/remove/all', (req, res) => {
-            cacheService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
+            cachesService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
                 .then(res.api.ok)
                 .catch(res.api.error);
         });

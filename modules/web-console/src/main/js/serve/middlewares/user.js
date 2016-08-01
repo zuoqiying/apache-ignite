@@ -20,28 +20,20 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/session',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
-};
+    implements: 'middlewares:user',
+    factory: () => {
+        return (req, res, next) => {
+            req.currentUserId = function() {
+                if (!req.user)
+                    return null;
 
-module.exports.factory = (_, mongo, spaceService, errors) => {
-    class SessionService {
-        /**
-         * Become user.
-         * @param {Session} session - current session of user.
-         * @param {mongo.ObjectId|String} viewedUserId - id of user to become.
-         */
-        static become(session, viewedUserId) {
+                if (req.session.viewedUser && req.user.admin)
+                    return req.session.viewedUser._id;
 
-        }
+                return req.user._id;
+            };
 
-        /**
-         * Revert to your identity.
-         */
-        static revert(session) {
-
-        }
+            next();
+        };
     }
-
-    return SessionService;
 };

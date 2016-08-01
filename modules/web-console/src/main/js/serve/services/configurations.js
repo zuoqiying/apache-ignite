@@ -20,29 +20,40 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/configuration',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'services/cache']
+    implements: 'services/configurations',
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'services/clusters', 'services/caches', 'services/domains', 'services/igfss']
 };
 
-module.exports.factory = (_, mongo, spaceService, cacheService) => {
-    class ConfigurationService {
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spacesService
+ * @param {ClustersService} clustersService
+ * @param {CachesService} cachesService
+ * @param {DomainsService} domainsService
+ * @param {IgfssService} igfssService
+ * @returns {ConfigurationsService}
+ */
+module.exports.factory = (_, mongo, spacesService, clustersService, cachesService, domainsService, igfssService) => {
+    class ConfigurationsService {
         static list(userId, demo) {
             let spaces;
 
-            return spaceService.spaces(userId, demo)
+            return spacesService.spaces(userId, demo)
                 .then((_spaces) => {
                     spaces = _spaces;
+
                     return spaces.map((space) => space._id);
                 })
-                .then((spacesIds) => Promise.all([
-                    cacheService.listBySpaces(spacesIds),
-                    mongo.DomainModel.find({space: {$in: spacesIds}}).sort('name').lean().exec(),
-                    mongo.Igfs.find({space: {$in: spacesIds}}).sort('name').lean().exec(),
-                    mongo.Cluster.find({space: {$in: spacesIds}}).sort('name').deepPopulate(mongo.ClusterDefaultPopulate).lean().exec()
+                .then((spaceIds) => Promise.all([
+                    clustersService.listBySpaces(spaceIds),
+                    domainsService.listBySpaces(spaceIds),
+                    cachesService.listBySpaces(spaceIds),
+                    igfssService.listBySpaces(spaceIds)
                 ]))
-                .then(([caches, domains, igfss, clusters]) => ({caches, domains, igfss, clusters, spaces}));
+                .then(([clusters, domains, caches, igfss]) => ({clusters, domains, caches, igfss, spaces}));
         }
     }
 
-    return ConfigurationService;
+    return ConfigurationsService;
 };

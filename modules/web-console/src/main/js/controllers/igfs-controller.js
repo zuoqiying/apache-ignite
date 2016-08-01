@@ -17,8 +17,8 @@
 
 // Controller for IGFS screen.
 export default ['igfsController', [
-    '$scope', '$http', '$state', '$filter', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteLegacyTable',
-    function($scope, $http, $state, $filter, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, LegacyTable) {
+    '$scope', '$http', '$state', '$filter', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteLegacyTable', 'igniteConfigurationResource',
+    function($scope, $http, $state, $filter, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, LegacyTable, Resource) {
         UnsavedChangesGuard.install($scope);
 
         const emptyIgfs = {empty: true};
@@ -135,11 +135,11 @@ export default ['igfsController', [
         Loading.start('loadingIgfsScreen');
 
         // When landing on the page, get IGFSs and show them.
-        $http.get('/api/v1/configuration/list')
-            .success(function(data) {
-                $scope.spaces = data.spaces;
+        Resource.read()
+            .then(({spaces, clusters, igfss}) => {
+                $scope.spaces = spaces;
 
-                $scope.igfss = data.igfss || [];
+                $scope.igfss = igfss || [];
 
                 // For backward compatibility set colocateMetadata and relaxedConsistency default values.
                 _.forEach($scope.igfss, (igfs) => {
@@ -150,12 +150,10 @@ export default ['igfsController', [
                         igfs.relaxedConsistency = true;
                 });
 
-                $scope.clusters = _.map(data.clusters || [], function(cluster) {
-                    return {
-                        value: cluster._id,
-                        label: cluster.name
-                    };
-                });
+                $scope.clusters = _.map(clusters || [], (cluster) => ({
+                    label: cluster.name,
+                    value: cluster._id
+                }));
 
                 if ($state.params.linkId)
                     $scope.createItem($state.params.linkId);
@@ -194,7 +192,7 @@ export default ['igfsController', [
                 }, true);
             })
             .catch(Messages.showError)
-            .finally(function() {
+            .then(() => {
                 $scope.ui.ready = true;
                 $scope.ui.inputForm.$setPristine();
                 Loading.finish('loadingIgfsScreen');

@@ -350,8 +350,22 @@ $generatorSpring.clusterGeneral = function(cluster, res) {
             case 'Jdbc':
                 res.startBlock('<bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder">');
 
-                if (d.Jdbc)
-                    res.line('<property name="initSchema" value="' + (!_.isNil(d.Jdbc.initSchema) && d.Jdbc.initSchema) + '"/>');
+                if (d.Jdbc) {
+                    const datasource = d.Jdbc;
+
+                    res.line('<property name="initSchema" value="' + (!_.isNil(datasource.initSchema) && datasource.initSchema) + '"/>');
+
+                    if (datasource.dataSourceBean && datasource.dialect) {
+                        res.line('<property name="dataSource" ref="' + datasource.dataSourceBean + '"/>');
+
+                        if (_.findIndex(res.datasources, (ds) => ds.dataSourceBean === datasource.dataSourceBean) < 0) {
+                            res.datasources.push({
+                                dataSourceBean: datasource.dataSourceBean,
+                                dialect: datasource.dialect
+                            });
+                        }
+                    }
+                }
 
                 res.endBlock('</bean>');
 
@@ -1213,7 +1227,6 @@ $generatorSpring.cacheStore = function(cache, domains, res) {
                 if (_.findIndex(res.datasources, (ds) => ds.dataSourceBean === storeFactory.dataSourceBean) < 0) {
                     res.datasources.push({
                         dataSourceBean: storeFactory.dataSourceBean,
-                        className: $generatorCommon.DATA_SOURCES[storeFactory.dialect],
                         dialect: storeFactory.dialect
                     });
                 }
@@ -1236,6 +1249,76 @@ $generatorSpring.cacheStore = function(cache, domains, res) {
         $generatorSpring.property(res, cache, 'writeBehindFlushSize', null, 10240);
         $generatorSpring.property(res, cache, 'writeBehindFlushFrequency', null, 5000);
         $generatorSpring.property(res, cache, 'writeBehindFlushThreadCount', null, 1);
+    }
+
+    res.needEmptyLine = true;
+
+    return res;
+};
+
+// Generate cache node filter group.
+$generatorSpring.cacheNodeFilter = function(cache, igfss, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    switch (_.get(cache, 'nodeFilter.kind')) {
+        case 'Exclude':
+            res.startBlock('<property name="nodeFilter">');
+            res.startBlock('<bean class="org.apache.ignite.tests.p2p.ExcludeNodeFilter" >');
+            res.startBlock('<constructor-arg>');
+            res.startBlock('<bean class="java.util.UUID" factory-method="fromString">');
+            res.line('<constructor-arg value="' + cache.nodeFilter.Exclude.nodeId + '"/>');
+            res.endBlock('</bean>');
+            res.endBlock('</constructor-arg>');
+            res.endBlock('</bean>');
+            res.endBlock('</property>');
+
+            break;
+
+        case 'IGFS':
+            const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
+
+            if (foundIgfs) {
+                res.startBlock('<property name="nodeFilter">');
+                res.startBlock('<bean class="org.apache.ignite.internal.processors.igfs.IgfsNodePredicate">');
+                res.line('<constructor-arg value="' + foundIgfs.name + '"/>');
+                res.endBlock('</bean>');
+                res.endBlock('</property>');
+            }
+
+            break;
+
+        case 'OnNodes':
+            const nodes = cache.nodeFilter.OnNodes.nodeIds;
+
+            if ($generatorCommon.isDefinedAndNotEmpty(nodes)) {
+                res.startBlock('<property name="nodeFilter">');
+                res.startBlock('<bean class="org.apache.ignite.internal.util.lang.GridNodePredicate">');
+                res.startBlock('<constructor-arg>');
+                res.startBlock('<list>');
+
+                _.forEach(nodes, (nodeId) => {
+                    res.startBlock('<bean class="java.util.UUID" factory-method="fromString">');
+                    res.line('<constructor-arg value="' + nodeId + '"/>');
+                    res.endBlock('</bean>');
+                });
+
+                res.endBlock('</list>');
+                res.endBlock('</constructor-arg>');
+                res.endBlock('</bean>');
+                res.endBlock('</property>');
+            }
+
+            break;
+
+        case 'Custom':
+            res.startBlock('<property name="nodeFilter">');
+            res.line('<bean class="' + cache.nodeFilter.Custom.className + '"/>');
+            res.endBlock('</property>');
+
+            break;
+
+        default: break;
     }
 
     res.needEmptyLine = true;
@@ -1586,6 +1669,10 @@ $generatorSpring.cacheConfiguration = function(cache, res) {
     $generatorSpring.cacheMemory(cache, res);
     $generatorSpring.cacheQuery(cache, res);
     $generatorSpring.cacheStore(cache, cache.domains, res);
+
+    const igfs = _.get(cache, 'nodeFilter.IGFS.instance');
+
+    $generatorSpring.cacheNodeFilter(cache, igfs ? [igfs] : [], res);
     $generatorSpring.cacheConcurrency(cache, res);
     $generatorSpring.cacheRebalance(cache, res);
     $generatorSpring.cacheServerNearCache(cache, res);
@@ -1813,43 +1900,7 @@ $generatorSpring.generateDataSources = function(datasources, res) {
     if (datasources.length > 0) {
         res.line('<!-- Data source beans will be initialized from external properties file. -->');
 
-        _.forEach(datasources, function(item) {
-            const beanId = item.dataSourceBean;
-
-            res.startBlock('<bean id="' + beanId + '" class="' + item.className + '">');
-
-            switch (item.dialect) {
-                case 'Generic':
-                    res.line('<property name="jdbcUrl" value="${' + beanId + '.jdbc.url}"/>');
-
-                    break;
-
-                case 'DB2':
-                    res.line('<property name="serverName" value="${' + beanId + '.jdbc.server_name}"/>');
-                    res.line('<property name="portNumber" value="${' + beanId + '.jdbc.port_number}"/>');
-                    res.line('<property name="databaseName" value="${' + beanId + '.jdbc.database_name}"/>');
-                    res.line('<property name="driverType" value="${' + beanId + '.jdbc.driver_type}"/>');
-
-                    break;
-
-                case 'PostgreSQL':
-                    res.line('<property name="url" value="${' + beanId + '.jdbc.url}"/>');
-
-                    break;
-
-                default:
-                    res.line('<property name="URL" value="${' + beanId + '.jdbc.url}"/>');
-            }
-
-            res.line('<property name="user" value="${' + beanId + '.jdbc.username}"/>');
-            res.line('<property name="password" value="${' + beanId + '.jdbc.password}"/>');
-
-            res.endBlock('</bean>');
-
-            res.needEmptyLine = true;
-
-            res.emptyLineIfNeeded();
-        });
+        _.forEach(datasources, (datasource) => $generatorXml.generateDataSource(datasource, res));
 
         res.needEmptyLine = true;
 
@@ -1857,6 +1908,44 @@ $generatorSpring.generateDataSources = function(datasources, res) {
     }
 
     return res;
+};
+
+$generatorXml.generateDataSource = function(datasource, res) {
+    const beanId = datasource.dataSourceBean;
+
+    res.startBlock('<bean id="' + beanId + '" class="' + $generatorCommon.DATA_SOURCES[datasource.dialect] + '">');
+
+    switch (datasource.dialect) {
+        case 'Generic':
+            res.line('<property name="jdbcUrl" value="${' + beanId + '.jdbc.url}"/>');
+
+            break;
+
+        case 'DB2':
+            res.line('<property name="serverName" value="${' + beanId + '.jdbc.server_name}"/>');
+            res.line('<property name="portNumber" value="${' + beanId + '.jdbc.port_number}"/>');
+            res.line('<property name="databaseName" value="${' + beanId + '.jdbc.database_name}"/>');
+            res.line('<property name="driverType" value="${' + beanId + '.jdbc.driver_type}"/>');
+
+            break;
+
+        case 'PostgreSQL':
+            res.line('<property name="url" value="${' + beanId + '.jdbc.url}"/>');
+
+            break;
+
+        default:
+            res.line('<property name="URL" value="${' + beanId + '.jdbc.url}"/>');
+    }
+
+    res.line('<property name="user" value="${' + beanId + '.jdbc.username}"/>');
+    res.line('<property name="password" value="${' + beanId + '.jdbc.password}"/>');
+
+    res.endBlock('</bean>');
+
+    res.needEmptyLine = true;
+
+    res.emptyLineIfNeeded();
 };
 
 $generatorSpring.clusterConfiguration = function(cluster, clientNearCfg, res) {

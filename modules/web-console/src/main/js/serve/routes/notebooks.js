@@ -20,11 +20,11 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'notebooks-routes',
-    inject: ['require(express)', 'mongo', 'services/space']
+    implements: 'routes/notebooks',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/spaces', 'services/notebooks']
 };
 
-module.exports.factory = function(express, mongo, spaceService) {
+module.exports.factory = (_, express, mongo, spacesService, notebooksService) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -34,25 +34,12 @@ module.exports.factory = function(express, mongo, spaceService) {
          * @param req Request.
          * @param res Response.
          */
-        router.post('/list', (req, res) => {
-            spaceService.spaces(req.currentUserId())
-                .then((spaces) => mongo.Notebook.find({space: {$in: spaces.map((value) => value._id)}}).select('_id name').sort('name').lean().exec())
-                .then((notebooks) => res.json(notebooks))
-                .catch((err) => mongo.handleError(res, err));
-
-        });
-
-        /**
-         * Get notebook accessed for user account.
-         *
-         * @param req Request.
-         * @param res Response.
-         */
-        router.post('/get', (req, res) => {
-            spaceService.spaces(req.currentUserId())
-                .then((spaces) => mongo.Notebook.findOne({space: {$in: spaces.map((value) => value._id)}, _id: req.body.noteId}).lean().exec())
-                .then((notebook) => res.json(notebook))
-                .catch((err) => mongo.handleError(res, err));
+        router.get('/', (req, res) => {
+            return spacesService.spaces(req.currentUserId())
+                .then((spaces) => _.map(spaces, (space) => space._id))
+                .then((spaceIds) => notebooksService.listBySpaces(spaceIds))
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         /**
@@ -62,25 +49,16 @@ module.exports.factory = function(express, mongo, spaceService) {
          * @param res Response.
          */
         router.post('/save', (req, res) => {
-            const note = req.body;
+            const notebook = req.body;
 
-            mongo.Notebook.findOne({space: note.space, name: note.name}).exec()
-                .then((notebook) => {
-                    const noteId = note._id;
+            spacesService.spaceIds(req.currentUserId())
+                .then((spaceIds) => {
+                    notebook.space = notebook.space || spaceIds[0];
 
-                    if (notebook && noteId !== notebook._id.toString())
-                        throw new Error('Notebook with name: "' + notebook.name + '" already exist.');
-
-                    if (noteId) {
-                        return mongo.Notebook.update({_id: noteId}, note, {upsert: true}).exec()
-                            .then(() => res.send(noteId))
-                            .catch((err) => mongo.handleError(res, err));
-                    }
-
-                    return (new mongo.Notebook(req.body)).save();
+                    return notebooksService.merge(notebook);
                 })
-                .then((notebook) => res.send(notebook._id))
-                .catch((err) => mongo.handleError(res, err));
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         /**
@@ -90,30 +68,11 @@ module.exports.factory = function(express, mongo, spaceService) {
          * @param res Response.
          */
         router.post('/remove', (req, res) => {
-            mongo.Notebook.remove(req.body).exec()
-                .then(() => res.sendStatus(200))
-                .catch((err) => mongo.handleError(res, err));
-        });
+            const notebookId = req.body;
 
-        /**
-         * Create new notebook for user account.
-         *
-         * @param req Request.
-         * @param res Response.
-         */
-        router.post('/new', (req, res) => {
-            spaceService.spaceIds(req.currentUserId())
-                .then((spaceIds) =>
-                    mongo.Notebook.findOne({space: spaceIds[0], name: req.body.name})
-                        .then((notebook) => {
-                            if (notebook)
-                                throw new Error('Notebook with name: "' + notebook.name + '" already exist.');
-
-                            return spaceIds;
-                        }))
-                .then((spaceIds) => (new mongo.Notebook({space: spaceIds[0], name: req.body.name})).save())
-                .then((notebook) => res.send(notebook._id))
-                .catch((err) => mongo.handleError(res, err));
+            notebooksService.remove(notebookId)
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         factoryResolve(router);

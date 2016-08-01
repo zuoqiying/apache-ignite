@@ -20,10 +20,17 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'services/cache',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
+    implements: 'services/caches',
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'errors']
 };
 
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spaceService
+ * @param errors
+ * @returns {CachesService}
+ */
 module.exports.factory = (_, mongo, spaceService, errors) => {
     /**
      * Convert remove status operation to own presentation.
@@ -44,7 +51,11 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
             .then(() => mongo.Cluster.update({_id: {$nin: cache.clusters}}, {$pull: {caches: cacheId}}, {multi: true}).exec())
             .then(() => mongo.DomainModel.update({_id: {$in: cache.domains}}, {$addToSet: {caches: cacheId}}, {multi: true}).exec())
             .then(() => mongo.DomainModel.update({_id: {$nin: cache.domains}}, {$pull: {caches: cacheId}}, {multi: true}).exec())
-            .then(() => cacheId);
+            .then(() => cache)
+            .catch((err) => {
+                if (err.code === mongo.errCodes.DUPLICATE_KEY_UPDATE_ERROR || err.code === mongo.errCodes.DUPLICATE_KEY_ERROR)
+                    throw new errors.DuplicateKeyException('Cache with name: "' + cache.name + '" already exist.');
+            });
     };
 
     /**
@@ -54,10 +65,10 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
      */
     const create = (cache) => {
         return mongo.Cache.create(cache)
-            .then((createdCache) =>
-                mongo.Cluster.update({_id: {$in: createdCache.clusters}}, {$addToSet: {caches: createdCache._id}}, {multi: true}).exec()
-                    .then(() => mongo.DomainModel.update({_id: {$in: createdCache.domains}}, {$addToSet: {caches: createdCache._id}}, {multi: true}).exec())
-                    .then(() => createdCache._id)
+            .then((savedCache) =>
+                mongo.Cluster.update({_id: {$in: savedCache.clusters}}, {$addToSet: {caches: savedCache._id}}, {multi: true}).exec()
+                    .then(() => mongo.DomainModel.update({_id: {$in: savedCache.domains}}, {$addToSet: {caches: savedCache._id}}, {multi: true}).exec())
+                    .then(() => savedCache)
             )
             .catch((err) => {
                 if (err.code === mongo.errCodes.DUPLICATE_KEY_ERROR)
@@ -79,7 +90,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
     /**
      * Service for manipulate Cache entities.
      */
-    class CacheService {
+    class CachesService {
         /**
          * Create or update cache.
          * @param {Object} cache - The cache.
@@ -107,8 +118,8 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
          * @returns {Promise.<{rowsAffected}>} - The number of affected rows.
          */
         static remove(cacheId) {
-            if (!cacheId)
-                throw new errors.IllegalArgumentException('Cache id can not be undefined or null');
+            if (_.isNil(cacheId))
+                return Promise.reject(new errors.IllegalArgumentException('Cache id can not be undefined or null'));
 
             return mongo.Cluster.update({caches: {$in: [cacheId]}}, {$pull: {caches: cacheId}}, {multi: true}).exec()
                 .then(() => mongo.DomainModel.update({caches: {$in: [cacheId]}}, {$pull: {caches: cacheId}}, {multi: true}).exec())
@@ -129,5 +140,5 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
         }
     }
 
-    return CacheService;
+    return CachesService;
 };

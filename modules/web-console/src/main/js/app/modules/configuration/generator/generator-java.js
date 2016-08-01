@@ -286,9 +286,11 @@ $generatorJava.listProperty = function(res, varName, obj, propName, dataType, se
  * @param args Array with arguments.
  * @param startBlock Optional start block string.
  * @param endBlock Optional end block string.
+ * @param startQuote Start quote string.
+ * @param endQuote End quote string.
  */
-$generatorJava.fxVarArgs = function(res, fx, quote, args, startBlock = '(', endBlock = ')') {
-    const quoteArg = (arg) => quote ? '"' + arg + '"' : arg;
+$generatorJava.fxVarArgs = function(res, fx, quote, args, startBlock = '(', endBlock = ')', startQuote = '"', endQuote = '"') {
+    const quoteArg = (arg) => quote ? startQuote + arg + endQuote : arg;
 
     if (args.length === 1)
         res.append(fx + startBlock + quoteArg(args[0]) + endBlock + ';');
@@ -539,8 +541,20 @@ $generatorJava.clusterGeneral = function(cluster, clientNearCfg, res) {
                 break;
 
             case 'Jdbc':
-                $generatorJava.beanProperty(res, 'discovery', d.Jdbc, 'ipFinder', 'ipFinder',
-                    'org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder', {initSchema: null}, true);
+                $generatorJava.declareVariable(res, 'ipFinder',
+                    'org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder');
+                $generatorJava.property(res, 'ipFinder', d.Jdbc, 'initSchema');
+
+                const datasource = d.Jdbc;
+                if (datasource.dataSourceBean && datasource.dialect) {
+                    res.needEmptyLine = !datasource.initSchema;
+
+                    res.line('ipFinder.setDataSource(DataSources.INSTANCE_' + datasource.dataSourceBean + ');');
+                }
+
+                res.needEmptyLine = true;
+
+                res.line('discovery.setIpFinder(ipFinder);');
 
                 break;
 
@@ -1456,7 +1470,7 @@ $generatorJava.cacheStoreDataSource = function(storeFactory, res) {
     return null;
 };
 
-$generatorJava.clusterDataSources = function(caches, res) {
+$generatorJava.clusterDataSources = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1464,7 +1478,16 @@ $generatorJava.clusterDataSources = function(caches, res) {
 
     let storeFound = false;
 
-    _.forEach(caches, function(cache) {
+    function startSourcesFunction() {
+        if (!storeFound) {
+            res.line('/** Helper class for datasource creation. */');
+            res.startBlock('public static class DataSources {');
+
+            storeFound = true;
+        }
+    }
+
+    _.forEach(cluster.caches, function(cache) {
         const factoryKind = cache.cacheStoreFactory.kind;
 
         const storeFactory = cache.cacheStoreFactory[factoryKind];
@@ -1476,18 +1499,27 @@ $generatorJava.clusterDataSources = function(caches, res) {
                 datasources.push(beanClassName);
 
                 if (factoryKind === 'CacheJdbcPojoStoreFactory' || factoryKind === 'CacheJdbcBlobStoreFactory') {
-                    if (!storeFound) {
-                        res.line('/** Helper class for datasource creation. */');
-                        res.startBlock('public static class DataSources {');
-
-                        storeFound = true;
-                    }
+                    startSourcesFunction();
 
                     $generatorJava.cacheStoreDataSource(storeFactory, res);
                 }
             }
         }
     });
+
+    if (cluster.discovery.kind === 'Jdbc') {
+        const datasource = cluster.discovery.Jdbc;
+
+        if (datasource.dataSourceBean && datasource.dialect) {
+            const beanClassName = $generatorJava.dataSourceClassName(res, datasource);
+
+            if (beanClassName && !_.includes(datasources, beanClassName)) {
+                startSourcesFunction();
+
+                $generatorJava.cacheStoreDataSource(datasource, res);
+            }
+        }
+    }
 
     if (storeFound)
         res.endBlock('}');
@@ -1630,6 +1662,57 @@ $generatorJava.cacheStore = function(cache, domains, cacheVarName, res) {
         $generatorJava.property(res, cacheVarName, cache, 'writeBehindFlushSize', null, null, 10240);
         $generatorJava.property(res, cacheVarName, cache, 'writeBehindFlushFrequency', null, null, 5000);
         $generatorJava.property(res, cacheVarName, cache, 'writeBehindFlushThreadCount', null, null, 1);
+    }
+
+    res.needEmptyLine = true;
+
+    return res;
+};
+
+// Generate cache node filter group.
+$generatorJava.cacheNodeFilter = function(cache, igfss, varName, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    if (!varName)
+        varName = $generatorJava.nextVariableName('cache', cache);
+
+    switch (_.get(cache, 'nodeFilter.kind')) {
+        case 'Exclude':
+            res.line(varName + '.setNodeFilter(new ' + res.importClass('org.apache.ignite.tests.p2p.ExcludeNodeFilter') +
+                '(' + res.importClass('java.util.UUID') + '.fromString("' + cache.nodeFilter.Exclude.nodeId + '")));');
+
+            break;
+
+        case 'IGFS':
+            const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
+
+            if (foundIgfs) {
+                res.line(varName + '.setNodeFilter(new ' + res.importClass('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate') +
+                    '("' + foundIgfs.name + '"));');
+            }
+
+            break;
+
+        case 'OnNodes':
+            const nodes = cache.nodeFilter.OnNodes.nodeIds;
+
+            if ($generatorCommon.isDefinedAndNotEmpty(nodes)) {
+                const startQuote = res.importClass('java.util.UUID') + '.fromString("';
+
+                $generatorJava.fxVarArgs(res, varName + '.setNodeFilter(new ' +
+                    res.importClass('org.apache.ignite.internal.util.lang.GridNodePredicate'), true, nodes, '(', '))',
+                    startQuote, '")');
+            }
+
+            break;
+
+        case 'Custom':
+            res.line(varName + '.setNodeFilter(new ' + res.importClass(cache.nodeFilter.Custom.className) + '());');
+
+            break;
+
+        default: break;
     }
 
     res.needEmptyLine = true;
@@ -1982,6 +2065,10 @@ $generatorJava.cache = function(cache, varName, res) {
     $generatorJava.cacheMemory(cache, varName, res);
     $generatorJava.cacheQuery(cache, varName, res);
     $generatorJava.cacheStore(cache, cache.domains, varName, res);
+
+    const igfs = _.get(cache, 'nodeFilter.IGFS.instance');
+
+    $generatorJava.cacheNodeFilter(cache, igfs ? [igfs] : [], varName, res);
     $generatorJava.cacheConcurrency(cache, varName, res);
     $generatorJava.cacheRebalance(cache, varName, res);
     $generatorJava.cacheServerNearCache(cache, varName, res);
@@ -2814,7 +2901,7 @@ $generatorJava.cluster = function(cluster, pkg, javaClass, clientNearCfg) {
 
         $generatorJava.tryLoadSecretProperties(cluster, res);
 
-        $generatorJava.clusterDataSources(cluster.caches, res);
+        $generatorJava.clusterDataSources(cluster, res);
 
         res.line('/**');
         res.line(' * Configure grid.');

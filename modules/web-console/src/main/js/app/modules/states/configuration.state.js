@@ -79,6 +79,7 @@ import cachesGeneral from './configuration/caches/general.directive';
 import cachesMemory from './configuration/caches/memory.directive';
 import cachesQuery from './configuration/caches/query.directive';
 import cachesStore from './configuration/caches/store.directive';
+import cachesNodeFilter from './configuration/caches/node-filter.directive';
 import cachesConcurrency from './configuration/caches/concurrency.directive';
 import cachesRebalance from './configuration/caches/rebalance.directive';
 import cachesServerNearCache from './configuration/caches/server-near-cache.directive';
@@ -94,7 +95,7 @@ import igfsMisc from './configuration/igfs/misc.directive';
 
 // Summary screen.
 import ConfigurationSummaryCtrl from './configuration/summary/summary.controller';
-import ConfigurationSummaryResource from './configuration/summary/summary.resource';
+import ConfigurationResource from './configuration/Configuration.resource';
 import summaryTabs from './configuration/summary/summary-tabs.directive';
 
 angular.module('ignite-console.states.configuration', ['ui.router'])
@@ -151,6 +152,7 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
     .directive(...cachesMemory)
     .directive(...cachesQuery)
     .directive(...cachesStore)
+    .directive(...cachesNodeFilter)
     .directive(...cachesConcurrency)
     .directive(...cachesRebalance)
     .directive(...cachesServerNearCache)
@@ -165,7 +167,7 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
     // Summary screen
     .directive(...summaryTabs)
     // Services.
-    .service(...ConfigurationSummaryResource)
+    .service('igniteConfigurationResource', ConfigurationResource)
     // Configure state provider.
     .config(['$stateProvider', ($stateProvider) => {
         // Setup the states.

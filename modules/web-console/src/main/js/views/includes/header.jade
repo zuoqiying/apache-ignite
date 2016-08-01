@@ -27,14 +27,14 @@ header#header.header
                         a.dropdown-toggle Configuration
                             span.caret
 
-                ul.nav.navbar-nav(ng-controller='notebooks')
+                ul.nav.navbar-nav(ng-controller='notebookController')
                     li.sql-notebooks(ng-if='IgniteDemoMode' ng-class='{active: $state.includes("base.sql")}')
                         a(ui-sref='base.sql.demo') SQL
 
                     li.sql-notebooks(ng-if='!IgniteDemoMode && !notebooks.length' ng-class='{active: $state.includes("base.sql")}')
-                        a(ng-click='inputNotebookName()') SQL
+                        a(ng-click='createNotebook()') SQL
 
-                    li.sql-notebooks(ng-if='!IgniteDemoMode && notebooks.length' ng-class='{active: $state.includes("base.sql")}' bs-dropdown='notebookDropdown' data-placement='bottom-left' data-trigger='hover focus' data-container='self' data-animation='' ng-click='$event.stopPropagation()')
+                    li.sql-notebooks(ng-if='!IgniteDemoMode && notebooks.length' ng-class='{active: $state.includes("base.sql")}' bs-dropdown='notebooks' data-placement='bottom-left' data-trigger='hover focus' data-container='self' data-animation='' ng-click='$event.stopPropagation()' aria-haspopup="true" aria-expanded="false")
                         a.dropdown-toggle SQL
                             span.caret
 

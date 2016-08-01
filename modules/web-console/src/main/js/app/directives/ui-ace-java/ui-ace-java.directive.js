@@ -90,6 +90,19 @@ export default ['igniteUiAceJava', ['JavaTransformer', (generator) => {
 
                     break;
 
+                case 'cacheNodeFilter':
+                    ctrl.generator = (cache) => {
+                        const igfss = _.reduce(scope.detail, (acc, igfs) => {
+                            acc.push(igfs.igfs);
+
+                            return acc;
+                        }, []);
+
+                        return generator.cacheNodeFilter(cache, igfss).asString();
+                    };
+
+                    break;
+
                 default:
                     ctrl.generator = (data) => generator[method](data).asString();
             }

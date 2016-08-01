@@ -41,8 +41,8 @@ angular
             url: '/demo/reset',
             controller: ['$state', '$http', 'IgniteMessages', ($state, $http, Messages) => {
                 $http.post('/api/v1/demo/reset')
-                    .then(() => $state.go('base.configuration.clusters'))
-                    .catch((err) => {
+                    .success(() => $state.go('base.configuration.clusters'))
+                    .error((err) => {
                         $state.go('base.configuration.clusters');
 
                         Messages.showError(err);

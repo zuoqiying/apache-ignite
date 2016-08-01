@@ -17,8 +17,8 @@
 
 // Controller for Clusters screen.
 export default ['clustersController', [
-    '$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteEventGroups', 'DemoInfo', 'IgniteLegacyTable',
-    function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable) {
+    '$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteEventGroups', 'DemoInfo', 'IgniteLegacyTable', 'igniteConfigurationResource',
+    function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable, Resource) {
         UnsavedChangesGuard.install($scope);
 
         const emptyCluster = {empty: true};
@@ -194,12 +194,13 @@ export default ['clustersController', [
         Loading.start('loadingClustersScreen');
 
         // When landing on the page, get clusters and show them.
-        $http.get('/api/v1/configuration/list')
-            .success(function(data) {
-                $scope.spaces = data.spaces;
-                $scope.clusters = data.clusters;
-                $scope.caches = _.map(data.caches, (cache) => ({value: cache._id, label: cache.name, cache}));
-                $scope.igfss = _.map(data.igfss, (igfs) => ({value: igfs._id, label: igfs.name, igfs}));
+        Resource.read()
+            .then(({spaces, clusters, caches, igfss}) => {
+                $scope.spaces = spaces;
+                $scope.clusters = clusters;
+
+                $scope.caches = _.map(caches, (cache) => ({value: cache._id, label: cache.name, cache}));
+                $scope.igfss = _.map(igfss, (igfs) => ({value: igfs._id, label: igfs.name, igfs}));
 
                 _.forEach($scope.clusters, (cluster) => {
                     cluster.label = _clusterLbl(cluster);
@@ -255,9 +256,10 @@ export default ['clustersController', [
                 }
             })
             .catch(Messages.showError)
-            .finally(function() {
+            .then(() => {
                 $scope.ui.ready = true;
                 $scope.ui.inputForm.$setPristine();
+
                 Loading.finish('loadingClustersScreen');
             });
 
@@ -298,7 +300,12 @@ export default ['clustersController', [
         function prepareNewItem(linkId) {
             return angular.merge({}, blank, {
                 space: $scope.spaces[0]._id,
-                discovery: {kind: 'Multicast', Vm: {addresses: ['127.0.0.1:47500..47510']}, Multicast: {addresses: ['127.0.0.1:47500..47510']}},
+                discovery: {
+                    kind: 'Multicast',
+                    Vm: {addresses: ['127.0.0.1:47500..47510']},
+                    Multicast: {addresses: ['127.0.0.1:47500..47510']},
+                    Jdbc: {initSchema: true}
+                },
                 binaryConfiguration: {typeConfigurations: [], compactFooter: true},
                 communication: {tcpNoDelay: true},
                 connector: {noDelay: true},
@@ -329,14 +336,22 @@ export default ['clustersController', [
         function checkCacheDatasources(item) {
             const caches = clusterCaches(item);
 
-            const checkRes = LegacyUtils.checkCachesDataSources(caches);
+            const checkRes = LegacyUtils.checkDataSources(item, caches);
 
             if (!checkRes.checked) {
+                if (_.get(checkRes.secondObj, 'discovery.kind') === 'Jdbc') {
+                    return showPopoverMessage($scope.ui, 'general', 'dialect',
+                        'Found cache "' + checkRes.firstObj.name + '" with the same data source bean name "' +
+                        item.discovery.Jdbc.dataSourceBean + '" and different database: "' +
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in current cluster and "' +
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" cache', 10000);
+                }
+
                 return showPopoverMessage($scope.ui, 'general', 'caches',
-                    'Found caches "' + checkRes.firstCache.name + '" and "' + checkRes.secondCache.name + '" ' +
-                    'with the same data source bean name "' + checkRes.firstCache.cacheStoreFactory[checkRes.firstCache.cacheStoreFactory.kind].dataSourceBean +
-                    '" and different databases: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstCache.name + '" and "' +
-                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondCache.name + '"', 10000);
+                    'Found caches "' + checkRes.firstObj.name + '" and "' + checkRes.secondObj.name + '" ' +
+                    'with the same data source bean name "' + checkRes.firstObj.cacheStoreFactory[checkRes.firstObj.cacheStoreFactory.kind].dataSourceBean +
+                    '" and different databases: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" and "' +
+                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondObj.name + '" cache', 10000);
             }
 
             return true;

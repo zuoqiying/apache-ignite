@@ -25,7 +25,15 @@
                     .col-sm-2
                         label.required.labelFormField New name:&nbsp;
                     .col-sm-10
-                        input.form-control(id='copy-new-name' type='text' ng-model='newName' ignite-on-enter='form.$valid && ok(newName)' required ignite-auto-focus)
+                        ignite-form-field-input-text(
+                            data-id='copy-new-name'
+                            data-ng-model='newName'
+                            data-ng-required='true'
+                            data-placeholder='Enter new name'
+                            data-ignite-form-field-input-autofocus='true'
+
+                            ignite-on-enter='form.$valid && ok(newName)'
+                        )
             .modal-footer
                 button.btn.btn-default(id='copy-btn-cancel' ng-click='$hide()') Cancel
                 button.btn.btn-primary(id='copy-btn-confirm' ng-disabled='ui.inputForm.$invalid' ng-click='ok(newName)') Confirm

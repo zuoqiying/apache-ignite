@@ -127,6 +127,19 @@ class GeneratorPom {
     }
 
     /**
+     * Add dependency for specified store factory if not exist.
+     * @param storeDeps Already added dependencies.
+     * @param storeFactory Store factory to add dependency.
+     */
+    storeFactoryDependency(storeDeps, storeFactory) {
+        if (storeFactory.dialect && (!storeFactory.connectVia || storeFactory.connectVia === 'DataSource')) {
+            const dep = POM_DEPENDENCIES[storeFactory.dialect];
+
+            this.addDependency(storeDeps, dep.groupId, dep.artifactId, dep.version, dep.jar);
+        }
+    }
+
+    /**
      * Generate pom.xml.
      *
      * @param cluster Cluster  to take info about dependencies.
@@ -146,15 +159,11 @@ class GeneratorPom {
             res = $generatorCommon.builder();
 
         _.forEach(caches, (cache) => {
-            if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind) {
-                const storeFactory = cache.cacheStoreFactory[cache.cacheStoreFactory.kind];
+            if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind)
+                this.storeFactoryDependency(storeDeps, cache.cacheStoreFactory[cache.cacheStoreFactory.kind]);
 
-                if (storeFactory.dialect && (!storeFactory.connectVia || storeFactory.connectVia === 'DataSource')) {
-                    const dep = POM_DEPENDENCIES[storeFactory.dialect];
-
-                    this.addDependency(storeDeps, dep.groupId, dep.artifactId, dep.version, dep.jar);
-                }
-            }
+            if (_.get(cache, 'nodeFilter.kind') === 'Exclude')
+                this.addDependency(deps, 'org.apache.ignite', 'ignite-extdata-p2p', igniteVersion);
         });
 
         res.line('<?xml version="1.0" encoding="UTF-8"?>');
@@ -183,6 +192,13 @@ class GeneratorPom {
 
         if (dep)
             this.addDependency(deps, 'org.apache.ignite', dep.artifactId, igniteVersion);
+
+        if (cluster.discovery.kind === 'Jdbc') {
+            const store = cluster.discovery.Jdbc;
+
+            if (store.dataSourceBean && store.dialect)
+                this.storeFactoryDependency(storeDeps, cluster.discovery.Jdbc);
+        }
 
         if (_.find(cluster.igfss, (igfs) => igfs.secondaryFileSystemEnabled))
             this.addDependency(deps, 'org.apache.ignite', 'ignite-hadoop', igniteVersion);

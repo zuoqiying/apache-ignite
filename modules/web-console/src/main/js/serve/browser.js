@@ -259,6 +259,32 @@ module.exports.factory = (_, socketio, agentMgr, configure) => {
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
+                // Gets node configuration for specified node.
+                socket.on('node:configuration', (nid, cb) => {
+                    agentMgr.findAgent(accountId())
+                        .then((agent) => agent.collectNodeConfiguration(demo, nid))
+                        .then((data) => {
+                            if (data.finished)
+                                return cb(null, data.result);
+
+                            cb(_errorToJson(data.error));
+                        })
+                        .catch((err) => cb(_errorToJson(err)));
+                });
+
+                // Gets cache configurations for specified node and caches deployment IDs.
+                socket.on('cache:configuration', (nid, caches, cb) => {
+                    agentMgr.findAgent(accountId())
+                        .then((agent) => agent.collectCacheConfigurations(demo, nid, caches))
+                        .then((data) => {
+                            if (data.finished)
+                                return cb(null, data.result);
+
+                            cb(_errorToJson(data.error));
+                        })
+                        .catch((err) => cb(_errorToJson(err)));
+                });
+
                 // Swap backups specified caches on specified node and return result to browser.
                 socket.on('node:cache:swap:backups', (nid, cacheNames, cb) => {
                     agentMgr.findAgent(accountId())

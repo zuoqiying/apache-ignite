@@ -20,11 +20,11 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'clusters-routes',
-    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/space']
+    implements: 'routes/clusters',
+    inject: ['require(lodash)', 'require(express)', 'mongo', 'services/clusters']
 };
 
-module.exports.factory = function(_, express, mongo, spaceService) {
+module.exports.factory = function(_, express, mongo, clustersService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
@@ -32,64 +32,31 @@ module.exports.factory = function(_, express, mongo, spaceService) {
          * Save cluster.
          */
         router.post('/save', (req, res) => {
-            const params = req.body;
-            const caches = params.caches;
-            const igfss = params.igfss;
+            const cluster = req.body;
 
-            mongo.Cluster.findOne({space: params.space, name: params.name}).exec()
-                .then((existingCluster) => {
-                    const clusterId = params._id;
-
-                    if (existingCluster && clusterId !== existingCluster._id.toString())
-                        throw new Error('Cluster with name: "' + existingCluster.name + '" already exist.');
-
-                    if (clusterId) {
-                        return mongo.Cluster.update({_id: clusterId}, params, {upsert: true}).exec()
-                            .then(() => mongo.Cache.update({_id: {$in: caches}}, {$addToSet: {clusters: clusterId}}, {multi: true}).exec())
-                            .then(() => mongo.Cache.update({_id: {$nin: caches}}, {$pull: {clusters: clusterId}}, {multi: true}).exec())
-                            .then(() => mongo.Igfs.update({_id: {$in: igfss}}, {$addToSet: {clusters: clusterId}}, {multi: true}).exec())
-                            .then(() => mongo.Igfs.update({_id: {$nin: igfss}}, {$pull: {clusters: clusterId}}, {multi: true}).exec())
-                            .then(() => res.send(clusterId));
-                    }
-
-                    return (new mongo.Cluster(params)).save()
-                        .then((cluster) =>
-                            mongo.Cache.update({_id: {$in: caches}}, {$addToSet: {clusters: cluster._id}}, {multi: true}).exec()
-                                .then(() => mongo.Cache.update({_id: {$nin: caches}}, {$pull: {clusters: cluster._id}}, {multi: true}).exec())
-                                .then(() => mongo.Igfs.update({_id: {$in: igfss}}, {$addToSet: {clusters: cluster._id}}, {multi: true}).exec())
-                                .then(() => mongo.Igfs.update({_id: {$nin: igfss}}, {$pull: {clusters: cluster._id}}, {multi: true}).exec())
-                                .then(() => res.send(cluster._id))
-                        );
-                })
-                .catch((err) => mongo.handleError(res, err));
+            clustersService.merge(cluster)
+                .then((savedCluster) => res.api.ok(savedCluster._id))
+                .catch(res.api.error);
         });
 
         /**
          * Remove cluster by ._id.
          */
         router.post('/remove', (req, res) => {
-            const params = req.body;
-            const clusterId = params._id;
+            const clusterId = req.body;
 
-            mongo.Cache.update({clusters: {$in: [clusterId]}}, {$pull: {clusters: clusterId}}, {multi: true}).exec()
-                .then(() => mongo.Igfs.update({clusters: {$in: [clusterId]}}, {$pull: {clusters: clusterId}}, {multi: true}).exec())
-                .then(() => mongo.Cluster.remove(params).exec())
-                .then(() => res.sendStatus(200))
-                .catch((err) => mongo.handleError(res, err));
+            clustersService.remove(clusterId)
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         /**
          * Remove all clusters.
          */
         router.post('/remove/all', (req, res) => {
-            // Get owned space and all accessed space.
-            spaceService.spaceIds(req.currentUserId(), req.header('IgniteDemoMode'))
-                .then((spaceIds) => mongo.Cache.update({space: {$in: spaceIds}}, {clusters: []}, {multi: true}).exec()
-                    .then(() => mongo.Igfs.update({space: {$in: spaceIds}}, {clusters: []}, {multi: true}).exec())
-                    .then(() => mongo.Cluster.remove({space: {$in: spaceIds}}).exec())
-                )
-                .then(() => res.sendStatus(200))
-                .catch((err) => mongo.handleError(res, err));
+            clustersService.removeAll(req.currentUserId(), req.header('IgniteDemoMode'))
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
         factoryResolve(router);

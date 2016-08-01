@@ -20,35 +20,38 @@ import JSZip from 'jszip';
 import saver from 'file-saver';
 
 export default [
-    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteLoading', '$filter', 'ConfigurationSummaryResource', 'JavaTypes', 'IgniteVersion', 'GeneratorDocker', 'GeneratorPom',
-    function($root, $scope, $http, LegacyUtils, Loading, $filter, Resource, JavaTypes, IgniteVersion, docker, pom) {
+    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteLoading', '$filter', 'igniteConfigurationResource', 'JavaTypes', 'IgniteVersion', 'GeneratorDocker', 'GeneratorPom',
+    function($root, $scope, $http, LegacyUtils, Messages, Loading, $filter, Resource, JavaTypes, IgniteVersion, docker, pom) {
         const ctrl = this;
 
         $scope.ui = { ready: false };
 
         Loading.start('summaryPage');
 
-        Resource.read().then(({clusters}) => {
-            $scope.clusters = clusters;
-            $scope.clustersMap = {};
-            $scope.clustersView = _.map(clusters, (item) => {
-                const { _id, name } = item;
+        Resource.read()
+            .then(Resource.populate)
+            .then(({clusters}) => {
+                $scope.clusters = clusters;
+                $scope.clustersMap = {};
+                $scope.clustersView = _.map(clusters, (item) => {
+                    const {_id, name} = item;
 
-                $scope.clustersMap[_id] = item;
+                    $scope.clustersMap[_id] = item;
 
-                return { _id, name };
-            });
+                    return {_id, name};
+                });
 
-            Loading.finish('summaryPage');
+                Loading.finish('summaryPage');
 
-            $scope.ui.ready = true;
+                $scope.ui.ready = true;
 
-            if (!_.isEmpty(clusters)) {
-                const idx = sessionStorage.summarySelectedId || 0;
+                if (!_.isEmpty(clusters)) {
+                    const idx = sessionStorage.summarySelectedId || 0;
 
-                $scope.selectItem(clusters[idx]);
-            }
-        });
+                    $scope.selectItem(clusters[idx]);
+                }
+            })
+            .catch(Messages.showError);
 
         $scope.contentVisible = (rows, row) => {
             return !row || !row._id || _.findIndex(rows, (item) => item._id === row._id) >= 0;
@@ -228,6 +231,9 @@ export default [
 
             if ($generatorJava.isDemoConfigured(cluster, $root.IgniteDemoMode))
                 javaFolder.children.push(demoFolder);
+
+            if (cluster.discovery.kind === 'Jdbc' && cluster.discovery.Jdbc.dialect)
+                $scope.dialects[cluster.discovery.Jdbc.dialect] = true;
 
             _.forEach(cluster.caches, (cache) => {
                 if (cache.cacheStoreFactory) {

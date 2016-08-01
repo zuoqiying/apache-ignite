@@ -315,6 +315,40 @@ module.exports.factory = function(_, ws, fs, path, JSZip, socketio, settings, mo
         /**
          * @param {Boolean} demo Is need run command on demo node.
          * @param {String} nid Node id.
+         * @returns {Promise}
+         */
+        collectNodeConfiguration(demo, nid) {
+            const cmd = new Command(demo, 'exe')
+                .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
+                .addParam('p1', nid)
+                .addParam('p2', 'org.apache.ignite.internal.visor.node.VisorNodeConfigurationCollectorTask')
+                .addParam('p3', 'java.lang.Void')
+                .addParam('p4', null);
+
+            return this.executeRest(cmd);
+        }
+
+        /**
+         * @param {Boolean} demo Is need run command on demo node.
+         * @param {String} nid Node id.
+         * @param {Array.<String>} caches Caches deployment IDs to collect configuration.
+         * @returns {Promise}
+         */
+        collectCacheConfigurations(demo, nid, caches) {
+            const cmd = new Command(demo, 'exe')
+                .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
+                .addParam('p1', nid)
+                .addParam('p2', 'org.apache.ignite.internal.visor.cache.VisorCacheConfigurationCollectorTask')
+                .addParam('p3', 'java.util.Collection')
+                .addParam('p4', 'org.apache.ignite.lang.IgniteUuid')
+                .addParam('p5', caches);
+
+            return this.executeRest(cmd);
+        }
+
+        /**
+         * @param {Boolean} demo Is need run command on demo node.
+         * @param {String} nid Node id.
          * @param {String} cacheName Cache name.
          * @returns {Promise}
          */
@@ -595,7 +629,7 @@ module.exports.factory = function(_, ws, fs, path, JSZip, socketio, settings, mo
                             cb();
                         })
                         // TODO IGNITE-1379 send error to web master.
-                        .catch((err) => cb('Agent is failed to authenticate. Please check agent\'s tokens'));
+                        .catch(() => cb('Agent is failed to authenticate. Please check agent\'s tokens'));
                 });
             });
         }

@@ -24,14 +24,12 @@
  */
 module.exports = {
     implements: 'mongo',
-    inject: ['require(mongoose-deep-populate)', 'require(passport-local-mongoose)', 'settings', 'ignite_modules/mongo:*', 'require(mongoose)']
+    inject: ['require(passport-local-mongoose)', 'settings', 'ignite_modules/mongo:*', 'require(mongoose)']
 };
 
-module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, pluginMongo, mongoose) {
+module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose) {
     // Use native promises
     mongoose.Promise = global.Promise;
-
-    const deepPopulate = deepPopulatePlugin(mongoose);
 
     // Connect to mongoDB database.
     mongoose.connect(settings.mongoUrl, {server: {poolSize: 4}});
@@ -105,7 +103,7 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         databaseSchema: String,
         databaseTable: String,
         keyType: String,
-        valueType: String,
+        valueType: {type: String},
         keyFields: [{
             databaseFieldName: String,
             databaseFieldType: String,
@@ -128,6 +126,8 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         demo: Boolean
     });
 
+    DomainModelSchema.index({valueType: 1, space: 1}, {unique: true});
+
     // Define model of Domain models.
     result.DomainModel = mongoose.model('DomainModel', DomainModelSchema);
 
@@ -139,6 +139,22 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         domains: [{type: ObjectId, ref: 'DomainModel'}],
         cacheMode: {type: String, enum: ['PARTITIONED', 'REPLICATED', 'LOCAL']},
         atomicityMode: {type: String, enum: ['ATOMIC', 'TRANSACTIONAL']},
+
+        nodeFilter: {
+            kind: {type: String, enum: ['Default', 'Exclude', 'IGFS', 'OnNodes', 'Custom']},
+            Exclude: {
+                nodeId: String
+            },
+            IGFS: {
+                igfs: {type: ObjectId, ref: 'Igfs'}
+            },
+            OnNodes: {
+                nodeIds: [String]
+            },
+            Custom: {
+                className: String
+            }
+        },
 
         backups: Number,
         memoryMode: {type: String, enum: ['ONHEAP_TIERED', 'OFFHEAP_TIERED', 'OFFHEAP_VALUES']},
@@ -259,17 +275,12 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
 
     CacheSchema.index({name: 1, space: 1}, {unique: true});
 
-    // Install deep populate plugin.
-    CacheSchema.plugin(deepPopulate, {
-        whitelist: ['domains']
-    });
-
     // Define Cache model.
     result.Cache = mongoose.model('Cache', CacheSchema);
 
     const IgfsSchema = new Schema({
         space: {type: ObjectId, ref: 'Space', index: true},
-        name: String,
+        name: {type: String},
         clusters: [{type: ObjectId, ref: 'Cluster'}],
         affinnityGroupSize: Number,
         blockSize: Number,
@@ -311,13 +322,15 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         relaxedConsistency: Boolean
     });
 
+    IgfsSchema.index({name: 1, space: 1}, {unique: true});
+
     // Define IGFS model.
     result.Igfs = mongoose.model('Igfs', IgfsSchema);
 
     // Define Cluster schema.
     const ClusterSchema = new Schema({
         space: {type: ObjectId, ref: 'Space', index: true},
-        name: String,
+        name: {type: String},
         localHost: String,
         discovery: {
             localAddress: String,
@@ -374,7 +387,12 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
                 addrReqAttempts: String
             },
             Jdbc: {
-                initSchema: Boolean
+                initSchema: Boolean,
+                dataSourceBean: String,
+                dialect: {
+                    type: String,
+                    enum: ['Generic', 'Oracle', 'DB2', 'SQLServer', 'MySQL', 'PostgreSQL', 'H2']
+                }
             },
             SharedFs: {
                 path: String
@@ -603,19 +621,10 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         }
     });
 
-    // Install deep populate plugin.
-    ClusterSchema.plugin(deepPopulate, {
-        whitelist: [
-            'caches',
-            'caches.domains',
-            'igfss'
-        ]
-    });
+    ClusterSchema.index({name: 1, space: 1}, {unique: true});
 
     // Define Cluster model.
     result.Cluster = mongoose.model('Cluster', ClusterSchema);
-
-    result.ClusterDefaultPopulate = '';
 
     // Define Notebook schema.
     const NotebookSchema = new Schema({
@@ -639,6 +648,8 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         }]
     });
 
+    NotebookSchema.index({name: 1, space: 1}, {unique: true});
+
     // Define Notebook model.
     result.Notebook = mongoose.model('Notebook', NotebookSchema);
 
@@ -647,11 +658,10 @@ module.exports.factory = function(deepPopulatePlugin, passportMongo, settings, p
         res.status(err.code || 500).send(err.message);
     };
 
-
     // Registering the routes of all plugin modules
     for (const name in pluginMongo) {
         if (pluginMongo.hasOwnProperty(name))
-            pluginMongo[name].register(mongoose, deepPopulate, result);
+            pluginMongo[name].register(mongoose, result);
     }
 
     return result;

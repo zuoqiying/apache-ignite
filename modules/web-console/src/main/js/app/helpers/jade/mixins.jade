@@ -91,6 +91,10 @@ mixin ipaddress-port-feedback(visible, name)
 mixin ipaddress-port-range-feedback(visible, name)
     +error-feedback(visible, 'ipaddressPortRange', 'Invalid port range!', name)
 
+//- Mixin for feedback on UUID violation.
+mixin uuid-feedback(visible, name)
+    +error-feedback(visible, 'uuid', 'Invalid node ID!', name)
+
 //- Mixin for checkbox.
 mixin checkbox(lbl, model, name, tip)
     ignite-form-field.checkbox
@@ -115,6 +119,27 @@ mixin checkbox-enabled(lbl, model, name, enabled, tip)
         | #{lbl}
         ignite-form-field-tooltip
             | !{tip}
+
+//- Mixin for uuid field with enabled condition.
+mixin uuid(lbl, model, name, enabled, required, tip)
+    -var errLbl = lbl.substring(0, lbl.length - 1)
+
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+        ignite-form-field-input-text(
+            data-id=name
+            data-name=name
+            data-ng-model=model
+            data-ng-disabled='!(#{enabled})'
+            data-ng-required=required
+            data-placeholder='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+
+            data-uuid='true'
+        )
+            +error-feedback('form[ngModelName].$error.uuid', 'uuid', errLbl + ' should not be valid UUID!', name)
 
 //- Mixin for java name field with enabled condition.
 mixin java-class(lbl, model, name, enabled, required, tip)
@@ -451,6 +476,30 @@ mixin table-address-field(field, items, valid, save, newItem, portRange)
     )
         block
 
+//- Mixin for table UUID field.
+mixin table-uuid-field(field, items, valid, save, newItem, portRange)
+    -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
+    -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
+
+    -var onEscape = newItem ? 'group.add = []' : 'field.edit = false'
+
+    -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
+    -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
+
+    ignite-form-field-input-text(
+        data-name='#{field}{{ $index || "" }}'
+        data-ng-model=field
+        data-ng-required='true'
+        data-placeholder='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+        data-uuid='true'
+        data-ignite-unique=items
+        data-ignite-form-field-input-autofocus='true'
+        ignite-on-enter=onEnter
+        ignite-on-escape=onEscape
+        ng-blur=onBlur
+    )
+        block
+
 //- Mixin for table save button.
    "||" used instead of "&&" to workaround escaping of "&&" to "&amp;&amp;"
 mixin table-save-button(valid, save, newItem)
@@ -587,3 +636,34 @@ mixin table-pair-edit(tbl, prefix, keyPlaceholder, valPlaceholder, keyJavaBuiltI
                 input.form-control(id=valFocusId type='text' ng-model=valModel placeholder=valPlaceholder bs-typeahead container='body' ignite-retain-selection data-min-length='1' bs-options='javaClass for javaClass in javaBuiltInClasses' ignite-on-enter=btnVisibleAndSave ignite-on-escape='tableReset()')
             else
                 input.form-control(id=valFocusId type='text' ng-model=valModel placeholder=valPlaceholder ignite-on-enter=btnVisibleAndSave ignite-on-escape='tableReset()')
+
+//- Mixin for DB dialect.
+mixin dialect(lbl, model, name, required, tipTitle, genericDialectName, placeholder)
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | #{tipTitle}
+            ul: li #{genericDialectName}
+                li Oracle database
+                li IBM DB2
+                li Microsoft SQL Server
+                li MySQL
+                li PostgreSQL
+                li H2 database
+        ignite-form-field-dropdown(
+        data-id=name
+        data-name=name
+        data-options='[\
+                {value: "Generic", label: "#{genericDialectName}"},\
+                {value: "Oracle", label: "Oracle"},\
+                {value: "DB2", label: "IBM DB2"},\
+                {value: "SQLServer", label: "Microsoft SQL Server"},\
+                {value: "MySQL", label: "MySQL"},\
+                {value: "PostgreSQL", label: "PostgreSQL"},\
+                {value: "H2", label: "H2 database"}\
+            ]'
+        data-ng-model=model
+        data-ng-required=required
+        data-placeholder=placeholder
+        )

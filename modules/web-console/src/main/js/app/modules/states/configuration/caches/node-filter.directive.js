@@ -15,26 +15,13 @@
  * limitations under the License.
  */
 
-'use strict';
+import templateUrl from './node-filter.jade';
 
-// Fire me up!
-
-module.exports = {
-    implements: 'services/agent',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
-};
-
-module.exports.factory = (_, mongo, spaceService, errors) => {
-    class AgentService {
-
-        /**
-         * Get agent archive with user agent configuration.
-         * @returns {stream.Readable} - readable stream for further piping. (http://stuk.github.io/jszip/documentation/api_jszip/generate_node_stream.html)
-         */
-        static getArchive(token, serverUrl) {
-
-        }
-    }
-
-    return AgentService;
-};
+export default ['igniteConfigurationCachesNodeFilter', [() => {
+    return {
+        scope: true,
+        restrict: 'E',
+        templateUrl,
+        replace: true
+    };
+}]];

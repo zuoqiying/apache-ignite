@@ -16,6 +16,11 @@
  */
 
 import gulp from 'gulp';
+import karmaBabelPreprocessor from 'karma-babel-preprocessor';
+import karmaPhantomjsLauncher from 'karma-phantomjs-launcher';
+import karmaWebpack from 'karma-webpack';
+import karmaJasmine from 'karma-jasmine';
+
 import {Server} from 'karma';
 
 import {rootDir} from '../paths';
@@ -34,10 +39,10 @@ gulp.task('test', (cb) => {
         ],
 
         plugins: [
-            require('karma-babel-preprocessor'),
-            require('karma-phantomjs-launcher'),
-            require('karma-webpack'),
-            require('karma-jasmine')
+            karmaBabelPreprocessor,
+            karmaPhantomjsLauncher,
+            karmaWebpack,
+            karmaJasmine
         ],
 
         // Preprocess matching files before serving them to the browser

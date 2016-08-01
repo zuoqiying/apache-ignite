@@ -46,6 +46,5 @@ export default ['resetPassword', [
                         $state.go('base.configuration.clusters');
                 });
         };
-
     }
 ]];

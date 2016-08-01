@@ -18,15 +18,9 @@
 import path from 'path';
 import fireUp from 'fire-up';
 
-const igniteModules = process.env.IGNITE_MODULES || './ignite_modules';
-
 module.exports = fireUp.newInjector({
-    basePath: __dirname,
+    basePath: path.join(__dirname, '../../'),
     modules: [
-        '**/*.js',
-        path.join(igniteModules, '**/*.js')
-    ],
-    use: [
-        'services/configuration:gridgain'
+        './serve/**/*.js'
     ]
 });

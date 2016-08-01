@@ -19,37 +19,6 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'store'
 -var model = 'backupItem'
 
-//- Mixin for DB dialect.
-mixin dialect(lbl, model, name, required, tipTitle, genericDialectName, placeholder)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | #{tipTitle}
-            ul: li #{genericDialectName}
-                li Oracle database
-                li IBM DB2
-                li Microsoft SQL Server
-                li MySQL
-                li PostgreSQL
-                li H2 database
-        ignite-form-field-dropdown(
-            data-id=name
-            data-name=name
-            data-options='[\
-                {value: "Generic", label: "#{genericDialectName}"},\
-                {value: "Oracle", label: "Oracle"},\
-                {value: "DB2", label: "IBM DB2"},\
-                {value: "SQLServer", label: "Microsoft SQL Server"},\
-                {value: "MySQL", label: "MySQL"},\
-                {value: "PostgreSQL", label: "PostgreSQL"},\
-                {value: "H2", label: "H2 database"}\
-            ]'
-            data-ng-model=model
-            data-ng-required=required
-            data-placeholder=placeholder
-        )
-
 mixin hibernateField(items, field, valid, save, newItem)
     -var reset = newItem ? 'group.add = []' : 'field.edit = false'
 

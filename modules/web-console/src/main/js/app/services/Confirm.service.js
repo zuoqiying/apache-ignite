@@ -19,30 +19,30 @@
 export default ['IgniteConfirm', ['$rootScope', '$q', '$modal', '$animate', ($root, $q, $modal, $animate) => {
     const scope = $root.$new();
 
-    const modal = $modal({templateUrl: '/templates/confirm.html', scope, placement: 'center', show: false});
+    const modal = $modal({templateUrl: '/templates/confirm.html', scope, placement: 'center', show: false, backdrop: true});
 
-    let deferred;
-
-    const _hide = (animate) => {
-        $animate.enabled(modal.$element, animate);
+    const _hide = () => {
+        $animate.enabled(modal.$element, false);
 
         modal.hide();
     };
 
+    let deferred;
+
     scope.confirmYes = () => {
-        _hide(scope.animate);
+        _hide();
 
         deferred.resolve(true);
     };
 
     scope.confirmNo = () => {
-        _hide(scope.animate);
+        _hide();
 
         deferred.resolve(false);
     };
 
     scope.confirmCancel = () => {
-        _hide(true);
+        _hide();
 
         deferred.reject('cancelled');
     };
@@ -51,11 +51,9 @@ export default ['IgniteConfirm', ['$rootScope', '$q', '$modal', '$animate', ($ro
      *
      * @param {String } content
      * @param {Boolean} [yesNo]
-     * @param {Boolean} [animate]
      * @returns {Promise}
      */
-    modal.confirm = (content, yesNo, animate) => {
-        scope.animate = !!animate;
+    modal.confirm = (content, yesNo) => {
         scope.content = content || 'Confirm?';
         scope.yesNo = !!yesNo;
 

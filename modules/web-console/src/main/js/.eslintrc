@@ -46,7 +46,7 @@ rules:
     comma-dangle: [2, "never"]
     comma-spacing: [2, {"before": false, "after": true}]
     comma-style: [2, "last"]
-    complexity: [1, 11]
+    complexity: [1, 40]
     computed-property-spacing: [2, "never"]
     consistent-return: 0
     consistent-this: [0, "that"]

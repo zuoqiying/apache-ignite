@@ -23,8 +23,8 @@ export default ['adminController', [
 
         const _reloadUsers = () => {
             $http.post('/api/v1/admin/list')
-                .then(({data}) => {
-                    $scope.users = data;
+                .success((users) => {
+                    $scope.users = users;
 
                     _.forEach($scope.users, (user) => {
                         user.userName = user.firstName + ' ' + user.lastName;
@@ -33,13 +33,14 @@ export default ['adminController', [
                             (user.company || '') + ' ' + (user.countryCode || '');
                     });
                 })
-                .catch(Messages.showError);
+                .error(Messages.showError);
         };
 
         _reloadUsers();
 
         $scope.becomeUser = function(user) {
             $http.get('/api/v1/admin/become', { params: {viewedUserId: user._id}})
+                .catch(({data}) => Promise.reject(data))
                 .then(User.read)
                 .then((becomeUser) => {
                     $rootScope.$broadcast('user', becomeUser);

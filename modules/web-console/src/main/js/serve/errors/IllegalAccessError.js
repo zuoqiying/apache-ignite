@@ -17,39 +17,13 @@
 
 'use strict';
 
-// Fire me up!
+import AppErrorException from './AppErrorException';
 
-module.exports = {
-    implements: 'services/mail',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
-};
-
-module.exports.factory = (_, mongo, spaceService, errors) => {
-
-    // TODO extract here current send mail.
-    const send = () => {
-
-    };
-
-    class MailService {
-
-        /**
-         * Send email to user for password reset.
-         * @param user
-         * @param resetUrl
-         */
-        static emailUserResetLink(user, resetUrl) {
-
-        }
-
-        /**
-         * Send emait to user when it was deleted.
-         * @param user
-         */
-        static emailUserDeletion(user) {
-
-        }
+class IllegalAccessError extends AppErrorException {
+    constructor(message) {
+        super(message);
+        this.httpCode = 401;
     }
+}
 
-    return MailService;
-};
+module.exports = IllegalAccessError;

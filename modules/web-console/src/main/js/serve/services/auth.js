@@ -21,12 +21,18 @@
 
 module.exports = {
     implements: 'services/auth',
-    inject: ['require(lodash)', 'mongo', 'services/space', 'errors']
+    inject: ['require(lodash)', 'mongo', 'services/spaces', 'errors']
 };
 
-module.exports.factory = (_, mongo, spaceService, errors) => {
+/**
+ * @param _
+ * @param mongo
+ * @param {SpacesService} spacesService
+ * @param errors
+ * @returns {AuthService}
+ */
+module.exports.factory = (_, mongo, spacesService, errors) => {
     class AuthService {
-
         // TODO move implementation from public router.
         static resetPassword() {
 
@@ -35,7 +41,6 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
         static validateResetToken() {
 
         }
-
     }
 
     return AuthService;

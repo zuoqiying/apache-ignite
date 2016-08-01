@@ -30,27 +30,29 @@ export default ['User', ['$q', '$injector', '$rootScope', '$state', '$http', fun
 
     return {
         read() {
-            return $http.post('/api/v1/user').then(({data}) => {
-                if (_.isEmpty(data)) {
-                    const Auth = $injector.get('Auth');
+            return $http.post('/api/v1/user')
+                .then(({data}) => {
+                    if (_.isEmpty(data)) {
+                        const Auth = $injector.get('Auth');
 
-                    Auth.authorized = false;
+                        Auth.authorized = false;
 
-                    this.clean();
+                        this.clean();
 
-                    if ($state.current.name !== 'signin')
-                        $state.go('signin');
-                }
+                        if ($state.current.name !== 'signin')
+                            $state.go('signin');
+                    }
 
-                try {
-                    localStorage.user = JSON.stringify(data);
-                }
-                catch (ignore) {
-                    // No-op.
-                }
+                    try {
+                        localStorage.user = JSON.stringify(data);
+                    }
+                    catch (ignore) {
+                        // No-op.
+                    }
 
-                return _user = $root.user = data;
-            });
+                    return _user = $root.user = data;
+                })
+                .catch(({data}) => Promise.reject(data));
         },
         clean() {
             delete $root.user;

@@ -16,9 +16,8 @@
  */
 
 // Controller for SQL notebook screen.
-export default ['sqlController', [
-    '$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'QueryNotebooks', 'uiGridConstants', 'uiGridExporterConstants',
-    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, QueryNotebooks, uiGridConstants, uiGridExporterConstants) {
+export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'uiGridConstants', 'uiGridExporterConstants',
+    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, uiGridConstants, uiGridExporterConstants) {
         let stopTopology = null;
 
         const _tryStopRefresh = function(paragraph) {
@@ -82,6 +81,33 @@ export default ['sqlController', [
 
         // Row index X axis descriptor.
         const ROW_IDX = {value: -2, type: 'java.lang.Integer', label: 'ROW_IDX'};
+
+        const EXTENDED_PARAGRAPH = {
+            table() {
+                return this.result === 'table';
+            },
+            chart() {
+                return this.result !== 'table' && this.result !== 'none';
+            },
+            nonEmpty() {
+                return this.rows && this.rows.length > 0;
+            },
+            queryExecuted() {
+                return this.queryArgs && this.queryArgs.query && !this.queryArgs.query.startsWith('EXPLAIN ');
+            },
+            refreshExecuting() {
+                return this.rate && this.rate.stopTime;
+            },
+            timeLineSupported() {
+                return this.result !== 'pie';
+            },
+            chartColumnsConfigured() {
+                return !_.isEmpty(this.chartKeyCols) && !_.isEmpty(this.chartValCols);
+            },
+            chartTimeLineEnabled() {
+                return !_.isEmpty(this.chartKeyCols) && _.eq(this.chartKeyCols[0], TIME_LINE);
+            }
+        };
 
         // We need max 1800 items to hold history for 30 mins in case of refresh every second.
         const HISTORY_LENGTH = 1800;
@@ -642,36 +668,7 @@ export default ['sqlController', [
         };
 
         function enhanceParagraph(paragraph) {
-            paragraph.nonEmpty = function() {
-                return this.rows && this.rows.length > 0;
-            };
-
-            paragraph.chart = function() {
-                return this.result !== 'table' && this.result !== 'none';
-            };
-
-            paragraph.queryExecuted = () =>
-                paragraph.queryArgs && paragraph.queryArgs.query && !paragraph.queryArgs.query.startsWith('EXPLAIN ');
-
-            paragraph.table = function() {
-                return this.result === 'table';
-            };
-
-            paragraph.chartColumnsConfigured = function() {
-                return !_.isEmpty(this.chartKeyCols) && !_.isEmpty(this.chartValCols);
-            };
-
-            paragraph.chartTimeLineEnabled = function() {
-                return !_.isEmpty(this.chartKeyCols) && angular.equals(this.chartKeyCols[0], TIME_LINE);
-            };
-
-            paragraph.timeLineSupported = function() {
-                return this.result !== 'pie';
-            };
-
-            paragraph.refreshExecuting = function() {
-                return paragraph.rate && paragraph.rate.stopTime;
-            };
+            Object.assign(paragraph, EXTENDED_PARAGRAPH);
 
             Object.defineProperty(paragraph, 'gridOptions', { value: {
                 enableGridMenu: false,
@@ -771,7 +768,7 @@ export default ['sqlController', [
 
             agentMonitor.awaitAgent()
                 .then(_updateTopology)
-                .finally(() => {
+                .then(() => {
                     if ($root.IgniteDemoMode)
                         _.forEach($scope.notebook.paragraphs, $scope.execute);
 
@@ -782,7 +779,7 @@ export default ['sqlController', [
         };
 
         const loadNotebook = function(notebook) {
-            $scope.notebook = notebook;
+            $scope.notebook = _.cloneDeep(notebook);
 
             $scope.notebook_name = notebook.name;
 
@@ -816,7 +813,7 @@ export default ['sqlController', [
             .then(_startTopologyRefresh);
         };
 
-        QueryNotebooks.read($state.params.noteId)
+        Notebook.find($state.params.noteId)
             .then(loadNotebook)
             .catch(() => {
                 $scope.notebookLoadFailed = true;
@@ -824,7 +821,7 @@ export default ['sqlController', [
                 Loading.finish('sqlLoading');
             });
 
-        $scope.renameNotebook = function(name) {
+        $scope.renameNotebook = (name) => {
             if (!name)
                 return;
 
@@ -833,20 +830,8 @@ export default ['sqlController', [
 
                 $scope.notebook.name = name;
 
-                QueryNotebooks.save($scope.notebook)
-                    .then(function() {
-                        const idx = _.findIndex($root.notebooks, function(item) {
-                            return item._id === $scope.notebook._id;
-                        });
-
-                        if (idx >= 0) {
-                            $root.notebooks[idx].name = name;
-
-                            $root.rebuildDropdown();
-                        }
-
-                        $scope.notebook.edit = false;
-                    })
+                Notebook.save($scope.notebook)
+                    .then(() => $scope.notebook.edit = false)
                     .catch((err) => {
                         $scope.notebook.name = prevName;
 
@@ -857,19 +842,7 @@ export default ['sqlController', [
                 $scope.notebook.edit = false;
         };
 
-        $scope.removeNotebook = function() {
-            Confirm.confirm('Are you sure you want to remove: "' + $scope.notebook.name + '"?')
-                .then(function() {
-                    return QueryNotebooks.remove($scope.notebook);
-                })
-                .then(function(notebook) {
-                    if (notebook)
-                        $state.go('base.sql.notebook', {noteId: notebook._id});
-                    else
-                        $state.go('base.configuration.clusters');
-                })
-                .catch(Messages.showError);
-        };
+        $scope.removeNotebook = (notebook) => Notebook.remove(notebook);
 
         $scope.renameParagraph = function(paragraph, newName) {
             if (!newName)
@@ -880,7 +853,7 @@ export default ['sqlController', [
 
                 $scope.rebuildScrollParagraphs();
 
-                QueryNotebooks.save($scope.notebook)
+                Notebook.save($scope.notebook)
                     .then(() => paragraph.edit = false)
                     .catch(Messages.showError);
             }
@@ -986,7 +959,7 @@ export default ['sqlController', [
 
                     $scope.rebuildScrollParagraphs();
 
-                    QueryNotebooks.save($scope.notebook)
+                    Notebook.save($scope.notebook)
                         .catch(Messages.showError);
                 });
         };
@@ -1241,7 +1214,7 @@ export default ['sqlController', [
         };
 
         $scope.execute = function(paragraph) {
-            QueryNotebooks.save($scope.notebook)
+            Notebook.save($scope.notebook)
                 .catch(Messages.showError);
 
             paragraph.prevQuery = paragraph.queryArgs ? paragraph.queryArgs.query : paragraph.query;
@@ -1270,7 +1243,7 @@ export default ['sqlController', [
 
                     $scope.stopRefresh(paragraph);
                 })
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         $scope.queryExecuted = function(paragraph) {
@@ -1290,7 +1263,7 @@ export default ['sqlController', [
         };
 
         $scope.explain = function(paragraph) {
-            QueryNotebooks.save($scope.notebook)
+            Notebook.save($scope.notebook)
                 .catch(Messages.showError);
 
             _cancelRefresh(paragraph);
@@ -1313,11 +1286,11 @@ export default ['sqlController', [
 
                     _showLoading(paragraph, false);
                 })
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         $scope.scan = function(paragraph) {
-            QueryNotebooks.save($scope.notebook)
+            Notebook.save($scope.notebook)
                 .catch(Messages.showError);
 
             _cancelRefresh(paragraph);
@@ -1339,7 +1312,7 @@ export default ['sqlController', [
 
                     _showLoading(paragraph, false);
                 })
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         function _updatePieChartsWithData(paragraph, newDatum) {
@@ -1391,7 +1364,7 @@ export default ['sqlController', [
 
                     _showLoading(paragraph, false);
                 })
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         const _export = (fileName, columnFilter, meta, rows) => {
@@ -1454,7 +1427,7 @@ export default ['sqlController', [
             agentMonitor.queryGetAll(args.cacheName, args.query)
                 .then((res) => _export(paragraph.name + '-all.csv', paragraph.columnFilter, res.fieldsMetadata, res.items))
                 .catch(Messages.showError)
-                .finally(() => paragraph.ace.focus());
+                .then(() => paragraph.ace.focus());
         };
 
         // $scope.exportPdfAll = function(paragraph) {
@@ -1560,7 +1533,7 @@ export default ['sqlController', [
                     }), 'name');
                 })
                 .catch(Messages.showError)
-                .finally(() => Loading.finish('loadingCacheMetadata'));
+                .then(() => Loading.finish('loadingCacheMetadata'));
         };
 
         $scope.showResultQuery = function(paragraph) {
@@ -1585,4 +1558,4 @@ export default ['sqlController', [
             }
         };
     }
-]];
+];
