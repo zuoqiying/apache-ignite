@@ -90,14 +90,12 @@ export default ['cachesController', [
 
                 _.forEach($scope.caches, (cache) => cache.label = _cacheLbl(cache));
 
-                $scope.clusters = _.map(data.clusters, function(cluster) {
-                    return {
-                        value: cluster._id,
-                        label: cluster.name,
-                        discovery: cluster.discovery,
-                        caches: cluster.caches
-                    };
-                });
+                $scope.clusters = _.map(clusters, (cluster) => ({
+                    value: cluster._id,
+                    label: cluster.name,
+                    discovery: cluster.discovery,
+                    caches: cluster.caches
+                }));
 
                 $scope.domains = _.sortBy(_.map(validFilter(domains, true, false), (domain) => ({
                     label: domain.valueType,
