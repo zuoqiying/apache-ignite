@@ -131,8 +131,18 @@ export default ['domainsController', [
         $scope.tableEditing = LegacyTable.tableEditing;
 
         $scope.tableRemove = function(item, field, index) {
-            if ($scope.tableReset(true))
+            if ($scope.tableReset(true)) {
+                // Remove field from indexes.
+                if (field.type === 'fields') {
+                    _.forEach($scope.backupItem.indexes, (modelIndex) => {
+                        modelIndex.fields = _.filter(modelIndex.fields, (indexField) => {
+                            return indexField.name !== $scope.backupItem.fields[index].name;
+                        });
+                    });
+                }
+
                 LegacyTable.tableRemove(item, field, index);
+            }
         };
 
         $scope.tablePairSave = LegacyTable.tablePairSave;
@@ -159,6 +169,19 @@ export default ['domainsController', [
         };
 
         $scope.queryMetadataVariants = LegacyUtils.mkOptions(['Annotations', 'Configuration']);
+
+        // Create list of fields to show in index fields dropdown.
+        $scope.fields = (prefix, cur) => {
+            const fields = _.map($scope.backupItem.fields, (field) => ({value: field.name, label: field.name}));
+
+            if (prefix === 'new')
+                return fields;
+
+            if (cur && !_.find(fields, {value: cur}))
+                fields.push({value: cur, label: cur + ' (Removed)'});
+
+            return fields;
+        };
 
         const INFO_CONNECT_TO_DB = 'Configure connection to database';
         const INFO_SELECT_SCHEMAS = 'Select schemas to load tables from';
@@ -1213,6 +1236,11 @@ export default ['domainsController', [
                     if (_.find(indexes, function(index, i) {
                         if (_.isEmpty(index.fields))
                             return !showPopoverMessage($scope.ui, 'query', 'indexes' + i, 'Index fields are not specified');
+
+                        if (_.find(index.fields, (field) =>
+                            !_.find(item.fields, (configuredField) => configuredField.name === field.name)
+                        ))
+                            return !showPopoverMessage($scope.ui, 'query', 'indexes' + i, 'Index contain not configured fields');
                     }))
                         return false;
                 }
