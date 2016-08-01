@@ -27,8 +27,8 @@ const dateOptions = {
     hour12: false
 };
 
-export default ['NetTransformer', ['PlatformGenerator', (generator) => {
-    return class NetTransformer {
+export default ['PlatformGenerator', (generator) => {
+    return class SharpTransformer {
         static commentBlock(sb, ...lines) {
             _.forEach(lines, (line) => sb.append(`// ${line}`));
         }
@@ -162,7 +162,7 @@ export default ['NetTransformer', ['PlatformGenerator', (generator) => {
 
             sb.endBlock('}');
 
-            return sb.build();
+            return sb.asString();
         }
 
         static generateSection(bean) {
@@ -170,7 +170,7 @@ export default ['NetTransformer', ['PlatformGenerator', (generator) => {
 
             this._setProperties(sb, bean);
 
-            return sb.build();
+            return sb.asString();
         }
 
         static clusterGeneral(cluster, clientNearCfg, res) {
@@ -182,7 +182,7 @@ export default ['NetTransformer', ['PlatformGenerator', (generator) => {
         }
 
         // Generate atomics group.
-        static clusterAtomics(atomics, sb = $generatorCommon.builder()) {
+        static clusterAtomics(atomics, sb = new StringBuilder()) {
             const cfg = generator.clusterAtomics(atomics);
 
             this._setProperties(sb, cfg);
@@ -190,4 +190,4 @@ export default ['NetTransformer', ['PlatformGenerator', (generator) => {
             return sb;
         }
     };
-}]];
+}];

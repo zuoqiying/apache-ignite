@@ -15,48 +15,18 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+const SERVER_CFG = 'ServerConfigurationFactory';
+const CLIENT_CFG = 'ClientConfigurationFactory';
 
-export default class StringBuilder {
-    /**
-     * @param deep
-     * @param indent
-     */
-    constructor(deep = 0, indent = 4) {
-        this.indent = indent;
-        this.deep = deep;
-        this.lines = [];
-    }
+export default ['$scope', 'SharpTransformer', function($scope, generator) {
+    const ctrl = this;
 
-    emptyLine() {
-        this.lines.push('');
+    delete ctrl.data;
 
-        return this;
-    }
+    // Set default generator
+    ctrl.generator = (cluster) => {
+        const type = $scope.cfg ? CLIENT_CFG : SERVER_CFG;
 
-    append(...lines) {
-        _.forEach(lines, (line) => this.lines.push(_.repeat(' ', this.indent * this.deep) + line));
-
-        return this;
-    }
-
-    startBlock(...lines) {
-        this.append(...lines);
-
-        this.deep++;
-
-        return this;
-    }
-
-    endBlock(line) {
-        this.deep--;
-
-        this.append(line);
-
-        return this;
-    }
-
-    asString() {
-        return this.lines.join('\n');
-    }
-}
+        return generator.cluster(cluster, 'config', type, $scope.cfg);
+    };
+}];

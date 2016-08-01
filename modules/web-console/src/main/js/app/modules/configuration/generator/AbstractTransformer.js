@@ -15,18 +15,25 @@
  * limitations under the License.
  */
 
-const SERVER_CFG = 'ServerConfigurationFactory';
-const CLIENT_CFG = 'ClientConfigurationFactory';
+import _ from 'lodash';
 
-export default ['$scope', 'NetTransformer', function($scope, generator) {
-    const ctrl = this;
+import StringBuilder from './StringBuilder';
 
-    delete ctrl.data;
+export default class AbstractTransformer {
+    // Generate atomics group.
+    static clusterAtomics(atomics, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterAtomics(atomics);
 
-    // Set default generator
-    ctrl.generator = (cluster) => {
-        const type = $scope.cfg ? CLIENT_CFG : SERVER_CFG;
+        this._setProperties(sb, cfg);
 
-        return generator.cluster(cluster, 'config', type, $scope.cfg);
-    };
-}];
+        return sb;
+    }
+
+    static clusterCollision(collision, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterCollision(collision);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+}

@@ -20,9 +20,9 @@ import _ from 'lodash';
 export default class Bean {
     /**
      * @param {String} clsName
-     * @param {String} id
-     * @param {Object} src
-     * @param {Object} dflts
+     * @param {String} [id]
+     * @param {Object} [src]
+     * @param {Object} [dflts]
      */
     constructor(clsName, id, src, dflts) {
         this.properties = [];
@@ -39,11 +39,11 @@ export default class Bean {
 
     property(model, name = model) {
         if (!this.src)
-            return;
+            return this;
 
         const value = this.src[model];
 
-        if (value && value !== this.dflts[model])
+        if (!_.isNil(value) && value !== this.dflts[model])
             this.properties.push({name, value});
 
         return this;
@@ -51,12 +51,12 @@ export default class Bean {
 
     enumProperty(model, name = model) {
         if (!this.src)
-            return;
+            return this;
 
         const value = this.src[model];
         const dflt = this.dflts[model];
 
-        if (value && value !== dflt.value)
+        if (!_.isNil(value) && value !== dflt.value)
             this.properties.push({type: 'ENUM', clsName: dflt.clsName, name, value, mapper: dflt.mapper });
 
         return this;
@@ -64,6 +64,40 @@ export default class Bean {
 
     beanProperty(name, bean) {
         this.properties.push({type: 'BEAN', name, value: bean});
+
+        return this;
+    }
+
+    emptyBeanProperty(model, name = model) {
+        if (!this.src)
+            return this;
+
+        const cls = this.src[model];
+
+        if (!_.isEmpty(cls) && cls !== this.dflts[model])
+            this.properties.push({type: 'BEAN', name, value: new Bean(cls)});
+
+        return this;
+    }
+
+    mapProperty(id, model, name = model) {
+        if (!this.src)
+            return this;
+
+        const value = this.src[model];
+        const dflt = this.dflts[model];
+
+        if (!_.isEmpty(value) && value !== dflt.value) {
+            this.properties.push({
+                type: 'MAP',
+                id,
+                name,
+                clsName: dflt.clsName,
+                keyClsName: dflt.keyClsName,
+                valClsName: dflt.valClsName,
+                value
+            });
+        }
 
         return this;
     }
@@ -84,6 +118,11 @@ export default class Bean {
                     break;
                 case 'BEAN':
                     classes.push(...prop.value.collectClasses());
+
+                    break;
+
+                case 'MAP':
+                    classes.push(prop.clsName, prop.keyClsName, prop.valClsName);
 
                     break;
                 default:

@@ -22,9 +22,10 @@ import igniteSidebar from './Sidebar.provider';
 
 import ConfigurationGenerator from './generator/ConfigurationGenerator';
 import PlatformGenerator from './generator/PlatformGenerator';
-import GeneratorSpring from './generator/SpringTransformer.service';
-import GeneratorJava from './generator/JavaTransformer.service';
-import GeneratorSharp from './generator/NetTransformer.service';
+
+import SpringTransformer from './generator/SpringTransformer.service';
+import JavaTransformer from './generator/JavaTransformer.service';
+import SharpTransformer from './generator/SharpTransformer.service';
 import GeneratorDocker from './generator/Docker.service';
 import GeneratorPom from './generator/Pom.service';
 
@@ -40,8 +41,8 @@ angular
 .directive(...igniteSidebarDirective)
 .service(...ConfigurationGenerator)
 .service(...PlatformGenerator)
-.service(...GeneratorSpring)
-.service(...GeneratorJava)
-.service(...GeneratorSharp)
+.service(...SpringTransformer)
+.service(...JavaTransformer)
+.service('SharpTransformer', SharpTransformer)
 .service(...GeneratorDocker)
 .service(...GeneratorPom);

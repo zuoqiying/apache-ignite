@@ -75,7 +75,7 @@ export default ['PlatformGenerator', () => {
             return cfg;
         }
 
-        clusterCollision() {
+        static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
 
         }
 

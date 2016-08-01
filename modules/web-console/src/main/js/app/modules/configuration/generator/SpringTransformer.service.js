@@ -16,14 +16,16 @@
  */
 
 import _ from 'lodash';
+
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
-import $generatorCommon from './generator-common';
 import $generatorSpring from './generator-spring';
 
 export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (JavaTypes, generator) => {
     return class SpringTransformer extends AbstractTransformer {
+        static generator = generator;
+
         static comment(sb, ...lines) {
             _.forEach(lines, (line) => sb.append(`<!-- ${line} -->`));
         }
@@ -41,7 +43,7 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
 
             sb.startBlock(`<bean ${idProp} class="${bean.clsName}">`);
 
-            this.setBeanProperties(sb, bean);
+            this._setProperties(sb, bean);
 
             sb.endBlock('</bean>');
         }
@@ -52,7 +54,7 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
          * @param {Bean} bean
          * @returns {Array}
          */
-        static setBeanProperties(sb, bean) {
+        static _setProperties(sb, bean) {
             _.forEach(bean.properties, (prop) => {
                 switch (prop.type) {
                     case 'BEAN':
@@ -64,12 +66,39 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
 
                         break;
 
+                    case 'MAP':
+                        sb.startBlock(`<property name="${prop.name}">`);
+
+                        sb.startBlock('<map>');
+
+                        _.forEach(prop.value, (entry) => {
+                            sb.append(`<entry key="${entry.name}" value="${entry.value}"/>`);
+                        });
+
+                        sb.endBlock('</map>');
+
+                        sb.endBlock('</property>');
+
+
+                        break;
+
                     default:
                         sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
                 }
             });
 
             return sb;
+        }
+
+        /**
+         * @param {Bean} bean
+         * @param {StringBuilder} sb
+         * @returns {String}
+         */
+        static generateSection(bean, sb = new StringBuilder()) {
+            this._setProperties(sb, bean);
+
+            return sb.asString();
         }
 
         /**
@@ -109,32 +138,11 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
             // 4. Close beans section.
             sb.endBlock('</beans>');
 
-            return sb.build();
-        }
-
-        /**
-         * @param {Bean} bean
-         * @param {Bean} deep
-         * @returns {String}
-         */
-        static generateSection(bean, deep = 0) {
-            const sb = [];
-
-            this.setBeanProperties(sb, deep, bean);
-
-            return sb.join('\n');
+            return sb.asString();
         }
 
         static cluster(cluster, clientNearCfg) {
             return $generatorSpring.cluster(cluster, clientNearCfg);
-        }
-
-        static clusterAtomics(atomics, res = $generatorCommon.builder()) {
-            const cfg = generator.clusterAtomics(atomics);
-
-            this.setBeanProperties(res, 0, cfg);
-
-            return res;
         }
 
         static clusterBinary(binary, res) {
@@ -143,10 +151,6 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
 
         static clusterCaches(caches, igfss, isSrvCfg, res) {
             return $generatorSpring.clusterCaches(caches, igfss, isSrvCfg, res);
-        }
-
-        static clusterCollision(collision, res) {
-            return $generatorSpring.clusterCollision(collision, res);
         }
 
         static clusterCommunication(cluster, res) {

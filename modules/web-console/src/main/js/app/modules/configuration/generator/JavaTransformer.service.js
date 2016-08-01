@@ -19,11 +19,12 @@ import _ from 'lodash';
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
-import $generatorCommon from './generator-common';
 import $generatorJava from './generator-java';
 
 export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (JavaTypes, generator) => {
     class JavaTransformer extends AbstractTransformer {
+        static generator = generator;
+
         static comment(sb, ...lines) {
             _.forEach(lines, (line) => sb.append(`// ${line}`));
         }
@@ -66,7 +67,13 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
          * @private
          */
         static _setBeanProperty(sb, parent, propertyName, bean) {
-            sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(${bean.id});`);
+            if (bean.id)
+                sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(${bean.id});`);
+            else {
+                const shortClsName = this.shortClassName(bean.clsName);
+
+                sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(new ${shortClsName}());`);
+            }
         }
 
         static shortClassName(clsName) {
@@ -92,15 +99,39 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                     case 'BEAN':
                         const nestedBean = prop.value;
 
-                        this._defineBean(sb, nestedBean);
+                        if (nestedBean.id) {
+                            this._defineBean(sb, nestedBean);
 
-                        sb.emptyLine();
+                            sb.emptyLine();
 
-                        this._setProperties(sb, nestedBean);
+                            this._setProperties(sb, nestedBean);
 
-                        sb.emptyLine();
+                            if (nestedBean.properties.length)
+                                sb.emptyLine();
+                        }
 
                         this._setBeanProperty(sb, bean, prop.name, nestedBean);
+
+                        break;
+
+                    case 'MAP':
+                        const shortClsName = this.shortClassName(prop.clsName);
+                        const shortKeyClsName = this.shortClassName(prop.keyClsName);
+                        const shortValClsName = this.shortClassName(prop.valClsName);
+
+                        sb.append(`${shortClsName}<${shortKeyClsName}, ${shortValClsName}> ${prop.id} = new ${shortClsName}<>();`);
+
+                        sb.emptyLine();
+
+                        if (!_.isEmpty(prop.value)) {
+                            _.forEach(prop.value, (entry) => {
+                                sb.append(`${bean.id}.put("${entry.name}", "${entry.value}")`);
+                            });
+
+                            sb.emptyLine();
+                        }
+
+                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
 
                         break;
 
@@ -117,6 +148,14 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
             });
 
             return sb;
+        }
+
+        static generateSection(bean) {
+            const sb = new StringBuilder();
+
+            this._setProperties(sb, bean);
+
+            return sb.asString();
         }
 
         /**
@@ -161,15 +200,7 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
 
             sb.endBlock('}');
 
-            return sb.build();
-        }
-
-        static generateSection(bean) {
-            const sb = new StringBuilder();
-
-            this._setProperties(sb, bean);
-
-            return sb.build();
+            return sb.asString();
         }
 
         static clusterGeneral(cluster, clientNearCfg, res) {
@@ -178,15 +209,6 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
 
         static clusterCaches(caches, igfss, isSrvCfg, res) {
             return $generatorJava.clusterCaches(caches, igfss, isSrvCfg, res);
-        }
-
-        // Generate atomics group.
-        static clusterAtomics(atomics, sb = $generatorCommon.builder()) {
-            const cfg = generator.clusterAtomics(atomics);
-
-            this._setProperties(sb, cfg);
-
-            return sb;
         }
     }
 

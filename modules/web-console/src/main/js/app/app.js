@@ -61,8 +61,8 @@ import igniteOnEnter from './directives/on-enter.directive.js';
 import igniteOnEnterFocusMove from './directives/on-enter-focus-move.directive.js';
 import igniteOnEscape from './directives/on-escape.directive.js';
 import igniteUiAceJava from './directives/ui-ace-java/ui-ace-java.directive';
-import igniteUiAceSpring from './directives/ui-ace-xml/ui-ace-xml.directive';
-import igniteUiAceCSharp from './directives/ui-ace-csharp/ui-ace-csharp.directive';
+import igniteUiAceSpring from './directives/ui-ace-spring/ui-ace-spring.directive';
+import igniteUiAceCSharp from './directives/ui-ace-sharp/ui-ace-sharp.directive';
 import igniteUiAcePojos from './directives/ui-ace-pojos/ui-ace-pojos.directive';
 import igniteUiAcePom from './directives/ui-ace-pom/ui-ace-pom.directive';
 import igniteUiAceDocker from './directives/ui-ace-docker/ui-ace-docker.directive';
@@ -92,12 +92,12 @@ import domainsValidation from './filters/domainsValidation.filter';
 import hasPojo from './filters/hasPojo.filter';
 
 // Generators
-import $generatorCommon from 'generator/generator-common';
-import $generatorJava from 'generator/generator-java';
-import $generatorOptional from 'generator/generator-optional';
-import $generatorProperties from 'generator/generator-properties';
-import $generatorReadme from 'generator/generator-readme';
-import $generatorSpring from 'generator/generator-spring';
+import $generatorCommon from './modules/configuration/generator/generator-common';
+import $generatorJava from './modules/configuration/generator/generator-java';
+import $generatorOptional from './modules/configuration/generator/generator-optional';
+import $generatorProperties from './modules/configuration/generator/generator-properties';
+import $generatorReadme from './modules/configuration/generator/generator-readme';
+import $generatorSpring from './modules/configuration/generator/generator-spring';
 
 window.$generatorCommon = $generatorCommon;
 window.$generatorJava = $generatorJava;

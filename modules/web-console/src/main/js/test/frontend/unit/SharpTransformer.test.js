@@ -16,14 +16,14 @@
  */
 
 import generator from '../../../app/modules/configuration/generator/PlatformGenerator';
-import transformer from '../../../app/modules/configuration/generator/NetTransformer.service';
+import transformer from '../../../app/modules/configuration/generator/SharpTransformer.service';
 
 const PlatformGenerator = generator[1]();
-const NetTransformer = transformer[1][1](PlatformGenerator);
+const SharpTransformer = transformer[1](PlatformGenerator);
 
 import { assert } from 'chai';
 
-suite('NetTransformerTestsSuite', () => {
+suite('SharpTransformerTestsSuite', () => {
     test('AtomicConfiguration', () => {
         const acfg = {
             atomicSequenceReserveSize: 1001,
@@ -33,7 +33,7 @@ suite('NetTransformerTestsSuite', () => {
 
         const bean = PlatformGenerator.clusterAtomics(acfg);
 
-        console.log(NetTransformer.generateSection(bean));
+        console.log(SharpTransformer.generateSection(bean));
     });
 
     test('IgniteConfiguration', () => {
@@ -47,6 +47,6 @@ suite('NetTransformerTestsSuite', () => {
 
         const bean = PlatformGenerator.igniteConfiguration(clusterCfg);
 
-        console.log(NetTransformer.toClassFile(bean, 'config', 'ServerConfigurationFactory', null));
+        console.log(SharpTransformer.toClassFile(bean, 'config', 'ServerConfigurationFactory', null));
     });
 });

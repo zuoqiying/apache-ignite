@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import templateUrl from './ui-ace-csharp.jade';
-import controller from './ui-ace-csharp.controller';
+import templateUrl from './ui-ace-spring.jade';
+import controller from './ui-ace-spring.controller';
 
-export default ['igniteUiAceSharp', ['NetTransformer', (generator) => {
+export default ['igniteUiAceSpring', ['SpringTransformer', (generator) => {
     const link = (scope, $el, attrs, [ctrl, igniteUiAceTabs, formCtrl, ngModelCtrl]) => {
         if (formCtrl && ngModelCtrl)
             formCtrl.$removeControl(ngModelCtrl);
@@ -71,7 +71,7 @@ export default ['igniteUiAceSharp', ['NetTransformer', (generator) => {
                             return acc;
                         }, []);
 
-                        return generator.igfss(igfss, 'cfg').asString();
+                        return generator.igfss(igfss).asString();
                     };
 
                     break;
@@ -86,6 +86,19 @@ export default ['igniteUiAceSharp', ['NetTransformer', (generator) => {
                         }, []);
 
                         return generator.cacheStore(cache, domains).asString();
+                    };
+
+                    break;
+
+                case 'cacheNodeFilter':
+                    ctrl.generator = (cache) => {
+                        const igfss = _.reduce(scope.detail, (acc, igfs) => {
+                            acc.push(igfs.igfs);
+
+                            return acc;
+                        }, []);
+
+                        return generator.cacheNodeFilter(cache, igfss).asString();
                     };
 
                     break;
@@ -128,6 +141,6 @@ export default ['igniteUiAceSharp', ['NetTransformer', (generator) => {
         templateUrl,
         controller,
         controllerAs: 'ctrl',
-        require: ['igniteUiAceSharp', '?^igniteUiAceTabs', '?^form', '?ngModel']
+        require: ['igniteUiAceSpring', '?^igniteUiAceTabs', '?^form', '?ngModel']
     };
 }]];

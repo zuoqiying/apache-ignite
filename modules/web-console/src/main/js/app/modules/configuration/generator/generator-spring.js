@@ -1900,7 +1900,7 @@ $generatorSpring.generateDataSources = function(datasources, res) {
     if (datasources.length > 0) {
         res.line('<!-- Data source beans will be initialized from external properties file. -->');
 
-        _.forEach(datasources, (datasource) => $generatorXml.generateDataSource(datasource, res));
+        _.forEach(datasources, (datasource) => $generatorSpring.generateDataSource(datasource, res));
 
         res.needEmptyLine = true;
 
@@ -1910,7 +1910,7 @@ $generatorSpring.generateDataSources = function(datasources, res) {
     return res;
 };
 
-$generatorXml.generateDataSource = function(datasource, res) {
+$generatorSpring.generateDataSource = function(datasource, res) {
     const beanId = datasource.dataSourceBean;
 
     res.startBlock('<bean id="' + beanId + '" class="' + $generatorCommon.DATA_SOURCES[datasource.dialect] + '">');

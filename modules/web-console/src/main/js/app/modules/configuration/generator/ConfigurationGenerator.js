@@ -23,6 +23,29 @@ const DEFAULT = {
         atomicSequenceReserveSize: 1000,
         backups: 0,
         cacheMode: {clsName: 'org.apache.ignite.cache.CacheMode', value: 'PARTITIONED'}
+    },
+    collision: {
+        kind: null,
+        JobStealing: {
+            activeJobsThreshold: 95,
+            waitJobsThreshold: 0,
+            messageExpireTime: 1000,
+            maximumStealingAttempts: 5,
+            stealingEnabled: true,
+            stealingAttributes: {clsName: 'java.util.HashMap', keyClsName: 'java.util.String', valClsName: 'java.io.Serializable'}
+        },
+        FifoQueue: {
+
+        },
+        PriorityQueue: {
+            priorityAttributeKey: 'grid.task.priority',
+            jobPriorityAttributeKey: 'grid.job.priority',
+            defaultPriority: 0,
+            starvationIncrement: 1,
+            starvationPreventionEnabled: true
+        },
+        Custom: {
+        }
     }
 };
 
@@ -70,7 +93,7 @@ export default ['ConfigurationGenerator', () => {
                 atomics, DEFAULT.atomics);
 
             if (acfg.isEmpty())
-                return acfg;
+                return cfg;
 
             cfg.beanProperty('atomicConfiguration', acfg);
 
@@ -83,8 +106,63 @@ export default ['ConfigurationGenerator', () => {
             return cfg;
         }
 
-        clusterCollision() {
+        static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
+            let colSpi;
 
+            switch (collision.kind) {
+                case 'JobStealing':
+                    colSpi = this.createBean('org.apache.ignite.spi.collision.jobstealing.JobStealingCollisionSpi',
+                        'colSpi', collision.JobStealing, DEFAULT.collision.JobStealing);
+
+                    colSpi.property('activeJobsThreshold')
+                        .property('waitJobsThreshold')
+                        .property('messageExpireTime')
+                        .property('maximumStealingAttempts')
+                        .property('stealingEnabled')
+                        .emptyBeanProperty('externalCollisionListener')
+                        .mapProperty('stealingAttrs', 'stealingAttributes');
+
+                    break;
+
+                case 'FifoQueue':
+                    colSpi = this.createBean('org.apache.ignite.spi.collision.fifoqueue.FifoQueueCollisionSpi',
+                        'colSpi', collision.FifoQueue, DEFAULT.collision.FifoQueue);
+
+                    colSpi.property('parallelJobsNumber')
+                        .property('waitingJobsNumber');
+
+                    break;
+
+                case 'PriorityQueue':
+                    colSpi = this.createBean('org.apache.ignite.spi.collision.priorityqueue.PriorityQueueCollisionSpi',
+                        'colSpi', collision.PriorityQueue, DEFAULT.collision.PriorityQueue);
+
+                    colSpi.property('parallelJobsNumber')
+                        .property('waitingJobsNumber')
+                        .property('priorityAttributeKey')
+                        .property('jobPriorityAttributeKey')
+                        .property('defaultPriority')
+                        .property('starvationIncrement')
+                        .property('starvationPreventionEnabled');
+
+                    break;
+
+                case 'Custom':
+                    colSpi = this.createBean(collision.Custom.class,
+                        'colSpi', collision.PriorityQueue, DEFAULT.collision.PriorityQueue);
+
+                    break;
+
+                default:
+                    return cfg;
+            }
+
+            if (colSpi.isEmpty())
+                return cfg;
+
+            cfg.beanProperty('collisionSpi', colSpi);
+
+            return cfg;
         }
 
         clusterConnector() {
