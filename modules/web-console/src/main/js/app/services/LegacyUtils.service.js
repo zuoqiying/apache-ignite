@@ -543,9 +543,22 @@ export default ['IgniteLegacyUtils', [
             return root;
         }
 
-        function extractDataSource(cache) {
-            if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind) {
-                const storeFactory = cache.cacheStoreFactory[cache.cacheStoreFactory.kind];
+        /**
+         * Extract datasource from cache or cluster.
+         *
+         * @param object Cache or cluster to extract datasource.
+         * @returns {*} Datasource object or null if not set.
+         */
+        function extractDataSource(object) {
+            // Extract from cluster object
+            if (_.get(object, 'discovery.kind') === 'Jdbc') {
+                const datasource = object.discovery.Jdbc;
+
+                if (datasource.dataSourceBean && datasource.dialect)
+                    return datasource;
+            } // Extract from cache object
+            else if (_.get(object, 'cacheStoreFactory.kind')) {
+                const storeFactory = object.cacheStoreFactory[object.cacheStoreFactory.kind];
 
                 if (storeFactory.dialect || (storeFactory.connectVia === 'DataSource'))
                     return storeFactory;
@@ -575,16 +588,23 @@ export default ['IgniteLegacyUtils', [
 
         const DS_CHECK_SUCCESS = { checked: true };
 
-        function compareDataSources(firstCache, secondCache) {
-            const firstDs = extractDataSource(firstCache);
-            const secondDs = extractDataSource(secondCache);
+        /**
+         * Compare datasources of caches or clusters.
+         *
+         * @param firstObj First cache or cluster.
+         * @param secondObj Second cache or cluster.
+         * @returns {*} Check result object.
+         */
+        function compareDataSources(firstObj, secondObj) {
+            const firstDs = extractDataSource(firstObj);
+            const secondDs = extractDataSource(secondObj);
 
             if (firstDs && secondDs) {
                 const firstDB = firstDs.dialect;
                 const secondDB = secondDs.dialect;
 
                 if (firstDs.dataSourceBean === secondDs.dataSourceBean && firstDB !== secondDB)
-                    return {checked: false, firstCache, firstDB, secondCache, secondDB};
+                    return {checked: false, firstObj, firstDB, secondObj, secondDB};
             }
 
             return DS_CHECK_SUCCESS;
@@ -814,10 +834,15 @@ export default ['IgniteLegacyUtils', [
 
                 return found ? found.label : null;
             },
-            checkCachesDataSources(caches, checkCacheExt) {
+            checkDataSources(cluster, caches, checkCacheExt) {
                 let res = DS_CHECK_SUCCESS;
 
                 _.find(caches, function(curCache, curIx) {
+                    res = compareDataSources(curCache, cluster);
+
+                    if (!res.checked)
+                        return true;
+
                     if (isDefined(checkCacheExt)) {
                         if (checkCacheExt._id !== curCache._id) {
                             res = compareDataSources(checkCacheExt, curCache);

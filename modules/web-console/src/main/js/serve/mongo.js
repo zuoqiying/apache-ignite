@@ -387,7 +387,12 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
                 addrReqAttempts: String
             },
             Jdbc: {
-                initSchema: Boolean
+                initSchema: Boolean,
+                dataSourceBean: String,
+                dialect: {
+                    type: String,
+                    enum: ['Generic', 'Oracle', 'DB2', 'SQLServer', 'MySQL', 'PostgreSQL', 'H2']
+                }
             },
             SharedFs: {
                 path: String

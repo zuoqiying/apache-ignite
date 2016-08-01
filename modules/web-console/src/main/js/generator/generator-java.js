@@ -541,8 +541,20 @@ $generatorJava.clusterGeneral = function(cluster, clientNearCfg, res) {
                 break;
 
             case 'Jdbc':
-                $generatorJava.beanProperty(res, 'discovery', d.Jdbc, 'ipFinder', 'ipFinder',
-                    'org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder', {initSchema: null}, true);
+                $generatorJava.declareVariable(res, 'ipFinder',
+                    'org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder');
+                $generatorJava.property(res, 'ipFinder', d.Jdbc, 'initSchema');
+
+                const datasource = d.Jdbc;
+                if (datasource.dataSourceBean && datasource.dialect) {
+                    res.needEmptyLine = !datasource.initSchema;
+
+                    res.line('ipFinder.setDataSource(DataSources.INSTANCE_' + datasource.dataSourceBean + ');');
+                }
+
+                res.needEmptyLine = true;
+
+                res.line('discovery.setIpFinder(ipFinder);');
 
                 break;
 
@@ -1458,7 +1470,7 @@ $generatorJava.cacheStoreDataSource = function(storeFactory, res) {
     return null;
 };
 
-$generatorJava.clusterDataSources = function(caches, res) {
+$generatorJava.clusterDataSources = function(cluster, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1466,7 +1478,16 @@ $generatorJava.clusterDataSources = function(caches, res) {
 
     let storeFound = false;
 
-    _.forEach(caches, function(cache) {
+    function startSourcesFunction() {
+        if (!storeFound) {
+            res.line('/** Helper class for datasource creation. */');
+            res.startBlock('public static class DataSources {');
+
+            storeFound = true;
+        }
+    }
+
+    _.forEach(cluster.caches, function(cache) {
         const factoryKind = cache.cacheStoreFactory.kind;
 
         const storeFactory = cache.cacheStoreFactory[factoryKind];
@@ -1478,18 +1499,27 @@ $generatorJava.clusterDataSources = function(caches, res) {
                 datasources.push(beanClassName);
 
                 if (factoryKind === 'CacheJdbcPojoStoreFactory' || factoryKind === 'CacheJdbcBlobStoreFactory') {
-                    if (!storeFound) {
-                        res.line('/** Helper class for datasource creation. */');
-                        res.startBlock('public static class DataSources {');
-
-                        storeFound = true;
-                    }
+                    startSourcesFunction();
 
                     $generatorJava.cacheStoreDataSource(storeFactory, res);
                 }
             }
         }
     });
+
+    if (cluster.discovery.kind === 'Jdbc') {
+        const datasource = cluster.discovery.Jdbc;
+
+        if (datasource.dataSourceBean && datasource.dialect) {
+            const beanClassName = $generatorJava.dataSourceClassName(res, datasource);
+
+            if (beanClassName && !_.includes(datasources, beanClassName)) {
+                startSourcesFunction();
+
+                $generatorJava.cacheStoreDataSource(datasource, res);
+            }
+        }
+    }
 
     if (storeFound)
         res.endBlock('}');
@@ -2871,7 +2901,7 @@ $generatorJava.cluster = function(cluster, pkg, javaClass, clientNearCfg) {
 
         $generatorJava.tryLoadSecretProperties(cluster, res);
 
-        $generatorJava.clusterDataSources(cluster.caches, res);
+        $generatorJava.clusterDataSources(cluster, res);
 
         res.line('/**');
         res.line(' * Configure grid.');

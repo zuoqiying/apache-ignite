@@ -90,11 +90,14 @@ export default ['cachesController', [
 
                 _.forEach($scope.caches, (cache) => cache.label = _cacheLbl(cache));
 
-                $scope.clusters = _.map(clusters, (cluster) => ({
-                    label: cluster.name,
-                    value: cluster._id,
-                    caches: cluster.caches
-                }));
+                $scope.clusters = _.map(data.clusters, function(cluster) {
+                    return {
+                        value: cluster._id,
+                        label: cluster.name,
+                        discovery: cluster.discovery,
+                        caches: cluster.caches
+                    };
+                });
 
                 $scope.domains = _.sortBy(_.map(validFilter(domains, true, false), (domain) => ({
                     label: domain.valueType,
@@ -225,17 +228,25 @@ export default ['cachesController', [
             const failCluster = _.find(clusters, (cluster) => {
                 const caches = clusterCaches(cluster);
 
-                checkRes = LegacyUtils.checkCachesDataSources(caches, $scope.backupItem);
+                checkRes = LegacyUtils.checkDataSources(cluster, caches, $scope.backupItem);
 
                 return !checkRes.checked;
             });
 
             if (!checkRes.checked) {
-                return showPopoverMessage($scope.ui, 'store', checkRes.firstCache.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialect' : 'blobDialect',
-                    'Found cache "' + checkRes.secondCache.name + '" in cluster "' + failCluster.label + '" ' +
-                    'with the same data source bean name "' + checkRes.firstCache.cacheStoreFactory[checkRes.firstCache.cacheStoreFactory.kind].dataSourceBean +
+                if (_.get(checkRes.secondObj, 'discovery.kind') === 'Jdbc') {
+                    return showPopoverMessage($scope.ui, 'store', checkRes.firstObj.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialect' : 'blobDialect',
+                        'Found cluster "' + failCluster.label + '" with the same data source bean name "' +
+                        checkRes.secondObj.discovery.Jdbc.dataSourceBean + '" and different database: "' +
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in current cache and "' +
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in"' + checkRes.secondObj.label + '" cluster', 10000);
+                }
+
+                return showPopoverMessage($scope.ui, 'store', checkRes.firstObj.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialect' : 'blobDialect',
+                    'Found cache "' + checkRes.secondObj.name + '" in cluster "' + failCluster.label + '" ' +
+                    'with the same data source bean name "' + checkRes.firstObj.cacheStoreFactory[checkRes.firstObj.cacheStoreFactory.kind].dataSourceBean +
                     '" and different database: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in current cache and "' +
-                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondCache.name + '"', 10000);
+                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondObj.name + '" cache', 10000);
             }
 
             return true;

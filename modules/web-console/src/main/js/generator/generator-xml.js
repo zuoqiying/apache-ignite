@@ -350,8 +350,22 @@ $generatorXml.clusterGeneral = function(cluster, res) {
             case 'Jdbc':
                 res.startBlock('<bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder">');
 
-                if (d.Jdbc)
-                    res.line('<property name="initSchema" value="' + (!_.isNil(d.Jdbc.initSchema) && d.Jdbc.initSchema) + '"/>');
+                if (d.Jdbc) {
+                    const datasource = d.Jdbc;
+
+                    res.line('<property name="initSchema" value="' + (!_.isNil(datasource.initSchema) && datasource.initSchema) + '"/>');
+
+                    if (datasource.dataSourceBean && datasource.dialect) {
+                        res.line('<property name="dataSource" ref="' + datasource.dataSourceBean + '"/>');
+
+                        if (_.findIndex(res.datasources, (ds) => ds.dataSourceBean === datasource.dataSourceBean) < 0) {
+                            res.datasources.push({
+                                dataSourceBean: datasource.dataSourceBean,
+                                dialect: datasource.dialect
+                            });
+                        }
+                    }
+                }
 
                 res.endBlock('</bean>');
 
@@ -1213,7 +1227,6 @@ $generatorXml.cacheStore = function(cache, domains, res) {
                 if (_.findIndex(res.datasources, (ds) => ds.dataSourceBean === storeFactory.dataSourceBean) < 0) {
                     res.datasources.push({
                         dataSourceBean: storeFactory.dataSourceBean,
-                        className: $generatorCommon.DATA_SOURCES[storeFactory.dialect],
                         dialect: storeFactory.dialect
                     });
                 }
@@ -1887,43 +1900,7 @@ $generatorXml.generateDataSources = function(datasources, res) {
     if (datasources.length > 0) {
         res.line('<!-- Data source beans will be initialized from external properties file. -->');
 
-        _.forEach(datasources, function(item) {
-            const beanId = item.dataSourceBean;
-
-            res.startBlock('<bean id="' + beanId + '" class="' + item.className + '">');
-
-            switch (item.dialect) {
-                case 'Generic':
-                    res.line('<property name="jdbcUrl" value="${' + beanId + '.jdbc.url}"/>');
-
-                    break;
-
-                case 'DB2':
-                    res.line('<property name="serverName" value="${' + beanId + '.jdbc.server_name}"/>');
-                    res.line('<property name="portNumber" value="${' + beanId + '.jdbc.port_number}"/>');
-                    res.line('<property name="databaseName" value="${' + beanId + '.jdbc.database_name}"/>');
-                    res.line('<property name="driverType" value="${' + beanId + '.jdbc.driver_type}"/>');
-
-                    break;
-
-                case 'PostgreSQL':
-                    res.line('<property name="url" value="${' + beanId + '.jdbc.url}"/>');
-
-                    break;
-
-                default:
-                    res.line('<property name="URL" value="${' + beanId + '.jdbc.url}"/>');
-            }
-
-            res.line('<property name="user" value="${' + beanId + '.jdbc.username}"/>');
-            res.line('<property name="password" value="${' + beanId + '.jdbc.password}"/>');
-
-            res.endBlock('</bean>');
-
-            res.needEmptyLine = true;
-
-            res.emptyLineIfNeeded();
-        });
+        _.forEach(datasources, (datasource) => $generatorXml.generateDataSource(datasource, res));
 
         res.needEmptyLine = true;
 
@@ -1931,6 +1908,44 @@ $generatorXml.generateDataSources = function(datasources, res) {
     }
 
     return res;
+};
+
+$generatorXml.generateDataSource = function(datasource, res) {
+    const beanId = datasource.dataSourceBean;
+
+    res.startBlock('<bean id="' + beanId + '" class="' + $generatorCommon.DATA_SOURCES[datasource.dialect] + '">');
+
+    switch (datasource.dialect) {
+        case 'Generic':
+            res.line('<property name="jdbcUrl" value="${' + beanId + '.jdbc.url}"/>');
+
+            break;
+
+        case 'DB2':
+            res.line('<property name="serverName" value="${' + beanId + '.jdbc.server_name}"/>');
+            res.line('<property name="portNumber" value="${' + beanId + '.jdbc.port_number}"/>');
+            res.line('<property name="databaseName" value="${' + beanId + '.jdbc.database_name}"/>');
+            res.line('<property name="driverType" value="${' + beanId + '.jdbc.driver_type}"/>');
+
+            break;
+
+        case 'PostgreSQL':
+            res.line('<property name="url" value="${' + beanId + '.jdbc.url}"/>');
+
+            break;
+
+        default:
+            res.line('<property name="URL" value="${' + beanId + '.jdbc.url}"/>');
+    }
+
+    res.line('<property name="user" value="${' + beanId + '.jdbc.username}"/>');
+    res.line('<property name="password" value="${' + beanId + '.jdbc.password}"/>');
+
+    res.endBlock('</bean>');
+
+    res.needEmptyLine = true;
+
+    res.emptyLineIfNeeded();
 };
 
 $generatorXml.clusterConfiguration = function(cluster, clientNearCfg, res) {

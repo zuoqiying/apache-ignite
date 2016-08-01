@@ -232,6 +232,9 @@ export default [
             if ($generatorJava.isDemoConfigured(cluster, $root.IgniteDemoMode))
                 javaFolder.children.push(demoFolder);
 
+            if (cluster.discovery.kind === 'Jdbc' && cluster.discovery.Jdbc.dialect)
+                $scope.dialects[cluster.discovery.Jdbc.dialect] = true;
+
             _.forEach(cluster.caches, (cache) => {
                 if (cache.cacheStoreFactory) {
                     const store = cache.cacheStoreFactory[cache.cacheStoreFactory.kind];

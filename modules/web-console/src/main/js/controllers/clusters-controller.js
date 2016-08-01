@@ -300,7 +300,12 @@ export default ['clustersController', [
         function prepareNewItem(linkId) {
             return angular.merge({}, blank, {
                 space: $scope.spaces[0]._id,
-                discovery: {kind: 'Multicast', Vm: {addresses: ['127.0.0.1:47500..47510']}, Multicast: {addresses: ['127.0.0.1:47500..47510']}},
+                discovery: {
+                    kind: 'Multicast',
+                    Vm: {addresses: ['127.0.0.1:47500..47510']},
+                    Multicast: {addresses: ['127.0.0.1:47500..47510']},
+                    Jdbc: {initSchema: true}
+                },
                 binaryConfiguration: {typeConfigurations: [], compactFooter: true},
                 communication: {tcpNoDelay: true},
                 connector: {noDelay: true},
@@ -331,14 +336,22 @@ export default ['clustersController', [
         function checkCacheDatasources(item) {
             const caches = clusterCaches(item);
 
-            const checkRes = LegacyUtils.checkCachesDataSources(caches);
+            const checkRes = LegacyUtils.checkDataSources(item, caches);
 
             if (!checkRes.checked) {
+                if (_.get(checkRes.secondObj, 'discovery.kind') === 'Jdbc') {
+                    return showPopoverMessage($scope.ui, 'general', 'dialect',
+                        'Found cache "' + checkRes.firstObj.name + '" with the same data source bean name "' +
+                        item.discovery.Jdbc.dataSourceBean + '" and different database: "' +
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in current cluster and "' +
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" cache', 10000);
+                }
+
                 return showPopoverMessage($scope.ui, 'general', 'caches',
-                    'Found caches "' + checkRes.firstCache.name + '" and "' + checkRes.secondCache.name + '" ' +
-                    'with the same data source bean name "' + checkRes.firstCache.cacheStoreFactory[checkRes.firstCache.cacheStoreFactory.kind].dataSourceBean +
-                    '" and different databases: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstCache.name + '" and "' +
-                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondCache.name + '"', 10000);
+                    'Found caches "' + checkRes.firstObj.name + '" and "' + checkRes.secondObj.name + '" ' +
+                    'with the same data source bean name "' + checkRes.firstObj.cacheStoreFactory[checkRes.firstObj.cacheStoreFactory.kind].dataSourceBean +
+                    '" and different databases: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" and "' +
+                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondObj.name + '" cache', 10000);
             }
 
             return true;
