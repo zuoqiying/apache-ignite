@@ -1233,14 +1233,20 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             this.rootPage = rootPage;
             this.lsnr = lsnr;
 
-            ByteBuffer buf = ByteBuffer.allocateDirect(cctx.shared().database().pageMemory().pageSize());
+            // TODO: find a better way to check if the store exists.
+            if (rootPage.isAllocated())
+                exists = false;
+            else {
+                Page page = cctx.shared().database().pageMemory().page(cctx.cacheId(), rootPage.pageId().pageId());
 
-            cctx.shared().pageStore().read(cctx.cacheId(), rootPage.pageId().pageId(), buf);
+                ByteBuffer buf = page.getForRead();
 
-            exists = PageIO.getVersion(buf) > 0;
+                exists = PageIO.getType(buf) == PageIO.T_BPLUS_META;
 
-            if (exists)
-                init();
+                page.releaseRead();
+
+                cctx.shared().database().pageMemory().releasePage(page);
+            }
         }
 
         private void init() throws IgniteCheckedException {
@@ -1255,7 +1261,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                         cctx,
                         cctx.shared().database().pageMemory(),
                         rootPage.pageId().pageId(),
-                        !exists || rootPage.isAllocated());
+                        !exists);
 
                     delegate = new CacheDataStoreImpl(idxName, rowStore, dataTree, lsnr);
 
