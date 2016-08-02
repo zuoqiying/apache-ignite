@@ -24,9 +24,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -51,7 +48,6 @@ import org.apache.ignite.internal.processors.cache.extras.GridCacheObsoleteEntry
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.GridCircularBuffer;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
-import org.apache.ignite.internal.util.lang.GridCursor;
 import org.apache.ignite.internal.util.lang.GridIterator;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.CI1;
@@ -59,7 +55,6 @@ import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +156,13 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
 
         rmvQueue = new GridCircularBuffer<>(U.ceilPow2(delQueueSize));
 
-        store = new LazyCacheDataStore();
+        try {
+            store = cctx.offheap().createCacheDataStore(id, this);
+        }
+        catch (IgniteCheckedException e) {
+            // TODO ignite-db
+            throw new IgniteException(e);
+        }
     }
 
     /**
@@ -865,100 +866,4 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
             "empty", isEmpty(),
             "createTime", U.format(createTime));
     }
-
-    private class LazyCacheDataStore implements CacheDataStore {
-
-        private final AtomicBoolean init = new AtomicBoolean();
-
-        private final CountDownLatch latch = new CountDownLatch(1);
-
-        private volatile CacheDataStore delegate;
-
-        private void init() throws IgniteCheckedException {
-            try {
-                if (init.compareAndSet(false, true)) {
-                    delegate = cctx.offheap().createCacheDataStore(id, GridDhtLocalPartition.this);
-
-                    latch.countDown();
-                }
-                else
-                    latch.await();
-            }
-            catch (InterruptedException e) {
-                throw new IgniteCheckedException(e);
-            }
-        }
-
-        @Override public void update(KeyCacheObject key, int part, CacheObject val, GridCacheVersion ver,
-            long expireTime) throws IgniteCheckedException {
-
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null) {
-                delegate.update(key, part, val, ver, expireTime);
-
-                return;
-            }
-
-            init();
-
-            this.delegate.update(key, part, val, ver, expireTime);
-        }
-
-        @Override public void remove(KeyCacheObject key, CacheObject prevVal, GridCacheVersion prevVer,
-            int partId) throws IgniteCheckedException {
-
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null) {
-                delegate.remove(key, prevVal, prevVer, partId);
-
-                return;
-            }
-
-            init();
-
-            this.delegate.remove(key, prevVal, prevVer, partId);
-        }
-
-        @Override public IgniteBiTuple<CacheObject, GridCacheVersion> find(KeyCacheObject key)
-            throws IgniteCheckedException {
-
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null)
-                return delegate.find(key);
-
-            init();
-
-            return this.delegate.find(key);
-        }
-
-        @Override public GridCursor<? extends CacheDataRow> cursor() throws IgniteCheckedException {
-
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate == null)
-                return EMPTY_CURSOR;
-
-            return delegate.cursor();
-        }
-
-        @Override public void destroy() throws IgniteCheckedException {
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null)
-                delegate.destroy();
-        }
-    }
-
-    private static final GridCursor<CacheDataRow> EMPTY_CURSOR = new GridCursor<CacheDataRow>() {
-        @Override public boolean next() throws IgniteCheckedException {
-            return false;
-        }
-
-        @Override public CacheDataRow get() throws IgniteCheckedException {
-            return null;
-        }
-    };
 }
