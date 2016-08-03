@@ -19,7 +19,7 @@ package org.apache.ignite.internal.pagemem;
 
 import org.apache.ignite.internal.util.typedef.internal.U;
 
-import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_DATA;
+import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_IDX;
 import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_PART_IDX;
 
 /**
@@ -62,8 +62,16 @@ public final class PageIdUtils {
     public static final long FLAG_MASK = ~(-1 << FLAG_SIZE);
 
     /** */
-    private static final long EFFECTIVE_NON_DATA_PAGE_ID_MASK =
+    public static final long RESERVED_MASK = ~(-1 << RESERVED_SIZE);
+
+    /** */
+    private static final long EFFECTIVE_IDX_PAGE_ID_MASK =
         (FLAG_MASK << (PAGE_IDX_SIZE + PART_ID_SIZE + RESERVED_SIZE)) | PAGE_IDX_MASK;
+
+    /** */
+    private static final long EFFECTIVE_PART_IDX_PAGE_ID_MASK =
+        (FLAG_MASK << (PAGE_IDX_SIZE + PART_ID_SIZE + RESERVED_SIZE)) |
+            (PART_ID_MASK << PAGE_IDX_SIZE + RESERVED_SIZE) | PAGE_IDX_MASK;
 
     /** Maximum page number. */
     public static final long MAX_PAGE_NUM = (1L << PAGE_IDX_SIZE) - 1;
@@ -131,6 +139,22 @@ public final class PageIdUtils {
         return pageId;
     }
 
+    private static long pageId(int fileId, int pageIdx, short res) {
+        assert (fileId & ~FILE_ID_MASK) == 0 : U.hexInt(fileId);
+
+        long pageId = 0;
+
+        pageId = (pageId << FILE_ID_SIZE) | (fileId & FILE_ID_MASK);
+        pageId = (pageId << RESERVED_SIZE) | (res & RESERVED_MASK);
+        pageId = (pageId << PAGE_IDX_SIZE) | (pageIdx & PAGE_IDX_MASK);
+
+        return pageId;
+    }
+
+    private static short res(long pageId) {
+        return (short)((pageId >>> PAGE_IDX_SIZE) & RESERVED_MASK);
+    }
+
     /**
      * Extracts a page index from the given pageId.
      *
@@ -156,8 +180,16 @@ public final class PageIdUtils {
      * @return Effective page id.
      */
     public static long effectivePageId(long link) {
-        return flag(link) == FLAG_DATA || flag(link) == FLAG_PART_IDX ?
-            pageId(link) : link & EFFECTIVE_NON_DATA_PAGE_ID_MASK;
+        switch (flag(link)) {
+            case FLAG_IDX:
+                return link & EFFECTIVE_IDX_PAGE_ID_MASK;
+
+            case FLAG_PART_IDX:
+                return link & EFFECTIVE_PART_IDX_PAGE_ID_MASK;
+
+            default:
+                return pageId(link);
+        }
     }
 
     /**
@@ -224,10 +256,19 @@ public final class PageIdUtils {
      * @return New page ID.
      */
     public static long rotatePageId(long pageId) {
-        // TODO
+        if (flag(pageId) == FLAG_PART_IDX) {
+            int fileId = fileId(pageId);
+            int pageIdx = pageIndex(pageId);
+            short res = res(pageId);
 
-        if (flag(pageId) == FLAG_PART_IDX)
-            return pageId;
+            res++;
+
+            long newId = pageId(fileId, pageIdx, res);
+
+            assert effectivePageId(pageId) == effectivePageId(newId);
+
+            return newId;
+        }
 
         assert flag(pageId) == PageIdAllocator.FLAG_IDX : flag(pageId); // Possible only for index pages.
 

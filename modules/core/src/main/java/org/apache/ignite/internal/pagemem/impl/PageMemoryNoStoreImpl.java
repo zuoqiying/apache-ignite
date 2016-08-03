@@ -39,6 +39,7 @@ import org.apache.ignite.internal.util.OffheapReadWriteLock;
 import org.apache.ignite.internal.util.offheap.GridOffHeapOutOfMemoryException;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lifecycle.LifecycleAware;
+import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentHashMap8;
 import sun.misc.JavaNioAccess;
 import sun.misc.SharedSecrets;
@@ -279,6 +280,11 @@ public class PageMemoryNoStoreImpl implements PageMemory {
             });
         }
 
+        return page(cacheId, pageId);
+    }
+
+    /** {@inheritDoc} */
+    @Nullable @Override public Page existingPage(int cacheId, long pageId) throws IgniteCheckedException {
         return page(cacheId, pageId);
     }
 

@@ -20,13 +20,17 @@ package org.apache.ignite.internal.processors.cache;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
@@ -35,7 +39,6 @@ import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
 import org.apache.ignite.internal.processors.cache.database.MetaStore;
 import org.apache.ignite.internal.processors.cache.database.MetadataStorage;
-import org.apache.ignite.internal.processors.cache.database.RootPage;
 import org.apache.ignite.internal.processors.cache.database.RowStore;
 import org.apache.ignite.internal.processors.cache.database.freelist.FreeList;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
@@ -84,10 +87,15 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     private ReuseList reuseList;
 
     /** */
+    private ReuseList partIdxReuseList;
+
+    /** */
     private CacheDataStore locCacheDataStore;
 
     /** */
     private MetaStore metaStore;
+
+    public static final ConcurrentMap<Integer, List> HISTORY = new ConcurrentHashMap();
 
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
@@ -106,6 +114,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             try {
                 reuseList = new ReuseList(cacheId, pageMem, cctx.shared().wal(), metas.rootIds(), metas.isInitNew());
+                partIdxReuseList = new ReuseList(cacheId, pageMem, cctx.shared().wal(), metas.rootIds(), metas.isInitNew());
                 freeList = new FreeList(cctx, reuseList);
 
                 metaStore = new MetadataStorage(pageMem, cctx.shared().wal(),
@@ -608,9 +617,26 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     @Override public final CacheDataStore createCacheDataStore(int p, CacheDataStore.Listener lsnr) throws IgniteCheckedException {
         String idxName = treeName(p);
 
-        final RootPage rootPage = metaStore.getOrAllocateForTree(idxName);
+        long pageId = PageIdUtils.pageId(p, PageIdAllocator.FLAG_PART_IDX, 0);
 
-        return new LazyCacheDataStore(p, idxName, rootPage, lsnr);
+        Page root = cctx.shared().database().pageMemory().existingPage(cctx.cacheId(), pageId);
+
+        boolean exists = false;
+
+        if (root != null) {
+            ByteBuffer buf = root.getForRead();
+
+            try {
+                exists = PageIO.getType(buf) == PageIO.T_BPLUS_META;
+            }
+            finally {
+                root.releaseRead();
+
+                cctx.shared().database().pageMemory().releasePage(root);
+            }
+        }
+
+        return new LazyCacheDataStore(p, idxName, new FullPageId(pageId, cctx.cacheId()), exists, lsnr);
     }
 
     /**
@@ -1215,7 +1241,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         private final String idxName;
 
-        private final RootPage rootPage;
+        private final FullPageId rootPage;
 
         private final CacheDataStore.Listener lsnr;
 
@@ -1227,26 +1253,12 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         private volatile CacheDataStore delegate;
 
-        public LazyCacheDataStore(int partId, String idxName, RootPage rootPage, Listener lsnr) throws IgniteCheckedException {
+        public LazyCacheDataStore(int partId, String idxName, FullPageId rootPage, boolean exists, Listener lsnr) throws IgniteCheckedException {
             this.partId = partId;
             this.idxName = idxName;
             this.rootPage = rootPage;
+            this.exists = exists;
             this.lsnr = lsnr;
-
-            // TODO: find a better way to check if the store exists.
-            if (rootPage.isAllocated())
-                exists = false;
-            else {
-                Page page = cctx.shared().database().pageMemory().page(cctx.cacheId(), rootPage.pageId().pageId());
-
-                ByteBuffer buf = page.getForRead();
-
-                exists = PageIO.getType(buf) == PageIO.T_BPLUS_META;
-
-                page.releaseRead();
-
-                cctx.shared().database().pageMemory().releasePage(page);
-            }
         }
 
         private void init() throws IgniteCheckedException {
@@ -1256,11 +1268,11 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
                     CacheDataTree dataTree = new CacheDataTree(idxName,
                         partId,
-                        reuseList,
+                        partIdxReuseList,
                         rowStore,
                         cctx,
                         cctx.shared().database().pageMemory(),
-                        rootPage.pageId().pageId(),
+                        rootPage.pageId(),
                         !exists);
 
                     delegate = new CacheDataStoreImpl(idxName, rowStore, dataTree, lsnr);
@@ -1340,13 +1352,18 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         @Override public void destroy() throws IgniteCheckedException {
             CacheDataStore delegate = this.delegate;
 
-            if (delegate != null)
+            if (delegate != null) {
                 delegate.destroy();
-            else {
+
+                return;
+            }
+
+            if (exists) {
                 init();
 
                 this.delegate.destroy();
             }
+
         }
     }
 

@@ -25,6 +25,8 @@ import java.nio.ByteBuffer;
  * Persistent store of pages.
  */
 public interface PageStore {
+    public boolean exists();
+
     /**
      * Allocates next page index.
      *

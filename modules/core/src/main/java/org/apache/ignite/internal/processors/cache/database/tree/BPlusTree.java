@@ -1545,6 +1545,8 @@ public abstract class BPlusTree<L, T extends L> {
         // Rotate page ID to avoid concurrency issues with reused pages.
         pageId = PageIdUtils.rotatePageId(pageId);
 
+        buf.clear();
+
         // Update page ID inside of the buffer, Page.id() will always return the original page ID.
         PageIO.setPageId(buf, pageId);
 
