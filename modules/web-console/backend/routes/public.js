@@ -61,7 +61,7 @@ module.exports.factory = function(express, passport, settings, mongo, mailsServi
          * Register new account.
          */
         router.post('/signup', (req, res) => {
-            usersService.create(req.headers.referer, req.body)
+            usersService.create(req.headers.origin, req.body)
                 .then((user) => new Promise((resolve, reject) => {
                     req.logIn(user, {}, (err) => {
                         if (err)
@@ -116,7 +116,7 @@ module.exports.factory = function(express, passport, settings, mongo, mailsServi
 
                     return user.save();
                 })
-                .then((user) => mailsService.emailUserResetLink(req.headers.referer, user))
+                .then((user) => mailsService.emailUserResetLink(req.headers.origin, user))
                 .then(() => res.status(200).send('An email has been sent with further instructions.'))
                 .catch((err) => {
                     // TODO IGNITE-843 Send email to admin
@@ -144,7 +144,7 @@ module.exports.factory = function(express, passport, settings, mongo, mailsServi
                         });
                     });
                 })
-                .then((user) => mailsService.emailPasswordChanged(req.headers.referer, user))
+                .then((user) => mailsService.emailPasswordChanged(req.headers.origin, user))
                 .then((user) => res.status(200).send(user.email))
                 .catch((err) => res.status(401).send(err.message));
         });

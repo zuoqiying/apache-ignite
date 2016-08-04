@@ -91,7 +91,7 @@ module.exports.factory = (_, nodemailer, settings) => {
          * @param user
          */
         static emailUserResetLink(host, user) {
-            const resetLink = `${host}password/reset?token=${user.resetPasswordToken}`;
+            const resetLink = `${host}/password/reset?token=${user.resetPasswordToken}`;
 
             return send(user, 'Password Reset',
                 `Hello ${user.firstName} ${user.lastName}!<br><br>` +
