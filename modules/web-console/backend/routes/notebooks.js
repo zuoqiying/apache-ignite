@@ -68,7 +68,7 @@ module.exports.factory = (_, express, mongo, spacesService, notebooksService) =>
          * @param res Response.
          */
         router.post('/remove', (req, res) => {
-            const notebookId = req.body_.id;
+            const notebookId = req.body._id;
 
             notebooksService.remove(notebookId)
                 .then(res.api.ok)
