@@ -308,6 +308,11 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         return sysPageSize;
     }
 
+    /** {@inheritDoc} */
+    @Override public void clear(int cacheId) {
+        // TODO
+    }
+
     /** */
     private int nextRoundRobinIndex() {
         while (true) {

@@ -100,9 +100,19 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     }
 
     /**
+     * Waits until current state is checkpointed.
+     *
+     * @throws IgniteCheckedException If failed.
+     */
+    public void waitForCheckpoint() throws IgniteCheckedException {
+        // No-op
+    }
+
+    /**
      *
      */
-    @Nullable public IgniteInternalFuture wakeupForBackup(long backupId, UUID backupNodeId, Collection<String> cacheNames) {
+    @Nullable public IgniteInternalFuture wakeupForBackup(long backupId, UUID backupNodeId,
+        Collection<String> cacheNames) {
         return null;
     }
 

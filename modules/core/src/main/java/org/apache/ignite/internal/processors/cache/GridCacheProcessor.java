@@ -431,14 +431,14 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             else if (cc.getRebalanceMode() == SYNC) {
                 if (delay < 0) {
                     U.warn(log, "Ignoring SYNC rebalance mode with manual rebalance start (node will not wait for " +
-                        "rebalancing to be finished): " + U.maskName(cc.getName()),
+                            "rebalancing to be finished): " + U.maskName(cc.getName()),
                         "Node will not wait for rebalance in SYNC mode: " + U.maskName(cc.getName()));
                 }
                 else {
                     U.warn(log,
                         "Using SYNC rebalance mode with rebalance delay (node will wait until rebalancing is " +
                             "initiated for " + delay + "ms) for cache: " + U.maskName(cc.getName()),
-                            "Node will wait until rebalancing is initiated for " + delay + "ms for cache: " + U.maskName(cc.getName()));
+                        "Node will wait until rebalancing is initiated for " + delay + "ms for cache: " + U.maskName(cc.getName()));
                 }
             }
         }
@@ -558,7 +558,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         if (!F.isEmpty(ctx.config().getCacheConfiguration())) {
             if (depMode != CONTINUOUS && depMode != SHARED)
                 U.warn(log, "Deployment mode for cache is not CONTINUOUS or SHARED " +
-                    "(it is recommended that you change deployment mode and restart): " + depMode,
+                        "(it is recommended that you change deployment mode and restart): " + depMode,
                     "Deployment mode for cache is not CONTINUOUS or SHARED.");
         }
 
@@ -819,7 +819,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         List<? extends GridCacheSharedManager<?, ?>> mgrs = sharedCtx.managers();
 
-        for (ListIterator<? extends GridCacheSharedManager<?, ?>> it = mgrs.listIterator(mgrs.size()); it.hasPrevious();) {
+        for (ListIterator<? extends GridCacheSharedManager<?, ?>> it = mgrs.listIterator(mgrs.size()); it.hasPrevious(); ) {
             GridCacheSharedManager<?, ?> mgr = it.previous();
 
             mgr.stop(cancel);
@@ -884,7 +884,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         List<? extends GridCacheSharedManager<?, ?>> sharedMgrs = sharedCtx.managers();
 
         for (ListIterator<? extends GridCacheSharedManager<?, ?>> it = sharedMgrs.listIterator(sharedMgrs.size());
-            it.hasPrevious();) {
+            it.hasPrevious(); ) {
             GridCacheSharedManager<?, ?> mgr = it.previous();
 
             if (mgr != exch)
@@ -913,7 +913,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             List<GridCacheManager> mgrs = cache.context().managers();
 
-            for (ListIterator<GridCacheManager> it = mgrs.listIterator(mgrs.size()); it.hasPrevious();) {
+            for (ListIterator<GridCacheManager> it = mgrs.listIterator(mgrs.size()); it.hasPrevious(); ) {
                 GridCacheManager mgr = it.previous();
 
                 mgr.onDisconnected(reconnectFut);
@@ -1212,8 +1212,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         CacheType cacheType,
         CacheObjectContext cacheObjCtx,
         boolean updatesAllowed)
-        throws IgniteCheckedException
-    {
+        throws IgniteCheckedException {
         assert cfg != null;
 
         if (cfg.getCacheStoreFactory() instanceof GridCacheLoaderWriterStoreFactory) {
@@ -1769,6 +1768,27 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                 String masked = maskNull(cacheCtx.name());
 
                 jCacheProxies.put(masked, new IgniteCacheProxy(cache.context(), cache, null, false));
+            }
+        }
+
+        if (!F.isEmpty(reqs) && err == null) {
+            boolean hasStop = false;
+
+            for (DynamicCacheChangeRequest req : reqs) {
+                if (req.stop()) {
+                    hasStop = true;
+
+                    break;
+                }
+            }
+
+            if (hasStop) {
+                try {
+                    ctx.cache().context().database().waitForCheckpoint();
+                }
+                catch (IgniteCheckedException e) {
+                    err = e;
+                }
             }
         }
 
