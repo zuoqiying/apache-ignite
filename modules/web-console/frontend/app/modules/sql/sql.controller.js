@@ -781,7 +781,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         const loadNotebook = function(notebook) {
             $scope.notebook = _.cloneDeep(notebook);
 
-            $scope.notebook_name = notebook.name;
+            $scope.notebook_name = $scope.notebook.name;
 
             if (!$scope.notebook.expandedParagraphs)
                 $scope.notebook.expandedParagraphs = [];
@@ -789,13 +789,13 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             if (!$scope.notebook.paragraphs)
                 $scope.notebook.paragraphs = [];
 
-            _.forEach(notebook.paragraphs, (paragraph) => {
+            _.forEach($scope.notebook.paragraphs, (paragraph) => {
                 paragraph.id = 'paragraph-' + paragraphId++;
 
                 enhanceParagraph(paragraph);
             });
 
-            if (!notebook.paragraphs || notebook.paragraphs.length === 0)
+            if (_.isEmpty($scope.notebook.paragraphs))
                 $scope.addParagraph();
             else
                 $scope.rebuildScrollParagraphs();
