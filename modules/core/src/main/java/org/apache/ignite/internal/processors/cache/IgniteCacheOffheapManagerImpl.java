@@ -87,6 +87,9 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     private ReuseList reuseList;
 
     /** */
+    private FreeList partIdxFreeList;
+
+    /** */
     private ReuseList partIdxReuseList;
 
     /** */
@@ -116,6 +119,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                 reuseList = new ReuseList(cacheId, pageMem, cctx.shared().wal(), metas.rootIds(), metas.isInitNew());
                 partIdxReuseList = new ReuseList(cacheId, pageMem, cctx.shared().wal(), metas.rootIds(), metas.isInitNew());
                 freeList = new FreeList(cctx, reuseList);
+                partIdxFreeList = new FreeList(cctx, partIdxReuseList);
 
                 metaStore = new MetadataStorage(pageMem, cctx.shared().wal(),
                     cacheId, reuseList, metas.metastoreRoot(), metas.isInitNew());
@@ -619,11 +623,11 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         long pageId = PageIdUtils.pageId(p, PageIdAllocator.FLAG_PART_IDX, 0);
 
-        Page root = cctx.shared().database().pageMemory().existingPage(cctx.cacheId(), pageId);
+        boolean exists = cctx.shared().pageStore().exists(cctx.cacheId(), p, PageIdAllocator.FLAG_PART_IDX);
 
-        boolean exists = false;
+        if (exists) {
+            Page root = cctx.shared().database().pageMemory().page(cctx.cacheId(), pageId);
 
-        if (root != null) {
             ByteBuffer buf = root.getForRead();
 
             try {
@@ -1264,7 +1268,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         private void init() throws IgniteCheckedException {
             try {
                 if (init.compareAndSet(false, true)) {
-                    CacheDataRowStore rowStore = new CacheDataRowStore(cctx, freeList);
+                    CacheDataRowStore rowStore = new CacheDataRowStore(cctx, partIdxFreeList);
 
                     CacheDataTree dataTree = new CacheDataTree(idxName,
                         partId,
