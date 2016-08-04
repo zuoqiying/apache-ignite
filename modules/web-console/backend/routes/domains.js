@@ -32,9 +32,9 @@ module.exports.factory = (_, express, mongo, domainsService) => {
          * Save domain model.
          */
         router.post('/save', (req, res) => {
-            const domainId = req.body._id;
+            const domain = req.body;
 
-            domainsService.batchMerge([domainId])
+            domainsService.batchMerge([domain])
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
@@ -43,9 +43,9 @@ module.exports.factory = (_, express, mongo, domainsService) => {
          * Batch save domain models.
          */
         router.post('/save/batch', (req, res) => {
-            const domainIds = req.body;
+            const domains = req.body;
 
-            domainsService.batchMerge(domainIds)
+            domainsService.batchMerge(domains)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });
