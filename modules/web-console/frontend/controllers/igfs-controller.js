@@ -356,12 +356,12 @@ export default ['igfsController', [
                             if (idx >= 0) {
                                 igfss.splice(idx, 1);
 
+                                $scope.ui.inputForm.$setPristine();
+
                                 if (igfss.length > 0)
                                     $scope.selectItem(igfss[0]);
-                                else {
+                                else
                                     $scope.backupItem = emptyIgfs;
-                                    $scope.ui.inputForm.$setPristine();
-                                }
                             }
                         })
                         .error(Messages.showError);

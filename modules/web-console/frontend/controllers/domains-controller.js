@@ -1378,12 +1378,12 @@ export default ['domainsController', [
                             if (idx >= 0) {
                                 domains.splice(idx, 1);
 
+                                $scope.ui.inputForm.$setPristine();
+
                                 if (domains.length > 0)
                                     $scope.selectItem(domains[0]);
-                                else {
+                                else
                                     $scope.backupItem = emptyDomain;
-                                    $scope.ui.inputForm.$setPristine();
-                                }
 
                                 _.forEach($scope.caches, (cache) => _.remove(cache.cache.domains, (id) => id === _id));
                             }

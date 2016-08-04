@@ -430,12 +430,12 @@ export default ['cachesController', [
                             if (idx >= 0) {
                                 caches.splice(idx, 1);
 
+                                $scope.ui.inputForm.$setPristine();
+
                                 if (caches.length > 0)
                                     $scope.selectItem(caches[0]);
-                                else {
+                                else
                                     $scope.backupItem = emptyCache;
-                                    $scope.ui.inputForm.$setPristine();
-                                }
 
                                 _.forEach($scope.clusters, (cluster) => _.remove(cluster.caches, (id) => id === _id));
                                 _.forEach($scope.domains, (domain) => _.remove(domain.meta.caches, (id) => id === _id));

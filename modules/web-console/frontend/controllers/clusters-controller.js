@@ -595,12 +595,12 @@ export default ['clustersController', [
                             if (idx >= 0) {
                                 clusters.splice(idx, 1);
 
+                                $scope.ui.inputForm.$setPristine();
+
                                 if (clusters.length > 0)
                                     $scope.selectItem(clusters[0]);
-                                else {
+                                else
                                     $scope.backupItem = emptyCluster;
-                                    $scope.ui.inputForm.$setPristine();
-                                }
 
                                 _.forEach($scope.caches, (cache) => _.remove(cache.cache.clusters, (id) => id === _id));
                                 _.forEach($scope.igfss, (igfs) => _.remove(igfs.igfs.clusters, (id) => id === _id));
