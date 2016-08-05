@@ -25,10 +25,10 @@ How to run console in development mode:
 1. Configure MongoDB to run as service or in terminal change dir to $MONGO_INSTALL_DIR/server/3.0/bin
   and start MongoDB by executing "mongod".
 
-2. In new terminal change directory to '$IGNITE_HOME/modules/web-console/src/main/js'.
-   If needed run "npm install --no-optional" (if dependencies changed) and run "node serve" to start backend.
+2. In new terminal change directory to '$IGNITE_HOME/modules/web-console/backend'.
+   If needed run "npm install --no-optional" (if dependencies changed) and run "node start" to start backend.
 
-3. In new terminal change directory to '$IGNITE_HOME/modules/web-console/src/main/js'
+3. In new terminal change directory to '$IGNITE_HOME/modules/web-console/frontend'
   and start webpack in development mode "npm run dev" .
 
 4. In browser open: http://localhost:9000
