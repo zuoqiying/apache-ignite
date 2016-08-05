@@ -1772,27 +1772,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         }
 
         if (!F.isEmpty(reqs) && err == null) {
-            boolean hasStop = false;
-
-            for (DynamicCacheChangeRequest req : reqs) {
-                if (req.stop()) {
-                    hasStop = true;
-
-                    break;
-                }
-            }
-
-            if (hasStop) {
-                try {
-                    ctx.cache().context().database().waitForCheckpoint();
-                }
-                catch (IgniteCheckedException e) {
-                    err = e;
-                }
-            }
-        }
-
-        if (!F.isEmpty(reqs) && err == null) {
             for (DynamicCacheChangeRequest req : reqs) {
                 String masked = maskNull(req.cacheName());
 
