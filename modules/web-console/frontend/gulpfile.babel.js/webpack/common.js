@@ -26,7 +26,7 @@ import eslintFormatter from 'eslint-friendly-formatter';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 
-import {srcDir, destDir, rootDir} from '../paths';
+import {srcDir, destDir, rootDir, igniteModulesDir} from '../paths';
 
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const development = NODE_ENV === 'development';
@@ -34,12 +34,10 @@ const node_modules_path = path.resolve('node_modules');
 const cssLoader = 'css-loader?sourceMap!postcss-loader';
 const stylesLoader = cssLoader + '!sass-loader?outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
-let favicon;
+let favicon = 'build/ignite_modules/favicon.ico';
 
 try {
-    fs.accessSync('build/ignite_modules/favicon.ico', fs.F_OK);
-
-    favicon = 'build/ignite_modules/favicon.ico';
+    fs.accessSync(path.join(igniteModulesDir, 'favicon.ico'), fs.F_OK);
 } catch (ignore) {
     favicon = 'build/favicon.ico';
 }
