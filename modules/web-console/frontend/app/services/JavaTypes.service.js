@@ -25,71 +25,100 @@ import JAVA_PRIMITIVES from '../data/java-primitives.json';
 
 import JAVA_KEYWORDS from '../data/java-keywords.json';
 
-export default ['JavaTypes', function() {
-    return {
-        /**
-         * @param {String} clsName Class name to check.
-         * @returns boolean 'true' if given class name non a Java built-in type.
-         */
-        nonBuiltInClass(clsName) {
-            return _.isNil(_.find(JAVA_CLASSES, (clazz) => clsName === clazz.short || clsName === clazz.full));
-        },
-        /**
-         * @param clsName Class name to check.
-         * @returns Full class name for java build-in types or source class otherwise.
-         */
-        fullClassName(clsName) {
-            const type = _.find(JAVA_CLASSES, (clazz) => clsName === clazz.short);
+export default class JavaTypes {
+    /**
+     * @param {String} clsName Class name to check.
+     * @returns boolean 'true' if given class name non a Java built-in type.
+     */
+    nonBuiltInClass(clsName) {
+        return _.isNil(_.find(JAVA_CLASSES, (clazz) => clsName === clazz.short || clsName === clazz.full));
+    }
 
-            return type ? type.full : clsName;
-        },
-        /**
-         * @param {String} value text to check.
-         * @returns boolean 'true' if given text is valid Java identifier.
-         */
-        validIdentifier(value) {
-            const regexp = /^(([a-zA-Z_$][a-zA-Z0-9_$]*)\.)*([a-zA-Z_$][a-zA-Z0-9_$]*)$/igm;
+    /**
+     * @param clsName Class name to check.
+     * @returns Full class name for java build-in types or source class otherwise.
+     */
+    fullClassName(clsName) {
+        const type = _.find(JAVA_CLASSES, (clazz) => clsName === clazz.short);
 
-            return value === '' || regexp.test(value);
-        },
-        /**
-         * @param {String} value text to check.
-         * @returns boolean 'true' if given text is valid Java package.
-         */
-        validPackage(value) {
-            const regexp = /^(([a-zA-Z_$][a-zA-Z0-9_$]*)\.)*([a-zA-Z_$][a-zA-Z0-9_$]*(\.?\*)?)$/igm;
+        return type ? type.full : clsName;
+    }
 
-            return value === '' || regexp.test(value);
-        },
-        /**
-         * @param {String} value text to check.
-         * @returns boolean 'true' if given text is valid Java UUID value.
-         */
-        validUUID(value) {
-            const regexp = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/igm;
+    shortClassName(clsName) {
+        if (this.isJavaPrimitive(clsName))
+            return clsName;
 
-            return value === '' || regexp.test(value);
-        },
-        /**
-         * @param {String} value text to check.
-         * @returns boolean 'true' if given text is a Java type with package.
-         */
-        packageSpecified(value) {
-            return value.split('.').length >= 2;
-        },
-        /**
-         * @param {String} value text to check.
-         * @returns boolean 'true' if given text non Java keyword.
-         */
-        isKeywords(value) {
-            return _.includes(JAVA_KEYWORDS, value);
-        },
-        /**
-         * @param {String} clsName Class name to check.
-         * @returns {boolean} 'true' if givent class name is java primitive.
-         */
-        isJavaPrimitive(clsName) {
-            return _.includes(JAVA_PRIMITIVES, clsName);
-        }
-    };
-}];
+        const fullClsName = this.fullClassName(clsName);
+
+        const dotIdx = fullClsName.lastIndexOf('.');
+
+        return dotIdx > 0 ? fullClsName.substr(dotIdx + 1) : fullClsName;
+    }
+
+    /**
+     * @param {String} value text to check.
+     * @returns boolean 'true' if given text is valid Java identifier.
+     */
+    validIdentifier(value) {
+        const regexp = /^(([a-zA-Z_$][a-zA-Z0-9_$]*)\.)*([a-zA-Z_$][a-zA-Z0-9_$]*)$/igm;
+
+        return value === '' || regexp.test(value);
+    }
+
+    /**
+     * @param {String} value text to check.
+     * @returns boolean 'true' if given text is valid Java package.
+     */
+    validPackage(value) {
+        const regexp = /^(([a-zA-Z_$][a-zA-Z0-9_$]*)\.)*([a-zA-Z_$][a-zA-Z0-9_$]*(\.?\*)?)$/igm;
+
+        return value === '' || regexp.test(value);
+    }
+
+    /**
+     * @param {String} value text to check.
+     * @returns boolean 'true' if given text is valid Java UUID value.
+     */
+    validUUID(value) {
+        const regexp = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/igm;
+
+        return value === '' || regexp.test(value);
+    }
+
+    /**
+     * @param {String} value text to check.
+     * @returns boolean 'true' if given text is a Java type with package.
+     */
+    packageSpecified(value) {
+        return value.split('.').length >= 2;
+    }
+
+    /**
+     * @param {String} value text to check.
+     * @returns boolean 'true' if given text non Java keyword.
+     */
+    isKeywords(value) {
+        return _.includes(JAVA_KEYWORDS, value);
+    }
+
+    /**
+     * @param {String} clsName Class name to check.
+     * @returns {boolean} 'true' if givent class name is java primitive.
+     */
+    isJavaPrimitive(clsName) {
+        return _.includes(JAVA_PRIMITIVES, clsName);
+    }
+
+    /**
+     * Convert some name to valid java name.
+     *
+     * @param prefix To append to java name.
+     * @param name to convert.
+     * @returns {string} Valid java name.
+     */
+    toJavaName(prefix, name) {
+        const javaName = name ? this.shortClassName(name).replace(/[^A-Za-z_0-9]+/g, '_') : 'dflt';
+
+        return prefix + javaName.charAt(0).toLocaleUpperCase() + javaName.slice(1);
+    }
+}

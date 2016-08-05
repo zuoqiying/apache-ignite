@@ -16,7 +16,7 @@
  */
 
 import _ from 'lodash';
-import Bean from './Bean';
+import { Bean } from './Beans';
 
 const enumMapper = (val) => _.capitalize(val);
 
@@ -76,7 +76,7 @@ export default ['PlatformGenerator', () => {
         }
 
         static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
-
+            return cfg;
         }
 
         clusterConnector() {

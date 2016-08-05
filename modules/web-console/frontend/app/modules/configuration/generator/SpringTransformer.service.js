@@ -52,38 +52,52 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
          *
          * @param {StringBuilder} sb
          * @param {Bean} bean
-         * @returns {Array}
+         * @returns {StringBuilder}
          */
         static _setProperties(sb, bean) {
             _.forEach(bean.properties, (prop) => {
                 switch (prop.type) {
-                    case 'BEAN':
+                    case null:
+                    case 'ENUM':
+                        sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
+
+                        break;
+
+                    case 'COLLECTION':
                         sb.startBlock(`<property name="${prop.name}">`);
+                        sb.startBlock('<list>');
 
-                        this.appendBean(sb, prop.value);
+                        _.forEach(prop.items, (item) => {
+                            if (_.isString(item) || _.isNumber(item))
+                                sb.append(`<value>${item}</value>`);
+                            else
+                                this.appendBean(sb, item);
+                        });
 
+                        sb.endBlock('</list>');
                         sb.endBlock('</property>');
 
                         break;
 
                     case 'MAP':
                         sb.startBlock(`<property name="${prop.name}">`);
-
                         sb.startBlock('<map>');
 
-                        _.forEach(prop.value, (entry) => {
+                        _.forEach(prop.entries, (entry) => {
                             sb.append(`<entry key="${entry.name}" value="${entry.value}"/>`);
                         });
 
                         sb.endBlock('</map>');
-
                         sb.endBlock('</property>');
-
 
                         break;
 
                     default:
-                        sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
+                        sb.startBlock(`<property name="${prop.name}">`);
+
+                        this.appendBean(sb, prop.value);
+
+                        sb.endBlock('</property>');
                 }
             });
 
@@ -143,10 +157,6 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
 
         static cluster(cluster, clientNearCfg) {
             return $generatorSpring.cluster(cluster, clientNearCfg);
-        }
-
-        static clusterBinary(binary, res) {
-            return $generatorSpring.clusterBinary(binary, res);
         }
 
         static clusterCaches(caches, igfss, isSrvCfg, res) {

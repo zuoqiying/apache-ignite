@@ -70,21 +70,10 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
             if (bean.id)
                 sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(${bean.id});`);
             else {
-                const shortClsName = this.shortClassName(bean.clsName);
+                const shortClsName = JavaTypes.shortClassName(bean.clsName);
 
                 sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(new ${shortClsName}());`);
             }
-        }
-
-        static shortClassName(clsName) {
-            if (JavaTypes.isJavaPrimitive(clsName))
-                return clsName;
-
-            const fullClsName = JavaTypes.fullClassName(clsName);
-
-            const dotIdx = fullClsName.lastIndexOf('.');
-
-            return dotIdx > 0 ? fullClsName.substr(dotIdx + 1) : fullClsName;
         }
 
         /**
@@ -115,11 +104,10 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                         break;
 
                     case 'MAP':
-                        const shortClsName = this.shortClassName(prop.clsName);
-                        const shortKeyClsName = this.shortClassName(prop.keyClsName);
-                        const shortValClsName = this.shortClassName(prop.valClsName);
+                        const keyCls = this.shortClassName(prop.keyClsName);
+                        const valCls = this.shortClassName(prop.valClsName);
 
-                        sb.append(`${shortClsName}<${shortKeyClsName}, ${shortValClsName}> ${prop.id} = new ${shortClsName}<>();`);
+                        sb.append(`Map<${keyCls}, ${valCls}> ${prop.id} = new HashMap<>();`);
 
                         sb.emptyLine();
 
@@ -159,6 +147,37 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
         }
 
         /**
+         * @param {Bean} bean
+         * @returns {Array.<String>}
+         */
+        collectClasses(bean) {
+            const classes = [bean.clsName];
+
+            _.forEach(bean.properties, (prop) => {
+                switch (prop.type) {
+                    case 'ENUM':
+                        classes.push(prop.clsName);
+
+                        break;
+                    case 'BEAN':
+                        classes.push(...this.collectClasses(prop.value));
+
+                        break;
+
+                    case 'MAP':
+                        classes.push('java.util.Map', 'java.util.HashMap', prop.keyClsName, prop.valClsName);
+
+                        break;
+
+                    default:
+                    // No-op.
+                }
+            });
+
+            return _.uniq(classes);
+        }
+
+        /**
          * Build Java startup class with configuration.
          *
          * @param {Bean} cfg
@@ -173,7 +192,7 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
             sb.append(`package ${pkg};`);
             sb.emptyLine();
 
-            _.forEach(_.sortBy(_.filter(cfg.collectClasses(), JavaTypes.nonBuiltInClass)), (cls) => sb.append(`import ${cls};`));
+            _.forEach(_.sortBy(_.filter(this.collectClasses(cfg), JavaTypes.nonBuiltInClass)), (cls) => sb.append(`import ${cls};`));
             sb.emptyLine();
 
             this.mainComment(sb);

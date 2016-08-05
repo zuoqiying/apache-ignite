@@ -17,18 +17,55 @@
 
 import _ from 'lodash';
 
-export default class Bean {
+export class EmptyBean {
     /**
      * @param {String} clsName
-     * @param {String} [id]
-     * @param {Object} [src]
-     * @param {Object} [dflts]
      */
-    constructor(clsName, id, src, dflts) {
+    constructor(clsName) {
         this.properties = [];
 
         this.clsName = clsName;
+    }
+
+    isEmpty() {
+        return _.isEmpty(this.properties);
+    }
+
+    nonEmpty() {
+        return !this.isEmpty();
+    }
+}
+
+export class Map {
+    /**
+     *
+     * @param {String} keyClsName
+     * @param {String} valClsName
+     * @param {String} id
+     * @param {Array.<{String, String}>} items
+     */
+    constructor(keyClsName, valClsName, id, items) {
+        this.keyClsName = keyClsName;
+        this.valClsName = valClsName;
+
         this.id = id;
+
+        this.items = items;
+    }
+}
+
+export class Bean extends EmptyBean {
+    /**
+     * @param {String} clsName
+     * @param {String} id
+     * @param {Object} src
+     * @param {Object} dflts
+     */
+    constructor(clsName, id, src, dflts = {}) {
+        super(clsName);
+
+        this.id = id;
+
         this.src = src;
         this.dflts = dflts;
     }
@@ -62,12 +99,6 @@ export default class Bean {
         return this;
     }
 
-    beanProperty(name, bean) {
-        this.properties.push({type: 'BEAN', name, value: bean});
-
-        return this;
-    }
-
     emptyBeanProperty(model, name = model) {
         if (!this.src)
             return this;
@@ -75,61 +106,61 @@ export default class Bean {
         const cls = this.src[model];
 
         if (!_.isEmpty(cls) && cls !== this.dflts[model])
-            this.properties.push({type: 'BEAN', name, value: new Bean(cls)});
+            this.properties.push({type: 'BEAN', name, value: new EmptyBean(cls)});
 
         return this;
     }
 
-    mapProperty(id, model, name = model) {
+    /**
+     * @param {String} name
+     * @param {Bean|MethodBean} value
+     * @returns {Bean}
+     */
+    beanProperty(name, value) {
+        this.properties.push({type: 'BEAN', name, value});
+
+        return this;
+    }
+
+    /**
+     * @param {String} name
+     * @param {Collection} items
+     * @param {String} clsName
+     * @param {String} implClsName
+     * @returns {Bean}
+     */
+    collectionProperty(name, items, clsName = 'java.util.Collection', implClsName = 'java.util.ArrayList') {
+        this.properties.push({type: 'COLLECTION', name, items, clsName, implClsName});
+
+        return this;
+    }
+
+    /**
+     * @param {String} name
+     * @param {String} id
+     * @returns {Bean}
+     */
+    mapProperty(name, id) {
         if (!this.src)
             return this;
 
-        const value = this.src[model];
-        const dflt = this.dflts[model];
+        const entries = this.src[name];
+        const dflt = this.dflts[name];
 
-        if (!_.isEmpty(value) && value !== dflt.value) {
+        if (!_.isEmpty(entries) && entries !== dflt.items) {
             this.properties.push({
                 type: 'MAP',
-                id,
                 name,
-                clsName: dflt.clsName,
-                keyClsName: dflt.keyClsName,
-                valClsName: dflt.valClsName,
-                value
+                value: new Map(dflt.keyClsName, dflt.valClsName, id, entries)
             });
         }
 
         return this;
     }
+}
 
-    // TODO default value check.
-    isEmpty() {
-        return !this.src || _.isEmpty(this.src);
-    }
-
-    collectClasses() {
-        const classes = [this.clsName];
-
-        _.forEach(this.properties, (prop) => {
-            switch (prop.type) {
-                case 'ENUM':
-                    classes.push(prop.clsName);
-
-                    break;
-                case 'BEAN':
-                    classes.push(...prop.value.collectClasses());
-
-                    break;
-
-                case 'MAP':
-                    classes.push(prop.clsName, prop.keyClsName, prop.valClsName);
-
-                    break;
-                default:
-                    // No-op.
-            }
-        });
-
-        return _.uniq(classes);
+export class MethodBean extends Bean {
+    constructor(clsName, id, src, dflts) {
+        super(clsName, id, src, dflts);
     }
 }

@@ -198,7 +198,7 @@ angular
 .service(...Countries)
 .service(...Focus)
 .service(...InetAddress)
-.service(...JavaTypes)
+.service('JavaTypes', JavaTypes)
 .service(...Messages)
 .service(...ModelNormalizer)
 .service(...LegacyTable)

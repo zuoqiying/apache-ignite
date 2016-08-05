@@ -27,6 +27,15 @@ export default class AbstractTransformer {
         return sb;
     }
 
+    // Generate binary group.
+    static clusterBinary(binary, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterBinary(binary);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
     static clusterCollision(collision, sb = new StringBuilder()) {
         const cfg = this.generator.clusterCollision(collision);
 

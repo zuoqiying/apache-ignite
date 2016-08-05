@@ -15,13 +15,19 @@
  * limitations under the License.
  */
 
-import Bean from './Bean';
+import { Bean, MethodBean } from './Beans';
 
 const DEFAULT = {
     atomics: {
         atomicSequenceReserveSize: 1000,
         backups: 0,
         cacheMode: {clsName: 'org.apache.ignite.cache.CacheMode', value: 'PARTITIONED'}
+    },
+    binary: {
+        compactFooter: true,
+        typeConfigurations: {
+            enum: true
+        }
     },
     collision: {
         kind: null,
@@ -31,7 +37,7 @@ const DEFAULT = {
             messageExpireTime: 1000,
             maximumStealingAttempts: 5,
             stealingEnabled: true,
-            stealingAttributes: {clsName: 'java.util.HashMap', keyClsName: 'java.util.String', valClsName: 'java.io.Serializable'}
+            stealingAttributes: {keyClsName: 'java.util.String', valClsName: 'java.io.Serializable'}
         },
         FifoQueue: {
 
@@ -48,22 +54,10 @@ const DEFAULT = {
     }
 };
 
-export default ['ConfigurationGenerator', () => {
+export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
     class ConfigurationGenerator {
-        /**
-         * @param {String} clsName
-         * @param {String} id
-         * @param {Object} src
-         * @param {Object} dflt
-         * @returns {Bean}
-         */
-        static createBean(clsName, id, src, dflt) {
-            return new Bean(clsName, id, src, dflt);
-        }
-
-
         static igniteConfigurationBean(cluster) {
-            return this.createBean('org.apache.ignite.configuration.IgniteConfiguration', 'cfg', cluster, DEFAULT);
+            return new Bean('org.apache.ignite.configuration.IgniteConfiguration', 'cfg', cluster, DEFAULT);
         }
 
         /**
@@ -84,14 +78,10 @@ export default ['ConfigurationGenerator', () => {
 
         }
 
+        // Generate atomics group.
         static clusterAtomics(atomics, cfg = this.igniteConfigurationBean()) {
-            const acfg = this.createBean('org.apache.ignite.configuration.AtomicConfiguration', 'atomicCfg',
+            const acfg = new Bean('org.apache.ignite.configuration.AtomicConfiguration', 'atomicCfg',
                 atomics, DEFAULT.atomics);
-
-            if (acfg.isEmpty())
-                return cfg;
-
-            cfg.beanProperty('atomicConfiguration', acfg);
 
             acfg.enumProperty('cacheMode')
                 .property('atomicSequenceReserveSize');
@@ -99,15 +89,57 @@ export default ['ConfigurationGenerator', () => {
             if (acfg.valueOf('cacheMode') === 'PARTITIONED')
                 acfg.property('backups');
 
+            if (acfg.isEmpty())
+                return cfg;
+
+            cfg.beanProperty('atomicConfiguration', acfg);
+
             return cfg;
         }
 
+        // Generate binary group.
+        static clusterBinary(binary, cfg = this.igniteConfigurationBean()) {
+            const binaryCfg = new Bean('org.apache.ignite.configuration.BinaryConfiguration', 'binaryCfg',
+                binary, DEFAULT.binary);
+
+            binaryCfg.emptyBeanProperty('idMapper')
+                .emptyBeanProperty('nameMapper')
+                .emptyBeanProperty('serializer');
+
+            const typeCfgs = [];
+
+            _.forEach(binary.typeConfigurations, (type) => {
+                const typeCfg = new MethodBean('org.apache.ignite.binary.BinaryTypeConfiguration',
+                    JavaTypes.toJavaName('binaryType', type.typeName), type, DEFAULT.binary.typeConfigurations);
+
+                typeCfg.emptyBeanProperty('idMapper')
+                    .emptyBeanProperty('nameMapper')
+                    .emptyBeanProperty('serializer')
+                    .enumProperty('enum');
+
+                typeCfgs.push(typeCfg);
+            });
+
+            if (typeCfgs.length)
+                binaryCfg.collectionProperty('typeConfigurations', typeCfgs);
+
+            binaryCfg.property('compactFooter');
+
+            if (binaryCfg.isEmpty())
+                return cfg;
+
+            cfg.beanProperty('binaryConfiguration', binaryCfg);
+
+            return cfg;
+        }
+
+        // Generate collision group.
         static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
             let colSpi;
 
             switch (collision.kind) {
                 case 'JobStealing':
-                    colSpi = this.createBean('org.apache.ignite.spi.collision.jobstealing.JobStealingCollisionSpi',
+                    colSpi = new Bean('org.apache.ignite.spi.collision.jobstealing.JobStealingCollisionSpi',
                         'colSpi', collision.JobStealing, DEFAULT.collision.JobStealing);
 
                     colSpi.property('activeJobsThreshold')
@@ -121,7 +153,7 @@ export default ['ConfigurationGenerator', () => {
                     break;
 
                 case 'FifoQueue':
-                    colSpi = this.createBean('org.apache.ignite.spi.collision.fifoqueue.FifoQueueCollisionSpi',
+                    colSpi = new Bean('org.apache.ignite.spi.collision.fifoqueue.FifoQueueCollisionSpi',
                         'colSpi', collision.FifoQueue, DEFAULT.collision.FifoQueue);
 
                     colSpi.property('parallelJobsNumber')
@@ -130,7 +162,7 @@ export default ['ConfigurationGenerator', () => {
                     break;
 
                 case 'PriorityQueue':
-                    colSpi = this.createBean('org.apache.ignite.spi.collision.priorityqueue.PriorityQueueCollisionSpi',
+                    colSpi = new Bean('org.apache.ignite.spi.collision.priorityqueue.PriorityQueueCollisionSpi',
                         'colSpi', collision.PriorityQueue, DEFAULT.collision.PriorityQueue);
 
                     colSpi.property('parallelJobsNumber')
@@ -144,7 +176,7 @@ export default ['ConfigurationGenerator', () => {
                     break;
 
                 case 'Custom':
-                    colSpi = this.createBean(collision.Custom.class,
+                    colSpi = new Bean(collision.Custom.class,
                         'colSpi', collision.PriorityQueue, DEFAULT.collision.PriorityQueue);
 
                     break;
@@ -215,4 +247,4 @@ export default ['ConfigurationGenerator', () => {
     }
 
     return ConfigurationGenerator;
-}];
+}]];
