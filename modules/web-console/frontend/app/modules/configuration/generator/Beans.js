@@ -81,7 +81,7 @@ export class Bean extends EmptyBean {
         const value = this.src[model];
 
         if (!_.isNil(value) && value !== this.dflts[model])
-            this.properties.push({name, value});
+            this.properties.push({type: 'PROPERTY', name, value});
 
         return this;
     }
@@ -124,13 +124,15 @@ export class Bean extends EmptyBean {
 
     /**
      * @param {String} name
-     * @param {Collection} items
+     * @param {Array} items
+     * @param {String} clsName
      * @param {String} clsName
      * @param {String} implClsName
      * @returns {Bean}
      */
-    collectionProperty(name, items, clsName = 'java.util.Collection', implClsName = 'java.util.ArrayList') {
-        this.properties.push({type: 'COLLECTION', name, items, clsName, implClsName});
+    collectionProperty(name, items, clsName = 'java.util.Collection', typeClsName = 'java.util.String', implClsName = 'java.util.ArrayList') {
+        if (items.length)
+            this.properties.push({type: 'COLLECTION', name, items, clsName, typeClsName, implClsName});
 
         return this;
     }

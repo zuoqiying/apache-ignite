@@ -112,16 +112,17 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 const typeCfg = new MethodBean('org.apache.ignite.binary.BinaryTypeConfiguration',
                     JavaTypes.toJavaName('binaryType', type.typeName), type, DEFAULT.binary.typeConfigurations);
 
-                typeCfg.emptyBeanProperty('idMapper')
+                typeCfg.property('typeName')
+                    .emptyBeanProperty('idMapper')
                     .emptyBeanProperty('nameMapper')
                     .emptyBeanProperty('serializer')
                     .enumProperty('enum');
 
-                typeCfgs.push(typeCfg);
+                if (typeCfg.nonEmpty())
+                    typeCfgs.push(typeCfg);
             });
 
-            if (typeCfgs.length)
-                binaryCfg.collectionProperty('typeConfigurations', typeCfgs);
+            binaryCfg.collectionProperty('typeConfigurations', typeCfgs, 'java.util.Collection', 'org.apache.ignite.binary.BinaryTypeConfiguration');
 
             binaryCfg.property('compactFooter');
 

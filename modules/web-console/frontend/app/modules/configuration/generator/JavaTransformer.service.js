@@ -18,6 +18,7 @@
 import _ from 'lodash';
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
+import { MethodBean } from './Beans';
 
 import $generatorJava from './generator-java';
 
@@ -42,7 +43,7 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
          * @param {Bean} bean
          */
         static _defineBean(sb, bean) {
-            const shortClsName = this.shortClassName(bean.clsName);
+            const shortClsName = JavaTypes.shortClassName(bean.clsName);
 
             sb.append(`${shortClsName} ${bean.id} = new ${shortClsName}();`);
         }
@@ -59,16 +60,25 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
         }
 
         /**
-         *
          * @param {StringBuilder} sb
          * @param {Bean} parent
          * @param {String} propertyName
          * @param {Bean} bean
          * @private
          */
-        static _setBeanProperty(sb, parent, propertyName, bean) {
-            if (bean.id)
+        static appendBean(sb, parent, propertyName, bean) {
+            if (bean.id) {
+                this._defineBean(sb, bean);
+
+                sb.emptyLine();
+
+                this._setProperties(sb, bean);
+
+                if (bean.properties.length)
+                    sb.emptyLine();
+
                 sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(${bean.id});`);
+            }
             else {
                 const shortClsName = JavaTypes.shortClassName(bean.clsName);
 
@@ -80,58 +90,80 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
          *
          * @param {StringBuilder} sb
          * @param {Bean} bean
-         * @returns {Array}
+         * @returns {StringBuilder}
          */
         static _setProperties(sb = new StringBuilder(), bean) {
             _.forEach(bean.properties, (prop) => {
                 switch (prop.type) {
-                    case 'BEAN':
-                        const nestedBean = prop.value;
-
-                        if (nestedBean.id) {
-                            this._defineBean(sb, nestedBean);
-
-                            sb.emptyLine();
-
-                            this._setProperties(sb, nestedBean);
-
-                            if (nestedBean.properties.length)
-                                sb.emptyLine();
-                        }
-
-                        this._setBeanProperty(sb, bean, prop.name, nestedBean);
-
-                        break;
-
-                    case 'MAP':
-                        const keyCls = this.shortClassName(prop.keyClsName);
-                        const valCls = this.shortClassName(prop.valClsName);
-
-                        sb.append(`Map<${keyCls}, ${valCls}> ${prop.id} = new HashMap<>();`);
-
-                        sb.emptyLine();
-
-                        if (!_.isEmpty(prop.value)) {
-                            _.forEach(prop.value, (entry) => {
-                                sb.append(`${bean.id}.put("${entry.name}", "${entry.value}")`);
-                            });
-
-                            sb.emptyLine();
-                        }
-
-                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
+                    case 'PROPERTY':
+                        this._setProperty(sb, bean, prop.name, prop.value);
 
                         break;
 
                     case 'ENUM':
-                        const value = `${this.shortClassName(prop.clsName)}.${prop.value}`;
+                        const value = `${JavaTypes.shortClassName(prop.clsName)}.${prop.value}`;
 
                         this._setProperty(sb, bean, prop.name, value);
 
                         break;
 
+                    case 'COLLECTION':
+                        const clsName = JavaTypes.shortClassName(prop.clsName);
+                        const typeClsName = JavaTypes.shortClassName(prop.typeClsName);
+                        const implClsName = JavaTypes.shortClassName(prop.implClsName);
+
+                        sb.append(`${clsName}<${typeClsName}> types = new ${implClsName}<>();`);
+
+                        sb.emptyLine();
+
+                        _.forEach(prop.items, (item) => {
+                            if (_.isString(item))
+                                sb.append(`types.add("${item}");`);
+                            else if (_.isNumber(item))
+                                sb.append(`types.add(${item});`);
+                            else if (item instanceof MethodBean)
+                                sb.append(`types.add(${item.id}());`);
+                            else {
+                                this._defineBean(sb, item);
+
+                                sb.emptyLine();
+
+                                this._setProperties(sb, item);
+
+                                if (item.properties.length)
+                                    sb.emptyLine();
+
+                                sb.append(`types.add(${item.id});`);
+                            }
+
+                            sb.emptyLine();
+                        });
+
+                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(types);`);
+
+                        break;
+
+                    case 'MAP':
+                        const keyCls = JavaTypes.shortClassName(prop.keyClsName);
+                        const valCls = JavaTypes.shortClassName(prop.valClsName);
+
+                        sb.append(`Map<${keyCls}, ${valCls}> ${prop.id} = new HashMap<>();`);
+
+                        sb.emptyLine();
+
+                        _.forEach(prop.value, (entry) => {
+                            sb.append(`${bean.id}.put("${entry.name}", "${entry.value}")`);
+                        });
+
+                        if (!_.isEmpty(prop.value))
+                            sb.emptyLine();
+
+                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
+
+                        break;
+
                     default:
-                        this._setProperty(sb, bean, prop.name, prop.value);
+                        this.appendBean(sb, bean, prop.name, prop.value);
                 }
             });
 
@@ -159,6 +191,7 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                         classes.push(prop.clsName);
 
                         break;
+
                     case 'BEAN':
                         classes.push(...this.collectClasses(prop.value));
 
