@@ -17,6 +17,7 @@
 
 package org.apache.ignite.internal.processors.cache;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -96,7 +97,7 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
     private int retryCnt;
 
     /** Indexed class handlers. */
-    private Map<Integer, IgniteBiInClosure[]> idxClsHandlers = new HashMap<>();
+    private volatile Map<Integer, IgniteBiInClosure[]> idxClsHandlers = new HashMap<>();
 
     /** Handler registry. */
     private ConcurrentMap<ListenerKey, IgniteBiInClosure<UUID, GridCacheMessage>>
@@ -200,11 +201,15 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
 
         IgniteBiInClosure<UUID, GridCacheMessage> c = null;
 
+        Map<Integer, IgniteBiInClosure[]> idxClsHandlers0 = idxClsHandlers;
+
         if (msgIdx >= 0) {
-            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers.get(cacheMsg.cacheId());
+            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers0.get(cacheMsg.cacheId());
 
             if (cacheClsHandlers != null)
                 c = cacheClsHandlers[msgIdx];
+
+            c = null;
         }
 
         if (c == null)
@@ -222,12 +227,17 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
                 append(", cacheDesc=").append(cctx.cache().cacheDescriptor(cacheMsg.cacheId())).
                 append(']');
 
+            msg0.append(U.nl()).append("Registered listeners:");
+
+            for (Map.Entry<Integer, IgniteBiInClosure[]> e : idxClsHandlers0.entrySet())
+                msg0.append(U.nl()).append(e.getKey()).append("=").append(Arrays.toString(e.getValue()));
+
             if (cctx.kernalContext().isStopping()) {
                 if (log.isDebugEnabled())
                     log.debug(msg0.toString());
             }
             else
-                U.warn(log, msg0.toString());
+                U.error(log, msg0.toString());
 
             return;
         }
@@ -1022,12 +1032,14 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
         int msgIdx = messageIndex(type);
 
         if (msgIdx != -1) {
-            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers.get(cacheId);
+            Map<Integer, IgniteBiInClosure[]> idxClsHandlers0 = idxClsHandlers;
+
+            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers0.get(cacheId);
 
             if (cacheClsHandlers == null) {
                 cacheClsHandlers = new IgniteBiInClosure[GridCacheMessage.MAX_CACHE_MSG_LOOKUP_INDEX];
 
-                idxClsHandlers.put(cacheId, cacheClsHandlers);
+                idxClsHandlers0.put(cacheId, cacheClsHandlers);
             }
 
             if (cacheClsHandlers[msgIdx] != null)
@@ -1035,6 +1047,8 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
                     ", type=" + type + ']');
 
             cacheClsHandlers[msgIdx] = c;
+
+            idxClsHandlers = idxClsHandlers0;
 
             return;
         }
