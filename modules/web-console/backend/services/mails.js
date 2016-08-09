@@ -75,7 +75,7 @@ module.exports.factory = (_, nodemailer, settings) => {
          * @param user
          */
         static emailUserSignUp(host, user) {
-            const resetLink = `${host}password/reset?token=${user.resetPasswordToken}`;
+            const resetLink = `${host}/password/reset?token=${user.resetPasswordToken}`;
 
             return send(user, `Thanks for signing up for ${settings.smtp.greeting}.`,
                 `Hello ${user.firstName} ${user.lastName}!<br><br>` +

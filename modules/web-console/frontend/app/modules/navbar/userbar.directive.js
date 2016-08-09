@@ -23,19 +23,19 @@ export default ['igniteUserbar', [function() {
 
             ctrl.items = [
                 {text: 'Profile', sref: 'settings.profile'},
-                {text: 'Getting Started', click: 'gettingStarted.tryShow(true)'}
+                {text: 'Getting started', click: 'gettingStarted.tryShow(true)'}
             ];
 
             const _rebuildSettings = (event, user) => {
                 ctrl.items.splice(2);
 
                 if (!user.becomeUsed && user.admin)
-                    ctrl.items.push({text: 'Admin Panel', sref: 'settings.admin'});
+                    ctrl.items.push({text: 'Admin panel', sref: 'settings.admin'});
 
                 ctrl.items.push(...IgniteUserbar);
 
                 if (!user.becomeUsed)
-                    ctrl.items.push({text: 'Log Out', sref: 'logout'});
+                    ctrl.items.push({text: 'Log out', sref: 'logout'});
             };
 
             if ($root.user)
