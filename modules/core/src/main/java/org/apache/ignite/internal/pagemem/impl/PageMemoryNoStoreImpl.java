@@ -149,7 +149,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         DirectMemoryProvider directMemoryProvider,
         GridCacheSharedContext<?, ?> sharedCtx,
         int pageSize
-        ) {
+    ) {
         assert log != null || sharedCtx != null;
 
         this.log = sharedCtx != null ? sharedCtx.logger(PageMemoryNoStoreImpl.class) : log;
@@ -312,6 +312,11 @@ public class PageMemoryNoStoreImpl implements PageMemory {
     /** {@inheritDoc} */
     @Override public int systemPageSize() {
         return sysPageSize;
+    }
+
+    /** {@inheritDoc} */
+    @Override public void clear(int cacheId) {
+        cacheMetaPages.remove(cacheId);
     }
 
     /** */
