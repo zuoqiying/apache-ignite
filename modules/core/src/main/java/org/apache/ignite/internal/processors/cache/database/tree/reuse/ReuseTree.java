@@ -33,7 +33,7 @@ import org.apache.ignite.internal.processors.cache.database.tree.reuse.io.ReuseL
 public final class ReuseTree extends BPlusTree<Number, Long> {
     private final int partId;
 
-    private final byte flag;
+    private final byte allocSpace;
 
     /**
      * @param name Tree name.
@@ -50,7 +50,7 @@ public final class ReuseTree extends BPlusTree<Number, Long> {
         ReuseList reuseList,
         int cacheId,
         int partId,
-        byte flag,
+        byte allocSpace,
         PageMemory pageMem,
         IgniteWriteAheadLogManager wal,
         long metaPageId,
@@ -59,7 +59,7 @@ public final class ReuseTree extends BPlusTree<Number, Long> {
         super(name, cacheId, pageMem, wal, metaPageId, reuseList, ReuseInnerIO.VERSIONS, ReuseLeafIO.VERSIONS);
 
         this.partId = partId;
-        this.flag = flag;
+        this.allocSpace = allocSpace;
 
         if (initNew)
             initNew();
@@ -83,7 +83,7 @@ public final class ReuseTree extends BPlusTree<Number, Long> {
 
     /** {@inheritDoc} */
     @Override protected long allocatePage0() throws IgniteCheckedException {
-        return pageMem.allocatePage(getCacheId(), partId, flag);
+        return pageMem.allocatePage(getCacheId(), partId, allocSpace);
     }
 
     /**
