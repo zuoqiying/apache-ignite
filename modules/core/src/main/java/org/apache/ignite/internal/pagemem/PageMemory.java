@@ -19,7 +19,6 @@ package org.apache.ignite.internal.pagemem;
 
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.lifecycle.LifecycleAware;
-import org.jetbrains.annotations.Nullable;
 
 /**
  */
@@ -32,6 +31,13 @@ public interface PageMemory extends LifecycleAware, PageIdAllocator {
      */
     public Page metaPage(int cacheId) throws IgniteCheckedException;
 
+    /**
+     * Gets or allocates partition metadata page for specified cacheId and partId.
+     *
+     * @param cacheId Cache ID.
+     * @param partId Partition ID.
+     * @return Meta page for cacheId and partId.
+     */
     public Page partMetaPage(int cacheId, int partId) throws IgniteCheckedException;
 
     /**

@@ -56,8 +56,10 @@ public class MetadataStorage implements MetaStore {
     /** Cache ID. */
     private final int cacheId;
 
+    /** */
     private final int partId;
 
+    /** */
     private final byte allocSpace;
 
     /**
@@ -145,8 +147,10 @@ public class MetadataStorage implements MetaStore {
      *
      */
     private static class MetaTree extends BPlusTree<IndexItem, IndexItem> {
+        /** */
         private final int partId;
 
+        /** */
         private final byte allocSpace;
 
         /**

@@ -25,6 +25,12 @@ import java.nio.ByteBuffer;
  * Persistent store of pages.
  */
 public interface PageStore {
+    /**
+     * Checks if page exists.
+     *
+     * @return {@code True} if page exists.
+     * @throws IgniteCheckedException If failed.
+     */
     public boolean exists();
 
     /**

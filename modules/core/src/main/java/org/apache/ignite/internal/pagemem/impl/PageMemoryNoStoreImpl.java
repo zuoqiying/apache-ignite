@@ -289,6 +289,10 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         return page(cacheId, pageId);
     }
 
+    /**
+     * @param cacheId Cache ID.
+     * @return Meta pages for given cache.
+     */
     private CacheMeta cacheMeta(int cacheId) {
         CacheMeta cacheMeta = cacheMetas.get(cacheId);
 
@@ -727,11 +731,19 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         }
     }
 
+    /**
+     *
+     */
     private static class CacheMeta {
+        /** */
         private final long metapage;
 
+        /** */
         private final ConcurrentHashMap8<Integer, Long> partMetaPages = new ConcurrentHashMap8<>();
 
+        /**
+         *
+         */
         public CacheMeta(long metapage) {
             this.metapage = metapage;
         }

@@ -37,6 +37,7 @@ public class FreeTree extends BPlusTree<FreeItem, FreeItem> {
     /** */
     private final int partId;
 
+    /** */
     private final byte allocSpace;
 
     /**
@@ -78,6 +79,7 @@ public class FreeTree extends BPlusTree<FreeItem, FreeItem> {
         return partId;
     }
 
+    /** {@inheritDoc} */
     @Override protected long allocatePage0() throws IgniteCheckedException {
         if (allocSpace == PageIdAllocator.FLAG_IDX)
             return pageMem.allocatePage(getCacheId(), 0, PageIdAllocator.FLAG_IDX);

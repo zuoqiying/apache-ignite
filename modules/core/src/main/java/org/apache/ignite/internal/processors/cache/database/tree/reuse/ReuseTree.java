@@ -31,8 +31,10 @@ import org.apache.ignite.internal.processors.cache.database.tree.reuse.io.ReuseL
  * Reuse tree for index pages.
  */
 public final class ReuseTree extends BPlusTree<Number, Long> {
+    /** */
     private final int partId;
 
+    /** */
     private final byte allocSpace;
 
     /**

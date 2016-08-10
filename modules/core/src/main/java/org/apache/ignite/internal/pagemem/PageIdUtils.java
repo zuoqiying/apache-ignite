@@ -139,6 +139,14 @@ public final class PageIdUtils {
         return pageId;
     }
 
+    /**
+     * Constructs a page ID by the given file ID, page index and reserved field value.
+     *
+     * @param fileId File ID.
+     * @param pageIdx Page index.
+     * @param res Reserved field value.
+     * @return Page ID.
+     */
     private static long pageId(int fileId, int pageIdx, short res) {
         assert (fileId & ~FILE_ID_MASK) == 0 : U.hexInt(fileId);
 
@@ -151,6 +159,11 @@ public final class PageIdUtils {
         return pageId;
     }
 
+    /**
+     * Extracts reserved field value from the given page ID.
+     * @param pageId Page ID.
+     * @return Reserved field value.
+     */
     private static short res(long pageId) {
         return (short)((pageId >>> PAGE_IDX_SIZE) & RESERVED_MASK);
     }

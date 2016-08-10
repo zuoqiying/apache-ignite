@@ -58,6 +58,7 @@ public class FreeList {
     /** */
     private final MetaStore metaStore;
 
+    /** */
     private final byte allocSpace;
 
     /** */

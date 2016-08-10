@@ -95,8 +95,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     /** */
     private MetaStore metaStore;
 
-    public static final ConcurrentMap<Integer, List> HISTORY = new ConcurrentHashMap();
-
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
         super.start0();
@@ -178,6 +176,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     /**
      * @param pageMem Page memory.
      * @param cacheId Cache ID.
+     * @param partId Partition ID.
+     * @param allocSpace Allocation space.
      * @return Allocated metapages.
      * @throws IgniteCheckedException
      */
@@ -185,13 +185,13 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         final PageIdAllocator pageMem,
         final int cacheId,
         final int partId,
-        final byte flag,
+        final byte allocSpace,
         int segments
     ) throws IgniteCheckedException {
         final long[] rootIds = new long[segments];
 
         for (int i = 0; i < segments; i++)
-            rootIds[i] = pageMem.allocatePage(cacheId, partId, flag);
+            rootIds[i] = pageMem.allocatePage(cacheId, partId, allocSpace);
 
         return rootIds;
     }
@@ -998,6 +998,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         /**
          * @param name Tree name.
+         * @param partId Partition ID.
          * @param reuseList Reuse list.
          * @param rowStore Row store.
          * @param cctx Context.
@@ -1293,21 +1294,37 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         }
     }
 
+    /**
+     *
+     */
     private class LazyCacheDataStore implements CacheDataStore {
+        /** */
         private final int partId;
 
+        /** */
         private final String idxName;
 
+        /** */
         private final CacheDataStore.Listener lsnr;
 
+        /** */
         private final boolean exists;
 
+        /** */
         private final AtomicBoolean init = new AtomicBoolean();
 
+        /** */
         private final CountDownLatch latch = new CountDownLatch(1);
 
+        /** */
         private volatile CacheDataStore delegate;
 
+        /**
+         * @param partId Partition ID.
+         * @param idxName Index name.
+         * @param exists {@code True} if store for this index exists.
+         * @param lsnr Listener.
+         */
         LazyCacheDataStore(int partId, String idxName, boolean exists, Listener lsnr) {
             this.partId = partId;
             this.idxName = idxName;
@@ -1315,6 +1332,9 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             this.lsnr = lsnr;
         }
 
+        /**
+         *
+         */
         private void init() throws IgniteCheckedException {
             try {
                 if (init.compareAndSet(false, true)) {
@@ -1353,6 +1373,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             }
         }
 
+        /** {@inheritDoc} */
         @Override public void update(KeyCacheObject key, int part, CacheObject val, GridCacheVersion ver,
             long expireTime) throws IgniteCheckedException {
 
@@ -1369,6 +1390,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             this.delegate.update(key, part, val, ver, expireTime);
         }
 
+        /** {@inheritDoc} */
         @Override public void remove(KeyCacheObject key, CacheObject prevVal, GridCacheVersion prevVer,
             int partId) throws IgniteCheckedException {
 
@@ -1385,6 +1407,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             this.delegate.remove(key, prevVal, prevVer, partId);
         }
 
+        /** {@inheritDoc} */
         @Override public IgniteBiTuple<CacheObject, GridCacheVersion> find(KeyCacheObject key)
             throws IgniteCheckedException {
 
@@ -1401,6 +1424,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             return this.delegate.find(key);
         }
 
+        /** {@inheritDoc} */
         @Override public GridCursor<? extends CacheDataRow> cursor() throws IgniteCheckedException {
             CacheDataStore delegate = this.delegate;
 
@@ -1415,6 +1439,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             return this.delegate.cursor();
         }
 
+        /** {@inheritDoc} */
         @Override public void destroy() throws IgniteCheckedException {
             CacheDataStore delegate = this.delegate;
 
@@ -1433,12 +1458,17 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         }
     }
 
+    /**
+     *
+     */
     private static final GridCursor<CacheDataRow> EMPTY_CURSOR = new GridCursor<CacheDataRow>() {
+        /** {@inheritDoc} */
         @Override public boolean next() throws IgniteCheckedException {
             return false;
         }
 
         @Override public CacheDataRow get() throws IgniteCheckedException {
+            /** {@inheritDoc} */
             return null;
         }
     };
