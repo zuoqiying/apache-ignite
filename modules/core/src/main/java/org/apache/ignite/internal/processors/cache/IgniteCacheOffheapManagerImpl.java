@@ -31,16 +31,15 @@ import javax.cache.Cache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.cluster.ClusterNode;
-import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
-import org.apache.ignite.internal.processors.cache.database.IgniteCacheDatabaseSharedManager;
 import org.apache.ignite.internal.processors.cache.database.MetaStore;
 import org.apache.ignite.internal.processors.cache.database.MetadataStorage;
+import org.apache.ignite.internal.processors.cache.database.RootPage;
 import org.apache.ignite.internal.processors.cache.database.RowStore;
 import org.apache.ignite.internal.processors.cache.database.freelist.FreeList;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
@@ -49,7 +48,6 @@ import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusInnerIO
 import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusLeafIO;
 import org.apache.ignite.internal.processors.cache.database.tree.io.DataPageIO;
 import org.apache.ignite.internal.processors.cache.database.tree.io.IOVersions;
-import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
 import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtInvalidPartitionException;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtLocalPartition;
@@ -89,12 +87,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     private ReuseList reuseList;
 
     /** */
-    private FreeList partIdxFreeList;
-
-    /** */
-    private ReuseList partIdxReuseList;
-
-    /** */
     private CacheDataStore locCacheDataStore;
 
     /** */
@@ -121,13 +113,12 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             cctx.shared().database().checkpointReadLock();
 
             try {
-                reuseList = new ReuseList(cacheId, pageMem, cctx.shared().wal(), metas.rootIds(), metas.isInitNew());
-                partIdxReuseList = new ReuseList(cacheId, pageMem, cctx.shared().wal(), metas.rootIds(), metas.isInitNew());
-                freeList = new FreeList(cctx, reuseList);
-                partIdxFreeList = new FreeList(cctx, partIdxReuseList);
+                reuseList = new ReuseList(cacheId, 0, PageIdAllocator.FLAG_IDX, pageMem, cctx.shared().wal(), metas.rootIds(), metas.isInitNew());
 
                 metaStore = new MetadataStorage(pageMem, cctx.shared().wal(),
-                    cacheId, reuseList, metas.metastoreRoot(), metas.isInitNew());
+                    cacheId, 0 , PageIdAllocator.FLAG_IDX, reuseList, metas.metastoreRoot(), metas.isInitNew());
+
+                freeList = new FreeList(cctx, reuseList, metaStore, PageIdAllocator.FLAG_IDX);
 
                 if (cctx.affinityNode() && cctx.isLocal()) {
                     assert cctx.cache() instanceof GridLocalCache : cctx.cache();
@@ -156,7 +147,29 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             final int segments = Runtime.getRuntime().availableProcessors() * 2;
 
-            final long[] rootIds = allocateMetas(pageMem, cacheId, segments);
+            final long[] rootIds = allocateMetas(pageMem, cacheId, 0, PageIdAllocator.FLAG_IDX, segments);
+
+            return new Metas(rootIds, metastoreRoot, true);
+        }
+    }
+
+    /**
+     * @param pageMem Page memory.
+     * @param cacheId Cache ID.
+     * @return Allocated pages.
+     * @throws IgniteCheckedException
+     */
+    protected Metas getOrAllocatePartMetas(
+        final PageMemory pageMem,
+        final int cacheId,
+        final int partId
+    ) throws IgniteCheckedException {
+        try (Page metaPage = pageMem.partMetaPage(cacheId, partId)) {
+            final long metastoreRoot = metaPage.id();
+
+            final int segments = Runtime.getRuntime().availableProcessors() * 2;
+
+            final long[] rootIds = allocateMetas(pageMem, cacheId, partId, PageIdAllocator.FLAG_PART_IDX, segments);
 
             return new Metas(rootIds, metastoreRoot, true);
         }
@@ -171,12 +184,14 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     protected long[] allocateMetas(
         final PageIdAllocator pageMem,
         final int cacheId,
+        final int partId,
+        final byte flag,
         int segments
     ) throws IgniteCheckedException {
         final long[] rootIds = new long[segments];
 
         for (int i = 0; i < segments; i++)
-            rootIds[i] = pageMem.allocatePage(cacheId, 0, PageMemory.FLAG_IDX);
+            rootIds[i] = pageMem.allocatePage(cacheId, partId, flag);
 
         return rootIds;
     }
@@ -667,26 +682,9 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         CacheDataStore.Listener lsnr) throws IgniteCheckedException {
         String idxName = treeName(p);
 
-        long pageId = PageIdUtils.pageId(p, PageIdAllocator.FLAG_PART_IDX, 0);
-
         boolean exists = cctx.shared().pageStore().exists(cctx.cacheId(), p, PageIdAllocator.FLAG_PART_IDX);
 
-        if (exists) {
-            Page root = cctx.shared().database().pageMemory().page(cctx.cacheId(), pageId);
-
-            ByteBuffer buf = root.getForRead();
-
-            try {
-                exists = PageIO.getType(buf) == PageIO.T_BPLUS_META;
-            }
-            finally {
-                root.releaseRead();
-
-                cctx.shared().database().pageMemory().releasePage(root);
-            }
-        }
-
-        return new LazyCacheDataStore(p, idxName, new FullPageId(pageId, cctx.cacheId()), exists, lsnr);
+        return new LazyCacheDataStore(p, idxName, exists, lsnr);
     }
 
     /**
@@ -1300,8 +1298,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         private final String idxName;
 
-        private final FullPageId rootPage;
-
         private final CacheDataStore.Listener lsnr;
 
         private final boolean exists;
@@ -1312,10 +1308,9 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         private volatile CacheDataStore delegate;
 
-        public LazyCacheDataStore(int partId, String idxName, FullPageId rootPage, boolean exists, Listener lsnr) throws IgniteCheckedException {
+        LazyCacheDataStore(int partId, String idxName, boolean exists, Listener lsnr) {
             this.partId = partId;
             this.idxName = idxName;
-            this.rootPage = rootPage;
             this.exists = exists;
             this.lsnr = lsnr;
         }
@@ -1323,6 +1318,18 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         private void init() throws IgniteCheckedException {
             try {
                 if (init.compareAndSet(false, true)) {
+                    Metas metas = getOrAllocatePartMetas(cctx.shared().database().pageMemory(), cctx.cacheId(), partId);
+
+                    ReuseList partIdxReuseList = new ReuseList(cctx.cacheId(), partId, PageIdAllocator.FLAG_PART_IDX,
+                        cctx.shared().database().pageMemory(), cctx.shared().wal(), metas.rootIds, metas.initNew);
+
+                    MetaStore partIdxMetaStore = new MetadataStorage(cctx.shared().database().pageMemory(),
+                        cctx.shared().wal(), cctx.cacheId(), partId, PageIdAllocator.FLAG_PART_IDX, reuseList, metas.metastoreRoot(), metas.isInitNew());
+
+                    FreeList partIdxFreeList = new FreeList(cctx, partIdxReuseList, partIdxMetaStore, PageIdAllocator.FLAG_PART_IDX);
+
+                    final RootPage rootPage = partIdxMetaStore.getOrAllocateForTree(idxName);
+
                     CacheDataRowStore rowStore = new CacheDataRowStore(cctx, partIdxFreeList);
 
                     CacheDataTree dataTree = new CacheDataTree(idxName,
@@ -1331,8 +1338,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                         rowStore,
                         cctx,
                         cctx.shared().database().pageMemory(),
-                        rootPage.pageId(),
-                        !exists);
+                        rootPage.pageId().pageId(),
+                        rootPage.isAllocated());
 
                     delegate = new CacheDataStoreImpl(idxName, rowStore, dataTree, lsnr);
 

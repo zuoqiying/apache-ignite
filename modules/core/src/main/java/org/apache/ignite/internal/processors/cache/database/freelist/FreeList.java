@@ -30,6 +30,7 @@ import org.apache.ignite.internal.pagemem.wal.record.delta.DataPageInsertRecord;
 import org.apache.ignite.internal.pagemem.wal.record.delta.DataPageRemoveRecord;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
+import org.apache.ignite.internal.processors.cache.database.MetaStore;
 import org.apache.ignite.internal.processors.cache.database.RootPage;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
 import org.apache.ignite.internal.processors.cache.database.tree.io.DataPageIO;
@@ -53,6 +54,11 @@ public class FreeList {
 
     /** */
     private final ReuseList reuseList;
+
+    /** */
+    private final MetaStore metaStore;
+
+    private final byte allocSpace;
 
     /** */
     private final IgniteWriteAheadLogManager wal;
@@ -126,7 +132,7 @@ public class FreeList {
      * @param reuseList Reuse list.
      * @param cctx Cache context.
      */
-    public FreeList(GridCacheContext<?, ?> cctx, ReuseList reuseList) {
+    public FreeList(GridCacheContext<?, ?> cctx, ReuseList reuseList, MetaStore metaStore, byte allocSpace) {
         assert cctx != null;
 
         this.cctx = cctx;
@@ -138,6 +144,8 @@ public class FreeList {
         assert pageMem != null;
 
         this.reuseList = reuseList;
+        this.metaStore = metaStore;
+        this.allocSpace = allocSpace;
     }
 
     /**
@@ -173,9 +181,9 @@ public class FreeList {
                 // Index name will be the same across restarts.
                 String idxName = BPlusTree.treeName("p" + partId, "Free");
 
-                final RootPage rootPage = cctx.offheap().meta().getOrAllocateForTree(idxName);
+                final RootPage rootPage = metaStore.getOrAllocateForTree(idxName);
 
-                fut.onDone(new FreeTree(idxName, reuseList, cctx.cacheId(), partId, pageMem, wal,
+                fut.onDone(new FreeTree(idxName, reuseList, cctx.cacheId(), partId, allocSpace, pageMem, wal,
                     rootPage.pageId().pageId(), rootPage.isAllocated()));
             }
         }

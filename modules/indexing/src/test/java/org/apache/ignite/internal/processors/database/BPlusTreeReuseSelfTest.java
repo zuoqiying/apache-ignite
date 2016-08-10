@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
 import org.apache.ignite.internal.util.GridStripedLock;
@@ -35,7 +36,7 @@ public class BPlusTreeReuseSelfTest extends BPlusTreeSelfTest {
     /** {@inheritDoc} */
     @Override protected ReuseList createReuseList(int cacheId, PageMemory pageMem, long[] rootIds, boolean initNew)
         throws IgniteCheckedException {
-        return new ReuseList(cacheId, pageMem, null, rootIds, initNew);
+        return new ReuseList(cacheId, 0, PageIdAllocator.FLAG_IDX, pageMem, null, rootIds, initNew);
     }
 
     /**

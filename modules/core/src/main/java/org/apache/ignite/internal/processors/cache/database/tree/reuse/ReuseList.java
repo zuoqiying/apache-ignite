@@ -41,7 +41,7 @@ public final class ReuseList {
      * @param initNew Init new flag.
      * @throws IgniteCheckedException If failed.
      */
-    public ReuseList(int cacheId, PageMemory pageMem, IgniteWriteAheadLogManager wal, long[] rooIds,
+    public ReuseList(int cacheId, int partId, byte flag, PageMemory pageMem, IgniteWriteAheadLogManager wal, long[] rooIds,
         boolean initNew) throws IgniteCheckedException {
         A.ensure(rooIds.length > 1, "Segments must be greater than 1.");
 
@@ -50,7 +50,7 @@ public final class ReuseList {
         for (int i = 0; i < rooIds.length; i++) {
             String idxName = BPlusTree.treeName("s" + i, "Reuse");
 
-            trees[i] = new ReuseTree(idxName, this, cacheId, pageMem, wal, rooIds[i], initNew);
+            trees[i] = new ReuseTree(idxName, this, cacheId, partId, flag, pageMem, wal, rooIds[i], initNew);
         }
     }
 

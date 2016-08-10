@@ -39,7 +39,6 @@ import org.apache.ignite.internal.util.OffheapReadWriteLock;
 import org.apache.ignite.internal.util.offheap.GridOffHeapOutOfMemoryException;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lifecycle.LifecycleAware;
-import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentHashMap8;
 import sun.misc.JavaNioAccess;
 import sun.misc.SharedSecrets;
@@ -134,7 +133,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
     private AtomicInteger selector = new AtomicInteger();
 
     /** */
-    private ConcurrentHashMap8<Integer, Long> cacheMetaPages = new ConcurrentHashMap8<>();
+    private final ConcurrentHashMap8<Integer, CacheMeta> cacheMetas = new ConcurrentHashMap8<>();
 
     /** */
     private OffheapReadWriteLock rwLock;
@@ -263,19 +262,26 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
         seg.releaseFreePage(pageId);
 
-        cacheMetaPages.remove(cacheId, pageId);
+        cacheMetas.remove(cacheId, pageId);
 
         return true;
     }
 
     /** {@inheritDoc} */
     @Override public Page metaPage(int cacheId) throws IgniteCheckedException {
-        Long pageId = cacheMetaPages.get(cacheId);
+        return page(cacheId, cacheMeta(cacheId).metapage);
+    }
+
+    /** {@inheritDoc} */
+    @Override public Page partMetaPage(final int cacheId, final int partId) throws IgniteCheckedException {
+        ConcurrentHashMap8<Integer, Long> pages = cacheMeta(cacheId).partMetaPages;
+
+        Long pageId = pages.get(partId);
 
         if (pageId == null) {
-            pageId = cacheMetaPages.computeIfAbsent(cacheId, new ConcurrentHashMap8.Fun<Integer, Long>() {
-                @Override public Long apply(Integer cacheId) {
-                    return allocatePage(cacheId, 0, FLAG_IDX);
+            pageId = pages.computeIfAbsent(partId, new ConcurrentHashMap8.Fun<Integer, Long>() {
+                @Override public Long apply(Integer integer) {
+                    return allocatePage(cacheId, partId, FLAG_PART_IDX);
                 }
             });
         }
@@ -283,9 +289,18 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         return page(cacheId, pageId);
     }
 
-    /** {@inheritDoc} */
-    @Nullable @Override public Page existingPage(int cacheId, long pageId) throws IgniteCheckedException {
-        return page(cacheId, pageId);
+    private CacheMeta cacheMeta(int cacheId) {
+        CacheMeta cacheMeta = cacheMetas.get(cacheId);
+
+        if (cacheMeta == null) {
+            cacheMeta = cacheMetas.computeIfAbsent(cacheId, new ConcurrentHashMap8.Fun<Integer, CacheMeta>() {
+                @Override public CacheMeta apply(Integer cacheId) {
+                    return new CacheMeta(allocatePage(cacheId, 0, FLAG_IDX));
+                }
+            });
+        }
+
+        return cacheMeta;
     }
 
     /** {@inheritDoc} */
@@ -316,7 +331,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
     /** {@inheritDoc} */
     @Override public void clear(int cacheId) {
-        cacheMetaPages.remove(cacheId);
+        cacheMetas.remove(cacheId);
     }
 
     /** */
@@ -709,6 +724,16 @@ public class PageMemoryNoStoreImpl implements PageMemory {
                     return pageIdx;
                 }
             }
+        }
+    }
+
+    private static class CacheMeta {
+        private final long metapage;
+
+        private final ConcurrentHashMap8<Integer, Long> partMetaPages = new ConcurrentHashMap8<>();
+
+        public CacheMeta(long metapage) {
+            this.metapage = metapage;
         }
     }
 }

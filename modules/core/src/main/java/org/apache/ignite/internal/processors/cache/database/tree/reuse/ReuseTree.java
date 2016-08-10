@@ -31,6 +31,10 @@ import org.apache.ignite.internal.processors.cache.database.tree.reuse.io.ReuseL
  * Reuse tree for index pages.
  */
 public final class ReuseTree extends BPlusTree<Number, Long> {
+    private final int partId;
+
+    private final byte flag;
+
     /**
      * @param name Tree name.
      * @param reuseList Reuse list.
@@ -45,12 +49,17 @@ public final class ReuseTree extends BPlusTree<Number, Long> {
         String name,
         ReuseList reuseList,
         int cacheId,
+        int partId,
+        byte flag,
         PageMemory pageMem,
         IgniteWriteAheadLogManager wal,
         long metaPageId,
         boolean initNew
     ) throws IgniteCheckedException {
         super(name, cacheId, pageMem, wal, metaPageId, reuseList, ReuseInnerIO.VERSIONS, ReuseLeafIO.VERSIONS);
+
+        this.partId = partId;
+        this.flag = flag;
 
         if (initNew)
             initNew();
@@ -70,6 +79,11 @@ public final class ReuseTree extends BPlusTree<Number, Long> {
     @Override protected long allocatePageForNew() throws IgniteCheckedException {
         // Do not call reuse list when allocating a new ReuseTree.
         return allocatePage0();
+    }
+
+    /** {@inheritDoc} */
+    @Override protected long allocatePage0() throws IgniteCheckedException {
+        return pageMem.allocatePage(getCacheId(), partId, flag);
     }
 
     /**

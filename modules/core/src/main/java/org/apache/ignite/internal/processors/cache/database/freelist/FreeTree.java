@@ -19,7 +19,7 @@ package org.apache.ignite.internal.processors.cache.database.freelist;
 
 import java.nio.ByteBuffer;
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.internal.pagemem.FullPageId;
+import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.pagemem.wal.IgniteWriteAheadLogManager;
@@ -37,6 +37,8 @@ public class FreeTree extends BPlusTree<FreeItem, FreeItem> {
     /** */
     private final int partId;
 
+    private final byte allocSpace;
+
     /**
      * @param name Tree name.
      * @param reuseList Reuse list.
@@ -52,6 +54,7 @@ public class FreeTree extends BPlusTree<FreeItem, FreeItem> {
         ReuseList reuseList,
         int cacheId,
         int partId,
+        byte allocSpace,
         PageMemory pageMem,
         IgniteWriteAheadLogManager wal,
         long metaPageId,
@@ -60,6 +63,7 @@ public class FreeTree extends BPlusTree<FreeItem, FreeItem> {
         super(name, cacheId, pageMem, wal, metaPageId, reuseList, FreeInnerIO.VERSIONS, FreeLeafIO.VERSIONS);
 
         this.partId = partId;
+        this.allocSpace = allocSpace;
 
         assert pageMem != null;
 
@@ -72,6 +76,13 @@ public class FreeTree extends BPlusTree<FreeItem, FreeItem> {
      */
     public int getPartId() {
         return partId;
+    }
+
+    @Override protected long allocatePage0() throws IgniteCheckedException {
+        if (allocSpace == PageIdAllocator.FLAG_IDX)
+            return pageMem.allocatePage(getCacheId(), 0, PageIdAllocator.FLAG_IDX);
+        else
+            return pageMem.allocatePage(getCacheId(), partId, allocSpace);
     }
 
     /** {@inheritDoc} */

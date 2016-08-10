@@ -32,15 +32,7 @@ public interface PageMemory extends LifecycleAware, PageIdAllocator {
      */
     public Page metaPage(int cacheId) throws IgniteCheckedException;
 
-    /**
-     * Gets the page associated with the given page ID. Each page obtained with this method must be released by
-     * calling {@link #releasePage(Page)}.
-     *
-     * @param cacheId Cache ID.
-     * @param pageId Page ID.
-     * @return Page or {@code null} if this page ID was not allocated.
-     */
-    @Nullable public Page existingPage(int cacheId, long pageId) throws IgniteCheckedException;
+    public Page partMetaPage(int cacheId, int partId) throws IgniteCheckedException;
 
     /**
      * Gets the page associated with the given page ID. Each page obtained with this method must be released by
