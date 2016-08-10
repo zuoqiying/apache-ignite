@@ -38,6 +38,7 @@ import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
+import org.apache.ignite.internal.processors.cache.database.IgniteCacheDatabaseSharedManager;
 import org.apache.ignite.internal.processors.cache.database.MetaStore;
 import org.apache.ignite.internal.processors.cache.database.MetadataStorage;
 import org.apache.ignite.internal.processors.cache.database.RowStore;
@@ -664,8 +665,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     /** {@inheritDoc} */
     @Override public final CacheDataStore createCacheDataStore(int p,
         CacheDataStore.Listener lsnr) throws IgniteCheckedException {
-        IgniteCacheDatabaseSharedManager dbMgr = cctx.shared().database();
-
         String idxName = treeName(p);
 
         long pageId = PageIdUtils.pageId(p, PageIdAllocator.FLAG_PART_IDX, 0);
@@ -1297,7 +1296,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     }
 
     private class LazyCacheDataStore implements CacheDataStore {
-
         private final int partId;
 
         private final String idxName;
