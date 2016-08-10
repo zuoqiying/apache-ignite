@@ -391,6 +391,20 @@ export default ['clustersController', [
             return true;
         }
 
+        function checkCacheKeyConfiguration(item) {
+            const cfgs = item.cacheKeyConfiguration;
+
+            _.forEach(cfgs, (type, typeIx) => {
+                if (LegacyUtils.isEmptyString(type.typeName))
+                    return showPopoverMessage($scope.ui, 'cacheKeyCfg', 'cacheKeyTypeName' + typeIx, 'Cache type configuration name should be specified!');
+
+                if (_.find(cfgs, (t, ix) => ix < typeIx && t.typeName === type.typeName))
+                    return showPopoverMessage($scope.ui, 'cacheKeyCfg', 'cacheKeyTypeName' + typeIx, 'Cache type configuration with such name is already specified!');
+            });
+
+            return true;
+        }
+
         function checkCommunicationConfiguration(item) {
             const c = item.communication;
 
@@ -487,6 +501,9 @@ export default ['clustersController', [
                 return false;
 
             if (!checkBinaryConfiguration(item))
+                return false;
+
+            if (!checkCacheKeyConfiguration(item))
                 return false;
 
             if (!checkCommunicationConfiguration(item))

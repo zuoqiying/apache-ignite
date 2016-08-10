@@ -569,6 +569,38 @@ $generatorXml.clusterBinary = function(binary, res) {
     return res;
 };
 
+// Generate cache key configurations.
+$generatorXml.clusterCacheKeyConfiguration = function(keyCfgs, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    if (_.isEmpty(keyCfgs))
+        return res;
+
+    res.startBlock('<property name="cacheKeyConfiguration">');
+    res.startBlock('<list>');
+
+    _.forEach(keyCfgs, (cfg) => {
+        if (cfg.typeName) {
+            res.startBlock('<bean class="org.apache.ignite.cache.CacheKeyConfiguration">');
+
+            if (cfg.affinityKeyFieldName) {
+                $generatorXml.constructorArg(res, -1, cfg, 'typeName');
+                $generatorXml.constructorArg(res, -1, cfg, 'affinityKeyFieldName');
+            }
+            else
+                $generatorXml.constructorArg(res, -1, cfg, 'typeName');
+
+            res.endBlock('</bean>');
+        }
+    });
+
+    res.endBlock('</list>');
+    res.endBlock('</property>');
+
+    return res;
+};
+
 // Generate collision group.
 $generatorXml.clusterCollision = function(collision, res) {
     if (!res)
@@ -1962,6 +1994,8 @@ $generatorXml.clusterConfiguration = function(cluster, clientNearCfg, res) {
     $generatorXml.clusterAtomics(cluster.atomicConfiguration, res);
 
     $generatorXml.clusterBinary(cluster.binaryConfiguration, res);
+
+    $generatorXml.clusterCacheKeyConfiguration(cluster.cacheKeyConfiguration, res);
 
     $generatorXml.clusterCollision(cluster.collision, res);
 

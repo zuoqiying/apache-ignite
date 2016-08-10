@@ -743,6 +743,40 @@ $generatorJava.clusterBinary = function(binary, res) {
     return res;
 };
 
+// Generate cache key configurations.
+$generatorJava.clusterCacheKeyConfiguration = function(keyCfgs, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    if (_.isEmpty(keyCfgs))
+        return res;
+
+    $generatorJava.declareVariableArray(res, 'keyConfigurations', 'org.apache.ignite.cache.CacheKeyConfiguration', keyCfgs.length);
+
+    const cacheKeyCfg = res.importClass('org.apache.ignite.cache.CacheKeyConfiguration');
+
+    _.forEach(keyCfgs, (cfg, idx) => {
+        if (cfg.affinityKeyFieldName) {
+            res.needEmptyLine = true;
+
+            res.line(`keyConfigurations[${idx}] = new ${cacheKeyCfg}("${cfg.typeName}", "${cfg.affinityKeyFieldName}");`);
+        }
+        else {
+            res.needEmptyLine = true;
+
+            res.line(`keyConfigurations[${idx}] = new ${cacheKeyCfg}(${res.importClass(cfg.typeName)}.class);`);
+        }
+
+        res.needEmptyLine = true;
+    });
+
+    res.line('cfg.setCacheKeyConfiguration(keyConfigurations);');
+
+    res.needEmptyLine = true;
+
+    return res;
+};
+
 // TODO IGNITE-2269 Remove specified methods after implamentation of extended constructors.
 // Construct binary type configuration factory method name.
 $generatorJava.binaryTypeFunctionName = function(typeName) {
@@ -2814,6 +2848,8 @@ $generatorJava.clusterConfiguration = function(cluster, clientNearCfg, res) {
     $generatorJava.clusterAtomics(cluster.atomicConfiguration, res);
 
     $generatorJava.clusterBinary(cluster.binaryConfiguration, res);
+
+    $generatorJava.clusterCacheKeyConfiguration(cluster.cacheKeyConfiguration, res);
 
     $generatorJava.clusterCollision(cluster.collision, res);
 

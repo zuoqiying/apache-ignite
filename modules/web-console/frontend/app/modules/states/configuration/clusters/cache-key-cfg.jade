@@ -1,0 +1,93 @@
+//-
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+include ../../../../../app/helpers/jade/mixins.jade
+
+-var form = 'cacheKeyCfg'
+-var model = 'backupItem.cacheKeyConfiguration'
+
+//- Mixin for java name field with enabled condition.
+mixin cache-key-java-class(lbl, model, name, enabled, required, remove, autofocus, tip)
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+        if (remove)
+            +table-remove-button('backupItem.cacheKeyConfiguration', 'Remove type configuration')
+        ignite-form-field-input-text(
+            data-id='{{#{name}}}'
+            data-name='{{#{name}}}'
+            data-ng-model=model
+            data-ng-disabled='!(#{enabled})'
+            data-ng-required=required
+            data-placeholder='Enter fully qualified class name'
+
+            data-ignite-form-field-input-autofocus=autofocus
+
+            data-java-identifier='true'
+            data-java-package-specified='true'
+            data-java-keywords='true'
+            data-java-built-in-class='true'
+        )
+            +error-feedback('form[ngModelName].$error.javaBuiltInClass', 'javaBuiltInClass', lbl + ' should not be the Java built-in class!', '{{' + name + '}}')
+            +error-feedback('form[ngModelName].$error.javaKeywords', 'javaKeywords', lbl + ' could not contains reserved Java keyword!', '{{' + name + '}}')
+            +error-feedback('form[ngModelName].$error.javaPackageSpecified', 'javaPackageSpecified', lbl + ' does not have package specified!', '{{' + name + '}}')
+            +error-feedback('form[ngModelName].$error.javaIdentifier', 'javaIdentifier', lbl + ' is invalid Java identifier!', '{{' + name + '}}')
+
+//- Mixin for java name field with enabled condition.
+mixin cache-key-field(lbl, model, name, tip)
+    ignite-form-field
+        ignite-form-field-label
+            | #{lbl}
+        ignite-form-field-tooltip
+            | !{tip}
+        ignite-form-field-input-text(
+            data-id='{{#{name}}}'
+            data-name='{{#{name}}}'
+            data-ng-model=model
+            data-ng-required='false'
+            data-placeholder='Enter field name'
+        )
+
+form.panel.panel-default(name=form novalidate)
+    .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
+        ignite-form-panel-chevron
+        label Cache key configuration
+        ignite-form-field-tooltip.tipLabel
+            | Cache key configuration
+        ignite-form-revert
+    .panel-collapse(role='tabpanel' bs-collapse-target id=form)
+        .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
+            .col-sm-6
+                .settings-row
+                    ignite-form-group(ng-form='#{form}TypeConfigurations' ng-model='#{model}')
+                        ignite-form-field-label
+                            | Cache key configuration
+                        ignite-form-group-tooltip
+                            | Cache key configuration
+                        ignite-form-group-add(ng-click='#{model}.push({})')
+                            | Add new cache key configuration
+                        .group-content-empty(ng-if='!#{model}.length')
+                            | Not defined
+                        .group-content(ng-repeat='model in #{model} track by $index')
+                            hr(ng-if='$index !== 0')
+                            .settings-row
+                                +cache-key-java-class('Type name:', 'model.typeName', '"cacheKeyTypeName" + $index', 'true', 'true', true, 'true', 'Type name')
+                            .settings-row
+                                +cache-key-field('Affinity key field name:', 'model.affinityKeyFieldName', '"affinityKeyFieldName" + $index', 'Affinity key field name')
+            .col-sm-6
+                +preview-xml-java(model, 'clusterCacheKeyConfiguration')

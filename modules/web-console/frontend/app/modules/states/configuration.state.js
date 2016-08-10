@@ -42,6 +42,7 @@ import clustersGeneralDiscoveryZookeeperRetryCustom from './configuration/cluste
 
 import clustersAtomic from './configuration/clusters/atomic.directive';
 import clustersBinary from './configuration/clusters/binary.directive';
+import clustersCacheKeyCfg from './configuration/clusters/cache-key-cfg.directive';
 import clustersCommunication from './configuration/clusters/communication.directive';
 import clustersConnector from './configuration/clusters/connector.directive';
 import clustersDeployment from './configuration/clusters/deployment.directive';
@@ -126,6 +127,7 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
     .directive(...clustersConnector)
     .directive(...clustersCommunication)
     .directive(...clustersBinary)
+    .directive(...clustersCacheKeyCfg)
     .directive(...clustersAtomic)
     .directive(...clustersGeneral)
     .directive(...clustersGeneralDiscoveryCloud)
