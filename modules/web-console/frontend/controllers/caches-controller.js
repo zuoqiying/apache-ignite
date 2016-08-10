@@ -86,7 +86,11 @@ export default ['cachesController', [
 
                 $scope.spaces = spaces;
                 $scope.caches = caches;
-                $scope.igfss = igfss;
+                $scope.igfss = _.map(igfss, (igfs) => ({
+                    label: igfs.name,
+                    value: igfs._id,
+                    igfs
+                }));
 
                 _.forEach($scope.caches, (cache) => cache.label = _cacheLbl(cache));
 

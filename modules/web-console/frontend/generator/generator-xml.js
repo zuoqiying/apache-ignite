@@ -1293,20 +1293,12 @@ $generatorXml.cacheNodeFilter = function(cache, igfss, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    switch (_.get(cache, 'nodeFilter.kind')) {
-        case 'Exclude':
-            res.startBlock('<property name="nodeFilter">');
-            res.startBlock('<bean class="org.apache.ignite.tests.p2p.ExcludeNodeFilter" >');
-            res.startBlock('<constructor-arg>');
-            res.startBlock('<bean class="java.util.UUID" factory-method="fromString">');
-            res.line('<constructor-arg value="' + cache.nodeFilter.Exclude.nodeId + '"/>');
-            res.endBlock('</bean>');
-            res.endBlock('</constructor-arg>');
-            res.endBlock('</bean>');
-            res.endBlock('</property>');
+    const kind = _.get(cache, 'nodeFilter.kind');
 
-            break;
+    if (_.isNil(cache.nodeFilter[kind]))
+        return res;
 
+    switch (kind) {
         case 'IGFS':
             const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
 

@@ -35,7 +35,6 @@ form.panel.panel-default(name=form novalidate)
 
                     +dropdown('Node filter:', nodeFilterKind, 'nodeFilter', 'true', 'Not set',
                         '[\
-                            {value: "Exclude", label: "Exclude node"},\
                             {value: "IGFS", label: "IGFS nodes"},\
                             {value: "OnNodes", label: "Specified nodes"},\
                             {value: "Custom", label: "Custom"},\
@@ -43,75 +42,66 @@ form.panel.panel-default(name=form novalidate)
                         ]',
                         'Node filter variant'
                     )
-                    span(ng-show=nodeFilterKind)
-                        .panel-details
-                            div(ng-show='#{nodeFilterKind} === "Exclude"')
-                                -var excludeNodeFilter = nodeFilter + '.Exclude'
-                                -var required = nodeFilterKind + ' === "Exclude"'
+                .settings-row(ng-show=nodeFilterKind)
+                    div(ng-show='#{nodeFilterKind} === "IGFS"')
+                        -var igfsNodeFilter = nodeFilter + '.IGFS'
+                        -var required = nodeFilterKind + ' === "IGFS"'
 
-                                .details-row
-                                    +uuid('Node ID:', excludeNodeFilter + '.nodeId', 'excludeNodeFilter', 'true', required, 'Node ID to exclude')
-                            div(ng-show='#{nodeFilterKind} === "IGFS"')
-                                -var igfsNodeFilter = nodeFilter + '.IGFS'
-                                -var required = nodeFilterKind + ' === "IGFS"'
+                        //(lbl, model, name, enabled, required, placeholder, options, tip)
+                        +dropdown-required-empty('IGFS:', igfsNodeFilter + '.igfs', 'igfsNodeFilter', 'true', required,
+                            'Choose IGFS', 'No IGFS configured', 'igfss', 'Select IGFS to filter nodes')
+                    div(ng-show='#{nodeFilterKind} === "Custom"')
+                        -var customNodeFilter = nodeFilter + '.Custom'
+                        -var required = nodeFilterKind + ' === "Custom"'
 
-                                //(lbl, model, name, enabled, required, placeholder, options, tip)
-                                .details-row
-                                    +dropdown-required-empty('IGFS:', igfsNodeFilter + '.igfs', 'igfsNodeFilter', 'true', required,
-                                        'Choose IGFS', 'No IGFS configured', 'igfss', 'Select IGFS to filter nodes')
-                            div(ng-show='#{nodeFilterKind} === "Custom"')
-                                -var customNodeFilter = nodeFilter + '.Custom'
-                                -var required = nodeFilterKind + ' === "Custom"'
+                        +java-class('Class name:', customNodeFilter + '.className', 'customNodeFilter',
+                            'true', required, 'Class name of custom node filter implementation')
+                    div(ng-show='#{nodeFilterKind} === "OnNodes"')
+                        -var nodeSetFilter = nodeFilter + '.OnNodes.nodeIds'
 
-                                .details-row
-                                    +java-class('Class name:', customNodeFilter + '.className', 'customNodeFilter',
-                                        'true', required, 'Class name of custom node filter implementation')
-                            div(ng-show='#{nodeFilterKind} === "OnNodes"')
-                                -var nodeSetFilter = nodeFilter + '.OnNodes.nodeIds'
+                        ignite-form-group(ng-model=nodeSetFilter ng-form=form)
+                            -var uniqueTip = 'Such node ID already exists!'
 
-                                ignite-form-group(ng-model=nodeSetFilter ng-form=form)
-                                    -var uniqueTip = 'Such node ID already exists!'
+                            ignite-form-field-label
+                                | Node IDs
+                            ignite-form-group-tooltip
+                                | Set of node IDs to deploy cache
+                            ignite-form-group-add(ng-click='group.add = [{}]')
+                                | Add new node ID
 
-                                    ignite-form-field-label
-                                        | Node IDs
-                                    ignite-form-group-tooltip
-                                        | Set of node IDs to deploy cache
-                                    ignite-form-group-add(ng-click='group.add = [{}]')
-                                        | Add new node ID
+                            .group-content(ng-if='#{nodeSetFilter}.length')
+                                -var field = 'edit'
+                                -var valid = 'form[ngModelName].$valid'
+                                -var unique = 'form[ngModelName].$error.igniteUnique'
+                                -var uuid = 'form[ngModelName].$error.uuid'
+                                -var save = nodeSetFilter + '[$index] = ' + field
 
-                                    .group-content(ng-if='#{nodeSetFilter}.length')
-                                        -var field = 'edit'
-                                        -var valid = 'form[ngModelName].$valid'
-                                        -var unique = 'form[ngModelName].$error.igniteUnique'
-                                        -var uuid = 'form[ngModelName].$error.uuid'
-                                        -var save = nodeSetFilter + '[$index] = ' + field
+                                ignite-form-field(ng-repeat='model in #{nodeSetFilter} track by $index' type='internal' name='Node IDs')
+                                    .indexField
+                                        | {{ $index+1 }})
+                                    +table-remove-button(nodeSetFilter, 'Remove node ID')
 
-                                        ignite-form-field(ng-repeat='model in #{nodeSetFilter} track by $index' type='internal' name='Node IDs')
-                                            .indexField
-                                                | {{ $index+1 }})
-                                            +table-remove-button(nodeSetFilter, 'Remove node ID')
+                                    span(ng-hide='field.edit')
+                                        a.labelFormField(ng-click='field.edit = true') {{ model }}
+                                    span(ng-if='field.edit' ng-init='#{field} = model')
+                                        +table-uuid-field(field, nodeSetFilter, valid, save, false, true)
+                                            +table-save-button(valid, save, false)
+                                            +unique-feedback(unique, uniqueTip)
+                                            +uuid-feedback(uuid)
+                            .group-content(ng-repeat='field in group.add')
+                                -var field = 'new'
+                                -var valid = 'form[ngModelName].$valid'
+                                -var unique = 'form[ngModelName].$error.igniteUnique'
+                                -var uuid = 'form[ngModelName].$error.uuid'
+                                -var save = nodeSetFilter + '.push(' + field + ')'
 
-                                            span(ng-hide='field.edit')
-                                                a.labelFormField(ng-click='field.edit = true') {{ model }}
-                                            span(ng-if='field.edit' ng-init='#{field} = model')
-                                                +table-uuid-field(field, nodeSetFilter, valid, save, false, true)
-                                                    +table-save-button(valid, save, false)
-                                                    +unique-feedback(unique, uniqueTip)
-                                                    +uuid-feedback(uuid)
-                                    .group-content(ng-repeat='field in group.add')
-                                        -var field = 'new'
-                                        -var valid = 'form[ngModelName].$valid'
-                                        -var unique = 'form[ngModelName].$error.igniteUnique'
-                                        -var uuid = 'form[ngModelName].$error.uuid'
-                                        -var save = nodeSetFilter + '.push(' + field + ')'
-
-                                        ignite-form-field(type='internal' name='Node Ids')
-                                            +table-uuid-field(field, nodeSetFilter, valid, save, true, true)
-                                                +table-save-button(valid, save, true)
-                                                +unique-feedback(unique, uniqueTip)
-                                                +uuid-feedback(uuid)
-                                    .group-content-empty(id='nodeSetFilter' ng-if='!(#{nodeSetFilter}.length) && !group.add.length')
-                                        | Not defined
+                                ignite-form-field(type='internal' name='Node Ids')
+                                    +table-uuid-field(field, nodeSetFilter, valid, save, true, true)
+                                        +table-save-button(valid, save, true)
+                                        +unique-feedback(unique, uniqueTip)
+                                        +uuid-feedback(uuid)
+                            .group-content-empty(id='nodeSetFilter' ng-if='!(#{nodeSetFilter}.length) && !group.add.length')
+                                | Not defined
 
             .col-sm-6
                 +preview-xml-java(model, 'cacheNodeFilter', 'igfss')

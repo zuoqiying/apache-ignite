@@ -1712,18 +1712,13 @@ $generatorJava.cacheNodeFilter = function(cache, igfss, varName, res) {
         varName = $generatorJava.nextVariableName('cache', cache);
 
     switch (_.get(cache, 'nodeFilter.kind')) {
-        case 'Exclude':
-            res.line(varName + '.setNodeFilter(new ' + res.importClass('org.apache.ignite.tests.p2p.ExcludeNodeFilter') +
-                '(' + res.importClass('java.util.UUID') + '.fromString("' + cache.nodeFilter.Exclude.nodeId + '")));');
-
-            break;
-
         case 'IGFS':
             const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
 
             if (foundIgfs) {
-                res.line(varName + '.setNodeFilter(new ' + res.importClass('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate') +
-                    '("' + foundIgfs.name + '"));');
+                const predClsName = res.importClass('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate');
+
+                res.line(`${varName}.setNodeFilter(new ${predClsName}("${foundIgfs.name}"));`);
             }
 
             break;
