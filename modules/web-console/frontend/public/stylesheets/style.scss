@@ -18,22 +18,8 @@
 @import "./font-awesome-custom";
 @import "./bootstrap-custom";
 @import "./variables";
-
+@import "~roboto-font/css/fonts.css";
 @import "./../../app/directives/information/information.scss";
-
-@font-face {
-    font-family: 'Roboto Slab';
-    font-style: normal;
-    font-weight: 400;
-    src: local('Roboto Slab Regular'), local('RobotoSlab-Regular'), url(https://fonts.gstatic.com/s/robotoslab/v6/y7lebkjgREBJK96VQi37ZiwlidHJgAgmTjOEEzwu1L8.ttf) format('truetype');
-}
-
-@font-face {
-    font-family: 'Roboto Slab';
-    font-style: normal;
-    font-weight: 700;
-    src: local('Roboto Slab Bold'), local('RobotoSlab-Bold'), url(https://fonts.gstatic.com/s/robotoslab/v6/dazS1PrQQuCxC3iOAJFEJTdGNerWpg2Hn6A-BxWgZ_I.ttf) format('truetype');
-}
 
 hr {
     margin: 20px 0;
@@ -2073,7 +2059,7 @@ treecontrol.tree-classic {
 
         text-align: center;
         text-decoration: none;
-        font-family: 'Roboto Slab', sans-serif;
+        font-family: $font-family-sans-serif;
         font-size: 20px;
         font-weight: 500;
 
