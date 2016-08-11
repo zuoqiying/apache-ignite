@@ -62,4 +62,5 @@ include ../../../../../app/helpers/jade/mixins.jade
                         div(ng-show='#{kind} === "Custom"')
                             include ./logger/custom.jade
             .col-sm-6
+                -var model = 'backupItem.logger'
                 +preview-xml-java(model, 'clusterLogger')

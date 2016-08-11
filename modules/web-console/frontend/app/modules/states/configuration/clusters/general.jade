@@ -49,21 +49,22 @@ include ../../../../../app/helpers/jade/mixins.jade
                         </ul>')
                 .settings-row
                     .panel-details
-                        div(ng-show='#{modelDiscoveryKind} === "Cloud"')
+                        div(ng-if='#{modelDiscoveryKind} === "Cloud"')
                             include ./general/discovery/cloud.jade
-                        div(ng-show='#{modelDiscoveryKind} === "GoogleStorage"')
+                        div(ng-if='#{modelDiscoveryKind} === "GoogleStorage"')
                             include ./general/discovery/google.jade
-                        div(ng-show='#{modelDiscoveryKind} === "Jdbc"')
+                        div(ng-if='#{modelDiscoveryKind} === "Jdbc"')
                             include ./general/discovery/jdbc.jade
-                        div(ng-show='#{modelDiscoveryKind} === "Multicast"')
+                        div(ng-if='#{modelDiscoveryKind} === "Multicast"')
                             include ./general/discovery/multicast.jade
-                        div(ng-show='#{modelDiscoveryKind} === "S3"')
+                        div(ng-if='#{modelDiscoveryKind} === "S3"')
                             include ./general/discovery/s3.jade
-                        div(ng-show='#{modelDiscoveryKind} === "SharedFs"')
+                        div(ng-if='#{modelDiscoveryKind} === "SharedFs"')
                             include ./general/discovery/shared.jade
-                        div(ng-show='#{modelDiscoveryKind} === "Vm"')
+                        div(ng-if='#{modelDiscoveryKind} === "Vm"')
                             include ./general/discovery/vm.jade
-                        div(ng-show='#{modelDiscoveryKind} === "ZooKeeper"')
+                        div(ng-if='#{modelDiscoveryKind} === "ZooKeeper"')
                             include ./general/discovery/zookeeper.jade
             .col-sm-6
+                -var model = 'backupItem'
                 +preview-xml-java(model, 'clusterCaches', 'caches')
