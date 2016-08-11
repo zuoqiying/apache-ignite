@@ -31,7 +31,6 @@ import igniteFormRevert from './panel/revert.directive';
 // Field.
 import igniteFormFieldLabel from './field/label.directive';
 import igniteFormFieldTooltip from './field/tooltip.directive';
-
 import placeholder from './field/bs-select-placeholder.directive';
 
 // Group.
@@ -55,6 +54,8 @@ import uuid from './validator/uuid.directive';
 // Helpers.
 import igniteFormFieldInputAutofocus from './field/input/autofocus.directive';
 import igniteFormControlFeedback from './field/form-control-feedback.directive';
+import igniteFormFieldUp from './field/up.directive';
+import igniteFormFieldDown from './field/down.directive';
 
 angular
 .module('ignite-console.Form', [
@@ -88,6 +89,8 @@ angular
 // Helpers.
 .directive(...igniteFormFieldInputAutofocus)
 .directive(...igniteFormControlFeedback)
+.directive(...igniteFormFieldUp)
+.directive(...igniteFormFieldDown)
 // Generator of globally unique identifier.
 .factory('IgniteFormGUID', [() => {
     let guid = 0;
