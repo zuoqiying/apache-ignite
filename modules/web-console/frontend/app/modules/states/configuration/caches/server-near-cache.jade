@@ -16,10 +16,10 @@
 
 include ../../../../../app/helpers/jade/mixins.jade
 
--var form = 'server-near-cache'
+-var form = 'serverNearCache'
 -var model = 'backupItem'
 
-form.panel.panel-default(name=form novalidate ng-show='#{model}.cacheMode === "PARTITIONED"')
+.panel.panel-default(ng-form=form novalidate ng-show='#{model}.cacheMode === "PARTITIONED"')
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Server near cache
@@ -35,11 +35,11 @@ form.panel.panel-default(name=form novalidate ng-show='#{model}.cacheMode === "P
                 -var nearCfg = model + '.nearConfiguration'
 
                 .settings-row
-                    +checkbox('Enabled', enabled, 'nearCacheEnabled', 'Flag indicating whether to configure near cache')
+                    +checkbox('Enabled', enabled, '"nearCacheEnabled"', 'Flag indicating whether to configure near cache')
                 .settings-row
-                    +number('Start size:', nearCfg + '.nearStartSize', 'nearStartSize', enabled, '375000', '0',
+                    +number('Start size:', nearCfg + '.nearStartSize', '"nearStartSize"', enabled, '375000', '0',
                         'Initial cache size for near cache which will be used to pre-create internal hash table after start')
                 .settings-row
-                    +evictionPolicy(model + '.nearConfiguration.nearEvictionPolicy', 'nearCacheEvictionPolicy', enabled, 'false', 'Near cache eviction policy')
+                    +evictionPolicy(model + '.nearConfiguration.nearEvictionPolicy', '"nearCacheEvictionPolicy"', enabled, 'false', 'Near cache eviction policy')
             .col-sm-6
                 +preview-xml-java(model, 'cacheServerNearCache')

@@ -15,29 +15,25 @@
  * limitations under the License.
  */
 
-const template = '<i class="tipField fa fa-arrow-down ng-scope" ng-click="down()"></i>';
-
 export default ['igniteFormFieldDown', ['$tooltip', ($tooltip) => {
-    const link = (scope, $element) => {
+    const controller = ['$element', function($element) {
         $tooltip($element, { title: 'Move item down' });
 
-        scope.down = () => {
-            const i = scope.models.indexOf(scope.model);
-            scope.models.splice(i, 1);
-            scope.models.splice(i + 1, 0, scope.model);
+        this.down = () => {
+            const i = this.models.indexOf(this.model);
+
+            this.models.splice(i, 1);
+            this.models.splice(i + 1, 0, this.model);
         };
-    };
+    }];
 
     return {
-        restrict: 'E',
-        scope: {
+        restrict: 'A',
+        bindToController: {
             model: '=ngModel',
             models: '=models'
         },
-        template,
-        link,
-        replace: true,
-        transclude: true,
-        require: '^form'
+        controller,
+        controllerAs: '$ctrl'
     };
 }]];

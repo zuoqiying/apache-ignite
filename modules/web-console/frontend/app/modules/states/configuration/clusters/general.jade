@@ -18,8 +18,9 @@ include ../../../../../app/helpers/jade/mixins.jade
 
 -var form = 'general'
 -var model = 'backupItem'
+-var modelDiscoveryKind = model + '.discovery.kind'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle)
         ignite-form-panel-chevron
         label General
@@ -28,13 +29,13 @@ form.panel.panel-default(name=form novalidate)
         .panel-body
             .col-sm-6
                 .settings-row
-                    +text('Name:', model + '.name', 'clusterName', 'true', 'Input name', 'Grid name')
+                    +text('Name:', model + '.name', '"clusterName"', 'true', 'Input name', 'Grid name')
                 .settings-row
                     +caches(model, 'Select caches to start in cluster or add a new cache')
                 .settings-row
-                    +text-ip-address('Local host:', model + '.localHost', 'localHost', 'true', '0.0.0.0', 'System-wide local address or host for all Ignite components to bind to')
+                    +text-ip-address('Local host:', model + '.localHost', '"localHost"', 'true', '0.0.0.0', 'System-wide local address or host for all Ignite components to bind to')
                 .settings-row
-                    +dropdown('Discovery:', model + '.discovery.kind', 'discovery', 'true', 'Choose discovery', 'discoveries',
+                    +dropdown('Discovery:', model + '.discovery.kind', '"discovery"', 'true', 'Choose discovery', 'discoveries',
                         'Discovery allows to discover remote nodes in grid\
                         <ul>\
                             <li>Static IPs - IP Finder which works only with pre configured list of IP addresses specified</li>\
@@ -48,21 +49,21 @@ form.panel.panel-default(name=form novalidate)
                         </ul>')
                 .settings-row
                     .panel-details
-                        ignite-configuration-clusters-general-discovery-cloud(
-                            ng-show='#{model}.discovery.kind === "Cloud"')
-                        ignite-configuration-clusters-general-discovery-google(
-                            ng-show='#{model}.discovery.kind === "GoogleStorage"')
-                        ignite-configuration-clusters-general-discovery-jdbc(
-                            ng-show='#{model}.discovery.kind === "Jdbc"')
-                        ignite-configuration-clusters-general-discovery-multicast(
-                            ng-show='#{model}.discovery.kind === "Multicast"')
-                        ignite-configuration-clusters-general-discovery-s3(
-                            ng-show='#{model}.discovery.kind === "S3"')
-                        ignite-configuration-clusters-general-discovery-shared(
-                            ng-show='#{model}.discovery.kind === "SharedFs"')
-                        ignite-configuration-clusters-general-discovery-vm(
-                            ng-show='#{model}.discovery.kind === "Vm"')
-                        ignite-configuration-clusters-general-discovery-zookeeper(
-                            ng-show='#{model}.discovery.kind === "ZooKeeper"')
+                        div(ng-show='#{modelDiscoveryKind} === "Cloud"')
+                            include ./general/discovery/cloud.jade
+                        div(ng-show='#{modelDiscoveryKind} === "GoogleStorage"')
+                            include ./general/discovery/google.jade
+                        div(ng-show='#{modelDiscoveryKind} === "Jdbc"')
+                            include ./general/discovery/jdbc.jade
+                        div(ng-show='#{modelDiscoveryKind} === "Multicast"')
+                            include ./general/discovery/multicast.jade
+                        div(ng-show='#{modelDiscoveryKind} === "S3"')
+                            include ./general/discovery/s3.jade
+                        div(ng-show='#{modelDiscoveryKind} === "SharedFs"')
+                            include ./general/discovery/shared.jade
+                        div(ng-show='#{modelDiscoveryKind} === "Vm"')
+                            include ./general/discovery/vm.jade
+                        div(ng-show='#{modelDiscoveryKind} === "ZooKeeper"')
+                            include ./general/discovery/zookeeper.jade
             .col-sm-6
                 +preview-xml-java(model, 'clusterCaches', 'caches')

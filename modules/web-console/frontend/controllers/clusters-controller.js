@@ -285,6 +285,8 @@ export default ['clustersController', [
                     $scope.backupItem = emptyCluster;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
+                $scope.ui.inputForm.$error = {};
+                $scope.ui.inputForm.$setPristine();
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -391,6 +393,20 @@ export default ['clustersController', [
             return true;
         }
 
+        function checkCacheKeyConfiguration(item) {
+            const cfgs = item.cacheKeyConfiguration;
+
+            _.forEach(cfgs, (type, typeIx) => {
+                if (LegacyUtils.isEmptyString(type.typeName))
+                    return showPopoverMessage($scope.ui, 'cacheKeyCfg', 'cacheKeyTypeName' + typeIx, 'Cache type configuration name should be specified!');
+
+                if (_.find(cfgs, (t, ix) => ix < typeIx && t.typeName === type.typeName))
+                    return showPopoverMessage($scope.ui, 'cacheKeyCfg', 'cacheKeyTypeName' + typeIx, 'Cache type configuration with such name is already specified!');
+            });
+
+            return true;
+        }
+
         function checkCommunicationConfiguration(item) {
             const c = item.communication;
 
@@ -487,6 +503,9 @@ export default ['clustersController', [
                 return false;
 
             if (!checkBinaryConfiguration(item))
+                return false;
+
+            if (!checkCacheKeyConfiguration(item))
                 return false;
 
             if (!checkCommunicationConfiguration(item))
@@ -624,6 +643,7 @@ export default ['clustersController', [
                             _.forEach($scope.igfss, (igfs) => igfs.igfs.clusters = []);
 
                             $scope.backupItem = emptyCluster;
+                            $scope.ui.inputForm.$error = {};
                             $scope.ui.inputForm.$setPristine();
                         })
                         .error(Messages.showError);
@@ -634,6 +654,7 @@ export default ['clustersController', [
             Confirm.confirm('Are you sure you want to undo all changes for current cluster?')
                 .then(function() {
                     $scope.backupItem = $scope.selectedItem ? angular.copy($scope.selectedItem) : prepareNewItem();
+                    $scope.ui.inputForm.$error = {};
                     $scope.ui.inputForm.$setPristine();
                 });
         };

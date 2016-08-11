@@ -14,10 +14,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
+include ./form.jade
+
 //- Mixin for advanced options toggle.
 mixin advanced-options-toggle(click, cond, showMessage, hideMessage)
     .advanced-options
-        i.fa(ng-click=click ng-class='#{cond} ? "fa-chevron-circle-down" : "fa-chevron-circle-right"')
+        i.fa(ng-click='#{click}' ng-class='#{cond} ? "fa-chevron-circle-down" : "fa-chevron-circle-right"')
         a(ng-click=click) {{#{cond} ? '#{hideMessage}' : '#{showMessage}'}}
 
 //- Mixin for advanced options toggle with default settings.
@@ -76,299 +78,170 @@ mixin error-feedback(visible, error, errorMessage, name)
     )
 
 //- Mixin for feedback on unique violation.
-mixin unique-feedback(visible, errorMessage)
-    +error-feedback(visible, 'igniteUnique', errorMessage)
+mixin unique-feedback(name, errorMessage)
+    +form-field-feedback(name, 'igniteUnique', errorMessage)
 
 //- Mixin for feedback on IP address violation.
-mixin ipaddress-feedback(visible, name)
-    +error-feedback(visible, 'ipaddress', 'Invalid address!', name)
+mixin ipaddress-feedback(name)
+    +form-field-feedback(name, 'ipaddress', 'Invalid address!')
 
 //- Mixin for feedback on port of IP address violation.
-mixin ipaddress-port-feedback(visible, name)
-    +error-feedback(visible, 'ipaddressPort', 'Invalid port!', name)
+mixin ipaddress-port-feedback(name)
+    +form-field-feedback(name, 'ipaddressPort', 'Invalid port!')
 
 //- Mixin for feedback on port range violation.
-mixin ipaddress-port-range-feedback(visible, name)
-    +error-feedback(visible, 'ipaddressPortRange', 'Invalid port range!', name)
+mixin ipaddress-port-range-feedback(name)
+    +form-field-feedback(name, 'ipaddressPortRange', 'Invalid port range!')
 
 //- Mixin for feedback on UUID violation.
-mixin uuid-feedback(visible, name)
-    +error-feedback(visible, 'uuid', 'Invalid node ID!', name)
+mixin uuid-feedback(name)
+    +form-field-feedback(name, 'uuid', 'Invalid node ID!')
 
 //- Mixin for checkbox.
 mixin checkbox(lbl, model, name, tip)
-    ignite-form-field.checkbox
-        ignite-form-field-input-checkbox(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-        )
-        | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
+    +form-field-checkbox(lbl, model, name, false, false, tip)
 
 //- Mixin for checkbox with enabled condition.
 mixin checkbox-enabled(lbl, model, name, enabled, tip)
-    ignite-form-field.checkbox
-        ignite-form-field-input-checkbox(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-ng-disabled='!(#{enabled})'
-        )
-        | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-
-//- Mixin for uuid field with enabled condition.
-mixin uuid(lbl, model, name, enabled, required, tip)
-    -var errLbl = lbl.substring(0, lbl.length - 1)
-
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-text(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-ng-disabled='!(#{enabled})'
-            data-ng-required=required
-            data-placeholder='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-
-            data-uuid='true'
-        )
-            +error-feedback('form[ngModelName].$error.uuid', 'uuid', errLbl + ' should not be valid UUID!', name)
+    if enabled === false || enabled === true 
+        -var disabled = !enabled
+    else
+        -var disabled = '!('+enabled+')'
+        
+    +form-field-checkbox(lbl, model, name, disabled, false, tip)
 
 //- Mixin for java name field with enabled condition.
 mixin java-class(lbl, model, name, enabled, required, tip)
     -var errLbl = lbl.substring(0, lbl.length - 1)
 
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-text(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-ng-disabled='!(#{enabled})'
-            data-ng-required=required
-            data-placeholder='Enter fully qualified class name'
+    if enabled === false || enabled === true 
+        -var disabled = !enabled
+    else
+        -var disabled = '!('+enabled+')'
 
-            data-java-identifier='true'
-            data-java-package-specified='true'
-            data-java-keywords='true'
-            data-java-built-in-class='true'
-        )
-            +error-feedback('form[ngModelName].$error.javaBuiltInClass', 'javaBuiltInClass', errLbl + ' should not be the Java built-in class!', name)
-            +error-feedback('form[ngModelName].$error.javaKeywords', 'javaKeywords', errLbl + ' could not contains reserved Java keyword!', name)
-            +error-feedback('form[ngModelName].$error.javaPackageSpecified', 'javaPackageSpecified', errLbl + ' does not have package specified!', name)
-            +error-feedback('form[ngModelName].$error.javaIdentifier', 'javaIdentifier', errLbl + ' is invalid Java identifier!', name)
+    +ignite-form-field-text(lbl, model, name, disabled, required, 'Enter fully qualified class name', tip)(
+        data-java-identifier='true'
+        data-java-package-specified='true'
+        data-java-keywords='true'
+        data-java-built-in-class='true'
+    )
+        if  block
+            block
+
+        +form-field-feedback(name, 'javaBuiltInClass', errLbl + ' should not be the Java built-in class!')
+        +form-field-feedback(name, 'javaKeywords', errLbl + ' could not contains reserved Java keyword!')
+        +form-field-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
+        +form-field-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
+
+        
 
 //- Mixin for text field with enabled condition with options.
 mixin java-class-typeahead(lbl, model, name, options, enabled, required, placeholder, tip)
     -var errLbl = lbl.substring(0, lbl.length - 1)
 
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-datalist(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-options=options
-            data-placeholder=placeholder
-            data-ng-disabled='!(#{enabled})'
-            data-ng-required=required
-
-            data-java-identifier='true'
-            data-java-package-specified='allow-built-in'
-            data-java-keywords='true'
-        )
-            +error-feedback('form[ngModelName].$error.javaKeywords', 'javaKeywords', errLbl + ' could not contains reserved Java keyword!', name)
-            +error-feedback('form[ngModelName].$error.javaPackageSpecified', 'javaPackageSpecified', errLbl + ' does not have package specified!', name)
-            +error-feedback('form[ngModelName].$error.javaIdentifier', 'javaIdentifier', errLbl + ' is invalid Java identifier!', name)
+    +form-field-datalist(lbl, model, name, '!('+enabled+')', required, placeholder, options, tip)(
+        data-java-identifier='true'
+        data-java-package-specified='allow-built-in'
+        data-java-keywords='true'
+    )
+        +form-field-feedback(name, 'javaKeywords', errLbl + ' could not contains reserved Java keyword!')
+        +form-field-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
+        +form-field-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
 
 //- Mixin for text field with IP address check.
 mixin text-ip-address(lbl, model, name, enabled, placeholder, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-text(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-ipaddress='true'
-            data-ng-disabled='!(#{enabled})'
-            data-placeholder=placeholder
-        )
-            +ipaddress-feedback('form[ngModelName].$error.ipaddress', name)
-
+    +ignite-form-field-text(lbl, model, name, '!('+enabled+')', false, placeholder, tip)(data-ipaddress='true')
+        +ipaddress-feedback(name)
 
 //- Mixin for text field with IP address and port check.
 mixin text-ip-address-with-port(lbl, model, name, enabled, placeholder, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-text(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-ipaddress='true'
-            data-ipaddress-with-port='true'
-            data-ng-disabled='!(#{enabled})'
-            data-placeholder=placeholder
-        )
-            +ipaddress-feedback('form[ngModelName].$error.ipaddress', name)
-            +ipaddress-port-feedback('form[ngModelName].$error.ipaddressPort', name)
+    +ignite-form-field-text(lbl, model, name, '!('+enabled+')', false, placeholder, tip)(data-ipaddress='true' data-ipaddress-with-port='true')
+        +ipaddress-feedback(name)
+        +ipaddress-port-feedback(name)
 
 //- Mixin for text field.
 mixin text-enabled(lbl, model, name, enabled, required, placeholder, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-text(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-placeholder=placeholder
-            data-ng-disabled='!(#{enabled})'
-            data-ng-required=required
-        )
+    if enabled === false || enabled === true 
+        -var disabled = !enabled
+    else
+        -var disabled = '!('+enabled+')'
+        
+    +ignite-form-field-text(lbl, model, name, disabled, required, placeholder, tip)
+        if  block
+            block
 
 //- Mixin for text field.
 mixin text(lbl, model, name, required, placeholder, tip)
-    +text-enabled(lbl, model, name, 'true', required, placeholder, tip)
+    +ignite-form-field-text(lbl, model, name, false, required, placeholder, tip)
+        if  block
+            block
 
 //- Mixin for text field with enabled condition with options.
 mixin text-options(lbl, model, name, options, enabled, required, placeholder, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-datalist(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-options=options
-            data-placeholder=placeholder
-            data-ng-disabled='!(#{enabled})'
-            data-ng-required=required
-        )
+    +form-field-datalist(lbl, model, name, '!('+enabled+')', required, placeholder, options, tip)
 
 //- Mixin for required numeric field.
 mixin number-required(lbl, model, name, enabled, required, placeholder, min, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-number(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-ng-required=required
-            data-ng-disabled='!(#{enabled})'
-            data-placeholder=placeholder
-            data-min=min
-        )
+    +form-field-number(lbl, model, name, '!('+enabled+')', required, placeholder, min, false, false, tip)
 
 //- Mixin for required numeric field with maximum and minimum limit.
 mixin number-min-max(lbl, model, name, enabled, placeholder, min, max, tip)
-    +number-min-max-step(lbl, model, name, enabled, placeholder, min, max, '1', tip)
+    +form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, max, '1', tip)
 
 //- Mixin for required numeric field with maximum and minimum limit.
 mixin number-min-max-step(lbl, model, name, enabled, placeholder, min, max, step, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-number(
-            data-id=name
-            data-name=name
-            data-ng-model=model
-            data-ng-disabled='!(#{enabled})'
-            data-placeholder=placeholder
-            data-min=min
-            data-max=max
-            data-step=step
-        )
+    +form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, max, step, tip)
 
 //- Mixin for numeric field.
 mixin number(lbl, model, name, enabled, placeholder, min, tip)
-    +number-required(lbl, model, name, enabled, 'false', placeholder, min, tip)
+    +form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, false, false, tip)
 
 //- Mixin for required dropdown field.
 mixin dropdown-required-empty(lbl, model, name, enabled, required, placeholder, placeholderEmpty, options, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-dropdown(
-            data-id=name
-            data-name=name
-            data-options=options
-            data-ng-model=model
-            data-ng-disabled='!(#{enabled})'
-            data-ng-required=required
-            data-placeholder='{{#{options}.length > 0 ? "#{placeholder}" : "#{placeholderEmpty}"}}'
-        )
+    if enabled === false || enabled === true 
+        -var disabled = !enabled
+    else
+        -var disabled = '!('+enabled+')'
 
+    +form-field-dropdown(lbl, model, name, disabled, required, false, placeholder, placeholderEmpty, options, tip)
+        if  block
+            block
+                
 //- Mixin for required dropdown field.
 mixin dropdown-required(lbl, model, name, enabled, required, placeholder, options, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-dropdown(
-            data-id=name
-            data-name=name
-            data-options=options
-            data-ng-model=model
-            data-ng-disabled='!(#{enabled})'
-            data-ng-required=required
-            data-placeholder=placeholder
-        )
+    if enabled === false || enabled === true 
+        -var disabled = !enabled
+    else
+        -var disabled = '!('+enabled+')'
+
+    +form-field-dropdown(lbl, model, name, disabled, required, false, placeholder, '', options, tip)
+        if  block
+            block
 
 //- Mixin for dropdown field.
 mixin dropdown(lbl, model, name, enabled, placeholder, options, tip)
-    +dropdown-required(lbl, model, name, enabled, 'false', placeholder, options, tip)
+    if enabled === false || enabled === true 
+        -var disabled = !enabled
+    else
+        -var disabled = '!('+enabled+')'
+
+    +form-field-dropdown(lbl, model, name, disabled, false, false, placeholder, '', options, tip)
+        if  block
+            block
 
 //- Mixin for dropdown-multiple field.
 mixin dropdown-multiple(lbl, model, name, enabled, placeholder, placeholderEmpty, options, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | !{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-dropdown(
-            data-id=name
-            data-name=name
-            data-multiple='true'
-            data-options=options
-            data-ng-model=model
-            data-ng-disabled='!(#{enabled})'
-            data-placeholder='{{ #{options}.length > 0 ? "#{placeholder}" : "#{placeholderEmpty}" }}'
-            data-disabled='!#{options}.length'
-        )
+    if enabled === false || enabled === true 
+        -var disabled = !enabled
+    else
+        -var disabled = '!('+enabled+')'
+
+    +form-field-dropdown(lbl, model, name, disabled, false, true, placeholder, placeholderEmpty, options, tip)
+        if  block
+            block
 
 //- Mixin for table text field.
-mixin table-text-field(field, items, valid, save, placeholder, newItem)
+mixin table-text-field(name, model, items, valid, save, placeholder, newItem)
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
     -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
 
@@ -377,21 +250,22 @@ mixin table-text-field(field, items, valid, save, placeholder, newItem)
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    ignite-form-field-input-text(
-        data-name='#{field}{{ $index || "" }}'
-        data-ng-model=field
-        data-ng-required='true'
-        data-placeholder=placeholder
-        data-ignite-unique=items
-        data-ignite-form-field-input-autofocus='true'
-        ignite-on-enter=onEnter
-        ignite-on-escape=onEscape
-        ng-blur=onBlur
-    )
+    if block
         block
+
+    .input-tip
+        +ignite-form-field-input(name, model, false, 'true', placeholder)(
+            data-ignite-unique=items
+            data-ignite-form-field-input-autofocus='true'
+            ng-blur=onBlur
+            ignite-on-enter=onEnter
+            ignite-on-escape=onEscape
+        )
 
 //- Mixin for table java class field.
-mixin table-java-class-field(lbl, field, items, valid, save, newItem)
+mixin table-java-class-field(lbl, name, model, items, valid, save, newItem)
+    -var errLbl = lbl.substring(0, lbl.length - 1)
+
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
     -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
 
@@ -400,33 +274,34 @@ mixin table-java-class-field(lbl, field, items, valid, save, newItem)
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    ignite-form-field-input-text(
-        data-name='#{field}{{ $index || "" }}'
-        data-ng-model=field
-        data-ng-required='true'
-        data-ignite-unique=items
-        data-ignite-form-field-input-autofocus='true'
-
-        data-java-identifier='true'
-        data-java-package-specified='true'
-        data-java-keywords='true'
-        data-java-built-in-class='true'
-
-        data-placeholder='Enter fully qualified class name'
-
-        ignite-on-enter=onEnter
-        ignite-on-escape=onEscape
-        ng-blur=onBlur
-    )
-        +error-feedback('form[ngModelName].$error.javaBuiltInClass', 'javaBuiltInClass', lbl + ' should not be the Java built-in class!')
-        +error-feedback('form[ngModelName].$error.javaKeywords', 'javaKeywords', lbl + ' could not contains reserved Java keyword!')
-        +error-feedback('form[ngModelName].$error.javaPackageSpecified', 'javaPackageSpecified', lbl + ' does not have package specified!')
-        +error-feedback('form[ngModelName].$error.javaIdentifier', 'javaIdentifier', lbl + ' is invalid Java identifier!')
-
+    if block
         block
+
+    +form-field-feedback(name, 'javaBuiltInClass', errLbl + ' should not be the Java built-in class!')
+    +form-field-feedback(name, 'javaKeywords', errLbl + ' could not contains reserved Java keyword!')
+    +form-field-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
+    +form-field-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
+
+    if block
+        block
+
+    .input-tip
+        +ignite-form-field-input(name, model, false, 'true', 'Enter fully qualified class name')(
+            data-java-identifier='true'
+            data-java-package-specified='true'
+            data-java-keywords='true'
+            data-java-built-in-class='true'
+
+            data-ignite-unique=items
+            data-ignite-form-field-input-autofocus='true'
+
+            ng-blur=onBlur
+            ignite-on-enter=onEnter
+            ignite-on-escape=onEscape
+        )
 
 //- Mixin for table java package field.
-mixin table-java-package-field(field, items, valid, save, newItem)
+mixin table-java-package-field(name, model, items, valid, save, newItem)
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
     -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
 
@@ -435,23 +310,28 @@ mixin table-java-package-field(field, items, valid, save, newItem)
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    ignite-form-field-input-text(
-        data-name='#{field}{{ $index || "" }}'
-        data-ng-model=field
-        data-ng-required='true'
-        data-placeholder='Enter package name'
-        data-java-keywords='true'
-        data-java-package-name='true'
-        data-ignite-unique=items
-        data-ignite-form-field-input-autofocus='true'
-        ignite-on-enter=onEnter
-        ignite-on-escape=onEscape
-        ng-blur=onBlur
-    )
+    +form-field-feedback(name, 'javaKeywords', 'Package name could not contains reserved Java keyword!')
+    +form-field-feedback(name, 'javaPackageName', 'Package name is invalid!')
+
+    if block
         block
+
+    .input-tip
+        +ignite-form-field-input(name, model, false, 'true', 'Enter package name')(
+            data-java-keywords='true'
+            data-java-package-name='true'
+
+            data-ignite-unique=items
+            data-ignite-form-field-input-autofocus='true'
+
+            ng-blur=onBlur
+            ignite-on-enter=onEnter
+            ignite-on-escape=onEscape
+        )
+
 
 //- Mixin for table address field.
-mixin table-address-field(field, items, valid, save, newItem, portRange)
+mixin table-address-field(name, model, items, valid, save, newItem, portRange)
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
     -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
 
@@ -460,24 +340,27 @@ mixin table-address-field(field, items, valid, save, newItem, portRange)
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    ignite-form-field-input-text(
-        data-name='#{field}{{ $index || "" }}'
-        data-ng-model=field
-        data-ng-required='true'
-        data-placeholder='IP address:port'
-        data-ipaddress='true'
-        data-ipaddress-with-port='true'
-        data-ipaddress-with-port-range=portRange ? 'true' : null
-        data-ignite-unique=items
-        data-ignite-form-field-input-autofocus='true'
-        ignite-on-enter=onEnter
-        ignite-on-escape=onEscape
-        ng-blur=onBlur
-    )
+    +ipaddress-feedback(name)
+    +ipaddress-port-feedback(name)
+    +ipaddress-port-range-feedback(name)
+
+    if block
         block
+
+    .input-tip
+        +ignite-form-field-input(name, model, false, 'true', 'IP address:port')(
+            data-ipaddress='true'
+            data-ipaddress-with-port='true'
+            data-ipaddress-with-port-range=portRange ? 'true' : null
+            data-ignite-unique=items
+            data-ignite-form-field-input-autofocus='true'
+            ng-blur=onBlur
+            ignite-on-enter=onEnter
+            ignite-on-escape=onEscape
+        )
 
 //- Mixin for table UUID field.
-mixin table-uuid-field(field, items, valid, save, newItem, portRange)
+mixin table-uuid-field(name, model, items, valid, save, newItem, portRange)
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
     -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
 
@@ -486,26 +369,25 @@ mixin table-uuid-field(field, items, valid, save, newItem, portRange)
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    ignite-form-field-input-text(
-        data-name='#{field}{{ $index || "" }}'
-        data-ng-model=field
-        data-ng-required='true'
-        data-placeholder='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-        data-uuid='true'
-        data-ignite-unique=items
-        data-ignite-form-field-input-autofocus='true'
-        ignite-on-enter=onEnter
-        ignite-on-escape=onEscape
-        ng-blur=onBlur
-    )
+    if block
         block
+
+    .input-tip
+        +ignite-form-field-input(name, model, false, 'true', 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx')(
+            data-uuid='true'
+            data-ignite-unique=items
+            data-ignite-form-field-input-autofocus='true'
+            ng-blur=onBlur
+            ignite-on-enter=onEnter
+            ignite-on-escape=onEscape
+        )
 
 //- Mixin for table save button.
    "||" used instead of "&&" to workaround escaping of "&&" to "&amp;&amp;"
 mixin table-save-button(valid, save, newItem)
     -var reset = newItem ? 'group.add = []' : 'field.edit = false'
 
-    i.fa.fa-floppy-o(
+    i.fa.fa-floppy-o.form-field-save(
         ng-show=valid
         ng-click='!(#{valid}) || (#{save}); !(#{valid}) || (#{reset});'
         bs-tooltip
@@ -546,36 +428,36 @@ mixin evictionPolicy(model, name, enabled, required, tip)
     -var kind = model + '.kind'
     -var policy = model + '[' + kind + ']'
 
-    +dropdown-required('Eviction policy:', kind, name + 'Kind', enabled, required, 'Not set',
+    +dropdown-required('Eviction policy:', kind, name + '+ "Kind"', enabled, required, 'Not set',
         '[\
             {value: "LRU", label: "LRU"},\
             {value: "FIFO", label: "FIFO"},\
             {value: "SORTED", label: "Sorted"},\
             {value: undefined, label: "Not set"}\
         ]', tip)
-    span(ng-if=kind)
+    span(ng-if=kind ng-init='__ = {};')
         a.customize(ng-show='__.expanded' ng-click='__.expanded = false') Hide settings
         a.customize(ng-hide='__.expanded' ng-click='__.expanded = true') Show settings
         .panel-details(ng-if='__.expanded')
             .details-row
-                +number('Batch size', policy + '.batchSize', name + 'batchSize', enabled, '1', '0',
+                +number('Batch size', policy + '.batchSize', name + '+ "batchSize"', enabled, '1', '0',
                     'Number of entries to remove on shrink')
             .details-row
-                +number('Max memory size', policy + '.maxMemorySize', name + 'maxMemorySize', enabled, '0', '0',
+                +number('Max memory size', policy + '.maxMemorySize', name + '+ "maxMemorySize"', enabled, '0', '0',
                     'Maximum allowed cache size in bytes')
             .details-row
-                +number('Max size', policy + '.maxSize', name + 'maxSize', enabled, '100000', '0',
+                +number('Max size', policy + '.maxSize', name + '+ "maxSize"', enabled, '100000', '0',
                     'Maximum allowed size of cache before entry will start getting evicted')
 
 //- Mixin for clusters dropdown.
 mixin clusters(model, tip)
     +dropdown-multiple('<span>Clusters:</span>' + '<a ui-sref="base.configuration.clusters({linkId: linkId()})"> (add)</a>',
-        model + '.clusters', 'clusters', 'true', 'Choose clusters', 'No clusters configured', 'clusters', tip)
+        model + '.clusters', '"clusters"', true, 'Choose clusters', 'No clusters configured', 'clusters', tip)
 
 //- Mixin for caches dropdown.
 mixin caches(model, tip)
     +dropdown-multiple('<span>Caches:</span>' + '<a ui-sref="base.configuration.caches({linkId: linkId()})"> (add)</a>',
-        model + '.caches', 'caches', 'true', 'Choose caches', 'No caches configured', 'caches', tip)
+        model + '.caches', '"caches"', true, 'Choose caches', 'No caches configured', 'caches', tip)
 
 //- Mixin for XML and Java preview.
 mixin preview-xml-java(master, generator, detail)
@@ -639,31 +521,22 @@ mixin table-pair-edit(tbl, prefix, keyPlaceholder, valPlaceholder, keyJavaBuiltI
 
 //- Mixin for DB dialect.
 mixin dialect(lbl, model, name, required, tipTitle, genericDialectName, placeholder)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | #{tipTitle}
-            ul: li #{genericDialectName}
-                li Oracle database
-                li IBM DB2
-                li Microsoft SQL Server
-                li MySQL
-                li PostgreSQL
-                li H2 database
-        ignite-form-field-dropdown(
-        data-id=name
-        data-name=name
-        data-options='[\
-                {value: "Generic", label: "#{genericDialectName}"},\
+    +dropdown(lbl, model, name, required, placeholder, '[\
+                {value: "Generic", label: "' + genericDialectName + '"},\
                 {value: "Oracle", label: "Oracle"},\
                 {value: "DB2", label: "IBM DB2"},\
                 {value: "SQLServer", label: "Microsoft SQL Server"},\
                 {value: "MySQL", label: "MySQL"},\
                 {value: "PostgreSQL", label: "PostgreSQL"},\
                 {value: "H2", label: "H2 database"}\
-            ]'
-        data-ng-model=model
-        data-ng-required=required
-        data-placeholder=placeholder
-        )
+        ]',
+        tipTitle + 
+        '<ul>\
+            <li>' + genericDialectName + '</li>\
+            <li>Oracle database</li>\
+            <li>IBM DB2</li>\
+            <li>Microsoft SQL Server</li>\
+            <li>MySQL</li>\
+            <li>PostgreSQL</li>\
+            <li>H2 database</li>\
+        </ul>')

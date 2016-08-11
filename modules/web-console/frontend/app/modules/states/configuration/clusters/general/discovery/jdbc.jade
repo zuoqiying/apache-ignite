@@ -22,7 +22,7 @@ include ../../../../../../../app/helpers/jade/mixins.jade
 
 div
     .details-row
-        +checkbox('DB schema should be initialized by Ignite', model + '.initSchema', 'initSchema',
+        +checkbox('DB schema should be initialized by Ignite', model + '.initSchema', '"initSchema"',
             'Flag indicating whether DB schema should be initialized by Ignite or was explicitly created by user')
     .details-row
         +text('Data source bean name:', model + '.dataSourceBean',

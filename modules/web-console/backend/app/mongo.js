@@ -618,7 +618,11 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             Custom: {
                 class: String
             }
-        }
+        },
+        cacheKeyConfiguration: [{
+            typeName: String,
+            affinityKeyFieldName: String
+        }]
     });
 
     ClusterSchema.index({name: 1, space: 1}, {unique: true});

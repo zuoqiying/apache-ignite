@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'secondaryFileSystem'
 -var model = 'backupItem'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label(id="secondaryFileSystem-title") Secondary file system
@@ -33,12 +33,12 @@ form.panel.panel-default(name=form novalidate)
                 -var secondaryFileSystem = model + '.secondaryFileSystem'
 
                 .settings-row
-                    +checkbox('Enabled', enabled, 'secondaryFileSystemEnabled', 'Secondary file system enabled flag')
+                    +checkbox('Enabled', enabled, '"secondaryFileSystemEnabled"', 'Secondary file system enabled flag')
                 .settings-row
-                    +text-enabled('URI:', secondaryFileSystem + '.uri', 'hadoopURI', enabled, 'false', 'hdfs://[namenodehost]:[port]/[path]', 'URI of file system')
+                    +text-enabled('URI:', secondaryFileSystem + '.uri', '"hadoopURI"', enabled, 'false', 'hdfs://[namenodehost]:[port]/[path]', 'URI of file system')
                 .settings-row
-                    +text-enabled('Config path:', secondaryFileSystem + '.cfgPath', 'cfgPath', enabled, 'false', 'Path to additional config', 'Additional path to Hadoop configuration')
+                    +text-enabled('Config path:', secondaryFileSystem + '.cfgPath', '"cfgPath"', enabled, 'false', 'Path to additional config', 'Additional path to Hadoop configuration')
                 .settings-row
-                    +text-enabled('User name:', secondaryFileSystem + '.userName', 'userName', enabled, 'false', 'Input user name', 'User name')
+                    +text-enabled('User name:', secondaryFileSystem + '.userName', '"userName"', enabled, 'false', 'Input user name', 'User name')
             .col-sm-6
                 +preview-xml-java(model, 'igfsSecondFS')

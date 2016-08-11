@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'memory'
 -var model = 'backupItem'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Memory
@@ -30,7 +30,7 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +dropdown('Mode:', model + '.memoryMode', 'memoryMode', 'true', 'ONHEAP_TIERED',
+                    +dropdown('Mode:', model + '.memoryMode', '"memoryMode"', 'true', 'ONHEAP_TIERED',
                         '[\
                             {value: "ONHEAP_TIERED", label: "ONHEAP_TIERED"},\
                             {value: "OFFHEAP_TIERED", label: "OFFHEAP_TIERED"},\
@@ -61,7 +61,7 @@ form.panel.panel-default(name=form novalidate)
                             </li>\
                         </ul>')
                 .settings-row(data-ng-show=model + '.memoryMode !== "OFFHEAP_VALUES"')
-                    +number-required('Off-heap max memory:', model + '.offHeapMaxMemory', 'offHeapMaxMemory', 'true',
+                    +number-required('Off-heap max memory:', model + '.offHeapMaxMemory', '"offHeapMaxMemory"', 'true',
                         model + '.memoryMode === "OFFHEAP_TIERED"', '-1', '-1',
                         'Sets maximum amount of memory available to off-heap storage<br/>\
                         Possible values are:\
@@ -75,14 +75,14 @@ form.panel.panel-default(name=form novalidate)
                     -var swapEnabled = model + '.swapEnabled'
                     -var offHeapMaxMemory = model + '.offHeapMaxMemory'
 
-                    +evictionPolicy(model + '.evictionPolicy', 'evictionPolicy', 'true',
+                    +evictionPolicy(model + '.evictionPolicy', '"evictionPolicy"', 'true',
                         onHeapTired  + ' && (' + swapEnabled + '|| _.isNumber(' + offHeapMaxMemory + ') &&' + offHeapMaxMemory + ' >= 0)',
                         'Optional cache eviction policy<br/>\
                         Must be set for entries to be evicted from on - heap to off - heap or swap')
                 .settings-row
-                    +number('Start size:', model + '.startSize', 'startSize', 'true', '1500000', '0',
+                    +number('Start size:', model + '.startSize', '"startSize"', 'true', '1500000', '0',
                         'Initial cache size which will be used to pre-create internal hash table after start')
                 .settings-row
-                    +checkbox('Swap enabled', model + '.swapEnabled', 'swapEnabled', 'Flag indicating whether swap storage is enabled or not for this cache')
+                    +checkbox('Swap enabled', model + '.swapEnabled', '"swapEnabled"', 'Flag indicating whether swap storage is enabled or not for this cache')
             .col-sm-6
                 +preview-xml-java(model, 'cacheMemory')

@@ -35,17 +35,17 @@ include ../../app/helpers/jade/mixins.jade
                 hr
             .bs-affix-fix
             div(bs-collapse='' data-allow-multiple='true' ng-model='ui.activePanels')
-                form.form-horizontal(name='ui.inputForm' ng-show='contentVisible()' novalidate)
-                    .panel-group
-                        ignite-configuration-igfs-general
+                form.form-horizontal(name='ui.inputForm' novalidate)
+                    .panel-group(ng-if='contentVisible()')
+                        include ../../app/modules/states/configuration/igfs/general.jade
 
                         +advanced-options-toggle-default
 
                         div(ng-show='ui.expanded')
-                            ignite-configuration-igfs-secondary
-                            ignite-configuration-igfs-ipc
-                            ignite-configuration-igfs-fragmentizer
-                            ignite-configuration-igfs-dual
-                            ignite-configuration-igfs-misc
+                            include ../../app/modules/states/configuration/igfs/secondary.jade
+                            include ../../app/modules/states/configuration/igfs/ipc.jade
+                            include ../../app/modules/states/configuration/igfs/fragmentizer.jade
+                            include ../../app/modules/states/configuration/igfs/dual.jade
+                            include ../../app/modules/states/configuration/igfs/misc.jade
 
                             +advanced-options-toggle-default

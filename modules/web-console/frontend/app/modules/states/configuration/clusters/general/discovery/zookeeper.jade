@@ -16,21 +16,23 @@
 
 include ../../../../../../../app/helpers/jade/mixins.jade
 
+-var form = 'general'
 -var discoveryKind = 'ZooKeeper'
 -var required = 'backupItem.discovery.kind == "' + discoveryKind + '"'
 -var model = 'backupItem.discovery.ZooKeeper'
+-var modelRetryPolicyKind = model + '.retryPolicy.kind'
 
 div
     .details-row
-        +java-class('Curator:', model + '.curator', 'curator', 'true', 'false',
+        +java-class('Curator:', model + '.curator', '"curator"', 'true', 'false',
             'The Curator framework in use<br/>\
             By default generates curator of org.apache.curator. framework.imps.CuratorFrameworkImpl\
             class with configured connect string, retry policy, and default session and connection timeouts')
     .details-row
-        +text('Connect string:', model + '.zkConnectionString', ZooKeeper + 'ConnectionString', required, 'host:port[chroot][,host:port[chroot]]',
+        +text('Connect string:', model + '.zkConnectionString', '"' + discoveryKind + 'ConnectionString"', required, 'host:port[chroot][,host:port[chroot]]',
             'When "IGNITE_ZK_CONNECTION_STRING" system property is not configured this property will be used')
     .details-row
-        +dropdown('Retry policy:', model + '.retryPolicy.kind', 'retryPolicy', 'true', 'Default',
+        +dropdown('Retry policy:', model + '.retryPolicy.kind', '"retryPolicy"', 'true', 'Default',
             '[\
                 {value: "ExponentialBackoff", label: "Exponential backoff"},\
                 {value: "BoundedExponentialBackoff", label: "Bounded exponential backoff"},\
@@ -54,21 +56,28 @@ div
             </ul>')
     .details-row(ng-show='#{model}.retryPolicy.kind')
         .panel-details
-            ignite-configuration-clusters-general-discovery-zookeeper-exponential(ng-show='#{model}.retryPolicy.kind === "ExponentialBackoff"')
-            ignite-configuration-clusters-general-discovery-zookeeper-bounded-exponential(ng-show='#{model}.retryPolicy.kind === "BoundedExponentialBackoff"')
-            ignite-configuration-clusters-general-discovery-zookeeper-until-elapsed(ng-show='#{model}.retryPolicy.kind === "UntilElapsed"')
-            ignite-configuration-clusters-general-discovery-zookeeper-n-times(ng-show='#{model}.retryPolicy.kind === "NTimes"')
-            ignite-configuration-clusters-general-discovery-zookeeper-one-time(ng-show='#{model}.retryPolicy.kind === "OneTime"')
-            ignite-configuration-clusters-general-discovery-zookeeper-forever(ng-show='#{model}.retryPolicy.kind === "Forever"')
-            ignite-configuration-clusters-general-discovery-zookeeper-custom(ng-show='#{model}.retryPolicy.kind === "Custom"')
+                div(ng-show='#{modelRetryPolicyKind} === "ExponentialBackoff"')
+                    include ./zookeeper/retrypolicy/exponential-backoff.jade
+                div(ng-show='#{modelRetryPolicyKind} === "BoundedExponentialBackoff"')
+                    include ./zookeeper/retrypolicy/bounded-exponential-backoff.jade
+                div(ng-show='#{modelRetryPolicyKind} === "UntilElapsed"')
+                    include ./zookeeper/retrypolicy/until-elapsed.jade
+                div(ng-show='#{modelRetryPolicyKind} === "NTimes"')
+                    include ./zookeeper/retrypolicy/n-times.jade
+                div(ng-show='#{modelRetryPolicyKind} === "OneTime"')
+                    include ./zookeeper/retrypolicy/one-time.jade
+                div(ng-show='#{modelRetryPolicyKind} === "Forever"')
+                    include ./zookeeper/retrypolicy/forever.jade
+                div(ng-show='#{modelRetryPolicyKind} === "Custom"')
+                    include ./zookeeper/retrypolicy/custom.jade
     .details-row
-        +text('Base path:', model + '.basePath', 'basePath', 'false', '/services', 'Base path for service registration')
+        +text('Base path:', model + '.basePath', '"basePath"', 'false', '/services', 'Base path for service registration')
     .details-row
-        +text('Service name:', model + '.serviceName', 'serviceName', 'false', 'ignite',
+        +text('Service name:', model + '.serviceName', '"serviceName"', 'false', 'ignite',
             'Service name to use, as defined by Curator&#39;s ServiceDiscovery recipe<br/>\
             In physical ZooKeeper terms, it represents the node under basePath, under which services will be registered')
     .details-row
-        +checkbox('Allow duplicate registrations', model + '.allowDuplicateRegistrations', 'allowDuplicateRegistrations',
+        +checkbox('Allow duplicate registrations', model + '.allowDuplicateRegistrations', '"allowDuplicateRegistrations"',
             'Whether to register each node only once, or if duplicate registrations are allowed<br/>\
             Nodes will attempt to register themselves, plus those they know about<br/>\
             By default, duplicate registrations are not allowed, but you might want to set this property to <b>true</b> if you have multiple network interfaces or if you are facing troubles')

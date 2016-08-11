@@ -16,9 +16,10 @@
 
 include ../../../../../app/helpers/jade/mixins.jade
 
+-var form = 'general'
 -var model = 'backupItem'
 
-form.panel.panel-default(name='general' novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle)
         ignite-form-panel-chevron
         label General
@@ -27,11 +28,11 @@ form.panel.panel-default(name='general' novalidate)
         .panel-body
             .col-sm-6
                 .settings-row
-                    +text('Name:', model + '.name', 'igfsName', 'true', 'Input name', 'IGFS name')
+                    +text('Name:', model + '.name', '"igfsName"', 'true', 'Input name', 'IGFS name')
                 .settings-row
                     +clusters(model, 'Associate clusters with the current IGFS')
                 .settings-row
-                    +dropdown('IGFS mode:', model + '.defaultMode', 'defaultMode', 'true', 'DUAL_ASYNC',
+                    +dropdown('IGFS mode:', model + '.defaultMode', '"defaultMode"', 'true', 'DUAL_ASYNC',
                     '[\
                         {value: "PRIMARY", label: "PRIMARY"},\
                         {value: "PROXY", label: "PROXY"},\
@@ -46,7 +47,7 @@ form.panel.panel-default(name='general' novalidate)
                         <li>DUAL_ASYNC - in this mode IGFS will cache files locally and also <b> asynchronously </b> write them through to secondary file system</li>\
                     </ul>')
                 .settings-row
-                    +number('Group size:', model + '.affinnityGroupSize', 'affinnityGroupSize', 'true', '512', '1',
+                    +number('Group size:', model + '.affinnityGroupSize', '"affinnityGroupSize"', 'true', '512', '1',
                         'Size of the group in blocks<br/>\
                         Required for construction of affinity mapper in IGFS data cache')
             .col-sm-6

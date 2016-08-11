@@ -34,31 +34,33 @@ include ../../app/helpers/jade/mixins.jade
                 hr
             .bs-affix-fix
             div(bs-collapse='' data-allow-multiple='true' ng-model='ui.activePanels')
-                form.form-horizontal(name='ui.inputForm' ng-show='contentVisible()' novalidate)
-                    .panel-group
-                        ignite-configuration-clusters-general
+                form.form-horizontal(name='ui.inputForm' novalidate)
+                    .panel-group(ng-if='contentVisible()')
+                        include ../../app/modules/states/configuration/clusters/general.jade
 
                         +advanced-options-toggle-default
 
                         div(ng-show='ui.expanded')
-                            ignite-configuration-clusters-atomic
-                            ignite-configuration-clusters-binary
-                            ignite-configuration-clusters-collision
-                            ignite-configuration-clusters-communication
-                            ignite-configuration-clusters-connector
-                            ignite-configuration-clusters-deployment
-                            ignite-configuration-clusters-discovery
-                            ignite-configuration-clusters-events
-                            ignite-configuration-clusters-failover
-                            ignite-configuration-clusters-igfs
-                            ignite-configuration-clusters-logger
-                            ignite-configuration-clusters-marshaller
-                            ignite-configuration-clusters-metrics
-                            ignite-configuration-clusters-ssl
-                            ignite-configuration-clusters-swap
-                            ignite-configuration-clusters-thread
-                            ignite-configuration-clusters-time
-                            ignite-configuration-clusters-transactions
-                            ignite-configuration-user-attributes
+                            
+                            include ../../app/modules/states/configuration/clusters/atomic.jade
+                            include ../../app/modules/states/configuration/clusters/binary.jade
+                            include ../../app/modules/states/configuration/clusters/cache-key-cfg.jade
+                            include ../../app/modules/states/configuration/clusters/collision.jade
+                            include ../../app/modules/states/configuration/clusters/communication.jade
+                            include ../../app/modules/states/configuration/clusters/connector.jade
+                            include ../../app/modules/states/configuration/clusters/deployment.jade
+                            include ../../app/modules/states/configuration/clusters/discovery.jade
+                            include ../../app/modules/states/configuration/clusters/events.jade
+                            include ../../app/modules/states/configuration/clusters/failover.jade
+                            include ../../app/modules/states/configuration/clusters/igfs.jade
+                            include ../../app/modules/states/configuration/clusters/logger.jade
+                            include ../../app/modules/states/configuration/clusters/marshaller.jade
+                            include ../../app/modules/states/configuration/clusters/metrics.jade
+                            include ../../app/modules/states/configuration/clusters/ssl.jade
+                            include ../../app/modules/states/configuration/clusters/swap.jade
+                            include ../../app/modules/states/configuration/clusters/thread.jade
+                            include ../../app/modules/states/configuration/clusters/time.jade
+                            include ../../app/modules/states/configuration/clusters/transactions.jade
+                            include ../../app/modules/states/configuration/clusters/attributes.jade
 
                             +advanced-options-toggle-default

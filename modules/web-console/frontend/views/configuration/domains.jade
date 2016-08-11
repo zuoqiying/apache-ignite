@@ -59,8 +59,8 @@ include ../../app/helpers/jade/mixins.jade
                 hr
             .bs-affix-fix
             div(bs-collapse='' data-allow-multiple='true' ng-model='ui.activePanels')
-                form.form-horizontal(name='ui.inputForm' ng-show='contentVisible()' novalidate)
-                    .panel-group
-                        ignite-configuration-domains-general
-                        ignite-configuration-domains-query
-                        ignite-configuration-domains-store
+                form.form-horizontal(name='ui.inputForm' novalidate)
+                    .panel-group(ng-if='contentVisible()')
+                        include ../../app/modules/states/configuration/domains/general.jade
+                        include ../../app/modules/states/configuration/domains/query.jade
+                        include ../../app/modules/states/configuration/domains/store.jade

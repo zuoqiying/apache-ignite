@@ -569,6 +569,38 @@ $generatorSpring.clusterBinary = function(binary, res) {
     return res;
 };
 
+// Generate cache key configurations.
+$generatorXml.clusterCacheKeyConfiguration = function(keyCfgs, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    if (_.isEmpty(keyCfgs))
+        return res;
+
+    res.startBlock('<property name="cacheKeyConfiguration">');
+    res.startBlock('<list>');
+
+    _.forEach(keyCfgs, (cfg) => {
+        if (cfg.typeName) {
+            res.startBlock('<bean class="org.apache.ignite.cache.CacheKeyConfiguration">');
+
+            if (cfg.affinityKeyFieldName) {
+                $generatorXml.constructorArg(res, -1, cfg, 'typeName');
+                $generatorXml.constructorArg(res, -1, cfg, 'affinityKeyFieldName');
+            }
+            else
+                $generatorXml.constructorArg(res, -1, cfg, 'typeName');
+
+            res.endBlock('</bean>');
+        }
+    });
+
+    res.endBlock('</list>');
+    res.endBlock('</property>');
+
+    return res;
+};
+
 // Generate collision group.
 $generatorSpring.clusterCollision = function(collision, res) {
     if (!res)
@@ -1261,20 +1293,12 @@ $generatorSpring.cacheNodeFilter = function(cache, igfss, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    switch (_.get(cache, 'nodeFilter.kind')) {
-        case 'Exclude':
-            res.startBlock('<property name="nodeFilter">');
-            res.startBlock('<bean class="org.apache.ignite.tests.p2p.ExcludeNodeFilter" >');
-            res.startBlock('<constructor-arg>');
-            res.startBlock('<bean class="java.util.UUID" factory-method="fromString">');
-            res.line('<constructor-arg value="' + cache.nodeFilter.Exclude.nodeId + '"/>');
-            res.endBlock('</bean>');
-            res.endBlock('</constructor-arg>');
-            res.endBlock('</bean>');
-            res.endBlock('</property>');
+    const kind = _.get(cache, 'nodeFilter.kind');
 
-            break;
+    if (_.isNil(cache.nodeFilter[kind]))
+        return res;
 
+    switch (kind) {
         case 'IGFS':
             const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
 
@@ -1962,6 +1986,8 @@ $generatorSpring.clusterConfiguration = function(cluster, clientNearCfg, res) {
     $generatorSpring.clusterAtomics(cluster.atomicConfiguration, res);
 
     $generatorSpring.clusterBinary(cluster.binaryConfiguration, res);
+
+    $generatorSpring.clusterCacheKeyConfiguration(cluster.cacheKeyConfiguration, res);
 
     $generatorSpring.clusterCollision(cluster.collision, res);
 

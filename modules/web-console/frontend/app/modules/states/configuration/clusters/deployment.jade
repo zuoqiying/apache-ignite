@@ -21,7 +21,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var exclude = model + '.peerClassLoadingLocalClassPathExclude'
 -var enabled = 'backupItem.peerClassLoadingEnabled'
 
-form.panel.panel-default(name='deployment' novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Class deployment
@@ -32,7 +32,7 @@ form.panel.panel-default(name='deployment' novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +dropdown('Deployment mode:', model + '.deploymentMode', 'deploymentMode', 'true', 'SHARED',
+                    +dropdown('Deployment mode:', model + '.deploymentMode', '"deploymentMode"', 'true', 'SHARED',
                         '[\
                             {value: "PRIVATE", label: "PRIVATE"},\
                             {value: "ISOLATED", label: "ISOLATED"}, \
@@ -48,15 +48,17 @@ form.panel.panel-default(name='deployment' novalidate)
                             <li>CONTINUOUS - same as SHARED deployment mode, but resources will not be undeployed even after all master nodes left grid</li>\
                         </ul>')
                 .settings-row
-                    +checkbox('Enable peer class loading', model + '.peerClassLoadingEnabled', 'peerClassLoadingEnabled', 'Enables/disables peer class loading')
+                    +checkbox('Enable peer class loading', model + '.peerClassLoadingEnabled', '"peerClassLoadingEnabled"', 'Enables/disables peer class loading')
                 .settings-row
-                    +number('Missed resources cache size:', model + '.peerClassLoadingMissedResourcesCacheSize', 'peerClassLoadingMissedResourcesCacheSize', enabled, '100', '0',
+                    +number('Missed resources cache size:', model + '.peerClassLoadingMissedResourcesCacheSize', '"peerClassLoadingMissedResourcesCacheSize"', enabled, '100', '0',
                         'If size greater than 0, missed resources will be cached and next resource request ignored<br/>\
                         If size is 0, then request for the resource will be sent to the remote node every time this resource is requested')
                 .settings-row
-                    +number('Pool size:', model + '.peerClassLoadingThreadPoolSize', 'peerClassLoadingThreadPoolSize', enabled, '2', '1', 'Thread pool size to use for peer class loading')
+                    +number('Pool size:', model + '.peerClassLoadingThreadPoolSize', '"peerClassLoadingThreadPoolSize"', enabled, '2', '1', 'Thread pool size to use for peer class loading')
                 .settings-row
-                    ignite-form-group(ng-model=exclude ng-form=form)
+                    +ignite-form-group(ng-model=exclude ng-form=form)
+                        -var uniqueTip = 'Such package already exists'
+
                         ignite-form-field-label
                             | Local class path exclude
                         ignite-form-group-tooltip
@@ -65,52 +67,44 @@ form.panel.panel-default(name='deployment' novalidate)
                         ignite-form-group-add(ng-show='#{enabled}' ng-click='(group.add = [{}])')
                             | Add package name.
 
-                        -var uniqueTip = 'Such package already exists'
-                        -var tipJavaPackageName = 'Package name is invalid'
-                        -var tipJavaKeyWord = 'Package name could not contains reserved java keyword'
-
                         .group-content(ng-if=exclude + '.length')
-                            -var field = 'edit'
-                            -var valid = 'form[ngModelName].$valid'
-                            -var unique = 'form[ngModelName].$error.igniteUnique'
-                            -var javaPackageName = 'form[ngModelName].$error.javaPackageName'
-                            -var javaKeywords = 'form[ngModelName].$error.javaKeywords'
-                            -var save = exclude + '[$index] = ' + field
+                            -var model = 'obj.model';
+                            -var name = '"edit" + $index'
+                            -var valid = form + '[' + name + '].$valid'
+                            -var save = exclude + '[$index] = ' + model
 
                             div(ng-show=enabled)
-                                ignite-form-field(ng-repeat='model in #{exclude} track by $index' type='internal' name='Package name')
-                                    .indexField
-                                        | {{ $index+1 }})
-                                    +table-remove-button(exclude, 'Remove package name')
-                                    span(ng-hide='field.edit')
-                                        a.labelFormField(ng-click='#{enabled} && (field.edit = true)') {{ model }}
-                                    span(ng-if='field.edit' ng-init='#{field} = model')
-                                        +table-java-package-field(field, exclude, valid, save, false)
-                                            +table-save-button(valid, save, false)
-                                            +unique-feedback(unique, uniqueTip)
-                                            +error-feedback(javaPackageName, 'javaPackageName', tipJavaPackageName)
-                                            +error-feedback(javaKeywords, 'javaKeywords', tipJavaKeyWord)
+                                div(ng-repeat='model in #{exclude} track by $index' ng-init='obj = {}')
+                                    label.col-xs-12.col-sm-12.col-md-12
+                                        .indexField
+                                            | {{ $index+1 }})
+                                        +table-remove-button(exclude, 'Remove package name')
+                                        span(ng-hide='field.edit')
+                                            a.labelFormField(ng-click='#{enabled} && (field.edit = true) && (#{model} = model)') {{ model }}
+                                        span(ng-if='field.edit')
+                                            +table-java-package-field(name, model, exclude, valid, save, false)
+                                                +table-save-button(valid, save, false)
+                                                +unique-feedback(name, uniqueTip)
+
                             div(ng-hide=enabled)
-                                ignite-form-field(ng-repeat='model in #{exclude} track by $index' type='internal' name='Package name')
-                                    .labelFormField.labelField
-                                        | {{ $index+1 }})
-                                    span.labelFormField
-                                        | {{ model }}
+                                div(ng-repeat='model in #{exclude} track by $index')
+                                    label.col-xs-12.col-sm-12.col-md-12
+                                        .labelFormField.labelField
+                                            | {{ $index+1 }})
+                                        span.labelFormField
+                                            | {{ model }}
 
                         .group-content(ng-repeat='field in group.add')
-                            -var field = 'new'
-                            -var valid = 'form[ngModelName].$valid'
-                            -var unique = 'form[ngModelName].$error.igniteUnique'
-                            -var javaPackageName = 'form[ngModelName].$error.javaPackageName'
-                            -var javaKeywords = 'form[ngModelName].$error.javaKeywords'
-                            -var save = exclude + '.push(' + field + ')'
+                            -var model = 'new';
+                            -var name = '"new"'
+                            -var valid = form + '[' + name + '].$valid'
+                            -var save = exclude + '.push(' + model + ')'
 
-                            ignite-form-field(type='internal' name='Package name')
-                                +table-java-package-field(field, exclude, valid, save, true)
-                                    +table-save-button(valid, save, true)
-                                    +unique-feedback(unique, uniqueTip)
-                                    +error-feedback(javaPackageName, 'javaPackageName', tipJavaPackageName)
-                                    +error-feedback(javaKeywords, 'javaKeywords', tipJavaKeyWord)
+                            div(type='internal' name='Package name')
+                                label.col-xs-12.col-sm-12.col-md-12
+                                    +table-java-package-field(name, model, exclude, valid, save, true)
+                                        +table-save-button(valid, save, true)
+                                        +unique-feedback(name, uniqueTip)
 
 
                         .group-content-empty(ng-if='!(#{exclude}.length) && !group.add.length')

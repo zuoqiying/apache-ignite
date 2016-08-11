@@ -35,14 +35,14 @@ export default ['ipaddress', ['IgniteInetAddress', (InetAddress) => {
         const portRange = !_.isNil(attrs.ipaddressWithPortRange);
 
         if (attrs.ipaddressWithPort) {
-            ngModel.$validators.ipaddressPort = (modelValue, viewValue) => {
-                if (isEmpty(modelValue) || viewValue.indexOf(':') === -1)
+            ngModel.$validators.ipaddressPort = (modelValue) => {
+                if (isEmpty(modelValue) || modelValue.indexOf(':') === -1)
                     return true;
 
-                if ((viewValue.match(/:/g) || []).length > 1)
+                if ((modelValue.match(/:/g) || []).length > 1)
                     return false;
 
-                const {ports} = parse(viewValue);
+                const {ports} = parse(modelValue);
 
                 if (ports.length !== 1)
                     return portRange;
@@ -52,11 +52,11 @@ export default ['ipaddress', ['IgniteInetAddress', (InetAddress) => {
         }
 
         if (portRange) {
-            ngModel.$validators.ipaddressPortRange = (modelValue, viewValue) => {
-                if (isEmpty(modelValue) || viewValue.indexOf('..') === -1)
+            ngModel.$validators.ipaddressPortRange = (modelValue) => {
+                if (isEmpty(modelValue) || modelValue.indexOf('..') === -1)
                     return true;
 
-                const {ports} = parse(viewValue);
+                const {ports} = parse(modelValue);
 
                 if (ports.length !== 2)
                     return false;
@@ -65,11 +65,11 @@ export default ['ipaddress', ['IgniteInetAddress', (InetAddress) => {
             };
         }
 
-        ngModel.$validators.ipaddress = (modelValue, viewValue) => {
+        ngModel.$validators.ipaddress = (modelValue) => {
             if (isEmpty(modelValue))
                 return true;
 
-            const {ipOrHost, ports} = parse(viewValue);
+            const {ipOrHost, ports} = parse(modelValue);
 
             if (attrs.ipaddressWithPort || attrs.ipaddressWithPortRange || ports.length === 0)
                 return InetAddress.validHost(ipOrHost);

@@ -1174,6 +1174,8 @@ export default ['domainsController', [
                     $scope.backupItem = emptyDomain;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
+                $scope.ui.inputForm.$error = {};
+                $scope.ui.inputForm.$setPristine();
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -1408,9 +1410,10 @@ export default ['domainsController', [
 
                             _.forEach($scope.caches, (cache) => cache.cache.domains = []);
 
-                            $scope.ui.inputForm.$setPristine();
                             $scope.backupItem = emptyDomain;
                             $scope.ui.showValid = true;
+                            $scope.ui.inputForm.$error = {};
+                            $scope.ui.inputForm.$setPristine();
                         })
                         .error(Messages.showError);
                 });
@@ -1745,6 +1748,7 @@ export default ['domainsController', [
             Confirm.confirm('Are you sure you want to undo all changes for current domain model?')
                 .then(function() {
                     $scope.backupItem = $scope.selectedItem ? angular.copy($scope.selectedItem) : prepareNewItem();
+                    $scope.ui.inputForm.$error = {};
                     $scope.ui.inputForm.$setPristine();
                 });
         };

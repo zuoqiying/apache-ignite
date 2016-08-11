@@ -61,7 +61,7 @@ mixin table-db-field-edit(tbl, prefix, focusId, index)
         .input-tip
             button.select-toggle.form-control(id=javaTypeId ng-model=javaTypeModel data-placeholder='Java type' ng-class='{placeholder: !#{javaTypeModel}}' bs-select bs-options='item.value as item.label for item in {{supportedJavaTypes}}' ignite-on-enter=btnVisibleAndSave ignite-on-escape='tableReset()' tabindex='0')
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Domain model for cache store
@@ -72,11 +72,11 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +text('Database schema:', model + '.databaseSchema', 'databaseSchema', 'false', 'Input DB schema name', 'Schema name in database')
+                    +text('Database schema:', model + '.databaseSchema', '"databaseSchema"', 'false', 'Input DB schema name', 'Schema name in database')
                 .settings-row
-                    +text('Database table:', model + '.databaseTable', 'databaseTable', 'false', 'Input DB table name', 'Table name in database')
+                    +text('Database table:', model + '.databaseTable', '"databaseTable"', 'false', 'Input DB table name', 'Table name in database')
                 .settings-row(ng-init='keysTbl={type: "table-db-fields", model: "keyFields", focusId: "KeyField", ui: "table-db-fields"}')
-                    ignite-form-group(ng-model='#{keyFields}' ng-form='#{keyFieldsForm}')
+                    +ignite-form-group(ng-form=keyFieldsForm ng-model=keyFields)
                         ignite-form-field-label(id='keyFields')
                             | Key fields
                         ignite-form-group-tooltip
@@ -99,7 +99,7 @@ form.panel.panel-default(name=form novalidate)
                                         td
                                             +table-db-field-edit('keysTbl', 'new', 'KeyField', '-1')
                 .settings-row(ng-init='valuesTbl={type: "table-db-fields", model: "valueFields", focusId: "ValueField", ui: "table-db-fields"}')
-                    ignite-form-group(ng-model='#{valueFields}' ng-form='#{valueFieldsForm}')
+                    +ignite-form-group(ng-form=valueFieldsForm ng-model=valueFields)
                         ignite-form-field-label(id='valueFields')
                             | Value fields
                         ignite-form-group-tooltip
