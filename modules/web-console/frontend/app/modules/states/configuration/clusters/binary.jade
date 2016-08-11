@@ -47,7 +47,7 @@ mixin binary-types-java-class(lbl, model, name, enabled, required, remove, autof
                 .settings-row
                     -var form = 'binaryTypeConfigurations';
 
-                    +ignite-form-group(ng-form='#{form}' ng-model='#{types}')
+                    +ignite-form-group()
                         ignite-form-field-label
                             | Type configurations
                         ignite-form-group-tooltip
