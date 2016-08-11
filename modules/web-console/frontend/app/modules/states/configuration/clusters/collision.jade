@@ -58,4 +58,5 @@ include ../../../../../app/helpers/jade/mixins.jade
                         div(ng-show='#{modelCollisionKind} === "Custom"')
                             include ./collision/custom.jade
             .col-sm-6
+                -var model = 'backupItem.collision'
                 +preview-xml-java(model, 'clusterCollision')
