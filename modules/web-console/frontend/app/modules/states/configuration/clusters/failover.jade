@@ -32,7 +32,7 @@ include ../../../../../app/helpers/jade/mixins.jade
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row(ng-init='failoverSpiTbl={type: "failoverSpi", model: "failoverSpi", focusId: "kind", ui: "failover-table"}')
-                    +ignite-form-group(ng-model='#{failoverSpi}' ng-form=form)
+                    +ignite-form-group()
                         ignite-form-field-label
                             | Failover SPI configurations
                         ignite-form-group-tooltip
