@@ -34,20 +34,20 @@ include ../../app/helpers/jade/mixins.jade
                 hr
             .bs-affix-fix
             div(bs-collapse='' data-allow-multiple='true' ng-model='ui.activePanels')
-                form.form-horizontal(name='ui.inputForm' ng-show='contentVisible()' novalidate)
-                    .panel-group
-                        ignite-configuration-caches-general
-                        ignite-configuration-caches-memory
-                        ignite-configuration-caches-query
-                        ignite-configuration-caches-store
+                form.form-horizontal(name='ui.inputForm' novalidate)
+                    .panel-group(ng-if='contentVisible()' )
+                        include ../../app/modules/states/configuration/caches/general.jade
+                        include ../../app/modules/states/configuration/caches/memory.jade
+                        include ../../app/modules/states/configuration/caches/query.jade
+                        include ../../app/modules/states/configuration/caches/store.jade
 
                         +advanced-options-toggle-default
 
                         div(ng-show='ui.expanded')
-                            ignite-configuration-caches-node-filter
-                            ignite-configuration-caches-concurrency
-                            ignite-configuration-caches-rebalance
-                            ignite-configuration-caches-server-near-cache
-                            ignite-configuration-caches-statistics
+                            include ../../app/modules/states/configuration/caches/node-filter.jade
+                            include ../../app/modules/states/configuration/caches/concurrency.jade
+                            include ../../app/modules/states/configuration/caches/rebalance.jade
+                            include ../../app/modules/states/configuration/caches/server-near-cache.jade
+                            include ../../app/modules/states/configuration/caches/statistics.jade
 
                             +advanced-options-toggle-default

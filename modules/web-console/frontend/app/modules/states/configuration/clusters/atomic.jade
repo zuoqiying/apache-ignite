@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'atomics'
 -var model = 'backupItem.atomicConfiguration'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Atomic configuration
@@ -31,7 +31,7 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +dropdown('Cache mode:', model + '.cacheMode', 'cacheMode', 'true', 'PARTITIONED',
+                    +dropdown('Cache mode:', model + '.cacheMode', '"cacheMode"', 'true', 'PARTITIONED',
                         '[\
                             {value: "LOCAL", label: "LOCAL"},\
                             {value: "REPLICATED", label: "REPLICATED"},\
@@ -44,10 +44,10 @@ form.panel.panel-default(name=form novalidate)
                             <li>Local - in this mode caches residing on different grid nodes will not know about each other</li>\
                         </ul>')
                 .settings-row
-                    +number('Sequence reserve:', model + '.atomicSequenceReserveSize', 'atomicSequenceReserveSize', 'true', '1000', '0',
+                    +number('Sequence reserve:', model + '.atomicSequenceReserveSize', '"atomicSequenceReserveSize"', 'true', '1000', '0',
                         'Default number of sequence values reserved for IgniteAtomicSequence instances<br/>\
                         After a certain number has been reserved, consequent increments of sequence will happen locally, without communication with other nodes, until the next reservation has to be made')
                 .settings-row(ng-if='!(#{model}.cacheMode && #{model}.cacheMode != "PARTITIONED")')
-                    +number('Backups:', model + '.backups', 'backups', 'true', '0', '0', 'Number of backup nodes')
+                    +number('Backups:', model + '.backups', '"backups"', 'true', '0', '0', 'Number of backup nodes')
             .col-sm-6
                 +preview-xml-java(model, 'clusterAtomics')

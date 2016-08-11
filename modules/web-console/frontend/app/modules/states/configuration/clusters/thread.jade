@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'pools'
 -var model = 'backupItem'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Thread pools size
@@ -30,19 +30,19 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +number('Public:', model + '.publicThreadPoolSize', 'publicThreadPoolSize', 'true', 'max(8, availableProcessors) * 2', '1',
+                    +number('Public:', model + '.publicThreadPoolSize', '"publicThreadPoolSize"', 'true', 'max(8, availableProcessors) * 2', '1',
                         'Thread pool that is in charge of processing ComputeJob, GridJobs and user messages sent to node')
                 .settings-row
-                    +number('System:', model + '.systemThreadPoolSize', 'systemThreadPoolSize', 'true', 'max(8, availableProcessors) * 2', '1',
+                    +number('System:', model + '.systemThreadPoolSize', '"systemThreadPoolSize"', 'true', 'max(8, availableProcessors) * 2', '1',
                         'Thread pool that is in charge of processing internal system messages')
                 .settings-row
-                    +number('Management:', model + '.managementThreadPoolSize', 'managementThreadPoolSize', 'true', '4', '1',
+                    +number('Management:', model + '.managementThreadPoolSize', '"managementThreadPoolSize"', 'true', '4', '1',
                         'Thread pool that is in charge of processing internal and Visor ComputeJob, GridJobs')
                 .settings-row
-                    +number('IGFS:', model + '.igfsThreadPoolSize', 'igfsThreadPoolSize', 'true', 'availableProcessors', '1',
+                    +number('IGFS:', model + '.igfsThreadPoolSize', '"igfsThreadPoolSize"', 'true', 'availableProcessors', '1',
                         'Thread pool that is in charge of processing outgoing IGFS messages')
                 .settings-row
-                    +number('Rebalance:', model + '.rebalanceThreadPoolSize', 'rebalanceThreadPoolSize', 'true', '1', '1',
+                    +number('Rebalance:', model + '.rebalanceThreadPoolSize', '"rebalanceThreadPoolSize"', 'true', '1', '1',
                         'Max count of threads can be used at rebalancing')
             .col-sm-6
                 +preview-xml-java(model, 'clusterPools')

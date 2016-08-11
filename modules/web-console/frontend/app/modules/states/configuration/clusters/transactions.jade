@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'transactions'
 -var model = 'backupItem.transactionConfiguration'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Transactions
@@ -30,14 +30,14 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +dropdown('Concurrency:', model + '.defaultTxConcurrency', 'defaultTxConcurrency', 'true', 'PESSIMISTIC',
+                    +dropdown('Concurrency:', model + '.defaultTxConcurrency', '"defaultTxConcurrency"', 'true', 'PESSIMISTIC',
                         '[\
                             {value: "OPTIMISTIC", label: "OPTIMISTIC"},\
                             {value: "PESSIMISTIC", label: "PESSIMISTIC"}\
                         ]',
                         'Cache transaction concurrency to use when one is not explicitly specified')
                 .settings-row
-                    +dropdown('Isolation:', model + '.defaultTxIsolation', 'defaultTxIsolation', 'true', 'REPEATABLE_READ',
+                    +dropdown('Isolation:', model + '.defaultTxIsolation', '"defaultTxIsolation"', 'true', 'REPEATABLE_READ',
                         '[\
                             {value: "READ_COMMITTED", label: "READ_COMMITTED"},\
                             {value: "REPEATABLE_READ", label: "REPEATABLE_READ"},\
@@ -45,15 +45,15 @@ form.panel.panel-default(name=form novalidate)
                         ]',
                         'Default transaction isolation')
                 .settings-row
-                    +number('Default timeout:', model + '.defaultTxTimeout', 'defaultTxTimeout', 'true', '0', '0', 'Default transaction timeout')
+                    +number('Default timeout:', model + '.defaultTxTimeout', '"defaultTxTimeout"', 'true', '0', '0', 'Default transaction timeout')
                 .settings-row
-                    +number('Pessimistic log cleanup delay:', model + '.pessimisticTxLogLinger', 'pessimisticTxLogLinger', 'true', '10000', '0',
+                    +number('Pessimistic log cleanup delay:', model + '.pessimisticTxLogLinger', '"pessimisticTxLogLinger"', 'true', '10000', '0',
                         'Delay, in milliseconds, after which pessimistic recovery entries will be cleaned up for failed node')
                 .settings-row
-                    +number('Pessimistic log size:', model + '.pessimisticTxLogSize', 'pessimisticTxLogSize', 'true', '0', '0',
+                    +number('Pessimistic log size:', model + '.pessimisticTxLogSize', '"pessimisticTxLogSize"', 'true', '0', '0',
                         'Size of pessimistic transactions log stored on node in order to recover transaction commit if originating node has left grid before it has sent all messages to transaction nodes')
                 .settings-row
-                    +java-class('Manager factory:', model + '.txManagerFactory', 'txManagerFactory', 'true', 'false',
+                    +java-class('Manager factory:', model + '.txManagerFactory', '"txManagerFactory"', 'true', 'false',
                         'Class name of transaction manager factory for integration with JEE app servers')
             .col-sm-6
                 +preview-xml-java(model, 'clusterTransactions')

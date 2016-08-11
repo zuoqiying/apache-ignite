@@ -21,7 +21,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var marshaller = model + '.marshaller'
 -var optMarshaller = marshaller + '.OptimizedMarshaller'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Marshaller
@@ -33,7 +33,7 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +dropdown('Marshaller:', marshaller + '.kind', 'kind', 'true', 'Choose marshaller',
+                    +dropdown('Marshaller:', marshaller + '.kind', '"kind"', 'true', 'Choose marshaller',
                         '[\
                             {value: "OptimizedMarshaller", label: "OptimizedMarshaller"},\
                             {value: "JdkMarshaller", label: "JdkMarshaller"},\
@@ -48,7 +48,7 @@ form.panel.panel-default(name=form novalidate)
                 .settings-row
                     .panel-details(ng-show='#{marshaller}.expanded && #{marshaller}.kind === "OptimizedMarshaller"')
                         .details-row
-                            +number('Streams pool size:', optMarshaller + '.poolSize', 'poolSize', 'true', '0', '0',
+                            +number('Streams pool size:', optMarshaller + '.poolSize', '"poolSize"', 'true', '0', '0',
                                 'Specifies size of cached object streams used by marshaller<br/>\
                                 Object streams are cached for performance reason to avoid costly recreation for every serialization routine<br/>\
                                 If 0 (default), pool is not used and each thread has its own cached object stream which it keeps reusing<br/>\
@@ -56,14 +56,14 @@ form.panel.panel-default(name=form novalidate)
                                 Consider using pool in this case. This will limit number of streams that can be created and, therefore, decrease memory consumption<br/>\
                                 NOTE: Using streams pool can decrease performance since streams will be shared between different threads which will lead to more frequent context switching')
                         .details-row
-                            +checkbox('Require serializable', optMarshaller + '.requireSerializable', 'requireSerializable',
+                            +checkbox('Require serializable', optMarshaller + '.requireSerializable', '"requireSerializable"',
                                 'Whether marshaller should require Serializable interface or not')
                 .settings-row
-                    +checkbox('Marshal local jobs', model + '.marshalLocalJobs', 'marshalLocalJobs', 'If this flag is enabled, jobs mapped to local node will be marshalled as if it was remote node')
+                    +checkbox('Marshal local jobs', model + '.marshalLocalJobs', '"marshalLocalJobs"', 'If this flag is enabled, jobs mapped to local node will be marshalled as if it was remote node')
                 .settings-row
-                    +number('Keep alive time:', model + '.marshallerCacheKeepAliveTime', 'marshallerCacheKeepAliveTime', 'true', '10000', '0')
+                    +number('Keep alive time:', model + '.marshallerCacheKeepAliveTime', '"marshallerCacheKeepAliveTime"', 'true', '10000', '0')
                 .settings-row
-                    +number('Pool size:', model + '.marshallerCacheThreadPoolSize', 'marshallerCacheThreadPoolSize', 'true', 'max(8, availableProcessors) * 2', '1',
+                    +number('Pool size:', model + '.marshallerCacheThreadPoolSize', '"marshallerCacheThreadPoolSize"', 'true', 'max(8, availableProcessors) * 2', '1',
                         'Default size of thread pool that is in charge of processing marshaller messages')
             .col-sm-6
                 +preview-xml-java(model, 'clusterMarshaller')

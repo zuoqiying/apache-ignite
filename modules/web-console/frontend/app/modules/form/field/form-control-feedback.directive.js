@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export default ['formControlFeedback', [() => {
+export default ['formFieldFeedback', [() => {
     const link = ($scope, $element, $attrs, [form]) => {
         let name = $scope.name;
 

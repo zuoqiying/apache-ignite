@@ -32,6 +32,7 @@ export default ['igniteFormRevert', ['$tooltip', 'IgniteLegacyTable', ($tooltip,
                 const field = form[name];
 
                 if (field) {
+                    field.$viewValue = value;
                     field.$setViewValue(value);
                     field.$setPristine();
                     field.$render();

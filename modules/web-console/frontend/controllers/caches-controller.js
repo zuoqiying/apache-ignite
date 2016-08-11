@@ -176,6 +176,8 @@ export default ['cachesController', [
                     $scope.backupItem = emptyCache;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
+                $scope.ui.inputForm.$error = {};
+                $scope.ui.inputForm.$setPristine();
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -463,6 +465,7 @@ export default ['cachesController', [
                             _.forEach($scope.domains, (domain) => domain.meta.caches = []);
 
                             $scope.backupItem = emptyCache;
+                            $scope.ui.inputForm.$error = {};
                             $scope.ui.inputForm.$setPristine();
                         })
                         .error(Messages.showError);
@@ -473,6 +476,7 @@ export default ['cachesController', [
             Confirm.confirm('Are you sure you want to undo all changes for current cache?')
                 .then(function() {
                     $scope.backupItem = $scope.selectedItem ? angular.copy($scope.selectedItem) : prepareNewItem();
+                    $scope.ui.inputForm.$error = {};
                     $scope.ui.inputForm.$setPristine();
                 });
         };

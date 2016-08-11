@@ -16,12 +16,13 @@
 
 include ../../../../../../app/helpers/jade/mixins.jade
 
+-var form = 'logger'
 -var model = 'backupItem.logger.Log4j2'
 -var log4j2Required = 'backupItem.logger.kind === "Log4j2"'
 
 div
     .details-row
-        +dropdown('Level:', model + '.level', 'log4j2Level', 'true', 'Default',
+        +dropdown('Level:', model + '.level', '"log4j2Level"', 'true', 'Default',
             '[\
                 {value: "OFF", label: "OFF"},\
                 {value: "FATAL", label: "FATAL"},\
@@ -35,4 +36,4 @@ div
             ]',
             'Level for internal log4j2 implementation')
     .details-row
-        +text('Path:', model + '.path', 'log4j2Path', log4j2Required, 'Input path', 'Path or URI to XML configuration')
+        +text('Path:', model + '.path', '"log4j2Path"', log4j2Required, 'Input path', 'Path or URI to XML configuration')

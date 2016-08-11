@@ -20,6 +20,6 @@ include ../../../../../../../../../app/helpers/jade/mixins.jade
 
 div
     .details-row
-        +number('Retries:', model + '.n', 'n', 'true', '10', '0', 'Number of times to retry')
+        +number('Retries:', model + '.n', '"n"', 'true', '10', '0', 'Number of times to retry')
     .details-row
-        +number('Interval:', model + '.sleepMsBetweenRetries', 'ntSleepMsBetweenRetries', 'true', '1000', '0', 'Time in ms between retry attempts')
+        +number('Interval:', model + '.sleepMsBetweenRetries', '"ntSleepMsBetweenRetries"', 'true', '1000', '0', 'Time in ms between retry attempts')

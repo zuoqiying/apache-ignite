@@ -222,6 +222,8 @@ export default ['igfsController', [
                     $scope.backupItem = emptyIgfs;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
+                $scope.ui.inputForm.$error = {};
+                $scope.ui.inputForm.$setPristine();
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -380,6 +382,7 @@ export default ['igfsController', [
 
                             $scope.igfss = [];
                             $scope.backupItem = emptyIgfs;
+                            $scope.ui.inputForm.$error = {};
                             $scope.ui.inputForm.$setPristine();
                         })
                         .error(Messages.showError);
@@ -392,6 +395,7 @@ export default ['igfsController', [
             Confirm.confirm('Are you sure you want to undo all changes for current IGFS?')
                 .then(function() {
                     $scope.backupItem = $scope.selectedItem ? angular.copy($scope.selectedItem) : prepareNewItem();
+                    $scope.ui.inputForm.$error = {};
                     $scope.ui.inputForm.$setPristine();
                 });
         };

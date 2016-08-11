@@ -18,10 +18,9 @@ include ../../../../../app/helpers/jade/mixins.jade
 
 -var form = 'attributes'
 -var model = 'backupItem'
--var types = model + '.typeConfigurations'
 -var userAttributes = model + '.attributes'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label User attributes
@@ -32,7 +31,7 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    ignite-form-group(ng-model='#{userAttributes}' ng-form='#{form}')
+                    +ignite-form-group(ng-model='#{userAttributes}' ng-form='#{form}')
                         ignite-form-field-label
                             | User attributes
                         ignite-form-group-tooltip

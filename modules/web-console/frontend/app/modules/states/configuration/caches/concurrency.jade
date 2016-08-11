@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'concurrency'
 -var model = 'backupItem'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Concurrency control
@@ -30,15 +30,15 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +number('Max async operations:', model + '.maxConcurrentAsyncOperations', 'maxConcurrentAsyncOperations', 'true', '500', '0',
+                    +number('Max async operations:', model + '.maxConcurrentAsyncOperations', '"maxConcurrentAsyncOperations"', 'true', '500', '0',
                         'Maximum number of allowed concurrent asynchronous operations<br/>\
                         If 0 then number of concurrent asynchronous operations is unlimited')
                 .settings-row
-                    +number('Default lock timeout:', model + '.defaultLockTimeout', 'defaultLockTimeout', 'true', '0', '0',
+                    +number('Default lock timeout:', model + '.defaultLockTimeout', '"defaultLockTimeout"', 'true', '0', '0',
                         'Default lock acquisition timeout<br/>\
                         If 0 then lock acquisition will never timeout')
                 .settings-row(ng-hide='#{model}.atomicityMode === "TRANSACTIONAL"')
-                    +dropdown('Entry versioning:', model + '.atomicWriteOrderMode', 'atomicWriteOrderMode', 'true', 'Choose versioning',
+                    +dropdown('Entry versioning:', model + '.atomicWriteOrderMode', '"atomicWriteOrderMode"', 'true', 'Choose versioning',
                         '[\
                             {value: "CLOCK", label: "CLOCK"},\
                             {value: "PRIMARY", label: "PRIMARY"}\
@@ -49,7 +49,7 @@ form.panel.panel-default(name=form novalidate)
                             <li>PRIMARY - in this mode version is assigned only on primary node. This means that sender will only send write request to primary node, which in turn will assign write version and forward it to backups</li>\
                         </ul>')
                 .settings-row
-                    +dropdown('Write synchronization mode:', model + '.writeSynchronizationMode', 'writeSynchronizationMode', 'true', 'PRIMARY_SYNC',
+                    +dropdown('Write synchronization mode:', model + '.writeSynchronizationMode', '"writeSynchronizationMode"', 'true', 'PRIMARY_SYNC',
                         '[\
                             {value: "FULL_SYNC", label: "FULL_SYNC"},\
                             {value: "FULL_ASYNC", label: "FULL_ASYNC"},\

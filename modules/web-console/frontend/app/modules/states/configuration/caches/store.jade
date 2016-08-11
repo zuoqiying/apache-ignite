@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'store'
 -var model = 'backupItem'
 
-mixin hibernateField(items, field, valid, save, newItem)
+mixin hibernateField(name, model, items, valid, save, newItem)
     -var reset = newItem ? 'group.add = []' : 'field.edit = false'
 
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
@@ -28,21 +28,21 @@ mixin hibernateField(items, field, valid, save, newItem)
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    ignite-form-field-input-text(
-        data-name='#{field}{{ $index || "" }}'
-        data-ng-model=field
-        data-ng-required='true'
-        data-placeholder='key=value'
-        data-ignite-property-unique=items
-        data-ignite-property-value-specified
-        data-ignite-form-field-input-autofocus='true'
-        ignite-on-enter=onEnter
-        ignite-on-escape=reset
-        ng-blur=onBlur
-    )
+    if block
         block
 
-form.panel.panel-default(name=form novalidate)
+    .input-tip
+        +ignite-form-field-input(name, model, false, 'true', 'key=value')(
+            data-ignite-property-unique=items
+            data-ignite-property-value-specified
+            data-ignite-form-field-input-autofocus='true'
+
+            ng-blur=onBlur
+            ignite-on-enter=onEnter
+            ignite-on-escape=onEscape
+        )
+
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Store
@@ -56,7 +56,7 @@ form.panel.panel-default(name=form novalidate)
                     -var storeFactory = model + '.cacheStoreFactory';
                     -var storeFactoryKind = storeFactory + '.kind';
 
-                    +dropdown('Store factory:', storeFactoryKind, 'cacheStoreFactory', 'true', 'Not set',
+                    +dropdown('Store factory:', storeFactoryKind, '"cacheStoreFactory"', 'true', 'Not set',
                         '[\
                             {value: "CacheJdbcPojoStoreFactory", label: "JDBC POJO store factory"},\
                             {value: "CacheJdbcBlobStoreFactory", label: "JDBC BLOB store factory"},\
@@ -75,10 +75,10 @@ form.panel.panel-default(name=form novalidate)
 
                                 .details-row
                                     +text('Data source bean name:', pojoStoreFactory + '.dataSourceBean',
-                                        'pojoDataSourceBean', required, 'Input bean name',
+                                        '"pojoDataSourceBean"', required, 'Input bean name',
                                         'Name of the data source bean in Spring context')
                                 .details-row
-                                    +dialect('Dialect:', pojoStoreFactory + '.dialect', 'pojoDialect', required,
+                                    +dialect('Dialect:', pojoStoreFactory + '.dialect', '"pojoDialect"', required,
                                         'Dialect of SQL implemented by a particular RDBMS:', 'Generic JDBC dialect',
                                         'Choose JDBC dialect')
                             div(ng-show='#{storeFactoryKind} === "CacheJdbcBlobStoreFactory"')
@@ -86,7 +86,7 @@ form.panel.panel-default(name=form novalidate)
                                 -var blobStoreFactoryVia = blobStoreFactory + '.connectVia'
 
                                 .details-row
-                                    +dropdown('Connect via:', blobStoreFactoryVia, 'connectVia', 'true', 'Choose connection method',
+                                    +dropdown('Connect via:', blobStoreFactoryVia, '"connectVia"', 'true', 'Choose connection method',
                                         '[\
                                             {value: "URL", label: "URL"},\
                                             {value: "DataSource", label: "Data source"}\
@@ -100,41 +100,41 @@ form.panel.panel-default(name=form novalidate)
                                     -var required = storeFactoryKind + ' === "CacheJdbcBlobStoreFactory" && ' + blobStoreFactoryVia + ' === "URL"'
 
                                     .details-row
-                                        +text('Connection URL:', blobStoreFactory + '.connectionUrl', 'connectionUrl', required, 'Input URL',
+                                        +text('Connection URL:', blobStoreFactory + '.connectionUrl', '"connectionUrl"', required, 'Input URL',
                                             'URL for database access, for example: jdbc:h2:mem:myDatabase')
                                     .details-row
-                                        +text('User:', blobStoreFactory + '.user', 'user', required, 'Input user name', 'User name for database access')
+                                        +text('User:', blobStoreFactory + '.user', '"user"', required, 'Input user name', 'User name for database access')
                                     .details-row
                                         label Note, password will be generated as stub
                                 div(ng-show='#{blobStoreFactoryVia} !== "URL"')
                                     -var required = storeFactoryKind + ' === "CacheJdbcBlobStoreFactory" && ' + blobStoreFactoryVia + '!== "URL"'
 
                                     .details-row
-                                        +text('Data source bean name:', blobStoreFactory + '.dataSourceBean', 'blobDataSourceBean', required, 'Input bean name',
+                                        +text('Data source bean name:', blobStoreFactory + '.dataSourceBean', '"blobDataSourceBean"', required, 'Input bean name',
                                             'Name of the data source bean in Spring context')
                                     .details-row
-                                        +dialect('Database:', blobStoreFactory + '.dialect', 'blobDialect', required, 'Supported databases:', 'Generic database', 'Choose database')
+                                        +dialect('Database:', blobStoreFactory + '.dialect', '"blobDialect"', required, 'Supported databases:', 'Generic database', 'Choose database')
                                 .details-row
-                                    +checkbox('Init schema', blobStoreFactory + '.initSchema', 'initSchema',
+                                    +checkbox('Init schema', blobStoreFactory + '.initSchema', '"initSchema"',
                                         'Flag indicating whether DB schema should be initialized by Ignite (default behaviour) or was explicitly created by user')
                                 .details-row
-                                    +text('Create query:', blobStoreFactory + '.createTableQuery', 'createTableQuery', 'false', 'SQL for table creation',
+                                    +text('Create query:', blobStoreFactory + '.createTableQuery', '"createTableQuery"', 'false', 'SQL for table creation',
                                         'Query for table creation in underlying database<br/>\
                                         Default value: create table if not exists ENTRIES (key binary primary key, val binary)')
                                 .details-row
-                                    +text('Load query:', blobStoreFactory + '.loadQuery', 'loadQuery', 'false', 'SQL for load entry',
+                                    +text('Load query:', blobStoreFactory + '.loadQuery', '"loadQuery"', 'false', 'SQL for load entry',
                                         'Query for entry load from underlying database<br/>\
                                         Default value: select * from ENTRIES where key=?')
                                 .details-row
-                                    +text('Insert query:', blobStoreFactory + '.insertQuery', 'insertQuery', 'false', 'SQL for insert entry',
+                                    +text('Insert query:', blobStoreFactory + '.insertQuery', '"insertQuery"', 'false', 'SQL for insert entry',
                                         'Query for insert entry into underlying database<br/>\
                                         Default value: insert into ENTRIES (key, val) values (?, ?)')
                                 .details-row
-                                    +text('Update query:', blobStoreFactory + '.updateQuery', 'updateQuery', 'false', 'SQL for update entry',
+                                    +text('Update query:', blobStoreFactory + '.updateQuery', '"updateQuery"', 'false', 'SQL for update entry',
                                         'Query for update entry in underlying database<br/>\
                                         Default value: update ENTRIES set val=? where key=?')
                                 .details-row
-                                    +text('Delete query:', blobStoreFactory + '.deleteQuery', 'deleteQuery', 'false', 'SQL for delete entry',
+                                    +text('Delete query:', blobStoreFactory + '.deleteQuery', '"deleteQuery"', 'false', 'SQL for delete entry',
                                         'Query for delete entry from underlying database<br/>\
                                         Default value: delete from ENTRIES where key=?')
 
@@ -143,7 +143,7 @@ form.panel.panel-default(name=form novalidate)
                                 -var hibernateProperties = hibernateStoreFactory + '.hibernateProperties'
 
                                 .details-row
-                                    ignite-form-group(ng-model=hibernateProperties ng-form=form)
+                                    +ignite-form-group(ng-form=form ng-model=hibernateProperties)
                                         ignite-form-field-label
                                             | Hibernate properties
                                         ignite-form-group-tooltip
@@ -156,45 +156,45 @@ form.panel.panel-default(name=form novalidate)
                                         -var tipPropertySpecified = 'Property should be present in format key=value!'
 
                                         .group-content(ng-if='#{hibernateProperties}.length')
-                                            -var field = 'edit'
-                                            -var valid = 'form[ngModelName].$valid'
-                                            -var unique = 'form[ngModelName].$error.ignitePropertyUnique'
-                                            -var prop = 'form[ngModelName].$error.ignitePropertyValueSpecified'
-                                            -var save = hibernateProperties + '[$index] = ' + field
+                                            -var model = 'obj.model';
+                                            -var name = '"edit" + $index'
+                                            -var valid = form + '[' + name + '].$valid'
+                                            -var save = hibernateProperties + '[$index] = ' + model
 
-                                            ignite-form-field(ng-repeat='model in #{hibernateProperties} track by $index' type='internal' name='Hibernate properties')
-                                                .indexField
-                                                    | {{ $index+1 }})
-                                                +table-remove-button(hibernateProperties, 'Remove Hibernate property')
+                                            div(ng-repeat='model in #{hibernateProperties} track by $index' ng-init='obj = {}')
+                                                label.col-xs-12.col-sm-12.col-md-12
+                                                    .indexField
+                                                        | {{ $index+1 }})
+                                                    +table-remove-button(hibernateProperties, 'Remove Hibernate property')
 
-                                                span(ng-hide='field.edit')
-                                                    a.labelFormField(ng-click='field.edit = true') {{ model }}
-                                                span(ng-if='field.edit' ng-init='#{field} = model')
-                                                    +hibernateField(hibernateProperties, field, valid, save, false)
-                                                        +table-save-button(valid, save, false)
-                                                        +error-feedback(unique, 'ignitePropertyUnique', tipUnique)
-                                                        +error-feedback(prop, 'ignitePropertyValueSpecified', tipPropertySpecified)
+                                                    span(ng-hide='field.edit')
+                                                        a.labelFormField(ng-click='field.edit = true; #{model} = model;') {{ model }}
+                                                    span(ng-if='field.edit')
+                                                        +hibernateField(name, model, hibernateProperties, valid, save, false)
+                                                            +table-save-button(valid, save, false)
+                                                            +form-field-feedback(name, 'ignitePropertyUnique', tipUnique)
+                                                            +form-field-feedback(name, 'ignitePropertyValueSpecified', tipPropertySpecified)
 
                                         .group-content(ng-repeat='field in group.add')
-                                            -var field = 'new'
-                                            -var valid = 'form[ngModelName].$valid'
-                                            -var unique = 'form[ngModelName].$error.ignitePropertyUnique'
-                                            -var prop = 'form[ngModelName].$error.ignitePropertyValueSpecified'
-                                            -var save = hibernateProperties + '.push(' + field + ')'
+                                            -var model = 'new';
+                                            -var name = '"new"'
+                                            -var valid = form + '[' + name + '].$valid'
+                                            -var save = hibernateProperties + '.push(' + model + ')'
 
-                                            ignite-form-field(type='internal' name='Hibernate property')
-                                                +hibernateField(hibernateProperties, field, valid, save, true)
-                                                    +table-save-button(valid, save, true)
-                                                    +error-feedback(unique, 'ignitePropertyUnique', tipUnique)
-                                                    +error-feedback(prop, 'ignitePropertyValueSpecified', tipPropertySpecified)
+                                            div
+                                                label.col-xs-12.col-sm-12.col-md-12
+                                                    +hibernateField(name, model, hibernateProperties, valid, save, true)
+                                                        +table-save-button(valid, save, true)
+                                                        +form-field-feedback(name, 'ignitePropertyUnique', tipUnique)
+                                                        +form-field-feedback(name, 'ignitePropertyValueSpecified', tipPropertySpecified)
                                         .group-content-empty(ng-if='!(#{hibernateProperties}.length) && !group.add.length')
                                             | Not defined
 
                 .settings-row
-                    +checkbox('Keep binary in store', model + '.storeKeepBinary', 'storeKeepBinary',
+                    +checkbox('Keep binary in store', model + '.storeKeepBinary', '"storeKeepBinary"',
                         'Flag indicating that CacheStore implementation is working with binary objects instead of Java objects')
                 .settings-row
-                    +checkbox('Load previous value', model + '.loadPreviousValue', 'loadPreviousValue',
+                    +checkbox('Load previous value', model + '.loadPreviousValue', '"loadPreviousValue"',
                         'Flag indicating whether value should be loaded from store if it is not in the cache for following cache operations: \
                         <ul> \
                             <li>IgniteCache.putIfAbsent()</li> \
@@ -207,11 +207,11 @@ form.panel.panel-default(name=form novalidate)
                             <li> IgniteCache.getAndPutIfAbsent()</li>\
                         </ul>')
                 .settings-row
-                    +checkbox('Read-through', model + '.readThrough', 'readThrough', 'Flag indicating whether read-through caching should be used')
+                    +checkbox('Read-through', model + '.readThrough', '"readThrough"', 'Flag indicating whether read-through caching should be used')
                 .settings-row
-                    +checkbox('Write-through', model + '.writeThrough', 'writeThrough', 'Flag indicating whether write-through caching should be used')
+                    +checkbox('Write-through', model + '.writeThrough', '"writeThrough"', 'Flag indicating whether write-through caching should be used')
                 .settings-row
-                    ignite-form-group
+                    +ignite-form-group
                         ignite-form-field-label
                             | Write behind
                         ignite-form-group-tooltip
@@ -221,20 +221,20 @@ form.panel.panel-default(name=form novalidate)
                             -var enabled = model + '.writeBehindEnabled'
 
                             .details-row
-                                +checkbox('Enabled', enabled, 'writeBehindEnabled', 'Flag indicating whether Ignite should use write-behind behaviour for the cache store')
+                                +checkbox('Enabled', enabled, '"writeBehindEnabled"', 'Flag indicating whether Ignite should use write-behind behaviour for the cache store')
                             .details-row
-                                +number('Batch size:', model + '.writeBehindBatchSize', 'writeBehindBatchSize', enabled, '512', '1',
+                                +number('Batch size:', model + '.writeBehindBatchSize', '"writeBehindBatchSize"', enabled, '512', '1',
                                     'Maximum batch size for write - behind cache store operations<br/>\
                                      Store operations(get or remove) are combined in a batch of this size to be passed to cache store')
                             .details-row
-                                +number('Flush size:', model + '.writeBehindFlushSize', 'writeBehindFlushSize', enabled, '10240', '1',
+                                +number('Flush size:', model + '.writeBehindFlushSize', '"writeBehindFlushSize"', enabled, '10240', '1',
                                     'Maximum size of the write-behind cache<br/>\
                                      If cache size exceeds this value, all cached items are flushed to the cache store and write cache is cleared')
                             .details-row
-                                +number('Flush frequency:', model + '.writeBehindFlushFrequency', 'writeBehindFlushFrequency', enabled, '5000', '1',
+                                +number('Flush frequency:', model + '.writeBehindFlushFrequency', '"writeBehindFlushFrequency"', enabled, '5000', '1',
                                     'Frequency with which write-behind cache is flushed to the cache store in milliseconds')
                             .details-row
-                                +number('Flush threads count:', model + '.writeBehindFlushThreadCount', 'writeBehindFlushThreadCount', enabled, '1', '1',
+                                +number('Flush threads count:', model + '.writeBehindFlushThreadCount', '"writeBehindFlushThreadCount"', enabled, '1', '1',
                                     'Number of threads that will perform cache flushing')
             .col-sm-6
                 +preview-xml-java(model, 'cacheStore', 'domains')

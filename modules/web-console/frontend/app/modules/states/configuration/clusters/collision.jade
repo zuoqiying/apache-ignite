@@ -18,8 +18,9 @@ include ../../../../../app/helpers/jade/mixins.jade
 
 -var form = 'collision'
 -var model = 'backupItem.collision'
+-var modelCollisionKind = model + '.kind';
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Collision configuration
@@ -30,7 +31,7 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +dropdown('CollisionSpi:', model + '.kind', 'collision', 'true', '',
+                    +dropdown('CollisionSpi:', model + '.kind', '"collision"', 'true', '',
                         '[\
                             {value: "JobStealing", label: "Job stealing"},\
                             {value: "FifoQueue", label: "FIFO queue"},\
@@ -48,13 +49,13 @@ form.panel.panel-default(name=form novalidate)
                         </ul>')
                 .settings-row(ng-show='#{model}.kind !== "Noop"')
                     .panel-details
-                        ignite-configuration-clusters-collision-job-stealing(
-                            ng-show='#{model}.kind === "JobStealing"')
-                        ignite-configuration-clusters-collision-fifo-queue(
-                            ng-show='#{model}.kind === "FifoQueue"')
-                        ignite-configuration-clusters-collision-priority-queue(
-                            ng-show='#{model}.kind === "PriorityQueue"')
-                        ignite-configuration-clusters-collision-custom(
-                            ng-show='#{model}.kind === "Custom"')
+                        div(ng-show='#{modelCollisionKind} === "JobStealing"')
+                            include ./collision/job-stealing.jade
+                        div(ng-show='#{modelCollisionKind} === "FifoQueue"')
+                            include ./collision/fifo-queue.jade
+                        div(ng-show='#{modelCollisionKind} === "PriorityQueue"')
+                            include ./collision/priority-queue.jade
+                        div(ng-show='#{modelCollisionKind} === "Custom"')
+                            include ./collision/custom.jade
             .col-sm-6
                 +preview-xml-java(model, 'clusterCollision')

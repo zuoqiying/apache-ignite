@@ -16,9 +16,10 @@
 
 include ../../../../../../app/helpers/jade/mixins.jade
 
+-var form = 'logger'
 -var model = 'backupItem.logger.Custom'
 -var required = 'backupItem.logger.kind === "Custom"'
 
 div
     .details-row
-        +java-class('Class:', model + '.class', 'customLogger', 'true', required, 'Logger implementation class')
+        +java-class('Class:', model + '.class', '"customLogger"', 'true', required, 'Logger implementation class')

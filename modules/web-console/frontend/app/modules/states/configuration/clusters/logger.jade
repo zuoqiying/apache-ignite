@@ -16,11 +16,11 @@
 
 include ../../../../../app/helpers/jade/mixins.jade
 
--var model = 'backupItem.logger'
 -var form = 'logger'
+-var model = 'backupItem.logger'
 -var kind = model + '.kind'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Logger configuration
@@ -31,7 +31,7 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +dropdown('Logger:', kind, 'logger', 'true', 'Default',
+                    +dropdown('Logger:', kind, '"logger"', 'true', 'Default',
                         '[\
                             {value: "Log4j", label: "Apache Log4j"},\
                             {value: "Log4j2", label: "Apache Log4j 2"},\
@@ -55,11 +55,11 @@ form.panel.panel-default(name=form novalidate)
                         </ul>')
                 .settings-row(ng-show='#{kind} && (#{kind} === "Log4j2" || #{kind} === "Log4j" || #{kind} === "Custom")')
                     .panel-details
-                        ignite-configuration-clusters-logger-log4j2(
-                            ng-show='#{kind} === "Log4j2"')
-                        ignite-configuration-clusters-logger-log4j(
-                            ng-show='#{kind} === "Log4j"')
-                        ignite-configuration-clusters-logger-custom(
-                            ng-show='#{kind} === "Custom"')
+                        div(ng-show='#{kind} === "Log4j2"')
+                            include ./logger/log4j2.jade
+                        div(ng-show='#{kind} === "Log4j"')
+                            include ./logger/log4j.jade
+                        div(ng-show='#{kind} === "Custom"')
+                            include ./logger/custom.jade
             .col-sm-6
                 +preview-xml-java(model, 'clusterLogger')

@@ -285,6 +285,8 @@ export default ['clustersController', [
                     $scope.backupItem = emptyCluster;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
+                $scope.ui.inputForm.$error = {};
+                $scope.ui.inputForm.$setPristine();
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -641,6 +643,7 @@ export default ['clustersController', [
                             _.forEach($scope.igfss, (igfs) => igfs.igfs.clusters = []);
 
                             $scope.backupItem = emptyCluster;
+                            $scope.ui.inputForm.$error = {};
                             $scope.ui.inputForm.$setPristine();
                         })
                         .error(Messages.showError);
@@ -651,6 +654,7 @@ export default ['clustersController', [
             Confirm.confirm('Are you sure you want to undo all changes for current cluster?')
                 .then(function() {
                     $scope.backupItem = $scope.selectedItem ? angular.copy($scope.selectedItem) : prepareNewItem();
+                    $scope.ui.inputForm.$error = {};
                     $scope.ui.inputForm.$setPristine();
                 });
         };

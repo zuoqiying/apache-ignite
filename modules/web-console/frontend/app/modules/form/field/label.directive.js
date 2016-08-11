@@ -27,7 +27,7 @@ export default ['igniteFormFieldLabel', [() => {
                         if (/(.*):$/.test(text))
                             field.name = /(.*):$/.exec(text)[1];
 
-                        const $label = $element.parent().parent().find('label');
+                        const $label = $element.parent().parent().find('.group-legend > label, .ignite-field > label');
 
                         if ($element[0].id) {
                             const id = $element[0].id;

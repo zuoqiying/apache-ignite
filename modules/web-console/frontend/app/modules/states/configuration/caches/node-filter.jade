@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'nodeFilter'
 -var model = 'backupItem'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Node filter
@@ -59,7 +59,7 @@ form.panel.panel-default(name=form novalidate)
                     div(ng-show='#{nodeFilterKind} === "OnNodes"')
                         -var nodeSetFilter = nodeFilter + '.OnNodes.nodeIds'
 
-                        ignite-form-group(ng-model=nodeSetFilter ng-form=form)
+                        +ignite-form-group(ng-form=form ng-model=nodeSetFilter)
                             -var uniqueTip = 'Such node ID already exists!'
 
                             ignite-form-field-label
@@ -70,36 +70,37 @@ form.panel.panel-default(name=form novalidate)
                                 | Add new node ID
 
                             .group-content(ng-if='#{nodeSetFilter}.length')
-                                -var field = 'edit'
-                                -var valid = 'form[ngModelName].$valid'
-                                -var unique = 'form[ngModelName].$error.igniteUnique'
-                                -var uuid = 'form[ngModelName].$error.uuid'
-                                -var save = nodeSetFilter + '[$index] = ' + field
+                                -var model = 'obj.model';
+                                -var name = '"edit" + $index'
+                                -var valid = form + '[' + name + '].$valid'
+                                -var save = nodeSetFilter + '[$index] = ' + model
 
-                                ignite-form-field(ng-repeat='model in #{nodeSetFilter} track by $index' type='internal' name='Node IDs')
-                                    .indexField
-                                        | {{ $index+1 }})
-                                    +table-remove-button(nodeSetFilter, 'Remove node ID')
+                                div(ng-repeat='model in #{nodeSetFilter} track by $index' ng-init='obj = {}')
+                                    label.col-xs-12.col-sm-12.col-md-12
+                                        .indexField
+                                            | {{ $index+1 }})
+                                        +table-remove-button(nodeSetFilter, 'Remove node ID')
 
-                                    span(ng-hide='field.edit')
-                                        a.labelFormField(ng-click='field.edit = true') {{ model }}
-                                    span(ng-if='field.edit' ng-init='#{field} = model')
-                                        +table-uuid-field(field, nodeSetFilter, valid, save, false, true)
-                                            +table-save-button(valid, save, false)
-                                            +unique-feedback(unique, uniqueTip)
-                                            +uuid-feedback(uuid)
+                                        span(ng-hide='field.edit')
+                                            a.labelFormField(ng-click='field.edit = true; #{model} = model;') {{ model }}
+                                        span(ng-if='field.edit' ng-init='#{field} = model')
+                                            +table-uuid-field(name, model, nodeSetFilter, valid, save, false, true)
+                                                +table-save-button(valid, save, false)
+                                                +unique-feedback(name, uniqueTip)
+                                                +uuid-feedback(name)
+
                             .group-content(ng-repeat='field in group.add')
-                                -var field = 'new'
-                                -var valid = 'form[ngModelName].$valid'
-                                -var unique = 'form[ngModelName].$error.igniteUnique'
-                                -var uuid = 'form[ngModelName].$error.uuid'
-                                -var save = nodeSetFilter + '.push(' + field + ')'
+                                -var model = 'new';
+                                -var name = '"new"'
+                                -var valid = form + '[' + name + '].$valid'
+                                -var save = nodeSetFilter + '.push(' + model + ')'
 
-                                ignite-form-field(type='internal' name='Node Ids')
-                                    +table-uuid-field(field, nodeSetFilter, valid, save, true, true)
-                                        +table-save-button(valid, save, true)
-                                        +unique-feedback(unique, uniqueTip)
-                                        +uuid-feedback(uuid)
+                                div
+                                    label.col-xs-12.col-sm-12.col-md-12
+                                        +table-uuid-field(name, model, nodeSetFilter, valid, save, true, true)
+                                            +table-save-button(valid, save, true)
+                                            +unique-feedback(name, uniqueTip)
+                                            +uuid-feedback(name)
                             .group-content-empty(id='nodeSetFilter' ng-if='!(#{nodeSetFilter}.length) && !group.add.length')
                                 | Not defined
 

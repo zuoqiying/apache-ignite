@@ -19,7 +19,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var form = 'statistics'
 -var model = 'backupItem'
 
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Statistics
@@ -30,8 +30,8 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +checkbox('Statistics enabled', model + '.statisticsEnabled', 'statisticsEnabled', 'Flag indicating whether statistics gathering is enabled on a cache')
+                    +checkbox('Statistics enabled', model + '.statisticsEnabled', '"statisticsEnabled"', 'Flag indicating whether statistics gathering is enabled on a cache')
                 .settings-row
-                    +checkbox('Management enabled', model + '.managementEnabled', 'managementEnabled', 'Flag indicating whether management is enabled on this cache')
+                    +checkbox('Management enabled', model + '.managementEnabled', '"managementEnabled"', 'Flag indicating whether management is enabled on this cache')
             .col-sm-6
                 +preview-xml-java(model, 'cacheStatistics')

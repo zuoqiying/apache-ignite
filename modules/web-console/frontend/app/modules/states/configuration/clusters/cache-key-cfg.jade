@@ -18,52 +18,9 @@ include ../../../../../app/helpers/jade/mixins.jade
 
 -var form = 'cacheKeyCfg'
 -var model = 'backupItem.cacheKeyConfiguration'
+-var items = model;
 
-//- Mixin for java name field with enabled condition.
-mixin cache-key-java-class(lbl, model, name, enabled, required, remove, autofocus, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        if (remove)
-            +table-remove-button('backupItem.cacheKeyConfiguration', 'Remove type configuration')
-        ignite-form-field-input-text(
-            data-id='{{#{name}}}'
-            data-name='{{#{name}}}'
-            data-ng-model=model
-            data-ng-disabled='!(#{enabled})'
-            data-ng-required=required
-            data-placeholder='Enter fully qualified class name'
-
-            data-ignite-form-field-input-autofocus=autofocus
-
-            data-java-identifier='true'
-            data-java-package-specified='true'
-            data-java-keywords='true'
-            data-java-built-in-class='true'
-        )
-            +error-feedback('form[ngModelName].$error.javaBuiltInClass', 'javaBuiltInClass', lbl + ' should not be the Java built-in class!', '{{' + name + '}}')
-            +error-feedback('form[ngModelName].$error.javaKeywords', 'javaKeywords', lbl + ' could not contains reserved Java keyword!', '{{' + name + '}}')
-            +error-feedback('form[ngModelName].$error.javaPackageSpecified', 'javaPackageSpecified', lbl + ' does not have package specified!', '{{' + name + '}}')
-            +error-feedback('form[ngModelName].$error.javaIdentifier', 'javaIdentifier', lbl + ' is invalid Java identifier!', '{{' + name + '}}')
-
-//- Mixin for java name field with enabled condition.
-mixin cache-key-field(lbl, model, name, tip)
-    ignite-form-field
-        ignite-form-field-label
-            | #{lbl}
-        ignite-form-field-tooltip
-            | !{tip}
-        ignite-form-field-input-text(
-            data-id='{{#{name}}}'
-            data-name='{{#{name}}}'
-            data-ng-model=model
-            data-ng-required='false'
-            data-placeholder='Enter field name'
-        )
-
-form.panel.panel-default(name=form novalidate)
+.panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Cache key configuration
@@ -74,7 +31,9 @@ form.panel.panel-default(name=form novalidate)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    ignite-form-group(ng-form='#{form}TypeConfigurations' ng-model='#{model}')
+                    -var form = form + 'TypeConfigurations'
+
+                    +ignite-form-group(ng-form=form ng-model=model)
                         ignite-form-field-label
                             | Cache key configuration
                         ignite-form-group-tooltip
@@ -86,8 +45,9 @@ form.panel.panel-default(name=form novalidate)
                         .group-content(ng-repeat='model in #{model} track by $index')
                             hr(ng-if='$index !== 0')
                             .settings-row
-                                +cache-key-java-class('Type name:', 'model.typeName', '"cacheKeyTypeName" + $index', 'true', 'true', true, 'true', 'Type name')
+                                +java-class('Type name:', 'model.typeName', '"cacheKeyTypeName" + $index', 'true', 'true', 'Type name')
+                                    +table-remove-button(items, 'Remove cache key configuration')
                             .settings-row
-                                +cache-key-field('Affinity key field name:', 'model.affinityKeyFieldName', '"affinityKeyFieldName" + $index', 'Affinity key field name')
+                                +text('Affinity key field name:', 'model.affinityKeyFieldName', '"affinityKeyFieldName" + $index', false, 'Enter field name', 'Affinity key field name')
             .col-sm-6
                 +preview-xml-java(model, 'clusterCacheKeyConfiguration')
