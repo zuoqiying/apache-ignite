@@ -570,7 +570,7 @@ $generatorSpring.clusterBinary = function(binary, res) {
 };
 
 // Generate cache key configurations.
-$generatorXml.clusterCacheKeyConfiguration = function(keyCfgs, res) {
+$generatorSpring.clusterCacheKeyConfiguration = function(keyCfgs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -585,11 +585,11 @@ $generatorXml.clusterCacheKeyConfiguration = function(keyCfgs, res) {
             res.startBlock('<bean class="org.apache.ignite.cache.CacheKeyConfiguration">');
 
             if (cfg.affinityKeyFieldName) {
-                $generatorXml.constructorArg(res, -1, cfg, 'typeName');
-                $generatorXml.constructorArg(res, -1, cfg, 'affinityKeyFieldName');
+                $generatorSpring.constructorArg(res, -1, cfg, 'typeName');
+                $generatorSpring.constructorArg(res, -1, cfg, 'affinityKeyFieldName');
             }
             else
-                $generatorXml.constructorArg(res, -1, cfg, 'typeName');
+                $generatorSpring.constructorArg(res, -1, cfg, 'typeName');
 
             res.endBlock('</bean>');
         }
