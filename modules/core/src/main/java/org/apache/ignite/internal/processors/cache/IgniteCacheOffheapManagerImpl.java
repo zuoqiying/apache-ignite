@@ -213,47 +213,45 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     protected void destroyCacheDataStructures() {
         final PageMemory pageMem = cctx.shared().database().pageMemory();
 
-        if (!cctx.shared().database().persistenceEnabled()) {
-            try (Page meta = pageMem.metaPage(cctx.cacheId())) {
-                final ByteBuffer buf = meta.getForWrite();
-
-                try {
-                    // Set number of initialized pages to 0.
-                    buf.putInt(0);
-                }
-                finally {
-                    meta.releaseWrite(true);
-                }
-            }
-            catch (IgniteCheckedException e) {
-                throw new IgniteException(e.getMessage(), e);
-            }
+        try (Page meta = pageMem.metaPage(cctx.cacheId())) {
+            final ByteBuffer buf = meta.getForWrite();
 
             try {
-                if (locCacheDataStore != null)
-                    locCacheDataStore.destroy();
-
-                for (CacheDataStore store : partDataStores.values()) {
-                    store.destroy();
-                }
-
-                metaStore.destroy();
-
-                Collection<Long> pages = freeList.pages();
-
-                pages.addAll(reuseList.pages());
-
-                reuseList.destroy();
-
-                freeList.destroy();
-
-                for (Long pageId : pages) {
-                    pageMem.freePage(cctx.cacheId(), pageId);
-                }
+                // Set number of initialized pages to 0.
+                buf.putInt(0);
             }
-            catch (IgniteCheckedException e) {
-                throw new IgniteException(e.getMessage(), e);
+            finally {
+                meta.releaseWrite(true);
             }
+        }
+        catch (IgniteCheckedException e) {
+            throw new IgniteException(e.getMessage(), e);
+        }
+
+        try {
+            if (locCacheDataStore != null)
+                locCacheDataStore.destroy();
+
+            for (CacheDataStore store : partDataStores.values()) {
+                store.destroy();
+            }
+
+            metaStore.destroy();
+
+            Collection<Long> pages = freeList.pages();
+
+            pages.addAll(reuseList.pages());
+
+            reuseList.destroy();
+
+            freeList.destroy();
+
+            for (Long pageId : pages) {
+                pageMem.freePage(cctx.cacheId(), pageId);
+            }
+        }
+        catch (IgniteCheckedException e) {
+            throw new IgniteException(e.getMessage(), e);
         }
     }
 
@@ -685,7 +683,13 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         boolean exists = cctx.shared().database().persistenceEnabled() &&
             cctx.shared().pageStore().exists(cctx.cacheId(), p, PageIdAllocator.FLAG_PART_IDX);
 
-        return new LazyCacheDataStore(p, idxName, exists, lsnr);
+        LazyCacheDataStore store = new LazyCacheDataStore(p, idxName, exists, lsnr);
+
+        CacheDataStore old = partDataStores.put(p, store);
+
+        assert old == null;
+
+        return store;
     }
 
     @Nullable @Override public CacheDataStore cacheDataStore(int p) {
@@ -738,6 +742,15 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         private final CacheDataTree dataTree;
 
         /** */
+        private final MetaStore metaStore;
+
+        /** */
+        private final ReuseList reuseList;
+
+        /** */
+        private final FreeList freeList;
+
+        /** */
         private final Listener lsnr;
 
         /**
@@ -750,12 +763,18 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             int partId,
             CacheDataRowStore rowStore,
             CacheDataTree dataTree,
+            MetaStore metaStore,
+            ReuseList reuseList,
+            FreeList freeList,
             Listener lsnr
         ) {
             this.name = name;
             this.partId = partId;
             this.rowStore = rowStore;
             this.dataTree = dataTree;
+            this.metaStore = metaStore;
+            this.reuseList = reuseList;
+            this.freeList = freeList;
             this.lsnr = lsnr;
         }
 
@@ -829,7 +848,33 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         /** {@inheritDoc} */
         @Override public void destroy() throws IgniteCheckedException {
+            try (Page meta = cctx.shared().database().pageMemory().partMetaPage(cctx.cacheId(), partId)) {
+                final ByteBuffer buf = meta.getForWrite();
+
+                try {
+                    // Set number of initialized pages to 0.
+                    buf.putInt(0);
+                }
+                finally {
+                    meta.releaseWrite(true);
+                }
+            }
+
             dataTree.destroy();
+
+            metaStore.destroy();
+
+            Collection<Long> pages = freeList.pages();
+
+            pages.addAll(reuseList.pages());
+
+            reuseList.destroy();
+
+            freeList.destroy();
+
+            for (Long pageId : pages) {
+                cctx.shared().database().pageMemory().freePage(cctx.cacheId(), pageId);
+            }
 
             onCacheDataStoreDestroyed(name);
 
@@ -1386,7 +1431,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                         rootPage.pageId().pageId(),
                         rootPage.isAllocated());
 
-                    delegate = new CacheDataStoreImpl(idxName, partId, rowStore, dataTree, lsnr);
+                    delegate = new CacheDataStoreImpl(idxName, partId, rowStore, dataTree, partIdxMetaStore,
+                        partIdxReuseList, partIdxFreeList, lsnr);
 
                     latch.countDown();
                 }
