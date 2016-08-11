@@ -29,11 +29,13 @@ import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.IgniteCacheOffheapManager;
+import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
 import org.apache.ignite.internal.processors.cache.database.IgniteCacheDatabaseSharedManager;
 import org.apache.ignite.internal.processors.cache.database.RootPage;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
 import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusIO;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.processors.query.h2.opt.GridH2Cursor;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2IndexBase;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2Row;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2Table;
@@ -54,7 +56,9 @@ import org.h2.table.TableFilter;
 
 public class H2PkHashIndex extends GridH2IndexBase {
 
-    private final IgniteCacheOffheapManager offheapMgr;
+    private final GridH2Table tbl;
+
+    private final GridCacheContext cctx;
 
     /**
      * @param cctx Cache context.
@@ -79,22 +83,58 @@ public class H2PkHashIndex extends GridH2IndexBase {
 
         assert pk;
 
+        assert cols.length == 1;
+
         // TODO: pass wrapper around per-partition hash indexes as base index.
 
         initBaseIndex(tbl, 0, name, cols, IndexType.createPrimaryKey(false, true));
 
-        offheapMgr = cctx.offheap();
+        this.tbl = tbl;
+        this.cctx = cctx;
     }
+
+
 
     /** {@inheritDoc} */
     @Override public Cursor find(Session ses, SearchRow lower, SearchRow upper) {
+        IndexingQueryFilter f = filters.get();
+        IgniteBiPredicate<Object, Object> p = null;
+
+        if (f != null) {
+            String spaceName = ((GridH2Table)getTable()).spaceName();
+
+            p = f.forSpace(spaceName);
+        }
+
+        try {
+            if (lower == null && upper == null) {
+
+                List<GridCursor<? extends CacheDataRow>> cursors = new ArrayList<>();
+
+                for (IgniteCacheOffheapManager.CacheDataStore store : cctx.offheap().cacheDataStores()) {
+                    cursors.add(store.cursor());
+                }
+
+                return new H2Cursor(new CompositeGridCursor<CacheDataRow>(cursors.iterator()), p);
+            }
+        }
+        catch (IgniteCheckedException e) {
+            throw DbException.convert(e);
+        }
+
+        // TODO : Delegate?
+
         throw DbException.getUnsupportedException("find");
+    }
+
+    @Override public boolean canScan() {
+        return false;
     }
 
     /** {@inheritDoc} */
     @Override public GridH2Row findOne(GridH2Row row) {
         try {
-            for (IgniteCacheOffheapManager.CacheDataStore store : offheapMgr.cacheDataStores()) {
+            for (IgniteCacheOffheapManager.CacheDataStore store : cctx.offheap().cacheDataStores()) {
                 IgniteBiTuple<CacheObject, GridCacheVersion> found = store.find(row.key);
 
                 if (found != null) {
@@ -119,13 +159,15 @@ public class H2PkHashIndex extends GridH2IndexBase {
     /** {@inheritDoc} */
     @SuppressWarnings("StatementWithEmptyBody")
     @Override public GridH2Row put(GridH2Row row) {
+        // TODO : Delegate?
         return null;
     }
 
     /** {@inheritDoc} */
     @Override public GridH2Row remove(SearchRow row) {
+        // TODO : Delegate?
         if (row instanceof GridH2Row)
-            return (GridH2Row) row;
+            return (GridH2Row)row;
 
         return null;
     }
@@ -169,9 +211,9 @@ public class H2PkHashIndex extends GridH2IndexBase {
     /**
      * Cursor.
      */
-    private static class H2Cursor implements Cursor {
+    private class H2Cursor implements Cursor {
         /** */
-        final GridCursor<GridH2Row> cursor;
+        final GridCursor<? extends CacheDataRow> cursor;
 
         /** */
         final IgniteBiPredicate<Object, Object> filter;
@@ -180,7 +222,7 @@ public class H2PkHashIndex extends GridH2IndexBase {
          * @param cursor Cursor.
          * @param filter Filter.
          */
-        private H2Cursor(GridCursor<GridH2Row> cursor, IgniteBiPredicate<Object, Object> filter) {
+        private H2Cursor(GridCursor<? extends CacheDataRow> cursor, IgniteBiPredicate<Object, Object> filter) {
             assert cursor != null;
 
             this.cursor = cursor;
@@ -190,7 +232,9 @@ public class H2PkHashIndex extends GridH2IndexBase {
         /** {@inheritDoc} */
         @Override public Row get() {
             try {
-                return cursor.get();
+                CacheDataRow dataRow = cursor.get();
+
+                return tbl.rowDescriptor().createRow(dataRow.key(), dataRow.partition(), dataRow.value(), dataRow.version(), 0);
             }
             catch (IgniteCheckedException e) {
                 throw DbException.convert(e);
@@ -209,10 +253,10 @@ public class H2PkHashIndex extends GridH2IndexBase {
                     if (filter == null)
                         return true;
 
-                    GridH2Row row = cursor.get();
+                    CacheDataRow dataRow = cursor.get();
 
-                    Object key = row.getValue(0).getObject();
-                    Object val = row.getValue(1).getObject();
+                    Object key = dataRow.key().value(null, false);
+                    Object val = dataRow.value().value(null, false);
 
                     assert key != null;
                     assert val != null;
@@ -231,6 +275,37 @@ public class H2PkHashIndex extends GridH2IndexBase {
         /** {@inheritDoc} */
         @Override public boolean previous() {
             throw DbException.getUnsupportedException("previous");
+        }
+    }
+
+    private static class CompositeGridCursor<T> implements GridCursor<T> {
+        private final Iterator<GridCursor<? extends T>> iterator;
+
+        private GridCursor<? extends T> current;
+
+        public CompositeGridCursor(Iterator<GridCursor<? extends T>> iterator) {
+            this.iterator = iterator;
+
+            if (iterator.hasNext())
+                current = iterator.next();
+        }
+
+        @Override public boolean next() throws IgniteCheckedException {
+            if (current.next())
+                return true;
+
+            while (iterator.hasNext()) {
+                current = iterator.next();
+
+                if (current.next())
+                    return true;
+            }
+
+            return false;
+        }
+
+        @Override public T get() throws IgniteCheckedException {
+            return current.get();
         }
     }
 }
