@@ -35,6 +35,14 @@ export default class AbstractTransformer {
 
         return sb;
     }
+    // Generate cache key configurations.
+    static clusterCacheKeyConfiguration(keyCfgs, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterCacheKeyConfiguration(keyCfgs);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
 
     static clusterCollision(collision, sb = new StringBuilder()) {
         const cfg = this.generator.clusterCollision(collision);

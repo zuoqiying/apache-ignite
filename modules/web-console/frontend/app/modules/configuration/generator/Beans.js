@@ -23,8 +23,13 @@ export class EmptyBean {
      */
     constructor(clsName) {
         this.properties = [];
+        this.arguments = [];
 
         this.clsName = clsName;
+    }
+
+    isEmptyConstructor() {
+        return _.isEmpty(this.arguments);
     }
 
     isEmpty() {
@@ -70,20 +75,40 @@ export class Bean extends EmptyBean {
         this.dflts = dflts;
     }
 
-    valueOf(path) {
-        return (this.src && this.src[path]) || this.dflts[path];
-    }
-
-    property(model, name = model) {
+    _property(acc, type, model, name) {
         if (!this.src)
             return this;
 
         const value = this.src[model];
 
         if (!_.isNil(value) && value !== this.dflts[model])
-            this.properties.push({type: 'PROPERTY', name, value});
+            acc.push({type, name, value});
 
         return this;
+    }
+
+    constructorArgument(model, name = model) {
+        return this._property(this.arguments, 'PROPERTY', model, name);
+    }
+
+    stringConstructorArgument(model, name = model) {
+        return this._property(this.arguments, 'STRING', model, name);
+    }
+
+    classConstructorArgument(model, name = model) {
+        return this._property(this.arguments, 'CLASS', model, name);
+    }
+
+    valueOf(path) {
+        return (this.src && this.src[path]) || this.dflts[path];
+    }
+
+    property(model, name = model) {
+        return this._property(this.properties, 'PROPERTY', model, name);
+    }
+
+    stringProperty(model, name = model) {
+        return this._property(this.properties, 'STRING', model, name);
     }
 
     enumProperty(model, name = model) {
@@ -123,26 +148,41 @@ export class Bean extends EmptyBean {
     }
 
     /**
+     * @param {String} id
      * @param {String} name
      * @param {Array} items
-     * @param {String} clsName
-     * @param {String} clsName
-     * @param {String} implClsName
+     * @param {String} typeClsName
      * @returns {Bean}
      */
-    collectionProperty(name, items, clsName = 'java.util.Collection', typeClsName = 'java.util.String', implClsName = 'java.util.ArrayList') {
+    arrayProperty(id, name, items, typeClsName = 'java.util.String') {
         if (items.length)
-            this.properties.push({type: 'COLLECTION', name, items, clsName, typeClsName, implClsName});
+            this.properties.push({type: 'ARRAY', id, name, items, typeClsName});
 
         return this;
     }
 
     /**
-     * @param {String} name
      * @param {String} id
+     * @param {String} name
+     * @param {Array} items
+     * @param {String} clsName
+     * @param {String} typeClsName
+     * @param {String} implClsName
      * @returns {Bean}
      */
-    mapProperty(name, id) {
+    collectionProperty(id, name, items, clsName = 'java.util.Collection', typeClsName = 'java.util.String', implClsName = 'java.util.ArrayList') {
+        if (items.length)
+            this.properties.push({type: 'COLLECTION', id, name, items, clsName, typeClsName, implClsName});
+
+        return this;
+    }
+
+    /**
+     * @param {String} id
+     * @param {String} name
+     * @returns {Bean}
+     */
+    mapProperty(id, name) {
         if (!this.src)
             return this;
 

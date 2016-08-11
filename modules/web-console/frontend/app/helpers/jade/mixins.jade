@@ -468,7 +468,7 @@ mixin preview-xml-java(master, generator, detail)
                 a(ng-class='{active: mode === "java"}' ng-click='mode = "java"') Java
                 a(ng-class='{active: mode === "csharp"}' ng-click='mode = "csharp"') C#
                 a(ng-class='{active: mode === "app.config"}' ng-click='mode = "app.config"') app.config
-            .preview-content(ng-switch on='mode')
+            .preview-content(ng-switch='mode')
                 ignite-ui-ace-spring(ng-switch-when="spring" data-master=master data-generator=generator ng-model='$parent.data' data-detail=detail)
                 ignite-ui-ace-java(ng-switch-when="java" data-master=master data-generator=generator ng-model='$parent.data' data-detail=detail)
                 ignite-ui-ace-sharp(ng-switch-when="csharp" data-master=master data-generator=generator ng-model='$parent.data' data-detail=detail)

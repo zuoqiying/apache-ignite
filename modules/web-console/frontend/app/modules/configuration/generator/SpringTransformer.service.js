@@ -58,9 +58,13 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
             _.forEach(bean.properties, (prop) => {
                 switch (prop.type) {
                     case 'PROPERTY':
+                    case 'STRING':
                     case 'ENUM':
                         sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
 
+                        break;
+
+                    case 'ARRAY':
                         break;
 
                     case 'COLLECTION':

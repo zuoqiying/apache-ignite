@@ -39,13 +39,38 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
         }
 
         /**
+         * @param {Bean} bean
+         */
+        static _newBean(bean) {
+            const shortClsName = JavaTypes.shortClassName(bean.clsName);
+
+            if (bean.isEmptyConstructor())
+                return `new ${shortClsName}()`;
+
+            const args = _.map(bean.arguments, (arg) => {
+                switch (arg.type) {
+                    case 'PROPERTY':
+                        return arg.value;
+                    case 'STRING':
+                        return `"${arg.value}"`;
+                    case 'CLASS':
+                        return `${JavaTypes.shortClassName(arg.value)}.class`;
+                    default:
+                        return 'null';
+                }
+            });
+
+            return `new ${shortClsName}(${args.join(', ')})`;
+        }
+
+        /**
          * @param {StringBuilder} sb
          * @param {Bean} bean
          */
         static _defineBean(sb, bean) {
             const shortClsName = JavaTypes.shortClassName(bean.clsName);
 
-            sb.append(`${shortClsName} ${bean.id} = new ${shortClsName}();`);
+            sb.append(`${shortClsName} ${bean.id} = ${this._newBean(bean)};`);
         }
 
         /**
@@ -61,40 +86,38 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
 
         /**
          * @param {StringBuilder} sb
-         * @param {Bean} parent
-         * @param {String} propertyName
          * @param {Bean} bean
+         * @param {Boolean} limitLines
          * @private
          */
-        static appendBean(sb, parent, propertyName, bean) {
-            if (bean.id) {
-                this._defineBean(sb, bean);
+        static constructBean(sb, bean, limitLines = false) {
+            this._defineBean(sb, bean);
 
-                sb.emptyLine();
+            sb.emptyLine();
 
-                this._setProperties(sb, bean);
-
-                if (bean.properties.length)
-                    sb.emptyLine();
-
-                sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(${bean.id});`);
-            }
-            else {
-                const shortClsName = JavaTypes.shortClassName(bean.clsName);
-
-                sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(new ${shortClsName}());`);
-            }
+            this._setProperties(sb, bean, limitLines);
         }
 
         /**
          *
          * @param {StringBuilder} sb
          * @param {Bean} bean
+         * @param {Boolean} limitLines
          * @returns {StringBuilder}
          */
-        static _setProperties(sb = new StringBuilder(), bean) {
+        static _setProperties(sb = new StringBuilder(), bean, limitLines = false) {
             _.forEach(bean.properties, (prop) => {
                 switch (prop.type) {
+                    case 'STRING':
+                        this._setProperty(sb, bean, prop.name, `"${prop.value}"`);
+
+                        break;
+
+                    case 'CLASS':
+                        this._setProperty(sb, bean, prop.name, `${JavaTypes.shortClassName(prop.value)}.class`);
+
+                        break;
+
                     case 'PROPERTY':
                         this._setProperty(sb, bean, prop.name, prop.value);
 
@@ -107,12 +130,29 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
 
                         break;
 
+                    case 'ARRAY':
+                        const arrTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
+
+                        sb.append(`${arrTypeClsName}[] ${prop.name} = new ${arrTypeClsName}[${prop.items.length}];`);
+
+                        sb.emptyLine();
+
+                        _.forEach(prop.items, (item, idx) => {
+                            sb.append(`${prop.name}[${idx}] = ${this._newBean(item)};`);
+                        });
+
+                        sb.emptyLine();
+
+                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
+
+                        break;
+
                     case 'COLLECTION':
                         const clsName = JavaTypes.shortClassName(prop.clsName);
-                        const typeClsName = JavaTypes.shortClassName(prop.typeClsName);
+                        const colTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
                         const implClsName = JavaTypes.shortClassName(prop.implClsName);
 
-                        sb.append(`${clsName}<${typeClsName}> types = new ${implClsName}<>();`);
+                        sb.append(`${clsName}<${colTypeClsName}> ${prop.name} = new ${implClsName}<>();`);
 
                         sb.emptyLine();
 
@@ -121,14 +161,14 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                                 sb.append(`types.add("${item}");`);
                             else if (_.isNumber(item))
                                 sb.append(`types.add(${item});`);
-                            else if (item instanceof MethodBean)
+                            else if (item instanceof MethodBean && limitLines)
                                 sb.append(`types.add(${item.id}());`);
                             else {
                                 this._defineBean(sb, item);
 
                                 sb.emptyLine();
 
-                                this._setProperties(sb, item);
+                                this._setProperties(sb, item, limitLines);
 
                                 if (item.properties.length)
                                     sb.emptyLine();
@@ -163,7 +203,20 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                         break;
 
                     default:
-                        this.appendBean(sb, bean, prop.name, prop.value);
+                        const embedded = prop.value;
+
+                        if (embedded.nonEmpty()) {
+                            this.constructBean(sb, embedded);
+
+                            sb.emptyLine();
+
+                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${embedded.id});`);
+                        }
+                        else {
+                            const shortClsName = JavaTypes.shortClassName(bean.clsName);
+
+                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${shortClsName}());`);
+                        }
                 }
             });
 
@@ -238,11 +291,7 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
             );
             sb.startBlock('public static IgniteConfiguration createConfiguration() throws Exception {');
 
-            this._defineBean(sb, cfg);
-
-            sb.emptyLine();
-
-            this._setProperties(sb, cfg);
+            this.constructBean(sb, cfg, true);
 
             sb.emptyLine();
 

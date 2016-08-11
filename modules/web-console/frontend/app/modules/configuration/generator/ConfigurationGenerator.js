@@ -112,7 +112,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 const typeCfg = new MethodBean('org.apache.ignite.binary.BinaryTypeConfiguration',
                     JavaTypes.toJavaName('binaryType', type.typeName), type, DEFAULT.binary.typeConfigurations);
 
-                typeCfg.property('typeName')
+                typeCfg.stringProperty('typeName')
                     .emptyBeanProperty('idMapper')
                     .emptyBeanProperty('nameMapper')
                     .emptyBeanProperty('serializer')
@@ -134,6 +134,24 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
+        // Generate cache key configurations.
+        static clusterCacheKeyConfiguration(keyCfgs, cfg = this.igniteConfigurationBean()) {
+            const items = _.map(keyCfgs, (keyCfg) => {
+                if (keyCfg.affinityKeyFieldName) {
+                    return new Bean('org.apache.ignite.cache.CacheKeyConfiguration', null, keyCfg)
+                        .stringConstructorArgument('typeName')
+                        .stringConstructorArgument('affinityKeyFieldName');
+                }
+
+                return new Bean('org.apache.ignite.cache.CacheKeyConfiguration', null, keyCfg)
+                    .classConstructorArgument('typeName');
+            });
+
+            cfg.arrayProperty('cacheKeyConfiguration', 'keyConfigurations', items, 'org.apache.ignite.cache.CacheKeyConfiguration');
+
+            return cfg;
+        }
+
         // Generate collision group.
         static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
             let colSpi;
@@ -149,7 +167,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         .property('maximumStealingAttempts')
                         .property('stealingEnabled')
                         .emptyBeanProperty('externalCollisionListener')
-                        .mapProperty('stealingAttrs', 'stealingAttributes');
+                        .mapProperty('stealingAttributes', 'stealingAttrs');
 
                     break;
 
