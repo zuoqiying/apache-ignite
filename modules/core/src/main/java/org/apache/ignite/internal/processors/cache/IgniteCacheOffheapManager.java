@@ -30,6 +30,7 @@ import org.apache.ignite.internal.util.lang.GridCloseableIterator;
 import org.apache.ignite.internal.util.lang.GridCursor;
 import org.apache.ignite.internal.util.lang.GridIterator;
 import org.apache.ignite.lang.IgniteBiTuple;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -81,6 +82,10 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      * @throws IgniteCheckedException If failed.
      */
     public CacheDataStore createCacheDataStore(int p, CacheDataStore.Listener lsnr) throws IgniteCheckedException;
+
+    @Nullable public CacheDataStore cacheDataStore(int p);
+
+    public Iterable<CacheDataStore> cacheDataStores();
 
     /**
      * TODO: GG-10884, used on only from initialValue.

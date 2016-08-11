@@ -13,28 +13,38 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package org.apache.ignite.internal.processors.query.h2.database;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.IgniteCacheOffheapManager;
 import org.apache.ignite.internal.processors.cache.database.IgniteCacheDatabaseSharedManager;
 import org.apache.ignite.internal.processors.cache.database.RootPage;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
 import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusIO;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2IndexBase;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2Row;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2Table;
 import org.apache.ignite.internal.util.lang.GridCursor;
 import org.apache.ignite.lang.IgniteBiPredicate;
+import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.spi.indexing.IndexingQueryFilter;
 import org.h2.engine.Session;
 import org.h2.index.Cursor;
 import org.h2.index.IndexType;
+import org.h2.index.SingleRowCursor;
 import org.h2.message.DbException;
 import org.h2.result.Row;
 import org.h2.result.SearchRow;
@@ -42,12 +52,9 @@ import org.h2.result.SortOrder;
 import org.h2.table.IndexColumn;
 import org.h2.table.TableFilter;
 
-/**
- * H2 Index over {@link BPlusTree}.
- */
-public class H2TreeIndex extends GridH2IndexBase {
-    /** */
-    private final H2Tree tree;
+public class H2PkHashIndex extends GridH2IndexBase {
+
+    private final IgniteCacheOffheapManager offheapMgr;
 
     /**
      * @param cctx Cache context.
@@ -59,8 +66,8 @@ public class H2TreeIndex extends GridH2IndexBase {
      * @param cols Index columns.
      * @throws IgniteCheckedException If failed.
      */
-    public H2TreeIndex(
-        GridCacheContext<?,?> cctx,
+    public H2PkHashIndex(
+        GridCacheContext<?, ?> cctx,
         int keyCol,
         int valCol,
         GridH2Table tbl,
@@ -70,56 +77,39 @@ public class H2TreeIndex extends GridH2IndexBase {
     ) throws IgniteCheckedException {
         super(keyCol, valCol);
 
-        if (!pk) {
-            // For other indexes we add primary key at the end to avoid conflicts.
-            cols = Arrays.copyOf(cols, cols.length + 1);
-
-            cols[cols.length - 1] = tbl.indexColumn(keyCol, SortOrder.ASCENDING);
-        }
+        assert pk;
 
         // TODO: pass wrapper around per-partition hash indexes as base index.
 
-        initBaseIndex(tbl, 0, name, cols,
-            pk ? IndexType.createPrimaryKey(false, false) : IndexType.createNonUnique(false, false, false));
+        initBaseIndex(tbl, 0, name, cols, IndexType.createPrimaryKey(false, true));
 
-        name = BPlusTree.treeName(name, "H2Tree");
-
-        IgniteCacheDatabaseSharedManager dbMgr = cctx.shared().database();
-
-        RootPage page = cctx.offheap().meta().getOrAllocateForTree(name);
-
-        tree = new H2Tree(name, cctx.offheap().reuseList(), cctx.cacheId(),
-            dbMgr.pageMemory(), cctx.shared().wal(), tbl.rowFactory(), page.pageId().pageId(), page.isAllocated()) {
-            @Override protected int compare(BPlusIO<SearchRow> io, ByteBuffer buf, int idx, SearchRow row)
-                throws IgniteCheckedException {
-                return compareRows(getRow(io, buf, idx), row);
-            }
-        };
+        offheapMgr = cctx.offheap();
     }
 
     /** {@inheritDoc} */
     @Override public Cursor find(Session ses, SearchRow lower, SearchRow upper) {
-        try {
-            IndexingQueryFilter f = filters.get();
-            IgniteBiPredicate<Object,Object> p = null;
-
-            if (f != null) {
-                String spaceName = ((GridH2Table)getTable()).spaceName();
-
-                p = f.forSpace(spaceName);
-            }
-
-            return new H2Cursor(tree.find(lower, upper), p);
-        }
-        catch (IgniteCheckedException e) {
-            throw DbException.convert(e);
-        }
+        throw DbException.getUnsupportedException("find");
     }
 
     /** {@inheritDoc} */
     @Override public GridH2Row findOne(GridH2Row row) {
         try {
-            return tree.findOne(row);
+            for (IgniteCacheOffheapManager.CacheDataStore store : offheapMgr.cacheDataStores()) {
+                IgniteBiTuple<CacheObject, GridCacheVersion> found = store.find(row.key);
+
+                if (found != null) {
+                    GridH2Row ret = new GridH2Row();
+
+                    ret.key = row.key;
+                    ret.partId = row.partId;
+                    ret.val = found.get1();
+                    ret.ver = found.get2();
+
+                    return ret;
+                }
+            }
+
+            return null;
         }
         catch (IgniteCheckedException e) {
             throw DbException.convert(e);
@@ -129,22 +119,15 @@ public class H2TreeIndex extends GridH2IndexBase {
     /** {@inheritDoc} */
     @SuppressWarnings("StatementWithEmptyBody")
     @Override public GridH2Row put(GridH2Row row) {
-        try {
-            return tree.put(row);
-        }
-        catch (IgniteCheckedException e) {
-            throw DbException.convert(e);
-        }
+        return null;
     }
 
     /** {@inheritDoc} */
     @Override public GridH2Row remove(SearchRow row) {
-        try {
-            return tree.remove(row);
-        }
-        catch (IgniteCheckedException e) {
-            throw DbException.convert(e);
-        }
+        if (row instanceof GridH2Row)
+            return (GridH2Row) row;
+
+        return null;
     }
 
     /** {@inheritDoc} */
@@ -181,12 +164,6 @@ public class H2TreeIndex extends GridH2IndexBase {
 
     /** {@inheritDoc} */
     @Override public void close(Session ses) {
-        try {
-            tree.destroy();
-        }
-        catch (IgniteCheckedException e) {
-            throw new IgniteException(e);
-        }
     }
 
     /**
@@ -197,13 +174,13 @@ public class H2TreeIndex extends GridH2IndexBase {
         final GridCursor<GridH2Row> cursor;
 
         /** */
-        final IgniteBiPredicate<Object,Object> filter;
+        final IgniteBiPredicate<Object, Object> filter;
 
         /**
          * @param cursor Cursor.
          * @param filter Filter.
          */
-        private H2Cursor(GridCursor<GridH2Row> cursor, IgniteBiPredicate<Object,Object> filter) {
+        private H2Cursor(GridCursor<GridH2Row> cursor, IgniteBiPredicate<Object, Object> filter) {
             assert cursor != null;
 
             this.cursor = cursor;

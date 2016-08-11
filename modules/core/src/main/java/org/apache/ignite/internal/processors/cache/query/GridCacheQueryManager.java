@@ -427,10 +427,6 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
         }
     }
 
-    public BPlusTree<?, ? extends CacheDataRow> pkIndex() {
-        return qryProc.pkIndex(space);
-    }
-
     /**
      * @param key Key.
      * @param val Value.

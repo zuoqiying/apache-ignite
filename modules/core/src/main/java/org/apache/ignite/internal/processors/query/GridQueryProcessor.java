@@ -750,21 +750,6 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         }
     }
 
-    public BPlusTree<?, ? extends CacheDataRow> pkIndex(String space) {
-        if (idx == null)
-            return null;
-
-        if (!busyLock.enterBusy())
-            throw new IllegalStateException("Failed to write to index (grid is stopping).");
-
-        try {
-            return idx.pkIndex(space);
-        }
-        finally {
-            busyLock.leaveBusy();
-        }
-    }
-
     /**
      * @throws IgniteCheckedException If failed.
      */

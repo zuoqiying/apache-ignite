@@ -218,12 +218,6 @@ public interface GridQueryIndexing {
         throws IgniteCheckedException;
 
     /**
-     * @param space Space name.
-     * @return Primary key index.
-     */
-    public BPlusTree<?, ? extends CacheDataRow> pkIndex(String space);
-
-    /**
      * Will be called when entry with given key is swapped.
      *
      * @param spaceName Space name.
