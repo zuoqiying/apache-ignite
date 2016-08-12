@@ -77,8 +77,6 @@ public class H2TreeIndex extends GridH2IndexBase {
             cols[cols.length - 1] = tbl.indexColumn(keyCol, SortOrder.ASCENDING);
         }
 
-        // TODO: pass wrapper around per-partition hash indexes as base index.
-
         initBaseIndex(tbl, 0, name, cols,
             pk ? IndexType.createPrimaryKey(false, false) : IndexType.createNonUnique(false, false, false));
 

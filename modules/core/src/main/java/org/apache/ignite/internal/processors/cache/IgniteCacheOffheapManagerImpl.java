@@ -846,6 +846,20 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             return dataTree.find(null, null);
         }
 
+        @Override public GridCursor<? extends CacheDataRow> cursor(KeyCacheObject lower,
+            KeyCacheObject upper) throws IgniteCheckedException {
+            KeySearchRow lowerRow = null;
+            KeySearchRow upperRow = null;
+
+            if (lower != null)
+                lowerRow = new KeySearchRow(lower.hashCode(), lower, 0);
+
+            if (upper != null)
+                upperRow = new KeySearchRow(upper.hashCode(), upper, 0);
+
+            return dataTree.find(lowerRow, upperRow);
+        }
+
         /** {@inheritDoc} */
         @Override public void destroy() throws IgniteCheckedException {
             try (Page meta = cctx.shared().database().pageMemory().partMetaPage(cctx.cacheId(), partId)) {
@@ -1508,6 +1522,21 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             init();
 
             return this.delegate.cursor();
+        }
+
+        @Override public GridCursor<? extends CacheDataRow> cursor(KeyCacheObject lower,
+            KeyCacheObject upper) throws IgniteCheckedException {
+            CacheDataStore delegate = this.delegate;
+
+            if (delegate != null)
+                return delegate.cursor(lower, upper);
+
+            if (!exists)
+                return EMPTY_CURSOR;
+
+            init();
+
+            return this.delegate.cursor(lower, upper);
         }
 
         /** {@inheritDoc} */

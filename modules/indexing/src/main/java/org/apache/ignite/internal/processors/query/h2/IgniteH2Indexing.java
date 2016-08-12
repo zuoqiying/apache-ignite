@@ -2065,6 +2065,8 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         /** */
         private Index pkTreeIdx;
 
+        private Index pkHashIdx;
+
         /**
          * @param schema Schema.
          * @param type Type descriptor.
@@ -2128,6 +2130,15 @@ public class IgniteH2Indexing implements GridQueryIndexing {
             ArrayList<Index> idxs = new ArrayList<>();
 
             int cacheId = CU.cacheId(schema.ccfg.getName());
+
+            idxs.add(createSortedIndex(
+                cacheId,
+                "_key_PK_hash",
+                tbl,
+                true,
+                KEY_COL,
+                VAL_COL,
+                tbl.indexColumn(0, ASCENDING)));
 
             idxs.add(createSortedIndex(
                 cacheId,
@@ -2243,7 +2254,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
 
             Index idx;
 
-            if (pk) {
+            if (pk && name.endsWith("_hash")) {
                 idx = new H2PkHashIndex(
                     cctx,
                     keyCol,
@@ -2266,9 +2277,16 @@ public class IgniteH2Indexing implements GridQueryIndexing {
             }
 
             if (pk) {
-                assert pkTreeIdx == null : pkTreeIdx;
+                if (name.endsWith("_hash")) {
+                    assert pkHashIdx == null : pkHashIdx;
 
-                pkTreeIdx = idx;
+                    pkHashIdx = idx;
+                }
+                else {
+                    assert pkTreeIdx == null : pkTreeIdx;
+
+                    pkTreeIdx = idx;
+                }
             }
 
             return idx;

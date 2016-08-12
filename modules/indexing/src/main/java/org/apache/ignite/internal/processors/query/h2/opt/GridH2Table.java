@@ -394,7 +394,7 @@ public class GridH2Table extends TableBase {
      * @return Primary key.
      */
     private GridH2IndexBase pk() {
-        return (GridH2IndexBase)idxs.get(1);
+        return (GridH2IndexBase)idxs.get(2);
     }
 
     /**
@@ -434,10 +434,10 @@ public class GridH2Table extends TableBase {
 
                 int len = idxs.size();
 
-                int i = 1;
+                int i = 2;
 
                 // Put row if absent to all indexes sequentially.
-                // Start from 2 because 0 - Scan (don't need to update), 1 - PK (already updated).
+                // Start from 3 because 0 - Scan (don't need to update), 1 - PK hash (already updated), 2 - PK (already updated).
                 while (++i < len) {
                     GridH2IndexBase idx = index(i);
 

@@ -238,6 +238,8 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
          */
         public GridCursor<? extends CacheDataRow> cursor() throws IgniteCheckedException;
 
+        public GridCursor<? extends CacheDataRow> cursor(KeyCacheObject lower, KeyCacheObject upper) throws IgniteCheckedException;
+
         /**
          * Destroys the tree associated with the store.
          *
