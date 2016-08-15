@@ -22,7 +22,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 .panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
-        label Node filter
+        label(id='nodeFilter-title') Node filter
         ignite-form-field-tooltip.tipLabel
             | Determines on what nodes the cache should be started
         ignite-form-revert
@@ -33,7 +33,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                     -var nodeFilter = model + '.nodeFilter';
                     -var nodeFilterKind = nodeFilter + '.kind';
 
-                    +dropdown('Node filter:', nodeFilterKind, 'nodeFilter', 'true', 'Not set',
+                    +dropdown('Node filter:', nodeFilterKind, '"nodeFilter"', 'true', 'Not set',
                         '[\
                             {value: "IGFS", label: "IGFS nodes"},\
                             {value: "OnNodes", label: "Specified nodes"},\
@@ -48,13 +48,13 @@ include ../../../../../app/helpers/jade/mixins.jade
                         -var required = nodeFilterKind + ' === "IGFS"'
 
                         //(lbl, model, name, enabled, required, placeholder, options, tip)
-                        +dropdown-required-empty('IGFS:', igfsNodeFilter + '.igfs', 'igfsNodeFilter', 'true', required,
+                        +dropdown-required-empty('IGFS:', igfsNodeFilter + '.igfs', '"igfsNodeFilter"', 'true', required,
                             'Choose IGFS', 'No IGFS configured', 'igfss', 'Select IGFS to filter nodes')
                     div(ng-show='#{nodeFilterKind} === "Custom"')
                         -var customNodeFilter = nodeFilter + '.Custom'
                         -var required = nodeFilterKind + ' === "Custom"'
 
-                        +java-class('Class name:', customNodeFilter + '.className', 'customNodeFilter',
+                        +java-class('Class name:', customNodeFilter + '.className', '"customNodeFilter"',
                             'true', required, 'Class name of custom node filter implementation')
                     div(ng-show='#{nodeFilterKind} === "OnNodes"')
                         -var nodeSetFilter = nodeFilter + '.OnNodes.nodeIds'

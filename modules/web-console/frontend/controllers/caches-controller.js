@@ -339,6 +339,9 @@ export default ['cachesController', [
             if (item.writeBehindFlushSize === 0 && item.writeBehindFlushFrequency === 0)
                 return showPopoverMessage($scope.ui, 'store', 'writeBehindFlushSize', 'Both "Flush frequency" and "Flush size" are not allowed as 0!');
 
+            if (item.nodeFilter.kind === 'OnNodes' && _.isEmpty(item.nodeFilter.OnNodes.nodeIds))
+                return showPopoverMessage($scope.ui, 'nodeFilter', 'nodeFilter-title', 'At least one node ID should be specified!');
+
             return true;
         }
 
