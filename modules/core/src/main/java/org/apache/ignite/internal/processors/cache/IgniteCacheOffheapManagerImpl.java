@@ -20,7 +20,6 @@ package org.apache.ignite.internal.processors.cache;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -37,7 +36,6 @@ import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRowAdapter;
-import org.apache.ignite.internal.processors.cache.database.IgniteCacheDatabaseSharedManager;
 import org.apache.ignite.internal.processors.cache.database.MetaStore;
 import org.apache.ignite.internal.processors.cache.database.MetadataStorage;
 import org.apache.ignite.internal.processors.cache.database.RootPage;
@@ -828,21 +826,25 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             metaStore.destroy();
 
-            Collection<Long> pages = freeList.pages();
+            GridLongList pages = new GridLongList();
 
-            pages.addAll(reuseList.pages());
+            freeList.pages(pages);
+
+            reuseList.pages(pages);
 
             reuseList.destroy();
 
             freeList.destroy();
 
-            for (Long pageId : pages) {
+            for (int i = 0; i < pages.size(); i++) {
+                long pageId = pages.get(i);
+
                 cctx.shared().database().pageMemory().freePage(cctx.cacheId(), pageId);
             }
 
             onCacheDataStoreDestroyed(name);
 
-            partDataStores.remove(partId, CacheDataStoreImpl.this);
+            partDataStores.remove(partId, this);
         }
     }
 
@@ -1012,7 +1014,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         }
 
         /** {@inheritDoc} */
-        @Override protected long allocatePage0() throws IgniteCheckedException {
+        @Override protected long allocatePageNoReuse() throws IgniteCheckedException {
             return pageMem.allocatePage(cctx.cacheId(), partId, PageIdAllocator.FLAG_PART_IDX);
         }
 
@@ -1368,7 +1370,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         }
 
         /** {@inheritDoc} */
-        @Override public IgniteBiTuple<CacheObject, GridCacheVersion> find(KeyCacheObject key)
+        @Override public CacheDataRow find(KeyCacheObject key)
             throws IgniteCheckedException {
 
             CacheDataStore delegate = this.delegate;
@@ -1423,11 +1425,11 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      */
     private static final GridCursor<CacheDataRow> EMPTY_CURSOR = new GridCursor<CacheDataRow>() {
         /** {@inheritDoc} */
-        @Override public boolean next() throws IgniteCheckedException {
+        @Override public boolean next() {
             return false;
         }
 
-        @Override public CacheDataRow get() throws IgniteCheckedException {
+        @Override public CacheDataRow get() {
             /** {@inheritDoc} */
             return null;
         }
