@@ -113,11 +113,9 @@ public final class ReuseTree extends BPlusTree<Number, Long> {
 
         DestroyBag bag = new DestroyBag();
 
-        long pagesCnt = destroy(bag);
-
         for (long pageId = bag.pollFreePage(); pageId != 0; pageId = bag.pollFreePage())
             pageMem.freePage(getCacheId(), pageId);
 
-        return pagesCnt;
+        return -1;
     }
 }
