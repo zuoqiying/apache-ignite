@@ -338,6 +338,10 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         cacheMetas.remove(cacheId);
     }
 
+    @Override public void clear(int cacheId, int partId, byte allocSpace) {
+        // No-op
+    }
+
     /** */
     private int nextRoundRobinIndex() {
         while (true) {

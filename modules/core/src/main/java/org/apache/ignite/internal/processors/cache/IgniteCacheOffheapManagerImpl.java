@@ -18,15 +18,11 @@
 package org.apache.ignite.internal.processors.cache;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
@@ -38,7 +34,6 @@ import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRowAdapter;
-import org.apache.ignite.internal.processors.cache.database.IgniteCacheDatabaseSharedManager;
 import org.apache.ignite.internal.processors.cache.database.MetaStore;
 import org.apache.ignite.internal.processors.cache.database.MetadataStorage;
 import org.apache.ignite.internal.processors.cache.database.RootPage;
@@ -64,7 +59,6 @@ import org.apache.ignite.internal.util.lang.GridCursor;
 import org.apache.ignite.internal.util.lang.GridIterator;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +114,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                 if (cctx.affinityNode() && cctx.isLocal()) {
                     assert cctx.cache() instanceof GridLocalCache : cctx.cache();
 
-                    locCacheDataStore = createCacheDataStore(0, (CacheDataStore.Listener)cctx.cache());
+                    locCacheDataStore = getOrCreateCacheDataStore(0, (CacheDataStore.Listener)cctx.cache());
                 }
             }
             finally {
@@ -662,26 +656,45 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     }
 
     /** {@inheritDoc} */
-    @Override public final CacheDataStore createCacheDataStore(int p,
+    @Override public final CacheDataStore getOrCreateCacheDataStore(int p,
         CacheDataStore.Listener lsnr) throws IgniteCheckedException {
         String idxName = treeName(p);
 
-        boolean exists = cctx.shared().pageStore() != null
-            && cctx.shared().pageStore().exists(cctx.cacheId(), p, PageIdAllocator.FLAG_PART_IDX);
+        CacheDataStore store = partDataStores.get(p);
 
-        LazyCacheDataStore store = new LazyCacheDataStore(p, idxName, exists, lsnr);
+        if (store != null)
+            return store;
 
-        CacheDataStore old = partDataStores.put(p, store);
+        store = createCacheDataStore0(p, idxName, lsnr);
 
-        assert old == null;
+        partDataStores.put(p, store);
 
         return store;
+    }
+
+    protected CacheDataStore createCacheDataStore0(int p, String idxName,
+        CacheDataStore.Listener lsnr) throws IgniteCheckedException {
+        final RootPage rootPage = metaStore.getOrAllocateForTree(idxName);
+
+        CacheDataRowStore rowStore = new CacheDataRowStore(cctx, freeList);
+
+        CacheDataTree dataTree = new CacheDataTree(idxName,
+            p,
+            reuseList,
+            rowStore,
+            cctx,
+            cctx.shared().database().pageMemory(),
+            rootPage.pageId().pageId(),
+            rootPage.isAllocated());
+
+        return new CacheDataStoreImpl(idxName, p, rowStore, dataTree, metaStore,
+            reuseList, freeList, lsnr);
     }
 
     /**
      *
      */
-    protected void onCacheDataStoreDestroyed(String name) throws IgniteCheckedException {
+    protected void onCacheDataStoreDestroyed(String name, int partId) throws IgniteCheckedException {
         // No-op
     }
 
@@ -696,7 +709,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     /**
      *
      */
-    private class CacheDataStoreImpl implements CacheDataStore {
+    protected class CacheDataStoreImpl implements CacheDataStore {
         /** Tree name. */
         private String name;
 
@@ -726,7 +739,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          * @param dataTree Data tree.
          * @param lsnr Listener.
          */
-        private CacheDataStoreImpl(
+        public CacheDataStoreImpl(
             String name,
             int partId,
             CacheDataRowStore rowStore,
@@ -826,26 +839,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                 }
             }
 
-            dataTree.destroy();
-
-            metaStore.destroy();
-
-            GridLongList pages = new GridLongList();
-
-            freeList.pages(pages);
-
-            reuseList.pages(pages);
-
-            reuseList.destroy();
-
-            freeList.destroy();
-
-            for (int i = 0; i < pages.size(); i++) {
-                long pageId = pages.get(i);
-                cctx.shared().database().pageMemory().freePage(cctx.cacheId(), pageId);
-            }
-
-            onCacheDataStoreDestroyed(name);
+            onCacheDataStoreDestroyed(name, partId);
 
             partDataStores.remove(partId, CacheDataStoreImpl.this);
         }
@@ -948,7 +942,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     /**
      *
      */
-    private static class CacheDataTree extends BPlusTree<KeySearchRow, DataRow> {
+    protected static class CacheDataTree extends BPlusTree<KeySearchRow, DataRow> {
         /** */
         private final CacheDataRowStore rowStore;
 
@@ -969,7 +963,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          * @param initNew Initialize new index.
          * @throws IgniteCheckedException If failed.
          */
-        CacheDataTree(
+        public CacheDataTree(
             String name,
             int partId,
             ReuseList reuseList,
@@ -1048,12 +1042,12 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     /**
      *
      */
-    private class CacheDataRowStore extends RowStore {
+    protected class CacheDataRowStore extends RowStore {
         /**
          * @param cctx Cache context.
          * @param freeList Free list.
          */
-        CacheDataRowStore(GridCacheContext<?, ?> cctx, FreeList freeList) {
+        public CacheDataRowStore(GridCacheContext<?, ?> cctx, FreeList freeList) {
             super(cctx, freeList);
         }
 
@@ -1217,10 +1211,10 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      */
     protected static class Metas {
         /** Meta root IDs. */
-        private final long[] rootIds;
+        public final long[] rootIds;
 
         /** Indicates whether pages were newly allocated. */
-        private final boolean initNew;
+        public final boolean initNew;
 
         /** Metastore root page. */
         private final long metastoreRoot;
@@ -1257,184 +1251,4 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             return metastoreRoot;
         }
     }
-
-    /**
-     *
-     */
-    private class LazyCacheDataStore implements CacheDataStore {
-        /** */
-        private final int partId;
-
-        /** */
-        private final String idxName;
-
-        /** */
-        private final CacheDataStore.Listener lsnr;
-
-        /** */
-        private final boolean exists;
-
-        /** */
-        private final AtomicBoolean init = new AtomicBoolean();
-
-        /** */
-        private final CountDownLatch latch = new CountDownLatch(1);
-
-        /** */
-        private volatile CacheDataStore delegate;
-
-        /**
-         * @param partId Partition ID.
-         * @param idxName Index name.
-         * @param exists {@code True} if store for this index exists.
-         * @param lsnr Listener.
-         */
-        LazyCacheDataStore(int partId, String idxName, boolean exists, Listener lsnr) {
-            this.partId = partId;
-            this.idxName = idxName;
-            this.exists = exists;
-            this.lsnr = lsnr;
-        }
-
-        /**
-         *
-         */
-        private void init() throws IgniteCheckedException {
-            try {
-                if (init.compareAndSet(false, true)) {
-                    Metas metas = getOrAllocatePartMetas(cctx.shared().database().pageMemory(), cctx.cacheId(), partId);
-
-                    ReuseList partIdxReuseList = new ReuseList(cctx.cacheId(), partId, PageIdAllocator.FLAG_PART_IDX,
-                        cctx.shared().database().pageMemory(), cctx.shared().wal(), metas.rootIds, metas.initNew);
-
-                    MetaStore partIdxMetaStore = new MetadataStorage(cctx.shared().database().pageMemory(),
-                        cctx.shared().wal(), cctx.cacheId(), partId, PageIdAllocator.FLAG_PART_IDX, reuseList, metas.metastoreRoot(), metas.isInitNew());
-
-                    FreeList partIdxFreeList = new FreeList(cctx, partIdxReuseList, partIdxMetaStore, PageIdAllocator.FLAG_PART_IDX);
-
-                    final RootPage rootPage = partIdxMetaStore.getOrAllocateForTree(idxName);
-
-                    CacheDataRowStore rowStore = new CacheDataRowStore(cctx, partIdxFreeList);
-
-                    CacheDataTree dataTree = new CacheDataTree(idxName,
-                        partId,
-                        partIdxReuseList,
-                        rowStore,
-                        cctx,
-                        cctx.shared().database().pageMemory(),
-                        rootPage.pageId().pageId(),
-                        rootPage.isAllocated());
-
-                    delegate = new CacheDataStoreImpl(idxName, partId, rowStore, dataTree, partIdxMetaStore,
-                        partIdxReuseList, partIdxFreeList, lsnr);
-
-                    latch.countDown();
-                }
-                else
-                    latch.await();
-            }
-            catch (InterruptedException e) {
-                throw new IgniteCheckedException(e);
-            }
-        }
-
-        /** {@inheritDoc} */
-        @Override public void update(KeyCacheObject key, int part, CacheObject val, GridCacheVersion ver,
-            long expireTime) throws IgniteCheckedException {
-
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null) {
-                delegate.update(key, part, val, ver, expireTime);
-
-                return;
-            }
-
-            init();
-
-            this.delegate.update(key, part, val, ver, expireTime);
-        }
-
-        /** {@inheritDoc} */
-        @Override public void remove(KeyCacheObject key, CacheObject prevVal, GridCacheVersion prevVer,
-            int partId) throws IgniteCheckedException {
-
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null) {
-                delegate.remove(key, prevVal, prevVer, partId);
-
-                return;
-            }
-
-            init();
-
-            this.delegate.remove(key, prevVal, prevVer, partId);
-        }
-
-        /** {@inheritDoc} */
-        @Override public CacheDataRow find(KeyCacheObject key)
-            throws IgniteCheckedException {
-
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null)
-                return delegate.find(key);
-
-            if (!exists)
-                return null;
-
-            init();
-
-            return this.delegate.find(key);
-        }
-
-        /** {@inheritDoc} */
-        @Override public GridCursor<? extends CacheDataRow> cursor() throws IgniteCheckedException {
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null)
-                return delegate.cursor();
-
-            if (!exists)
-                return EMPTY_CURSOR;
-
-            init();
-
-            return this.delegate.cursor();
-        }
-
-        /** {@inheritDoc} */
-        @Override public void destroy() throws IgniteCheckedException {
-            CacheDataStore delegate = this.delegate;
-
-            if (delegate != null) {
-                delegate.destroy();
-
-                return;
-            }
-
-            if (exists) {
-                init();
-
-                this.delegate.destroy();
-            }
-
-        }
-    }
-
-    /**
-     *
-     */
-    private static final GridCursor<CacheDataRow> EMPTY_CURSOR = new GridCursor<CacheDataRow>() {
-        /** {@inheritDoc} */
-        @Override public boolean next() throws IgniteCheckedException {
-            return false;
-        }
-
-        @Override public CacheDataRow get() throws IgniteCheckedException {
-            /** {@inheritDoc} */
-            return null;
-        }
-    };
 }

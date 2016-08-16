@@ -156,4 +156,6 @@ public interface IgnitePageStoreManager extends GridCacheSharedManager {
      * @return Meta page ID.
      */
     public long metaPageId(int cacheId);
+
+    public void clear(int cacheId, byte flags, int partId) throws IgniteCheckedException;
 }

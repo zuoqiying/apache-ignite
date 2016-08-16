@@ -71,4 +71,13 @@ public interface PageMemory extends LifecycleAware, PageIdAllocator {
      * @param cacheId Cache ID.
      */
     public void clear(int cacheId);
+
+    /**
+     * Clears all entries that meet provided criteria.
+     *
+     * @param cacheId Cache ID.
+     * @param partId Partition ID.
+     * @param allocSpace Allocation space.
+     */
+    public void clear(int cacheId, int partId, byte allocSpace);
 }
