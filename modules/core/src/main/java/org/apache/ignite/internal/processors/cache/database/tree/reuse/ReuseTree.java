@@ -84,7 +84,7 @@ public final class ReuseTree extends BPlusTree<Number, Long> {
     }
 
     /** {@inheritDoc} */
-    @Override protected long allocatePage0() throws IgniteCheckedException {
+    @Override protected long allocatePageNoReuse() throws IgniteCheckedException {
         return pageMem.allocatePage(getCacheId(), partId, allocSpace);
     }
 

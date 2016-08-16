@@ -2962,7 +2962,7 @@ public abstract class BPlusTree<L, T extends L> {
      * @return Page ID of newly allocated page.
      * @throws IgniteCheckedException If failed.
      */
-    protected final long allocatePageNoReuse() throws IgniteCheckedException {
+    protected long allocatePageNoReuse() throws IgniteCheckedException {
         return pageMem.allocatePage(cacheId, 0, PageIdAllocator.FLAG_IDX);
     }
 
