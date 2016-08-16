@@ -41,6 +41,7 @@ export default ['cachesController', [
         $scope.hidePopover = LegacyUtils.hidePopover;
         $scope.saveBtnTipText = LegacyUtils.saveBtnTipText;
         $scope.widthIsSufficient = LegacyUtils.widthIsSufficient;
+        $scope.offHeapMode = 'DISABLED';
 
         const showPopoverMessage = LegacyUtils.showPopoverMessage;
 
@@ -76,6 +77,22 @@ export default ['cachesController', [
                 return memo;
             }, []);
         }
+
+        const setOffHeapMode = (item) => {
+            if (_.isNil(item.offHeapMaxMemory))
+                return;
+
+            return item.offHeapMode = Math.sign(item.offHeapMaxMemory);
+        };
+
+        const setOffHeapMaxMemory = (value) => {
+            const item = $scope.backupItem;
+
+            if (value <= 0)
+                return item.offHeapMaxMemory = value || -1;
+
+            item.offHeapMaxMemory = item.offHeapMaxMemory > 0 ? item.offHeapMaxMemory : null;
+        };
 
         Loading.start('loadingCachesScreen');
 
@@ -143,6 +160,8 @@ export default ['cachesController', [
                     else
                         form.$setDirty();
                 }, true);
+
+                $scope.$watch('backupItem.offHeapMode', setOffHeapMaxMemory);
             })
             .catch(Messages.showError)
             .then(() => {
@@ -178,6 +197,8 @@ export default ['cachesController', [
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
                 $scope.ui.inputForm.$error = {};
                 $scope.ui.inputForm.$setPristine();
+
+                setOffHeapMode($scope.backupItem);
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -327,8 +348,8 @@ export default ['cachesController', [
             if (item.memoryMode === 'OFFHEAP_VALUES' && !_.isEmpty(item.domains))
                 return showPopoverMessage($scope.ui, 'memory', 'memoryMode', 'Query indexing could not be enabled while values are stored off-heap!');
 
-            if (item.memoryMode === 'OFFHEAP_TIERED' && (!LegacyUtils.isDefined(item.offHeapMaxMemory) || item.offHeapMaxMemory < 0))
-                return showPopoverMessage($scope.ui, 'memory', 'offHeapMaxMemory', 'Off-heap max memory should be specified!');
+            if (item.memoryMode === 'OFFHEAP_TIERED' && (_.isNil(item.offHeapMaxMemory) || item.offHeapMaxMemory < 0))
+                return showPopoverMessage($scope.ui, 'memory', 'offHeapMode', 'Off-heap max memory should be specified!');
 
             if (!checkSQLSchemas())
                 return false;
@@ -339,7 +360,7 @@ export default ['cachesController', [
             if (item.writeBehindFlushSize === 0 && item.writeBehindFlushFrequency === 0)
                 return showPopoverMessage($scope.ui, 'store', 'writeBehindFlushSize', 'Both "Flush frequency" and "Flush size" are not allowed as 0!');
 
-            if (item.nodeFilter.kind === 'OnNodes' && _.isEmpty(item.nodeFilter.OnNodes.nodeIds))
+            if (item.nodeFilter && item.nodeFilter.kind === 'OnNodes' && _.isEmpty(item.nodeFilter.OnNodes.nodeIds))
                 return showPopoverMessage($scope.ui, 'nodeFilter', 'nodeFilter-title', 'At least one node ID should be specified!');
 
             return true;

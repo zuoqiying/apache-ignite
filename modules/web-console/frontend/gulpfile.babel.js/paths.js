@@ -27,7 +27,8 @@ const igniteModulesTemp = path.resolve('ignite_modules_temp');
 const jadePaths = [
     './views/*.jade',
     './views/**/*.jade',
-    './app/helpers/jade/*.jade'
+    './app/helpers/**/*.jade',
+    './app/modules/states/configuration/**/*.jade'
 ];
 
 const resourcePaths = [

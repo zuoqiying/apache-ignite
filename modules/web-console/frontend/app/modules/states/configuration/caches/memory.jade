@@ -61,15 +61,25 @@ include ../../../../../app/helpers/jade/mixins.jade
                             </li>\
                         </ul>')
                 .settings-row(data-ng-show=model + '.memoryMode !== "OFFHEAP_VALUES"')
-                    +number-required('Off-heap max memory:', model + '.offHeapMaxMemory', '"offHeapMaxMemory"', 'true',
-                        model + '.memoryMode === "OFFHEAP_TIERED"', '-1', '-1',
-                        'Sets maximum amount of memory available to off-heap storage<br/>\
-                        Possible values are:\
-                        <ul>\
-                            <li>-1 - means that off-heap storage is disabled</li>\
-                            <li>0 - Ignite will not limit off-heap storage (it is up to user to properly add and remove entries from cache to ensure that off-heap storage does not grow infinitely)</li>\
-                            <li>Any positive value specifies the limit of off-heap storage in bytes</li>\
-                        </ul>')
+                    +dropdown-required('Off-heap memory:', model + '.offHeapMode', '"offHeapMode"', 'true',
+                    model + '.memoryMode === "OFFHEAP_TIERED"',
+                    'Disabled',
+                    '[\
+                        {value: -1, label: "Disabled"},\
+                        {value: 1, label: "Limited"},\
+                        {value: 0, label: "Unlimited"}\
+                    ]',
+                    'Off-heap storage mode:\
+                    <ul>\
+                        <li>Disabled - Off-heap storage is disabled</li>\
+                        <li>Limited - Off-heap storage has limited size</li>\
+                        <li>Unlimited - Off-heap storage grow infinitely (it is up to user to properly add and remove entries from cache to ensure that off-heap storage does not grow infinitely)</li>\
+                    </ul>'
+                    )
+                .settings-row(data-ng-if=model + '.offHeapMode === 1')
+                    +number-required('Off-heap memory max size:', model + '.offHeapMaxMemory', '"offHeapMaxMemory"', 'true',
+                        model + '.offHeapMode === 1', '', 1,
+                        'Sets maximum amount of memory available to off-heap storage in bytes')
                 .settings-row
                     -var onHeapTired = model + '.memoryMode === "ONHEAP_TIERED"'
                     -var swapEnabled = model + '.swapEnabled'
