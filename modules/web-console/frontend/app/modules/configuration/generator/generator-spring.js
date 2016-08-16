@@ -574,28 +574,24 @@ $generatorSpring.clusterCacheKeyConfiguration = function(keyCfgs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
+    keyCfgs = _.filter(keyCfgs, (cfg) => cfg.typeName && cfg.affinityKeyFieldName);
+
     if (_.isEmpty(keyCfgs))
         return res;
 
     res.startBlock('<property name="cacheKeyConfiguration">');
-    res.startBlock('<list>');
+    res.startBlock('<array>');
 
     _.forEach(keyCfgs, (cfg) => {
-        if (cfg.typeName) {
-            res.startBlock('<bean class="org.apache.ignite.cache.CacheKeyConfiguration">');
+        res.startBlock('<bean class="org.apache.ignite.cache.CacheKeyConfiguration">');
 
-            if (cfg.affinityKeyFieldName) {
-                $generatorSpring.constructorArg(res, -1, cfg, 'typeName');
-                $generatorSpring.constructorArg(res, -1, cfg, 'affinityKeyFieldName');
-            }
-            else
-                $generatorSpring.constructorArg(res, -1, cfg, 'typeName');
+        $generatorSpring.constructorArg(res, -1, cfg, 'typeName');
+        $generatorSpring.constructorArg(res, -1, cfg, 'affinityKeyFieldName');
 
-            res.endBlock('</bean>');
-        }
+        res.endBlock('</bean>');
     });
 
-    res.endBlock('</list>');
+    res.endBlock('</array>');
     res.endBlock('</property>');
 
     return res;
