@@ -748,6 +748,8 @@ $generatorJava.clusterCacheKeyConfiguration = function(keyCfgs, res) {
     if (!res)
         res = $generatorCommon.builder();
 
+    keyCfgs = _.filter(keyCfgs, (cfg) => cfg.typeName && cfg.affinityKeyFieldName);
+
     if (_.isEmpty(keyCfgs))
         return res;
 
@@ -756,16 +758,9 @@ $generatorJava.clusterCacheKeyConfiguration = function(keyCfgs, res) {
     const cacheKeyCfg = res.importClass('org.apache.ignite.cache.CacheKeyConfiguration');
 
     _.forEach(keyCfgs, (cfg, idx) => {
-        if (cfg.affinityKeyFieldName) {
-            res.needEmptyLine = true;
+        res.needEmptyLine = true;
 
-            res.line(`keyConfigurations[${idx}] = new ${cacheKeyCfg}("${cfg.typeName}", "${cfg.affinityKeyFieldName}");`);
-        }
-        else {
-            res.needEmptyLine = true;
-
-            res.line(`keyConfigurations[${idx}] = new ${cacheKeyCfg}(${res.importClass(cfg.typeName)}.class);`);
-        }
+        res.line(`keyConfigurations[${idx}] = new ${cacheKeyCfg}("${cfg.typeName}", "${cfg.affinityKeyFieldName}");`);
 
         res.needEmptyLine = true;
     });
