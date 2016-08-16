@@ -396,13 +396,18 @@ export default ['clustersController', [
         function checkCacheKeyConfiguration(item) {
             const cfgs = item.cacheKeyConfiguration;
 
-            _.forEach(cfgs, (type, typeIx) => {
+            if (_.isEmpty(cfgs))
+                return true;
+
+            for (let typeIx = 0; typeIx < cfgs.length; typeIx++) {
+                const type = cfgs[typeIx];
+
                 if (LegacyUtils.isEmptyString(type.typeName))
                     return showPopoverMessage($scope.ui, 'cacheKeyCfg', 'cacheKeyTypeName' + typeIx, 'Cache type configuration name should be specified!');
 
                 if (_.find(cfgs, (t, ix) => ix < typeIx && t.typeName === type.typeName))
                     return showPopoverMessage($scope.ui, 'cacheKeyCfg', 'cacheKeyTypeName' + typeIx, 'Cache type configuration with such name is already specified!');
-            });
+            }
 
             return true;
         }
