@@ -1053,6 +1053,18 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * @param buf Buffer.
+     * @return String.
+     */
+    public static String byteBufferToString(ByteBuffer buf) {
+        byte[] b = new byte[buf.remaining()];
+
+        System.arraycopy(buf.array(), buf.position() + buf.arrayOffset(), b, 0, b.length);
+
+        return Arrays.toString(b);
+    }
+
+    /**
      * Prints stack trace of the current thread to {@code System.out}.
      *
      * @deprecated Calls to this method should never be committed to master.

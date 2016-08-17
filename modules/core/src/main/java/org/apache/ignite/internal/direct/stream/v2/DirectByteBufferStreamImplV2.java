@@ -322,7 +322,7 @@ public class DirectByteBufferStreamImplV2 implements DirectByteBufferStream {
             this.buf = buf;
 
             heapArr = buf.isDirect() ? null : buf.array();
-            baseOff = buf.isDirect() ? ((DirectBuffer)buf).address() : BYTE_ARR_OFF;
+            baseOff = buf.isDirect() ? ((DirectBuffer)buf).address() : BYTE_ARR_OFF + buf.arrayOffset();
         }
     }
 

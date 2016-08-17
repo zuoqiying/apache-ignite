@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.managers.communication.GridIoMessage;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.apache.ignite.plugin.extensions.communication.MessageFactory;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
@@ -72,6 +74,9 @@ public class GridDirectParser implements GridNioParser {
         if (buf.hasRemaining()) {
             if (reader != null)
                 reader.setCurrentReadClass(msg.getClass());
+
+            if (msg instanceof GridIoMessage)
+                U.debug("Parsing IO message");;
 
             finished = msg.readFrom(buf, reader);
         }

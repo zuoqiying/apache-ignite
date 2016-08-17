@@ -1234,14 +1234,14 @@ public class IgnitionEx {
         IgniteNamedInstance dfltGrid0 = dfltGrid;
 
         if (dfltGrid0 != null) {
-            IgniteKernal g = dfltGrid0.grid();
+            IgniteKernal g = dfltGrid0.gridx();
 
             if (g != null && g.getLocalNodeId().equals(locNodeId))
                 return g;
         }
 
         for (IgniteNamedInstance grid : grids.values()) {
-            IgniteKernal g = grid.grid();
+            IgniteKernal g = grid.gridx();
 
             if (g != null && g.getLocalNodeId().equals(locNodeId))
                 return g;
@@ -2165,6 +2165,7 @@ public class IgnitionEx {
             cache.setNodeFilter(CacheConfiguration.ALL_NODES);
             cache.setStartSize(300);
             cache.setRebalanceOrder(-2);//Prior to other system caches.
+            cache.setCopyOnRead(false);
 
             return cache;
         }
@@ -2186,6 +2187,7 @@ public class IgnitionEx {
             cache.setAffinity(new RendezvousAffinityFunction(false, 100));
             cache.setNodeFilter(CacheConfiguration.ALL_NODES);
             cache.setRebalanceOrder(-2); //Prior to user caches.
+            cache.setCopyOnRead(false);
 
             return cache;
         }
@@ -2207,6 +2209,7 @@ public class IgnitionEx {
             ccfg.setCacheMode(cfg.getCacheMode());
             ccfg.setNodeFilter(CacheConfiguration.ALL_NODES);
             ccfg.setRebalanceOrder(-1); //Prior to user caches.
+            ccfg.setCopyOnRead(false);
 
             if (cfg.getCacheMode() == PARTITIONED)
                 ccfg.setBackups(cfg.getBackups());

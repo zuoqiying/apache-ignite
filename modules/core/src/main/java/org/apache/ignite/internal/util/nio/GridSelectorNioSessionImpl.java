@@ -24,9 +24,11 @@ import java.util.Collection;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentLinkedDeque8;
 
@@ -36,6 +38,14 @@ import org.jsr166.ConcurrentLinkedDeque8;
  * socket addresses.
  */
 class GridSelectorNioSessionImpl extends GridNioSessionImpl {
+    /** */
+    public static final int BUF_CHUNK_SIZE = IgniteSystemProperties.getInteger(
+        "IGNITE_CONN_BUF_CHUNK_SIZE",
+        65000);
+    public static final int IGNITE_CONN_BUF_CHUNK_CNT = IgniteSystemProperties.getInteger(
+        "IGNITE_CONN_BUF_CHUNK_CNT",
+        2048);
+
     /** Pending write requests. */
     private final ConcurrentLinkedDeque8<GridNioFuture<?>> queue = new ConcurrentLinkedDeque8<>();
 
@@ -64,6 +74,19 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
 
     /** Logger. */
     private final IgniteLogger log;
+
+    /** */
+    private final ByteBuffer pool = ByteBuffer.allocateDirect(
+        BUF_CHUNK_SIZE *
+            IGNITE_CONN_BUF_CHUNK_CNT);
+
+    private final BufferChunk writeChunks[] = new BufferChunk[
+        IGNITE_CONN_BUF_CHUNK_CNT];
+
+    private final BufferChunk readChunks[] = new BufferChunk[
+        IGNITE_CONN_BUF_CHUNK_CNT];
+
+    private final BufferChunkList chunkList;
 
     /**
      * Creates session instance.
@@ -116,6 +139,25 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
 
             this.readBuf = readBuf;
         }
+
+        for (int i = 0; i < writeChunks.length; i++) {
+            //pool.position(i * BUF_CHUNK_SIZE).limit((i + 1) * BUF_CHUNK_SIZE);
+
+            writeChunks[i] = new BufferChunk(
+                i,
+                ByteBuffer.allocate( //TODO change to direct
+                    BUF_CHUNK_SIZE));
+
+            readChunks[i] = new BufferChunk(
+                i,
+                ByteBuffer.allocate(
+                    BUF_CHUNK_SIZE));
+        }
+
+        chunkList = new BufferChunkList(Math.max(16, writeBuf.capacity() / BUF_CHUNK_SIZE));
+
+        U.quietAndInfo(log, "info [chunkSize=" + BUF_CHUNK_SIZE + ", chunksCnt=" + writeChunks.length +
+            ", chunkListSize=" + chunkList.maxSize() + ']');
     }
 
     /**
@@ -310,6 +352,73 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     void onClosed() {
         if (sem != null)
             sem.release(1_000_000);
+    }
+
+    /**
+     * @return First buffer chunk.
+     */
+    public BufferChunk reserveWriteChunk() {
+        return reserveWriteChunk(0); // TODO random start?
+    }
+
+    /**
+     * @return First buffer chunk.
+     */
+    BufferChunk reserveWriteChunk(int start) {
+        return reserveChunk(start, writeChunks);
+    }
+
+    public BufferChunk expandWriteChunk(BufferChunk chunk) {
+        BufferChunk newChunk = reserveWriteChunk(chunk.index() + 1);
+
+        if (newChunk == null)
+            return null;
+
+        // TODO alter passed in chunk if buffer is next to it
+
+        chunk.next(newChunk.index());
+
+        return newChunk;
+    }
+
+    /**
+     * @return Buffer chunk to read.
+     */
+    public BufferChunk reserveReadChunk() {
+        BufferChunk chunk = new BufferChunk(
+            0,
+            ByteBuffer.allocate(BUF_CHUNK_SIZE));
+        chunk.reserve();
+
+        return chunk;
+        //return reserveChunk(0, readChunks); // TODO random start?
+    }
+
+    private BufferChunk reserveChunk(int start, BufferChunk[] chunks) {
+        for (int i = start; i < chunks.length + start; i++) {
+            BufferChunk chunk = chunks[i >= chunks.length ? i - chunks.length : i];
+
+            if (chunk.reserve())
+                return chunk;
+        }
+
+        return null;
+
+    }
+
+    /**
+     * @param idx
+     * @return
+     */
+    BufferChunk writeChunk(int idx) {
+        return writeChunks[idx];
+    }
+
+    /**
+     * @return
+     */
+    public BufferChunkList list() {
+        return chunkList;
     }
 
     /** {@inheritDoc} */

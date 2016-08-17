@@ -24,6 +24,7 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SelectableChannel;
@@ -2589,9 +2590,9 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                             buf = handBuff;
                     }
                     else {
-                        buf = ByteBuffer.allocate(17);
+                        buf = ByteBuffer.allocate(17 + 12); // TODO
 
-                        for (int i = 0; i < 17; ) {
+                        for (int i = 0; i < 17 + 12; ) {
                             int read = ch.read(buf);
 
                             if (read == -1)
@@ -2601,7 +2602,9 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                         }
                     }
 
-                    UUID rmtNodeId0 = U.bytesToUuid(buf.array(), 1);
+                    U.debug("Read: " + Arrays.toString(buf.array()));
+
+                    UUID rmtNodeId0 = U.bytesToUuid(buf.array(), 1 + 12);
 
                     if (!rmtNodeId.equals(rmtNodeId0))
                         throw new IgniteCheckedException("Remote node ID is not as expected [expected=" + rmtNodeId +
@@ -2609,13 +2612,22 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     else if (log.isDebugEnabled())
                         log.debug("Received remote node ID: " + rmtNodeId0);
 
+
+                    U.debug("Received remote node ID: " + rmtNodeId0);
+
+
                     if (isSslEnabled()) {
                         assert sslHnd != null;
 
                         ch.write(sslHnd.encrypt(ByteBuffer.wrap(U.IGNITE_HEADER)));
                     }
-                    else
+                    else {
+                        ByteBuffer src
+                            = ByteBuffer.allocate(12).putLong(Thread.currentThread().getId()).putInt(U.IGNITE_HEADER.length);
+                        src.flip();
+                        ch.write(src);
                         ch.write(ByteBuffer.wrap(U.IGNITE_HEADER));
+                    }
 
                     ClusterNode locNode = getLocalNode();
 
@@ -2631,15 +2643,17 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                         if (log.isDebugEnabled())
                             log.debug("Write handshake message [rmtNode=" + rmtNodeId + ", msg=" + msg + ']');
 
-                        buf = ByteBuffer.allocate(33);
+                        buf = ByteBuffer.allocate(33+12);
 
-                        buf.order(ByteOrder.nativeOrder());
+                        buf.putLong(Thread.currentThread().getId()).putInt(33);
 
                         boolean written = msg.writeTo(buf, null);
 
                         assert written;
 
                         buf.flip();
+
+                        U.debug(log, "Buf: " + buf + " " + Arrays.toString(buf.array()));
 
                         if (isSslEnabled()) {
                             assert sslHnd != null;
@@ -2650,6 +2664,9 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                             ch.write(buf);
                     }
                     else {
+                        if (true)
+                            throw new RuntimeException(); // TODO
+
                         if (isSslEnabled()) {
                             assert sslHnd != null;
 
@@ -2658,6 +2675,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                         else
                             ch.write(ByteBuffer.wrap(nodeIdMessage().nodeIdBytesWithType));
                     }
+
                     if (recovery != null) {
                         if (log.isDebugEnabled())
                             log.debug("Waiting for handshake [rmtNode=" + rmtNodeId + ']');
@@ -2691,11 +2709,11 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                             rcvCnt = decode.getLong(1);
                         }
                         else {
-                            buf = ByteBuffer.allocate(9);
+                            buf = ByteBuffer.allocate(9 + 12);
 
                             buf.order(ByteOrder.nativeOrder());
 
-                            for (int i = 0; i < 9; ) {
+                            for (int i = 0; i < 9 + 12; ) {
                                 int read = ch.read(buf);
 
                                 if (read == -1)
@@ -2705,11 +2723,13 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                                 i += read;
                             }
 
-                            rcvCnt = buf.getLong(1);
+                            rcvCnt = buf.getLong(1 + 12);
                         }
 
                         if (log.isDebugEnabled())
                             log.debug("Received handshake message [rmtNode=" + rmtNodeId + ", rcvCnt=" + rcvCnt + ']');
+
+                        U.debug("Received handshake message [rmtNode=" + rmtNodeId + ", rcvCnt=" + rcvCnt + ']');
 
                         if (rcvCnt == -1) {
                             if (log.isDebugEnabled())
@@ -2725,11 +2745,15 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     if (log.isDebugEnabled())
                         log.debug("Failed to read from channel: " + e);
 
+                    e.printStackTrace();
+
                     throw new IgniteCheckedException("Failed to read from channel.", e);
                 }
                 finally {
                     if (!success)
                         U.closeQuiet(ch);
+
+                    U.debug(log, "Success: " + success);
                 }
             }
         }
@@ -3627,6 +3651,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
             buf.put(NODE_ID_MSG_TYPE);
             buf.put(nodeIdBytes);
+
+            U.debug(">>> ID msg: " + Arrays.toString(nodeIdBytes) + ", buf=" + buf + ']');
 
             return true;
         }

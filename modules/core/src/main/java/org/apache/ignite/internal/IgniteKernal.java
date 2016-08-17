@@ -724,6 +724,10 @@ public class IgniteKernal implements IgniteEx, IgniteMXBean, Externalizable {
         ackConfigUrl();
         ackDaemon();
         ackOsInfo();
+
+        if (log.isInfoEnabled())
+            log.info("Local node ID: " + cfg.getNodeId());
+
         ackLanguageRuntime();
         ackRemoteManagement();
         ackVmArguments(rtBean);

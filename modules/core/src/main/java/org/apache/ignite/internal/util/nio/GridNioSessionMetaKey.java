@@ -32,6 +32,9 @@ public enum GridNioSessionMetaKey {
     /** NIO operation (request type). */
     NIO_OPERATION,
 
+    /** TODO */
+    READ_CHUNK,
+
     /** Last future. */
     LAST_FUT,
 

@@ -160,17 +160,17 @@ public class GridNioRecoveryDescriptor {
     public boolean add(GridNioFuture<?> fut) {
         assert fut != null;
 
-        if (!fut.skipRecovery()) {
-            if (resendCnt == 0) {
-                msgFuts.addLast(fut);
-
-                sentCnt++;
-
-                return msgFuts.size() < queueLimit;
-            }
-            else
-                resendCnt--;
-        }
+//        if (!fut.skipRecovery()) {
+//            if (resendCnt == 0) {
+//                msgFuts.addLast(fut);
+//
+//                sentCnt++;
+//
+//                return msgFuts.size() < queueLimit;
+//            }
+//            else
+//                resendCnt--;
+//        }
 
         return true;
     }
@@ -183,22 +183,22 @@ public class GridNioRecoveryDescriptor {
             log.debug("Handle acknowledgment [acked=" + acked + ", rcvCnt=" + rcvCnt +
                 ", msgFuts=" + msgFuts.size() + ']');
 
-        while (acked < rcvCnt) {
-            GridNioFuture<?> fut = msgFuts.pollFirst();
-
-            assert fut != null : "Missed message future [rcvCnt=" + rcvCnt +
-                ", acked=" + acked +
-                ", desc=" + this + ']';
-
-            assert fut.isDone() : fut;
-
-            if (fut.ackClosure() != null)
-                fut.ackClosure().apply(null);
-
-            fut.onAckReceived();
-
-            acked++;
-        }
+//        while (acked < rcvCnt) {
+//            GridNioFuture<?> fut = msgFuts.pollFirst();
+//
+//            assert fut != null : "Missed message future [rcvCnt=" + rcvCnt +
+//                ", acked=" + acked +
+//                ", desc=" + this + ']';
+//
+//            assert fut.isDone() : fut;
+//
+//            if (fut.ackClosure() != null)
+//                fut.ackClosure().apply(null);
+//
+//            fut.onAckReceived();
+//
+//            acked++;
+//        }
     }
 
     /**
