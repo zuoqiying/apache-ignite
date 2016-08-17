@@ -348,7 +348,7 @@ export default ['cachesController', [
             if (item.memoryMode === 'OFFHEAP_VALUES' && !_.isEmpty(item.domains))
                 return showPopoverMessage($scope.ui, 'memory', 'memoryMode', 'Query indexing could not be enabled while values are stored off-heap!');
 
-            if (item.memoryMode === 'OFFHEAP_TIERED' && (_.isNil(item.offHeapMaxMemory) || item.offHeapMaxMemory < 0))
+            if (item.memoryMode === 'OFFHEAP_TIERED' && _.isNil(item.offHeapMaxMemory))
                 return showPopoverMessage($scope.ui, 'memory', 'offHeapMode', 'Off-heap max memory should be specified!');
 
             if (!checkSQLSchemas())
