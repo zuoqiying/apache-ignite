@@ -88,8 +88,8 @@ export default ['cachesController', [
         const setOffHeapMaxMemory = (value) => {
             const item = $scope.backupItem;
 
-            if (value <= 0)
-                return item.offHeapMaxMemory = value || -1;
+            if (_.isNil(value) || value <= 0)
+                return item.offHeapMaxMemory = value;
 
             item.offHeapMaxMemory = item.offHeapMaxMemory > 0 ? item.offHeapMaxMemory : null;
         };
