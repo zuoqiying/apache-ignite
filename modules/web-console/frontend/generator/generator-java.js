@@ -1384,7 +1384,9 @@ $generatorJava.cacheMemory = function(cache, varName, res) {
         varName = $generatorJava.nextVariableName('cache', cache);
 
     $generatorJava.enumProperty(res, varName, cache, 'memoryMode', 'org.apache.ignite.cache.CacheMemoryMode', null, 'ONHEAP_TIERED');
-    $generatorJava.property(res, varName, cache, 'offHeapMaxMemory', null, null, -1);
+
+    if (cache.memoryMode !== 'OFFHEAP_VALUES')
+        $generatorJava.property(res, varName, cache, 'offHeapMaxMemory', null, null, -1);
 
     res.softEmptyLine();
 

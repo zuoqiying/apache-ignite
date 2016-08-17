@@ -1123,7 +1123,9 @@ $generatorXml.cacheMemory = function(cache, res) {
         res = $generatorCommon.builder();
 
     $generatorXml.property(res, cache, 'memoryMode', null, 'ONHEAP_TIERED');
-    $generatorXml.property(res, cache, 'offHeapMaxMemory', null, -1);
+
+    if (cache.memoryMode !== 'OFFHEAP_VALUES')
+        $generatorXml.property(res, cache, 'offHeapMaxMemory', null, -1);
 
     res.softEmptyLine();
 
