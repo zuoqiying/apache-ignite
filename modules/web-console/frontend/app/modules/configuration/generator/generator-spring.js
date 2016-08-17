@@ -1123,7 +1123,9 @@ $generatorSpring.cacheMemory = function(cache, res) {
         res = $generatorCommon.builder();
 
     $generatorSpring.property(res, cache, 'memoryMode', null, 'ONHEAP_TIERED');
-    $generatorSpring.property(res, cache, 'offHeapMaxMemory', null, -1);
+
+    if (cache.memoryMode !== 'OFFHEAP_VALUES')
+        $generatorSpring.property(res, cache, 'offHeapMaxMemory', null, -1);
 
     res.softEmptyLine();
 

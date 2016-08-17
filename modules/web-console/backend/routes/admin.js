@@ -50,7 +50,7 @@ module.exports.factory = function(_, express, settings, mongo, spacesService, ma
 
         // Remove user.
         router.post('/remove', (req, res) => {
-            usersService.remove(req.headers.origin, req.body.userId)
+            usersService.remove(req.origin(), req.body.userId)
                 .then(res.api.ok)
                 .catch(res.api.error);
         });

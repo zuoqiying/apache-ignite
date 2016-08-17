@@ -120,7 +120,7 @@ module.exports.factory = (_, nodemailer, settings) => {
          * @param user
          */
         static emailUserDeletion(host, user) {
-            return send(user, 'Your account was deleted',
+            return send(user, 'Your account was removed',
                 `Hello ${user.firstName} ${user.lastName}!<br><br>` +
                 `You are receiving this email because your account for <a href="${host}">${settings.smtp.greeting}</a> was removed.`,
                 'Account was removed, but failed to send email notification to user!');
