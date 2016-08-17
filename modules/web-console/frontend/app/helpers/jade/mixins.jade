@@ -182,19 +182,19 @@ mixin text-options(lbl, model, name, options, enabled, required, placeholder, ti
 
 //- Mixin for required numeric field.
 mixin number-required(lbl, model, name, enabled, required, placeholder, min, tip)
-    +form-field-number(lbl, model, name, '!('+enabled+')', required, placeholder, min, false, false, tip)
+    +ignite-form-field-number(lbl, model, name, '!('+enabled+')', required, placeholder, min, false, false, tip)
 
 //- Mixin for required numeric field with maximum and minimum limit.
 mixin number-min-max(lbl, model, name, enabled, placeholder, min, max, tip)
-    +form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, max, '1', tip)
+    +ignite-form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, max, '1', tip)
 
 //- Mixin for required numeric field with maximum and minimum limit.
 mixin number-min-max-step(lbl, model, name, enabled, placeholder, min, max, step, tip)
-    +form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, max, step, tip)
+    +ignite-form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, max, step, tip)
 
 //- Mixin for numeric field.
 mixin number(lbl, model, name, enabled, placeholder, min, tip)
-    +form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, false, false, tip)
+    +ignite-form-field-number(lbl, model, name, '!('+enabled+')', false, placeholder, min, false, false, tip)
 
 //- Mixin for required dropdown field.
 mixin dropdown-required-empty(lbl, model, name, enabled, required, placeholder, placeholderEmpty, options, tip)
@@ -203,7 +203,7 @@ mixin dropdown-required-empty(lbl, model, name, enabled, required, placeholder, 
     else
         -var disabled = '!('+enabled+')'
 
-    +form-field-dropdown(lbl, model, name, disabled, required, false, placeholder, placeholderEmpty, options, tip)
+    +ignite-form-field-dropdown(lbl, model, name, disabled, required, false, placeholder, placeholderEmpty, options, tip)
         if  block
             block
                 
@@ -214,7 +214,7 @@ mixin dropdown-required(lbl, model, name, enabled, required, placeholder, option
     else
         -var disabled = '!('+enabled+')'
 
-    +form-field-dropdown(lbl, model, name, disabled, required, false, placeholder, '', options, tip)
+    +ignite-form-field-dropdown(lbl, model, name, disabled, required, false, placeholder, '', options, tip)
         if  block
             block
 
@@ -225,7 +225,7 @@ mixin dropdown(lbl, model, name, enabled, placeholder, options, tip)
     else
         -var disabled = '!('+enabled+')'
 
-    +form-field-dropdown(lbl, model, name, disabled, false, false, placeholder, '', options, tip)
+    +ignite-form-field-dropdown(lbl, model, name, disabled, false, false, placeholder, '', options, tip)
         if  block
             block
 
@@ -236,7 +236,7 @@ mixin dropdown-multiple(lbl, model, name, enabled, placeholder, placeholderEmpty
     else
         -var disabled = '!('+enabled+')'
 
-    +form-field-dropdown(lbl, model, name, disabled, false, true, placeholder, placeholderEmpty, options, tip)
+    +ignite-form-field-dropdown(lbl, model, name, disabled, false, true, placeholder, placeholderEmpty, options, tip)
         if  block
             block
 

@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import templateUrl from './group.jade';
-
 export default ['igniteFormGroup', [() => {
     const controller = [function() { }];
 
@@ -29,6 +27,8 @@ export default ['igniteFormGroup', [() => {
 
         parentFormCtrl.$addControl(ngModelCtrl);
         parentFormCtrl.$removeControl(ownFormCtrl);
+
+        scope.group = {};
 
         scope.ngModel = scope.ngModel || [];
         parentFormCtrl.$defaults = parentFormCtrl.$defaults || {};
@@ -63,7 +63,7 @@ export default ['igniteFormGroup', [() => {
     };
 
     return {
-        restrict: 'E',
+        restrict: 'A',
         scope: {
             ngModel: '=ngModel'
         },
@@ -71,11 +71,8 @@ export default ['igniteFormGroup', [() => {
             label: '@'
         },
         link,
-        templateUrl,
         controller,
         controllerAs: 'group',
-        replace: true,
-        transclude: true,
         require: ['?ngModel', '?form', '^^form']
     };
 }]];
