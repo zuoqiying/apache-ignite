@@ -136,16 +136,18 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate cache key configurations.
         static clusterCacheKeyConfiguration(keyCfgs, cfg = this.igniteConfigurationBean()) {
-            const items = _.map(keyCfgs, (keyCfg) => {
-                if (keyCfg.affinityKeyFieldName) {
-                    return new Bean('org.apache.ignite.cache.CacheKeyConfiguration', null, keyCfg)
+            const items = _.reduce(keyCfgs, (acc, keyCfg) => {
+                if (keyCfg.typeName && keyCfg.affinityKeyFieldName) {
+                    acc.push(new Bean('org.apache.ignite.cache.CacheKeyConfiguration', null, keyCfg)
                         .stringConstructorArgument('typeName')
-                        .stringConstructorArgument('affinityKeyFieldName');
+                        .stringConstructorArgument('affinityKeyFieldName'));
                 }
 
-                return new Bean('org.apache.ignite.cache.CacheKeyConfiguration', null, keyCfg)
-                    .classConstructorArgument('typeName');
-            });
+                return acc;
+            }, []);
+
+            if (_.isEmpty(items))
+                return cfg;
 
             cfg.arrayProperty('cacheKeyConfiguration', 'keyConfigurations', items, 'org.apache.ignite.cache.CacheKeyConfiguration');
 

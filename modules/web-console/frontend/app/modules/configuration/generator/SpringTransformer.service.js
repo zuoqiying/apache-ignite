@@ -39,9 +39,21 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
         }
 
         static appendBean(sb, bean) {
-            const idProp = bean.id ? `id="${bean.id}"` : '';
+            sb.startBlock(`<bean class="${bean.clsName}">`);
 
-            sb.startBlock(`<bean ${idProp} class="${bean.clsName}">`);
+            _.forEach(bean.arguments, (arg) => {
+                switch (arg.type) {
+                    case 'CLASS':
+                    case 'STRING':
+                    case 'PROPERTY':
+                        sb.append(`<constructor-arg value="${arg.value}"/>`);
+
+                        break;
+
+                    default:
+                        // No-op.
+                }
+            });
 
             this._setProperties(sb, bean);
 
@@ -65,6 +77,19 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
                         break;
 
                     case 'ARRAY':
+                        sb.startBlock(`<property name="${prop.name}">`);
+                        sb.startBlock('<array>');
+
+                        _.forEach(prop.items, (item) => {
+                            if (_.isString(item) || _.isNumber(item))
+                                sb.append(`<value>${item}</value>`);
+                            else
+                                this.appendBean(sb, item);
+                        });
+
+                        sb.endBlock('</array>');
+                        sb.endBlock('</property>');
+
                         break;
 
                     case 'COLLECTION':
