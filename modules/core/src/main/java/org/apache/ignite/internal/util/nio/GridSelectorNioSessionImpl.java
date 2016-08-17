@@ -41,7 +41,7 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     /** */
     public static final int BUF_CHUNK_SIZE = IgniteSystemProperties.getInteger(
         "IGNITE_CONN_BUF_CHUNK_SIZE",
-        65000);
+        256);
     public static final int IGNITE_CONN_BUF_CHUNK_CNT = IgniteSystemProperties.getInteger(
         "IGNITE_CONN_BUF_CHUNK_CNT",
         2048);
@@ -385,13 +385,7 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
      * @return Buffer chunk to read.
      */
     public BufferChunk reserveReadChunk() {
-        BufferChunk chunk = new BufferChunk(
-            0,
-            ByteBuffer.allocate(BUF_CHUNK_SIZE));
-        chunk.reserve();
-
-        return chunk;
-        //return reserveChunk(0, readChunks); // TODO random start?
+        return reserveChunk(0, readChunks); // TODO random start?
     }
 
     private BufferChunk reserveChunk(int start, BufferChunk[] chunks) {
