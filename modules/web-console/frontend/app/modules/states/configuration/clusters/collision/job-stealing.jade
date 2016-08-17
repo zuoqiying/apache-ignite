@@ -51,7 +51,7 @@ div
             .group-content(ng-show='(#{stealingAttributes} && #{stealingAttributes}.length > 0) || tableNewItemActive(stealingAttributesTbl)')
                 table.links-edit(id='attributes' st-table=stealingAttributes)
                     tbody
-                        tr(ng-repeat='item in #{stealingAttributes}')
+                        tr(ng-repeat='item in #{stealingAttributes} track by $index')
                             td.col-sm-12(ng-show='!tableEditing(stealingAttributesTbl, $index)')
                                 a.labelFormField(ng-click='tableStartEdit(backupItem, stealingAttributesTbl, $index)') {{item.name}} = {{item.value}}
                                 +btn-remove('tableRemove(backupItem, stealingAttributesTbl, $index)', '"Remove attribute"')

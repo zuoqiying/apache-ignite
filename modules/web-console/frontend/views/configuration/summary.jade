@@ -70,16 +70,17 @@ mixin hard-link(ref, txt)
                         label Client
 
                     .panel-collapse(id='client' role='tabpanel' bs-collapse-target)
-                        form(name='clientForm' novalidate)
+                        -var form = 'clientForm'
+                        form(name=form novalidate)
                             -var nearCfg = 'ctrl.cluster.clientNearCfg'
                             -var nearCfgEvictionPolicy = nearCfg + '.nearEvictionPolicy[' + nearCfg + '.nearEvictionPolicy.kind]'
 
                             .group-content
-                                .settings-row
+                                .settings-row(ng-if='true')
                                     .col-xs-8.col-sm-8.col-md-7
                                         +ignite-form-field-number('Near cache start size:', nearCfg + '.nearStartSize', '"nearStartSize"', false, false, '375000', false, false, false, 'Initial cache size for near cache which will be used to pre-create internal hash table after start')
 
-                                .settings-row
+                                .settings-row(ng-if='true')
                                     .col-xs-8.col-sm-8.col-md-7
                                         +ignite-form-field-dropdown('Near cache eviction policy', nearCfg + '.nearEvictionPolicy.kind', '"evictionPolicies"', false, false, false, 'Not set', false, '[\
                                                 {value: "LRU", label: "LRU"},\
