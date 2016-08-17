@@ -27,6 +27,7 @@ import javax.cache.Cache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.internal.pagemem.MetaPageUtils;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
@@ -99,7 +100,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         if (cctx.affinityNode()) {
             int cacheId = cctx.cacheId();
 
-            final Metas metas = getOrAllocateMetas(pageMem, cacheId);
+            final MetaPageUtils.Metas metas = getOrAllocateMetas(pageMem, cacheId);
 
             cctx.shared().database().checkpointReadLock();
 
@@ -109,7 +110,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                 metaStore = new MetadataStorage(pageMem, cctx.shared().wal(),
                     cacheId, 0, PageIdAllocator.FLAG_IDX, reuseList, metas.metastoreRoot(), metas.isInitNew());
 
-                freeList = new FreeList(cctx, reuseList, metaStore, PageIdAllocator.FLAG_IDX);
+                freeList = new FreeList(cctx.shared().wal(), pageMem, reuseList, metaStore, PageIdAllocator.FLAG_IDX);
 
                 if (cctx.affinityNode() && cctx.isLocal()) {
                     assert cctx.cache() instanceof GridLocalCache : cctx.cache();
@@ -129,19 +130,11 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      * @return Allocated pages.
      * @throws IgniteCheckedException
      */
-    protected Metas getOrAllocateMetas(
+    protected MetaPageUtils.Metas getOrAllocateMetas(
         final PageMemory pageMem,
         final int cacheId
     ) throws IgniteCheckedException {
-        try (Page metaPage = pageMem.metaPage(cacheId)) {
-            final long metastoreRoot = metaPage.id();
-
-            final int segments = Runtime.getRuntime().availableProcessors() * 2;
-
-            final long[] rootIds = allocateMetas(pageMem, cacheId, 0, PageIdAllocator.FLAG_IDX, segments);
-
-            return new Metas(rootIds, metastoreRoot, true);
-        }
+        return MetaPageUtils.getOrAllocateMetas(pageMem, cacheId);
     }
 
     /**
@@ -150,43 +143,12 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      * @return Allocated pages.
      * @throws IgniteCheckedException
      */
-    protected Metas getOrAllocatePartMetas(
+    protected MetaPageUtils.Metas getOrAllocatePartMetas(
         final PageMemory pageMem,
         final int cacheId,
         final int partId
     ) throws IgniteCheckedException {
-        try (Page metaPage = pageMem.partMetaPage(cacheId, partId)) {
-            final long metastoreRoot = metaPage.id();
-
-            final int segments = Runtime.getRuntime().availableProcessors() * 2;
-
-            final long[] rootIds = allocateMetas(pageMem, cacheId, partId, PageIdAllocator.FLAG_DATA, segments);
-
-            return new Metas(rootIds, metastoreRoot, true);
-        }
-    }
-
-    /**
-     * @param pageMem Page memory.
-     * @param cacheId Cache ID.
-     * @param partId Partition ID.
-     * @param allocSpace Allocation space.
-     * @return Allocated metapages.
-     * @throws IgniteCheckedException
-     */
-    protected long[] allocateMetas(
-        final PageIdAllocator pageMem,
-        final int cacheId,
-        final int partId,
-        final byte allocSpace,
-        int segments
-    ) throws IgniteCheckedException {
-        final long[] rootIds = new long[segments];
-
-        for (int i = 0; i < segments; i++)
-            rootIds[i] = pageMem.allocatePage(cacheId, partId, allocSpace);
-
-        return rootIds;
+        return MetaPageUtils.getOrAllocatePartMetas(pageMem, cacheId, partId);
     }
 
     /** {@inheritDoc} */
@@ -229,23 +191,23 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                 store.destroy();
             }
 
-            metaStore.destroy();
-
-            GridLongList pagesList = new GridLongList();
-
-            freeList.pages(pagesList);
-
-            reuseList.pages(pagesList);
-
-            reuseList.destroy();
-
-            freeList.destroy();
-
-            for (int i = 0; i < pagesList.size(); i++) {
-                long pageId = pagesList.get(i);
-
-                pageMem.freePage(cctx.cacheId(), pageId);
-            }
+//            metaStore.destroy();
+//
+//            GridLongList pagesList = new GridLongList();
+//
+//            freeList.pages(pagesList);
+//
+//            reuseList.pages(pagesList);
+//
+//            reuseList.destroy();
+//
+//            freeList.destroy();
+//
+//            for (int i = 0; i < pagesList.size(); i++) {
+//                long pageId = pagesList.get(i);
+//
+//                pageMem.freePage(cctx.cacheId(), pageId);
+//            }
         }
         catch (IgniteCheckedException e) {
             throw new IgniteException(e.getMessage(), e);
@@ -687,8 +649,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             rootPage.pageId().pageId(),
             rootPage.isAllocated());
 
-        return new CacheDataStoreImpl(idxName, p, rowStore, dataTree, metaStore,
-            reuseList, freeList, lsnr);
+        return new CacheDataStoreImpl(idxName, p, rowStore, dataTree, cctx.shared().database().globalMetaStore(),
+            cctx.shared().database().globalReuseList(), cctx.shared().database().globalFreeList(), lsnr);
     }
 
     /**
@@ -1203,52 +1165,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         /** {@inheritDoc} */
         @Override public int getHash(ByteBuffer buf, int idx) {
             return buf.getInt(offset(idx) + 8);
-        }
-    }
-
-    /**
-     *
-     */
-    protected static class Metas {
-        /** Meta root IDs. */
-        public final long[] rootIds;
-
-        /** Indicates whether pages were newly allocated. */
-        public final boolean initNew;
-
-        /** Metastore root page. */
-        private final long metastoreRoot;
-
-        /**
-         * @param rootIds Meta root IDs.
-         * @param metastoreRoot Indicates whether pages were newly allocated.
-         * @param initNew Metastore root page.
-         */
-        public Metas(final long[] rootIds, final long metastoreRoot, final boolean initNew) {
-            this.rootIds = rootIds;
-            this.initNew = initNew;
-            this.metastoreRoot = metastoreRoot;
-        }
-
-        /**
-         * @return Meta root IDs.
-         */
-        public long[] rootIds() {
-            return rootIds;
-        }
-
-        /**
-         * @return Indicates whether pages were newly allocated.
-         */
-        public boolean isInitNew() {
-            return initNew;
-        }
-
-        /**
-         * @return Metastore root page.
-         */
-        public long metastoreRoot() {
-            return metastoreRoot;
         }
     }
 }

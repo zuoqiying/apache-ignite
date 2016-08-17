@@ -25,11 +25,15 @@ import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.mem.DirectMemoryProvider;
 import org.apache.ignite.internal.mem.file.MappedFileMemoryProvider;
 import org.apache.ignite.internal.mem.unsafe.UnsafeMemoryProvider;
+import org.apache.ignite.internal.pagemem.MetaPageUtils;
+import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.backup.BackupFuture;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.pagemem.backup.BackupMessage;
 import org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter;
+import org.apache.ignite.internal.processors.cache.database.freelist.FreeList;
+import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +48,12 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     /** */
     protected PageMemory pageMem;
 
+    private MetaStore metaStore;
+
+    private FreeList freeList;
+
+    private ReuseList reuseList;
+
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
         DatabaseConfiguration dbCfg = cctx.kernalContext().config().getDatabaseConfiguration();
@@ -55,7 +65,20 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
             pageMem = initMemory(dbCfg);
 
             pageMem.start();
+
+            initGlobalDataStructures();
         }
+    }
+
+    protected void initGlobalDataStructures() throws IgniteCheckedException {
+        MetaPageUtils.Metas metas = MetaPageUtils.getOrAllocateMetas(pageMem, 0);
+
+        reuseList = new ReuseList(0, 0, PageIdAllocator.FLAG_IDX, pageMem, cctx.wal(), metas.rootIds(), metas.isInitNew());
+
+        metaStore = new MetadataStorage(pageMem, cctx.wal(),
+            0, 0, PageIdAllocator.FLAG_IDX, reuseList, metas.metastoreRoot(), metas.isInitNew());
+
+        freeList = new FreeList(cctx.wal(), cctx.database().pageMemory(), reuseList, metaStore, PageIdAllocator.FLAG_IDX);
     }
 
     /** {@inheritDoc} */
@@ -145,6 +168,18 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     @Nullable public IgniteInternalFuture startBackup(BackupMessage backupMsg, ClusterNode initiator)
         throws IgniteCheckedException {
         return null;
+    }
+
+    public FreeList globalFreeList() {
+        return freeList;
+    }
+
+    public ReuseList globalReuseList() {
+        return reuseList;
+    }
+
+    public MetaStore globalMetaStore() {
+        return metaStore;
     }
 
     /**
