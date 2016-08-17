@@ -160,7 +160,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             final int segments = Runtime.getRuntime().availableProcessors() * 2;
 
-            final long[] rootIds = allocateMetas(pageMem, cacheId, partId, PageIdAllocator.FLAG_PART_IDX, segments);
+            final long[] rootIds = allocateMetas(pageMem, cacheId, partId, PageIdAllocator.FLAG_DATA, segments);
 
             return new Metas(rootIds, metastoreRoot, true);
         }
@@ -1012,7 +1012,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         /** {@inheritDoc} */
         @Override protected long allocatePageNoReuse() throws IgniteCheckedException {
-            return pageMem.allocatePage(cctx.cacheId(), partId, PageIdAllocator.FLAG_PART_IDX);
+            return pageMem.allocatePage(cctx.cacheId(), partId, PageIdAllocator.FLAG_DATA);
         }
 
         /**
