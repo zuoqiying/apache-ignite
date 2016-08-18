@@ -106,23 +106,23 @@ public class BufferChunk {
         long threadId = buf.getLong();
         int expLen = buf.getInt();
 
-        int lim0 = buf.limit();
+        if (buf.remaining() < expLen) {
+            buf.position(buf.position() - 12);
 
-        int chunkLim = buf.position() + expLen < buf.remaining() ? expLen : buf.limit();
-
-        buf.limit(chunkLim);
+            return null;
+        }
 
         ByteBuffer subBuf = buf.slice();
+
+        subBuf.limit(expLen);
 
         BufferReadSubChunk ret = new BufferReadSubChunk(threadId, subBuf, this);
 
         subchunksCreated--;
 
-        U.debug("Subch: " + this);
+        //U.debug("Subch: " + this);
 
-        // Put position an limit back.
-        buf.position(buf.limit());
-        buf.limit(lim0);
+        buf.position(buf.position() + expLen);
 
         return ret;
     }
