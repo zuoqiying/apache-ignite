@@ -18,6 +18,10 @@
 import { Bean, MethodBean } from './Beans';
 
 const DEFAULT = {
+    discovery: {
+        Vm: {
+        }
+    },
     atomics: {
         atomicSequenceReserveSize: 1000,
         backups: 0,
@@ -74,8 +78,37 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
-        clusterGeneral() {
+        // Generate general section.
+        clusterGeneral(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            cfg.stringProperty('name', 'gridName')
+                .stringProperty('localHost');
 
+            if (cluster.discovery) {
+                const discovery = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery', cluster.discovery, DEFAULT.discovery);
+
+                let ipFinder;
+
+                switch (discovery.kind) {
+                    case 'Vm':
+                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder',
+                            'ipFinder', discovery.Vm);
+
+                        ipFinder.collectionProperty('addrs', 'addresses', discovery.Vm.addresses);
+
+                        break;
+                    case 'Multicast':
+
+                        break;
+                    default:
+                }
+
+                if (ipFinder && ipFinder.nonEmpty())
+                    discovery.beanProperty('discoverySpi', ipFinder);
+
+                cfg.beanProperty('discovery', discovery);
+            }
+
+            return cfg;
         }
 
         // Generate atomics group.
@@ -122,7 +155,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     typeCfgs.push(typeCfg);
             });
 
-            binaryCfg.collectionProperty('typeConfigurations', typeCfgs, 'java.util.Collection', 'org.apache.ignite.binary.BinaryTypeConfiguration');
+            binaryCfg.collectionProperty('types', 'typeConfigurations', typeCfgs, 'java.util.Collection', 'org.apache.ignite.binary.BinaryTypeConfiguration');
 
             binaryCfg.property('compactFooter');
 

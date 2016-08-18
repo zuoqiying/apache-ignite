@@ -18,6 +18,15 @@
 import StringBuilder from './StringBuilder';
 
 export default class AbstractTransformer {
+    // Generate general section.
+    static clusterGeneral(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterGeneral(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
     // Generate atomics group.
     static clusterAtomics(atomics, sb = new StringBuilder()) {
         const cfg = this.generator.clusterAtomics(atomics);

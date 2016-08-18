@@ -220,10 +220,6 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
             return $generatorSpring.clusterFailover(cluster, res);
         }
 
-        static clusterGeneral(cluster, res) {
-            return $generatorSpring.clusterGeneral(cluster, res);
-        }
-
         // Generate logger group.
         static clusterLogger(logger, res) {
             return $generatorSpring.clusterLogger(logger, res);
