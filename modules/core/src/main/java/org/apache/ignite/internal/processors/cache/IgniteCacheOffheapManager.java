@@ -73,7 +73,7 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      * @return Value tuple, if available.
      * @throws IgniteCheckedException If failed.
      */
-    public IgniteBiTuple<CacheObject, GridCacheVersion> read(GridCacheMapEntry entry) throws IgniteCheckedException;
+    public CacheDataRow read(GridCacheMapEntry entry) throws IgniteCheckedException;
 
     /**
      * @param p Partition.
@@ -230,7 +230,7 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
          * @return Value/version tuple.
          * @throws IgniteCheckedException If failed.
          */
-        public IgniteBiTuple<CacheObject, GridCacheVersion> find(KeyCacheObject key) throws IgniteCheckedException;
+        public CacheDataRow find(KeyCacheObject key) throws IgniteCheckedException;
 
         /**
          * @return Data cursor.
