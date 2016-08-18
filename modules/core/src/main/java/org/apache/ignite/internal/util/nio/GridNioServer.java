@@ -467,7 +467,7 @@ public class GridNioServer<T> {
 
                 BufferChunk chunk = firstChunk;
 
-                U.debug(log, "Writing message: " + msg + "threadId=" + Thread.currentThread().getId());
+                //U.debug(log, "Writing message: " + msg + ", threadId=" + Thread.currentThread().getId());
 
                 int chunkCnt = 1;
 
@@ -511,7 +511,7 @@ public class GridNioServer<T> {
                     (NioOperationFuture)fut,
                     sys);
 
-                U.debug(log, "Finished writing message: " + msg + "chunkCnt=" + chunkCnt + ']');
+                //U.debug(log, "Finished writing message: " + msg + ", chunkCnt=" + chunkCnt + ']');
             }
             catch (IgniteCheckedException e) {
                 fut = new GridNioFinishedFuture<Object>(e);
@@ -1009,14 +1009,14 @@ public class GridNioServer<T> {
 
             chunk.onBeforeRead();
 
-            U.debug(log, "read [cnt=" + cnt + ", bytes=" + U.byteBufferToString(chunk.buffer()));
+            //U.debug(log, "read [cnt=" + cnt + ", bytes=" + U.byteBufferToString(chunk.buffer()));
 
             for (;;) {
                 BufferReadSubChunk subChunk = chunk.nextChunk();
 
                 if (subChunk == null) {
                     if (chunk.buffer().hasRemaining()) {
-                        U.debug(log, ">>> buffer has remaining. \n\n\n");
+                        //U.debug(log, ">>> buffer has remaining. \n\n\n");
 
                         BufferChunk newChunk = ses.reserveReadChunk();
 
@@ -1030,7 +1030,7 @@ public class GridNioServer<T> {
                     break;
                 }
 
-                U.debug(log, "Notifying: " + subChunk.buffer() + "\n" + " \n" +U.byteBufferToString(subChunk.buffer()));
+                //U.debug(log, "Notifying: " + subChunk.buffer() + "\n" + " \n" +U.byteBufferToString(subChunk.buffer()));
 
                 try {
                     filterChain.onMessageReceived(ses, subChunk.buffer());

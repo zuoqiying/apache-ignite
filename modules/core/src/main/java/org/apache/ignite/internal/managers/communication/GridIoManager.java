@@ -583,7 +583,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             // Check discovery.
             ClusterNode node = ctx.discovery().node(nodeId);
 
-            U.debug(log, "MSG: " + msg);
+            //U.debug(log, "MSG: " + msg);
 
             if (node == null) {
                 if (log.isDebugEnabled())

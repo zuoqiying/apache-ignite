@@ -75,8 +75,8 @@ public class GridDirectParser implements GridNioParser {
             if (reader != null)
                 reader.setCurrentReadClass(msg.getClass());
 
-            if (msg instanceof GridIoMessage)
-                U.debug("Parsing IO message");;
+//            if (msg instanceof GridIoMessage)
+//                U.debug("Parsing IO message");;
 
             finished = msg.readFrom(buf, reader);
         }

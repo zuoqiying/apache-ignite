@@ -2653,7 +2653,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
                         buf.flip();
 
-                        U.debug(log, "Buf: " + buf + " " + Arrays.toString(buf.array()));
+                        //U.debug(log, "Buf: " + buf + " " + Arrays.toString(buf.array()));
 
                         if (isSslEnabled()) {
                             assert sslHnd != null;
@@ -2753,7 +2753,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     if (!success)
                         U.closeQuiet(ch);
 
-                    U.debug(log, "Success: " + success);
+                    //U.debug(log, "Success: " + success);
                 }
             }
         }
