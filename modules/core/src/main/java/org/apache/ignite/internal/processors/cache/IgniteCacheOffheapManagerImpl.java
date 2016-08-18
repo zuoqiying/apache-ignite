@@ -190,24 +190,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             for (CacheDataStore store : partDataStores.values()) {
                 store.destroy();
             }
-
-//            metaStore.destroy();
-//
-//            GridLongList pagesList = new GridLongList();
-//
-//            freeList.pages(pagesList);
-//
-//            reuseList.pages(pagesList);
-//
-//            reuseList.destroy();
-//
-//            freeList.destroy();
-//
-//            for (int i = 0; i < pagesList.size(); i++) {
-//                long pageId = pagesList.get(i);
-//
-//                pageMem.freePage(cctx.cacheId(), pageId);
-//            }
         }
         catch (IgniteCheckedException e) {
             throw new IgniteException(e.getMessage(), e);
