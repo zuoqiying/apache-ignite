@@ -81,7 +81,7 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      * @return Data store.
      * @throws IgniteCheckedException If failed.
      */
-    public CacheDataStore createCacheDataStore(int p, CacheDataStore.Listener lsnr) throws IgniteCheckedException;
+    public CacheDataStore getOrCreateCacheDataStore(int p, CacheDataStore.Listener lsnr) throws IgniteCheckedException;
 
     @Nullable public CacheDataStore cacheDataStore(int p);
 
