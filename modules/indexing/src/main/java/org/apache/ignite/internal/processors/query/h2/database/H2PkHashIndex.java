@@ -70,16 +70,9 @@ public class H2PkHashIndex extends GridH2IndexBase {
     ) throws IgniteCheckedException {
         assert pk;
 
-        assert colsList.size() == 1;
-
         IndexColumn[] cols = colsList.toArray(new IndexColumn[colsList.size()]);
 
         IndexColumn.mapColumns(cols, tbl);
-
-        initBaseIndex(tbl, 0, name, cols,
-            pk ? IndexType.createPrimaryKey(false, false) : IndexType.createNonUnique(false, false, false));
-
-        name = BPlusTree.treeName(name, "H2Tree");
 
         initBaseIndex(tbl, 0, name, cols, IndexType.createPrimaryKey(false, true));
 
@@ -171,6 +164,8 @@ public class H2PkHashIndex extends GridH2IndexBase {
         int mul = getDistributedMultiplier(ses, filters, filter);
 
         return mul * baseCost;
+
+//        return Double.MAX_VALUE;
     }
 
     /** {@inheritDoc} */

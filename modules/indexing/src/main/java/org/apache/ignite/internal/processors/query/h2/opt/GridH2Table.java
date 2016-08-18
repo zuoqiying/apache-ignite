@@ -152,10 +152,10 @@ public class GridH2Table extends TableBase {
         idxs = idxsFactory.createIndexes(this);
 
         assert idxs != null;
-        assert idxs.size() >= 1;
+        assert idxs.size() >= 2;
 
         // Add scan index at 0 which is required by H2.
-        idxs.add(0, new ScanIndex(index(0)));
+        idxs.add(0, new ScanIndex(index(1)));
 
         snapshotEnabled = desc == null || desc.snapshotableIndex();
 
