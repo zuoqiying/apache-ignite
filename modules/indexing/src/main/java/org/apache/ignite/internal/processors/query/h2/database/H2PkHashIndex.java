@@ -81,8 +81,6 @@ public class H2PkHashIndex extends GridH2IndexBase {
 
         name = BPlusTree.treeName(name, "H2Tree");
 
-        // TODO: pass wrapper around per-partition hash indexes as base index.
-
         initBaseIndex(tbl, 0, name, cols, IndexType.createPrimaryKey(false, true));
 
         this.tbl = tbl;

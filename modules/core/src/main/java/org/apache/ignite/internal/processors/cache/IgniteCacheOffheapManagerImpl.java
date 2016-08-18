@@ -635,6 +635,24 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         return new CacheDataStoreImpl(idxName, p, rowStore, dataTree, lsnr);
     }
 
+    @Nullable @Override public CacheDataStore cacheDataStore(int p) {
+        if (cctx.isLocal())
+            return locCacheDataStore;
+
+        return partDataStores.get(p);
+    }
+
+    public Iterable<CacheDataStore> cacheDataStores() {
+        if (cctx.isLocal())
+            return Collections.singleton(locCacheDataStore);
+
+        return new Iterable<CacheDataStore>() {
+            @Override public Iterator<CacheDataStore> iterator() {
+                return partDataStores.values().iterator();
+            }
+        };
+    }
+
     /**
      *
      */
