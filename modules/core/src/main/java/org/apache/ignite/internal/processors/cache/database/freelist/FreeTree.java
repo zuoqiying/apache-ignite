@@ -80,7 +80,7 @@ public class FreeTree extends BPlusTree<FreeItem, FreeItem> {
     }
 
     /** {@inheritDoc} */
-    @Override protected long allocatePage0() throws IgniteCheckedException {
+    @Override protected long allocatePageNoReuse() throws IgniteCheckedException {
         if (allocSpace == PageIdAllocator.FLAG_IDX)
             return pageMem.allocatePage(getCacheId(), 0, PageIdAllocator.FLAG_IDX);
         else

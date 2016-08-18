@@ -1091,7 +1091,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
      * @param enforceJoinOrder Enforce join order of tables.
      * @return Iterable result.
      */
-    private Iterable<List<?>> runQueryTwoStep(final GridCacheContext<?,?> cctx, final GridCacheTwoStepQuery qry,
+    private Iterable<List<?>> runQueryTwoStep(final GridCacheContext<?, ?> cctx, final GridCacheTwoStepQuery qry,
         final boolean keepCacheObj, final boolean enforceJoinOrder) {
         return new Iterable<List<?>>() {
             @Override public Iterator<List<?>> iterator() {
@@ -1931,7 +1931,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
     }
 
     /** {@inheritDoc} */
-    @Override public void registerCache(GridCacheContext<?, ?> cctx, CacheConfiguration<?,?> ccfg)
+    @Override public void registerCache(GridCacheContext<?, ?> cctx, CacheConfiguration<?, ?> ccfg)
         throws IgniteCheckedException {
         String schema = schemaNameFromCacheConf(ccfg);
 
@@ -1968,7 +1968,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
                     idx.close(null);
 
             for (Iterator<Map.Entry<TwoStepCachedQueryKey, TwoStepCachedQuery>> it = twoStepCache.entrySet().iterator();
-                 it.hasNext();) {
+                it.hasNext(); ) {
                 Map.Entry<TwoStepCachedQueryKey, TwoStepCachedQuery> e = it.next();
 
                 if (F.eq(e.getKey().space, ccfg.getName()))
@@ -2481,9 +2481,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
                 "_key_PK_hash",
                 tbl,
                 true,
-                KEY_COL,
-                VAL_COL,
-                tbl.indexColumn(0, ASCENDING)));
+                treeIndexColumns(new ArrayList<IndexColumn>(2), keyCol, affCol)));
 
             // Add primary key index.
             idxs.add(createSortedIndex(
@@ -2602,25 +2600,22 @@ public class IgniteH2Indexing implements GridQueryIndexing {
 
             Index idx;
 
-                        if (pk && name.endsWith("_hash")) {
-                            idx = new H2PkHashIndex(
-                                cctx,
-                                keyCol,
-                                valCol,
-                                tbl,
-                                name,
-                                pk,
-                                cols
-                            );
-                        }
-                        else {
-                            H2TreeIndex idx = new H2TreeIndex(
-                                            cctx,
-                                            tbl,
-                                            name,
-                                            pk,
-                                            cols);
-                        }
+            if (pk && name.endsWith("_hash")) {
+                idx = new H2PkHashIndex(
+                    cctx,
+                    tbl,
+                    name,
+                    pk,
+                    cols);
+            }
+            else {
+                idx = new H2TreeIndex(
+                    cctx,
+                    tbl,
+                    name,
+                    pk,
+                    cols);
+            }
 
             if (pk) {
                 if (name.endsWith("_hash")) {
@@ -2833,7 +2828,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         private final CacheLongKeyLIRS<GridH2Row> rowCache;
 
         /** */
-        private final GridCacheContext<?,?> cctx;
+        private final GridCacheContext<?, ?> cctx;
 
         /** */
         private final CacheConfiguration<?, ?> ccfg;
@@ -2844,7 +2839,8 @@ public class IgniteH2Indexing implements GridQueryIndexing {
          * @param cctx Cache context.
          * @param ccfg Cache configuration.
          */
-        private Schema(String spaceName, String schemaName, GridCacheContext<?,?> cctx, CacheConfiguration<?,?> ccfg) {
+        private Schema(String spaceName, String schemaName, GridCacheContext<?, ?> cctx,
+            CacheConfiguration<?, ?> ccfg) {
             this.spaceName = spaceName;
             this.cctx = cctx;
             this.schemaName = schemaName;
@@ -2968,7 +2964,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         }
 
         /** {@inheritDoc} */
-        @Override public GridCacheContext<?,?> context() {
+        @Override public GridCacheContext<?, ?> context() {
             return schema.cctx;
         }
 

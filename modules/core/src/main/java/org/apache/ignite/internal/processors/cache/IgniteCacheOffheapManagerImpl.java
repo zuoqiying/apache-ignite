@@ -669,9 +669,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         LazyCacheDataStore store = new LazyCacheDataStore(p, idxName, exists, lsnr);
 
-        CacheDataStore old = partDataStores.put(p, store);
-
-        assert old == null;
+        partDataStores.put(p, store);
 
         return store;
     }
@@ -860,15 +858,19 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             metaStore.destroy();
 
-            Collection<Long> pages = freeList.pages();
+            GridLongList pages = new GridLongList();
 
-            pages.addAll(reuseList.pages());
+            freeList.pages(pages);
+
+            reuseList.pages(pages);
 
             reuseList.destroy();
 
             freeList.destroy();
 
-            for (Long pageId : pages) {
+            for (int i = 0; i < pages.size(); i++) {
+                long pageId = pages.get(i);
+
                 cctx.shared().database().pageMemory().freePage(cctx.cacheId(), pageId);
             }
 
@@ -1044,7 +1046,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         }
 
         /** {@inheritDoc} */
-        @Override protected long allocatePage0() throws IgniteCheckedException {
+        @Override protected long allocatePageNoReuse() throws IgniteCheckedException {
             return pageMem.allocatePage(cctx.cacheId(), partId, PageIdAllocator.FLAG_PART_IDX);
         }
 
@@ -1400,7 +1402,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         }
 
         /** {@inheritDoc} */
-        @Override public IgniteBiTuple<CacheObject, GridCacheVersion> find(KeyCacheObject key)
+        @Override public CacheDataRow find(KeyCacheObject key)
             throws IgniteCheckedException {
 
             CacheDataStore delegate = this.delegate;

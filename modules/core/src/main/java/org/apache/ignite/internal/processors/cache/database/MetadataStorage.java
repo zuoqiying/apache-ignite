@@ -183,7 +183,7 @@ public class MetadataStorage implements MetaStore {
         }
 
         /** {@inheritDoc} */
-        @Override protected long allocatePage0() throws IgniteCheckedException {
+        @Override protected long allocatePageNoReuse() throws IgniteCheckedException {
             return pageMem.allocatePage(getCacheId(), partId, allocSpace);
         }
 

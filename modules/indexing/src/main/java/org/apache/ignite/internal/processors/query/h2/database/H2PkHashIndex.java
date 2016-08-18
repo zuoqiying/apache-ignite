@@ -27,6 +27,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.IgniteCacheOffheapManager;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
+import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2IndexBase;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2Row;
@@ -44,6 +45,7 @@ import org.h2.result.SearchRow;
 import org.h2.result.SortOrder;
 import org.h2.table.IndexColumn;
 import org.h2.table.TableFilter;
+import org.jetbrains.annotations.Nullable;
 
 public class H2PkHashIndex extends GridH2IndexBase {
 
@@ -53,28 +55,31 @@ public class H2PkHashIndex extends GridH2IndexBase {
 
     /**
      * @param cctx Cache context.
-     * @param keyCol Key column.
-     * @param valCol Value column.
      * @param tbl Table.
      * @param name Index name.
      * @param pk Primary key.
-     * @param cols Index columns.
+     * @param colsList Index columns.
      * @throws IgniteCheckedException If failed.
      */
     public H2PkHashIndex(
         GridCacheContext<?, ?> cctx,
-        int keyCol,
-        int valCol,
         GridH2Table tbl,
         String name,
         boolean pk,
-        IndexColumn[] cols
+        List<IndexColumn> colsList
     ) throws IgniteCheckedException {
-        super(keyCol, valCol);
-
         assert pk;
 
-        assert cols.length == 1;
+        assert colsList.size() == 1;
+
+        IndexColumn[] cols = colsList.toArray(new IndexColumn[colsList.size()]);
+
+        IndexColumn.mapColumns(cols, tbl);
+
+        initBaseIndex(tbl, 0, name, cols,
+            pk ? IndexType.createPrimaryKey(false, false) : IndexType.createNonUnique(false, false, false));
+
+        name = BPlusTree.treeName(name, "H2Tree");
 
         // TODO: pass wrapper around per-partition hash indexes as base index.
 
@@ -86,7 +91,7 @@ public class H2PkHashIndex extends GridH2IndexBase {
 
     /** {@inheritDoc} */
     @Override public Cursor find(Session ses, final SearchRow lower, final SearchRow upper) {
-        IndexingQueryFilter f = filters.get();
+        IndexingQueryFilter f = threadLocalFilter();
         IgniteBiPredicate<Object, Object> p = null;
 
         if (f != null) {
@@ -126,7 +131,7 @@ public class H2PkHashIndex extends GridH2IndexBase {
     @Override public GridH2Row findOne(GridH2Row row) {
         try {
             for (IgniteCacheOffheapManager.CacheDataStore store : cctx.offheap().cacheDataStores()) {
-                IgniteBiTuple<CacheObject, GridCacheVersion> found = store.find(row.key);
+                CacheDataRow found = store.find(row.key);
 
                 if (found != null) {
                     tbl.rowDescriptor().createRow(row.key(), row.partition(), row.value(), row.version(), 0);
@@ -160,8 +165,14 @@ public class H2PkHashIndex extends GridH2IndexBase {
     }
 
     /** {@inheritDoc} */
-    @Override public double getCost(Session ses, int[] masks, TableFilter filter, SortOrder sortOrder) {
-        return getCostRangeIndex(masks, getRowCountApproximation(), filter, sortOrder);
+    @Override public double getCost(Session ses, int[] masks, TableFilter[] filters, int filter, SortOrder sortOrder) {
+        long rowCnt = getRowCountApproximation();
+
+        double baseCost = getCostRangeIndex(masks, rowCnt, filters, filter, sortOrder, false);
+
+        int mul = getDistributedMultiplier(ses, filters, filter);
+
+        return mul * baseCost;
     }
 
     /** {@inheritDoc} */
@@ -192,7 +203,10 @@ public class H2PkHashIndex extends GridH2IndexBase {
     }
 
     /** {@inheritDoc} */
-    @Override public void close(Session ses) {
+    @Nullable @Override protected Object doTakeSnapshot() {
+        assert false;
+
+        return this;
     }
 
     /**
