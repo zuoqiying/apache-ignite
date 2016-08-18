@@ -135,13 +135,4 @@ public final class ReuseList {
                 collector.add(cursor.get());
         }
     }
-
-    /**
-     * Destroys this Reuse List.
-     * @throws IgniteCheckedException If failed.
-     */
-    public void destroy() throws IgniteCheckedException {
-        for (int i = 0; i < trees.length; i++)
-            trees[i].destroy();
-    }
 }

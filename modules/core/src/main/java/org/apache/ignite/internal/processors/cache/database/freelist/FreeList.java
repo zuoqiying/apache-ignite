@@ -69,6 +69,13 @@ public class FreeList {
     /** */
     private final ConcurrentHashMap8<Integer, GridFutureAdapter<FreeTree>> trees = new ConcurrentHashMap8<>();
 
+    /**
+     * @param wal Write-ahead log manager.
+     * @param pageMem Page memory.
+     * @param reuseList Reuse list.
+     * @param metaStore Meta store.
+     * @param allocSpace Allocation space.
+     */
     public FreeList(IgniteWriteAheadLogManager wal, PageMemory pageMem, ReuseList reuseList, MetaStore metaStore,
         byte allocSpace) {
         assert pageMem != null;
@@ -224,18 +231,6 @@ public class FreeList {
     }
 
     /**
-     * Destroys this FreeList.
-     * @throws IgniteCheckedException If failed.
-     */
-    public void destroy() throws IgniteCheckedException {
-        for (GridFutureAdapter<FreeTree> fut : trees.values()) {
-            FreeTree tree = fut.get();
-
-            tree.destroy();
-        }
-    }
-
-    /**
      * @param part Partition.
      * @return Page.
      * @throws IgniteCheckedException If failed.
@@ -246,13 +241,21 @@ public class FreeList {
         return pageMem.page(cacheId, pageId);
     }
 
+    /**
+     *
+     */
     private class WriteRowPageHandler extends PageHandler<CacheDataRow, Integer> {
+        /** */
         private final GridCacheContext cctx;
 
+        /**
+         *
+         */
         public WriteRowPageHandler(GridCacheContext cctx) {
             this.cctx = cctx;
         }
 
+        /** {@inheritDoc} */
         @Override public Integer run(long pageId, Page page, ByteBuffer buf, CacheDataRow row, int written)
             throws IgniteCheckedException {
             DataPageIO io = DataPageIO.VERSIONS.forPage(buf);
@@ -348,14 +351,21 @@ public class FreeList {
         }
     }
 
+    /**
+     *
+     */
     private class RemoveRowPageHandler extends PageHandler<FreeTree, Long> {
-
+        /** */
         private final GridCacheContext cctx;
 
+        /**
+         *
+         */
         public RemoveRowPageHandler(GridCacheContext cctx) {
             this.cctx = cctx;
         }
 
+        /** {@inheritDoc} */
         @Override public Long run(long pageId, Page page, ByteBuffer buf, FreeTree tree,
             int itemId) throws IgniteCheckedException {
             assert tree != null;

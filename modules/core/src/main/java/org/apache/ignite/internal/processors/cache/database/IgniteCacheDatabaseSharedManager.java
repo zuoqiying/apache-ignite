@@ -48,10 +48,13 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     /** */
     protected PageMemory pageMem;
 
+    /** */
     private MetaStore metaStore;
 
+    /** */
     private FreeList freeList;
 
+    /** */
     private ReuseList reuseList;
 
     /** {@inheritDoc} */
@@ -70,6 +73,9 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
         }
     }
 
+    /**
+     * @throws IgniteCheckedException If failed.
+     */
     protected void initGlobalDataStructures() throws IgniteCheckedException {
         MetaPageUtils.Metas metas = MetaPageUtils.getOrAllocateMetas(pageMem, 0);
 
@@ -170,15 +176,24 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
         return null;
     }
 
-    public FreeList globalFreeList() {
+    /**
+     * @return Free list.
+     */
+    @Nullable public FreeList globalFreeList() {
         return freeList;
     }
 
-    public ReuseList globalReuseList() {
+    /**
+     * @return Reuse list.
+     */
+    @Nullable public ReuseList globalReuseList() {
         return reuseList;
     }
 
-    public MetaStore globalMetaStore() {
+    /**
+     * @return Meta store.
+     */
+    @Nullable public MetaStore globalMetaStore() {
         return metaStore;
     }
 

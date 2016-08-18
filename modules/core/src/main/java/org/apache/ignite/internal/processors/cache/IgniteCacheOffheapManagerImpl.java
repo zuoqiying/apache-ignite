@@ -618,21 +618,20 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
     protected CacheDataStore createCacheDataStore0(int p, String idxName,
         CacheDataStore.Listener lsnr) throws IgniteCheckedException {
-        final RootPage rootPage = metaStore.getOrAllocateForTree(idxName);
+        final RootPage rootPage = cctx.shared().database().globalMetaStore().getOrAllocateForTree(idxName);
 
-        CacheDataRowStore rowStore = new CacheDataRowStore(cctx, freeList);
+        CacheDataRowStore rowStore = new CacheDataRowStore(cctx, cctx.shared().database().globalFreeList());
 
         CacheDataTree dataTree = new CacheDataTree(idxName,
             p,
-            reuseList,
+            cctx.shared().database().globalReuseList(),
             rowStore,
             cctx,
             cctx.shared().database().pageMemory(),
             rootPage.pageId().pageId(),
             rootPage.isAllocated());
 
-        return new CacheDataStoreImpl(idxName, p, rowStore, dataTree, cctx.shared().database().globalMetaStore(),
-            cctx.shared().database().globalReuseList(), cctx.shared().database().globalFreeList(), lsnr);
+        return new CacheDataStoreImpl(idxName, p, rowStore, dataTree, lsnr);
     }
 
     /**
@@ -667,15 +666,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         private final CacheDataTree dataTree;
 
         /** */
-        private final MetaStore metaStore;
-
-        /** */
-        private final ReuseList reuseList;
-
-        /** */
-        private final FreeList freeList;
-
-        /** */
         private final Listener lsnr;
 
         /**
@@ -688,18 +678,12 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             int partId,
             CacheDataRowStore rowStore,
             CacheDataTree dataTree,
-            MetaStore metaStore,
-            ReuseList reuseList,
-            FreeList freeList,
             Listener lsnr
         ) {
             this.name = name;
             this.partId = partId;
             this.rowStore = rowStore;
             this.dataTree = dataTree;
-            this.metaStore = metaStore;
-            this.reuseList = reuseList;
-            this.freeList = freeList;
             this.lsnr = lsnr;
         }
 

@@ -20,6 +20,9 @@ package org.apache.ignite.internal.pagemem;
 
 import org.apache.ignite.IgniteCheckedException;
 
+/**
+ *
+ */
 public class MetaPageUtils {
 
     /**
