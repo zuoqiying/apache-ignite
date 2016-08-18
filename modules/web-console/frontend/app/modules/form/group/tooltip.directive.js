@@ -35,6 +35,6 @@ export default ['igniteFormGroupTooltip', ['$tooltip', ($tooltip) => {
         link,
         replace: true,
         transclude: true,
-        require: ['^form', '^igniteFormGroup']
+        require: ['^form']
     };
 }]];
