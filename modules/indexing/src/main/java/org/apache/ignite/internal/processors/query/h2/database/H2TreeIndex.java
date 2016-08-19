@@ -22,6 +22,10 @@ import java.util.List;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
+import org.apache.ignite.internal.processors.cache.GridCacheEntryRemovedException;
+import org.apache.ignite.internal.processors.cache.IgniteCacheOffheapManager;
+import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
 import org.apache.ignite.internal.processors.cache.database.IgniteCacheDatabaseSharedManager;
 import org.apache.ignite.internal.processors.cache.database.RootPage;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
@@ -50,6 +54,12 @@ public class H2TreeIndex extends GridH2IndexBase {
     /** */
     private final H2Tree tree;
 
+    private final GridCacheContext cctx;
+
+    private final GridH2Table tbl;
+
+    protected volatile boolean needRebuild = false;
+
     /**
      * @param cctx Cache context.
      * @param tbl Table.
@@ -59,12 +69,15 @@ public class H2TreeIndex extends GridH2IndexBase {
      * @throws IgniteCheckedException If failed.
      */
     public H2TreeIndex(
-        GridCacheContext<?,?> cctx,
+        GridCacheContext<?, ?> cctx,
         GridH2Table tbl,
         String name,
         boolean pk,
         List<IndexColumn> colsList
     ) throws IgniteCheckedException {
+        this.cctx = cctx;
+        this.tbl = tbl;
+
         IndexColumn[] cols = colsList.toArray(new IndexColumn[colsList.size()]);
 
         IndexColumn.mapColumns(cols, tbl);
@@ -93,7 +106,7 @@ public class H2TreeIndex extends GridH2IndexBase {
     @Override public Cursor find(Session ses, SearchRow lower, SearchRow upper) {
         try {
             IndexingQueryFilter f = threadLocalFilter();
-            IgniteBiPredicate<Object,Object> p = null;
+            IgniteBiPredicate<Object, Object> p = null;
 
             if (f != null) {
                 String spaceName = getTable().spaceName();
@@ -203,13 +216,13 @@ public class H2TreeIndex extends GridH2IndexBase {
         final GridCursor<GridH2Row> cursor;
 
         /** */
-        final IgniteBiPredicate<Object,Object> filter;
+        final IgniteBiPredicate<Object, Object> filter;
 
         /**
          * @param cursor Cursor.
          * @param filter Filter.
          */
-        private H2Cursor(GridCursor<GridH2Row> cursor, IgniteBiPredicate<Object,Object> filter) {
+        private H2Cursor(GridCursor<GridH2Row> cursor, IgniteBiPredicate<Object, Object> filter) {
             assert cursor != null;
 
             this.cursor = cursor;
@@ -261,5 +274,56 @@ public class H2TreeIndex extends GridH2IndexBase {
         @Override public boolean previous() {
             throw DbException.getUnsupportedException("previous");
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean needRebuild() {
+        return needRebuild;
+    }
+
+    /**
+     *
+     */
+    public void markForRebuild() {
+        needRebuild = true;
+    }
+
+    /** {@inheritDoc} */
+    @Override public GridH2IndexBase rebuild() throws InterruptedException, IgniteCheckedException {
+        // TODO : make separate method ?
+
+        for (IgniteCacheOffheapManager.CacheDataStore store : cctx.offheap().cacheDataStores()) {
+            GridCursor<? extends CacheDataRow> cursor = store.cursor();
+
+            while (cursor.next()) {
+                CacheDataRow dataRow = cursor.get();
+
+                boolean done = false;
+
+                while (!done) {
+                    GridCacheEntryEx entry = cctx.cache().entryEx(dataRow.key());
+
+                    try {
+                        synchronized (entry) {
+                            GridH2Row row = tbl.rowDescriptor().createRow(entry.key(), entry.partition(),
+                                dataRow.value(), entry.version(), entry.expireTime());
+
+                            row.link(dataRow.link());
+
+                            put(row);
+
+                            done = true;
+                        }
+                    }
+                    catch (GridCacheEntryRemovedException e) {
+                        // No-op
+                    }
+                }
+            }
+        }
+
+        needRebuild = false;
+
+        return this;
     }
 }

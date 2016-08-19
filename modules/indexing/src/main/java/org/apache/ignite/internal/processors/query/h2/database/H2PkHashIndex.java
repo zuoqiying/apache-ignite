@@ -86,7 +86,7 @@ public class H2PkHashIndex extends GridH2IndexBase {
         IgniteBiPredicate<Object, Object> p = null;
 
         if (f != null) {
-            String spaceName = ((GridH2Table)getTable()).spaceName();
+            String spaceName = getTable().spaceName();
 
             p = f.forSpace(spaceName);
         }
@@ -163,9 +163,9 @@ public class H2PkHashIndex extends GridH2IndexBase {
 
         int mul = getDistributedMultiplier(ses, filters, filter);
 
-        return mul * baseCost;
+//        return mul * baseCost;
 
-//        return Double.MAX_VALUE;
+        return Double.MAX_VALUE;
     }
 
     /** {@inheritDoc} */

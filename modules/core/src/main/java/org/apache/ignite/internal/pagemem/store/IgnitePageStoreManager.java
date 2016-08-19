@@ -166,4 +166,6 @@ public interface IgnitePageStoreManager extends GridCacheSharedManager {
      * @throws IgniteCheckedException If failed.
      */
     public void clear(int cacheId, byte flags, int partId) throws IgniteCheckedException;
+
+    public boolean indexPresentOnStart(int cacheId);
 }

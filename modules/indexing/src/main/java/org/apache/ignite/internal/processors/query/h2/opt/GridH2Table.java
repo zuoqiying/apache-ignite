@@ -29,6 +29,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteInterruptedException;
 import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
@@ -684,30 +685,33 @@ public class GridH2Table extends TableBase {
      * Rebuilds all indexes of this table.
      */
     public void rebuildIndexes() {
-        if (!snapshotEnabled)
-            return;
+//        if (!snapshotEnabled)
+//            return;
 
         Lock l = lock(true, Long.MAX_VALUE);
 
         ArrayList<Index> idxs0 = new ArrayList<>(idxs);
 
         try {
-            snapshotIndexes(null); // Allow read access while we are rebuilding indexes.
+//            snapshotIndexes(null); // Allow read access while we are rebuilding indexes.
 
-            for (int i = 1, len = idxs.size(); i < len; i++) {
+            for (int i = 2, len = idxs.size(); i < len; i++) {
                 GridH2IndexBase newIdx = index(i).rebuild();
 
                 idxs.set(i, newIdx);
 
-                if (i == 1) // ScanIndex at 0 and actualSnapshot can contain references to old indexes, reset them.
+                if (i == 2) // ScanIndex at 0 and actualSnapshot can contain references to old indexes, reset them.
                     idxs.set(0, new ScanIndex(newIdx));
             }
         }
         catch (InterruptedException e) {
             throw new IgniteInterruptedException(e);
         }
+        catch (IgniteCheckedException e) {
+            throw new IgniteException(e);
+        }
         finally {
-            releaseSnapshots0(idxs0);
+//            releaseSnapshots0(idxs0);
 
             unlock(l);
         }
