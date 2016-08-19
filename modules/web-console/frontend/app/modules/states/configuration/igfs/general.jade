@@ -30,7 +30,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                 .settings-row
                     +text('Name:', model + '.name', '"igfsName"', 'true', 'Input name', 'IGFS name')
                 .settings-row
-                    +clusters(model, 'Associate current IGFS with the clusters')
+                    +clusters(model, 'Associate clusters with the current IGFS')
                 .settings-row
                     +dropdown('IGFS mode:', model + '.defaultMode', '"defaultMode"', 'true', 'DUAL_ASYNC',
                     '[\

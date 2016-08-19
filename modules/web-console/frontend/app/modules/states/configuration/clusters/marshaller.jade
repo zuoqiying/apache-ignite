@@ -45,8 +45,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                             <li>OptimizedMarshaller - Optimized implementation of marshaller</li>\
                             <li>JdkMarshaller - Marshaller based on JDK serialization mechanism</li>\
                             <li>Not set - BinaryMarshaller serialize and deserialize all objects in the binary format</li>\
-                        </ul>\
-                        ')
+                        </ul>')
                     a.customize(
                         ng-if='#{marshaller}.kind && #{marshaller}.kind === "OptimizedMarshaller"'
                         ng-click='#{marshaller}.expanded = !#{marshaller}.expanded'

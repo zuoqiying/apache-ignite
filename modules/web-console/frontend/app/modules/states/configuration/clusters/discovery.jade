@@ -32,7 +32,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                 .settings-row
                     +text-ip-address('Local address:', model + '.localAddress', '"discoLocalAddress"', 'true', '228.1.2.4',
                         'Local host IP address that discovery SPI uses<br/>\
-                        If not provided a first found non - loopback address will be used')
+                        If not provided a first found non-loopback address will be used')
                 .settings-row
                     +number-min-max('Local port:', model + '.localPort', '"discoLocalPort"', 'true', '47500', '1024', '65535', 'Local port which node uses')
                 .settings-row
