@@ -37,7 +37,8 @@ include ../../../../../app/helpers/jade/mixins.jade
                         'Number of metrics kept in history to compute totals and averages')
                 .settings-row
                     +number('Log frequency:', model + '.metricsLogFrequency', '"metricsLogFrequency"', 'true', '60000', '0',
-                        'Frequency of metrics log print out. To disable set to 0')
+                        'Frequency of metrics log print out<br/>\ ' +
+                        'When <b>0</b> log print of metrics is disabled')
                 .settings-row
                     +number('Update frequency:', model + '.metricsUpdateFrequency', '"metricsUpdateFrequency"', 'true', '2000', '0',
                         'Job metrics update frequency in milliseconds\

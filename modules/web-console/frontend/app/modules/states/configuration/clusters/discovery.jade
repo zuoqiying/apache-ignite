@@ -24,20 +24,22 @@ include ../../../../../app/helpers/jade/mixins.jade
         ignite-form-panel-chevron
         label Discovery
         ignite-form-field-tooltip.tipLabel
-            | Discovery properties configuration
+            | TCP/IP discovery configuration
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id=form)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
             .col-sm-6
                 .settings-row
-                    +text-ip-address('Local address:', model + '.localAddress', '"discoLocalAddress"', 'true', '228.1.2.4', 'Local address')
+                    +text-ip-address('Local address:', model + '.localAddress', '"discoLocalAddress"', 'true', '228.1.2.4',
+                        'Local host IP address that discovery SPI uses<br/>\
+                        If not provided a first found non - loopback address will be used')
                 .settings-row
                     +number-min-max('Local port:', model + '.localPort', '"discoLocalPort"', 'true', '47500', '1024', '65535', 'Local port which node uses')
                 .settings-row
                     +number('Local port range:', model + '.localPortRange', '"discoLocalPortRange"', 'true', '100', '1', 'Local port range')
                 .settings-row
                     +java-class('Address resolver:', model + '.addressResolver', '"discoAddressResolver"', 'true', 'false',
-                        'Class name of resolution between external and internal addresses provider')
+                        'Provides resolution between external and internal addresses')
                 .settings-row
                     +number('Socket timeout:', model + '.socketTimeout', '"socketTimeout"', 'true', '5000', '0', 'Socket operations timeout')
                 .settings-row
@@ -45,7 +47,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                 .settings-row
                     +number('Max acknowledgement timeout:', model + '.maxAckTimeout', '"maxAckTimeout"', 'true', '600000', '0', 'Maximum message acknowledgement timeout')
                 .settings-row
-                    +number('Network timeout:', model + '.networkTimeout', '"discoNetworkTimeout"', 'true', '5000', '1', 'Network timeout')
+                    +number('Network timeout:', model + '.networkTimeout', '"discoNetworkTimeout"', 'true', '5000', '1', 'Timeout to use for network operations')
                 .settings-row
                     +number('Join timeout:', model + '.joinTimeout', '"joinTimeout"', 'true', '0', '0',
                         'Join timeout<br/>' +
@@ -58,11 +60,12 @@ include ../../../../../app/helpers/jade/mixins.jade
                     +number('Max heartbeats miss w/o init:', model + '.maxMissedHeartbeats', '"maxMissedHeartbeats"', 'true', '1', '1',
                         'Max heartbeats count node can miss without initiating status check')
                 .settings-row
-                    +number('Max heartbeats miss w/o failing client node:', model + '.maxMissedClientHeartbeats', '"maxMissedClientHeartbeats"', 'true', '5', '1')
+                    +number('Max missed client heartbeats:', model + '.maxMissedClientHeartbeats', '"maxMissedClientHeartbeats"', 'true', '5', '1',
+                        'Max heartbeats count node can miss without failing client node')
                 .settings-row
                     +number('Topology history:', model + '.topHistorySize', '"topHistorySize"', 'true', '1000', '0', 'Size of topology snapshots history')
                 .settings-row
-                    +java-class('Discovery listener:', model + '.listener', '"discoListener"', 'true', 'false', 'Grid discovery listener')
+                    +java-class('Discovery listener:', model + '.listener', '"discoListener"', 'true', 'false', 'Listener for grid node discovery events')
                 .settings-row
                     +java-class('Data exchange:', model + '.dataExchange', '"dataExchange"', 'true', 'false', 'Class name of handler for initial data exchange between Ignite nodes')
                 .settings-row
@@ -74,10 +77,11 @@ include ../../../../../app/helpers/jade/mixins.jade
                 .settings-row
                     +number('IP finder clean frequency:', model + '.ipFinderCleanFrequency', '"ipFinderCleanFrequency"', 'true', '60000', '1', 'IP finder clean frequency')
                 .settings-row
-                    +java-class('Node authenticator:', model + '.authenticator', '"authenticator"', 'true', 'false', 'Node authenticator')
+                    +java-class('Node authenticator:', model + '.authenticator', '"authenticator"', 'true', 'false', 'Class name of node authenticator implementation')
                 .settings-row
-                    +checkbox('Force server mode', model + '.forceServerMode', '"forceServerMode"', 'Force server mode')
+                    +checkbox('Force server mode', model + '.forceServerMode', '"forceServerMode"', 'Force start TCP/IP discovery in server mode')
                 .settings-row
-                    +checkbox('Client reconnect disabled', model + '.clientReconnectDisabled', '"clientReconnectDisabled"', 'Client reconnect disabled')
+                    +checkbox('Client reconnect disabled', model + '.clientReconnectDisabled', '"clientReconnectDisabled"',
+                        'Disable try of client to reconnect after server detected client node failure')
             .col-sm-6
                 +preview-xml-java(model, 'clusterDiscovery')

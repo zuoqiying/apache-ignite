@@ -484,7 +484,8 @@ $generatorCommon.IGFS_IPC_CONFIGURATION = {
         host: {dflt: '127.0.0.1'},
         port: {dflt: 10500},
         memorySize: {dflt: 262144},
-        tokenDirectoryPath: {dflt: 'ipc/shmem'}
+        tokenDirectoryPath: {dflt: 'ipc/shmem'},
+        threadCount: null
     }
 };
 

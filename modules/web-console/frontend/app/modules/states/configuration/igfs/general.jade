@@ -30,7 +30,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                 .settings-row
                     +text('Name:', model + '.name', '"igfsName"', 'true', 'Input name', 'IGFS name')
                 .settings-row
-                    +clusters(model, 'Associate clusters with the current IGFS')
+                    +clusters(model, 'Associate current IGFS with the clusters')
                 .settings-row
                     +dropdown('IGFS mode:', model + '.defaultMode', '"defaultMode"', 'true', 'DUAL_ASYNC',
                     '[\
@@ -39,7 +39,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                         {value: "DUAL_SYNC", label: "DUAL_SYNC"},\
                         {value: "DUAL_ASYNC", label: "DUAL_ASYNC"}\
                     ]',
-                    'Mode to specify how IGFS interacts with Hadoop file system:\
+                    'Mode to specify how IGFS interacts with Hadoop file system\
                     <ul>\
                         <li>PRIMARY - in this mode IGFS will not delegate to secondary Hadoop file system and will cache all the files in memory only</li>\
                         <li>PROXY - in this mode IGFS will not cache any files in memory and will only pass them through to secondary file system</li>\

@@ -300,7 +300,8 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             host: String,
             port: Number,
             memorySize: Number,
-            tokenDirectoryPath: String
+            tokenDirectoryPath: String,
+            threadCount: Number
         },
         ipcEndpointEnabled: Boolean,
         maxSpaceSize: Number,

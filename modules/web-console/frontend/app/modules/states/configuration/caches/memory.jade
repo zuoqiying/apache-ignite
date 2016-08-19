@@ -36,7 +36,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                             {value: "OFFHEAP_TIERED", label: "OFFHEAP_TIERED"},\
                             {value: "OFFHEAP_VALUES", label: "OFFHEAP_VALUES"}\
                         ]',
-                        'Memory modes:\
+                        'Memory modes control whether value is stored in on-heap memory, off-heap memory, or swap space\
                         <ul>\
                             <li>\
                                 ONHEAP_TIERED - entries are cached on heap memory first<br/>\
@@ -62,20 +62,20 @@ include ../../../../../app/helpers/jade/mixins.jade
                         </ul>')
                 .settings-row(data-ng-show=model + '.memoryMode !== "OFFHEAP_VALUES"')
                     +dropdown-required('Off-heap memory:', model + '.offHeapMode', '"offHeapMode"', 'true',
-                    model + '.memoryMode === "OFFHEAP_TIERED"',
-                    'Disabled',
-                    '[\
-                        {value: -1, label: "Disabled"},\
-                        {value: 1, label: "Limited"},\
-                        {value: 0, label: "Unlimited"}\
-                    ]',
-                    'Off-heap storage mode:\
-                    <ul>\
-                        <li>Disabled - Off-heap storage is disabled</li>\
-                        <li>Limited - Off-heap storage has limited size</li>\
-                        <li>Unlimited - Off-heap storage grow infinitely (it is up to user to properly add and remove entries from cache to ensure that off-heap storage does not grow infinitely)</li>\
-                    </ul>'
-                    )
+                        model + '.memoryMode === "OFFHEAP_TIERED"',
+                        'Disabled',
+                        '[\
+                            {value: -1, label: "Disabled"},\
+                            {value: 1, label: "Limited"},\
+                            {value: 0, label: "Unlimited"}\
+                        ]',
+                        'Off-heap storage mode:\
+                        <ul>\
+                            <li>Disabled - Off-heap storage is disabled</li>\
+                            <li>Limited - Off-heap storage has limited size</li>\
+                            <li>Unlimited - Off-heap storage grow infinitely (it is up to user to properly add and remove entries from cache to ensure that off-heap storage does not grow infinitely)</li>\
+                        </ul>'
+                        )
                 .settings-row(data-ng-if=model + '.offHeapMode === 1 && ' + model + '.memoryMode !== "OFFHEAP_VALUES"')
                     +number-required('Off-heap memory max size:', model + '.offHeapMaxMemory', '"offHeapMaxMemory"', 'true',
                         model + '.offHeapMode === 1', '', 1,
@@ -88,7 +88,12 @@ include ../../../../../app/helpers/jade/mixins.jade
                     +evictionPolicy(model + '.evictionPolicy', '"evictionPolicy"', 'true',
                         onHeapTired  + ' && (' + swapEnabled + '|| _.isNumber(' + offHeapMaxMemory + ') &&' + offHeapMaxMemory + ' >= 0)',
                         'Optional cache eviction policy<br/>\
-                        Must be set for entries to be evicted from on - heap to off - heap or swap')
+                        Must be set for entries to be evicted from on-heap to off-heap or swap\
+                        <ul>\
+                            <li>Least Recently Used(LRU) - Eviction policy based on LRU algorithm and supports batch eviction</li>\
+                            <li>First In First Out (FIFO) - Eviction policy based on FIFO algorithm and supports batch eviction</li>\
+                            <li>SORTED - Eviction policy which will select the minimum cache entry for eviction</li>\
+                        </ul>')
                 .settings-row
                     +number('Start size:', model + '.startSize', '"startSize"', 'true', '1500000', '0',
                         'Initial cache size which will be used to pre-create internal hash table after start')
