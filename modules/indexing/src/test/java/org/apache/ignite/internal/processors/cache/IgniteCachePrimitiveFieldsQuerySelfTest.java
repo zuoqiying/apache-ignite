@@ -24,11 +24,13 @@ import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.marshaller.optimized.OptimizedMarshaller;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -55,7 +57,7 @@ public class IgniteCachePrimitiveFieldsQuerySelfTest extends GridCommonAbstractT
         cfg.setCacheConfiguration(cacheConfiguration(CACHE_NAME));
 
         // Force BinaryMarshaller.
-        cfg.setMarshaller(null);
+        cfg.setMarshaller(new OptimizedMarshaller());
 
         return cfg;
     }
@@ -120,7 +122,7 @@ public class IgniteCachePrimitiveFieldsQuerySelfTest extends GridCommonAbstractT
      * 
      */
     @SuppressWarnings("unused")
-    private static class IndexedType {
+    private static class IndexedType implements Serializable {
         /** */
         private int iVal;
 

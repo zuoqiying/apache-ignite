@@ -164,7 +164,6 @@ public class H2PkHashIndex extends GridH2IndexBase {
         int mul = getDistributedMultiplier(ses, filters, filter);
 
 //        return mul * baseCost;
-
         return Double.MAX_VALUE;
     }
 
