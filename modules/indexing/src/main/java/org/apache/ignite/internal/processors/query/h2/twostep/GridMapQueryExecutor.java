@@ -912,7 +912,7 @@ public class GridMapQueryExecutor {
          * @param qrySrcNodeId Query source node.
          * @param qry Query.
          */
-        private QueryResult(ResultSet rs, GridCacheContext<?,?> cctx, UUID qrySrcNodeId, GridCacheSqlQuery qry) {
+        private QueryResult(ResultSet rs, GridCacheContext<?, ?> cctx, UUID qrySrcNodeId, GridCacheSqlQuery qry) {
             this.rs = rs;
             this.cctx = cctx;
             this.qry = qry;
@@ -958,10 +958,12 @@ public class GridMapQueryExecutor {
                         if (val instanceof GridH2ValueCacheObject) {
                             GridH2ValueCacheObject valCacheObj = (GridH2ValueCacheObject)val;
 
-                            if (valCacheObj.isCopyNeeded()) {
+                            GridCacheContext cctx = valCacheObj.getCacheContext();
+
+                            if (cctx != null && cctx.needValueCopy()) {
                                 row[j] = new GridH2ValueCacheObject(valCacheObj.getCacheContext(), valCacheObj.getCacheObject()) {
                                     @Override public Object getObject() {
-                                        return super.getObjectCopy();
+                                        return getObject(true);
                                     }
                                 };
 

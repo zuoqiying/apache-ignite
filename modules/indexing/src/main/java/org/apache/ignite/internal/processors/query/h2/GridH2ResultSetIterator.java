@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2ValueCacheObject;
 import org.apache.ignite.internal.util.GridCloseableIteratorAdapter;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -68,24 +69,20 @@ public abstract class GridH2ResultSetIterator<T> extends GridCloseableIteratorAd
     private final boolean closeStmt;
 
     /** */
-    private final boolean locNode;
-
-    /** */
     private boolean hasRow;
 
     /**
      * @param data Data array.
      * @param closeStmt If {@code true} closes result set statement when iterator is closed.
-     * @param locNode Is local node?
+     * @param needCpy {@code True} if need copy cache object's value.
      * @throws IgniteCheckedException If failed.
      */
-    protected GridH2ResultSetIterator(ResultSet data, boolean closeStmt, boolean locNode) throws IgniteCheckedException {
+    protected GridH2ResultSetIterator(ResultSet data, boolean closeStmt, boolean needCpy) throws IgniteCheckedException {
         this.data = data;
         this.closeStmt = closeStmt;
-        this.locNode = locNode;
 
         try {
-            res = (ResultInterface)RESULT_FIELD.get(data);
+            res = needCpy ? (ResultInterface)RESULT_FIELD.get(data) : null;
         }
         catch (IllegalAccessException e) {
             throw new IllegalStateException(e); // Must not happen.
@@ -114,18 +111,26 @@ public abstract class GridH2ResultSetIterator<T> extends GridCloseableIteratorAd
             if (!data.next())
                 return false;
 
-            Value[] values = res.currentRow();
+            if (res != null) {
+                Value[] values = res.currentRow();
 
-            for (int c = 0; c < row.length; c++) {
-                Value val = values[c];
-                
-                if (locNode && val instanceof GridH2ValueCacheObject) {
-                    GridH2ValueCacheObject valCacheObj = (GridH2ValueCacheObject)values[c];
+                for (int c = 0; c < row.length; c++) {
+                    Value val = values[c];
 
-                    row[c] = valCacheObj.isCopyNeeded() ? valCacheObj.getObjectCopy() : valCacheObj.getObject();
+                    if (val instanceof GridH2ValueCacheObject) {
+                        GridH2ValueCacheObject valCacheObj = (GridH2ValueCacheObject)values[c];
+
+                        GridCacheContext cctx = valCacheObj.getCacheContext();
+
+                        row[c] = valCacheObj.getObject(cctx != null && cctx.needValueCopy());
+                    }
+                    else
+                        row[c] = val.getObject();
                 }
-                else
-                    row[c] = val.getObject();
+            }
+            else {
+                for (int c = 0; c < row.length; c++)
+                    row[c] = data.getObject(c + 1);
             }
 
             return true;
@@ -181,6 +186,6 @@ public abstract class GridH2ResultSetIterator<T> extends GridCloseableIteratorAd
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString((Class<GridH2ResultSetIterator>)getClass(), this);
+        return S.toString(GridH2ResultSetIterator.class, this);
     }
 }

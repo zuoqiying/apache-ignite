@@ -21,34 +21,43 @@ import java.util.List;
 import javax.cache.Cache;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.cache.query.SqlQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 /**
  * Tests modification of values returned by query iterators with enabled copy on read.
  */
 public class CacheSqlQueryValueCopySelfTest extends GridCommonAbstractTest {
+    /** */
+    private static final TcpDiscoveryIpFinder ipFinder = new TcpDiscoveryVmIpFinder(true);
+
+    /** */
+    private static final int KEYS = 100;
+
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
-        IgniteConfiguration configuration = super.getConfiguration(gridName);
+        IgniteConfiguration cfg = super.getConfiguration(gridName);
 
-        if ("client".equals(configuration.getGridName()))
-            configuration.setClientMode(true);
+        if ("client".equals(cfg.getGridName()))
+            cfg.setClientMode(true);
 
-        ((TcpDiscoverySpi)configuration.getDiscoverySpi()).setIpFinder(LOCAL_IP_FINDER);
+        ((TcpDiscoverySpi)cfg.getDiscoverySpi()).setIpFinder(ipFinder);
 
         CacheConfiguration<Integer, Value> cc = new CacheConfiguration<>();
+
+        cc.setCopyOnRead(true);
         cc.setIndexedTypes(Integer.class, Value.class);
 
-        configuration.setCacheConfiguration(cc);
+        cfg.setCacheConfiguration(cc);
 
-        return configuration;
+        return cfg;
     }
 
     /** {@inheritDoc} */
@@ -62,11 +71,8 @@ public class CacheSqlQueryValueCopySelfTest extends GridCommonAbstractTest {
     @Override protected void beforeTest() throws Exception {
         IgniteCache<Integer, Value> cache = grid(0).cache(null);
 
-        cache.put(0, new Value("before"));
-        cache.put(1, new Value("before"));
-        cache.put(2, new Value("before"));
-        cache.put(3, new Value("before"));
-        cache.put(4, new Value("before"));
+        for (int i = 0; i < KEYS; i++)
+            cache.put(i, new Value("before"));
     }
 
     /** {@inheritDoc} */
@@ -86,18 +92,32 @@ public class CacheSqlQueryValueCopySelfTest extends GridCommonAbstractTest {
     }
 
     /**
-     * Test two step query from dedicated client.
+     * Tests two step query from dedicated client.
+     *
+     * @throws Exception If failed.
      */
     public void testTwoStepSqlClientQuery() throws Exception {
-        try(Ignite client = startGrid("client")) {
-
+        try (Ignite client = startGrid("client")) {
             IgniteCache<Integer, Value> cache = client.cache(null);
 
             List<Cache.Entry<Integer, Value>> all = cache.query(
                 new SqlQuery<Integer, Value>(Value.class, "select * from Value")).getAll();
 
+            assertEquals(KEYS, all.size());
+
             for (Cache.Entry<Integer, Value> entry : all)
                 entry.getValue().str = "after";
+
+            check(cache);
+
+            QueryCursor<List<?>> qry = cache.query(new SqlFieldsQuery("select _val from Value"));
+
+            List<List<?>> all0 = qry.getAll();
+
+            assertEquals(KEYS, all0.size());
+
+            for (List<?> entry : all0)
+                ((Value)entry.get(0)).str = "after";
 
             check(cache);
         }
@@ -106,11 +126,13 @@ public class CacheSqlQueryValueCopySelfTest extends GridCommonAbstractTest {
     /**
      * Test two step query without local reduce phase.
      */
-    public void testTwoStepSkipRdcSqlQuery() {
+    public void testTwoStepSkipReduceSqlQuery() {
         IgniteCache<Integer, Value> cache = grid(0).cache(null);
 
         List<Cache.Entry<Integer, Value>> all = cache.query(
             new SqlQuery<Integer, Value>(Value.class, "select * from Value").setPageSize(3)).getAll();
+
+        assertEquals(KEYS, all.size());
 
         for (Cache.Entry<Integer, Value> entry : all)
             entry.getValue().str = "after";
@@ -121,14 +143,16 @@ public class CacheSqlQueryValueCopySelfTest extends GridCommonAbstractTest {
     /**
      * Test two step query value copy.
      */
-    public void testTwoStepRdcSqlQuery() {
+    public void testTwoStepReduceSqlQuery() {
         IgniteCache<Integer, Value> cache = grid(0).cache(null);
-
-        cache.put(0, new Value("before"));
 
         QueryCursor<List<?>> qry = cache.query(new SqlFieldsQuery("select _val from Value order by _key"));
 
-        for (List<?> entry : qry.getAll())
+        List<List<?>> all = qry.getAll();
+
+        assertEquals(KEYS, all.size());
+
+        for (List<?> entry : all)
             ((Value)entry.get(0)).str = "after";
 
         check(cache);
@@ -140,13 +164,12 @@ public class CacheSqlQueryValueCopySelfTest extends GridCommonAbstractTest {
     public void testLocalSqlQuery() {
         IgniteCache<Integer, Value> cache = grid(0).cache(null);
 
-        Value before = new Value("before");
-        cache.put(0, before);
-
-        SqlQuery<Integer, Value> qry = new SqlQuery<>(Value.class, "select * from Value");
+        SqlQuery<Integer, Value> qry = new SqlQuery<>(Value.class.getSimpleName(), "select * from Value");
         qry.setLocal(true);
 
         List<Cache.Entry<Integer, Value>> all = cache.query(qry).getAll();
+
+        assertFalse(all.isEmpty());
 
         for (Cache.Entry<Integer, Value> entry : all)
             entry.getValue().str = "after";
@@ -154,35 +177,22 @@ public class CacheSqlQueryValueCopySelfTest extends GridCommonAbstractTest {
         check(cache);
     }
 
-    /** */
-    private static class Key {
-        /** */
-        private String str;
+    /**
+     * Tests local sql query.
+     */
+    public void testLocalSqlFieldsQuery() {
+        IgniteCache<Integer, Value> cache = grid(0).cache(null);
 
-        /**
-         * @param str String.
-         */
-        public Key(String str) {
-            this.str = str;
-        }
+        QueryCursor<List<?>> cur = cache.query(new SqlFieldsQuery("select _val from Value").setLocal(true));
 
-        /** {@inheritDoc} */
-        @Override public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
+        List<List<?>> all = cur.getAll();
 
-            Key key = (Key)o;
+        assertFalse(all.isEmpty());
 
-            return str.equals(key.str);
+        for (List<?> entry : all)
+            ((Value)entry.get(0)).str = "after";
 
-        }
-
-        /** {@inheritDoc} */
-        @Override public int hashCode() {
-            return str.hashCode();
-        }
+        check(cache);
     }
 
     /** */
@@ -202,8 +212,15 @@ public class CacheSqlQueryValueCopySelfTest extends GridCommonAbstractTest {
      * @param cache Cache.
      */
     private void check(IgniteCache<Integer, Value> cache) {
+        int cnt = 0;
+
         // Value should be not modified by previous assignment.
-        for (Cache.Entry<Integer, Value> entry : cache)
+        for (Cache.Entry<Integer, Value> entry : cache) {
+            cnt++;
+
             assertEquals("before", entry.getValue().str);
+        }
+
+        assertEquals(KEYS, cnt);
     }
 }
