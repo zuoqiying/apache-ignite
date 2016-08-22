@@ -155,8 +155,8 @@ mixin footer-controls
         div(ng-if='notebook' ignite-loading='sqlLoading' ignite-loading-text='{{ loadingText }}' ignite-loading-position='top')
             .docs-body.paragraphs
                 .panel-group(bs-collapse ng-model='notebook.expandedParagraphs' data-allow-multiple='true' data-start-collapsed='false')
-                    .panel.panel-default(ng-repeat='paragraph in notebook.paragraphs')
-                        .panel-heading(id='{{paragraph.id}}' bs-collapse-toggle)
+                    .panel.panel-default(ng-repeat='paragraph in notebook.paragraphs' id='{{paragraph.id}}')
+                        .panel-heading(bs-collapse-toggle)
                             .row
                                 +paragraph-rename
                         .panel-collapse(role='tabpanel' bs-collapse-target)
@@ -168,7 +168,7 @@ mixin footer-controls
                                 .col-xs-4.col-sm-3
                                     div(ng-show='caches.length > 0' style='padding: 5px 10px' st-table='displayedCaches' st-safe-src='caches')
                                         lable.labelField.labelFormField Caches:
-                                        i.fa.fa-database.tipField(title='Click to show cache types metadata dialog' bs-popover data-template-url='/sql/cache-metadata.html', data-placement='bottom', data-trigger='click')
+                                        i.fa.fa-database.tipField(title='Click to show cache types metadata dialog' bs-popover data-template-url='/sql/cache-metadata.html' data-placement='bottom' data-trigger='click' data-container='#{{ paragraph.id}}')
                                         .input-tip
                                             input.form-control(type='text' st-search='label' placeholder='Filter caches...')
                                         table.links
