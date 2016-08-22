@@ -19,11 +19,17 @@ package org.apache.ignite.internal.util.nio;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
-import org.apache.ignite.internal.util.typedef.internal.LT;
+import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 
 /**
  * Filter that transforms byte buffers to user-defined objects and vice-versa
@@ -91,35 +97,106 @@ public class GridNioCodecFilter extends GridNioFilterAdapter {
         }
     }
 
+    private ThreadPoolExecutor exec;
+
+    private final ConcurrentMap<DirectReaderQueueKey, DirectReaderQueue<BufferReadSubChunk>> qMap = new ConcurrentHashMap<>();
+
     /** {@inheritDoc} */
     @Override public void onMessageReceived(GridNioSession ses, Object msg) throws IgniteCheckedException {
-        if (!(msg instanceof ByteBuffer))
-            throw new GridNioException("Failed to decode incoming message (incoming message is not a byte buffer, " +
-                "is filter properly placed?): " + msg.getClass());
+//        if (!(msg instanceof ByteBuffer))
+//            throw new GridNioException("Failed to decode incoming message (incoming message is not a byte buffer, " +
+//                "is filter properly placed?): " + msg.getClass());
+
+        BufferChunk chunk = ses.meta(GridNioSessionMetaKey.READ_CHUNK.ordinal());
 
         try {
-            ByteBuffer input = (ByteBuffer)msg;
+            for (;;) {
+                BufferReadSubChunk subChunk = chunk.nextSubChunk();
 
-            while (input.hasRemaining()) {
-                Object res = parser.decode(ses, input);
+                if (subChunk == null)
+                    return;
 
-                if (res != null)
-                    proceedMessageReceived(ses, res);
+                UUID nodeId = ses.meta(TcpCommunicationSpi.NODE_ID_META);
+
+                if (nodeId == null)
+                    processSubChunk(ses, subChunk);
                 else {
-                    if (input.hasRemaining()) {
-                        if (directMode)
-                            return;
+                    DirectReaderQueueKey key = new DirectReaderQueueKey(nodeId, subChunk.threadId());
 
-                        LT.warn(log, null, "Parser returned null but there are still unread data in input buffer (bug in " +
-                            "parser code?) [parser=" + parser + ", ses=" + ses + ']');
+                    DirectReaderQueue<BufferReadSubChunk> q = qMap.get(key);
 
-                        input.position(input.limit());
+                    if (q == null) {
+                        DirectReaderQueue<BufferReadSubChunk> old = qMap.putIfAbsent(key, q = new DirectReaderQueue<>(ses));
+
+                        assert old == null;
                     }
+
+                    q.add(subChunk);
+
+                    if (q.reserved())
+                        continue;
+
+                    final DirectReaderQueue<BufferReadSubChunk> finalQ = q;
+
+//                    exec.submit(
+//                        new Runnable() {
+//                            @Override public void run() {
+                                for (;;) {
+                                    if (finalQ.reserved() || !finalQ.reserve())
+                                        return;
+
+                                    try {
+                                        // TODO need to limit max chunks count processed at a time.
+                                        for (BufferReadSubChunk t = finalQ.poll(); t != null; t = finalQ.poll())
+                                            processSubChunk(finalQ.session(), t);
+                                    }
+                                    catch (IOException | IgniteCheckedException e) {
+                                        // Print stack trace only if has runtime exception in it's cause.
+                                        if (X.hasCause(e, IOException.class))
+                                            U.warn(log, "Closing NIO session because of unhandled exception " +
+                                                "[cls=" + e.getClass() +
+                                                ", msg=" + e.getMessage() + ']');
+                                        else
+                                            U.error(log, "Closing NIO session because of unhandled exception.", e);
+
+                                        finalQ.session().close();
+                                    }
+                                    finally {
+                                        finalQ.release();
+                                    }
+
+                                    if (finalQ.isEmpty())
+                                        break;
+                                }
+
+//                            }
+//                        });
                 }
             }
         }
         catch (IOException e) {
             throw new GridNioException(e);
+        }
+    }
+
+    private void processSubChunk(
+        GridNioSession ses,
+        BufferReadSubChunk subChunk
+    ) throws IOException, IgniteCheckedException {
+        try {
+            Object res = parser.decode(
+                ses,
+                subChunk.buffer());
+
+            assert !subChunk.buffer().hasRemaining();
+
+            if (res != null)
+                proceedMessageReceived(
+                    ses,
+                    res);
+        }
+        finally {
+            subChunk.release();
         }
     }
 

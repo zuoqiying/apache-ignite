@@ -24,7 +24,6 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SelectableChannel;
@@ -78,7 +77,6 @@ import org.apache.ignite.internal.util.nio.GridDirectParser;
 import org.apache.ignite.internal.util.nio.GridNioCodecFilter;
 import org.apache.ignite.internal.util.nio.GridNioFilter;
 import org.apache.ignite.internal.util.nio.GridNioMessageReaderFactory;
-import org.apache.ignite.internal.util.nio.GridNioMessageTracker;
 import org.apache.ignite.internal.util.nio.GridNioMessageWriterFactory;
 import org.apache.ignite.internal.util.nio.GridNioMetricsListener;
 import org.apache.ignite.internal.util.nio.GridNioRecoveryDescriptor;
@@ -287,7 +285,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
     public static final int DFLT_SELECTORS_CNT = Math.min(4, Runtime.getRuntime().availableProcessors());
 
     /** Node ID meta for session. */
-    private static final int NODE_ID_META = GridNioSessionMetaKey.nextUniqueKey();
+    public static final int NODE_ID_META = GridNioSessionMetaKey.nextUniqueKey();
 
     /** Message tracker meta for session. */
     private static final int TRACKER_META = GridNioSessionMetaKey.nextUniqueKey();
@@ -569,7 +567,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                                     log.debug("Send recovery acknowledgement [rmtNode=" + sndId +
                                         ", rcvCnt=" + rcvCnt + ']');
 
-                                nioSrvr.sendSystem(ses, new RecoveryLastReceivedMessage(rcvCnt));
+                                ses.send(new RecoveryLastReceivedMessage(rcvCnt));
 
                                 recovery.lastAcknowledged(rcvCnt);
                             }
@@ -578,21 +576,21 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
                     IgniteRunnable c;
 
-                    if (msgQueueLimit > 0) {
-                        GridNioMessageTracker tracker = ses.meta(TRACKER_META);
-
-                        if (tracker == null) {
-                            GridNioMessageTracker old = ses.addMeta(TRACKER_META, tracker =
-                                new GridNioMessageTracker(ses, msgQueueLimit));
-
-                            assert old == null;
-                        }
-
-                        tracker.onMessageReceived();
-
-                        c = tracker;
-                    }
-                    else
+//                    if (msgQueueLimit > 0) {
+//                        GridNioMessageTracker tracker = ses.meta(TRACKER_META);
+//
+//                        if (tracker == null) {
+//                            GridNioMessageTracker old = ses.addMeta(TRACKER_META, tracker =
+//                                new GridNioMessageTracker(ses, msgQueueLimit));
+//
+//                            assert old == null;
+//                        }
+//
+//                        tracker.onMessageReceived();
+//
+//                        c = tracker;
+//                    }
+//                    else
                         c = NOOP;
 
                     notifyListener(sndId, msg, c);
@@ -2602,8 +2600,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                         }
                     }
 
-                    U.debug("Read: " + Arrays.toString(buf.array()));
-
                     UUID rmtNodeId0 = U.bytesToUuid(buf.array(), 1 + 12);
 
                     if (!rmtNodeId.equals(rmtNodeId0))
@@ -2611,10 +2607,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                             ", rcvd=" + rmtNodeId0 + ']');
                     else if (log.isDebugEnabled())
                         log.debug("Received remote node ID: " + rmtNodeId0);
-
-
-                    U.debug("Received remote node ID: " + rmtNodeId0);
-
 
                     if (isSslEnabled()) {
                         assert sslHnd != null;
@@ -2652,8 +2644,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                         assert written;
 
                         buf.flip();
-
-                        //U.debug(log, "Buf: " + buf + " " + Arrays.toString(buf.array()));
 
                         if (isSslEnabled()) {
                             assert sslHnd != null;
@@ -2729,8 +2719,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                         if (log.isDebugEnabled())
                             log.debug("Received handshake message [rmtNode=" + rmtNodeId + ", rcvCnt=" + rcvCnt + ']');
 
-                        U.debug("Received handshake message [rmtNode=" + rmtNodeId + ", rcvCnt=" + rcvCnt + ']');
-
                         if (rcvCnt == -1) {
                             if (log.isDebugEnabled())
                                 log.debug("Connection rejected, will retry client creation [rmtNode=" + rmtNodeId + ']');
@@ -2745,6 +2733,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     if (log.isDebugEnabled())
                         log.debug("Failed to read from channel: " + e);
 
+                    U.debug("Error in thread");
                     e.printStackTrace();
 
                     throw new IgniteCheckedException("Failed to read from channel.", e);
@@ -2752,8 +2741,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                 finally {
                     if (!success)
                         U.closeQuiet(ch);
-
-                    //U.debug(log, "Success: " + success);
                 }
             }
         }
@@ -3652,8 +3639,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
             buf.put(NODE_ID_MSG_TYPE);
             buf.put(nodeIdBytes);
 
-            U.debug(">>> ID msg: " + Arrays.toString(nodeIdBytes) + ", buf=" + buf + ']');
-
             return true;
         }
 
@@ -3681,7 +3666,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
         /** {@inheritDoc} */
         @Override public String toString() {
-            return S.toString(NodeIdMessage.class, this);
+            return S.toString(NodeIdMessage.class, this, "bytes", Arrays.toString(nodeIdBytesWithType));
         }
     }
 

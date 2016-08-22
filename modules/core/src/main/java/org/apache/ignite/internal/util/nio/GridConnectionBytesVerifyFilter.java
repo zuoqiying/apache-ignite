@@ -80,12 +80,12 @@ public class GridConnectionBytesVerifyFilter extends GridNioFilterAdapter {
             return;
         }
 
-        if (!(msg instanceof ByteBuffer))
-            throw new GridNioException("Failed to decode incoming message (message should be a byte buffer, is " +
-                "filter properly placed?): " + msg.getClass());
+        BufferChunk chunk = ses.meta(GridNioSessionMetaKey.READ_CHUNK.ordinal());
 
-        ByteBuffer buf = (ByteBuffer)msg;
-
+//        if (!(msg instanceof ByteBuffer))
+//            throw new GridNioException("Failed to decode incoming message (message should be a byte buffer, is " +
+//                "filter properly placed?): " + (msg != null ? msg.getClass() : "null"));
+//
         Integer magic = ses.meta(MAGIC_META_KEY);
 
         if (magic == null || magic < U.IGNITE_HEADER.length) {
@@ -94,6 +94,13 @@ public class GridConnectionBytesVerifyFilter extends GridNioFilterAdapter {
             if (magicBuf == null)
                 magicBuf = new byte[U.IGNITE_HEADER.length];
 
+            BufferReadSubChunk subChunk = chunk.nextSubChunk();
+
+            if (subChunk == null)
+                return;
+
+            ByteBuffer buf = subChunk.buffer();
+
             int magicRead = magic == null ? 0 : magic;
 
             int cnt = buf.remaining();
@@ -101,6 +108,7 @@ public class GridConnectionBytesVerifyFilter extends GridNioFilterAdapter {
             buf.get(magicBuf, magicRead, Math.min(U.IGNITE_HEADER.length - magicRead, cnt));
 
             if (cnt + magicRead < U.IGNITE_HEADER.length) {
+                // TODO with parallel direct marshalling not supposed to be here.
                 // Magic bytes are not fully read.
                 ses.addMeta(MAGIC_META_KEY, cnt + magicRead);
                 ses.addMeta(MAGIC_BUF_KEY, magicBuf);
@@ -110,7 +118,11 @@ public class GridConnectionBytesVerifyFilter extends GridNioFilterAdapter {
                 ses.removeMeta(MAGIC_BUF_KEY);
                 ses.addMeta(MAGIC_META_KEY, U.IGNITE_HEADER.length);
 
-                proceedMessageReceived(ses, buf);
+                assert !buf.hasRemaining();
+
+                subChunk.release();
+
+                proceedMessageReceived(ses, msg);
             }
             else {
                 ses.close();
@@ -120,7 +132,7 @@ public class GridConnectionBytesVerifyFilter extends GridNioFilterAdapter {
             }
         }
         else
-            proceedMessageReceived(ses, buf);
+            proceedMessageReceived(ses, msg);
     }
 
     /** {@inheritDoc} */

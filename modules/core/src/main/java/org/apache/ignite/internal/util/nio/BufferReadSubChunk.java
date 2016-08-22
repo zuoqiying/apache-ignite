@@ -40,6 +40,10 @@ public class BufferReadSubChunk {
         this.parent = parent;
     }
 
+    public long threadId() {
+        return threadId;
+    }
+
     public void release() {
         parent.releaseSubChunk();
     }

@@ -99,7 +99,7 @@ public class BufferChunk {
         buf.flip();
     }
 
-    BufferReadSubChunk nextChunk() {
+    BufferReadSubChunk nextSubChunk() {
         if (buf.remaining() < 12)
             return null;
 
@@ -119,8 +119,6 @@ public class BufferChunk {
         BufferReadSubChunk ret = new BufferReadSubChunk(threadId, subBuf, this);
 
         subchunksCreated--;
-
-        //U.debug("Subch: " + this);
 
         buf.position(buf.position() + expLen);
 

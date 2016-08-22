@@ -50,8 +50,6 @@ import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
-import org.apache.ignite.internal.managers.communication.GridIoMessage;
-import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsSingleMessage;
 import org.apache.ignite.internal.util.GridConcurrentHashSet;
 import org.apache.ignite.internal.util.nio.ssl.GridNioSslFilter;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
@@ -427,7 +425,7 @@ public class GridNioServer<T> {
         Message msg,
         boolean sys
     ) {
-        assert ses instanceof GridSelectorNioSessionImpl;
+        assert ses instanceof GridSelectorNioSessionImpl : ses;
 
         GridSelectorNioSessionImpl impl = (GridSelectorNioSessionImpl)ses;
 
@@ -467,10 +465,6 @@ public class GridNioServer<T> {
 
                 BufferChunk chunk = firstChunk;
 
-                //U.debug(log, "Writing message: " + msg + ", threadId=" + Thread.currentThread().getId());
-
-                int chunkCnt = 1;
-
                 for (;;) {
                     chunk.onBeforeWrite();
 
@@ -480,8 +474,6 @@ public class GridNioServer<T> {
 
                     chunk.onAfterWrite();
 
-                    //U.debug(log, "Next chunk: " + chunk + " " + U.byteBufferToString(chunk.buffer()));
-
                     if (b) {
                         if (writer != null)
                             writer.reset();
@@ -490,8 +482,6 @@ public class GridNioServer<T> {
                     }
 
                     chunk = impl.expandWriteChunk(chunk);
-
-                    chunkCnt++;
 
                     assert chunk.reserved();
 
@@ -510,8 +500,6 @@ public class GridNioServer<T> {
                     impl,
                     (NioOperationFuture)fut,
                     sys);
-
-                //U.debug(log, "Finished writing message: " + msg + ", chunkCnt=" + chunkCnt + ']');
             }
             catch (IgniteCheckedException e) {
                 fut = new GridNioFinishedFuture<Object>(e);
@@ -987,8 +975,6 @@ public class GridNioServer<T> {
                 if (log.isDebugEnabled())
                     log.debug("Remote client closed connection: " + ses);
 
-                U.debug("Remote client closed connection: " + ses);
-
                 close(ses, null);
 
                 chunk.release();
@@ -1009,41 +995,28 @@ public class GridNioServer<T> {
 
             chunk.onBeforeRead();
 
-            //U.debug(log, "read [cnt=" + cnt + ", bytes=" + U.byteBufferToString(chunk.buffer()));
+            ses.addMeta(READ_CHUNK.ordinal(), chunk);
 
-            for (;;) {
-                BufferReadSubChunk subChunk = chunk.nextChunk();
-
-                if (subChunk == null) {
-                    if (chunk.buffer().hasRemaining()) {
-                        //U.debug(log, ">>> buffer has remaining. \n\n\n");
-
-                        BufferChunk newChunk = ses.reserveReadChunk();
-
-                        chunk.copyTo(newChunk);
-
-                        ses.addMeta(READ_CHUNK.ordinal(), newChunk);
-                    }
-
-                    chunk.tryRelease();
-
-                    break;
-                }
-
-                //U.debug(log, "Notifying: " + subChunk.buffer() + "\n" + " \n" +U.byteBufferToString(subChunk.buffer()));
-
-                try {
-                    filterChain.onMessageReceived(ses, subChunk.buffer());
-
-                    assert !subChunk.buffer().hasRemaining();
-                }
-                catch (IgniteCheckedException e) {
-                    close(ses, e);
-                }
-                finally {
-                    subChunk.release();
-                }
+            try {
+                filterChain.onMessageReceived(ses, null);
             }
+            catch (IgniteCheckedException e) {
+                close(ses, e);
+
+                return;
+            }
+
+            if (chunk.buffer().hasRemaining()) {
+                BufferChunk newChunk = ses.reserveReadChunk();
+
+                chunk.copyTo(newChunk);
+
+                ses.addMeta(READ_CHUNK.ordinal(), newChunk);
+            }
+            else
+                ses.removeMeta(READ_CHUNK.ordinal());
+
+            chunk.tryRelease();
         }
 
         /**
