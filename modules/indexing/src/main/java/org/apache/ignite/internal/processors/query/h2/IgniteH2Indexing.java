@@ -72,6 +72,8 @@ import org.apache.ignite.internal.processors.cache.CacheObjectContext;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheAffinityManager;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
+import org.apache.ignite.internal.processors.cache.GridCacheEntryRemovedException;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.QueryCursorImpl;
@@ -94,6 +96,7 @@ import org.apache.ignite.internal.processors.query.h2.database.H2RowFactory;
 import org.apache.ignite.internal.processors.query.h2.database.H2TreeIndex;
 import org.apache.ignite.internal.processors.query.h2.database.io.H2InnerIO;
 import org.apache.ignite.internal.processors.query.h2.database.io.H2LeafIO;
+import org.apache.ignite.internal.processors.query.h2.opt.GridH2IndexBase;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2KeyValueRowOffheap;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2KeyValueRowOnheap;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2QueryContext;
@@ -137,6 +140,7 @@ import org.h2.api.JavaObjectSerializer;
 import org.h2.command.CommandInterface;
 import org.h2.engine.Session;
 import org.h2.engine.SysProperties;
+import org.h2.index.Cursor;
 import org.h2.index.Index;
 import org.h2.index.SpatialIndex;
 import org.h2.jdbc.JdbcConnection;
@@ -1633,6 +1637,56 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         tbl.tbl.rebuildIndexes();
     }
 
+    public void rebuildIndexesFromHash(@Nullable String spaceName,
+        GridQueryTypeDescriptor type) throws IgniteCheckedException {
+        TableDescriptor tbl = tableDescriptor(spaceName, type);
+
+        if (tbl == null)
+            return;
+
+        H2PkHashIndex hashIdx = tbl.pkHashIdx;
+
+        Cursor cursor = hashIdx.find((Session)null, null, null);
+
+        int cacheId = CU.cacheId(tbl.schema.ccfg.getName());
+
+        GridCacheContext cctx = ctx.cache().context().cacheContext(cacheId);
+
+        while (cursor.next()) {
+            CacheDataRow dataRow = (CacheDataRow) cursor.get();
+
+            boolean done = false;
+
+            while (!done) {
+                GridCacheEntryEx entry = cctx.cache().entryEx(dataRow.key());
+
+                try {
+                    synchronized (entry) {
+                        GridH2Row row = tbl.tbl.rowDescriptor().createRow(entry.key(), entry.partition(),
+                            dataRow.value(), entry.version(), entry.expireTime());
+
+                        row.link(dataRow.link());
+
+                        List<Index> indexes = tbl.tbl.getIndexes();
+
+                        for (int i = 2; i < indexes.size(); i++) {
+                            Index idx = indexes.get(i);
+
+                            if (idx instanceof H2TreeIndex)
+                                ((H2TreeIndex)idx).put(row);
+                        }
+
+                        done = true;
+                    }
+                }
+                catch (GridCacheEntryRemovedException e) {
+                    // No-op
+                }
+            }
+
+        }
+    }
+
     /**
      * Gets size (for tests only).
      *
@@ -2404,7 +2458,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         /** */
         private Index pkTreeIdx;
 
-        private Index pkHashIdx;
+        private H2PkHashIndex pkHashIdx;
 
         /**
          * @param schema Schema.
@@ -2598,39 +2652,34 @@ public class IgniteH2Indexing implements GridQueryIndexing {
             if (log.isInfoEnabled())
                 log.info("Creating cache index [cacheId=" + cctx.cacheId() + ", idxName=" + name + ']');
 
-            Index idx;
-
             if (pk && name.endsWith("_hash")) {
-                idx = new H2PkHashIndex(
+                assert pkHashIdx == null : pkHashIdx;
+
+                pkHashIdx = new H2PkHashIndex(
                     cctx,
                     tbl,
                     name,
                     pk,
                     cols);
+
+                return pkHashIdx;
             }
             else {
-                idx = new H2TreeIndex(
+                Index idx = new H2TreeIndex(
                     cctx,
                     tbl,
                     name,
                     pk,
                     cols);
-            }
 
-            if (pk) {
-                if (name.endsWith("_hash")) {
-                    assert pkHashIdx == null : pkHashIdx;
-
-                    pkHashIdx = idx;
-                }
-                else {
+                if (pk) {
                     assert pkTreeIdx == null : pkTreeIdx;
 
                     pkTreeIdx = idx;
                 }
-            }
 
-            return idx;
+                return idx;
+            }
         }
 
         /**

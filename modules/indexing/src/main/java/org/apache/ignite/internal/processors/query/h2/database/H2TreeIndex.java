@@ -289,39 +289,7 @@ public class H2TreeIndex extends GridH2IndexBase {
     }
 
     /** {@inheritDoc} */
-    @Override public GridH2IndexBase rebuild() throws InterruptedException, IgniteCheckedException {
-        // TODO : make separate method ?
-
-        for (IgniteCacheOffheapManager.CacheDataStore store : cctx.offheap().cacheDataStores()) {
-            GridCursor<? extends CacheDataRow> cursor = store.cursor();
-
-            while (cursor.next()) {
-                CacheDataRow dataRow = cursor.get();
-
-                boolean done = false;
-
-                while (!done) {
-                    GridCacheEntryEx entry = cctx.cache().entryEx(dataRow.key());
-
-                    try {
-                        synchronized (entry) {
-                            GridH2Row row = tbl.rowDescriptor().createRow(entry.key(), entry.partition(),
-                                dataRow.value(), entry.version(), entry.expireTime());
-
-                            row.link(dataRow.link());
-
-                            put(row);
-
-                            done = true;
-                        }
-                    }
-                    catch (GridCacheEntryRemovedException e) {
-                        // No-op
-                    }
-                }
-            }
-        }
-
+    @Override public GridH2IndexBase rebuild() throws InterruptedException {
         needRebuild = false;
 
         return this;

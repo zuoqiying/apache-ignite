@@ -222,6 +222,8 @@ public interface GridQueryIndexing {
      */
     public void rebuildIndexes(@Nullable String spaceName, GridQueryTypeDescriptor type);
 
+    public void rebuildIndexesFromHash(@Nullable String spaceName, GridQueryTypeDescriptor type) throws IgniteCheckedException;
+
     /**
      * Returns backup filter.
      *

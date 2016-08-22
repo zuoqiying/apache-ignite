@@ -585,7 +585,8 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         GridWorker w = new GridWorker(ctx.gridName(), "index-rebuild-worker", log) {
             @Override protected void body() {
                 try {
-                    idx.rebuildIndexes(space, desc);
+                    idx.rebuildIndexesFromHash(space, desc);
+//                    idx.rebuildIndexes(space, desc);
 
                     fut.onDone();
                 }

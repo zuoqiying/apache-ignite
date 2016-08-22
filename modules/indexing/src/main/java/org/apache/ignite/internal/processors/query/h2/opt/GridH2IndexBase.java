@@ -183,7 +183,7 @@ public abstract class GridH2IndexBase extends BaseIndex {
      * @return Rebuilt copy.
      * @throws InterruptedException If interrupted.
      */
-    public GridH2IndexBase rebuild() throws InterruptedException, IgniteCheckedException {
+    public GridH2IndexBase rebuild() throws InterruptedException {
         return this;
     }
 

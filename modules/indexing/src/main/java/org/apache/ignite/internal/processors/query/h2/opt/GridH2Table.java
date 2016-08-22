@@ -89,7 +89,7 @@ public class GridH2Table extends TableBase {
     private boolean destroyed;
 
     /** */
-    private final Set<Session> sessions = Collections.newSetFromMap(new ConcurrentHashMap8<Session,Boolean>());
+    private final Set<Session> sessions = Collections.newSetFromMap(new ConcurrentHashMap8<Session, Boolean>());
 
     /** */
     private final AtomicReference<Object[]> actualSnapshot = new AtomicReference<>();
@@ -223,7 +223,8 @@ public class GridH2Table extends TableBase {
      * @throws IgniteCheckedException If failed.
      */
     @SuppressWarnings("LockAcquiredButNotSafelyReleased")
-    private boolean onSwapUnswap(KeyCacheObject key, int partId, @Nullable CacheObject val) throws IgniteCheckedException {
+    private boolean onSwapUnswap(KeyCacheObject key, int partId,
+        @Nullable CacheObject val) throws IgniteCheckedException {
         assert key != null;
 
         GridH2IndexBase pk = pk();
@@ -309,7 +310,7 @@ public class GridH2Table extends TableBase {
         Lock l;
 
         // Try to reuse existing snapshots outside of the lock.
-        for (long waitTime = 200;; waitTime *= 2) { // Increase wait time to avoid starvation.
+        for (long waitTime = 200; ; waitTime *= 2) { // Increase wait time to avoid starvation.
             snapshots = actualSnapshot.get();
 
             if (snapshots != null) { // Reuse existing snapshot without locking.
@@ -567,8 +568,8 @@ public class GridH2Table extends TableBase {
      * @return {@code True} if operation succeeded.
      * @throws IgniteCheckedException If failed.
      */
-    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
-    boolean doUpdate(final GridH2Row row, boolean del) throws IgniteCheckedException {
+    @SuppressWarnings("LockAcquiredButNotSafelyReleased") boolean doUpdate(final GridH2Row row,
+        boolean del) throws IgniteCheckedException {
         // Here we assume that each key can't be updated concurrently and case when different indexes
         // getting updated from different threads with different rows with the same key is impossible.
         GridUnsafeMemory mem = desc == null ? null : desc.memory();
@@ -633,7 +634,7 @@ public class GridH2Table extends TableBase {
                     for (int i = 2, len = idxs.size(); i < len; i++) {
                         Row res = index(i).remove(old);
 
-                        assert eq(pk, res, old): "\n" + old + "\n" + res + "\n" + i + " -> " + index(i).getName();
+                        assert eq(pk, res, old) : "\n" + old + "\n" + res + "\n" + i + " -> " + index(i).getName();
                     }
 
                     size.decrement();
@@ -675,7 +676,7 @@ public class GridH2Table extends TableBase {
     ArrayList<GridH2IndexBase> indexes() {
         ArrayList<GridH2IndexBase> res = new ArrayList<>(idxs.size() - 1);
 
-        for (int i = 1, len = idxs.size(); i < len ; i++)
+        for (int i = 1, len = idxs.size(); i < len; i++)
             res.add(index(i));
 
         return res;
@@ -685,15 +686,15 @@ public class GridH2Table extends TableBase {
      * Rebuilds all indexes of this table.
      */
     public void rebuildIndexes() {
-//        if (!snapshotEnabled)
-//            return;
+        if (!snapshotEnabled)
+            return;
 
         Lock l = lock(true, Long.MAX_VALUE);
 
         ArrayList<Index> idxs0 = new ArrayList<>(idxs);
 
         try {
-//            snapshotIndexes(null); // Allow read access while we are rebuilding indexes.
+            snapshotIndexes(null); // Allow read access while we are rebuilding indexes.
 
             for (int i = 2, len = idxs.size(); i < len; i++) {
                 GridH2IndexBase newIdx = index(i).rebuild();
@@ -707,11 +708,8 @@ public class GridH2Table extends TableBase {
         catch (InterruptedException e) {
             throw new IgniteInterruptedException(e);
         }
-        catch (IgniteCheckedException e) {
-            throw new IgniteException(e);
-        }
         finally {
-//            releaseSnapshots0(idxs0);
+            releaseSnapshots0(idxs0);
 
             unlock(l);
         }
@@ -1011,7 +1009,7 @@ public class GridH2Table extends TableBase {
             double baseCost = getCostRangeIndex(masks, rows, filters, filter, sortOrder, true);
             int mul = delegate.getDistributedMultiplier(ses, filters, filter);
 
-            return  mul * baseCost;
+            return mul * baseCost;
         }
 
         /** {@inheritDoc} */
