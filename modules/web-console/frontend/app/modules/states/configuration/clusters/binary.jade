@@ -31,7 +31,7 @@ mixin binary-types-java-class(lbl, model, name, enabled, required, remove, autof
         ignite-form-panel-chevron
         label Binary configuration
         ignite-form-field-tooltip.tipLabel
-            | Configuration for Ignite Binary Objects
+            | Configuration of specific binary types
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id=form)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
@@ -63,7 +63,7 @@ mixin binary-types-java-class(lbl, model, name, enabled, required, remove, autof
                             .settings-row
                                 +binary-types-java-class('ID mapper:', 'model.idMapper', '"idMapper" + $index', 'true', 'false', false, 'false',
                                     'Maps given from BinaryNameMapper type and filed name to ID that will be used by Ignite in internals<br/>\
-                                    Ignite never writes full strings for field or type/class names. Instead, for performance reasons, Ignite writes integer hash codes for type/class and field names. It has been tested that hash code conflicts for the type/class names or the field names within the same type are virtually non - existent and, to gain performance, it is safe to work with hash codes. For the cases when hash codes for different types or fields actually do collide #[b BinaryIdMapper] allows to override the automatically generated hash code IDs for the type and field names')
+                                    Ignite never writes full strings for field or type/class names. Instead, for performance reasons, Ignite writes integer hash codes for type/class and field names. It has been tested that hash code conflicts for the type/class names or the field names within the same type are virtually non - existent and, to gain performance, it is safe to work with hash codes. For the cases when hash codes for different types or fields actually do collide <b>BinaryIdMapper</b> allows to override the automatically generated hash code IDs for the type and field names')
                             .settings-row
                                 +binary-types-java-class('Name mapper:', 'model.nameMapper', '"nameMapper" + $index', 'true', 'false', false, 'false', 'Maps type/class and field names to different names')
                             .settings-row
