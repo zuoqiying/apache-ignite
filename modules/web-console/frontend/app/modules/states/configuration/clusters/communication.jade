@@ -25,7 +25,8 @@ include ../../../../../app/helpers/jade/mixins.jade
         ignite-form-panel-chevron
         label Communication
         ignite-form-field-tooltip.tipLabel
-            | Cluster communication network properties
+            | Configuration of communication with other nodes by TCP/IP
+            | Provide basic plumbing to send and receive grid messages and is utilized for all distributed grid operations
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id=form)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
@@ -39,9 +40,11 @@ include ../../../../../app/helpers/jade/mixins.jade
                 .settings-row
                     +number('Discovery startup delay:', model + '.discoveryStartupDelay', '"discoveryStartupDelay"', 'true', '60000', '1', 'This value is used to expire messages from waiting list whenever node discovery discrepancies happen')
                 .settings-row
-                    +java-class('Communication listener:', communication + '.listener', '"comListener"', 'true', 'false', 'Communication listener')
+                    +java-class('Communication listener:', communication + '.listener', '"comListener"', 'true', 'false', 'Listener of communication events')
                 .settings-row
-                    +text-ip-address('Local IP address:', communication + '.localAddress', '"comLocalAddress"', 'true', '0.0.0.0', 'Local host address for socket binding')
+                    +text-ip-address('Local IP address:', communication + '.localAddress', '"comLocalAddress"', 'true', '0.0.0.0',
+                        'Local host address for socket binding<br/>\
+                        If not specified use all available addres on local host')
                 .settings-row
                     +number-min-max('Local port:', communication + '.localPort', '"comLocalPort"', 'true', '47100', '1024', '65535', 'Local port for socket binding')
                 .settings-row
@@ -83,7 +86,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                 .settings-row
                     +number('Selectors count:', communication + '.selectorsCount', '"selectorsCount"', 'true', 'min(4, availableProcessors)', '1', 'Count of selectors te be used in TCP server')
                 .settings-row
-                    +java-class('Address resolver:', communication + '.addressResolver', '"comAddressResolver"', 'true', 'false', 'Address resolver')
+                    +java-class('Address resolver:', communication + '.addressResolver', '"comAddressResolver"', 'true', 'false', 'Provides resolution between external and internal addresses')
                 .settings-row
                     +checkbox('Direct buffer', communication + '.directBuffer', '"directBuffer"',
                     'If value is true, then SPI will use ByteBuffer.allocateDirect(int) call<br/>\

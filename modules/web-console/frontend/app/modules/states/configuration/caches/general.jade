@@ -45,8 +45,8 @@ include ../../../../../app/helpers/jade/mixins.jade
                         ]',
                         'Atomicity:\
                         <ul>\
-                            <li>Atomic - in this mode distributed transactions and distributed locking are not supported</li>\
-                            <li>Transactional - in this mode specified fully ACID-compliant transactional cache behavior</li>\
+                            <li>ATOMIC - in this mode distributed transactions and distributed locking are not supported</li>\
+                            <li>TRANSACTIONAL - in this mode specified fully ACID-compliant transactional cache behavior</li>\
                         </ul>')
                 .settings-row(data-ng-show='#{model}.cacheMode === "PARTITIONED"')
                     +number('Backups:', model + '.backups', '"backups"', 'true', '0', '0', 'Number of nodes used to back up single partition for partitioned cache')
