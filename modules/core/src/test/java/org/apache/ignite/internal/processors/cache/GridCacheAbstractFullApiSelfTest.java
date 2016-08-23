@@ -17,8 +17,6 @@
 
 package org.apache.ignite.internal.processors.cache;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +47,8 @@ import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.EntryProcessorResult;
 import javax.cache.processor.MutableEntry;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import junit.framework.AssertionFailedError;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
@@ -62,8 +62,6 @@ import org.apache.ignite.cache.CacheEntryProcessor;
 import org.apache.ignite.cache.CacheMemoryMode;
 import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.cache.affinity.Affinity;
-import org.apache.ignite.cache.query.QueryCursor;
-import org.apache.ignite.cache.query.ScanQuery;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
@@ -4426,41 +4424,6 @@ public abstract class GridCacheAbstractFullApiSelfTest extends GridCacheAbstract
     }
 
     /**
-     * @throws Exception If failed.
-     */
-    public void testIteratorLeakOnCancelCursor() throws Exception {
-        IgniteCache<String, Integer> cache = jcache(0);
-
-        final int SIZE = 10_000;
-
-        Map<String, Integer> putMap = new HashMap<>();
-
-        for (int i = 0; i < SIZE; ++i) {
-            String key = Integer.toString(i);
-
-            putMap.put(key, i);
-
-            if (putMap.size() == 500) {
-                cache.putAll(putMap);
-
-                info("Puts finished: " + (i + 1));
-
-                putMap.clear();
-            }
-        }
-
-        cache.putAll(putMap);
-
-        QueryCursor<Cache.Entry<String, Integer>> cur = cache.query(new ScanQuery<String, Integer>());
-
-        cur.iterator().next();
-
-        cur.close();
-
-        waitForIteratorsCleared(cache, 10);
-    }
-
-    /**
      * If hasNext() is called repeatedly, it should return the same result.
      */
     private void checkIteratorHasNext() {
@@ -4569,31 +4532,6 @@ public abstract class GridCacheAbstractFullApiSelfTest extends GridCacheAbstract
     }
 
     /**
-     * Checks iterators are cleared.
-     */
-    private void waitForIteratorsCleared(IgniteCache<String, Integer> cache, int secs) throws InterruptedException {
-        for (int i = 0; i < secs; i++) {
-            try {
-                cache.size(); // Trigger weak queue poll.
-
-                checkIteratorsCleared();
-            }
-            catch (AssertionFailedError e) {
-                if (i == 9) {
-                    for (int j = 0; j < gridCount(); j++)
-                        executeOnLocalOrRemoteJvm(j, new PrintIteratorStateTask());
-
-                    throw e;
-                }
-
-                log.info("Iterators not cleared, will wait");
-
-                Thread.sleep(1000);
-            }
-        }
-    }
-
-    /**
      * Checks iterators are cleared after using.
      *
      * @param cache Cache.
@@ -4612,7 +4550,21 @@ public abstract class GridCacheAbstractFullApiSelfTest extends GridCacheAbstract
 
         System.gc();
 
-        waitForIteratorsCleared(cache, 10);
+        for (int i = 0; i < 10; i++) {
+            try {
+                cache.size(); // Trigger weak queue poll.
+
+                checkIteratorsCleared();
+            }
+            catch (AssertionFailedError e) {
+                if (i == 9)
+                    throw e;
+
+                log.info("Set iterators not cleared, will wait");
+
+                Thread.sleep(1000);
+            }
+        }
     }
 
     /**
