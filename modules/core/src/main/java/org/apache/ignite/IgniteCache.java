@@ -188,7 +188,7 @@ public interface IgniteCache<K, V> extends javax.cache.Cache<K, V>, IgniteAsyncS
     public void loadCache(@Nullable IgniteBiPredicate<K, V> p, @Nullable Object... args) throws CacheException;
 
     /**
-     * Delegates to {@link CacheStore#loadCache(IgniteBiInClosure,Object...)} method
+     * Delegates to {@link CacheStore#loadCache(IgniteBiInClosure, Object...)} method
      * to load state from the underlying persistent storage. The loaded values
      * will then be given to the optionally passed in predicate, and, if the predicate returns
      * {@code true}, will be stored in cache. If predicate is {@code null}, then
@@ -839,6 +839,13 @@ public interface IgniteCache<K, V> extends javax.cache.Cache<K, V>, IgniteAsyncS
      * @return Future that will be completed when rebalancing is finished.
      */
     public IgniteFuture<?> rebalance();
+
+    /**
+     * Returns future that will be completed when all indexes for this cache are ready to use.
+     *
+     * @return Future.
+     */
+    public IgniteFuture<?> indexReadyFuture();
 
     /**
      * Gets whole cluster snapshot metrics (statistics) for this cache.

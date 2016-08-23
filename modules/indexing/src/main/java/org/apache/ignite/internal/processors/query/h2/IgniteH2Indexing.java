@@ -1644,6 +1644,10 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         if (tbl == null)
             return;
 
+        assert tbl.tbl != null;
+
+        assert tbl.tbl.rebuildFromHashInProgress();
+
         H2PkHashIndex hashIdx = tbl.pkHashIdx;
 
         Cursor cursor = hashIdx.find((Session)null, null, null);
@@ -1653,7 +1657,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         GridCacheContext cctx = ctx.cache().context().cacheContext(cacheId);
 
         while (cursor.next()) {
-            CacheDataRow dataRow = (CacheDataRow) cursor.get();
+            CacheDataRow dataRow = (CacheDataRow)cursor.get();
 
             boolean done = false;
 
@@ -1662,12 +1666,14 @@ public class IgniteH2Indexing implements GridQueryIndexing {
 
                 try {
                     synchronized (entry) {
+                        // TODO : How to correctly get current value and link here?
+
                         GridH2Row row = tbl.tbl.rowDescriptor().createRow(entry.key(), entry.partition(),
                             dataRow.value(), entry.version(), entry.expireTime());
 
                         row.link(dataRow.link());
 
-                        List<Index> indexes = tbl.tbl.getIndexes();
+                        List<Index> indexes = tbl.tbl.getAllIndexes();
 
                         for (int i = 2; i < indexes.size(); i++) {
                             Index idx = indexes.get(i);
@@ -1685,6 +1691,20 @@ public class IgniteH2Indexing implements GridQueryIndexing {
             }
 
         }
+
+        tbl.tbl.markRebuildFromHashInProgress(false);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void markForRebuildFromHash(@Nullable String spaceName, GridQueryTypeDescriptor type) {
+        TableDescriptor tbl = tableDescriptor(spaceName, type);
+
+        if (tbl == null)
+            return;
+
+        assert tbl.tbl != null;
+
+        tbl.tbl.markRebuildFromHashInProgress(true);
     }
 
     /**
@@ -2018,7 +2038,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
             }
 
             for (TableDescriptor tblDesc : rmv.tbls.values())
-                for (Index idx : tblDesc.tbl.getIndexes())
+                for (Index idx : tblDesc.tbl.getAllIndexes())
                     idx.close(null);
 
             for (Iterator<Map.Entry<TwoStepCachedQueryKey, TwoStepCachedQuery>> it = twoStepCache.entrySet().iterator();

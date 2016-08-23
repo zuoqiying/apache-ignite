@@ -54,12 +54,6 @@ public class H2TreeIndex extends GridH2IndexBase {
     /** */
     private final H2Tree tree;
 
-    private final GridCacheContext cctx;
-
-    private final GridH2Table tbl;
-
-    protected volatile boolean needRebuild = false;
-
     /**
      * @param cctx Cache context.
      * @param tbl Table.
@@ -75,9 +69,6 @@ public class H2TreeIndex extends GridH2IndexBase {
         boolean pk,
         List<IndexColumn> colsList
     ) throws IgniteCheckedException {
-        this.cctx = cctx;
-        this.tbl = tbl;
-
         IndexColumn[] cols = colsList.toArray(new IndexColumn[colsList.size()]);
 
         IndexColumn.mapColumns(cols, tbl);
@@ -161,7 +152,6 @@ public class H2TreeIndex extends GridH2IndexBase {
         int mul = getDistributedMultiplier(ses, filters, filter);
 
         return mul * baseCost;
-
     }
 
     /** {@inheritDoc} */
@@ -274,24 +264,5 @@ public class H2TreeIndex extends GridH2IndexBase {
         @Override public boolean previous() {
             throw DbException.getUnsupportedException("previous");
         }
-    }
-
-    /** {@inheritDoc} */
-    @Override public boolean needRebuild() {
-        return needRebuild;
-    }
-
-    /**
-     *
-     */
-    public void markForRebuild() {
-        needRebuild = true;
-    }
-
-    /** {@inheritDoc} */
-    @Override public GridH2IndexBase rebuild() throws InterruptedException {
-        needRebuild = false;
-
-        return this;
     }
 }

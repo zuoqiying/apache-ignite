@@ -29,7 +29,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteInterruptedException;
 import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
@@ -106,6 +105,9 @@ public class GridH2Table extends TableBase {
     /** */
     private final H2RowFactory rowFactory;
 
+    /** */
+    private volatile boolean rebuildFromHashInProgress = false;
+
     /**
      * Creates table.
      *
@@ -153,10 +155,10 @@ public class GridH2Table extends TableBase {
         idxs = idxsFactory.createIndexes(this);
 
         assert idxs != null;
-        assert idxs.size() >= 2;
+        assert idxs.size() >= 3;
 
         // Add scan index at 0 which is required by H2.
-        idxs.add(0, new ScanIndex(index(1)));
+        idxs.add(0, new ScanIndex(index(1), index(0)));
 
         snapshotEnabled = desc == null || desc.snapshotableIndex();
 
@@ -702,7 +704,7 @@ public class GridH2Table extends TableBase {
                 idxs.set(i, newIdx);
 
                 if (i == 2) // ScanIndex at 0 and actualSnapshot can contain references to old indexes, reset them.
-                    idxs.set(0, new ScanIndex(newIdx));
+                    idxs.set(0, new ScanIndex(newIdx, index(1)));
             }
         }
         catch (InterruptedException e) {
@@ -713,6 +715,14 @@ public class GridH2Table extends TableBase {
 
             unlock(l);
         }
+    }
+
+    public void markRebuildFromHashInProgress(boolean value) {
+        rebuildFromHashInProgress = value;
+    }
+
+    public boolean rebuildFromHashInProgress() {
+        return rebuildFromHashInProgress;
     }
 
     /** {@inheritDoc} */
@@ -753,11 +763,26 @@ public class GridH2Table extends TableBase {
 
     /** {@inheritDoc} */
     @Override public Index getUniqueIndex() {
-        return getIndexes().get(1); // PK index is always second.
+        if (rebuildFromHashInProgress)
+            return index(1);
+        else
+            return index(2);
     }
 
     /** {@inheritDoc} */
     @Override public ArrayList<Index> getIndexes() {
+        if (!rebuildFromHashInProgress)
+            return idxs;
+
+        ArrayList<Index> idxs = new ArrayList<>(2);
+
+        idxs.add(this.idxs.get(0));
+        idxs.add(this.idxs.get(1));
+
+        return idxs;
+    }
+
+    public ArrayList<Index> getAllIndexes() {
         return idxs;
     }
 
@@ -913,23 +938,29 @@ public class GridH2Table extends TableBase {
      * Wrapper type for primary key.
      */
     @SuppressWarnings("PackageVisibleInnerClass")
-    static class ScanIndex extends BaseIndex {
+    class ScanIndex extends BaseIndex {
         /** */
         static final String SCAN_INDEX_NAME_SUFFIX = "__SCAN_";
 
         /** */
-        private static final IndexType TYPE = IndexType.createScan(false);
+        private final IndexType type = IndexType.createScan(false);
 
         /** */
-        private final GridH2IndexBase delegate;
+        private final GridH2IndexBase treeIdx;
+
+        /** */
+        private final GridH2IndexBase hashIdx;
 
         /**
          * Constructor.
-         *
-         * @param delegate Index delegate to.
          */
-        private ScanIndex(GridH2IndexBase delegate) {
-            this.delegate = delegate;
+        private ScanIndex(GridH2IndexBase treeIdx, GridH2IndexBase hashIdx) {
+            this.treeIdx = treeIdx;
+            this.hashIdx = hashIdx;
+        }
+
+        private GridH2IndexBase delegate() {
+            return rebuildFromHashInProgress ? hashIdx : treeIdx;
         }
 
         /** {@inheritDoc} */
@@ -939,7 +970,7 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public void add(Session ses, Row row) {
-            delegate.add(ses, row);
+            delegate().add(ses, row);
         }
 
         /** {@inheritDoc} */
@@ -954,7 +985,7 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public boolean canScan() {
-            return delegate.canScan();
+            return delegate().canScan();
         }
 
         /** {@inheritDoc} */
@@ -969,7 +1000,8 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public int compareRows(SearchRow rowData, SearchRow compare) {
-            return delegate.compareRows(rowData, compare);
+            return delegate().compareRows(rowData, compare);
+
         }
 
         /** {@inheritDoc} */
@@ -979,7 +1011,7 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public Cursor find(Session ses, SearchRow first, SearchRow last) {
-            return delegate.find(ses, null, null);
+            return delegate().find(ses, first, last);
         }
 
         /** {@inheritDoc} */
@@ -999,7 +1031,7 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public Column[] getColumns() {
-            return delegate.getColumns();
+            return treeIdx.getColumns();
         }
 
         /** {@inheritDoc} */
@@ -1007,49 +1039,49 @@ public class GridH2Table extends TableBase {
             SortOrder sortOrder) {
             long rows = getRowCountApproximation();
             double baseCost = getCostRangeIndex(masks, rows, filters, filter, sortOrder, true);
-            int mul = delegate.getDistributedMultiplier(ses, filters, filter);
+            int mul = delegate().getDistributedMultiplier(ses, filters, filter);
 
             return mul * baseCost;
         }
 
         /** {@inheritDoc} */
         @Override public IndexColumn[] getIndexColumns() {
-            return delegate.getIndexColumns();
+            return delegate().getIndexColumns();
         }
 
         /** {@inheritDoc} */
         @Override public IndexType getIndexType() {
-            return TYPE;
+            return type;
         }
 
         /** {@inheritDoc} */
         @Override public String getPlanSQL() {
-            return delegate.getTable().getSQL() + "." + SCAN_INDEX_NAME_SUFFIX;
+            return delegate().getTable().getSQL() + "." + SCAN_INDEX_NAME_SUFFIX;
         }
 
         /** {@inheritDoc} */
         @Override public Row getRow(Session ses, long key) {
-            return delegate.getRow(ses, key);
+            return delegate().getRow(ses, key);
         }
 
         /** {@inheritDoc} */
         @Override public long getRowCount(Session ses) {
-            return delegate.getRowCount(ses);
+            return delegate().getRowCount(ses);
         }
 
         /** {@inheritDoc} */
         @Override public long getRowCountApproximation() {
-            return delegate.getRowCountApproximation();
+            return delegate().getRowCountApproximation();
         }
 
         /** {@inheritDoc} */
         @Override public Table getTable() {
-            return delegate.getTable();
+            return delegate().getTable();
         }
 
         /** {@inheritDoc} */
         @Override public boolean isRowIdIndex() {
-            return delegate.isRowIdIndex();
+            return treeIdx.isRowIdIndex();
         }
 
         /** {@inheritDoc} */
@@ -1074,7 +1106,7 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public IndexLookupBatch createLookupBatch(TableFilter filter) {
-            return delegate.createLookupBatch(filter);
+            return delegate().createLookupBatch(filter);
         }
 
         /** {@inheritDoc} */
@@ -1084,12 +1116,12 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public Schema getSchema() {
-            return delegate.getSchema();
+            return delegate().getSchema();
         }
 
         /** {@inheritDoc} */
         @Override public boolean isHidden() {
-            return delegate.isHidden();
+            return delegate().isHidden();
         }
 
         /** {@inheritDoc} */
@@ -1099,12 +1131,12 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public ArrayList<DbObject> getChildren() {
-            return delegate.getChildren();
+            return delegate().getChildren();
         }
 
         /** {@inheritDoc} */
         @Override public String getComment() {
-            return delegate.getComment();
+            return delegate().getComment();
         }
 
         /** {@inheritDoc} */
@@ -1114,42 +1146,42 @@ public class GridH2Table extends TableBase {
 
         /** {@inheritDoc} */
         @Override public String getCreateSQLForCopy(Table tbl, String quotedName) {
-            return delegate.getCreateSQLForCopy(tbl, quotedName);
+            return treeIdx.getCreateSQLForCopy(tbl, quotedName);
         }
 
         /** {@inheritDoc} */
         @Override public Database getDatabase() {
-            return delegate.getDatabase();
+            return delegate().getDatabase();
         }
 
         /** {@inheritDoc} */
         @Override public String getDropSQL() {
-            return delegate.getDropSQL();
+            return delegate().getDropSQL();
         }
 
         /** {@inheritDoc} */
         @Override public int getId() {
-            return delegate.getId();
+            return delegate().getId();
         }
 
         /** {@inheritDoc} */
         @Override public String getName() {
-            return delegate.getName() + SCAN_INDEX_NAME_SUFFIX;
+            return delegate().getName() + SCAN_INDEX_NAME_SUFFIX;
         }
 
         /** {@inheritDoc} */
         @Override public String getSQL() {
-            return delegate.getSQL();
+            return delegate().getSQL();
         }
 
         /** {@inheritDoc} */
         @Override public int getType() {
-            return delegate.getType();
+            return delegate().getType();
         }
 
         /** {@inheritDoc} */
         @Override public boolean isTemporary() {
-            return delegate.isTemporary();
+            return delegate().isTemporary();
         }
 
         /** {@inheritDoc} */

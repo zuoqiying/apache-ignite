@@ -64,6 +64,7 @@ import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
+import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.util.worker.GridWorker;
@@ -190,7 +191,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param ccfg Cache configuration.
      * @return {@code true} If query index must be enabled for this cache.
      */
-    public static boolean isEnabled(CacheConfiguration<?,?> ccfg) {
+    public static boolean isEnabled(CacheConfiguration<?, ?> ccfg) {
         return !F.isEmpty(ccfg.getIndexedTypes()) ||
             !F.isEmpty(ccfg.getTypeMetadata()) ||
             !F.isEmpty(ccfg.getQueryEntities());
@@ -208,7 +209,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @throws IgniteCheckedException If failed.
      */
     private void initializeCache(GridCacheContext<?, ?> cctx) throws IgniteCheckedException {
-        CacheConfiguration<?,?> ccfg = cctx.config();
+        CacheConfiguration<?, ?> ccfg = cctx.config();
 
         idx.registerCache(cctx, cctx.config());
 
@@ -461,7 +462,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param desc Type descriptor.
      * @throws IgniteCheckedException If failed.
      */
-    private void addTypeByName(CacheConfiguration<?,?> ccfg, TypeDescriptor desc) throws IgniteCheckedException {
+    private void addTypeByName(CacheConfiguration<?, ?> ccfg, TypeDescriptor desc) throws IgniteCheckedException {
         if (typesByName.putIfAbsent(new TypeName(ccfg.getName(), desc.name()), desc) != null)
             throw new IgniteCheckedException("Type with name '" + desc.name() + "' already indexed " +
                 "in cache '" + ccfg.getName() + "'.");
@@ -556,12 +557,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
             throw new IllegalStateException("Failed to rebuild indexes (grid is stopping).");
 
         try {
-            return rebuildIndexes(
-                space,
-                typesByName.get(
-                    new TypeName(
-                        space,
-                        valTypeName)));
+            return rebuildIndexes(space, typesByName.get(new TypeName(space, valTypeName)), false);
         }
         finally {
             busyLock.leaveBusy();
@@ -573,7 +569,8 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param desc Type descriptor.
      * @return Future that will be completed when rebuilding of all indexes is finished.
      */
-    private IgniteInternalFuture<?> rebuildIndexes(@Nullable final String space, @Nullable final TypeDescriptor desc) {
+    private IgniteInternalFuture<?> rebuildIndexes(@Nullable final String space, @Nullable final TypeDescriptor desc,
+        final boolean fromHash) {
         if (idx == null)
             return new GridFinishedFuture<>(new IgniteCheckedException("Indexing is disabled."));
 
@@ -582,11 +579,16 @@ public class GridQueryProcessor extends GridProcessorAdapter {
 
         final GridWorkerFuture<?> fut = new GridWorkerFuture<Void>();
 
+        if (fromHash)
+            idx.markForRebuildFromHash(space, desc);
+
         GridWorker w = new GridWorker(ctx.gridName(), "index-rebuild-worker", log) {
             @Override protected void body() {
                 try {
-                    idx.rebuildIndexesFromHash(space, desc);
-//                    idx.rebuildIndexes(space, desc);
+                    if (fromHash)
+                        idx.rebuildIndexesFromHash(space, desc);
+                    else
+                        idx.rebuildIndexes(space, desc);
 
                     fut.onDone();
                 }
@@ -625,7 +627,28 @@ public class GridQueryProcessor extends GridProcessorAdapter {
             GridCompoundFuture<?, ?> fut = new GridCompoundFuture<Object, Object>();
 
             for (Map.Entry<TypeId, TypeDescriptor> e : types.entrySet())
-                fut.add((IgniteInternalFuture)rebuildIndexes(e.getKey().space, e.getValue()));
+                fut.add((IgniteInternalFuture)rebuildIndexes(e.getKey().space, e.getValue(), false));
+
+            fut.markInitialized();
+
+            return fut;
+        }
+        finally {
+            busyLock.leaveBusy();
+        }
+    }
+
+    public IgniteInternalFuture<?> rebuildIndexesFromHash(Collection<Integer> cacheIds) {
+        if (!busyLock.enterBusy())
+            throw new IllegalStateException("Failed to get space size (grid is stopping).");
+
+        try {
+            GridCompoundFuture<?, ?> fut = new GridCompoundFuture<Object, Object>();
+
+            for (Map.Entry<TypeId, TypeDescriptor> e : types.entrySet()) {
+                if (cacheIds.contains(CU.cacheId(e.getKey().space)))
+                    fut.add((IgniteInternalFuture)rebuildIndexes(e.getKey().space, e.getValue(), true));
+            }
 
             fut.markInitialized();
 
@@ -772,7 +795,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param qry Query.
      * @return Cursor.
      */
-    public QueryCursor<List<?>> queryTwoStep(final GridCacheContext<?,?> cctx, final SqlFieldsQuery qry) {
+    public QueryCursor<List<?>> queryTwoStep(final GridCacheContext<?, ?> cctx, final SqlFieldsQuery qry) {
         checkxEnabled();
 
         if (!busyLock.enterBusy())
@@ -798,7 +821,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param qry Query.
      * @return Cursor.
      */
-    public <K,V> QueryCursor<Cache.Entry<K,V>> queryTwoStep(final GridCacheContext<?,?> cctx, final SqlQuery qry) {
+    public <K, V> QueryCursor<Cache.Entry<K, V>> queryTwoStep(final GridCacheContext<?, ?> cctx, final SqlQuery qry) {
         checkxEnabled();
 
         if (!busyLock.enterBusy())
@@ -929,7 +952,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param qry Query.
      * @return Iterator.
      */
-    public QueryCursor<List<?>> queryLocalFields(final GridCacheContext<?,?> cctx, final SqlFieldsQuery qry) {
+    public QueryCursor<List<?>> queryLocalFields(final GridCacheContext<?, ?> cctx, final SqlFieldsQuery qry) {
         if (!busyLock.enterBusy())
             throw new IllegalStateException("Failed to execute query (grid is stopping).");
 
@@ -972,7 +995,8 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param key Key.
      * @throws IgniteCheckedException Thrown in case of any errors.
      */
-    public boolean remove(String space, KeyCacheObject key, int partId, CacheObject val, GridCacheVersion ver) throws IgniteCheckedException {
+    public boolean remove(String space, KeyCacheObject key, int partId, CacheObject val,
+        GridCacheVersion ver) throws IgniteCheckedException {
         assert key != null;
 
         if (log.isDebugEnabled())
@@ -1231,7 +1255,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      */
     private void processClassMeta(CacheTypeMetadata meta, TypeDescriptor d, CacheObjectContext coCtx)
         throws IgniteCheckedException {
-        Map<String,String> aliases = meta.getAliases();
+        Map<String, String> aliases = meta.getAliases();
 
         if (aliases == null)
             aliases = Collections.emptyMap();
@@ -1309,7 +1333,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         int idxOrder,
         IndexType idxType,
         String idxName,
-        Map<String,String> aliases,
+        Map<String, String> aliases,
         CacheObjectContext coCtx
     ) throws IgniteCheckedException {
         String propName;
@@ -1357,7 +1381,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      */
     private void processBinaryMeta(CacheTypeMetadata meta, TypeDescriptor d)
         throws IgniteCheckedException {
-        Map<String,String> aliases = meta.getAliases();
+        Map<String, String> aliases = meta.getAliases();
 
         if (aliases == null)
             aliases = Collections.emptyMap();
@@ -1434,7 +1458,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @throws IgniteCheckedException If failed.
      */
     private void processBinaryMeta(QueryEntity qryEntity, TypeDescriptor d) throws IgniteCheckedException {
-        Map<String,String> aliases = qryEntity.getAliases();
+        Map<String, String> aliases = qryEntity.getAliases();
 
         if (aliases == null)
             aliases = Collections.emptyMap();
@@ -1460,7 +1484,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         TypeDescriptor d,
         CacheObjectContext coCtx
     ) throws IgniteCheckedException {
-        Map<String,String> aliases = qryEntity.getAliases();
+        Map<String, String> aliases = qryEntity.getAliases();
 
         if (aliases == null)
             aliases = Collections.emptyMap();
@@ -1542,7 +1566,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param aliases Aliases.
      * @return Binary property.
      */
-    private BinaryProperty buildBinaryProperty(String pathStr, Class<?> resType, Map<String,String> aliases) {
+    private BinaryProperty buildBinaryProperty(String pathStr, Class<?> resType, Map<String, String> aliases) {
         String[] path = pathStr.split("\\.");
 
         BinaryProperty res = null;
@@ -1573,7 +1597,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @throws IgniteCheckedException If failed.
      */
     private static ClassProperty buildClassProperty(Class<?> keyCls, Class<?> valCls, String pathStr, Class<?> resType,
-        Map<String,String> aliases, CacheObjectContext coCtx) throws IgniteCheckedException {
+        Map<String, String> aliases, CacheObjectContext coCtx) throws IgniteCheckedException {
         ClassProperty res = buildClassProperty(
             true,
             keyCls,
@@ -1602,7 +1626,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @return Property instance corresponding to the given path.
      */
     static ClassProperty buildClassProperty(boolean key, Class<?> cls, String pathStr, Class<?> resType,
-        Map<String,String> aliases, CacheObjectContext coCtx) {
+        Map<String, String> aliases, CacheObjectContext coCtx) {
         String[] path = pathStr.split("\\.");
 
         ClassProperty res = null;
@@ -1816,9 +1840,9 @@ public class GridQueryProcessor extends GridProcessorAdapter {
 
             this.name = !F.isEmpty(name) ? name :
                 member instanceof Method && member.getName().startsWith("get") && member.getName().length() > 3 ?
-                member.getName().substring(3) : member.getName();
+                    member.getName().substring(3) : member.getName();
 
-            ((AccessibleObject) member).setAccessible(true);
+            ((AccessibleObject)member).setAccessible(true);
 
             field = member instanceof Field;
 
@@ -2314,7 +2338,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
 
             if (descending) {
                 if (descendings == null)
-                    descendings  = new HashSet<>();
+                    descendings = new HashSet<>();
 
                 descendings.add(field);
             }
