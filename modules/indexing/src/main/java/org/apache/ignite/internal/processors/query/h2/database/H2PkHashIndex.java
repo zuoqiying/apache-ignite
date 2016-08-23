@@ -227,7 +227,11 @@ public class H2PkHashIndex extends GridH2IndexBase {
             try {
                 CacheDataRow dataRow = cursor.get();
 
-                return tbl.rowDescriptor().createRow(dataRow.key(), dataRow.partition(), dataRow.value(), dataRow.version(), 0);
+                GridH2Row row = tbl.rowDescriptor().createRow(dataRow.key(), dataRow.partition(), dataRow.value(), dataRow.version(), 0);
+
+                row.link(dataRow.link());
+
+                return row;
             }
             catch (IgniteCheckedException e) {
                 throw DbException.convert(e);
@@ -249,6 +253,8 @@ public class H2PkHashIndex extends GridH2IndexBase {
                     CacheDataRow dataRow = cursor.get();
 
                     GridH2Row row = tbl.rowDescriptor().createRow(dataRow.key(), dataRow.partition(), dataRow.value(), dataRow.version(), 0);
+
+                    row.link(dataRow.link());
 
                     Object key = row.getValue(0).getObject();
                     Object val = row.getValue(1).getObject();
