@@ -67,7 +67,7 @@ public interface GridQueryIndexing {
      * @param qry Query.
      * @return Cursor.
      */
-    public QueryCursor<List<?>> queryTwoStep(GridCacheContext<?,?> cctx, SqlFieldsQuery qry);
+    public QueryCursor<List<?>> queryTwoStep(GridCacheContext<?, ?> cctx, SqlFieldsQuery qry);
 
     /**
      * Parses SQL query into two step query and executes it.
@@ -76,7 +76,7 @@ public interface GridQueryIndexing {
      * @param qry Query.
      * @return Cursor.
      */
-    public <K,V> QueryCursor<Cache.Entry<K,V>> queryTwoStep(GridCacheContext<?,?> cctx, SqlQuery qry);
+    public <K, V> QueryCursor<Cache.Entry<K, V>> queryTwoStep(GridCacheContext<?, ?> cctx, SqlQuery qry);
 
     /**
      * Queries individual fields (generally used by JDBC drivers).
@@ -104,7 +104,8 @@ public interface GridQueryIndexing {
      * @throws IgniteCheckedException If failed.
      */
     public <K, V> GridCloseableIterator<IgniteBiTuple<K, V>> queryLocalSql(@Nullable String spaceName, String qry,
-        Collection<Object> params, GridQueryTypeDescriptor type, IndexingQueryFilter filter) throws IgniteCheckedException;
+        Collection<Object> params, GridQueryTypeDescriptor type,
+        IndexingQueryFilter filter) throws IgniteCheckedException;
 
     /**
      * Executes text query.
@@ -126,7 +127,7 @@ public interface GridQueryIndexing {
      * @param ccfg Cache configuration.
      * @throws IgniteCheckedException If failed.
      */
-    public void registerCache(GridCacheContext<?,?> cctx, CacheConfiguration<?,?> ccfg) throws IgniteCheckedException;
+    public void registerCache(GridCacheContext<?, ?> cctx, CacheConfiguration<?, ?> ccfg) throws IgniteCheckedException;
 
     /**
      * Unregisters cache.
@@ -184,7 +185,8 @@ public interface GridQueryIndexing {
      * @param val Value.
      * @throws IgniteCheckedException If failed.
      */
-    public boolean remove(@Nullable String spaceName, KeyCacheObject key, int partId, CacheObject val, GridCacheVersion ver) throws IgniteCheckedException;
+    public boolean remove(@Nullable String spaceName, KeyCacheObject key, int partId, CacheObject val,
+        GridCacheVersion ver) throws IgniteCheckedException;
 
     /**
      * @param space Space name.
@@ -212,7 +214,8 @@ public interface GridQueryIndexing {
      * @param val Value.
      * @throws IgniteCheckedException If failed.
      */
-    public void onUnswap(@Nullable String spaceName, KeyCacheObject key, int partId, CacheObject val) throws IgniteCheckedException;
+    public void onUnswap(@Nullable String spaceName, KeyCacheObject key, int partId,
+        CacheObject val) throws IgniteCheckedException;
 
     /**
      * Rebuilds all indexes of given type.
@@ -222,8 +225,23 @@ public interface GridQueryIndexing {
      */
     public void rebuildIndexes(@Nullable String spaceName, GridQueryTypeDescriptor type);
 
-    public void rebuildIndexesFromHash(@Nullable String spaceName, GridQueryTypeDescriptor type) throws IgniteCheckedException;
+    /**
+     * Rebuilds all indexes of given type from hash index.
+     *
+     * @param spaceName Space name.
+     * @param type Type descriptor.
+     * @throws IgniteCheckedException If failed.
+     */
+    public void rebuildIndexesFromHash(@Nullable String spaceName,
+        GridQueryTypeDescriptor type) throws IgniteCheckedException;
 
+    /**
+     * Marks all indexes of given type for rebuild from hash index, making them unusable until rebuild finishes.
+     *
+     * @param spaceName Space name.
+     * @param type Type descriptor.
+     * @throws IgniteCheckedException If failed.
+     */
     public void markForRebuildFromHash(@Nullable String spaceName, GridQueryTypeDescriptor type);
 
     /**

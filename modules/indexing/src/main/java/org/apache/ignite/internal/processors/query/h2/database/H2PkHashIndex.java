@@ -22,19 +22,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.IgniteCacheOffheapManager;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
-import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
-import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2IndexBase;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2Row;
 import org.apache.ignite.internal.processors.query.h2.opt.GridH2Table;
 import org.apache.ignite.internal.util.lang.GridCursor;
 import org.apache.ignite.lang.IgniteBiPredicate;
-import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.spi.indexing.IndexingQueryFilter;
 import org.h2.engine.Session;
 import org.h2.index.Cursor;
@@ -47,10 +43,14 @@ import org.h2.table.IndexColumn;
 import org.h2.table.TableFilter;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ *
+ */
 public class H2PkHashIndex extends GridH2IndexBase {
-
+    /** */
     private final GridH2Table tbl;
 
+    /** */
     private final GridCacheContext cctx;
 
     /**
@@ -114,6 +114,7 @@ public class H2PkHashIndex extends GridH2IndexBase {
         }
     }
 
+    /** {@inheritDoc} */
     @Override public boolean canScan() {
         return false;
     }
@@ -162,6 +163,8 @@ public class H2PkHashIndex extends GridH2IndexBase {
         double baseCost = getCostRangeIndex(masks, rowCnt, filters, filter, sortOrder, false);
 
         int mul = getDistributedMultiplier(ses, filters, filter);
+
+        // TODO : How to calculate cost?
 
 //        return mul * baseCost;
         return Double.MAX_VALUE;
@@ -273,11 +276,19 @@ public class H2PkHashIndex extends GridH2IndexBase {
         }
     }
 
+    /**
+     *
+     */
     private static class CompositeGridCursor<T> implements GridCursor<T> {
+        /** */
         private final Iterator<GridCursor<? extends T>> iterator;
 
+        /** */
         private GridCursor<? extends T> current;
 
+        /**
+         *
+         */
         public CompositeGridCursor(Iterator<GridCursor<? extends T>> iterator) {
             this.iterator = iterator;
 
@@ -285,6 +296,7 @@ public class H2PkHashIndex extends GridH2IndexBase {
                 current = iterator.next();
         }
 
+        /** {@inheritDoc} */
         @Override public boolean next() throws IgniteCheckedException {
             if (current.next())
                 return true;
@@ -299,6 +311,7 @@ public class H2PkHashIndex extends GridH2IndexBase {
             return false;
         }
 
+        /** {@inheritDoc} */
         @Override public T get() throws IgniteCheckedException {
             return current.get();
         }

@@ -83,8 +83,9 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      */
     public CacheDataStore getOrCreateCacheDataStore(int p, CacheDataStore.Listener lsnr) throws IgniteCheckedException;
 
-    @Nullable public CacheDataStore cacheDataStore(int p);
-
+    /**
+     * @return Iterable over all existing cache data stores.
+     */
     public Iterable<CacheDataStore> cacheDataStores();
 
     /**
@@ -107,12 +108,12 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      * @throws IgniteCheckedException If failed.
      */
     public void update(
-            KeyCacheObject key,
-            CacheObject val,
-            GridCacheVersion ver,
-            long expireTime,
-            int partId,
-            GridDhtLocalPartition part
+        KeyCacheObject key,
+        CacheObject val,
+        GridCacheVersion ver,
+        long expireTime,
+        int partId,
+        GridDhtLocalPartition part
     ) throws IgniteCheckedException;
 
     /**
@@ -123,11 +124,11 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      * @throws IgniteCheckedException If failed.
      */
     public void remove(
-            KeyCacheObject key,
-            CacheObject prevVal,
-            GridCacheVersion prevVer,
-            int partId,
-            GridDhtLocalPartition part
+        KeyCacheObject key,
+        CacheObject prevVal,
+        GridCacheVersion prevVer,
+        int partId,
+        GridDhtLocalPartition part
     ) throws IgniteCheckedException;
 
     /**
@@ -249,7 +250,14 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
          */
         public GridCursor<? extends CacheDataRow> cursor() throws IgniteCheckedException;
 
-        public GridCursor<? extends CacheDataRow> cursor(KeyCacheObject lower, KeyCacheObject upper) throws IgniteCheckedException;
+        /**
+         * @param lower Lower bound.
+         * @param upper Upper bound.
+         * @return Data cursor.
+         * @throws IgniteCheckedException If failed.
+         */
+        public GridCursor<? extends CacheDataRow> cursor(KeyCacheObject lower,
+            KeyCacheObject upper) throws IgniteCheckedException;
 
         /**
          * Destroys the tree associated with the store.

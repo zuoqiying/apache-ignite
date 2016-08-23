@@ -258,8 +258,6 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
     /** {@inheritDoc} */
     @Override public boolean freePage(int cacheId, long pageId) {
-        cacheMetaPages.remove(cacheId, PageIdUtils.effectivePageId(pageId));
-
         Segment seg = segment(pageId);
 
         seg.releaseFreePage(pageId);

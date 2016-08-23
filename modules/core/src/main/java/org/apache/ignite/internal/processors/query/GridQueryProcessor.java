@@ -638,6 +638,12 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         }
     }
 
+    /**
+     * Rebuilds indexes for provided caches from corresponding hash indexes.
+     *
+     * @param cacheIds Cache IDs.
+     * @return Future that will be completed when rebuilding is finished.
+     */
     public IgniteInternalFuture<?> rebuildIndexesFromHash(Collection<Integer> cacheIds) {
         if (!busyLock.enterBusy())
             throw new IllegalStateException("Failed to get space size (grid is stopping).");

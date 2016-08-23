@@ -167,5 +167,9 @@ public interface IgnitePageStoreManager extends GridCacheSharedManager {
      */
     public void clear(int cacheId, byte flags, int partId) throws IgniteCheckedException;
 
+    /**
+     * @param cacheId Cache ID.
+     * @return {@code True} if index store for given cache existed before node started.
+     */
     public boolean hasIndexStore(int cacheId);
 }

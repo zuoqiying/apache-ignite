@@ -57,7 +57,7 @@ public class IgniteCachePrimitiveFieldsQuerySelfTest extends GridCommonAbstractT
         cfg.setCacheConfiguration(cacheConfiguration(CACHE_NAME));
 
         // Force BinaryMarshaller.
-        cfg.setMarshaller(new OptimizedMarshaller());
+        cfg.setMarshaller(null);
 
         return cfg;
     }
@@ -122,7 +122,7 @@ public class IgniteCachePrimitiveFieldsQuerySelfTest extends GridCommonAbstractT
      * 
      */
     @SuppressWarnings("unused")
-    private static class IndexedType implements Serializable {
+    private static class IndexedType {
         /** */
         private int iVal;
 

@@ -676,9 +676,9 @@ public class GridH2Table extends TableBase {
      * @return Indexes.
      */
     ArrayList<GridH2IndexBase> indexes() {
-        ArrayList<GridH2IndexBase> res = new ArrayList<>(idxs.size() - 1);
+        ArrayList<GridH2IndexBase> res = new ArrayList<>(idxs.size() - 2);
 
-        for (int i = 1, len = idxs.size(); i < len; i++)
+        for (int i = 2, len = idxs.size(); i < len; i++)
             res.add(index(i));
 
         return res;
@@ -717,10 +717,16 @@ public class GridH2Table extends TableBase {
         }
     }
 
+    /**
+     *
+     */
     public void markRebuildFromHashInProgress(boolean value) {
         rebuildFromHashInProgress = value;
     }
 
+    /**
+     *
+     */
     public boolean rebuildFromHashInProgress() {
         return rebuildFromHashInProgress;
     }
@@ -782,6 +788,9 @@ public class GridH2Table extends TableBase {
         return idxs;
     }
 
+    /**
+     * @return All indexes, even marked for rebuild.
+     */
     public ArrayList<Index> getAllIndexes() {
         return idxs;
     }
@@ -959,6 +968,9 @@ public class GridH2Table extends TableBase {
             this.hashIdx = hashIdx;
         }
 
+        /**
+         *
+         */
         private GridH2IndexBase delegate() {
             return rebuildFromHashInProgress ? hashIdx : treeIdx;
         }

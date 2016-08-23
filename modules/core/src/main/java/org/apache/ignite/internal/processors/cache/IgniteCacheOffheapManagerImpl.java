@@ -175,7 +175,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             for (CacheDataStore store : partDataStores.values())
                 store.destroy();
-            }
         }
         catch (IgniteCheckedException e) {
             throw new IgniteException(e.getMessage(), e);
@@ -602,6 +601,9 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         return store;
     }
 
+    /**
+     *
+     */
     protected CacheDataStore createCacheDataStore0(int p, String idxName,
         CacheDataStore.Listener lsnr) throws IgniteCheckedException {
         final RootPage rootPage = cctx.shared().database().globalMetaStore().getOrAllocateForTree(idxName);
@@ -620,14 +622,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         return new CacheDataStoreImpl(idxName, p, rowStore, dataTree, lsnr);
     }
 
-    @Nullable @Override public CacheDataStore cacheDataStore(int p) {
-        if (cctx.isLocal())
-            return locCacheDataStore;
-
-        return partDataStores.get(p);
-    }
-
-    public Iterable<CacheDataStore> cacheDataStores() {
+    /** {@inheritDoc} */
+    @Override public Iterable<CacheDataStore> cacheDataStores() {
         if (cctx.isLocal())
             return Collections.singleton(locCacheDataStore);
 
