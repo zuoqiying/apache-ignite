@@ -57,7 +57,6 @@ public class H2PkHashIndex extends GridH2IndexBase {
      * @param cctx Cache context.
      * @param tbl Table.
      * @param name Index name.
-     * @param pk Primary key.
      * @param colsList Index columns.
      * @throws IgniteCheckedException If failed.
      */
@@ -65,10 +64,8 @@ public class H2PkHashIndex extends GridH2IndexBase {
         GridCacheContext<?, ?> cctx,
         GridH2Table tbl,
         String name,
-        boolean pk,
         List<IndexColumn> colsList
     ) throws IgniteCheckedException {
-        assert pk;
 
         IndexColumn[] cols = colsList.toArray(new IndexColumn[colsList.size()]);
 

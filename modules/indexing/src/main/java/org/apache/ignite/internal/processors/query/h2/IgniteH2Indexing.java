@@ -2556,11 +2556,10 @@ public class IgniteH2Indexing implements GridQueryIndexing {
 
             int cacheId = CU.cacheId(schema.ccfg.getName());
 
-            idxs.add(createSortedIndex(
+            idxs.add(createHashIndex(
                 cacheId,
                 "_key_PK_hash",
                 tbl,
-                true,
                 treeIndexColumns(new ArrayList<IndexColumn>(2), keyCol, affCol)));
 
             // Add primary key index.
@@ -2661,6 +2660,36 @@ public class IgniteH2Indexing implements GridQueryIndexing {
             }
         }
 
+        private Index createHashIndex(
+            int cacheId,
+            String name,
+            GridH2Table tbl,
+            List<IndexColumn> cols
+        ) {
+            try {
+                GridCacheSharedContext<Object, Object> scctx = ctx.cache().context();
+
+                GridCacheContext cctx = scctx.cacheContext(cacheId);
+
+                if (cctx.affinityNode() && cctx.offheapIndex()) {
+                    assert pkHashIdx == null : pkHashIdx;
+
+                    pkHashIdx = new H2PkHashIndex(
+                        cctx,
+                        tbl,
+                        name,
+                        cols);
+
+                    return pkHashIdx;
+                }
+
+                return new GridH2TreeIndex(name, tbl, true, cols);
+            }
+            catch (IgniteCheckedException e) {
+                throw new IgniteException(e);
+            }
+        }
+
         /**
          * @param name Index name.
          * @param tbl Table.
@@ -2678,34 +2707,21 @@ public class IgniteH2Indexing implements GridQueryIndexing {
             if (log.isInfoEnabled())
                 log.info("Creating cache index [cacheId=" + cctx.cacheId() + ", idxName=" + name + ']');
 
-            if (pk && name.endsWith("_hash")) {
-                assert pkHashIdx == null : pkHashIdx;
+            Index idx = new H2TreeIndex(
+                cctx,
+                tbl,
+                name,
+                pk,
+                cols);
 
-                pkHashIdx = new H2PkHashIndex(
-                    cctx,
-                    tbl,
-                    name,
-                    pk,
-                    cols);
+            if (pk) {
+                assert pkTreeIdx == null : pkTreeIdx;
 
-                return pkHashIdx;
+                pkTreeIdx = idx;
             }
-            else {
-                Index idx = new H2TreeIndex(
-                    cctx,
-                    tbl,
-                    name,
-                    pk,
-                    cols);
 
-                if (pk) {
-                    assert pkTreeIdx == null : pkTreeIdx;
+            return idx;
 
-                    pkTreeIdx = idx;
-                }
-
-                return idx;
-            }
         }
 
         /**
