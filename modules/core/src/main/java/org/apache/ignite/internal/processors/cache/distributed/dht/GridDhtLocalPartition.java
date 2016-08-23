@@ -161,7 +161,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         rmvQueue = new GridCircularBuffer<>(U.ceilPow2(delQueueSize));
 
         try {
-            store = cctx.offheap().createCacheDataStore(id, this);
+            store = cctx.offheap().getOrCreateCacheDataStore(id, this);
         }
         catch (IgniteCheckedException e) {
             // TODO ignite-db

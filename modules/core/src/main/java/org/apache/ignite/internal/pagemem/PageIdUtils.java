@@ -19,8 +19,8 @@ package org.apache.ignite.internal.pagemem;
 
 import org.apache.ignite.internal.util.typedef.internal.U;
 
+import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_DATA;
 import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_IDX;
-import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_PART_IDX;
 
 /**
  * Utility class for page ID parts manipulation.
@@ -69,7 +69,7 @@ public final class PageIdUtils {
         (FLAG_MASK << (PAGE_IDX_SIZE + PART_ID_SIZE + RESERVED_SIZE)) | PAGE_IDX_MASK;
 
     /** */
-    private static final long EFFECTIVE_PART_IDX_PAGE_ID_MASK =
+    private static final long EFFECTIVE_DATA_PAGE_ID_MASK =
         (FLAG_MASK << (PAGE_IDX_SIZE + PART_ID_SIZE + RESERVED_SIZE)) |
             (PART_ID_MASK << PAGE_IDX_SIZE + RESERVED_SIZE) | PAGE_IDX_MASK;
 
@@ -182,8 +182,8 @@ public final class PageIdUtils {
             case FLAG_IDX:
                 return link & EFFECTIVE_IDX_PAGE_ID_MASK;
 
-            case FLAG_PART_IDX:
-                return link & EFFECTIVE_PART_IDX_PAGE_ID_MASK;
+            case FLAG_DATA:
+                return link & EFFECTIVE_DATA_PAGE_ID_MASK;
 
             default:
                 return pageId(link);
@@ -254,7 +254,7 @@ public final class PageIdUtils {
      * @return New page ID.
      */
     public static long rotatePageId(long pageId) {
-        if (flag(pageId) == FLAG_PART_IDX) {
+        if (flag(pageId) == FLAG_DATA) {
             int fileId = fileId(pageId);
             int pageIdx = pageIndex(pageId);
             short res = res(pageId);
