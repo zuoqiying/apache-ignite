@@ -15,34 +15,14 @@
  * limitations under the License.
  */
 
-import angular from 'angular';
+const guest = ['login', 'terms'];
+const becomed = ['profile', 'configuration', 'query', 'terms'];
+const user = becomed.concat(['logout']);
+const admin = user.concat(['admin_page']);
 
-angular
-.module('ignite-console.states.password', [
-    'ui.router'
-])
-.config(['$stateProvider', 'AclRouteProvider', function($stateProvider, AclRoute) {
-    // set up the states
-    $stateProvider
-    .state('password', {
-        url: '/password',
-        abstract: true,
-        template: '<ui-view></ui-view>'
-    })
-    .state('password.reset', {
-        url: '/reset?{token}',
-        templateUrl: '/reset.html',
-        onEnter: AclRoute.checkAccess('login'),
-        metaTags: {
-            title: 'Reset password'
-        }
-    })
-    .state('password.send', {
-        url: '/send',
-        templateUrl: '/reset.html',
-        onEnter: AclRoute.checkAccess('login'),
-        metaTags: {
-            title: 'Password Send'
-        }
-    });
-}]);
+export default {
+    guest,
+    user,
+    admin,
+    becomed
+};

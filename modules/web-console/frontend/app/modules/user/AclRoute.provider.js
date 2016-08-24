@@ -15,34 +15,24 @@
  * limitations under the License.
  */
 
-import angular from 'angular';
+export default [() => {
+    class AclRoute {
+        static checkAccess = (permissions, failState) => {
+            failState = failState || '403';
 
-angular
-.module('ignite-console.states.password', [
-    'ui.router'
-])
-.config(['$stateProvider', 'AclRouteProvider', function($stateProvider, AclRoute) {
-    // set up the states
-    $stateProvider
-    .state('password', {
-        url: '/password',
-        abstract: true,
-        template: '<ui-view></ui-view>'
-    })
-    .state('password.reset', {
-        url: '/reset?{token}',
-        templateUrl: '/reset.html',
-        onEnter: AclRoute.checkAccess('login'),
-        metaTags: {
-            title: 'Reset password'
+            return ['$state', 'AclService', 'Auth', ($state, AclService) => {
+                if (AclService.can(permissions))
+                    return;
+
+                return $state.go(failState);
+            }];
         }
-    })
-    .state('password.send', {
-        url: '/send',
-        templateUrl: '/reset.html',
-        onEnter: AclRoute.checkAccess('login'),
-        metaTags: {
-            title: 'Password Send'
+    }
+
+    return {
+        checkAccess: AclRoute.checkAccess,
+        $get: () => {
+            return AclRoute;
         }
-    });
-}]);
+    };
+}];

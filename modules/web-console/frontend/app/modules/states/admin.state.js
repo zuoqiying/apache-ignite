@@ -21,12 +21,13 @@ angular
 .module('ignite-console.states.admin', [
     'ui.router'
 ])
-.config(['$stateProvider', function($stateProvider) {
+.config(['$stateProvider', 'AclRouteProvider', function($stateProvider, AclRoute) {
     // set up the states
     $stateProvider
     .state('settings.admin', {
         url: '/admin',
         templateUrl: '/settings/admin.html',
+        onEnter: AclRoute.checkAccess('admin_page'),
         metaTags: {
             title: 'List of registered users'
         }

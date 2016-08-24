@@ -16,13 +16,38 @@
  */
 
 import angular from 'angular';
+import aclData from './permissions';
 
 import Auth from './Auth.service';
 import User from './User.service';
+import AclRouteProvider from './AclRoute.provider';
 
 angular
 .module('ignite-console.user', [
-
+    'mm.acl',
+    'ignite-console.config'
 ])
 .service(...Auth)
-.service(...User);
+.service(...User)
+.provider('AclRoute', AclRouteProvider)
+.run(['$rootScope', 'AclService', ($root, AclService) => {
+    AclService.setAbilities(aclData);
+    AclService.attachRole('guest');
+
+    $root.$on('user', (event, user) => {
+        if (!user)
+            return;
+
+        AclService.flushRoles();
+
+        let role = 'user';
+
+        if (user.admin)
+            role = 'admin';
+
+        if (user.becomeUsed)
+            role = 'becomed';
+
+        AclService.attachRole(role);
+    });
+}]);

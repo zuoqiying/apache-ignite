@@ -17,6 +17,7 @@
 
 import 'jquery';
 import 'angular';
+import 'angular-acl';
 import 'angular-animate';
 import 'angular-sanitize';
 import 'angular-strap';

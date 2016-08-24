@@ -34,6 +34,7 @@ import './modules/states/password.state';
 import './modules/states/configuration.state';
 import './modules/states/profile.state';
 import './modules/states/admin.state';
+import './modules/states/errors.state';
 
 // ignite:modules
 import './modules/user/user.module';
@@ -158,6 +159,7 @@ angular
     'ignite-console.states.configuration',
     'ignite-console.states.profile',
     'ignite-console.states.admin',
+    'ignite-console.states.errors',
     // Common modules.
     'ignite-console.dialog',
     'ignite-console.navbar',
@@ -231,8 +233,7 @@ angular
             templateUrl: baseTemplate
         });
 
-    $urlRouterProvider.otherwise('/');
-
+    $urlRouterProvider.otherwise('/404');
     $locationProvider.html5Mode(true);
 }])
 .run(['$rootScope', '$state', 'MetaTags', 'gettingStarted', ($root, $state, $meta, gettingStarted) => {

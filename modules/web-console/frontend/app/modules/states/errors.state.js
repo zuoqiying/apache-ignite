@@ -16,33 +16,22 @@
  */
 
 import angular from 'angular';
+import templateNotFoundPage from '../../../views/404.jade';
+import templateNotAuthorizedPage from '../../../views/403.jade';
 
 angular
-.module('ignite-console.states.password', [
-    'ui.router'
-])
-.config(['$stateProvider', 'AclRouteProvider', function($stateProvider, AclRoute) {
-    // set up the states
-    $stateProvider
-    .state('password', {
-        url: '/password',
-        abstract: true,
-        template: '<ui-view></ui-view>'
-    })
-    .state('password.reset', {
-        url: '/reset?{token}',
-        templateUrl: '/reset.html',
-        onEnter: AclRoute.checkAccess('login'),
-        metaTags: {
-            title: 'Reset password'
-        }
-    })
-    .state('password.send', {
-        url: '/send',
-        templateUrl: '/reset.html',
-        onEnter: AclRoute.checkAccess('login'),
-        metaTags: {
-            title: 'Password Send'
-        }
-    });
-}]);
+    .module('ignite-console.states.errors', [
+        'ui.router'
+    ])
+    .config(['$stateProvider', 'AclRouteProvider', function($stateProvider) {
+        // set up the states
+        $stateProvider
+            .state('404', {
+                url: '/404',
+                templateUrl: templateNotFoundPage
+            })
+            .state('403', {
+                url: '/403',
+                templateUrl: templateNotAuthorizedPage
+            });
+    }]);
