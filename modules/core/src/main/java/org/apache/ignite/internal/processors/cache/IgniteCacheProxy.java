@@ -617,7 +617,8 @@ public class IgniteCacheProxy<K, V> extends AsyncSupportAdapter<IgniteCache<K, V
                 qry.getTimeInterval(),
                 qry.isAutoUnsubscribe(),
                 loc,
-                keepBinary);
+                keepBinary,
+                qry.isIncludeExpired());
 
             final QueryCursor<Cache.Entry<K, V>> cur =
                 qry.getInitialQuery() != null ? query(qry.getInitialQuery()) : null;
@@ -672,6 +673,10 @@ public class IgniteCacheProxy<K, V> extends AsyncSupportAdapter<IgniteCache<K, V
                     opCtxCall != null && opCtxCall.isKeepBinary());
 
             if (qry instanceof SqlQuery) {
+                if (isReplicatedDataNode() && ((SqlQuery)qry).isDistributedJoins())
+                    throw new CacheException("Queries using distributed JOINs have to be run on partitioned cache, " +
+                        "not on replicated.");
+
                 final SqlQuery p = (SqlQuery)qry;
 
                 if (isReplicatedDataNode() || ctx.isLocal() || qry.isLocal())
@@ -686,6 +691,10 @@ public class IgniteCacheProxy<K, V> extends AsyncSupportAdapter<IgniteCache<K, V
             }
 
             if (qry instanceof SqlFieldsQuery) {
+                if (isReplicatedDataNode() && ((SqlFieldsQuery)qry).isDistributedJoins())
+                    throw new CacheException("Queries using distributed JOINs have to be run on partitioned cache, " +
+                        "not on replicated.");
+
                 SqlFieldsQuery p = (SqlFieldsQuery)qry;
 
                 if (isReplicatedDataNode() || ctx.isLocal() || qry.isLocal())
