@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.cache.database.tree.io;
 
 import java.nio.ByteBuffer;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  * Registry for IO versions.
@@ -88,7 +89,8 @@ public final class IOVersions<V extends PageIO> {
 
         V res = forVersion(ver);
 
-        assert res.getType() == PageIO.getType(buf);
+        assert res.getType() == PageIO.getType(buf) : "expected=" + res.getType() +
+            ", actual=" + PageIO.getType(buf) + ", pageId=" + U.hexLong(PageIO.getPageId(buf));
 
         return res;
     }

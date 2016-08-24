@@ -81,10 +81,8 @@ public class FreeTree extends BPlusTree<FreeItem, FreeItem> {
 
     /** {@inheritDoc} */
     @Override protected long allocatePageNoReuse() throws IgniteCheckedException {
-        if (allocSpace == PageIdAllocator.FLAG_IDX)
-            return pageMem.allocatePage(getCacheId(), 0, PageIdAllocator.FLAG_IDX);
-        else
-            return pageMem.allocatePage(getCacheId(), partId, allocSpace);
+        return pageMem.allocatePage(getCacheId(), allocSpace == PageIdAllocator.FLAG_IDX ? 0 : partId,
+            allocSpace);
     }
 
     /** {@inheritDoc} */

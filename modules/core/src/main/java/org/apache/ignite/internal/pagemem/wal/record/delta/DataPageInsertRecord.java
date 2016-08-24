@@ -67,6 +67,11 @@ public class DataPageInsertRecord extends PageDeltaRecord implements CacheDataRo
         this.rowSize = rowSize;
     }
 
+    /** {@inheritDoc} */
+    @Override public GridCacheContext<?, ?> cacheContext() {
+        throw new IllegalStateException("cacheContext should be never called on insert record.");
+    }
+
     /**
      * @return Key.
      */

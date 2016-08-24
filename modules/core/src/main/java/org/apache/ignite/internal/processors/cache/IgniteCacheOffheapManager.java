@@ -203,11 +203,6 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      */
     interface CacheDataStore {
         /**
-         * @return Store name.
-         */
-        String name();
-
-        /**
          * @param key Key.
          * @param part Partition.
          * @param val Value.
