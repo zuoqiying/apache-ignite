@@ -222,59 +222,64 @@ module.exports.factory = function(_, ws, fs, path, JSZip, socketio, settings, mo
         }
 
         /**
-         *
          * @param {Boolean} demo Is need run command on demo node.
+         * @param {String} nid Node id.
          * @param {String} cacheName Cache name.
          * @param {String} query Query.
+         * @param {Boolean} local Flag whether to execute query locally.
          * @param {int} pageSize Page size.
          * @returns {Promise}
          */
-        fieldsQuery(demo, cacheName, query, pageSize) {
-            const cmd = new Command(demo, 'qryfldexe')
-                .addParam('cacheName', cacheName)
-                .addParam('qry', query)
-                .addParam('pageSize', pageSize);
-
-            return this.executeRest(cmd);
-        }
-
-        /**
-         *
-         * @param {Boolean} demo Is need run command on demo node.
-         * @param {String} cacheName Cache name.
-         * @param {int} pageSize Page size.
-         * @returns {Promise}
-         */
-        scan(demo, cacheName, pageSize) {
-            const cmd = new Command(demo, 'qryscanexe')
-                .addParam('cacheName', cacheName)
-                .addParam('pageSize', pageSize);
+        fieldsQuery(demo, nid, cacheName, query, local, pageSize) {
+            const cmd = new Command(demo, 'exe')
+                .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
+                .addParam('p1', nid)
+                .addParam('p2', 'org.apache.ignite.internal.visor.query.VisorQueryTask')
+                .addParam('p3', 'org.apache.ignite.internal.visor.query.VisorQueryArg')
+                .addParam('p4', cacheName)
+                .addParam('p5', query)
+                .addParam('p6', local)
+                .addParam('p7', pageSize);
 
             return this.executeRest(cmd);
         }
 
         /**
          * @param {Boolean} demo Is need run command on demo node.
+         * @param {String} nid Node id.
          * @param {int} queryId Query Id.
          * @param {int} pageSize Page size.
          * @returns {Promise}
          */
-        queryFetch(demo, queryId, pageSize) {
-            const cmd = new Command(demo, 'qryfetch')
-                .addParam('qryId', queryId)
-                .addParam('pageSize', pageSize);
+        queryFetch(demo, nid, queryId, pageSize) {
+            const cmd = new Command(demo, 'exe')
+                .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
+                .addParam('p1', nid)
+                .addParam('p2', 'org.apache.ignite.internal.visor.query.VisorQueryNextPageTask')
+                .addParam('p3', 'org.apache.ignite.lang.IgniteBiTuple')
+                .addParam('p4', 'java.lang.String')
+                .addParam('p5', 'java.lang.Integer')
+                .addParam('p6', queryId)
+                .addParam('p7', pageSize);
 
             return this.executeRest(cmd);
         }
 
         /**
          * @param {Boolean} demo Is need run command on demo node.
+         * @param {String} nid Node id.
          * @param {int} queryId Query Id.
          * @returns {Promise}
          */
-        queryClose(demo, queryId) {
-            const cmd = new Command(demo, 'qrycls')
-                .addParam('qryId', queryId);
+        queryClose(demo, nid, queryId) {
+            const cmd = new Command(demo, 'exe')
+                .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
+                .addParam('p1', '')
+                .addParam('p2', 'org.apache.ignite.internal.visor.query.VisorQueryCleanupTask')
+                .addParam('p3', 'java.util.Map')
+                .addParam('p4', 'java.util.UUID')
+                .addParam('p5', 'java.util.Set')
+                .addParam('p6', `${nid}=${queryId}`);
 
             return this.executeRest(cmd);
         }

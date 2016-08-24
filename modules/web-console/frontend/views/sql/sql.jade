@@ -28,8 +28,8 @@ mixin result-toolbar
         +btn-toolbar-data('fa-line-chart', 'line', 'Show line chart<br/>By default first column - X values, second column - Y values<br/>In case of one column it will be treated as Y values')
         +btn-toolbar-data('fa-area-chart', 'area', 'Show area chart<br/>By default first column - X values, second column - Y values<br/>In case of one column it will be treated as Y values')
 
-mixin chart-settings(mdl)
-    .row
+mixin chart-settings
+    .total.row
         .col-xs-4
             .chart-settings-link(ng-show='paragraph.chart && paragraph.chartColumns.length > 0')
                 a(title='Click to show chart settings dialog' ng-click='$event.stopPropagation()' bs-popover data-template-url='/sql/chart-settings.html' data-placement='bottom' data-auto-close='1' data-trigger='click')
@@ -86,9 +86,13 @@ mixin query-controls
     .sql-controls
         a.btn.btn-primary(ng-disabled='!actionAvailable(paragraph, true)' ng-click='actionAvailable(paragraph, true) && execute(paragraph)' data-placement='bottom' bs-tooltip data-title='{{actionTooltip(paragraph, "execute", true)}}') Execute
         a.btn.btn-primary(ng-disabled='!actionAvailable(paragraph, true)' ng-click='actionAvailable(paragraph, true) && explain(paragraph)' data-placement='bottom' bs-tooltip data-title='{{actionTooltip(paragraph, "explain", true)}}') Explain
-        a.btn.btn-primary(ng-disabled='!actionAvailable(paragraph, false)' ng-click='actionAvailable(paragraph, false) && scan(paragraph)' data-placement='bottom' bs-tooltip data-title='{{actionTooltip(paragraph, "execute scan", false)}}') Scan
+        .btn-group(ng-disabled='!actionAvailable(paragraph, false)')
+            a.btn.btn-primary.fieldButton(ng-click='actionAvailable(paragraph, false) && scan(paragraph)' data-placement='bottom' bs-tooltip data-title='{{actionTooltip(paragraph, "execute scan", false)}}') Scan
+            a.btn.btn-primary(data-toggle='dropdown' data-container='body' bs-dropdown='[{ text: "Scan with filter", click: "actionAvailable(paragraph, false) && scanWithFilter(paragraph)" }]' data-placement='bottom-right')
+                span.caret
+
         .pull-right
-            labelHide System columns:
+            label.tipLabel System columns:
             a.btn.btn-default.fa.fa-bars.tipLabel(ng-class='{"btn-info": paragraph.systemColumns}' ng-click='toggleSystemColumns(paragraph)' ng-disabled='paragraph.disabledSystemColumns' bs-tooltip data-title='Show "_KEY", "_VAL" columns')
             label.tipLabel Refresh rate:
             button.btn.btn-default.fa.fa-clock-o.tipLabel(title='Click to show refresh rate dialog' ng-class='{"btn-info": paragraph.rate && paragraph.rate.installed}' bs-popover data-template-url='/sql/paragraph-rate.html' data-placement='left' data-auto-close='1' data-trigger='click') {{rateAsString(paragraph)}}
@@ -96,10 +100,11 @@ mixin query-controls
             button.select-toggle.fieldButton.btn.btn-default(ng-model='paragraph.pageSize' bs-options='item for item in pageSizes' bs-select bs-tooltip data-placement='bottom-right' data-title='Max number of rows to show in query result as one page')
 
 mixin table-result
-    .sql-table-total.row
+    .total.row
         .col-xs-4
-            label(style='margin-right: 10px;') Page: #[b {{paragraph.page}}]
-            label Results so far: #[b {{paragraph.rows.length + paragraph.total}}]
+            label Page: #[b {{paragraph.page}}]
+            label.margin-left-dflt Results so far: #[b {{paragraph.rows.length + paragraph.total}}]
+            label.margin-left-dflt Duration: #[b {{paragraph.duration | duration}}]
         .col-xs-4
             +result-toolbar
         .col-xs-4
@@ -112,30 +117,18 @@ mixin table-result
 mixin chart-result
     div(ng-show='paragraph.queryExecuted()')
         +chart-settings
-        div(ng-show='paragraph.chartColumns.length > 0 && !paragraph.chartColumnsConfigured()')
-            .sql-empty-result Cannot display chart. Please configure axis using #[b Chart settings]
-        div(ng-show='paragraph.chartColumns.length == 0')
-            .sql-empty-result Cannot display chart. Result set must contain Java build-in type columns. Please change query and execute it again.
+        .empty(ng-show='paragraph.chartColumns.length > 0 && !paragraph.chartColumnsConfigured()') Cannot display chart. Please configure axis using #[b Chart settings]
+        .empty(ng-show='paragraph.chartColumns.length == 0') Cannot display chart. Result set must contain Java build-in type columns. Please change query and execute it again.
         div(ng-show='paragraph.chartColumnsConfigured()')
             div(ng-show='paragraph.timeLineSupported() || !paragraph.chartTimeLineEnabled()')
                 div(ng-repeat='chart in paragraph.charts')
                     nvd3(options='chart.options' data='chart.data' api='chart.api')
-            .sql-empty-result(ng-show='!paragraph.timeLineSupported() && paragraph.chartTimeLineEnabled()') Pie chart does not support 'TIME_LINE' column for X-axis. Please use another column for X-axis or switch to another chart.
-    .sql-empty-result(ng-hide='paragraph.queryExecuted()')
+            .empty(ng-show='!paragraph.timeLineSupported() && paragraph.chartTimeLineEnabled()') Pie chart does not support 'TIME_LINE' column for X-axis. Please use another column for X-axis or switch to another chart.
+    .empty(ng-hide='paragraph.queryExecuted()')
         .row
             .col-xs-4.col-xs-offset-4
                 +result-toolbar
         label.margin-top-dflt Charts do not support #[b Explain] and #[b Scan] query
-
-mixin footer-controls
-    hr(style='margin-top: 0; margin-bottom: 5px')
-    a(style='float: left; margin-left: 10px; margin-bottom: 5px' ng-click='showResultQuery(paragraph)') Show query
-
-    -var nextVisibleCondition = 'paragraph.queryId && (paragraph.table() || paragraph.chart() && (paragraph.timeLineSupported() || !paragraph.chartTimeLineEnabled()))'
-
-    .sql-next(ng-show=nextVisibleCondition)
-        i.fa.fa-chevron-circle-right(ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)')
-        a(ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)') Next
 
 .row(ng-controller='sqlController')
     .docs-content
@@ -182,20 +175,19 @@ mixin footer-controls
                                     .empty-caches(ng-show='caches.length == 0')
                                         label No caches
                             .col-sm-12
-                                hr(style='margin: 0')
-                            .col-sm-12
                                 +query-controls
-                            .col-sm-12.sql-error-result(ng-show='paragraph.errMsg') Error: {{paragraph.errMsg}}
-                            .col-sm-12(ng-show='!paragraph.errMsg && paragraph.queryArgs')
-                                hr(style='margin-top: 0; margin-bottom: 10px')
-
-                                .sql-empty-result(ng-show='!paragraph.nonEmpty()') Result set is empty
-
-                                div(ng-show='paragraph.table() && paragraph.nonEmpty()')
+                            .col-sm-12.sql-result(ng-switch='paragraph.resultType()')
+                                .error(ng-switch-when='error') Error: {{paragraph.errMsg}}
+                                .empty(ng-switch-when='empty') Result set is empty
+                                .table(ng-switch-when='table')
                                     +table-result
-
-                                div(ng-show='paragraph.chart() && paragraph.nonEmpty()')
+                                .chart(ng-switch-when='chart')
                                     +chart-result
+                                .footer.clearfix(ng-show='paragraph.nonRefresh()')
+                                    a.pull-left(ng-click='showResultQuery(paragraph)') Show query
 
-                                div(ng-show='!paragraph.refreshExecuting()')
-                                    +footer-controls
+                                    -var nextVisibleCondition = 'paragraph.queryId && (paragraph.table() || paragraph.chart() && (paragraph.timeLineSupported() || !paragraph.chartTimeLineEnabled()))'
+
+                                    .pull-right(ng-show=nextVisibleCondition ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)')
+                                        i.fa.fa-chevron-circle-right
+                                        a Next
