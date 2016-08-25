@@ -22,9 +22,6 @@ const TIME_LINE = {value: -1, type: 'java.sql.Date', label: 'TIME_LINE'};
 const ROW_IDX = {value: -2, type: 'java.lang.Integer', label: 'ROW_IDX'};
 
 /** Prefix for node local key for SCAN near queries. */
-const SCAN_NEAR_CACHE = 'VISOR_SCAN_NEAR_CACHE';
-
-/** Prefix for node local key for SCAN near queries. */
 const SCAN_CACHE_WITH_FILTER = 'VISOR_SCAN_CACHE_WITH_FILTER';
 
 /** Prefix for node local key for SCAN near queries. */
@@ -45,10 +42,7 @@ const _fullColName = (col) => {
 };
 
 class Paragraph {
-    constructor($timeout, Notebook, paragraph) {
-        this.$timeout = $timeout;
-        this.Notebook = Notebook;
-
+    constructor(paragraph) {
         _.assign(this, paragraph);
     }
 
@@ -797,7 +791,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 $scope.notebook.paragraphs = _.map($scope.notebook.paragraphs, (paragraph) => {
                     paragraph.id = 'paragraph-' + paragraphId++;
 
-                    const par = new Paragraph($timeout, Notebook, paragraph);
+                    const par = new Paragraph(paragraph);
 
                     Object.defineProperty(par, 'gridOptions', {value: {
                         enableGridMenu: false,
