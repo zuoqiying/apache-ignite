@@ -542,7 +542,23 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
     /** {@inheritDoc} */
     @Override public boolean put(K key, V val, CacheEntryPredicate[] filter) throws IgniteCheckedException {
-        return putAsync(key, val, filter).get();
+        IgniteInternalFuture<Boolean> future = putAsync(
+            key,
+            val,
+            filter);
+        try {
+            return future.get(200);
+        }
+        catch (IgniteCheckedException e) {
+            if (e.hasCause(InterruptedException.class))
+                throw e;
+
+            U.debug(log, "Failed to wait for future: " + future);
+
+            future.cancel();
+
+            return true;
+        }
     }
 
     /** {@inheritDoc} */
@@ -2908,7 +2924,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             fut.onResult(nodeId, res);
         else {
             U.warn(msgLog, "Failed to find near update future for update response (will ignore) " +
-                "[futId" + res.futureVersion() + ", node=" + nodeId + ", res=" + res + ']');
+                "[futId=" + res.futureVersion() + ", node=" + nodeId + ", res=" + res + ']');
         }
     }
 

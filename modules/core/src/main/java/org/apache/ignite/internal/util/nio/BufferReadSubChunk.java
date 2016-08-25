@@ -30,14 +30,22 @@ public class BufferReadSubChunk {
 
     private final BufferChunk parent;
 
+    private final byte plc;
+
+    private final byte flags;
+
     public BufferReadSubChunk(
         long threadId,
         ByteBuffer buf,
-        BufferChunk parent
+        BufferChunk parent,
+        byte plc,
+        byte flags
     ) {
         this.threadId = threadId;
         this.buf = buf;
         this.parent = parent;
+        this.plc = plc;
+        this.flags = flags;
     }
 
     public long threadId() {
@@ -50,6 +58,22 @@ public class BufferReadSubChunk {
 
     public ByteBuffer buffer() {
         return buf;
+    }
+
+    public byte policy() {
+        return plc;
+    }
+
+    public boolean first() {
+        return (flags & BufferChunk.FIRST_MASK) != 0;
+    }
+
+    public boolean last() {
+        return (flags & BufferChunk.LAST_MASK) != 0;
+    }
+
+    public boolean ordered() {
+        return (flags & BufferChunk.ORDERED_MASK) != 0;
     }
 
     /** {@inheritDoc} */

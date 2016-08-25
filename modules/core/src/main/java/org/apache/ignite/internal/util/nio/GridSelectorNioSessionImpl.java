@@ -46,6 +46,13 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
         "IGNITE_CONN_BUF_CHUNK_CNT",
         2048);
 
+    public static final int READ_BUF_CHUNK_SIZE = IgniteSystemProperties.getInteger(
+        "IGNITE_READ_BUF_CHUNK_SIZE",
+        65536);
+    public static final int IGNITE_READ_CONN_BUF_CHUNK_CNT = IgniteSystemProperties.getInteger(
+        "IGNITE_READ_CONN_BUF_CHUNK_CNT",
+        256);
+
     /** Pending write requests. */
     private final ConcurrentLinkedDeque8<GridNioFuture<?>> queue = new ConcurrentLinkedDeque8<>();
 
@@ -84,7 +91,7 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
         IGNITE_CONN_BUF_CHUNK_CNT];
 
     private final BufferChunk readChunks[] = new BufferChunk[
-        IGNITE_CONN_BUF_CHUNK_CNT];
+        IGNITE_READ_CONN_BUF_CHUNK_CNT];
 
     private final BufferChunkList chunkList;
 
@@ -143,18 +150,14 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
         for (int i = 0; i < writeChunks.length; i++) {
             //pool.position(i * BUF_CHUNK_SIZE).limit((i + 1) * BUF_CHUNK_SIZE);
 
-            writeChunks[i] = new BufferChunk(
-                i,
-                ByteBuffer.allocate( //TODO change to direct
-                    BUF_CHUNK_SIZE));
-
-            readChunks[i] = new BufferChunk(
-                i,
-                ByteBuffer.allocate(
-                    BUF_CHUNK_SIZE));
+            writeChunks[i] = new BufferChunk(i, ByteBuffer.allocateDirect(BUF_CHUNK_SIZE));
         }
 
-        chunkList = new BufferChunkList(Math.max(16, writeBuf.capacity() / BUF_CHUNK_SIZE));
+        for (int i = 0; i < IGNITE_READ_CONN_BUF_CHUNK_CNT; i++) {
+            readChunks[i] = new BufferChunk(i, ByteBuffer.allocateDirect(READ_BUF_CHUNK_SIZE));
+        }
+
+        chunkList = new BufferChunkList(Math.max(16, 65536 / BUF_CHUNK_SIZE));
 
         U.quietAndInfo(log, "info [chunkSize=" + BUF_CHUNK_SIZE + ", chunksCnt=" + writeChunks.length +
             ", chunkListSize=" + chunkList.maxSize() + ']');
@@ -358,7 +361,9 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
      * @return First buffer chunk.
      */
     public BufferChunk reserveWriteChunk() {
-        return reserveWriteChunk(0); // TODO random start?
+        int start = U.hash(Thread.currentThread().getId()) & (writeChunks.length - 1);
+
+        return reserveWriteChunk(start); // TODO random start?
     }
 
     /**
@@ -384,16 +389,20 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     /**
      * @return Buffer chunk to read.
      */
-    public BufferChunk reserveReadChunk() {
-        return reserveChunk(0, readChunks); // TODO random start?
+    public BufferChunk reserveReadChunk(int idx) {
+        return reserveChunk(idx, readChunks); // TODO random start?
     }
 
     private BufferChunk reserveChunk(int start, BufferChunk[] chunks) {
         for (int i = start; i < chunks.length + start; i++) {
             BufferChunk chunk = chunks[i >= chunks.length ? i - chunks.length : i];
 
-            if (chunk.reserve())
+            if (chunk.reserve()) {
+                if ((i - start) > 60)
+                    U.debug(log, "iter on reserve: " + (i - start));
+
                 return chunk;
+            }
         }
 
         return null;

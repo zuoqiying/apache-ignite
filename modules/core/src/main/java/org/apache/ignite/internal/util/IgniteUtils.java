@@ -8323,6 +8323,14 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * @param l Long.
+     * @return Hash.
+     */
+    public static int hash(long l) {
+        return (int)(l ^ (l >>> 32));
+    }
+
+    /**
      * Applies a supplemental hash function to a given hashCode, which
      * defends against poor quality hash functions.  This is critical
      * because ConcurrentHashMap uses power-of-two length hash tables,

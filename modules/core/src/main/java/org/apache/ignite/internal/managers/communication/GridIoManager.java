@@ -17,7 +17,10 @@
 
 package org.apache.ignite.internal.managers.communication;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -35,6 +39,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.ignite.IgniteCheckedException;
@@ -57,6 +62,10 @@ import org.apache.ignite.internal.processors.timeout.GridTimeoutObject;
 import org.apache.ignite.internal.util.GridBoundedConcurrentLinkedHashSet;
 import org.apache.ignite.internal.util.GridSpinReadWriteLock;
 import org.apache.ignite.internal.util.lang.GridTuple3;
+import org.apache.ignite.internal.util.nio.BufferChunk;
+import org.apache.ignite.internal.util.nio.BufferReadSubChunk;
+import org.apache.ignite.internal.util.nio.DirectReaderQueue;
+import org.apache.ignite.internal.util.nio.DirectReaderQueueKey;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.X;
@@ -168,7 +177,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         new ConcurrentHashMap8<>();
 
     /** Communication message listener. */
-    private CommunicationListener<Serializable> commLsnr;
+    private CommunicationListener<Object> commLsnr;
 
     /** Grid marshaller. */
     private final Marshaller marsh;
@@ -257,10 +266,11 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             0,
             new LinkedBlockingQueue<Runnable>());
 
-        getSpi().setListener(commLsnr = new CommunicationListener<Serializable>() {
-            @Override public void onMessage(UUID nodeId, Serializable msg, IgniteRunnable msgC) {
+        commLsnr = new CommunicationListener<Object>() {
+            @Override public void onMessage(UUID nodeId, Object msg, IgniteRunnable msgC) {
                 try {
-                    onMessage0(nodeId, (GridIoMessage)msg, msgC);
+                    onMessage0_2(nodeId,
+                        (BufferChunk)msg, msgC);
                 }
                 catch (ClassCastException ignored) {
                     U.error(log, "Communication manager received message of unknown type (will ignore): " +
@@ -273,7 +283,9 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                 for (GridDisconnectListener lsnr : disconnectLsnrs)
                     lsnr.onNodeDisconnected(nodeId);
             }
-        });
+        };
+
+        getSpi().setListener((CommunicationListener<Serializable>)(Object)commLsnr);
 
         ctx.addNodeAttribute(DIRECT_PROTO_VER_ATTR, DIRECT_PROTO_VER);
 
@@ -557,6 +569,427 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             log.debug(stopInfo());
 
         Arrays.fill(ioPools, null);
+    }
+
+    /** */ // TODO - cleanup for left nodes
+    private final ConcurrentMap<DirectReaderQueueKey, DirectReaderQueue<BufferReadSubChunk>> orderedMsgQ = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, Queue<BufferReadSubChunk>> msgQ = new ConcurrentHashMap<>();
+
+    private AtomicInteger cnt = new AtomicInteger();
+
+    /**
+     * @param nodeId Node ID.
+     * @param chunk Message bytes.
+     * @param msgC Closure to call when message processing finished.
+     */
+    @SuppressWarnings("fallthrough")
+    private void onMessage0_2(final UUID nodeId, BufferChunk chunk, final IgniteRunnable msgC) {
+        assert nodeId != null;
+        assert chunk != null;
+
+        DirectReaderQueueKey key = null;
+        DirectReaderQueue<BufferReadSubChunk> q = null;
+
+        for (;;) {
+            final BufferReadSubChunk subChunk = chunk.nextSubChunk();
+
+            if (subChunk == null)
+                return;
+
+            if (!subChunk.ordered()) {
+                if (subChunk.first() && subChunk.last()) {
+                    Executor pool;
+
+                    try {
+                        pool = pool(subChunk.policy());
+                    }
+                    catch (IgniteCheckedException e) {
+                        U.error(log, "Failed to get pool.", e);
+
+                        return;
+                    }
+
+                    pool.execute(new Runnable() {
+                        @Override public void run() {
+                            try {
+                                MessageReader reader = formatter.reader(nodeId, msgFactory);
+
+                                ByteBuffer buf = subChunk.buffer();
+
+                                assert buf.hasRemaining();
+
+                                Message msg = msgFactory.create(buf.get());
+
+                                boolean finished = false;
+
+                                if (buf.hasRemaining()) {
+                                    if (reader != null)
+                                        reader.setCurrentReadClass(msg.getClass());
+
+                                    finished = msg.readFrom(buf, reader);
+                                }
+
+                                assert !subChunk.buffer().hasRemaining();
+                                assert finished;
+
+                                subChunk.release();
+
+                                if (msg instanceof GridIoMessage)
+                                    processMessage(
+                                        nodeId,
+                                        (GridIoMessage)msg,
+                                        msgC);
+                                else
+                                    U.debug(
+                                        log,
+                                        "Skipped: " + msg);
+                            }
+                            catch (IgniteCheckedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    continue;
+                }
+
+                Queue<BufferReadSubChunk> chunks = msgQ.get(nodeId);
+
+                if (chunks == null)
+                    msgQ.putIfAbsent(nodeId, chunks = new ArrayDeque<>()); // TODO check for concurrent updates?
+
+                chunks.add(subChunk);
+
+                if (subChunk.last()) {
+                    boolean b = msgQ.remove(
+                        nodeId,
+                        chunks);
+
+                    assert b;
+
+                    Executor pool;
+
+                    try {
+                        pool = pool(subChunk.policy());
+                    }
+                    catch (IgniteCheckedException e) {
+                        U.error(log, "Failed to get pool.", e);
+
+                        return;
+                    }
+
+                    final Queue<BufferReadSubChunk> chunks0 = chunks;
+
+                    pool.execute(new Runnable() {
+                        @Override public void run() {
+                            try {
+                                MessageReader reader = formatter.reader(nodeId, msgFactory);
+
+                                Message msg = null;
+
+                                for (BufferReadSubChunk ch = chunks0.poll(); ch != null; ch = chunks0.poll()) {
+                                    ByteBuffer buf = ch.buffer();
+
+                                    assert buf.hasRemaining();
+
+                                    if (msg == null)
+                                        msg = msgFactory.create(buf.get());
+
+                                    boolean finished = msg.readFrom(buf, reader);
+
+                                    assert !ch.buffer().hasRemaining() : ch;
+
+                                    ch.release();
+
+                                    if (finished) {
+                                        assert chunks0.isEmpty();
+
+                                        if (msg instanceof GridIoMessage)
+                                            processMessage(
+                                                nodeId,
+                                                (GridIoMessage)msg,
+                                                msgC);
+                                        else
+                                            U.debug(
+                                                log,
+                                                "Skipped: " + msg);
+
+                                        return;
+                                    }
+                                }
+                            }
+                            catch (IgniteCheckedException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    });
+                }
+            }
+            else {
+
+                if (key == null || key.threadId() != subChunk.threadId() || !key.nodeId().equals(nodeId)) {
+                    key = new DirectReaderQueueKey(
+                        nodeId,
+                        subChunk.threadId());
+
+                    q = orderedMsgQ.get(key);
+
+                    if (q == null) {
+                        DirectReaderQueue<BufferReadSubChunk> old = orderedMsgQ.putIfAbsent(
+                            key,
+                            q = new DirectReaderQueue<>());
+
+                        assert old == null; // TODO remove when fixing recovery since this can be called from separate nio worker
+                    }
+                }
+
+                q.add(subChunk);
+
+                if (q.isEmpty())
+                    continue;
+
+                final boolean reserved = q.reserve();
+
+                if (!reserved)
+                    continue;
+
+                final DirectReaderQueue<BufferReadSubChunk> q0 = q;
+
+                Executor pool;
+
+                try {
+                    pool = pool(subChunk.policy());
+                }
+                catch (IgniteCheckedException e) {
+                    U.error(
+                        log,
+                        "Failed to get pool.",
+                        e);
+
+                    return;
+                }
+
+                pool.execute(
+                    new Runnable() {
+                        @Override public void run() {
+                            boolean firstIter = true;
+
+                            for (; ; ) {
+                                if (!(reserved && firstIter) && !q0.reserve()) {
+                                    int cnt0 = cnt.incrementAndGet();
+
+                                    if ((cnt0 & 128) == 0)
+                                        U.debug(
+                                            log,
+                                            "False: " + cnt0);
+
+                                    return;
+                                }
+
+                                firstIter = false;
+
+                                try {
+                                    // TODO need to limit max chunks count processed at a time.
+                                    for (BufferReadSubChunk t = q0.poll(); t != null; t = q0.poll()) {
+                                        MessageReader reader = q0.reader();
+
+                                        if (reader == null)
+                                            q0.reader(reader = formatter.reader(
+                                                nodeId,
+                                                msgFactory));
+
+                                        Message msg = q0.message();
+
+                                        ByteBuffer buf = t.buffer();
+
+                                        if (msg == null && buf.hasRemaining())
+                                            msg = msgFactory.create(buf.get());
+
+                                        boolean finished = false;
+
+                                        if (buf.hasRemaining()) {
+                                            if (reader != null)
+                                                reader.setCurrentReadClass(msg.getClass());
+
+                                            finished = msg.readFrom(
+                                                buf,
+                                                reader);
+                                        }
+
+                                        assert !t.buffer().hasRemaining();
+
+                                        t.release();
+
+                                        if (finished) {
+//                                        U.debug(log, "Received: " + msg);
+
+                                            q0.message(null);
+
+                                            if (reader != null)
+                                                reader.reset();
+
+                                            if (msg instanceof GridIoMessage)
+                                                processMessage(
+                                                    nodeId,
+                                                    (GridIoMessage)msg,
+                                                    msgC);
+                                            else
+                                                U.debug(
+                                                    log,
+                                                    "Skipped: " + msg);
+
+                                        }
+                                        else
+                                            q0.message(msg);
+                                    }
+                                }
+                                catch (IgniteCheckedException e) {
+                                    // Print stack trace only if has runtime exception in it's cause.
+                                    if (X.hasCause(
+                                        e,
+                                        IOException.class))
+                                        U.warn(
+                                            log,
+                                            "Closing NIO session because of unhandled exception " +
+                                                "[cls=" + e.getClass() +
+                                                ", msg=" + e.getMessage() + ']');
+                                    else
+                                        U.error(
+                                            log,
+                                            "Closing NIO session because of unhandled exception.",
+                                            e);
+
+                                    q0.session().close();
+                                }
+                                finally {
+                                    q0.release();
+                                }
+
+                                if (q0.isEmpty())
+                                    break;
+                            }
+                        }
+                    });
+            }
+        }
+    }
+
+    private void processMessage(
+        UUID nodeId,
+        GridIoMessage msg,
+        IgniteRunnable msgC
+    ) {
+        busyLock.readLock();
+
+        try {
+            if (stopping) {
+                if (log.isDebugEnabled())
+                    log.debug("Received communication message while stopping (will ignore) [nodeId=" +
+                        nodeId + ", msg=" + msg + ']');
+
+                return;
+            }
+
+            // Check discovery.
+            ClusterNode node = ctx.discovery().node(nodeId);
+
+            //U.debug(log, "MSG: " + msg);
+
+            if (node == null) {
+                if (log.isDebugEnabled())
+                    log.debug("Ignoring message from dead node [senderId=" + nodeId + ", msg=" + msg + ']');
+
+                return; // We can't receive messages from non-discovered ones.
+            }
+
+            if (msg.topic() == null) {
+                int topicOrd = msg.topicOrdinal();
+
+                msg.topic(topicOrd >= 0 ? GridTopic.fromOrdinal(topicOrd) :
+                    marsh.unmarshal(msg.topicBytes(), U.resolveClassLoader(ctx.config())));
+            }
+
+            if (!started) {
+                lock.readLock().lock();
+
+                try {
+                    if (!started) { // Sets to true in write lock, so double checking.
+                        // Received message before valid context is set to manager.
+                        if (log.isDebugEnabled())
+                            log.debug("Adding message to waiting list [senderId=" + nodeId +
+                                ", msg=" + msg + ']');
+
+                        ConcurrentLinkedDeque8<DelayedMessage> list =
+                            F.addIfAbsent(waitMap, nodeId, F.<DelayedMessage>newDeque());
+
+                        assert list != null;
+
+                        list.add(new DelayedMessage(nodeId, msg, msgC));
+
+                        return;
+                    }
+                }
+                finally {
+                    lock.readLock().unlock();
+                }
+            }
+
+            // If message is P2P, then process in P2P service.
+            // This is done to avoid extra waiting and potential deadlocks
+            // as thread pool may not have any available threads to give.
+            byte plc = msg.policy();
+
+            switch (plc) {
+                case P2P_POOL: {
+                    processP2PMessage(nodeId, msg, msgC);
+
+                    break;
+                }
+
+                case PUBLIC_POOL:
+                case SYSTEM_POOL:
+                case MANAGEMENT_POOL:
+                case AFFINITY_POOL:
+                case UTILITY_CACHE_POOL:
+                case MARSH_CACHE_POOL:
+                case IGFS_POOL:
+                {
+                    if (msg.isOrdered())
+                        processOrderedMessage(nodeId, msg, plc, msgC);
+                    else {
+                        try {
+                            processRegularMessage0(
+                                msg,
+                                nodeId);
+                        }
+                        finally {
+                            msgC.run();
+                        }
+                    }
+
+                    break;
+                }
+
+                default:
+                    assert plc >= 0 : "Negative policy: " + plc;
+
+                    if (isReservedGridIoPolicy(plc))
+                        throw new IgniteCheckedException("Failed to process message with policy of reserved range. " +
+                            "[policy=" + plc + ']');
+
+                    if (msg.isOrdered())
+                        processOrderedMessage(nodeId, msg, plc, msgC);
+                    else
+                        processRegularMessage(nodeId, msg, plc, msgC);
+            }
+        }
+        catch (IgniteCheckedException e) {
+            U.error(log, "Failed to process message (will ignore): " + msg, e);
+        }
+        finally {
+            busyLock.readUnlock();
+        }
     }
 
     /**

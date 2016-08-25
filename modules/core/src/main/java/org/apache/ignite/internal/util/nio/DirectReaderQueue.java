@@ -22,6 +22,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.ignite.internal.util.lang.GridMetadataAwareAdapter;
+import org.apache.ignite.plugin.extensions.communication.Message;
+import org.apache.ignite.plugin.extensions.communication.MessageReader;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +37,18 @@ public class DirectReaderQueue<T> {
 
     private final GridNioSession ses;
 
+    MessageReader rdr;
+
+    Message msg;
+
     public DirectReaderQueue(
         GridNioSession ses
     ) {
         this.ses = new SessionWrapper(ses);
+    }
+
+    public DirectReaderQueue() {
+        this(null);
     }
 
     public void add(T t) {
@@ -62,11 +72,27 @@ public class DirectReaderQueue<T> {
     }
 
     public boolean reserve() {
-        return reserved.compareAndSet(false, true);
+        return !reserved.get() && reserved.compareAndSet(false, true);
     }
 
     public boolean isEmpty() {
         return q.isEmpty();
+    }
+
+    public void reader(MessageReader rdr) {
+        this.rdr = rdr;
+    }
+
+    public MessageReader reader() {
+        return rdr;
+    }
+
+    public Message message() {
+        return msg;
+    }
+
+    public void message(Message msg) {
+        this.msg = msg;
     }
 
     private static class SessionWrapper extends GridMetadataAwareAdapter implements GridNioSession {

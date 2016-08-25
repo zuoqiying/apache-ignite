@@ -36,6 +36,14 @@ public class DirectReaderQueueKey {
         this.threadId = threadId;
     }
 
+    public UUID nodeId() {
+        return nodeId;
+    }
+
+    public long threadId() {
+        return threadId;
+    }
+
     @Override public boolean equals(Object o) {
         if (this == o)
             return true;

@@ -342,14 +342,14 @@ public class CacheContinuousBatchAckTest extends GridCommonAbstractTest implemen
         }
 
         /** {@inheritDoc} */
-        @Override protected void notifyListener(UUID sndId, Message msg, IgniteRunnable msgC) {
-            if (check || (periodicCheck && filterOn.get())) {
-                if (msg instanceof GridIoMessage &&
-                    ((GridIoMessage)msg).message() instanceof CacheContinuousQueryBatchAck)
-                    fail.set(true);
-            }
-
-            super.notifyListener(sndId, msg, msgC);
-        }
+//        @Override protected void notifyListener(UUID sndId, Message msg, IgniteRunnable msgC) {
+//            if (check || (periodicCheck && filterOn.get())) {
+//                if (msg instanceof GridIoMessage &&
+//                    ((GridIoMessage)msg).message() instanceof CacheContinuousQueryBatchAck)
+//                    fail.set(true);
+//            }
+//
+//            super.notifyListener(sndId, msg, msgC);
+//        }
     }
 }

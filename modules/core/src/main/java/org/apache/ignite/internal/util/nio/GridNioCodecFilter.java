@@ -20,15 +20,10 @@ package org.apache.ignite.internal.util.nio;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
-import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.S;
-import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 
 /**
@@ -97,10 +92,6 @@ public class GridNioCodecFilter extends GridNioFilterAdapter {
         }
     }
 
-    private ThreadPoolExecutor exec;
-
-    private final ConcurrentMap<DirectReaderQueueKey, DirectReaderQueue<BufferReadSubChunk>> qMap = new ConcurrentHashMap<>();
-
     /** {@inheritDoc} */
     @Override public void onMessageReceived(GridNioSession ses, Object msg) throws IgniteCheckedException {
 //        if (!(msg instanceof ByteBuffer))
@@ -110,11 +101,48 @@ public class GridNioCodecFilter extends GridNioFilterAdapter {
         BufferChunk chunk = ses.meta(GridNioSessionMetaKey.READ_CHUNK.ordinal());
 
         try {
+            for (; ; ) {
+                UUID nodeId = ses.meta(TcpCommunicationSpi.NODE_ID_META);
+
+                if (nodeId != null) {
+                    proceedMessageReceived(
+                        ses,
+                        chunk);
+
+
+
+                    return;
+                }
+
+                BufferReadSubChunk subChunk = chunk.nextSubChunk();
+
+                if (subChunk == null)
+                    return;
+
+                processSubChunk(
+                    ses,
+                    subChunk);
+            }
+        }
+        catch (IOException e) {
+            throw new GridNioException(e);
+        }
+
+
+/*
+        BufferChunk chunk = ses.meta(GridNioSessionMetaKey.READ_CHUNK.ordinal());
+
+        try {
             for (;;) {
                 BufferReadSubChunk subChunk = chunk.nextSubChunk();
 
                 if (subChunk == null)
                     return;
+
+                processSubChunk(ses, subChunk);
+
+                if (true)
+                    continue;
 
                 UUID nodeId = ses.meta(TcpCommunicationSpi.NODE_ID_META);
 
@@ -138,11 +166,11 @@ public class GridNioCodecFilter extends GridNioFilterAdapter {
 
                     final DirectReaderQueue<BufferReadSubChunk> finalQ = q;
 
-//                    exec.submit(
-//                        new Runnable() {
-//                            @Override public void run() {
+                    exec.submit(
+                        new Runnable() {
+                            @Override public void run() {
                                 for (;;) {
-                                    if (finalQ.reserved() || !finalQ.reserve())
+                                    if (!finalQ.reserve())
                                         return;
 
                                     try {
@@ -168,21 +196,23 @@ public class GridNioCodecFilter extends GridNioFilterAdapter {
                                     if (finalQ.isEmpty())
                                         break;
                                 }
-
-//                            }
-//                        });
+                            }
+                        });
                 }
             }
         }
         catch (IOException e) {
             throw new GridNioException(e);
         }
+        */
     }
 
     private void processSubChunk(
         GridNioSession ses,
         BufferReadSubChunk subChunk
     ) throws IOException, IgniteCheckedException {
+//        U.debug(log, "Processing [ses=" + ses + ", subChunk=" + subChunk + ']');
+
         try {
             Object res = parser.decode(
                 ses,

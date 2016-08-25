@@ -172,29 +172,29 @@ public class GridOrderedMessageCancelSelfTest extends GridCommonAbstractTest {
      */
     private static class CommunicationSpi extends TcpCommunicationSpi {
         /** {@inheritDoc} */
-        @Override protected void notifyListener(UUID sndId, Message msg,
-            IgniteRunnable msgC) {
-            try {
-                GridIoMessage ioMsg = (GridIoMessage)msg;
-
-                boolean wait = ioMsg.message() instanceof GridCacheQueryResponse ||
-                        ioMsg.message() instanceof GridJobExecuteResponse;
-
-                if (wait) {
-                    cancelLatch.countDown();
-
-                    assertTrue(U.await(resLatch, 5000, MILLISECONDS));
-                }
-
-                super.notifyListener(sndId, msg, msgC);
-
-                if (wait)
-                    finishLatch.countDown();
-            }
-            catch (Exception e) {
-                fail("Unexpected error: " + e);
-            }
-        }
+//        @Override protected void notifyListener(UUID sndId, Message msg,
+//            IgniteRunnable msgC) {
+//            try {
+//                GridIoMessage ioMsg = (GridIoMessage)msg;
+//
+//                boolean wait = ioMsg.message() instanceof GridCacheQueryResponse ||
+//                        ioMsg.message() instanceof GridJobExecuteResponse;
+//
+//                if (wait) {
+//                    cancelLatch.countDown();
+//
+//                    assertTrue(U.await(resLatch, 5000, MILLISECONDS));
+//                }
+//
+//                super.notifyListener(sndId, msg, msgC);
+//
+//                if (wait)
+//                    finishLatch.countDown();
+//            }
+//            catch (Exception e) {
+//                fail("Unexpected error: " + e);
+//            }
+//        }
     }
 
     /**
