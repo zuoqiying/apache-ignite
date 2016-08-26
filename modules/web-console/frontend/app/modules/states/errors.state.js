@@ -28,10 +28,16 @@ angular
         $stateProvider
             .state('404', {
                 url: '/404',
-                templateUrl: templateNotFoundPage
+                templateUrl: templateNotFoundPage,
+                metaTags: {
+                    title: 'Page not found'
+                }
             })
             .state('403', {
                 url: '/403',
-                templateUrl: templateNotAuthorizedPage
+                templateUrl: templateNotAuthorizedPage,
+                metaTags: {
+                    title: 'Not authorized'
+                }
             });
     }]);

@@ -42,7 +42,7 @@ module.exports.factory = (mongo, errors) => {
             return mongo.Space.find({owner: userId, demo: !!demo}).lean().exec()
                 .then((spaces) => {
                     if (!spaces.length)
-                        throw new errors.NotFoundException('Failed to find space');
+                        throw new errors.MissingResourceException('Failed to find space');
 
                     return spaces;
                 });

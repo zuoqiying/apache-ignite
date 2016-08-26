@@ -32,9 +32,8 @@ angular
         templateUrl,
         onEnter: ['$state', 'Auth', 'AclService', ($state, Auth, AclService) => {
             if (Auth.authorized)
-                $state.go('base.configuration.clusters');
-
-            if (!AclService.can('login'))
+                $state.go('base.configuration.clusters', {}, {reload: true});
+            else if (!AclService.can('login'))
                 $state.go('403');
         }],
         metaTags: {

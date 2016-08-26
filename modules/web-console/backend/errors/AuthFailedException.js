@@ -19,11 +19,12 @@
 
 import AppErrorException from './AppErrorException';
 
-class NotFoundException extends AppErrorException {
+class AuthFailedException extends AppErrorException {
     constructor(message) {
         super(message);
-        this.httpCode = 404;
+
+        this.httpCode = 401;
     }
 }
 
-module.exports = NotFoundException;
+module.exports = AuthFailedException;

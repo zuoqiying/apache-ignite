@@ -17,23 +17,14 @@
 
 'use strict';
 
-// Fire me up!
-
 import AppErrorException from './AppErrorException';
-import IllegalArgumentException from './IllegalArgumentException';
-import DuplicateKeyException from './DuplicateKeyException';
-import ServerErrorException from './ServerErrorException';
-import MissingResourceException from './MissingResourceException';
-import AuthFailedException from './AuthFailedException';
 
-module.exports = {
-    implements: 'errors',
-    factory: () => ({
-        AppErrorException,
-        IllegalArgumentException,
-        DuplicateKeyException,
-        ServerErrorException,
-        MissingResourceException,
-        AuthFailedException
-    })
-};
+class MissingResourceException extends AppErrorException {
+    constructor(message) {
+        super(message);
+
+        this.httpCode = 404;
+    }
+}
+
+module.exports = MissingResourceException;

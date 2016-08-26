@@ -51,7 +51,7 @@ module.exports.factory = (_, express, settings, mongo, spacesService, errors) =>
                     }
                 })
                 .catch((err) => {
-                    if (err instanceof errors.NotFoundException)
+                    if (err instanceof errors.MissingResourceException)
                         return spacesService.createDemoSpace(req.user._id);
                 })
                 .then((space) => {

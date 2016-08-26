@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-const guest = ['login', 'terms'];
-const becomed = ['profile', 'configuration', 'query', 'terms'];
+const guest = ['login'];
+const becomed = ['profile', 'configuration', 'query'];
 const user = becomed.concat(['logout']);
 const admin = user.concat(['admin_page']);
 

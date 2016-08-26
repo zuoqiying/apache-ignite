@@ -30,18 +30,21 @@ export default ['User', ['$q', '$injector', '$rootScope', '$state', '$http', fun
 
     return {
         read() {
+            const dropSessionAndSignin = () => {
+                const Auth = $injector.get('Auth');
+
+                Auth.authorized = false;
+
+                this.clean();
+
+                if ($state.current.name !== 'signin')
+                    $state.go('signin');
+            };
+
             return $http.post('/api/v1/user')
                 .then(({data}) => {
-                    if (_.isEmpty(data)) {
-                        const Auth = $injector.get('Auth');
-
-                        Auth.authorized = false;
-
-                        this.clean();
-
-                        if ($state.current.name !== 'signin')
-                            $state.go('signin');
-                    }
+                    if (_.isEmpty(data))
+                        return dropSessionAndSignin();
 
                     try {
                         localStorage.user = JSON.stringify(data);
@@ -52,7 +55,12 @@ export default ['User', ['$q', '$injector', '$rootScope', '$state', '$http', fun
 
                     return _user = $root.user = data;
                 })
-                .catch(({data}) => Promise.reject(data));
+                .catch(({data, status}) => {
+                    if (status === 401)
+                        dropSessionAndSignin();
+
+                    return Promise.reject(data);
+                });
         },
         clean() {
             delete $root.user;

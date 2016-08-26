@@ -44,7 +44,7 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
             const latest = agentMgr.supportedAgents.latest;
 
             if (_.isEmpty(latest))
-                throw new errors.NotFoundException('Missing agent zip on server. Please ask webmaster to upload agent zip!');
+                throw new errors.MissingResourceException('Missing agent zip on server. Please ask webmaster to upload agent zip!');
 
             const filePath = latest.filePath;
             const fileName = latest.fileName;
