@@ -55,7 +55,7 @@ public class BufferChunkList {
             if (bufs[i].remaining() == 0) {
                 newStart = i + 1;
 
-                bufChunks[i].release();
+                bufChunks[i].release(0);
             }
             else
                 break;

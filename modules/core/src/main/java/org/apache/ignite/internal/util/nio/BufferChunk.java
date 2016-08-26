@@ -57,15 +57,27 @@ public class BufferChunk {
     }
 
     public boolean reserve() {
-        return state.get() == 0 && state.compareAndSet(0, 1);
+        int i = state.get();
+
+        return (i & 1) == 0 && state.compareAndSet(i, i + 1);
     }
 
-    public void release() {
+    public void release(int curState) {
+        if (curState == -1)
+            // Already locked for release.
+            return;
+
+        if (curState == 0)
+            curState = state.get();
+
+        else if (!(state.get() == curState && state.compareAndSet(curState, -1)))
+            return;
+
         next = -1;
         buf.clear();
         subchunksCreated = 0;
         subchunksReleased.set(0);
-        state.set(0);
+        state.set(curState + 1);
     }
 
     public ByteBuffer buffer() {
@@ -91,10 +103,11 @@ public class BufferChunk {
     }
 
     public void releaseSubChunk() {
+        int state0 = state.get();
         int c = subchunksReleased.incrementAndGet();
 
         if (c == subchunksCreated)
-            release();
+            release(state0);
     }
 
     void onBeforeRead() {
@@ -125,9 +138,9 @@ public class BufferChunk {
 
         BufferReadSubChunk ret = new BufferReadSubChunk(threadId, subBuf, this, plc, flags);
 
-        subchunksCreated--;
-
         buf.position(buf.position() + expLen);
+
+        subchunksCreated--;
 
         return ret;
     }
@@ -138,21 +151,27 @@ public class BufferChunk {
         dst.buffer().put(buf);
     }
 
+    public int state() {
+        return state.get();
+    }
+
     void tryRelease() {
         int c = subchunksCreated;
 
         if (c == 0) {
-            release();
+            release(0);
 
             return;
         }
 
         assert c < 0;
 
+        int state0 = state.get();
+
         subchunksCreated = -c;
 
         if (subchunksReleased.get() == -c)
-            release();
+            release(state0);
     }
 
     public void onBeforeWrite() {

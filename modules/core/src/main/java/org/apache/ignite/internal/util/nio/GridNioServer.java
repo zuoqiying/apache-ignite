@@ -974,7 +974,7 @@ public class GridNioServer<T> {
 
                 close(ses, null);
 
-                chunk.release();
+                chunk.release(0);
 
                 return;
             }
