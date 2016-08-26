@@ -51,8 +51,8 @@ export default () => {
                 '/api/v1/*': {
                     target: 'http://localhost:3000',
                     changeOrigin: true,
-                    pathRewrite:{
-                        '^/api/v1' : ''
+                    pathRewrite: {
+                        '^/api/v1': ''
                     }
                 }
             },
