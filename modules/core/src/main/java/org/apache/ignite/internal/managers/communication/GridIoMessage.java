@@ -101,7 +101,7 @@ public class GridIoMessage implements Message {
     /**
      * @return Policy.
      */
-    byte policy() {
+    public byte policy() {
         return plc;
     }
 
@@ -164,7 +164,7 @@ public class GridIoMessage implements Message {
     /**
      * @return {@code True} if message is ordered, {@code false} otherwise.
      */
-    boolean isOrdered() {
+    public boolean isOrdered() {
         return ordered;
     }
 

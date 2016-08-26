@@ -46,12 +46,10 @@ import java.util.Set;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
-import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
 import org.apache.ignite.internal.managers.communication.GridIoMessage;
-import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsSingleMessage;
 import org.apache.ignite.internal.util.GridConcurrentHashSet;
 import org.apache.ignite.internal.util.nio.ssl.GridNioSslFilter;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
@@ -89,9 +87,6 @@ import static org.apache.ignite.internal.util.nio.GridNioSessionMetaKey.READ_CHU
  *
  */
 public class GridNioServer<T> {
-    /** TODO */
-    public static final int MAX_READ_CHUNKS = IgniteSystemProperties.getInteger("IGNITE_MAX_READ_CHUNKS", 32);
-
     /** Default session write timeout. */
     public static final int DFLT_SES_WRITE_TIMEOUT = 5000;
 
@@ -314,9 +309,6 @@ public class GridNioServer<T> {
         this.writerFactory = writerFactory;
 
         this.skipRecoveryPred = skipRecoveryPred != null ? skipRecoveryPred : F.<Message>alwaysFalse();
-
-        // TODO
-        U.quietAndInfo(log, ">>> Max chunks to read: " + MAX_READ_CHUNKS);
     }
 
     /**
@@ -427,13 +419,16 @@ public class GridNioServer<T> {
         Message msg,
         boolean sys
     ) {
-        assert ses instanceof GridSelectorNioSessionImpl;
+        assert ses instanceof GridSelectorNioSessionImpl : ses;
 
         GridSelectorNioSessionImpl impl = (GridSelectorNioSessionImpl)ses;
 
         BufferChunk firstChunk = impl.reserveWriteChunk();
 
         GridNioFuture<?> fut;
+
+        byte plc = msg instanceof GridIoMessage ? ((GridIoMessage)msg).policy() : 0;
+        boolean ordered = msg instanceof GridIoMessage && ((GridIoMessage)msg).isOrdered();
 
         if (firstChunk == null) {
             assert false; // TODO if chunk cannot be allocated then message should be marshalled in nio thread
@@ -467,22 +462,16 @@ public class GridNioServer<T> {
 
                 BufferChunk chunk = firstChunk;
 
-                //U.debug(log, "Writing message: " + msg + ", threadId=" + Thread.currentThread().getId());
-
-                int chunkCnt = 1;
-
                 for (;;) {
                     chunk.onBeforeWrite();
 
-                    boolean b = msg.writeTo(
+                    boolean finished = msg.writeTo(
                         chunk.buffer(),
                         writer);
 
-                    chunk.onAfterWrite();
+                    chunk.onAfterWrite(plc, ordered, chunk == firstChunk, finished);
 
-                    //U.debug(log, "Next chunk: " + chunk + " " + U.byteBufferToString(chunk.buffer()));
-
-                    if (b) {
+                    if (finished) {
                         if (writer != null)
                             writer.reset();
 
@@ -490,8 +479,6 @@ public class GridNioServer<T> {
                     }
 
                     chunk = impl.expandWriteChunk(chunk);
-
-                    chunkCnt++;
 
                     assert chunk.reserved();
 
@@ -510,8 +497,6 @@ public class GridNioServer<T> {
                     impl,
                     (NioOperationFuture)fut,
                     sys);
-
-                //U.debug(log, "Finished writing message: " + msg + ", chunkCnt=" + chunkCnt + ']');
             }
             catch (IgniteCheckedException e) {
                 fut = new GridNioFinishedFuture<Object>(e);
@@ -975,7 +960,7 @@ public class GridNioServer<T> {
             BufferChunk chunk = ses.removeMeta(READ_CHUNK.ordinal());
 
             if (chunk == null)
-                chunk = ses.reserveReadChunk();
+                chunk = ses.reserveReadChunk(0);
 
             if (chunk == null)
                 throw new RuntimeException();
@@ -986,8 +971,6 @@ public class GridNioServer<T> {
             if (cnt == -1) {
                 if (log.isDebugEnabled())
                     log.debug("Remote client closed connection: " + ses);
-
-                U.debug("Remote client closed connection: " + ses);
 
                 close(ses, null);
 
@@ -1012,13 +995,13 @@ public class GridNioServer<T> {
             //U.debug(log, "read [cnt=" + cnt + ", bytes=" + U.byteBufferToString(chunk.buffer()));
 
             for (;;) {
-                BufferReadSubChunk subChunk = chunk.nextChunk();
+                BufferReadSubChunk subChunk = chunk.nextSubChunk();
 
                 if (subChunk == null) {
                     if (chunk.buffer().hasRemaining()) {
                         //U.debug(log, ">>> buffer has remaining. \n\n\n");
 
-                        BufferChunk newChunk = ses.reserveReadChunk();
+                        BufferChunk newChunk = ses.reserveReadChunk(chunk.index() + 1);
 
                         chunk.copyTo(newChunk);
 
@@ -1309,7 +1292,7 @@ public class GridNioServer<T> {
             // Fill up as many messages as possible to write buffer.
             List<NioOperationFuture<?>> doneFuts = null;
 
-            for (; chunk != null; ) {
+            for (; chunkList.hasFreeChunks() && chunk != null; ) {
                 if (req != null) {
                     if (doneFuts == null)
                         doneFuts = new ArrayList<>();

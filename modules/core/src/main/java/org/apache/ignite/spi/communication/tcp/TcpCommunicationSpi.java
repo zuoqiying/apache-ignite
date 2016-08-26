@@ -2729,8 +2729,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                         if (log.isDebugEnabled())
                             log.debug("Received handshake message [rmtNode=" + rmtNodeId + ", rcvCnt=" + rcvCnt + ']');
 
-                        U.debug("Received handshake message [rmtNode=" + rmtNodeId + ", rcvCnt=" + rcvCnt + ']');
-
                         if (rcvCnt == -1) {
                             if (log.isDebugEnabled())
                                 log.debug("Connection rejected, will retry client creation [rmtNode=" + rmtNodeId + ']');
@@ -2745,6 +2743,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     if (log.isDebugEnabled())
                         log.debug("Failed to read from channel: " + e);
 
+                    U.debug("Error in thread");
                     e.printStackTrace();
 
                     throw new IgniteCheckedException("Failed to read from channel.", e);
@@ -2752,8 +2751,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                 finally {
                     if (!success)
                         U.closeQuiet(ch);
-
-                    //U.debug(log, "Success: " + success);
                 }
             }
         }
@@ -3652,8 +3649,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
             buf.put(NODE_ID_MSG_TYPE);
             buf.put(nodeIdBytes);
 
-            U.debug(">>> ID msg: " + Arrays.toString(nodeIdBytes) + ", buf=" + buf + ']');
-
             return true;
         }
 
@@ -3681,7 +3676,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
         /** {@inheritDoc} */
         @Override public String toString() {
-            return S.toString(NodeIdMessage.class, this);
+            return S.toString(NodeIdMessage.class, this, "bytes", Arrays.toString(nodeIdBytesWithType));
         }
     }
 

@@ -18,15 +18,17 @@
 package org.apache.ignite.internal.util.nio;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.internal.util.typedef.internal.S;
-import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  *
  */
 public class BufferChunk {
+    public static final byte FIRST_MASK = 0x1;
+    public static final byte LAST_MASK = 0x2;
+    public static final byte ORDERED_MASK = 0x4;
+
     private final int idx;
 
     private int next = -1;
@@ -99,12 +101,17 @@ public class BufferChunk {
         buf.flip();
     }
 
-    BufferReadSubChunk nextChunk() {
+    public BufferReadSubChunk nextSubChunk() {
         if (buf.remaining() < 12)
             return null;
 
         long threadId = buf.getLong();
         int expLen = buf.getInt();
+
+        byte plc = (byte)(expLen >> 24);
+        byte flags = (byte)((expLen >> 16) & 0xFF);
+
+        expLen = expLen & 0xFFFF;
 
         if (buf.remaining() < expLen) {
             buf.position(buf.position() - 12);
@@ -116,11 +123,9 @@ public class BufferChunk {
 
         subBuf.limit(expLen);
 
-        BufferReadSubChunk ret = new BufferReadSubChunk(threadId, subBuf, this);
+        BufferReadSubChunk ret = new BufferReadSubChunk(threadId, subBuf, this, plc, flags);
 
         subchunksCreated--;
-
-        //U.debug("Subch: " + this);
 
         buf.position(buf.position() + expLen);
 
@@ -156,8 +161,21 @@ public class BufferChunk {
         buf.putInt(0); // Reserve space for size.
     }
 
-    public void onAfterWrite() {
-        buf.putInt(8, buf.position() - 12);
+    public void onAfterWrite(byte plc, boolean ordered, boolean first, boolean last) {
+        int flags = 0;
+
+        if (ordered)
+            flags |= ORDERED_MASK;
+
+        if (last)
+            flags |= LAST_MASK;
+
+        if (first)
+            flags |= FIRST_MASK;
+
+        int data = ((plc & 0xFF) << 24) | (flags << 16) | (buf.position() - 12);
+
+        buf.putInt(8, data);
         buf.flip();
     }
 
