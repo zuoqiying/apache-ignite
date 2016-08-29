@@ -409,6 +409,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                 if (log.isDebugEnabled())
                     log.debug("Remote node ID received: " + sndId);
 
+                U.debug(log, "Remote node ID received: " + sndId);
+
                 final UUID old = ses.addMeta(NODE_ID_META, sndId);
 
                 assert old == null;
@@ -2614,14 +2616,18 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     else if (log.isDebugEnabled())
                         log.debug("Received remote node ID: " + rmtNodeId0);
 
+                    U.debug(log, "Received remote node ID: " + rmtNodeId0);
+
                     if (isSslEnabled()) {
                         assert sslHnd != null;
 
                         ch.write(sslHnd.encrypt(ByteBuffer.wrap(U.IGNITE_HEADER)));
                     }
                     else {
-                        ByteBuffer src
-                            = ByteBuffer.allocate(12).putLong(Thread.currentThread().getId()).putInt(U.IGNITE_HEADER.length);
+                        ByteBuffer src =
+                            ByteBuffer.allocate(12).order(ByteOrder.nativeOrder())
+                                .putLong(Thread.currentThread().getId())
+                                .putInt(U.IGNITE_HEADER.length);
                         src.flip();
                         ch.write(src);
                         ch.write(ByteBuffer.wrap(U.IGNITE_HEADER));
@@ -2642,6 +2648,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                             log.debug("Write handshake message [rmtNode=" + rmtNodeId + ", msg=" + msg + ']');
 
                         buf = ByteBuffer.allocate(33 + 12);
+
+                        buf.order(ByteOrder.nativeOrder());
 
                         buf.putLong(Thread.currentThread().getId()).putInt(33);
 
@@ -2724,6 +2732,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
                         if (log.isDebugEnabled())
                             log.debug("Received handshake message [rmtNode=" + rmtNodeId + ", rcvCnt=" + rcvCnt + ']');
+
+                        U.debug(log, ">>> Received handshake message [rmtNode=" + rmtNodeId + ", rcvCnt=" + rcvCnt + ']');
 
                         if (rcvCnt == -1) {
                             if (log.isDebugEnabled())

@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.util.nio;
 
 import java.nio.ByteBuffer;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
@@ -28,10 +29,12 @@ public class BufferReadSubChunk {
 
     private final ByteBuffer buf;
 
+    @GridToStringExclude
     private final BufferChunk parent;
 
     private final byte plc;
 
+    @GridToStringExclude
     private final byte flags;
 
     public BufferReadSubChunk(
@@ -78,6 +81,8 @@ public class BufferReadSubChunk {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(BufferReadSubChunk.class, this);
+        return S.toString(BufferReadSubChunk.class, this, "first", first(), "last", last(),
+            "ordered", ordered(),
+            "remaining", buf.remaining());
     }
 }

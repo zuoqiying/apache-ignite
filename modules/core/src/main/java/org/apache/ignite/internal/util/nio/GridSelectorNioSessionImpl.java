@@ -38,20 +38,12 @@ import org.jsr166.ConcurrentLinkedDeque8;
  * socket addresses.
  */
 class GridSelectorNioSessionImpl extends GridNioSessionImpl {
-    /** */
-    public static final int BUF_CHUNK_SIZE = IgniteSystemProperties.getInteger(
-        "IGNITE_CONN_BUF_CHUNK_SIZE",
-        256);
-    public static final int IGNITE_CONN_BUF_CHUNK_CNT = IgniteSystemProperties.getInteger(
-        "IGNITE_CONN_BUF_CHUNK_CNT",
-        2048);
-
     public static final int READ_BUF_CHUNK_SIZE = IgniteSystemProperties.getInteger(
         "IGNITE_READ_BUF_CHUNK_SIZE",
         65536);
     public static final int IGNITE_READ_CONN_BUF_CHUNK_CNT = IgniteSystemProperties.getInteger(
         "IGNITE_READ_CONN_BUF_CHUNK_CNT",
-        256);
+        16);
 
     /** Pending write requests. */
     private final ConcurrentLinkedDeque8<GridNioFuture<?>> queue = new ConcurrentLinkedDeque8<>();
@@ -83,17 +75,8 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     private final IgniteLogger log;
 
     /** */
-    private final ByteBuffer pool = ByteBuffer.allocateDirect(
-        BUF_CHUNK_SIZE *
-            IGNITE_CONN_BUF_CHUNK_CNT);
-
-    private final BufferChunk writeChunks[] = new BufferChunk[
-        IGNITE_CONN_BUF_CHUNK_CNT];
-
     private final BufferChunk readChunks[] = new BufferChunk[
         IGNITE_READ_CONN_BUF_CHUNK_CNT];
-
-    private final BufferChunkList chunkList;
 
     /**
      * Creates session instance.
@@ -147,20 +130,11 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
             this.readBuf = readBuf;
         }
 
-        for (int i = 0; i < writeChunks.length; i++) {
-            //pool.position(i * BUF_CHUNK_SIZE).limit((i + 1) * BUF_CHUNK_SIZE);
-
-            writeChunks[i] = new BufferChunk(i, ByteBuffer.allocateDirect(BUF_CHUNK_SIZE));
-        }
-
-        for (int i = 0; i < IGNITE_READ_CONN_BUF_CHUNK_CNT; i++) {
-            readChunks[i] = new BufferChunk(i, ByteBuffer.allocateDirect(READ_BUF_CHUNK_SIZE));
-        }
-
-        chunkList = new BufferChunkList(Math.max(16, 65536 / BUF_CHUNK_SIZE));
-
-        U.quietAndInfo(log, "info [chunkSize=" + BUF_CHUNK_SIZE + ", chunksCnt=" + writeChunks.length +
-            ", chunkListSize=" + chunkList.maxSize() + ']');
+        for (int i = 0; i < IGNITE_READ_CONN_BUF_CHUNK_CNT; i++)
+            readChunks[i] = new BufferChunk(
+                i,
+                ByteBuffer.allocateDirect(READ_BUF_CHUNK_SIZE)
+                    .order(writeBuf.order()));
     }
 
     /**
@@ -358,35 +332,6 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     }
 
     /**
-     * @return First buffer chunk.
-     */
-    public BufferChunk reserveWriteChunk() {
-        int start = U.hash(Thread.currentThread().getId()) & (writeChunks.length - 1);
-
-        return reserveWriteChunk(start); // TODO random start?
-    }
-
-    /**
-     * @return First buffer chunk.
-     */
-    BufferChunk reserveWriteChunk(int start) {
-        return reserveChunk(start, writeChunks);
-    }
-
-    public BufferChunk expandWriteChunk(BufferChunk chunk) {
-        BufferChunk newChunk = reserveWriteChunk(chunk.index() + 1);
-
-        if (newChunk == null)
-            return null;
-
-        // TODO alter passed in chunk if buffer is next to it
-
-        chunk.next(newChunk.index());
-
-        return newChunk;
-    }
-
-    /**
      * @return Buffer chunk to read.
      */
     public BufferChunk reserveReadChunk(int idx) {
@@ -407,21 +352,6 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
 
         return null;
 
-    }
-
-    /**
-     * @param idx
-     * @return
-     */
-    BufferChunk writeChunk(int idx) {
-        return writeChunks[idx];
-    }
-
-    /**
-     * @return
-     */
-    public BufferChunkList list() {
-        return chunkList;
     }
 
     /** {@inheritDoc} */

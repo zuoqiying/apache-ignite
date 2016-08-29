@@ -20,6 +20,7 @@ package org.apache.ignite.internal.util.nio;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  *
@@ -196,6 +197,52 @@ public class BufferChunk {
 
         buf.putInt(8, data);
         buf.flip();
+    }
+
+    public static void putChunkHeader(
+        ByteBuffer buf,
+        int pos,
+        byte plc,
+        boolean ordered,
+        boolean first,
+        boolean last
+    ) {
+        if (pos == buf.position() - 12) {
+            buf.position(pos);
+
+            return;
+        }
+
+        buf.putLong(pos, Thread.currentThread().getId());
+
+        int flags = 0;
+
+        if (ordered)
+            flags |= ORDERED_MASK;
+
+        if (last)
+            flags |= LAST_MASK;
+
+        if (first)
+            flags |= FIRST_MASK;
+
+        int data = ((plc & 0xFF) << 24) | (flags << 16) | (buf.position() - pos - 12);
+
+        buf.putInt(pos + 8, data);
+
+//        U.debug(log, "Header has been put [threadId=" + Thread.currentThread().getId() + ", len=" + (buf.position() - pos - 12) +
+//            ", ordered=" + ordered + ", first=" + first + ", last=" + last + ']');
+    }
+
+    public static int reserveChunkHeader(ByteBuffer buf) {
+        if (buf.remaining() < 12)
+            return -1;
+
+        int pos = buf.position();
+
+        buf.position(pos + 12);
+
+        return pos;
     }
 
     /** {@inheritDoc} */

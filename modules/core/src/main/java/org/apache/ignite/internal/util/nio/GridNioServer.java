@@ -406,8 +406,6 @@ public class GridNioServer<T> {
         return fut;
     }
 
-    private final ThreadLocal<MessageWriter> threadLocalMsgWriter = new ThreadLocal<>();
-
     /**
      * @param ses Session.
      * @param msg Message.
@@ -419,89 +417,14 @@ public class GridNioServer<T> {
         Message msg,
         boolean sys
     ) {
-        assert ses instanceof GridSelectorNioSessionImpl : ses;
+        assert ses instanceof GridSelectorNioSessionImpl;
 
         GridSelectorNioSessionImpl impl = (GridSelectorNioSessionImpl)ses;
 
-        BufferChunk firstChunk = impl.reserveWriteChunk();
+        NioOperationFuture<?> fut = new NioOperationFuture<Void>(impl, NioOperation.REQUIRE_WRITE, msg,
+            skipRecoveryPred.apply(msg));
 
-        GridNioFuture<?> fut;
-
-        byte plc = msg instanceof GridIoMessage ? ((GridIoMessage)msg).policy() : 0;
-        boolean ordered = msg instanceof GridIoMessage && ((GridIoMessage)msg).isOrdered();
-
-        if (firstChunk == null) {
-            assert false; // TODO if chunk cannot be allocated then message should be marshalled in nio thread
-
-            if (true)
-                throw new RuntimeException(msg.toString());
-
-            fut = new NioOperationFuture<Void>(impl,
-                NioOperation.REQUIRE_WRITE,
-                msg,
-                skipRecoveryPred.apply(msg));
-
-            send0(
-                impl,
-                (NioOperationFuture)fut,
-                sys);
-        }
-        else {
-            try {
-                MessageWriter writer = threadLocalMsgWriter.get();
-
-                if (writer == null) {
-                    writer = writerFactory.writer(ses);
-
-                    if (writer != null)
-                        threadLocalMsgWriter.set(writer);
-                }
-
-                if (writer != null)
-                    writer.setCurrentWriteClass(msg.getClass());
-
-                BufferChunk chunk = firstChunk;
-
-                for (;;) {
-                    chunk.onBeforeWrite();
-
-                    boolean finished = msg.writeTo(
-                        chunk.buffer(),
-                        writer);
-
-                    chunk.onAfterWrite(plc, ordered, chunk == firstChunk, finished);
-
-                    if (finished) {
-                        if (writer != null)
-                            writer.reset();
-
-                        break;
-                    }
-
-                    chunk = impl.expandWriteChunk(chunk);
-
-                    assert chunk.reserved();
-
-                    if (chunk == null)
-                        throw new RuntimeException(msg.toString());// TODO if chunk cannot be allocated then message marshal should be finished in nio thread
-                }
-
-                fut = new NioOperationFuture<Void>(impl,
-                    NioOperation.REQUIRE_WRITE,
-                    msg,
-                    firstChunk,
-                    skipRecoveryPred.apply(msg)
-                );
-
-                send0(
-                    impl,
-                    (NioOperationFuture)fut,
-                    sys);
-            }
-            catch (IgniteCheckedException e) {
-                fut = new GridNioFinishedFuture<Object>(e);
-            }
-        }
+        send0(impl, fut, sys);
 
         return fut;
     }
@@ -992,6 +915,8 @@ public class GridNioServer<T> {
 
             chunk.onBeforeRead();
 
+//            U.debug(log, "Bytes received [sockCh=" + sockCh + ", cnt=" + cnt + ", bytes=" + U.byteBufferToString(chunk.buffer()) + ']');
+
             ses.addMeta(READ_CHUNK.ordinal(), chunk);
 
             try {
@@ -1242,72 +1167,115 @@ public class GridNioServer<T> {
          */
         @SuppressWarnings("ForLoopReplaceableByForEach")
         private void processWrite0(SelectionKey key) throws IOException {
-            SocketChannel sockCh = (SocketChannel)key.channel();
+            WritableByteChannel sockCh = (WritableByteChannel)key.channel();
 
             GridSelectorNioSessionImpl ses = (GridSelectorNioSessionImpl)key.attachment();
-            BufferChunkList chunkList = ses.list();
-            BufferChunk chunk = ses.removeMeta(NIO_OPERATION.ordinal());
+            ByteBuffer buf = ses.writeBuffer();
+            NioOperationFuture<?> req = ses.removeMeta(NIO_OPERATION.ordinal());
 
-//            MessageWriter writer = ses.meta(MSG_WRITER.ordinal());
-//
-//            if (writer == null) {
-//                try {
-//                    ses.addMeta(MSG_WRITER.ordinal(), writer = writerFactory.writer(ses));
-//                }
-//                catch (IgniteCheckedException e) {
-//                    throw new IOException("Failed to create message writer.", e);
-//                }
-//            }
+            MessageWriter writer = ses.meta(MSG_WRITER.ordinal());
 
-            NioOperationFuture<?> req = null;
+            if (writer == null) {
+                try {
+                    ses.addMeta(MSG_WRITER.ordinal(), writer = writerFactory.writer(ses));
+                }
+                catch (IgniteCheckedException e) {
+                    throw new IOException("Failed to create message writer.", e);
+                }
+            }
 
-            if (chunkList.isEmpty() && chunk == null) {
+            if (req == null) {
                 req = (NioOperationFuture<?>)ses.pollFuture();
 
-                if (req == null) {
+                if (req == null && buf.position() == 0) {
                     key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
 
                     return;
                 }
-                else
-                    chunk = req.chunk;
             }
 
-//            Message msg;
-//            boolean finished = false;
+            Message msg;
+            boolean finished = false;
+            boolean first = false;
+            int pos;
+
+            if (req != null) {
+                msg = req.directMessage();
+
+                assert msg != null;
+
+                byte plc = msg instanceof GridIoMessage ? ((GridIoMessage)msg).policy() : 0;
+                boolean ordered = msg instanceof GridIoMessage && ((GridIoMessage)msg).isOrdered();
+
+                pos = BufferChunk.reserveChunkHeader(buf);
+
+                if (pos != -1) {
+                    if (writer != null) {
+                        writer.setCurrentWriteClass(msg.getClass());
+
+                        first = !writer.isHeaderWritten();
+                    }
+
+                    finished = msg.writeTo(
+                        buf,
+                        writer);
+
+                    if (finished && writer != null)
+                        writer.reset();
+
+                    BufferChunk.putChunkHeader(buf, pos, plc, ordered, first, finished);
+                }
+            }
 
             // Fill up as many messages as possible to write buffer.
             List<NioOperationFuture<?>> doneFuts = null;
 
-            for (; chunkList.hasFreeChunks() && chunk != null; ) {
-                if (req != null) {
-                    if (doneFuts == null)
-                        doneFuts = new ArrayList<>();
+            while (finished) {
+                if (doneFuts == null)
+                    doneFuts = new ArrayList<>();
 
-                    doneFuts.add(req);
+                doneFuts.add(req);
 
-                    req = null;
-                }
+                req = (NioOperationFuture<?>)ses.pollFuture();
 
-                chunkList.add(chunk);
-
-                chunk = chunk.hasNext() ? ses.writeChunk(chunk.next()) : null;
-
-                if (!chunkList.hasFreeChunks())
+                if (req == null)
                     break;
 
-                if (chunk == null) {
-                    req = (NioOperationFuture<?>)ses.pollFuture();
+                msg = req.directMessage();
 
-                    if (req != null)
-                        chunk = req.chunk;
+                assert msg != null;
+
+                byte plc = msg instanceof GridIoMessage ? ((GridIoMessage)msg).policy() : 0;
+                boolean ordered = msg instanceof GridIoMessage && ((GridIoMessage)msg).isOrdered();
+
+                pos = BufferChunk.reserveChunkHeader(buf);
+
+                if (pos != -1) {
+                    if (writer != null) {
+                        writer.setCurrentWriteClass(msg.getClass());
+
+                        first = !writer.isHeaderWritten();
+                    }
+
+                    finished = msg.writeTo(
+                        buf,
+                        writer);
+
+                    if (finished && writer != null)
+                        writer.reset();
+
+                    BufferChunk.putChunkHeader(buf, pos, plc, ordered, first, finished);
                 }
             }
 
+            buf.flip();
+
+//            U.debug(log, "Sending " + U.byteBufferToString(buf));
+
+            assert buf.hasRemaining();
+
             if (!skipWrite) {
-                // Chunk list gets cleared or compacted
-                // after content is written to channel.
-                long cnt = chunkList.write(sockCh);
+                int cnt = sockCh.write(buf);
 
                 if (!F.isEmpty(doneFuts)) {
                     for (int i = 0; i < doneFuts.size(); i++)
@@ -1320,12 +1288,9 @@ public class GridNioServer<T> {
                     log.trace("Bytes sent [sockCh=" + sockCh + ", cnt=" + cnt + ']');
 
                 if (metricsLsnr != null)
-                    metricsLsnr.onBytesSent((int)cnt);
+                    metricsLsnr.onBytesSent(cnt);
 
-                ses.bytesSent((int)cnt);
-
-                if (chunk != null)
-                    ses.addMeta(NIO_OPERATION.ordinal(), chunk);
+                ses.bytesSent(cnt);
             }
             else {
                 // For test purposes only (skipWrite is set to true in tests only).
@@ -1336,6 +1301,14 @@ public class GridNioServer<T> {
                     throw new IOException("Thread has been interrupted.", e);
                 }
             }
+
+            if (buf.hasRemaining() || !finished) {
+                buf.compact();
+
+                ses.addMeta(NIO_OPERATION.ordinal(), req);
+            }
+            else
+                buf.clear();
         }
     }
 
@@ -1700,13 +1673,11 @@ public class GridNioServer<T> {
                 ByteBuffer readBuf = null;
 
                 if (directMode) {
-                    writeBuf = directBuf ? ByteBuffer.allocateDirect(sock.getSendBufferSize()) :
-                        ByteBuffer.allocate(sock.getSendBufferSize());
-                    readBuf = directBuf ? ByteBuffer.allocateDirect(sock.getReceiveBufferSize()) :
-                        ByteBuffer.allocate(sock.getReceiveBufferSize());
+                    writeBuf =  directBuf ?
+                        ByteBuffer.allocateDirect(65536) :
+                        ByteBuffer.allocate(65536);
 
                     writeBuf.order(order);
-                    readBuf.order(order);
                 }
 
                 final GridSelectorNioSessionImpl ses = new GridSelectorNioSessionImpl(
