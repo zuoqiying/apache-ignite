@@ -41,9 +41,66 @@ const _fullColName = (col) => {
     return res.join('.');
 };
 
+let paragraphId = 0;
+
 class Paragraph {
-    constructor(paragraph) {
+    constructor($animate, $timeout, paragraph) {
+        const self = this;
+
+        self.id = 'paragraph-' + paragraphId++;
+
         _.assign(this, paragraph);
+
+        Object.defineProperty(this, 'gridOptions', {value: {
+            enableGridMenu: false,
+            enableColumnMenus: false,
+            flatEntityAccess: true,
+            fastWatch: true,
+            rebuildColumns() {
+                if (_.isNil(this.api))
+                    return;
+
+                this.columnDefs = _.reduce(self.meta, (cols, col, idx) => {
+                    if (self.columnFilter(col)) {
+                        cols.push({
+                            displayName: col.fieldName,
+                            headerTooltip: _fullColName(col),
+                            field: idx.toString(),
+                            minWidth: 50,
+                            cellClass: 'cell-left'
+                        });
+                    }
+
+                    return cols;
+                }, []);
+
+                $timeout(() => this.api.core.notifyDataChange('column'));
+            },
+            adjustHeight() {
+                if (_.isNil(this.api))
+                    return;
+
+                this.data = self.rows;
+
+                const height = Math.min(self.rows.length, 15) * 30 + 47;
+
+                // Remove header height.
+                this.api.grid.element.css('height', height + 'px');
+
+                $timeout(() => this.api.core.handleWindowResize());
+            },
+            onRegisterApi(api) {
+                $animate.enabled(api.grid.element, false);
+
+                this.api = api;
+
+                this.rebuildColumns();
+
+                this.adjustHeight();
+            }
+        }});
+
+        Object.defineProperty(this, 'chartHistory', {value: []});
     }
 
     resultType() {
@@ -93,8 +150,8 @@ class Paragraph {
 }
 
 // Controller for SQL notebook screen.
-export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteScanFilterInput', 'uiGridConstants', 'uiGridExporterConstants',
-    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, ScanFilterInput, uiGridConstants, uiGridExporterConstants) {
+export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteScanFilterInput', 'uiGridExporterConstants',
+    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, ScanFilterInput, uiGridExporterConstants) {
         let stopTopology = null;
 
         const _tryStopRefresh = function(paragraph) {
@@ -674,8 +731,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             });
         };
 
-        $scope.scrollToParagraph = function(paragraphId) {
-            const idx = _.findIndex($scope.notebook.paragraphs, {id: paragraphId});
+        $scope.scrollToParagraph = (id) => {
+            const idx = _.findIndex($scope.notebook.paragraphs, {id});
 
             if (idx >= 0) {
                 if (!_.includes($scope.notebook.expandedParagraphs, idx))
@@ -686,7 +743,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 });
             }
 
-            $location.hash(paragraphId);
+            $location.hash(id);
 
             $anchorScroll();
         };
@@ -694,8 +751,6 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         const _hideColumn = (col) => col.fieldName !== '_KEY' && col.fieldName !== '_VAL';
 
         const _allColumn = () => true;
-
-        let paragraphId = 0;
 
         $scope.aceInit = function(paragraph) {
             return function(editor) {
@@ -788,64 +843,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 if (!$scope.notebook.paragraphs)
                     $scope.notebook.paragraphs = [];
 
-                $scope.notebook.paragraphs = _.map($scope.notebook.paragraphs, (paragraph) => {
-                    paragraph.id = 'paragraph-' + paragraphId++;
-
-                    const par = new Paragraph(paragraph);
-
-                    Object.defineProperty(par, 'gridOptions', {value: {
-                        enableGridMenu: false,
-                        enableColumnMenus: false,
-                        flatEntityAccess: true,
-                        fastWatch: true,
-                        rebuildColumns() {
-                            if (_.isNil(this.api))
-                                return;
-
-                            this.columnDefs = _.reduce(par.meta, (cols, col, idx) => {
-                                if (par.columnFilter(col)) {
-                                    cols.push({
-                                        displayName: col.fieldName,
-                                        headerTooltip: _fullColName(col),
-                                        field: idx.toString(),
-                                        minWidth: 50,
-                                        cellClass: 'cell-left'
-                                    });
-                                }
-
-                                return cols;
-                            }, []);
-
-                            $timeout(() => this.api.core.notifyDataChange(uiGridConstants.dataChange.COLUMN));
-                        },
-                        adjustHeight() {
-                            if (_.isNil(this.api))
-                                return;
-
-                            this.data = par.rows;
-
-                            const height = Math.min(this.data.length, 15) * 30 + 47;
-
-                            // Remove header height.
-                            this.api.grid.element.css('height', height + 'px');
-
-                            $timeout(() => this.api.core.handleWindowResize());
-                        },
-                        onRegisterApi(api) {
-                            $animate.enabled(api.grid.element, false);
-
-                            this.api = api;
-
-                            this.rebuildColumns();
-
-                            this.adjustHeight();
-                        }
-                    }});
-
-                    Object.defineProperty(par, 'chartHistory', {value: []});
-
-                    return par;
-                });
+                $scope.notebook.paragraphs = _.map($scope.notebook.paragraphs,
+                    (paragraph) => new Paragraph($animate, $timeout, paragraph));
 
                 if (_.isEmpty($scope.notebook.paragraphs))
                     $scope.addParagraph();
@@ -902,8 +901,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         $scope.addParagraph = function() {
             const sz = $scope.notebook.paragraphs.length;
 
-            const paragraph = {
-                id: 'paragraph-' + paragraphId++,
+            const paragraph = new Paragraph($animate, $timeout, {
                 name: 'Query' + (sz === 0 ? '' : sz),
                 query: '',
                 pageSize: $scope.pageSizes[0],
@@ -914,7 +912,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     unit: 60000,
                     installed: false
                 }
-            };
+            });
 
             if ($scope.caches && $scope.caches.length > 0)
                 paragraph.cacheName = $scope.caches[0].name;
@@ -927,9 +925,11 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             $location.hash(paragraph.id);
 
-            $anchorScroll();
+            $timeout(() => {
+                $anchorScroll();
 
-            setTimeout(paragraph.ace.focus);
+                paragraph.ace.focus();
+            });
         };
 
         function _saveChartSettings(paragraph) {
