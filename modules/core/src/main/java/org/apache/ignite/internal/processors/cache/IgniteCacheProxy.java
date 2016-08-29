@@ -64,6 +64,7 @@ import org.apache.ignite.internal.AsyncSupportAdapter;
 import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.binary.BinaryUtils;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.query.CacheQuery;
 import org.apache.ignite.internal.processors.cache.query.CacheQueryFuture;
@@ -751,12 +752,8 @@ public class IgniteCacheProxy<K, V> extends AsyncSupportAdapter<IgniteCache<K, V
             return;
 
         for (int i = 0; i < args.length; i++) {
-            if (args[i] != null &&
-                !U.isPrimitiveOrWrapper(args[i].getClass())
-                && !(args[i] instanceof String)
-                && !args[i].getClass().isEnum()
-                && !(args[i] instanceof BinaryObject))
-                args[i] = ctx.kernalContext().grid().binary().toBinary(args[i]);
+            if (args[i] != null && !BinaryUtils.isBinaryType(args[i].getClass()))
+                args[i] = ctx.toCacheObject(args[i]);
         }
     }
 
