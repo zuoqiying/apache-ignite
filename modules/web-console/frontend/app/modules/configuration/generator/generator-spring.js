@@ -358,7 +358,7 @@ $generatorSpring.clusterGeneral = function(cluster, res) {
                     if (datasource.dataSourceBean && datasource.dialect) {
                         res.line('<property name="dataSource" ref="' + datasource.dataSourceBean + '"/>');
 
-                        if (_.findIndex(res.datasources, (ds) => ds.dataSourceBean === datasource.dataSourceBean) < 0) {
+                        if (!_.find(res.datasources, { dataSourceBean: datasource.dataSourceBean })) {
                             res.datasources.push({
                                 dataSourceBean: datasource.dataSourceBean,
                                 dialect: datasource.dialect
@@ -1254,7 +1254,7 @@ $generatorSpring.cacheStore = function(cache, domains, res) {
                 $generatorSpring.beanProperty(res, storeFactory, 'cacheStoreFactory', $generatorCommon.STORE_FACTORIES[factoryKind], true);
 
             if (storeFactory.dataSourceBean && (storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect)) {
-                if (_.findIndex(res.datasources, (ds) => ds.dataSourceBean === storeFactory.dataSourceBean) < 0) {
+                if (!_.find(res.datasources, { dataSourceBean: storeFactory.dataSourceBean})) {
                     res.datasources.push({
                         dataSourceBean: storeFactory.dataSourceBean,
                         dialect: storeFactory.dialect

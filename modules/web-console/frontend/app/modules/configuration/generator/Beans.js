@@ -103,6 +103,15 @@ export class Bean extends EmptyBean {
         return (this.src && this.src[path]) || this.dflts[path];
     }
 
+    includes(...paths) {
+        return this.src && _.every(paths, (path) => {
+            const value = this.src[path];
+            const dflt = this.dflts[path];
+
+            return !_.isNil(value) && value !== dflt;
+        });
+    }
+
     property(model, name = model) {
         return this._property(this.properties, 'PROPERTY', model, name);
     }
@@ -198,6 +207,15 @@ export class Bean extends EmptyBean {
         }
 
         return this;
+    }
+
+    /**
+     * @param {String} id
+     * @param {String} name
+     * @param {String} dialect
+     */
+    dataSource(id, name, dialect) {
+        this.properties.push({type: 'DATASOURCE', id, name, dialect});
     }
 }
 

@@ -75,7 +75,10 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
                         sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
 
                         break;
+                    case 'DATASOURCE':
+                        sb.append(`<property name="${prop.name}" ref="${prop.id}"/>`);
 
+                        break;
                     case 'ARRAY':
                         sb.startBlock(`<property name="${prop.name}">`);
                         sb.startBlock('<array>');

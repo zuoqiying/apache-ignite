@@ -112,28 +112,28 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                         this._setProperty(sb, bean, prop.name, `"${prop.value}"`);
 
                         break;
-
                     case 'CLASS':
                         this._setProperty(sb, bean, prop.name, `${JavaTypes.shortClassName(prop.value)}.class`);
 
                         break;
-
                     case 'PROPERTY':
                         this._setProperty(sb, bean, prop.name, prop.value);
 
                         break;
+                    case 'DATASOURCE':
+                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(DataSources.INSTANCE_${prop.id});`);
 
+                        break;
                     case 'ENUM':
                         const value = `${JavaTypes.shortClassName(prop.clsName)}.${prop.value}`;
 
                         this._setProperty(sb, bean, prop.name, value);
 
                         break;
-
                     case 'ARRAY':
                         const arrTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
 
-                        sb.append(`${arrTypeClsName}[] ${prop.name} = new ${arrTypeClsName}[${prop.items.length}];`);
+                        sb.append(`${arrTypeClsName}[] ${prop.id} = new ${arrTypeClsName}[${prop.items.length}];`);
 
                         sb.emptyLine();
 
@@ -146,43 +146,48 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                         sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
 
                         break;
-
                     case 'COLLECTION':
                         const clsName = JavaTypes.shortClassName(prop.clsName);
                         const colTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
                         const implClsName = JavaTypes.shortClassName(prop.implClsName);
 
-                        sb.append(`${clsName}<${colTypeClsName}> ${prop.name} = new ${implClsName}<>();`);
-
-                        sb.emptyLine();
-
-                        _.forEach(prop.items, (item) => {
-                            if (_.isString(item))
-                                sb.append(`types.add("${item}");`);
-                            else if (_.isNumber(item))
-                                sb.append(`types.add(${item});`);
-                            else if (item instanceof MethodBean && limitLines)
-                                sb.append(`types.add(${item.id}());`);
-                            else {
-                                this._defineBean(sb, item);
-
-                                sb.emptyLine();
-
-                                this._setProperties(sb, item, limitLines);
-
-                                if (item.properties.length)
-                                    sb.emptyLine();
-
-                                sb.append(`types.add(${item.id});`);
-                            }
+                        if (JavaTypes.nonBuiltInClass(colTypeClsName) || implClsName !== 'ArrayList') {
+                            sb.append(`${clsName}<${colTypeClsName}> ${prop.id} = new ${implClsName}<>();`);
 
                             sb.emptyLine();
-                        });
 
-                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(types);`);
+                            _.forEach(prop.items, (item) => {
+                                if (_.isString(item))
+                                    sb.append(`${prop.id}.add("${item}");`);
+                                else if (_.isNumber(item))
+                                    sb.append(`${prop.id}.add(${item});`);
+                                else if (item instanceof MethodBean && limitLines)
+                                    sb.append(`${prop.id}.add(${item.id}());`);
+                                else {
+                                    this._defineBean(sb, item);
+
+                                    sb.emptyLine();
+
+                                    this._setProperties(sb, item, limitLines);
+
+                                    if (item.properties.length)
+                                        sb.emptyLine();
+
+                                    sb.append(`${prop.id}.add(${item.id});`);
+                                }
+
+                                sb.emptyLine();
+                            });
+
+                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
+                        }
+                        else {
+                            const items = _.map(prop.items, (item) => _.isString(item) ? `"${item}"` : item);
+
+                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(Arrays.asList(${items.join(', ')}));`);
+                        }
 
                         break;
-
                     case 'MAP':
                         const keyCls = JavaTypes.shortClassName(prop.keyClsName);
                         const valCls = JavaTypes.shortClassName(prop.valClsName);
@@ -201,7 +206,6 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                         sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
 
                         break;
-
                     default:
                         const embedded = prop.value;
 
@@ -213,7 +217,7 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                             sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${embedded.id});`);
                         }
                         else {
-                            const shortClsName = JavaTypes.shortClassName(bean.clsName);
+                            const shortClsName = JavaTypes.shortClassName(embedded.clsName);
 
                             sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${shortClsName}());`);
                         }
@@ -302,10 +306,6 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
             sb.endBlock('}');
 
             return sb.asString();
-        }
-
-        static clusterGeneral(cluster, clientNearCfg, res) {
-            return $generatorJava.clusterGeneral(cluster, clientNearCfg, res);
         }
 
         static clusterCaches(caches, igfss, isSrvCfg, res) {
