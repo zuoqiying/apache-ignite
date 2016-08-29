@@ -17,30 +17,7 @@
 
 export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteLegacyUtils', 'IgniteMessages', 'gettingStarted', 'User', 'IgniteAgentMonitor',
     ($http, $root, $state, $window, LegacyUtils, Messages, gettingStarted, User, agentMonitor) => {
-        let _auth = false;
-
-        try {
-            _auth = localStorage.authorized === 'true';
-        }
-        catch (ignore) {
-            // No-op.
-        }
-
-        function _authorized(value) {
-            try {
-                return _auth = localStorage.authorized = !!value;
-            } catch (ignore) {
-                return _auth = !!value;
-            }
-        }
-
         return {
-            get authorized() {
-                return _auth;
-            },
-            set authorized(auth) {
-                _authorized(auth);
-            },
             forgotPassword(userInfo) {
                 $http.post('/api/v1/password/forgot', userInfo)
                     .success(() => $state.go('password.send'))
@@ -49,17 +26,20 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteLega
             auth(action, userInfo) {
                 $http.post('/api/v1/' + action, userInfo)
                     .catch(({data}) => Promise.reject(data))
-                    .then(User.read)
-                    .then((user) => {
-                        _authorized(true);
+                    .then(() => {
+                        if (action === 'password/forgot')
+                            return;
 
-                        $root.$broadcast('user', user);
+                        User.read()
+                            .then((user) => {
+                                $root.$broadcast('user', user);
 
-                        $state.go('base.configuration.clusters');
+                                $state.go('base.configuration.clusters');
 
-                        $root.gettingStarted.tryShow();
+                                agentMonitor.init();
 
-                        agentMonitor.init();
+                                $root.gettingStarted.tryShow();
+                            });
                     })
                     .catch((err) => LegacyUtils.showPopoverMessage(null, null, action + '_email', Messages.errorMessage(null, err)));
             },
@@ -67,8 +47,6 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteLega
                 $http.post('/api/v1/logout')
                     .success(() => {
                         User.clean();
-
-                        _authorized(false);
 
                         $window.open($state.href('signin'), '_self');
                     })

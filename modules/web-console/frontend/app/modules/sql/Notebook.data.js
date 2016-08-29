@@ -70,7 +70,9 @@ const DEMO_NOTEBOOK = {
     expandedParagraphs: [0, 1, 2]
 };
 
-class NotebookData {
+export default class NotebookData {
+    static $inject = ['$rootScope', '$http', '$q'];
+
     constructor($root, $http, $q) {
         this.demo = $root.IgniteDemoMode;
 
@@ -153,7 +155,3 @@ class NotebookData {
             .catch(({data}) => Promise.reject(data));
     }
 }
-
-NotebookData.$inject = ['$rootScope', '$http', '$q'];
-
-export default NotebookData;

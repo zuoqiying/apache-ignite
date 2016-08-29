@@ -16,56 +16,28 @@
  */
 
 export default ['User', ['$q', '$injector', '$rootScope', '$state', '$http', function($q, $injector, $root, $state, $http) {
-    let _user;
-
-    try {
-        _user = JSON.parse(localStorage.user);
-
-        if (_user)
-            $root.user = _user;
-    }
-    catch (ignore) {
-        // No-op.
-    }
+    let user = null;
 
     return {
-        read() {
-            const dropSessionAndSignin = () => {
-                const Auth = $injector.get('Auth');
-
-                Auth.authorized = false;
-
-                this.clean();
-
-                if ($state.current.name !== 'signin')
-                    $state.go('signin');
-            };
-
+        load() {
             return $http.post('/api/v1/user')
                 .then(({data}) => {
-                    if (_.isEmpty(data))
-                        return dropSessionAndSignin();
+                    user = $root.user = data;
 
-                    try {
-                        localStorage.user = JSON.stringify(data);
-                    }
-                    catch (ignore) {
-                        // No-op.
-                    }
+                    $root.$broadcast('user', user);
 
-                    return _user = $root.user = data;
+                    return user;
                 })
-                .catch(({data, status}) => {
-                    if (status === 401)
-                        dropSessionAndSignin();
+                .catch(({data}) => $q.reject(data));
+        },
+        read() {
+            if (user)
+                return $q.resolve(user);
 
-                    return Promise.reject(data);
-                });
+            return this.load();
         },
         clean() {
             delete $root.user;
-
-            delete localStorage.user;
 
             delete $root.IgniteDemoMode;
 

@@ -27,6 +27,24 @@ angular
     'mm.acl',
     'ignite-console.config'
 ])
+.factory('sessionRecoverer', ['$injector', '$q', ($injector, $q) => {
+    return {
+        responseError: (response) => {
+            const $state = $injector.get('$state');
+
+            // Session has expired
+            if (response.status === 401 && $state.current.name !== 'signin')
+                $state.go('signin');
+
+            $injector.get('User').clean();
+
+            return $q.reject(response);
+        }
+    };
+}])
+.config(['$httpProvider', ($httpProvider) => {
+    $httpProvider.interceptors.push('sessionRecoverer');
+}])
 .service(...Auth)
 .service(...User)
 .provider('AclRoute', AclRouteProvider)
