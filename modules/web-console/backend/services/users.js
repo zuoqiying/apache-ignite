@@ -203,7 +203,7 @@ module.exports.factory = (_, mongo, settings, spacesService, mailsService, agent
          */
         static get(user, viewedUser) {
             if (_.isNil(user))
-                return Promise.reject('The user profile service failed the sign in. User profile cannot be loaded.');
+                return Promise.reject(new errors.AuthFailedException('The user profile service failed the sign in. User profile cannot be loaded.'));
 
             const becomeUsed = viewedUser && user.admin;
 

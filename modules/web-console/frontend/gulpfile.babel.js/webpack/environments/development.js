@@ -51,10 +51,8 @@ export default () => {
                 '/api/v1/*': {
                     target: 'http://localhost:3000',
                     changeOrigin: true,
-                    rewrite: (req) => {
-                        req.url = req.url.replace(/^\/api\/v1/, '');
-
-                        return req;
+                    pathRewrite: {
+                        '^/api/v1': ''
                     }
                 }
             },

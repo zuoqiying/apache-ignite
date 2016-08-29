@@ -21,14 +21,13 @@ angular
 .module('ignite-console.states.logout', [
     'ui.router'
 ])
-.config(['$stateProvider', function($stateProvider) {
+.config(['$stateProvider', 'AclRouteProvider', function($stateProvider, AclRoute) {
     // set up the states
     $stateProvider
     .state('logout', {
         url: '/logout',
-        controller: ['Auth', function(Auth) {
-            Auth.logout();
-        }],
+        onEnter: AclRoute.checkAccess('logout'),
+        controller: ['Auth', (Auth) => Auth.logout()],
         metaTags: {
             title: 'Logout'
         }

@@ -15,9 +15,143 @@
  * limitations under the License.
  */
 
+// Time line X axis descriptor.
+const TIME_LINE = {value: -1, type: 'java.sql.Date', label: 'TIME_LINE'};
+
+// Row index X axis descriptor.
+const ROW_IDX = {value: -2, type: 'java.lang.Integer', label: 'ROW_IDX'};
+
+/** Prefix for node local key for SCAN near queries. */
+const SCAN_CACHE_WITH_FILTER = 'VISOR_SCAN_CACHE_WITH_FILTER';
+
+/** Prefix for node local key for SCAN near queries. */
+const SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE = 'VISOR_SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE';
+
+const _fullColName = (col) => {
+    const res = [];
+
+    if (col.schemaName)
+        res.push(col.schemaName);
+
+    if (col.typeName)
+        res.push(col.typeName);
+
+    res.push(col.fieldName);
+
+    return res.join('.');
+};
+
+let paragraphId = 0;
+
+class Paragraph {
+    constructor($animate, $timeout, paragraph) {
+        const self = this;
+
+        self.id = 'paragraph-' + paragraphId++;
+
+        _.assign(this, paragraph);
+
+        Object.defineProperty(this, 'gridOptions', {value: {
+            enableGridMenu: false,
+            enableColumnMenus: false,
+            flatEntityAccess: true,
+            fastWatch: true,
+            rebuildColumns() {
+                if (_.isNil(this.api))
+                    return;
+
+                this.columnDefs = _.reduce(self.meta, (cols, col, idx) => {
+                    if (self.columnFilter(col)) {
+                        cols.push({
+                            displayName: col.fieldName,
+                            headerTooltip: _fullColName(col),
+                            field: idx.toString(),
+                            minWidth: 50,
+                            cellClass: 'cell-left'
+                        });
+                    }
+
+                    return cols;
+                }, []);
+
+                $timeout(() => this.api.core.notifyDataChange('column'));
+            },
+            adjustHeight() {
+                if (_.isNil(this.api))
+                    return;
+
+                this.data = self.rows;
+
+                const height = Math.min(self.rows.length, 15) * 30 + 47;
+
+                // Remove header height.
+                this.api.grid.element.css('height', height + 'px');
+
+                $timeout(() => this.api.core.handleWindowResize());
+            },
+            onRegisterApi(api) {
+                $animate.enabled(api.grid.element, false);
+
+                this.api = api;
+
+                this.rebuildColumns();
+
+                this.adjustHeight();
+            }
+        }});
+
+        Object.defineProperty(this, 'chartHistory', {value: []});
+    }
+
+    resultType() {
+        if (_.isNil(this.queryArgs))
+            return null;
+
+        if (!_.isEmpty(this.errMsg))
+            return 'error';
+
+        if (_.isEmpty(this.rows))
+            return 'empty';
+
+        return this.result === 'table' ? 'table' : 'chart';
+    }
+
+    nonRefresh() {
+        return _.isNil(this.rate) || _.isNil(this.rate.stopTime);
+    }
+
+    table() {
+        return this.result === 'table';
+    }
+
+    chart() {
+        return this.result !== 'table' && this.result !== 'none';
+    }
+
+    nonEmpty() {
+        return this.rows && this.rows.length > 0;
+    }
+
+    queryExecuted() {
+        return this.queryArgs && this.queryArgs.query && !this.queryArgs.query.startsWith('EXPLAIN ');
+    }
+
+    timeLineSupported() {
+        return this.result !== 'pie';
+    }
+
+    chartColumnsConfigured() {
+        return !_.isEmpty(this.chartKeyCols) && !_.isEmpty(this.chartValCols);
+    }
+
+    chartTimeLineEnabled() {
+        return !_.isEmpty(this.chartKeyCols) && _.eq(this.chartKeyCols[0], TIME_LINE);
+    }
+}
+
 // Controller for SQL notebook screen.
-export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'uiGridConstants', 'uiGridExporterConstants',
-    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, uiGridConstants, uiGridExporterConstants) {
+export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteScanFilterInput', 'uiGridExporterConstants',
+    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, ScanFilterInput, uiGridExporterConstants) {
         let stopTopology = null;
 
         const _tryStopRefresh = function(paragraph) {
@@ -75,39 +209,6 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         $scope.maskCacheName = (cacheName) => _.isEmpty(cacheName) ? '<default>' : cacheName;
-
-        // Time line X axis descriptor.
-        const TIME_LINE = {value: -1, type: 'java.sql.Date', label: 'TIME_LINE'};
-
-        // Row index X axis descriptor.
-        const ROW_IDX = {value: -2, type: 'java.lang.Integer', label: 'ROW_IDX'};
-
-        const EXTENDED_PARAGRAPH = {
-            table() {
-                return this.result === 'table';
-            },
-            chart() {
-                return this.result !== 'table' && this.result !== 'none';
-            },
-            nonEmpty() {
-                return this.rows && this.rows.length > 0;
-            },
-            queryExecuted() {
-                return this.queryArgs && this.queryArgs.query && !this.queryArgs.query.startsWith('EXPLAIN ');
-            },
-            refreshExecuting() {
-                return this.rate && this.rate.stopTime;
-            },
-            timeLineSupported() {
-                return this.result !== 'pie';
-            },
-            chartColumnsConfigured() {
-                return !_.isEmpty(this.chartKeyCols) && !_.isEmpty(this.chartValCols);
-            },
-            chartTimeLineEnabled() {
-                return !_.isEmpty(this.chartKeyCols) && _.eq(this.chartKeyCols[0], TIME_LINE);
-            }
-        };
 
         // We need max 1800 items to hold history for 30 mins in case of refresh every second.
         const HISTORY_LENGTH = 1800;
@@ -630,8 +731,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             });
         };
 
-        $scope.scrollToParagraph = function(paragraphId) {
-            const idx = _.findIndex($scope.notebook.paragraphs, {id: paragraphId});
+        $scope.scrollToParagraph = (id) => {
+            const idx = _.findIndex($scope.notebook.paragraphs, {id});
 
             if (idx >= 0) {
                 if (!_.includes($scope.notebook.expandedParagraphs, idx))
@@ -642,7 +743,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 });
             }
 
-            $location.hash(paragraphId);
+            $location.hash(id);
 
             $anchorScroll();
         };
@@ -650,67 +751,6 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         const _hideColumn = (col) => col.fieldName !== '_KEY' && col.fieldName !== '_VAL';
 
         const _allColumn = () => true;
-
-        let paragraphId = 0;
-
-        const _fullColName = function(col) {
-            const res = [];
-
-            if (col.schemaName)
-                res.push(col.schemaName);
-
-            if (col.typeName)
-                res.push(col.typeName);
-
-            res.push(col.fieldName);
-
-            return res.join('.');
-        };
-
-        function enhanceParagraph(paragraph) {
-            Object.assign(paragraph, EXTENDED_PARAGRAPH);
-
-            Object.defineProperty(paragraph, 'gridOptions', { value: {
-                enableGridMenu: false,
-                enableColumnMenus: false,
-                flatEntityAccess: true,
-                fastWatch: true,
-                updateColumns(cols) {
-                    this.columnDefs = _.map(cols, (col) => {
-                        return {
-                            displayName: col.fieldName,
-                            headerTooltip: _fullColName(col),
-                            field: col.field,
-                            minWidth: 50,
-                            cellClass: 'cell-left'
-                        };
-                    });
-
-                    $timeout(() => this.api.core.notifyDataChange(uiGridConstants.dataChange.COLUMN));
-                },
-                updateRows(rows) {
-                    const sizeChanged = this.data.length !== rows.length;
-
-                    this.data = rows;
-
-                    if (sizeChanged) {
-                        const height = Math.min(rows.length, 15) * 30 + 47;
-
-                        // Remove header height.
-                        this.api.grid.element.css('height', height + 'px');
-
-                        $timeout(() => this.api.core.handleWindowResize());
-                    }
-                },
-                onRegisterApi(api) {
-                    $animate.enabled(api.grid.element, false);
-
-                    this.api = api;
-                }
-            }});
-
-            Object.defineProperty(paragraph, 'chartHistory', {value: []});
-        }
 
         $scope.aceInit = function(paragraph) {
             return function(editor) {
@@ -732,74 +772,46 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             };
         };
 
-        const _setActiveCache = function() {
-            if ($scope.caches.length > 0) {
-                _.forEach($scope.notebook.paragraphs, (paragraph) => {
-                    if (!_.find($scope.caches, {name: paragraph.cacheName}))
-                        paragraph.cacheName = $scope.caches[0].name;
-                });
-            }
-        };
-
-        const _updateTopology = () =>
+        /**
+         * Update caches list.
+         * @private
+         */
+        const _refreshFn = () =>
             agentMonitor.topology()
                 .then((clusters) => {
-                    agentMonitor.checkModal();
+                    $scope.caches = _.sortBy(_.reduce(clusters, (items, cluster) => {
+                        _.forEach(cluster.caches, (cache) => {
+                            let item = _.find(items, {name: cache.name});
 
-                    const caches = _.flattenDeep(clusters.map((cluster) => cluster.caches));
+                            if (_.isNil(item)) {
+                                cache.label = $scope.maskCacheName(cache.name);
 
-                    $scope.caches = _.sortBy(_.map(_.uniqBy(_.reject(caches, {mode: 'LOCAL'}), 'name'), (cache) => {
-                        cache.label = $scope.maskCacheName(cache.name);
+                                cache.nodeIds = [];
 
-                        return cache;
-                    }), 'label');
+                                items.push(item = cache);
+                            }
 
-                    _setActiveCache();
+                            item.nodeIds.push(cluster.nodeId);
+                        });
+
+                        return items;
+                    }, []), 'label');
+
+                    if (_.isEmpty($scope.caches))
+                        return;
+
+                    // Reset to first cache in case of stopped selected.
+                    const cacheNames = _.map($scope.caches, (cache) => cache.name);
+
+                    _.forEach($scope.notebook.paragraphs, (paragraph) => {
+                        if (!_.includes(cacheNames, paragraph.cacheName))
+                            paragraph.cacheName = _.head(cacheNames);
+                    });
                 })
-                .catch((err) => {
-                    if (err.code === 2)
-                        return agentMonitor.showNodeError('Agent is failed to authenticate in grid. Please check agent\'s login and password.');
+                .then(() => agentMonitor.checkModal())
+                .catch((err) => agentMonitor.showNodeError(err));
 
-                    agentMonitor.showNodeError(err);
-                });
-
-        const _startTopologyRefresh = () => {
-            Loading.start('sqlLoading');
-
-            agentMonitor.awaitAgent()
-                .then(_updateTopology)
-                .then(() => {
-                    if ($root.IgniteDemoMode)
-                        _.forEach($scope.notebook.paragraphs, $scope.execute);
-
-                    Loading.finish('sqlLoading');
-
-                    stopTopology = $interval(_updateTopology, 5000, 0, false);
-                });
-        };
-
-        const loadNotebook = function(notebook) {
-            $scope.notebook = _.cloneDeep(notebook);
-
-            $scope.notebook_name = $scope.notebook.name;
-
-            if (!$scope.notebook.expandedParagraphs)
-                $scope.notebook.expandedParagraphs = [];
-
-            if (!$scope.notebook.paragraphs)
-                $scope.notebook.paragraphs = [];
-
-            _.forEach($scope.notebook.paragraphs, (paragraph) => {
-                paragraph.id = 'paragraph-' + paragraphId++;
-
-                enhanceParagraph(paragraph);
-            });
-
-            if (_.isEmpty($scope.notebook.paragraphs))
-                $scope.addParagraph();
-            else
-                $scope.rebuildScrollParagraphs();
-
+        const _startWatch = () =>
             agentMonitor.startWatch({
                 state: 'base.configuration.clusters',
                 text: 'Back to Configuration',
@@ -807,14 +819,39 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 onDisconnect: () => {
                     _stopTopologyRefresh();
 
-                    _startTopologyRefresh();
+                    _startWatch();
                 }
             })
-            .then(_startTopologyRefresh);
-        };
+                .then(() => Loading.start('sqlLoading'))
+                .then(_refreshFn)
+                .then(() => Loading.finish('sqlLoading'))
+                .then(() => {
+                    $root.IgniteDemoMode && _.forEach($scope.notebook.paragraphs, $scope.execute);
+
+                    stopTopology = $interval(_refreshFn, 5000, 0, false);
+                });
 
         Notebook.find($state.params.noteId)
-            .then(loadNotebook)
+            .then((notebook) => {
+                $scope.notebook = _.cloneDeep(notebook);
+
+                $scope.notebook_name = $scope.notebook.name;
+
+                if (!$scope.notebook.expandedParagraphs)
+                    $scope.notebook.expandedParagraphs = [];
+
+                if (!$scope.notebook.paragraphs)
+                    $scope.notebook.paragraphs = [];
+
+                $scope.notebook.paragraphs = _.map($scope.notebook.paragraphs,
+                    (paragraph) => new Paragraph($animate, $timeout, paragraph));
+
+                if (_.isEmpty($scope.notebook.paragraphs))
+                    $scope.addParagraph();
+                else
+                    $scope.rebuildScrollParagraphs();
+            })
+            .then(_startWatch)
             .catch(() => {
                 $scope.notebookLoadFailed = true;
 
@@ -864,8 +901,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         $scope.addParagraph = function() {
             const sz = $scope.notebook.paragraphs.length;
 
-            const paragraph = {
-                id: 'paragraph-' + paragraphId++,
+            const paragraph = new Paragraph($animate, $timeout, {
                 name: 'Query' + (sz === 0 ? '' : sz),
                 query: '',
                 pageSize: $scope.pageSizes[0],
@@ -876,9 +912,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     unit: 60000,
                     installed: false
                 }
-            };
-
-            enhanceParagraph(paragraph);
+            });
 
             if ($scope.caches && $scope.caches.length > 0)
                 paragraph.cacheName = $scope.caches[0].name;
@@ -891,9 +925,9 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             $location.hash(paragraph.id);
 
-            $anchorScroll();
+            $timeout(() => {
+                $anchorScroll();
 
-            setTimeout(function() {
                 paragraph.ace.focus();
             });
         };
@@ -931,8 +965,6 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             if (paragraph.chart())
                 _chartApplySettings(paragraph, true);
-            else
-                $timeout(() => paragraph.gridOptions.api.core.handleWindowResize());
         };
 
         $scope.resultEq = function(paragraph, result) {
@@ -1033,25 +1065,15 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 });
             });
 
-            const cols = [];
+            paragraph.gridOptions.rebuildColumns();
 
-            _.forEach(paragraph.meta, (col, idx) => {
-                if (paragraph.columnFilter(col)) {
-                    col.field = paragraph.queryArgs.query ? idx.toString() : col.fieldName;
-
-                    cols.push(col);
-                }
-            });
-
-            paragraph.gridOptions.updateColumns(cols);
-
-            paragraph.chartColumns = _.reduce(cols, (acc, col) => {
-                if (_notObjectType(col.fieldTypeName)) {
+            paragraph.chartColumns = _.reduce(paragraph.meta, (acc, col, idx) => {
+                if (paragraph.columnFilter(col) && _notObjectType(col.fieldTypeName)) {
                     acc.push({
                         label: col.fieldName,
                         type: col.fieldTypeName,
                         aggFx: $scope.aggregateFxs[0],
-                        value: col.field
+                        value: idx.toString()
                     });
                 }
 
@@ -1087,14 +1109,14 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
         /**
          * @param {Object} paragraph Query
-         * @param {{fieldsMetadata: Array, items: Array, queryId: int, last: Boolean}} res Query results.
+         * @param {{columns: Array, rows: Array, responseNodeId: String, queryId: int, hasMore: Boolean}} res Query results.
          * @private
          */
-        const _processQueryResult = function(paragraph, res) {
+        const _processQueryResult = (paragraph, res) => {
             const prevKeyCols = paragraph.chartKeyCols;
             const prevValCols = paragraph.chartValCols;
 
-            if (!_.eq(paragraph.meta, res.fieldsMetadata)) {
+            if (!_.eq(paragraph.meta, res.columns)) {
                 paragraph.meta = [];
 
                 paragraph.chartColumns = [];
@@ -1105,17 +1127,17 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 if (!LegacyUtils.isDefined(paragraph.chartValCols))
                     paragraph.chartValCols = [];
 
-                if (res.fieldsMetadata.length <= 2) {
-                    const _key = _.find(res.fieldsMetadata, {fieldName: '_KEY'});
-                    const _val = _.find(res.fieldsMetadata, {fieldName: '_VAL'});
+                if (res.columns.length <= 2) {
+                    const _key = _.find(res.columns, {fieldName: '_KEY'});
+                    const _val = _.find(res.columns, {fieldName: '_VAL'});
 
-                    paragraph.disabledSystemColumns = (res.fieldsMetadata.length === 2 && _key && _val) ||
-                        (res.fieldsMetadata.length === 1 && (_key || _val));
+                    paragraph.disabledSystemColumns = (res.columns.length === 2 && _key && _val) ||
+                        (res.columns.length === 1 && (_key || _val));
                 }
 
                 paragraph.columnFilter = _columnFilter(paragraph);
 
-                paragraph.meta = res.fieldsMetadata;
+                paragraph.meta = res.columns;
 
                 _rebuildColumns(paragraph);
             }
@@ -1124,24 +1146,28 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             paragraph.total = 0;
 
-            paragraph.queryId = res.last ? null : res.queryId;
+            paragraph.duration = res.duration;
+
+            paragraph.queryId = res.hasMore ? res.queryId : null;
+
+            paragraph.resNodeId = res.responseNodeId;
 
             delete paragraph.errMsg;
 
             // Prepare explain results for display in table.
-            if (paragraph.queryArgs.query && paragraph.queryArgs.query.startsWith('EXPLAIN') && res.items) {
+            if (paragraph.queryArgs.query && paragraph.queryArgs.query.startsWith('EXPLAIN') && res.rows) {
                 paragraph.rows = [];
 
-                res.items.forEach(function(row, i) {
-                    const line = res.items.length - 1 === i ? row[0] : row[0] + '\n';
+                res.rows.forEach((row, i) => {
+                    const line = res.rows.length - 1 === i ? row[0] : row[0] + '\n';
 
                     line.replace(/\"/g, '').split('\n').forEach((ln) => paragraph.rows.push([ln]));
                 });
             }
             else
-                paragraph.rows = res.items;
+                paragraph.rows = res.rows;
 
-            paragraph.gridOptions.updateRows(paragraph.rows);
+            paragraph.gridOptions.adjustHeight(paragraph.rows.length);
 
             const chartHistory = paragraph.chartHistory;
 
@@ -1189,12 +1215,18 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             return queryId ? agentMonitor.queryClose(queryId) : $q.when();
         };
 
+        const cacheNode = (name) => {
+            const cache = _.find($scope.caches, {name});
+
+            return cache.nodeIds[_.random(0, cache.nodeIds.length - 1)];
+        };
+
         const _executeRefresh = (paragraph) => {
             const args = paragraph.queryArgs;
 
             agentMonitor.awaitAgent()
                 .then(() => _closeOldQuery(paragraph))
-                .then(() => agentMonitor.query(args.cacheName, args.pageSize, args.query))
+                .then(() => agentMonitor.query(cacheNode(args.cacheName), args.cacheName, args.query, false, args.pageSize))
                 .then(_processQueryResult.bind(this, paragraph))
                 .catch((err) => paragraph.errMsg = err.message);
         };
@@ -1213,7 +1245,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             }
         };
 
-        $scope.execute = function(paragraph) {
+        $scope.execute = (paragraph) => {
             Notebook.save($scope.notebook)
                 .catch(Messages.showError);
 
@@ -1222,16 +1254,16 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             _showLoading(paragraph, true);
 
             _closeOldQuery(paragraph)
-                .then(function() {
+                .then(() => {
                     const args = paragraph.queryArgs = {
                         cacheName: paragraph.cacheName,
                         pageSize: paragraph.pageSize,
                         query: paragraph.query
                     };
 
-                    return agentMonitor.query(args.cacheName, args.pageSize, args.query);
+                    return agentMonitor.query(cacheNode(paragraph.cacheName), args.cacheName, args.query, false, args.pageSize);
                 })
-                .then(function(res) {
+                .then((res) => {
                     _processQueryResult(paragraph, res);
 
                     _tryStartRefresh(paragraph);
@@ -1250,7 +1282,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             return LegacyUtils.isDefined(paragraph.queryArgs);
         };
 
-        const _cancelRefresh = function(paragraph) {
+        const _cancelRefresh = (paragraph) => {
             if (paragraph.rate && paragraph.rate.stopTime) {
                 delete paragraph.queryArgs;
 
@@ -1262,34 +1294,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             }
         };
 
-        $scope.explain = function(paragraph) {
-            Notebook.save($scope.notebook)
-                .catch(Messages.showError);
-
-            _cancelRefresh(paragraph);
-
-            _showLoading(paragraph, true);
-
-            _closeOldQuery(paragraph)
-                .then(function() {
-                    const args = paragraph.queryArgs = {
-                        cacheName: paragraph.cacheName,
-                        pageSize: paragraph.pageSize,
-                        query: 'EXPLAIN ' + paragraph.query
-                    };
-
-                    return agentMonitor.query(args.cacheName, args.pageSize, args.query);
-                })
-                .then(_processQueryResult.bind(this, paragraph))
-                .catch((err) => {
-                    paragraph.errMsg = err.message;
-
-                    _showLoading(paragraph, false);
-                })
-                .then(() => paragraph.ace.focus());
-        };
-
-        $scope.scan = function(paragraph) {
+        $scope.explain = (paragraph) => {
             Notebook.save($scope.notebook)
                 .catch(Messages.showError);
 
@@ -1301,10 +1306,11 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then(() => {
                     const args = paragraph.queryArgs = {
                         cacheName: paragraph.cacheName,
-                        pageSize: paragraph.pageSize
+                        pageSize: paragraph.pageSize,
+                        query: 'EXPLAIN ' + paragraph.query
                     };
 
-                    return agentMonitor.query(args.cacheName, args.pageSize);
+                    return agentMonitor.query(cacheNode(paragraph.cacheName), args.cacheName, args.query, false, args.pageSize);
                 })
                 .then(_processQueryResult.bind(this, paragraph))
                 .catch((err) => {
@@ -1313,6 +1319,42 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     _showLoading(paragraph, false);
                 })
                 .then(() => paragraph.ace.focus());
+        };
+
+        $scope.scan = (paragraph, query = null) => {
+            Notebook.save($scope.notebook)
+                .catch(Messages.showError);
+
+            _cancelRefresh(paragraph);
+
+            _showLoading(paragraph, true);
+
+            _closeOldQuery(paragraph)
+                .then(() => {
+                    const args = paragraph.queryArgs = {
+                        cacheName: paragraph.cacheName,
+                        pageSize: paragraph.pageSize,
+                        query
+                    };
+
+                    return agentMonitor.query(cacheNode(paragraph.cacheName), args.cacheName, query, false, args.pageSize);
+                })
+                .then(_processQueryResult.bind(this, paragraph))
+                .catch((err) => {
+                    paragraph.errMsg = err.message;
+
+                    _showLoading(paragraph, false);
+                })
+                .then(() => paragraph.ace.focus());
+        };
+
+        $scope.scanWithFilter = (paragraph) => {
+            ScanFilterInput.open()
+                .then(({filter, caseSensitive}) => {
+                    const prefix = caseSensitive ? SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE : SCAN_CACHE_WITH_FILTER;
+
+                    $scope.scan(paragraph, `${prefix}${filter}`);
+                });
         };
 
         function _updatePieChartsWithData(paragraph, newDatum) {
@@ -1332,18 +1374,20 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             });
         }
 
-        $scope.nextPage = function(paragraph) {
+        $scope.nextPage = (paragraph) => {
             _showLoading(paragraph, true);
 
             paragraph.queryArgs.pageSize = paragraph.pageSize;
 
-            agentMonitor.next(paragraph.queryId, paragraph.pageSize)
-                .then(function(res) {
+            agentMonitor.next(paragraph.resNodeId, paragraph.queryId, paragraph.pageSize)
+                .then((res) => {
                     paragraph.page++;
 
                     paragraph.total += paragraph.rows.length;
 
-                    paragraph.rows = res.items;
+                    paragraph.duration = res.duration;
+
+                    paragraph.rows = res.rows;
 
                     if (paragraph.chart()) {
                         if (paragraph.result === 'pie')
@@ -1352,11 +1396,11 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             _updateChartsWithData(paragraph, _chartDatum(paragraph));
                     }
 
-                    paragraph.gridOptions.updateRows(paragraph.rows);
+                    paragraph.gridOptions.adjustHeight(paragraph.rows.length);
 
                     _showLoading(paragraph, false);
 
-                    if (res.last)
+                    if (!res.hasMore)
                         delete paragraph.queryId;
                 })
                 .catch((err) => {
@@ -1424,8 +1468,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         $scope.exportCsvAll = function(paragraph) {
             const args = paragraph.queryArgs;
 
-            agentMonitor.queryGetAll(args.cacheName, args.query)
-                .then((res) => _export(paragraph.name + '-all.csv', paragraph.columnFilter, res.fieldsMetadata, res.items))
+            agentMonitor.queryGetAll(cacheNode(args.cacheName), args.cacheName, args.query, false)
+                .then((res) => _export(paragraph.name + '-all.csv', paragraph.columnFilter, res.columns, res.rows))
                 .catch(Messages.showError)
                 .then(() => paragraph.ace.focus());
         };
@@ -1543,6 +1587,18 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 if (_.isNil(paragraph.queryArgs.query)) {
                     scope.title = 'SCAN query';
                     scope.content = [`SCAN query for cache: <b>${$scope.maskCacheName(paragraph.queryArgs.cacheName)}</b>`];
+                }
+                if (paragraph.queryArgs.query.startsWith(SCAN_CACHE_WITH_FILTER)) {
+                    scope.title = 'SCAN query';
+
+                    let filter = '';
+
+                    if (paragraph.queryArgs.query.startsWith(SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE))
+                        filter = paragraph.queryArgs.query.substr(SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE.length);
+                    else
+                        filter = paragraph.queryArgs.query.substr(SCAN_CACHE_WITH_FILTER.length);
+
+                    scope.content = [`SCAN query for cache: <b>${$scope.maskCacheName(paragraph.queryArgs.cacheName)}</b> with filter: <b>${filter}</b>`];
                 }
                 else if (paragraph.queryArgs.query .startsWith('EXPLAIN ')) {
                     scope.title = 'Explain query';

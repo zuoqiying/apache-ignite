@@ -41,7 +41,7 @@ export default ['adminController', [
         $scope.becomeUser = function(user) {
             $http.get('/api/v1/admin/become', { params: {viewedUserId: user._id}})
                 .catch(({data}) => Promise.reject(data))
-                .then(User.read)
+                .then(User.load)
                 .then((becomeUser) => {
                     $rootScope.$broadcast('user', becomeUser);
 

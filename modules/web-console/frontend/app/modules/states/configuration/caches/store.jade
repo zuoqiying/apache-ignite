@@ -63,7 +63,12 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                             {value: "CacheHibernateBlobStoreFactory", label: "Hibernate BLOB store factory"},\
                             {value: undefined, label: "Not set"}\
                         ]',
-                        'Factory for persistent storage for cache data'
+                        'Factory for persistent storage for cache data\
+                        <ul>\
+                            <li>JDBC POJO store factory - Objects are stored in underlying database by using java beans mapping description via reflection backed by JDBC</li>\
+                            <li>JDBC BLOB store factory - Objects are stored in underlying database in BLOB format backed by JDBC</li>\
+                            <li>Hibernate BLOB store factory - Objects are stored in underlying database in BLOB format backed by Hibernate</li>\
+                        </ul>'
                     )
                     span(ng-show=storeFactoryKind ng-init='__.expanded = true')
                         a.customize(ng-show='__.expanded' ng-click='__.expanded = false') Hide settings
@@ -199,7 +204,6 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                         <ul> \
                             <li>IgniteCache.putIfAbsent()</li> \
                             <li>IgniteCache.replace()</li> \
-                            <li>IgniteCache.replace()</li> \
                             <li>IgniteCache.remove()</li> \
                             <li>IgniteCache.getAndPut()</li> \
                             <li>IgniteCache.getAndRemove()</li> \
@@ -213,9 +217,9 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                 .settings-row
                     +ignite-form-group
                         ignite-form-field-label
-                            | Write behind
+                            | Write-behind
                         ignite-form-group-tooltip
-                            | Cache write behind settings#[br]
+                            | Cache write-behind settings#[br]
                             | Write-behind is a special mode when updates to cache accumulated and then asynchronously flushed to persistent store as a bulk operation
                         .group-content
                             -var enabled = model + '.writeBehindEnabled'
@@ -224,7 +228,7 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                                 +checkbox('Enabled', enabled, '"writeBehindEnabled"', 'Flag indicating whether Ignite should use write-behind behaviour for the cache store')
                             .details-row
                                 +number('Batch size:', model + '.writeBehindBatchSize', '"writeBehindBatchSize"', enabled, '512', '1',
-                                    'Maximum batch size for write - behind cache store operations<br/>\
+                                    'Maximum batch size for write-behind cache store operations<br/>\
                                      Store operations(get or remove) are combined in a batch of this size to be passed to cache store')
                             .details-row
                                 +number('Flush size:', model + '.writeBehindFlushSize', '"writeBehindFlushSize"', enabled, '10240', '1',

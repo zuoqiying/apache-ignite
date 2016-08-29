@@ -18,6 +18,8 @@
 import angular from 'angular';
 import io from 'socket.io-client'; // eslint-disable-line no-unused-vars
 
+const maskNull = (val) => _.isEmpty(val) ? 'null' : val;
+
 class IgniteAgentMonitor {
     constructor(socketFactory, $root, $q, $state, $modal, Messages) {
         this._scope = $root.$new();
@@ -260,30 +262,52 @@ class IgniteAgentMonitor {
     }
 
     /**
+     * @param {String} nid Node id.
      * @param {int} [queryId]
      * @returns {Promise}
      */
-    queryClose(queryId) {
-        return this._rest('node:query:close', queryId);
+    queryClose(nid, queryId) {
+        return this._rest('node:query:close', nid, queryId);
     }
 
     /**
+     * @param {String} nid Node id.
      * @param {String} cacheName Cache name.
+     * @param {String} [query] Query if null then scan query.
+     * @param {Boolean} local Flag whether to execute query locally.
      * @param {int} pageSize
-     * @param {String} [query] Query if null then scan query.
      * @returns {Promise}
      */
-    query(cacheName, pageSize, query) {
-        return this._rest('node:query', _.isEmpty(cacheName) ? null : cacheName, pageSize, query);
+    query(nid, cacheName, query, local, pageSize) {
+        return this._rest('node:query', nid, maskNull(cacheName), maskNull(query), local, pageSize)
+            .then(({result}) => {
+                if (_.isEmpty(result.key))
+                    return result.value;
+
+                return Promise.reject(result.key);
+            });
     }
 
     /**
+     * @param {String} nid Node id.
      * @param {String} cacheName Cache name.
      * @param {String} [query] Query if null then scan query.
+     * @param {Boolean} local Flag whether to execute query locally.
      * @returns {Promise}
      */
-    queryGetAll(cacheName, query) {
-        return this._rest('node:query:getAll', _.isEmpty(cacheName) ? null : cacheName, query);
+    queryGetAll(nid, cacheName, query, local) {
+        return this._rest('node:query:getAll', nid, maskNull(cacheName), maskNull(query), local);
+    }
+
+    /**
+     * @param {String} nid Node id.
+     * @param {int} queryId
+     * @param {int} pageSize
+     * @returns {Promise}
+     */
+    next(nid, queryId, pageSize) {
+        return this._rest('node:query:fetch', nid, queryId, pageSize)
+            .then(({result}) => result);
     }
 
     /**
@@ -291,16 +315,7 @@ class IgniteAgentMonitor {
      * @returns {Promise}
      */
     metadata(cacheName) {
-        return this._rest('node:cache:metadata', _.isEmpty(cacheName) ? null : cacheName);
-    }
-
-    /**
-     * @param {int} queryId
-     * @param {int} pageSize
-     * @returns {Promise}
-     */
-    next(queryId, pageSize) {
-        return this._rest('node:query:fetch', queryId, pageSize);
+        return this._rest('node:cache:metadata', maskNull(cacheName));
     }
 
     stopWatch() {

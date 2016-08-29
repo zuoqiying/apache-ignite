@@ -18,7 +18,7 @@
 export default ['igniteUserbar', [function() {
     return {
         restrict: 'A',
-        controller: ['$rootScope', 'IgniteUserbar', function($root, IgniteUserbar) {
+        controller: ['$rootScope', 'IgniteUserbar', 'AclService', function($root, IgniteUserbar, AclService) {
             const ctrl = this;
 
             ctrl.items = [
@@ -26,15 +26,15 @@ export default ['igniteUserbar', [function() {
                 {text: 'Getting started', click: 'gettingStarted.tryShow(true)'}
             ];
 
-            const _rebuildSettings = (event, user) => {
+            const _rebuildSettings = () => {
                 ctrl.items.splice(2);
 
-                if (!user.becomeUsed && user.admin)
+                if (AclService.can('admin_page'))
                     ctrl.items.push({text: 'Admin panel', sref: 'settings.admin'});
 
                 ctrl.items.push(...IgniteUserbar);
 
-                if (!user.becomeUsed)
+                if (AclService.can('logout'))
                     ctrl.items.push({text: 'Log out', sref: 'logout'});
             };
 

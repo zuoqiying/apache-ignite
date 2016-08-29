@@ -28,7 +28,8 @@ const jadePaths = [
     './views/*.jade',
     './views/**/*.jade',
     './app/helpers/**/*.jade',
-    './app/modules/states/configuration/**/*.jade'
+    './app/modules/states/configuration/**/*.jade',
+    './app/modules/sql/*.jade'
 ];
 
 const resourcePaths = [

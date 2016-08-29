@@ -32,16 +32,18 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
     // Services.
     .service('igniteConfigurationResource', ConfigurationResource)
     // Configure state provider.
-    .config(['$stateProvider', ($stateProvider) => {
+    .config(['$stateProvider', 'AclRouteProvider', ($stateProvider, AclRoute) => {
         // Setup the states.
         $stateProvider
             .state('base.configuration', {
                 url: '/configuration',
-                templateUrl: '/configuration/sidebar.html'
+                templateUrl: '/configuration/sidebar.html',
+                abstract: true
             })
             .state('base.configuration.clusters', {
                 url: '/clusters',
                 templateUrl: '/configuration/clusters.html',
+                onEnter: AclRoute.checkAccess('configuration'),
                 params: {
                     linkId: null
                 },
@@ -52,6 +54,7 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
             .state('base.configuration.caches', {
                 url: '/caches',
                 templateUrl: '/configuration/caches.html',
+                onEnter: AclRoute.checkAccess('configuration'),
                 params: {
                     linkId: null
                 },
@@ -62,6 +65,7 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
             .state('base.configuration.domains', {
                 url: '/domains',
                 templateUrl: '/configuration/domains.html',
+                onEnter: AclRoute.checkAccess('configuration'),
                 params: {
                     linkId: null
                 },
@@ -72,6 +76,7 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
             .state('base.configuration.igfs', {
                 url: '/igfs',
                 templateUrl: '/configuration/igfs.html',
+                onEnter: AclRoute.checkAccess('configuration'),
                 params: {
                     linkId: null
                 },
@@ -82,6 +87,7 @@ angular.module('ignite-console.states.configuration', ['ui.router'])
             .state('base.configuration.summary', {
                 url: '/summary',
                 templateUrl: '/configuration/summary.html',
+                onEnter: AclRoute.checkAccess('configuration'),
                 controller: ConfigurationSummaryCtrl,
                 controllerAs: 'ctrl',
                 metaTags: {

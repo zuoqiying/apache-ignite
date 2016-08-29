@@ -325,7 +325,9 @@ export default ['domainsController', [
         $scope.selectAllSchemas = function() {
             const allSelected = $scope.importDomain.allSchemasSelected;
 
-            _.forEach($scope.importDomain.displayedSchemas, (schema) => schema.use = allSelected);
+            _.forEach($scope.importDomain.displayedSchemas, (schema) => {
+                schema.use = allSelected;
+            });
         };
 
         $scope.selectSchema = function() {

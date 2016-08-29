@@ -21,12 +21,13 @@ angular
 .module('ignite-console.states.profile', [
     'ui.router'
 ])
-.config(['$stateProvider', function($stateProvider) {
+.config(['$stateProvider', 'AclRouteProvider', function($stateProvider, AclRoute) {
     // set up the states
     $stateProvider
     .state('settings.profile', {
         url: '/profile',
         templateUrl: '/settings/profile.html',
+        onEnter: AclRoute.checkAccess('profile'),
         metaTags: {
             title: 'User profile'
         }

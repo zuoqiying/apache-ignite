@@ -19,13 +19,21 @@
 
 // Fire me up!
 
+import AppErrorException from './AppErrorException';
+import IllegalArgumentException from './IllegalArgumentException';
+import DuplicateKeyException from './DuplicateKeyException';
+import ServerErrorException from './ServerErrorException';
+import MissingResourceException from './MissingResourceException';
+import AuthFailedException from './AuthFailedException';
+
 module.exports = {
     implements: 'errors',
     factory: () => ({
-        AppErrorException: require('./AppErrorException'),
-        IllegalArgumentException: require('./IllegalArgumentException'),
-        DuplicateKeyException: require('./DuplicateKeyException'),
-        ServerErrorException: require('./ServerErrorException'),
-        NotFoundException: require('./NotFoundException')
+        AppErrorException,
+        IllegalArgumentException,
+        DuplicateKeyException,
+        ServerErrorException,
+        MissingResourceException,
+        AuthFailedException
     })
 };

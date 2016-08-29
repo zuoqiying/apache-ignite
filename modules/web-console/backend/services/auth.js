@@ -33,7 +33,7 @@ module.exports = {
  */
 module.exports.factory = (_, mongo, spacesService, errors) => {
     class AuthService {
-        // TODO move implementation from public router.
+        // TODO IGNITE-3774: move implementation from public router.
         static resetPassword() {
 
         }

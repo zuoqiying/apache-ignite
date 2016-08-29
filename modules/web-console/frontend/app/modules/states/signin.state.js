@@ -24,30 +24,17 @@ angular
     // services
     'ignite-console.user'
 ])
-.config(['$stateProvider', function($stateProvider) {
+.config(['$stateProvider', 'AclRouteProvider', function($stateProvider) {
     // set up the states
     $stateProvider
     .state('signin', {
         url: '/',
         templateUrl,
+        onEnter: ['$state', 'User', ($state, User) => {
+            User.read()
+                .then(() => $state.go('base.configuration.clusters', {}, {reload: true}));
+        }],
         metaTags: {
-        }
-    });
-}])
-.run(['$rootScope', '$state', 'Auth', 'IgniteBranding', function($root, $state, Auth, branding) {
-    $root.$on('$stateChangeStart', function(event, toState) {
-        if (toState.name === branding.termsState)
-            return;
-
-        if (!Auth.authorized && (toState.name !== 'signin' && !_.startsWith(toState.name, 'password.'))) {
-            event.preventDefault();
-
-            $state.go('signin');
-        }
-        else if (Auth.authorized && toState.name === 'signin') {
-            event.preventDefault();
-
-            $state.go('base.configuration.clusters');
         }
     });
 }]);

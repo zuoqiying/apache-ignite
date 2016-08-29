@@ -90,53 +90,53 @@ module.exports.factory = (_, socketio, agentMgr, configure) => {
                 });
 
                 // Close query on node.
-                socket.on('node:query:close', (queryId, cb) => {
+                socket.on('node:query:close', (nid, queryId, cb) => {
                     agentMgr.findAgent(accountId())
-                        .then((agent) => agent.queryClose(demo, queryId))
+                        .then((agent) => agent.queryClose(demo, nid, queryId))
                         .then(() => cb())
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
                 // Execute query on node and return first page to browser.
-                socket.on('node:query', (cacheName, pageSize, query, cb) => {
+                socket.on('node:query', (nid, cacheName, query, local, pageSize, cb) => {
                     agentMgr.findAgent(accountId())
-                        .then((agent) => {
-                            if (query === null)
-                                return agent.scan(demo, cacheName, pageSize);
-
-                            return agent.fieldsQuery(demo, cacheName, query, pageSize);
-                        })
+                        .then((agent) => agent.fieldsQuery(demo, nid, cacheName, query, local, pageSize))
                         .then((res) => cb(null, res))
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
                 // Fetch next page for query and return result to browser.
-                socket.on('node:query:fetch', (queryId, pageSize, cb) => {
+                socket.on('node:query:fetch', (nid, queryId, pageSize, cb) => {
                     agentMgr.findAgent(accountId())
-                        .then((agent) => agent.queryFetch(demo, queryId, pageSize))
+                        .then((agent) => agent.queryFetch(demo, nid, queryId, pageSize))
                         .then((res) => cb(null, res))
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
                 // Execute query on node and return full result to browser.
-                socket.on('node:query:getAll', (cacheName, query, cb) => {
+                socket.on('node:query:getAll', (nid, cacheName, query, local, cb) => {
                     // Set page size for query.
                     const pageSize = 1024;
 
                     agentMgr.findAgent(accountId())
                         .then((agent) => {
-                            const firstPage = query === null ? agent.scan(demo, cacheName, pageSize)
-                                : agent.fieldsQuery(demo, cacheName, query, pageSize);
+                            const firstPage = agent.fieldsQuery(demo, nid, cacheName, query, local, pageSize)
+                                .then(({result}) => {
+                                    if (result.key)
+                                        return Promise.reject(result.key);
+
+                                    return result.value;
+                                });
 
                             const fetchResult = (acc) => {
-                                if (acc.last)
+                                if (!acc.hasMore)
                                     return acc;
 
-                                return agent.queryFetch(demo, acc.queryId, pageSize)
+                                return agent.queryFetch(demo, acc.responseNodeId, acc.queryId, pageSize)
                                     .then((res) => {
-                                        acc.items = acc.items.concat(res.items);
+                                        acc.rows = acc.rows.concat(res.rows);
 
-                                        acc.last = res.last;
+                                        acc.hasMore = res.hasMore;
 
                                         return fetchResult(acc);
                                     });

@@ -29,23 +29,26 @@ include ../../../../../app/helpers/jade/mixins.jade
         .panel-body
             .col-sm-6
                 .settings-row
-                    +text('Name:', model + '.name', '"clusterName"', 'true', 'Input name', 'Grid name')
+                    +text('Name:', model + '.name', '"clusterName"', 'true', 'Input name', 'Grid name allows to indicate to what grid this particular grid instance belongs to')
                 .settings-row
                     +caches(model, 'Select caches to start in cluster or add a new cache')
                 .settings-row
-                    +text-ip-address('Local host:', model + '.localHost', '"localHost"', 'true', '0.0.0.0', 'System-wide local address or host for all Ignite components to bind to')
+                    +text-ip-address('Local host:', model + '.localHost', '"localHost"', 'true', '0.0.0.0',
+                        'System-wide local address or host for all Ignite components to bind to<br/>\
+                        If not defined then Ignite tries to use local wildcard address<br/>\
+                        That means that all services will be available on all network interfaces of the host machine')
                 .settings-row
                     +dropdown('Discovery:', model + '.discovery.kind', '"discovery"', 'true', 'Choose discovery', 'discoveries',
                         'Discovery allows to discover remote nodes in grid\
                         <ul>\
                             <li>Static IPs - IP Finder which works only with pre configured list of IP addresses specified</li>\
                             <li>Multicast - Multicast based IP finder</li>\
-                            <li>AWS S3 - AWS S3 based IP finder</li>\
-                            <li>Apache jclouds - Apache jclouds multi cloud toolkit based IP finder</li>\
-                            <li>Google cloud storage - Google Cloud Storage based IP finder</li>\
-                            <li>JDBC - JDBC based IP finder</li>\
-                            <li>Shared filesystem - Shared filesystem based IP finder</li>\
-                            <li>Apache ZooKeeper - Apache ZooKeeper based IP finder</li>\
+                            <li>AWS S3 - AWS S3 based IP finder that automatically discover cluster nodes on Amazon EC2 cloud</li>\
+                            <li>Apache jclouds - Apache jclouds multi cloud toolkit based IP finder for cloud platforms with unstable IP addresses</li>\
+                            <li>Google cloud storage - Google Cloud Storage based IP finder that automatically discover cluster nodes on Google Compute Engine cluster</li>\
+                            <li>JDBC - JDBC based IP finder that use database to store node IP addres</li>\
+                            <li>Shared filesystem - Shared filesystem based IP finder that use file to store node IP address</li>\
+                            <li>Apache ZooKeeper - Apache ZooKeeper based IP finder when you use ZooKeeper to coordinate your distributed environment</li>\
                         </ul>')
                 .settings-row
                     .panel-details

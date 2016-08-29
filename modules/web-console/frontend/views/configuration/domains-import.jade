@@ -38,7 +38,7 @@ mixin td-ellipses-lbl(w, lbl)
                         li Agent failed to find JDBC drivers
                         li Copy required JDBC drivers into agent 'jdbc-drivers' folder and try again
                         li Refer to agent README.txt for more information
-                .import-domain-model-wizard-page(ng-show='importDomain.action == "connect" && importDomain.demo')
+                .import-domain-model-wizard-page(ng-if='importDomain.action == "connect" && importDomain.demo')
                     div(ng-if='demoConnection.db == "H2"')
                         label Demo description:
                         ul
@@ -52,8 +52,10 @@ mixin td-ellipses-lbl(w, lbl)
                                 li Agent failed to resolve H2 database jar
                                 li Copy h2-x.x.x.jar into agent 'jdbc-drivers' folder and try again
                                 li Refer to agent README.txt for more information
-                .import-domain-model-wizard-page(ng-show='importDomain.action == "connect" && !importDomain.demo')
-                    form.form-horizontal(name='connectForm' novalidate)
+                .import-domain-model-wizard-page(ng-if='importDomain.action == "connect" && !importDomain.demo')
+                    - var form = 'connectForm'
+
+                    form.form-horizontal(name=form novalidate)
                         .settings-row
                             label.col-xs-4.col-sm-2.col-md-2.required Driver JAR:
                             .col-xs-8.col-sm-10.col-md-10
@@ -63,38 +65,27 @@ mixin td-ellipses-lbl(w, lbl)
                         .settings-row
                             label.col-xs-4.col-sm-2.col-md-2.required JDBC driver:
                             .col-xs-8.col-sm-10.col-md-10
+                                - var name = '"jdbcDriverClass"'
                                 i.tipField.fa.fa-question-circle(bs-tooltip='' data-title='Fully qualified class name of JDBC driver that will be used to connect to database')
-                                .input-tip
-                                    ignite-form-field-input-text(
-                                        data-id='jdbcDriverClass'
-                                        data-name='jdbcDriverClass'
-                                        data-ng-model='selectedPreset.jdbcDriverClass'
-                                        data-ignite-label-name='JDBC driver'
-                                        data-ng-required='true'
-                                        data-placeholder='Enter fully qualified class name'
 
+                                +form-field-feedback(name, 'javaBuiltInClass', 'JDBC Driver should not be the Java built-in class!')
+                                +form-field-feedback(name, 'javaKeywords', 'JDBC Driver could not contains reserved Java keyword!')
+                                +form-field-feedback(name, 'javaPackageSpecified', 'JDBC Driver does not have package specified!')
+                                +form-field-feedback(name, 'javaIdentifier', 'JDBC Driver is invalid Java identifier!')
+
+                                .input-tip
+                                    +ignite-form-field-input(name, 'selectedPreset.jdbcDriverClass', false, true, 'Enter fully qualified class name')(
                                         data-java-identifier='true'
                                         data-java-package-specified='true'
                                         data-java-keywords='true'
                                         data-java-built-in-class='true'
                                     )
-                                        +error-feedback('connectForm.$error.javaBuiltInClass', 'javaBuiltInClass', 'JDBC Driver should not be the Java built-in class!')
-                                        +error-feedback('connectForm.$error.javaKeywords', 'javaKeywords', 'JDBC Driver could not contains reserved Java keyword!')
-                                        +error-feedback('connectForm.$error.javaPackageSpecified', 'javaPackageSpecified', 'JDBC Driver does not have package specified!')
-                                        +error-feedback('connectForm.$error.javaIdentifier', 'javaIdentifier', 'JDBC Driver is invalid Java identifier!')
                         .settings-row
                             label.col-xs-4.col-sm-2.col-md-2.required JDBC URL:
                             .col-xs-8.col-sm-10.col-md-10
                                 i.tipField.fa.fa-question-circle(bs-tooltip='' data-title='JDBC URL for connecting to database<br>Refer to your database documentation for details')
                                 .input-tip
-                                    ignite-form-field-input-text(
-                                        data-id='jdbcUrl'
-                                        data-name='jdbcUrl'
-                                        data-ng-model='selectedPreset.jdbcUrl'
-                                        data-ignite-label-name='JDBC URL'
-                                        data-ng-required='true'
-                                        data-placeholder='JDBC URL'
-                                    )
+                                    +ignite-form-field-input('jdbcUrl', 'selectedPreset.jdbcUrl', false, true, 'JDBC URL')
                         .settings-row
                             label.col-xs-4.col-sm-2.col-md-2 User:
                             .col-xs-8.col-sm-10.col-md-10
@@ -183,26 +174,24 @@ mixin td-ellipses-lbl(w, lbl)
                         .col-sm-1(style='padding-left: 5px')
                             button.btn.btn-primary(ng-click='applyDefaults()') Apply
                 .import-domain-model-wizard-page(ng-show='importDomain.action == "options"')
+                    - var form = 'optionsForm'
                     form.form-horizontal(name='optionsForm' novalidate)
                         .settings-row
                             .col-xs-3.col-sm-2.col-md-2.required
                                 label.required Package:
                             .col-xs-9.col-sm-10.col-md-10
+                                - var name = '"domainPackageName"'
                                 i.tipField.fa.fa-question-circle(bs-tooltip='' data-title='Package that will be used for POJOs generation')
+
+                                +form-field-feedback(name, 'javaPackageName', 'Package name is invalid')
+                                +form-field-feedback(name, 'javaKeywords', 'Package name could not contains reserved java keyword')
+
                                 .input-tip
-                                    ignite-form-field-input-text(
-                                        data-id='domainPackageName'
-                                        data-name='domainPackageName'
-                                        data-ng-model='ui.packageName'
-                                        data-ignite-label-name='Package'
-                                        data-ng-required='true'
-                                        data-placeholder='Enter package name'
+                                    +ignite-form-field-input(name, 'ui.packageName', false, true, 'Enter package name')(
                                         data-java-keywords='true'
                                         data-java-package-name='package-only'
                                         ng-model-options='{allowInvalid: true}'
                                     )
-                                        +error-feedback('optionsForm.$error.javaPackageName', 'javaPackageName', 'Package name is invalid')
-                                        +error-feedback('optionsForm.$error.javaKeywords', 'javaKeywords', 'Package name could not contains reserved java keyword')
                         .settings-row
                             .checkbox
                                 label
