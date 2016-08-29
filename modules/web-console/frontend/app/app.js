@@ -242,12 +242,9 @@ angular
     $root.$meta = $meta;
     $root.gettingStarted = gettingStarted;
 }])
-.run(['$rootScope', 'Auth', 'User', 'IgniteAgentMonitor', ($root, Auth, User, agentMonitor) => {
-    if (Auth.authorized) {
-        User.read()
-            .then((user) => $root.$broadcast('user', user))
-            .then(() => Auth.authorized && agentMonitor.init());
-    }
+.run(['$rootScope', 'User', 'IgniteAgentMonitor', ($root, User, agentMonitor) => {
+    User.read()
+        .then(() => agentMonitor.init());
 }])
 .run(['$rootScope', ($root) => {
     $root.$on('$stateChangeStart', () => {
@@ -257,9 +254,8 @@ angular
 .run(['$rootScope', '$http', '$state', 'IgniteMessages', 'User',
     ($root, $http, $state, Messages, User) => { // eslint-disable-line no-shadow
         $root.revertIdentity = () => {
-            $http
-                .get('/api/v1/admin/revert/identity')
-                .then(User.read)
+            $http.get('/api/v1/admin/revert/identity')
+                .then(User.load)
                 .then((user) => {
                     $root.$broadcast('user', user);
 

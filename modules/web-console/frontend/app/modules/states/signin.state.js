@@ -30,11 +30,9 @@ angular
     .state('signin', {
         url: '/',
         templateUrl,
-        onEnter: ['$state', 'Auth', 'AclService', ($state, Auth, AclService) => {
-            if (Auth.authorized)
-                $state.go('base.configuration.clusters', {}, {reload: true});
-            else if (!AclService.can('login'))
-                $state.go('403');
+        onEnter: ['$state', 'User', ($state, User) => {
+            User.read()
+                .then(() => $state.go('base.configuration.clusters', {}, {reload: true}));
         }],
         metaTags: {
         }
