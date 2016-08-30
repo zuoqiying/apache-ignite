@@ -43,7 +43,7 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
         65536);
     public static final int IGNITE_READ_CONN_BUF_CHUNK_CNT = IgniteSystemProperties.getInteger(
         "IGNITE_READ_CONN_BUF_CHUNK_CNT",
-        16);
+        32);
 
     /** Pending write requests. */
     private final ConcurrentLinkedDeque8<GridNioFuture<?>> queue = new ConcurrentLinkedDeque8<>();
