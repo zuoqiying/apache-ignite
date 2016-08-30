@@ -17,8 +17,8 @@
 
 // Controller for Domain model screen.
 export default ['domainsController', [
-    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource',
-    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource) {
+    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
+    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource, ErrorPopover, FormUtils) {
         UnsavedChangesGuard.install($scope);
 
         const emptyDomain = {empty: true};
@@ -30,7 +30,7 @@ export default ['domainsController', [
         // We need to initialize backupItem with empty object in order to properly used from angular directives.
         $scope.backupItem = emptyDomain;
 
-        $scope.ui = LegacyUtils.formUI();
+        $scope.ui = FormUtils.formUI();
         $scope.ui.activePanels = [0, 1];
         $scope.ui.topPanels = [0, 1, 2];
 
@@ -68,9 +68,9 @@ export default ['domainsController', [
 
         $scope.getModel = LegacyUtils.getModel;
         $scope.javaBuiltInClasses = LegacyUtils.javaBuiltInClasses;
-        $scope.compactJavaName = LegacyUtils.compactJavaName;
-        $scope.widthIsSufficient = LegacyUtils.widthIsSufficient;
-        $scope.saveBtnTipText = LegacyUtils.saveBtnTipText;
+        $scope.compactJavaName = FormUtils.compactJavaName;
+        $scope.widthIsSufficient = FormUtils.widthIsSufficient;
+        $scope.saveBtnTipText = FormUtils.saveBtnTipText;
 
         $scope.tableSave = function(field, index, stopEdit) {
             if (LegacyTable.tableEditing({model: 'table-index-fields'}, LegacyTable.tableEditedRowIndex())) {
@@ -172,10 +172,6 @@ export default ['domainsController', [
         $scope.ui.invalidKeyFieldsTooltip = 'Found key types without configured key fields<br/>' +
             'It may be a result of import tables from database without primary keys<br/>' +
             'Key field for such key types should be configured manually';
-
-        $scope.hidePopover = LegacyUtils.hidePopover;
-
-        const showPopoverMessage = LegacyUtils.showPopoverMessage;
 
         $scope.indexType = LegacyUtils.mkOptions(['SORTED', 'FULLTEXT', 'GEOSPATIAL']);
 
@@ -380,7 +376,7 @@ export default ['domainsController', [
         $scope.showImportDomainModal = function() {
             LegacyTable.tableReset();
 
-            LegacyUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, function() {
+            FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, function() {
                 if ($scope.ui.inputForm.$dirty)
                     $scope.backupItem = $scope.selectedItem ? angular.copy($scope.selectedItem) : prepareNewItem();
 
@@ -436,7 +432,7 @@ export default ['domainsController', [
 
                                     $scope.ui.selectedJdbcDriverJar = $scope.jdbcDriverJars[0].value;
 
-                                    LegacyUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, function() {
+                                    FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, function() {
                                         importDomainModal.$promise.then(() => {
                                             $scope.importDomain.action = 'connect';
                                             $scope.importDomain.tables = [];
@@ -728,7 +724,7 @@ export default ['domainsController', [
 
         function _saveDomainModel() {
             if (LegacyUtils.isEmptyString($scope.ui.packageName))
-                return LegacyUtils.showPopoverMessage(null, null, 'domainPackageName', 'Package could not be empty');
+                return ErrorPopover.show('domainPackageName', 'Package could not be empty');
 
             if (!LegacyUtils.isValidJavaClass('Package', $scope.ui.packageName, false, 'domainPackageName', true))
                 return false;
@@ -1132,6 +1128,10 @@ export default ['domainsController', [
                     else
                         form.$setDirty();
                 }, true);
+
+                $scope.$watch('ui.activePanels.length', () => {
+                    ErrorPopover.hide();
+                });
             })
             .catch(Messages.showError)
             .then(() => {
@@ -1191,15 +1191,15 @@ export default ['domainsController', [
                     $state.go('base.configuration.domains');
             }
 
-            LegacyUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, selectItem);
+            FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, selectItem);
         };
 
         // Add new domain model.
         $scope.createItem = function(cacheId) {
             if ($scope.tableReset(true)) {
                 $timeout(() => {
-                    LegacyUtils.ensureActivePanel($scope.ui, 'query');
-                    LegacyUtils.ensureActivePanel($scope.ui, 'general', 'keyType');
+                    FormUtils.ensureActivePanel($scope.ui, 'query');
+                    FormUtils.ensureActivePanel($scope.ui, 'general', 'keyType');
                 });
 
                 $scope.selectItem(null, prepareNewItem(cacheId));
@@ -1209,14 +1209,14 @@ export default ['domainsController', [
         function checkQueryConfiguration(item) {
             if (item.queryMetadata === 'Configuration' && LegacyUtils.domainForQueryConfigured(item)) {
                 if (_.isEmpty(item.fields))
-                    return showPopoverMessage($scope.ui, 'query', 'queryFields', 'Query fields should not be empty');
+                    return ErrorPopover.show('queryFields', 'Query fields should not be empty', $scope.ui, 'query');
 
                 const indexes = item.indexes;
 
                 if (indexes && indexes.length > 0) {
                     if (_.find(indexes, function(index, i) {
                         if (_.isEmpty(index.fields))
-                            return !showPopoverMessage($scope.ui, 'query', 'indexes' + i, 'Index fields are not specified');
+                            return !ErrorPopover.show('indexes' + i, 'Index fields are not specified', $scope.ui, 'query');
                     }))
                         return false;
                 }
@@ -1228,19 +1228,19 @@ export default ['domainsController', [
         function checkStoreConfiguration(item) {
             if (LegacyUtils.domainForStoreConfigured(item)) {
                 if (LegacyUtils.isEmptyString(item.databaseSchema))
-                    return showPopoverMessage($scope.ui, 'store', 'databaseSchema', 'Database schema should not be empty');
+                    return ErrorPopover.show('databaseSchema', 'Database schema should not be empty', $scope.ui, 'store');
 
                 if (LegacyUtils.isEmptyString(item.databaseTable))
-                    return showPopoverMessage($scope.ui, 'store', 'databaseTable', 'Database table should not be empty');
+                    return ErrorPopover.show('databaseTable', 'Database table should not be empty', $scope.ui, 'store');
 
                 if (_.isEmpty(item.keyFields))
-                    return showPopoverMessage($scope.ui, 'store', 'keyFields', 'Key fields are not specified');
+                    return ErrorPopover.show('keyFields', 'Key fields are not specified', $scope.ui, 'store');
 
                 if (LegacyUtils.isJavaBuiltInClass(item.keyType) && item.keyFields.length !== 1)
-                    return showPopoverMessage($scope.ui, 'store', 'keyFields', 'Only one field should be specified in case when key type is a Java built-in type');
+                    return ErrorPopover.show('keyFields', 'Only one field should be specified in case when key type is a Java built-in type', $scope.ui, 'store');
 
                 if (_.isEmpty(item.valueFields))
-                    return showPopoverMessage($scope.ui, 'store', 'valueFields', 'Value fields are not specified');
+                    return ErrorPopover.show('valueFields', 'Value fields are not specified', $scope.ui, 'store');
             }
 
             return true;
@@ -1258,7 +1258,7 @@ export default ['domainsController', [
                 return false;
 
             if (!LegacyUtils.domainForStoreConfigured(item) && !LegacyUtils.domainForQueryConfigured(item) && item.queryMetadata === 'Configuration')
-                return showPopoverMessage($scope.ui, 'query', 'query-title', 'SQL query domain model should be configured');
+                return ErrorPopover.show('query-title', 'SQL query domain model should be configured', $scope.ui, 'query');
 
             return true;
         }
@@ -1466,7 +1466,7 @@ export default ['domainsController', [
 
                     // Found duplicate by key.
                     if (idx >= 0 && idx !== index)
-                        return showPopoverMessage($scope.ui, 'query', LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Field with such ' + pairField.dupObjName + ' already exists!');
+                        return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Field with such ' + pairField.dupObjName + ' already exists!', $scope.ui, 'query');
                 }
 
                 if (pairField.classValidation && !LegacyUtils.isValidJavaClass(pairField.msg, pairValue.value, true, LegacyTable.tableFieldId(index, 'Value' + pairField.id), false, $scope.ui, 'query'))
@@ -1524,7 +1524,7 @@ export default ['domainsController', [
 
                     // Found duplicate.
                     if (idx >= 0 && index !== idx)
-                        return showPopoverMessage($scope.ui, 'store', LegacyTable.tableFieldId(index, 'DatabaseFieldName' + dbFieldTable.id), 'Field with such database name already exists!');
+                        return ErrorPopover.show(LegacyTable.tableFieldId(index, 'DatabaseFieldName' + dbFieldTable.id), 'Field with such database name already exists!', $scope.ui, 'store');
 
                     idx = _.findIndex(model, function(dbMeta) {
                         return dbMeta.javaFieldName === dbFieldValue.javaFieldName;
@@ -1532,7 +1532,7 @@ export default ['domainsController', [
 
                     // Found duplicate.
                     if (idx >= 0 && index !== idx)
-                        return showPopoverMessage($scope.ui, 'store', LegacyTable.tableFieldId(index, 'JavaFieldName' + dbFieldTable.id), 'Field with such java name already exists!');
+                        return ErrorPopover.show(LegacyTable.tableFieldId(index, 'JavaFieldName' + dbFieldTable.id), 'Field with such java name already exists!', $scope.ui, 'store');
 
                     if (index < 0)
                         model.push(dbFieldValue);
@@ -1593,7 +1593,7 @@ export default ['domainsController', [
 
                 // Found duplicate.
                 if (idx >= 0 && idx !== curIdx)
-                    return showPopoverMessage($scope.ui, 'query', LegacyTable.tableFieldId(curIdx, 'IndexName'), 'Index with such name already exists!');
+                    return ErrorPopover.show(LegacyTable.tableFieldId(curIdx, 'IndexName'), 'Index with such name already exists!', $scope.ui, 'query');
             }
 
             LegacyTable.tableReset();
@@ -1708,7 +1708,7 @@ export default ['domainsController', [
 
                 // Found duplicate.
                 if (idx >= 0 && idx !== curIdx)
-                    return showPopoverMessage($scope.ui, 'query', LegacyTable.tableFieldId(curIdx, 'FieldName' + (index.indexType === 'SORTED' ? 'S' : '') + indexIdx + (curIdx >= 0 ? '-' : '')), 'Field with such name already exists in index!');
+                    return ErrorPopover.show(LegacyTable.tableFieldId(curIdx, 'FieldName' + (index.indexType === 'SORTED' ? 'S' : '') + indexIdx + (curIdx >= 0 ? '-' : '')), 'Field with such name already exists in index!', $scope.ui, 'query');
             }
 
             LegacyTable.tableReset();

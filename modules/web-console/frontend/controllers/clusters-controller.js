@@ -17,8 +17,8 @@
 
 // Controller for Clusters screen.
 export default ['clustersController', [
-    '$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteEventGroups', 'DemoInfo', 'IgniteLegacyTable', 'igniteConfigurationResource',
-    function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable, Resource) {
+    '$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteEventGroups', 'DemoInfo', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
+    function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable, Resource, ErrorPopover, FormUtils) {
         UnsavedChangesGuard.install($scope);
 
         const emptyCluster = {empty: true};
@@ -43,8 +43,6 @@ export default ['clustersController', [
             'collision.JobStealing.stealingAttributes': {id: 'CAttribute', idPrefix: 'Key', searchCol: 'name', valueCol: 'key', dupObjName: 'name', group: 'collision'}
         };
 
-        const showPopoverMessage = LegacyUtils.showPopoverMessage;
-
         $scope.tablePairValid = function(item, field, index) {
             const pairField = pairFields[field.model];
 
@@ -60,7 +58,7 @@ export default ['clustersController', [
 
                     // Found duplicate by key.
                     if (idx >= 0 && idx !== index)
-                        return showPopoverMessage($scope.ui, pairField.group, LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Attribute with such ' + pairField.dupObjName + ' already exists!');
+                        return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Attribute with such ' + pairField.dupObjName + ' already exists!', $scope.ui, pairField.group);
                 }
             }
 
@@ -142,13 +140,12 @@ export default ['clustersController', [
         // We need to initialize backupItem with empty object in order to properly used from angular directives.
         $scope.backupItem = emptyCluster;
 
-        $scope.ui = LegacyUtils.formUI();
+        $scope.ui = FormUtils.formUI();
         $scope.ui.activePanels = [0];
         $scope.ui.topPanels = [0];
 
-        $scope.hidePopover = LegacyUtils.hidePopover;
-        $scope.saveBtnTipText = LegacyUtils.saveBtnTipText;
-        $scope.widthIsSufficient = LegacyUtils.widthIsSufficient;
+        $scope.saveBtnTipText = FormUtils.saveBtnTipText;
+        $scope.widthIsSufficient = FormUtils.widthIsSufficient;
 
         $scope.contentVisible = function() {
             const item = $scope.backupItem;
@@ -159,7 +156,7 @@ export default ['clustersController', [
         $scope.toggleExpanded = function() {
             $scope.ui.expanded = !$scope.ui.expanded;
 
-            LegacyUtils.hidePopover();
+            ErrorPopover.hide();
         };
 
         $scope.discoveries = [
@@ -249,6 +246,10 @@ export default ['clustersController', [
                         form.$setDirty();
                 }, true);
 
+                $scope.$watch('ui.activePanels.length', () => {
+                    ErrorPopover.hide();
+                });
+
                 if ($root.IgniteDemoMode && sessionStorage.showDemoInfo !== 'true') {
                     sessionStorage.showDemoInfo = 'true';
 
@@ -294,7 +295,7 @@ export default ['clustersController', [
                     $state.go('base.configuration.clusters');
             }
 
-            LegacyUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm.$dirty, selectItem);
+            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm.$dirty, selectItem);
         };
 
         $scope.linkId = () => $scope.backupItem._id ? $scope.backupItem._id : 'create';
@@ -321,7 +322,7 @@ export default ['clustersController', [
 
         // Add new cluster.
         $scope.createItem = function(linkId) {
-            $timeout(() => LegacyUtils.ensureActivePanel($scope.ui, 'general', 'clusterName'));
+            $timeout(() => FormUtils.ensureActivePanel($scope.ui, 'general', 'clusterName'));
 
             $scope.selectItem(null, prepareNewItem(linkId));
         };
@@ -342,18 +343,20 @@ export default ['clustersController', [
 
             if (!checkRes.checked) {
                 if (_.get(checkRes.secondObj, 'discovery.kind') === 'Jdbc') {
-                    return showPopoverMessage($scope.ui, 'general', 'dialect',
+                    return ErrorPopover.show('dialect',
                         'Found cache "' + checkRes.firstObj.name + '" with the same data source bean name "' +
                         item.discovery.Jdbc.dataSourceBean + '" and different database: "' +
                         LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in current cluster and "' +
-                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" cache', 10000);
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" cache',
+                        $scope.ui, 'general', 10000);
                 }
 
-                return showPopoverMessage($scope.ui, 'general', 'caches',
+                return ErrorPopover.show('caches',
                     'Found caches "' + checkRes.firstObj.name + '" and "' + checkRes.secondObj.name + '" ' +
                     'with the same data source bean name "' + checkRes.firstObj.cacheStoreFactory[checkRes.firstObj.cacheStoreFactory.kind].dataSourceBean +
                     '" and different databases: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" and "' +
-                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondObj.name + '" cache', 10000);
+                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondObj.name + '" cache',
+                    $scope.ui, 'general', 10000);
             }
 
             return true;
@@ -365,9 +368,10 @@ export default ['clustersController', [
             const checkRes = LegacyUtils.checkCacheSQLSchemas(caches);
 
             if (!checkRes.checked) {
-                return showPopoverMessage($scope.ui, 'general', 'caches',
+                return ErrorPopover.show('caches',
                     'Found caches "' + checkRes.firstCache.name + '" and "' + checkRes.secondCache.name + '" ' +
-                    'with the same SQL schema name "' + checkRes.firstCache.sqlSchema + '"', 10000);
+                    'with the same SQL schema name "' + checkRes.firstCache.sqlSchema + '"',
+                    $scope.ui, 'general', 10000);
             }
 
             return true;
@@ -382,10 +386,10 @@ export default ['clustersController', [
                         const type = b.typeConfigurations[typeIx];
 
                         if (LegacyUtils.isEmptyString(type.typeName))
-                            return showPopoverMessage($scope.ui, 'binary', 'typeName' + typeIx, 'Type name should be specified!');
+                            return ErrorPopover.show('typeName' + typeIx, 'Type name should be specified!', $scope.ui, 'binary');
 
                         if (_.find(b.typeConfigurations, (t, ix) => ix < typeIx && t.typeName === type.typeName))
-                            return showPopoverMessage($scope.ui, 'binary', 'typeName' + typeIx, 'Type with such name is already specified!');
+                            return ErrorPopover.show('typeName' + typeIx, 'Type with such name is already specified!', $scope.ui, 'binary');
                     }
                 }
             }
@@ -403,10 +407,10 @@ export default ['clustersController', [
                 const type = cfgs[typeIx];
 
                 if (LegacyUtils.isEmptyString(type.typeName))
-                    return showPopoverMessage($scope.ui, 'cacheKeyCfg', 'cacheKeyTypeName' + typeIx, 'Cache type configuration name should be specified!');
+                    return ErrorPopover.show('cacheKeyTypeName' + typeIx, 'Cache type configuration name should be specified!', $scope.ui, 'cacheKeyCfg');
 
                 if (_.find(cfgs, (t, ix) => ix < typeIx && t.typeName === type.typeName))
-                    return showPopoverMessage($scope.ui, 'cacheKeyCfg', 'cacheKeyTypeName' + typeIx, 'Cache type configuration with such name is already specified!');
+                    return ErrorPopover.show('cacheKeyTypeName' + typeIx, 'Cache type configuration with such name is already specified!', $scope.ui, 'cacheKeyCfg');
             }
 
             return true;
@@ -418,14 +422,14 @@ export default ['clustersController', [
             if (LegacyUtils.isDefined(c)) {
                 if (LegacyUtils.isDefined(c.unacknowledgedMessagesBufferSize)) {
                     if (LegacyUtils.isDefined(c.messageQueueLimit) && c.unacknowledgedMessagesBufferSize < 5 * c.messageQueueLimit)
-                        return showPopoverMessage($scope.ui, 'communication', 'unacknowledgedMessagesBufferSize', 'Maximum number of stored unacknowledged messages should be at least 5 * message queue limit!');
+                        return ErrorPopover.show('unacknowledgedMessagesBufferSize', 'Maximum number of stored unacknowledged messages should be at least 5 * message queue limit!', $scope.ui, 'communication');
 
                     if (LegacyUtils.isDefined(c.ackSendThreshold) && c.unacknowledgedMessagesBufferSize < 5 * c.ackSendThreshold)
-                        return showPopoverMessage($scope.ui, 'communication', 'unacknowledgedMessagesBufferSize', 'Maximum number of stored unacknowledged messages should be at least 5 * ack send threshold!');
+                        return ErrorPopover.show('unacknowledgedMessagesBufferSize', 'Maximum number of stored unacknowledged messages should be at least 5 * ack send threshold!', $scope.ui, 'communication');
                 }
 
                 if (c.sharedMemoryPort === 0)
-                    return showPopoverMessage($scope.ui, 'communication', 'sharedMemoryPort', 'Shared memory port should be more than "0" or equals to "-1"!');
+                    return ErrorPopover.show('sharedMemoryPort', 'Shared memory port should be more than "0" or equals to "-1"!', $scope.ui, 'communication');
             }
 
             return true;
@@ -436,10 +440,10 @@ export default ['clustersController', [
 
             if (d) {
                 if ((_.isNil(d.maxAckTimeout) ? 600000 : d.maxAckTimeout) < (d.ackTimeout || 5000))
-                    return showPopoverMessage($scope.ui, 'discovery', 'ackTimeout', 'Acknowledgement timeout should be less than max acknowledgement timeout!');
+                    return ErrorPopover.show('ackTimeout', 'Acknowledgement timeout should be less than max acknowledgement timeout!', $scope.ui, 'discovery');
 
                 if (d.kind === 'Vm' && d.Vm && d.Vm.addresses.length === 0)
-                    return showPopoverMessage($scope.ui, 'general', 'addresses', 'Addresses are not specified!');
+                    return ErrorPopover.show('addresses', 'Addresses are not specified!', $scope.ui, 'general');
             }
 
             return true;
@@ -454,12 +458,12 @@ export default ['clustersController', [
                 const sparsity = swap.maximumSparsity;
 
                 if (LegacyUtils.isDefined(sparsity) && (sparsity < 0 || sparsity >= 1))
-                    return showPopoverMessage($scope.ui, 'swap', 'maximumSparsity', 'Maximum sparsity should be more or equal 0 and less than 1!');
+                    return ErrorPopover.show('maximumSparsity', 'Maximum sparsity should be more or equal 0 and less than 1!', $scope.ui, 'swap');
 
                 const readStripesNumber = swap.readStripesNumber;
 
                 if (readStripesNumber && !(readStripesNumber === -1 || (readStripesNumber & (readStripesNumber - 1)) === 0))
-                    return showPopoverMessage($scope.ui, 'swap', 'readStripesNumber', 'Read stripe size must be positive and power of two!');
+                    return ErrorPopover.show('readStripesNumber', 'Read stripe size must be positive and power of two!', $scope.ui, 'swap');
             }
 
             return true;
@@ -470,15 +474,15 @@ export default ['clustersController', [
 
             if (LegacyUtils.isDefined(r)) {
                 if (r.sslEnabled && LegacyUtils.isEmptyString(r.sslFactory))
-                    return showPopoverMessage($scope.ui, 'connector', 'connectorSslFactory', 'SSL factory should not be empty!');
+                    return ErrorPopover.show('connectorSslFactory', 'SSL factory should not be empty!', $scope.ui, 'connector');
             }
 
             if (item.sslEnabled) {
                 if (!LegacyUtils.isDefined(item.sslContextFactory) || LegacyUtils.isEmptyString(item.sslContextFactory.keyStoreFilePath))
-                    return showPopoverMessage($scope.ui, 'sslConfiguration', 'keyStoreFilePath', 'Key store file should not be empty!');
+                    return ErrorPopover.show('keyStoreFilePath', 'Key store file should not be empty!', $scope.ui, 'sslConfiguration');
 
                 if (LegacyUtils.isEmptyString(item.sslContextFactory.trustStoreFilePath) && _.isEmpty(item.sslContextFactory.trustManagers))
-                    return showPopoverMessage($scope.ui, 'sslConfiguration', 'sslConfiguration-title', 'Trust storage file or managers should be configured!');
+                    return ErrorPopover.show('sslConfiguration-title', 'Trust storage file or managers should be configured!', $scope.ui, 'sslConfiguration');
             }
 
             return true;
@@ -486,17 +490,17 @@ export default ['clustersController', [
 
         function checkPoolSizes(item) {
             if (item.rebalanceThreadPoolSize && item.systemThreadPoolSize && item.systemThreadPoolSize <= item.rebalanceThreadPoolSize)
-                return showPopoverMessage($scope.ui, 'pools', 'rebalanceThreadPoolSize', 'Rebalance thread pool size exceed or equals System thread pool size!');
+                return ErrorPopover.show('rebalanceThreadPoolSize', 'Rebalance thread pool size exceed or equals System thread pool size!', $scope.ui, 'pools');
 
             return true;
         }
 
         // Check cluster logical consistency.
         function validate(item) {
-            LegacyUtils.hidePopover();
+            ErrorPopover.hide();
 
             if (LegacyUtils.isEmptyString(item.name))
-                return showPopoverMessage($scope.ui, 'general', 'clusterName', 'Cluster name should not be empty!');
+                return ErrorPopover.show('clusterName', 'Cluster name should not be empty!', $scope.ui, 'general');
 
             if (!LegacyUtils.checkFieldValidators($scope.ui))
                 return false;

@@ -1293,7 +1293,7 @@ $generatorXml.cacheNodeFilter = function(cache, igfss, res) {
 
     const kind = _.get(cache, 'nodeFilter.kind');
 
-    if (_.isNil(cache.nodeFilter[kind]))
+    if (_.isNil(kind) || _.isNil(cache.nodeFilter[kind]))
         return res;
 
     switch (kind) {
