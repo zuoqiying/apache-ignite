@@ -61,6 +61,7 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                             {value: "CacheJdbcPojoStoreFactory", label: "JDBC POJO store factory"},\
                             {value: "CacheJdbcBlobStoreFactory", label: "JDBC BLOB store factory"},\
                             {value: "CacheHibernateBlobStoreFactory", label: "Hibernate BLOB store factory"},\
+                            {value: "custom", label: "Custom"},\
                             {value: undefined, label: "Not set"}\
                         ]',
                         'Factory for persistent storage for cache data\
@@ -194,6 +195,11 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                                                         +form-field-feedback(name, 'ignitePropertyValueSpecified', tipPropertySpecified)
                                         .group-content-empty(ng-if='!(#{hibernateProperties}.length) && !group.add.length')
                                             | Not defined
+                            div(ng-show='#{storeFactoryKind} === "custom"')
+                                -var hibernateStoreFactory = storeFactory + '.custom'
+                                -var hibernateProperties = hibernateStoreFactory + '.config'
+
+                                div(ignite-ace='{onLoad: onLoad, mode: "xml"}' ng-model='cache.cfg')
 
                 .settings-row
                     +checkbox('Keep binary in store', model + '.storeKeepBinary', '"storeKeepBinary"',

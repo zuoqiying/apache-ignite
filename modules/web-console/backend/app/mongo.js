@@ -192,7 +192,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         cacheStoreFactory: {
             kind: {
                 type: String,
-                enum: ['CacheJdbcPojoStoreFactory', 'CacheJdbcBlobStoreFactory', 'CacheHibernateBlobStoreFactory']
+                enum: ['CacheJdbcPojoStoreFactory', 'CacheJdbcBlobStoreFactory', 'CacheHibernateBlobStoreFactory', 'custom']
             },
             CacheJdbcPojoStoreFactory: {
                 dataSourceBean: String,
@@ -219,6 +219,9 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             },
             CacheHibernateBlobStoreFactory: {
                 hibernateProperties: [String]
+            },
+            custom: {
+                config: String
             }
         },
         storeKeepBinary: Boolean,
