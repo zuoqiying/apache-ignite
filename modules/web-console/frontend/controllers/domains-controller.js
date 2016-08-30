@@ -397,9 +397,9 @@ export default ['domainsController', [
                 $scope.importDomain.loadingOptions = LOADING_JDBC_DRIVERS;
 
                 IgniteAgentMonitor.startWatch({text: 'Back to Domain models', goal: 'import domain model from database'})
-                    .then(function() {
-                        importDomainModal.$promise.then(importDomainModal.show);
-
+                    .then(importDomainModal.$promise)
+                    .then(importDomainModal.show)
+                    .then(() => {
                         if (demo) {
                             $scope.ui.packageNameUserInput = $scope.ui.packageName;
                             $scope.ui.packageName = 'model';
@@ -420,7 +420,7 @@ export default ['domainsController', [
                                 if (drivers && drivers.length > 0) {
                                     drivers = _.sortBy(drivers, 'jdbcDriverJar');
 
-                                    _.forEach(drivers, function(drv) {
+                                    _.forEach(drivers, (drv) => {
                                         $scope.jdbcDriverJars.push({
                                             label: drv.jdbcDriverJar,
                                             value: {
@@ -432,13 +432,11 @@ export default ['domainsController', [
 
                                     $scope.ui.selectedJdbcDriverJar = $scope.jdbcDriverJars[0].value;
 
-                                    FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, function() {
-                                        importDomainModal.$promise.then(() => {
-                                            $scope.importDomain.action = 'connect';
-                                            $scope.importDomain.tables = [];
+                                    FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, () => {
+                                        $scope.importDomain.action = 'connect';
+                                        $scope.importDomain.tables = [];
 
-                                            Focus.move('jdbcUrl');
-                                        });
+                                        Focus.move('jdbcUrl');
                                     });
                                 }
                                 else {

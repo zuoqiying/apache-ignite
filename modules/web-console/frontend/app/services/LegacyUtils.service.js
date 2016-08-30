@@ -362,9 +362,7 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
         isEmptyString,
         SUPPORTED_JDBC_TYPES,
         findJdbcType(jdbcType) {
-            const res = _.find(ALL_JDBC_TYPES, function (item) {
-                return item.dbType === jdbcType;
-            });
+            const res = _.find(ALL_JDBC_TYPES, (item) => item.dbType === jdbcType);
 
             return res ? res : {dbName: 'Unknown', javaType: 'Unknown'};
         },
@@ -432,16 +430,14 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
         },
         cacheStoreJdbcDialects,
         cacheStoreJdbcDialectsLabel(dialect) {
-            const found = _.find(cacheStoreJdbcDialects, function (dialectVal) {
-                return dialectVal.value === dialect;
-            });
+            const found = _.find(cacheStoreJdbcDialects, (dialectVal) => dialectVal.value === dialect);
 
             return found ? found.label : null;
         },
         checkDataSources(cluster, caches, checkCacheExt) {
             let res = DS_CHECK_SUCCESS;
 
-            _.find(caches, function (curCache, curIx) {
+            _.find(caches, (curCache, curIx) => {
                 res = compareDataSources(curCache, cluster);
 
                 if (!res.checked)
@@ -457,7 +453,7 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
                     return false;
                 }
 
-                return _.find(caches, function (checkCache, checkIx) {
+                return _.find(caches, (checkCache, checkIx) => {
                     if (checkIx < curIx) {
                         res = compareDataSources(checkCache, curCache);
 
@@ -484,7 +480,7 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
                     return false;
                 }
 
-                return _.find(caches, function (checkCache, checkIx) {
+                return _.find(caches, (checkCache, checkIx) => {
                     if (checkIx < curIx) {
                         res = compareSQLSchemaNames(checkCache, curCache);
 
@@ -551,7 +547,7 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
                 const errNameFull = actualError.$name;
                 const errNameShort = errNameFull.endsWith('TextInput') ? errNameFull.substring(0, errNameFull.length - 9) : errNameFull;
 
-                const extractErrorMessage = function (errName) {
+                const extractErrorMessage = (errName) => {
                     try {
                         return errors[firstErrorKey][0].$errorMessages[errName][firstErrorKey];
                     }
