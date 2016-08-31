@@ -30,10 +30,13 @@ angular
     .state('signin', {
         url: '/',
         templateUrl,
-        onEnter: ['$state', 'User', ($state, User) => {
-            User.read()
-                .then(() => $state.go('base.configuration.clusters', {}, {reload: true}));
-        }],
+        resolve: {
+            user: ['$state', 'User', ($state, User) => {
+                return User.read()
+                    .then(() => $state.go('base.configuration.clusters'))
+                    .catch(() => {});
+            }]
+        },
         metaTags: {
         }
     });
