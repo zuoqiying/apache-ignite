@@ -221,6 +221,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
                 hibernateProperties: [String]
             },
             custom: {
+                className: String,
                 config: String
             }
         },

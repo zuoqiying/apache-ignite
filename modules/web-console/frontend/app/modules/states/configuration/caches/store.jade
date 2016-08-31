@@ -199,7 +199,11 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                                 -var hibernateStoreFactory = storeFactory + '.custom'
                                 -var hibernateProperties = hibernateStoreFactory + '.config'
 
-                                div(ignite-ace='{onLoad: onLoad, mode: "xml"}' ng-model='cache.cfg')
+                                .details-row
+                                    +java-class('Class name:', hibernateStoreFactory + '.className', '"CustomStoreClassName"', 'true', 'true', 'Custom store factory implementation class name')
+
+                                .details-row
+                                    div(ignite-ace='{onLoad: onLoad, mode: "xml"}' ng-model='#{hibernateStoreFactory}.config')
 
                 .settings-row
                     +checkbox('Keep binary in store', model + '.storeKeepBinary', '"storeKeepBinary"',

@@ -1250,6 +1250,11 @@ $generatorXml.cacheStore = function(cache, domains, res) {
                 res.endBlock('</bean>');
                 res.endBlock('</property>');
             }
+            else if (factoryKind === 'custom') {
+                const lines = storeFactory.config.split('\n');
+
+                _.forEach(lines, (line) => res.line(line));
+            }
             else
                 $generatorXml.beanProperty(res, storeFactory, 'cacheStoreFactory', $generatorCommon.STORE_FACTORIES[factoryKind], true);
 

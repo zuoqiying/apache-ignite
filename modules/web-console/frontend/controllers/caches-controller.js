@@ -15,6 +15,81 @@
  * limitations under the License.
  */
 
+// List of code completions.
+const DFLT_COMPLETIONS = [{
+    caption: 'bean',
+    meta: 'bean - Bean node with class attribute',
+    snippet: '<bean class=\"${1:class}\">\n\t${2}\n</bean>'
+}, {
+    caption: 'bean',
+    meta: 'bean - Bean node with id and class attributes',
+    snippet: '<bean id=\"${1:id}\" class=\"${2:class}\">\n\t${3}\n</bean>'
+}, {
+    caption: 'description',
+    meta: 'description - Description node',
+    snippet: '<description>\n\t${1}\n<description/>'
+}, {
+    caption: 'entry',
+    meta: 'entry - Entry node with key and value attributes',
+    snippet: '<entry key=\"${1:key}\" value=\"${2:value}\"/>'
+}, {
+    caption: 'import',
+    meta: 'import - Import node with resource attribute',
+    snippet: '<import resource=\"${1:resource}\"/>'
+}, {
+    caption: 'list',
+    meta: 'list - List node',
+    snippet: '<list>\n\t${1}\n</list>'
+}, {
+    caption: 'list',
+    meta: 'list - List node with id attribute',
+    snippet: '<list id=\"${1:id}\">\n\t${2}\n</list>'
+}, {
+    caption: 'list',
+    meta: 'list - List node with id and list-class attributes',
+    snippet: '<list id=\"${1:id}\" list-class=\"${2:class}\">\n\t${3}\n</list>'
+}, {
+    caption: 'map',
+    meta: 'map - Map node',
+    snippet: '<map>\n\t${cursor}\n</map>'
+}, {
+    caption: 'map',
+    meta: 'map - Map node with id attribute',
+    snippet: '<map id=\"${id}\">\n\t${cursor}\n</map>'
+}, {
+    caption: 'map',
+    meta: 'map - Map node with id and map-class attributes',
+    snippet: '<map id=\"${id}\" map-class=\"${class}\">\n\t${cursor}\n</map>'
+}, {
+    caption: 'properties',
+    meta: 'properties - Properties node with id and location attributes',
+    snippet: '<properties id=\"${id}\" location=\"${location}\"/>'
+}, {
+    caption: 'property',
+    meta: 'property - Property node with name attribute',
+    snippet: '<property name=\"${name}\">\n\t${cursor}\n</property>'
+}, {
+    caption: 'property',
+    meta: 'property - Property node with name and value attributes',
+    snippet: '<property name=\"${name}\" value=\"${value}\"/>'
+}, {
+    caption: 'set',
+    meta: 'set - Set node',
+    snippet: '<set>\n\t${cursor}\n</set>'
+}, {
+    caption: 'set',
+    meta: 'set - Set node with id attribute',
+    snippet: '<set id=\"${id}\">\n\t${cursor}\n</set>'
+}, {
+    caption: 'set',
+    meta: 'set - Set node with id and set-class attributes',
+    snippet: '<set id=\"${id}\" set-class=\"${class}\">\n\t${cursor}\n</set>'
+}, {
+    caption: 'value',
+    meta: 'value - Value node',
+    snippet: '<value>${cursor}</value>'
+}];
+
 // Controller for Caches screen.
 export default ['cachesController', [
     '$scope', '$http', '$state', '$filter', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteConfigurationResource',
@@ -94,6 +169,30 @@ export default ['cachesController', [
             item.offHeapMaxMemory = item.offHeapMaxMemory > 0 ? item.offHeapMaxMemory : null;
         };
 
+        const _updateCustomStore = () => {
+            let config = '';
+
+            try {
+                const parser = new DOMParser();
+
+                const dom = parser.parseFromString(_.get($scope.backupItem, 'cacheStoreFactory.custom.config'), 'text/xml');
+
+                const bean = dom.getElementsByTagName('bean').item(0);
+
+                if (bean)
+                    config = bean.innerHTML.trim();
+            }
+            catch (ignore) {
+                // No-op.
+            }
+
+            _.set($scope.backupItem, 'cacheStoreFactory.custom.config', '<property name="cacheStoreFactory">\n' +
+                '    <bean class="' + (_.get($scope.backupItem, 'cacheStoreFactory.custom.className') || 'Input class name') + '">\n' +
+                '        ' + config + '\n' +
+                '    </bean>\n' +
+                '</property>');
+        };
+
         Loading.start('loadingCachesScreen');
 
         // When landing on the page, get caches and show them.
@@ -162,6 +261,8 @@ export default ['cachesController', [
                 }, true);
 
                 $scope.$watch('backupItem.offHeapMode', setOffHeapMaxMemory);
+
+                $scope.$watch('backupItem.cacheStoreFactory.custom.className', _updateCustomStore);
             })
             .catch(Messages.showError)
             .then(() => {
@@ -505,6 +606,8 @@ export default ['cachesController', [
                 });
         };
 
+        const completions = _.clone(DFLT_COMPLETIONS);
+
         const autoCompleter = {
             getCompletions(_editor, session, pos, prefix, callback) {
                 if (prefix.length === 0) {
@@ -516,299 +619,6 @@ export default ['cachesController', [
                 callback(null, completions);
             }
         };
-
-        // List of code completions.
-        const DFLT_COMPLETIONS = [{
-            caption: 'affinity',
-            meta: 'Node group resolver',
-            snippet: '<property name=\"affinity\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        }, {
-            caption: 'affinityMapper',
-            meta: 'Affinity key mapper',
-            snippet: '<property name=\"affinityMapper\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        //}, {
-        //    caption: 'atomicWriteOrderMode',
-        //    meta: 'Write ordering mode',
-        //    snippet: '<property name=\"atomicWriteOrderMode\" value=\"${1:' + DFLT_CFG.atomicWriteOrderMode + '}\"/>'
-        //}, {
-        //    caption: 'atomicityMode',
-        //    meta: 'Cache atomicity mode',
-        //    snippet: '<property name=\"atomicityMode\" value=\"${1:' + DFLT_CFG.atomicityMode + '}\"/>'
-        //}, {
-        //    caption: 'backups',
-        //    meta: 'Number of backups for cache',
-        //    snippet: '<property name=\"backups\" value=\"${1:' + DFLT_CFG.backups + '}\"/>'
-        //}, {
-        //    caption: 'cacheMode',
-        //    meta: 'Cache mode',
-        //    snippet: '<property name=\"cacheMode\" value=\"${1:' + DFLT_CFG.cacheMode + '}\"/>'
-        //}, {
-        //    caption: 'copyOnRead',
-        //    meta: 'Copy on read',
-        //    snippet: '<property name=\"copyOnRead\" value=\"${1:' + DFLT_CFG.copyOnRead + '}\"/>'
-        //}, {
-        //    caption: 'defaultLockTimeout',
-        //    meta: 'Default lock acquisition timeout',
-        //    snippet: '<property name=\"defaultLockTimeout\" value=\"${1:' + DFLT_CFG.defaultLockTimeout + '}\"/>'
-        //}, {
-        //    caption: 'eagerTtl',
-        //    meta: 'Eager ttl',
-        //    snippet: '<property name=\"eagerTtl\" value=\"${1:' + DFLT_CFG.eagerTtl + '}\"/>'
-        //}, {
-        //    caption: 'evictMaxOverflowRatio',
-        //    meta: 'Maximum eviction overflow ratio',
-        //    snippet: '<property name=\"evictMaxOverflowRatio\" value=\"${1:' + DFLT_CFG.evictMaxOverflowRatio + '}\"/>'
-        //}, {
-        //    caption: 'evictSynchronized',
-        //    meta: 'a flag indicating whether eviction is synchronized',
-        //    snippet: '<property name=\"evictSynchronized\" value=\"${1:' + DFLT_CFG.evictSynchronized + '}\"/>'
-        //}, {
-        //    caption: 'evictSynchronizedConcurrencyLevel',
-        //    meta: 'Synchronous eviction concurrency level',
-        //    snippet: '<property name=\"evictSynchronizedConcurrencyLevel\" value=\"${1:' + DFLT_CFG.evictSynchronizedConcurrencyLevel + '}\"/>'
-        //}, {
-        //    caption: 'evictSynchronizedKeyBufferSize',
-        //    meta: 'Eviction key buffer size',
-        //    snippet: '<property name=\"evictSynchronizedKeyBufferSize\" value=\"${1:' + DFLT_CFG.evictSynchronizedKeyBufferSize + '}\"/>'
-        //}, {
-        //    caption: 'evictSynchronizedTimeout',
-        //    meta: 'Synchronous eviction timeout',
-        //    snippet: '<property name=\"evictSynchronizedTimeout\" value=\"${1:' + DFLT_CFG.evictSynchronizedTimeout + '}\"/>'
-        }, {
-            caption: 'evictionFilter',
-            meta: 'Eviction filter',
-            snippet: '<property name=\"evictionFilter\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        }, {
-            caption: 'evictionPolicy',
-            meta: 'Cache expiration policy',
-            snippet: '<property name=\"evictionPolicy\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        }, {
-            caption: 'indexedTypes',
-            meta: 'Key and value type pairs',
-            snippet: '<property name=\"indexedTypes\">\n\t<list>\n\t\t<value>${1:keyType}</value>\n\t\t<value>${2:valueType}</value>\n\t</list>\n</property>'
-        }, {
-            caption: 'interceptor',
-            meta: 'Cache interceptor',
-            snippet: '<property name=\"interceptor\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        //}, {
-        //    caption: 'invalidate',
-        //    meta: 'Invalidation flag',
-        //    snippet: '<property name=\"invalidate\" value=\"${1:' + DFLT_CFG.invalidate + '}\"/>'
-        //}, {
-        //    caption: 'loadPreviousValue',
-        //    meta: 'Load previous value flag',
-        //    snippet: '<property name=\"loadPreviousValue\" value=\"${1:' + DFLT_CFG.loadPreviousValue + '}\"/>'
-        //}, {
-        //    caption: 'longQueryWarningTimeout',
-        //    meta: 'Timeout in milliseconds',
-        //    snippet: '<property name=\"longQueryWarningTimeout\" value=\"${1:' + DFLT_CFG.longQueryWarningTimeout + '}\"/>'
-        //}, {
-        //    caption: 'managementEnabled',
-        //    meta: 'Whether management is enabled',
-        //    snippet: '<property name=\"managementEnabled\" value=\"${1:' + DFLT_CFG.managementEnabled + '}\"/>'
-        //}, {
-        //    caption: 'maxConcurrentAsyncOperations',
-        //    meta: 'Maximum number of concurrent asynchronous operations',
-        //    snippet: '<property name=\"maxConcurrentAsyncOperations\" value=\"${1:' + DFLT_CFG.maxConcurrentAsyncOperations + '}\"/>'
-        //}, {
-        //    caption: 'memoryMode',
-        //    meta: 'Memory mode',
-        //    snippet: '<property name=\"memoryMode\" value=\"${1:' + DFLT_CFG.memoryMode + '}\"/>'
-        }, {
-            caption: 'name',
-            meta: 'Cache name',
-            snippet: '<property name=\"name\" value=\"${1:name}\"/>'
-        }, {
-            caption: 'nearConfiguration',
-            meta: 'Near cache configuration',
-            snippet: '<property name=\"nearConfiguration\">\n\t<bean class=\"org.apache.ignite.configuration.NearCacheConfiguration\">\n\t\t${1}\n\t</bean>\n</property>'
-        }, {
-            caption: 'nearEvictionPolicy',
-            meta: 'Near cache eviction policy',
-            snippet: '<property name=\"nearEvictionPolicy\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        //}, {
-        //    caption: 'nearStartSize',
-        //    meta: 'Memory mode',
-        //    snippet: '<property name=\"nearStartSize\" value=\"${1:' + (DFLT_CFG.startSize / 4) + '}\"/>'
-        }, {
-            caption: 'nodeFilter',
-            meta: 'Node filter',
-            snippet: '<property name=\"nodeFilter\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        //}, {
-        //    caption: 'offHeapMaxMemory',
-        //    meta: 'Maximum memory in bytes available to off-heap memory space',
-        //    snippet: '<property name=\"offHeapMaxMemory\" value=\"${1:' + DFLT_CFG.offHeapMaxMemory + '}\"/>'
-        }, {
-            caption: 'pluginConfigurations',
-            meta: 'Cache plugin configurations',
-            snippet: '<property name=\"pluginConfigurations\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        //}, {
-        //    caption: 'readFromBackup',
-        //    meta: 'A flag indicating whether data can be read from backup',
-        //    snippet: '<property name=\"readFromBackup\" value=\"${1:' + DFLT_CFG.readFromBackup + '}\"/>'
-        //}, {
-        //    caption: 'readThrough',
-        //    meta: 'A flag indicating if \"read-through\" mode is required',
-        //    snippet: '<property name=\"readThrough\" value=\"${1:' + DFLT_CFG.readThrough + '}\"/>'
-        //}, {
-        //    caption: 'rebalanceBatchSize',
-        //    meta: 'Rebalance batch size',
-        //    snippet: '<property name=\"rebalanceBatchSize\" value=\"${1:' + DFLT_CFG.rebalanceBatchSize + '}\"/>'
-        //}, {
-        //    caption: 'rebalanceDelay',
-        //    meta: 'Rebalance delay',
-        //    snippet: '<property name=\"rebalanceDelay\" value=\"${1:' + DFLT_CFG.rebalanceDelay + '}\"/>'
-        //}, {
-        //    caption: 'rebalanceMode',
-        //    meta: 'Rebalance mode',
-        //    snippet: '<property name=\"rebalanceMode\" value=\"${1:' + DFLT_CFG.rebalanceMode + '}\"/>'
-        //}, {
-        //    caption: 'rebalanceOrder',
-        //    meta: 'Cache rebalance order',
-        //    snippet: '<property name=\"rebalanceOrder\" value=\"${1:' + DFLT_CFG.rebalanceOrder + '}\"/>'
-        //}, {
-        //    caption: 'rebalanceThreadPoolSize',
-        //    meta: 'Size of rebalance thread pool',
-        //    snippet: '<property name=\"rebalanceThreadPoolSize\" value=\"${1:' + DFLT_CFG.rebalanceThreadPoolSize + '}\"/>'
-        //}, {
-        //    caption: 'rebalanceThrottle',
-        //    meta: 'Time in milliseconds to wait between rebalance messages to avoid overloading of CPU',
-        //    snippet: '<property name=\"rebalanceThrottle\" value=\"${1:' + DFLT_CFG.rebalanceThrottle + '}\"/>'
-        //}, {
-        //    caption: 'rebalanceTimeout',
-        //    meta: 'Rebalance timeout',
-        //    snippet: '<property name=\"rebalanceTimeout\" value=\"${1:' + DFLT_CFG.rebalanceTimeout + '}\"/>'
-        //}, {
-        //    caption: 'sqlEscapeAll',
-        //    meta: 'Escaping of query and field names flag',
-        //    snippet: '<property name=\"sqlEscapeAll\" value=\"${1:' + DFLT_CFG.sqlEscapeAll + '}\"/>'
-        }, {
-            caption: 'sqlFunctionClasses',
-            meta: 'One or more classes with SQL functions',
-            snippet: '<property name=\"sqlFunctionClasses\">\n\t<list>\n\t\t<value>${1:class}</value>\n\t</list>\n</property>'
-        //}, {
-        //    caption: 'sqlOnheapRowCacheSize',
-        //    meta: 'Cache size',
-        //    snippet: '<property name=\"sqlOnheapRowCacheSize\" value=\"${1:' + DFLT_CFG.sqlOnheapRowCacheSize + '}\"/>'
-        //}, {
-        //    caption: 'startSize',
-        //    meta: 'Initial cache size',
-        //    snippet: '<property name=\"startSize\" value=\"${1:' + DFLT_CFG.startSize + '}\"/>'
-        //}, {
-        //    caption: 'statisticsEnabled',
-        //    meta: 'A flag indicating if statistics gathering is enabled',
-        //    snippet: '<property name=\"statisticsEnabled\" value=\"${1:' + DFLT_CFG.statisticsEnabled + '}\"/>'
-        //}, {
-        //    caption: 'storeByValue',
-        //    meta: 'A flag indicating if the cache will be store-by-value or store-by-reference',
-        //    snippet: '<property name=\"storeByValue\" value=\"${1:' + DFLT_CFG.storeByValue + '}\"/>'
-        //}, {
-        //    caption: 'swapEnabled',
-        //    meta: 'a flag indicating whether Ignite should use swap storage by default',
-        //    snippet: '<property name=\"swapEnabled\" value=\"${1:' + DFLT_CFG.swapEnabled + '}\"/>'
-        }, {
-            caption: 'topologyValidator',
-            meta: 'Cache topology validator',
-            snippet: '<property name=\"topologyValidator\">\n\t<bean class=\"${1:class}\">\n\t\t${2}\n\t</bean>\n</property>'
-        }, {
-            caption: 'typeMetadata',
-            meta: 'Collection of type metadata',
-            snippet: '<property name=\"typeMetadata\">\n\t<list>\n\t\t${1}\n\t</list>\n</property>'
-        //}, {
-        //    caption: 'writeBehindBatchSize',
-        //    meta: 'Maximum batch size for store operations',
-        //    snippet: '<property name=\"writeBehindBatchSize\" value=\"${1:' + DFLT_CFG.writeBehindBatchSize + '}\"/>'
-        //}, {
-        //    caption: 'writeBehindEnabled',
-        //    meta: 'Write-behind feature',
-        //    snippet: '<property name=\"writeBehindEnabled\" value=\"${1:' + DFLT_CFG.writeBehindEnabled + '}\"/>'
-        //}, {
-        //    caption: 'writeBehindFlushFrequency',
-        //    meta: 'Write-behind flush frequency in milliseconds',
-        //    snippet: '<property name=\"writeBehindFlushFrequency\" value=\"${1:' + DFLT_CFG.writeBehindFlushFrequency + '}\"/>'
-        //}, {
-        //    caption: 'writeBehindFlushSize',
-        //    meta: 'Maximum object count in write-behind cache',
-        //    snippet: '<property name=\"writeBehindFlushSize\" value=\"${1:' + DFLT_CFG.writeBehindFlushSize + '}\"/>'
-        //}, {
-        //    caption: 'writeBehindFlushThreadCount',
-        //    meta: 'Count of flush threads',
-        //    snippet: '<property name=\"writeBehindFlushThreadCount\" value=\"${1:' + DFLT_CFG.writeBehindFlushThreadCount + '}\"/>'
-        //}, {
-        //    caption: 'writeSynchronizationMode',
-        //    meta: 'Write synchronization mode',
-        //    snippet: '<property name=\"writeSynchronizationMode\" value=\"${1:' + DFLT_CFG.writeSynchronizationMode + '}\"/>'
-        //}, {
-        //    caption: 'writeThrough',
-        //    meta: 'A flag indicating if \"write-through\" mode is required',
-        //    snippet: '<property name=\"writeThrough\" value=\"${1:' + DFLT_CFG.writeThrough + '}\"/>'
-        }, {
-            caption: 'LOCAL',
-            meta: 'Cache mode',
-            value: 'LOCAL'
-        }, {
-            caption: 'REPLICATED',
-            meta: 'Cache mode',
-            value: 'REPLICATED'
-        }, {
-            caption: 'PARTITIONED',
-            meta: 'Cache mode',
-            value: 'PARTITIONED'
-        }, {
-            caption: 'TRANSACTIONAL',
-            meta: 'Cache atomicity mode',
-            value: 'TRANSACTIONAL'
-        }, {
-            caption: 'ATOMIC',
-            meta: 'Cache atomicity mode',
-            value: 'ATOMIC'
-        }, {
-            caption: 'SYNC',
-            meta: 'Cache rebalance mode',
-            value: 'SYNC'
-        }, {
-            caption: 'ASYNC',
-            meta: 'Cache rebalance mode',
-            value: 'ASYNC'
-        }, {
-            caption: 'NONE',
-            meta: 'Cache rebalance mode',
-            value: 'NONE'
-        }, {
-            caption: 'ONHEAP_TIERED',
-            meta: 'Cache memory mode',
-            value: 'ONHEAP_TIERED'
-        }, {
-            caption: 'OFFHEAP_TIERED',
-            meta: 'Cache memory mode',
-            value: 'OFFHEAP_TIERED'
-        }, {
-            caption: 'OFFHEAP_VALUES',
-            meta: 'Cache memory mode',
-            value: 'OFFHEAP_VALUES'
-        }, {
-            caption: 'FULL_SYNC',
-            meta: 'Cache write synchronization mode',
-            value: 'FULL_SYNC'
-        }, {
-            caption: 'FULL_ASYNC',
-            meta: 'Cache write synchronization mode',
-            value: 'FULL_ASYNC'
-        }, {
-            caption: 'PRIMARY_SYNC',
-            meta: 'Cache write synchronization mode',
-            value: 'PRIMARY_SYNC'
-        }, {
-            caption: 'CLOCK',
-            meta: 'Cache write atomic mode',
-            value: 'CLOCK'
-        }, {
-            caption: 'PRIMARY',
-            meta: 'Cache write atomic mode',
-            value: 'PRIMARY'
-        }];
-
-        const completions = _.clone(DFLT_COMPLETIONS);
 
         const AVAILABLE_CMDS = [
             'Esc', 'gotoleft', 'golineup', 'gotoright', 'golinedown',
@@ -837,17 +647,34 @@ export default ['cachesController', [
             editor.commands.on('exec', (e) => {
                 const cur = editor.selection.getCursor();
 
-                const firstRow = cur.row === 0;
-                const lastRow = (cur.row + 1) === editor.session.getLength();
+                const firstEditable = 2;
+                const lastEditable = editor.session.getLength() - 2;
 
-                if (!(firstRow || lastRow))
+                // Change selection to exclude not editable part.
+                if (editor.selection.selectionAnchor.row < 2) {
+                    editor.selection.selectionAnchor.row = 2;
+                    editor.selection.selectionAnchor.column = 0;
+                }
+
+                if (editor.selection.selectionAnchor.row >= lastEditable) {
+                    editor.selection.selectionAnchor.row = lastEditable - 1;
+                    editor.selection.selectionAnchor.column = editor.session.$rowLengthCache[lastEditable - 1];
+                }
+
+                const skipInBegin = cur.row <= 1 ||
+                    (e.command.name === 'backspace' && cur.row === 2 && cur.column === 0);
+                const skipInLast = cur.row >= lastEditable ||
+                    (e.command.name === 'del' && cur.row === lastEditable - 1 &&
+                        cur.column === editor.session.$rowLengthCache[cur.row]);
+
+                if (!(skipInBegin || skipInLast))
                     return;
 
                 if (AVAILABLE_CMDS.indexOf(e.command.name) !== -1)
                     return;
 
-                const endOfFirstRow = firstRow && editor.session.getLine(0).length === cur.column;
-                const startOfLastRow = lastRow && cur.column === 0;
+                const endOfFirstRow = cur.row == 1 && editor.session.$rowLengthCache[1] === cur.column;
+                const startOfLastRow = cur.row == lastEditable && cur.column === 0;
 
                 const newLine = e.command.name === 'insertstring' && e.args === '\n';
 
