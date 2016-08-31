@@ -17,8 +17,8 @@
 
 // Controller for IGFS screen.
 export default ['igfsController', [
-    '$scope', '$http', '$state', '$filter', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteLegacyTable', 'igniteConfigurationResource',
-    function($scope, $http, $state, $filter, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, LegacyTable, Resource) {
+    '$scope', '$http', '$state', '$filter', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
+    function($scope, $http, $state, $filter, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, LegacyTable, Resource, ErrorPopover, FormUtils) {
         UnsavedChangesGuard.install($scope);
 
         const emptyIgfs = {empty: true};
@@ -33,15 +33,13 @@ export default ['igfsController', [
         // We need to initialize backupItem with empty object in order to properly used from angular directives.
         $scope.backupItem = emptyIgfs;
 
-        $scope.ui = LegacyUtils.formUI();
+        $scope.ui = FormUtils.formUI();
         $scope.ui.activePanels = [0];
         $scope.ui.topPanels = [0];
 
-        $scope.compactJavaName = LegacyUtils.compactJavaName;
-        $scope.widthIsSufficient = LegacyUtils.widthIsSufficient;
-        $scope.saveBtnTipText = LegacyUtils.saveBtnTipText;
-
-        const showPopoverMessage = LegacyUtils.showPopoverMessage;
+        $scope.compactJavaName = FormUtils.compactJavaName;
+        $scope.widthIsSufficient = FormUtils.widthIsSufficient;
+        $scope.saveBtnTipText = FormUtils.saveBtnTipText;
 
         $scope.tableSave = function(field, index, stopEdit) {
             if (field.type === 'pathModes' && LegacyTable.tablePairSaveVisible(field, index))
@@ -94,7 +92,7 @@ export default ['igfsController', [
 
                 // Found duplicate.
                 if (idx >= 0 && idx !== index)
-                    return showPopoverMessage($scope.ui, 'misc', LegacyTable.tableFieldId(index, 'KeyPathMode'), 'Such path already exists!');
+                    return ErrorPopover.show(LegacyTable.tableFieldId(index, 'KeyPathMode'), 'Such path already exists!', $scope.ui, 'misc');
             }
 
             return true;
@@ -121,7 +119,7 @@ export default ['igfsController', [
         $scope.toggleExpanded = function() {
             $scope.ui.expanded = !$scope.ui.expanded;
 
-            LegacyUtils.hidePopover();
+            ErrorPopover.hide();
         };
 
         $scope.igfss = [];
@@ -190,6 +188,10 @@ export default ['igfsController', [
                     else
                         form.$setDirty();
                 }, true);
+
+                $scope.$watch('ui.activePanels.length', () => {
+                    ErrorPopover.hide();
+                });
             })
             .catch(Messages.showError)
             .then(() => {
@@ -231,7 +233,7 @@ export default ['igfsController', [
                     $state.go('base.configuration.igfs');
             }
 
-            LegacyUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm.$dirty, selectItem);
+            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm.$dirty, selectItem);
         };
 
         $scope.linkId = () => $scope.backupItem._id ? $scope.backupItem._id : 'create';
@@ -251,7 +253,7 @@ export default ['igfsController', [
         // Add new IGFS.
         $scope.createItem = function(linkId) {
             if ($scope.tableReset(true)) {
-                $timeout(() => LegacyUtils.ensureActivePanel($scope.ui, 'general', 'igfsName'));
+                $timeout(() => FormUtils.ensureActivePanel($scope.ui, 'general', 'igfsName'));
 
                 $scope.selectItem(null, prepareNewItem(linkId));
             }
@@ -259,21 +261,21 @@ export default ['igfsController', [
 
         // Check IGFS logical consistency.
         function validate(item) {
-            LegacyUtils.hidePopover();
+            ErrorPopover.hide();
 
             if (LegacyUtils.isEmptyString(item.name))
-                return showPopoverMessage($scope.ui, 'general', 'igfsName', 'IGFS name should not be empty!');
+                return ErrorPopover.show('igfsName', 'IGFS name should not be empty!', $scope.ui, 'general');
 
             if (!LegacyUtils.checkFieldValidators($scope.ui))
                 return false;
 
             if (!item.secondaryFileSystemEnabled && (item.defaultMode === 'PROXY'))
-                return showPopoverMessage($scope.ui, 'secondaryFileSystem', 'secondaryFileSystem-title', 'Secondary file system should be configured for "PROXY" IGFS mode!');
+                return ErrorPopover.show('secondaryFileSystem-title', 'Secondary file system should be configured for "PROXY" IGFS mode!', $scope.ui, 'secondaryFileSystem');
 
             if (item.pathModes) {
                 for (let pathIx = 0; pathIx < item.pathModes.length; pathIx++) {
                     if (!item.secondaryFileSystemEnabled && item.pathModes[pathIx].mode === 'PROXY')
-                        return showPopoverMessage($scope.ui, 'secondaryFileSystem', 'secondaryFileSystem-title', 'Secondary file system should be configured for "PROXY" path mode!');
+                        return ErrorPopover.show('secondaryFileSystem-title', 'Secondary file system should be configured for "PROXY" path mode!', $scope.ui, 'secondaryFileSystem');
                 }
             }
 

@@ -34,7 +34,6 @@ import igniteFormFieldTooltip from './field/tooltip.directive';
 import placeholder from './field/bs-select-placeholder.directive';
 
 // Group.
-import igniteFormGroup from './group/group.directive';
 import igniteFormGroupAdd from './group/add.directive';
 import igniteFormGroupTooltip from './group/tooltip.directive';
 
@@ -70,7 +69,6 @@ angular
 .directive(...igniteFormFieldTooltip)
 .directive(...placeholder)
 // Group.
-.directive(...igniteFormGroup)
 .directive(...igniteFormGroupAdd)
 .directive(...igniteFormGroupTooltip)
 // Validators.
