@@ -23,7 +23,7 @@ import { jadeViewsPaths, jadeAppModulePaths, jadeModulePaths, resourcePaths, res
 gulp.task('watch:ignite-modules', (cb) => sequence('clean:ignite-modules-temp', 'ignite:modules', cb));
 
 // Build + watch task.
-gulp.task('watch', ['set-watch', 'build'], () => {
+gulp.task('watch', ['build'], () => {
     gulp.watch(jadeViewsPaths, ['jade:views']);
     gulp.watch(jadeAppModulePaths, ['jade:app']);
     gulp.watch(jadeModulePaths, ['jade:ignite_modules']);
@@ -31,5 +31,3 @@ gulp.task('watch', ['set-watch', 'build'], () => {
     gulp.watch(resourceModulePaths, ['copy:resource:ignite_modules']);
     gulp.watch(appModulePaths, ['watch:ignite-modules']);
 });
-
-gulp.task('set-watch', () =>global.isWatching = true);
