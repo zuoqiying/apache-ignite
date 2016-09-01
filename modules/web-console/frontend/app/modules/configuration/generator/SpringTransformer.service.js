@@ -229,10 +229,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
             return $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
         }
 
-        static clusterFailover(cluster, res) {
-            return $generatorSpring.clusterFailover(cluster, res);
-        }
-
         // Generate logger group.
         static clusterLogger(logger, res) {
             return $generatorSpring.clusterLogger(logger, res);

@@ -92,4 +92,12 @@ export default class AbstractTransformer {
 
         return sb;
     }
+
+    static clusterFailover(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterFailover(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
 }

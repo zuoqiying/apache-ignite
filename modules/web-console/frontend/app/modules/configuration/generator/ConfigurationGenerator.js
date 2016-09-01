@@ -134,6 +134,14 @@ const DEFAULT = {
         noDelay: true,
         sslEnabled: false,
         sslClientAuth: false
+    },
+    failoverSpi: {
+        JobStealing: {
+            maximumFailoverAttempts: 5
+        },
+        Always: {
+            maximumFailoverAttempts: 5
+        }
     }
 };
 
@@ -518,8 +526,49 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
-        clusterFailover() {
+        // Generate failover group.
+        static clusterFailover(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            const spis = [];
 
+            _.forEach(cluster.failoverSpi, (spi) => {
+                let failoverSpi;
+
+                switch (spi.kind) {
+                    case 'JobStealing':
+                        failoverSpi = new Bean('org.apache.ignite.spi.failover.jobstealing.JobStealingFailoverSpi',
+                            'failoverSpi', spi.JobStealing, DEFAULT.failoverSpi.JobStealing);
+
+                        failoverSpi.property('maximumFailoverAttempts');
+
+                        break;
+                    case 'Never':
+                        failoverSpi = new Bean('org.apache.ignite.spi.failover.never.NeverFailoverSpi',
+                            'failoverSpi', spi.Never);
+
+                        break;
+                    case 'Always':
+                        failoverSpi = new Bean('org.apache.ignite.spi.failover.always.AlwaysFailoverSpi',
+                            'failoverSpi', spi.Always, DEFAULT.failoverSpi.Always);
+
+                        failoverSpi.property('maximumFailoverAttempts');
+
+                        break;
+                    case 'Custom':
+                        if (spi.Custom.class)
+                            failoverSpi = new EmptyBean(spi.Custom.class);
+
+                        break;
+                    default:
+                }
+
+                if (failoverSpi)
+                    spis.push(failoverSpi);
+            });
+
+            if (spis.length)
+                cfg.arrayProperty('failoverSpi', 'failoverSpi', spis, 'org.apache.ignite.spi.failover.FailoverSpi');
+
+            return cfg;
         }
 
         clusterLogger() {

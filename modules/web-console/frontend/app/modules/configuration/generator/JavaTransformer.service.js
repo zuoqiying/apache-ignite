@@ -176,8 +176,28 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                         sb.emptyLine();
 
-                        _.forEach(prop.items, (item, idx) => {
-                            sb.append(`${prop.name}[${idx}] = ${this._newBean(item)};`);
+                        _.forEach(prop.items, (nesterBean, idx) => {
+                            sb.append(`${prop.name}[${idx}] = ${this._newBean(nesterBean)};`);
+
+                            const clsName = JavaTypes.shortClassName(nesterBean.clsName);
+
+                            _.forEach(nesterBean.properties, (p) => {
+                                switch (p.type) {
+                                    case 'PROPERTY':
+                                        sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}(${p.value});`);
+
+                                        break;
+                                    case 'STRING':
+                                        sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}("${p.value}");`);
+
+                                        break;
+                                    case 'CLASS':
+                                        sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}(${JavaTypes.shortClassName(p.value)}.class);`);
+
+                                        break;
+                                    default:
+                                }
+                            });
                         });
 
                         sb.emptyLine();
