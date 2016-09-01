@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './ui-ace-pojos.jade';
+import templateUrl from './ui-ace-pojos.tpl.jade';
 import controller from './ui-ace-pojos.controller';
 
 export default ['igniteUiAcePojos', [() => {

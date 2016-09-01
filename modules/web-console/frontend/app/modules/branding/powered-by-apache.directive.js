@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './powered-by-apache.jade';
+import templateUrl from './powered-by-apache.tpl.jade';
 
 export default ['ignitePoweredByApache', ['IgniteBranding', (branding) => {
     function controller() {

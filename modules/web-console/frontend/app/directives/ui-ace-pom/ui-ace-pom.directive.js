@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './ui-ace-pom.jade';
+import templateUrl from './ui-ace-pom.tpl.jade';
 import controller from './ui-ace-pom.controller';
 
 export default ['igniteUiAcePom', [() => {

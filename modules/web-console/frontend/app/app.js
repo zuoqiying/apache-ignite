@@ -122,7 +122,7 @@ import resetPassword from './controllers/reset-password.controller';
 // Inject external modules.
 import 'ignite_modules_temp/index';
 
-import baseTemplate from '../views/base.jade';
+import baseTemplate from '../views/base.tpl.jade';
 
 angular
 .module('ignite-console', [

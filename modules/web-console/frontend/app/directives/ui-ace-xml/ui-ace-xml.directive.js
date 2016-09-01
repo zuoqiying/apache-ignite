@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './ui-ace-xml.jade';
+import templateUrl from './ui-ace-xml.tpl.jade';
 import controller from './ui-ace-xml.controller';
 
 export default ['igniteUiAceXml', ['GeneratorXml', (generator) => {

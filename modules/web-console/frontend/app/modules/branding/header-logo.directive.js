@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './header-logo.jade';
+import templateUrl from './header-logo.tpl.jade';
 
 export default ['igniteHeaderLogo', ['IgniteBranding', (branding) => {
     function controller() {

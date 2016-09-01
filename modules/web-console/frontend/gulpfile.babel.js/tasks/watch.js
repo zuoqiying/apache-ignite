@@ -18,14 +18,18 @@
 import gulp from 'gulp';
 import sequence from 'gulp-sequence';
 
-import { jadePaths, jadeModulePaths, resourcePaths, resourceModulePaths, appModulePaths } from '../paths';
+import { jadeViewsPaths, jadeAppModulePaths, jadeModulePaths, resourcePaths, resourceModulePaths, appModulePaths } from '../paths';
 
 gulp.task('watch:ignite-modules', (cb) => sequence('clean:ignite-modules-temp', 'ignite:modules', cb));
 
 // Build + watch task.
-gulp.task('watch', ['build'], () => {
-    gulp.watch(jadePaths.concat(jadeModulePaths), ['jade']);
+gulp.task('watch', ['set-watch', 'build'], () => {
+    gulp.watch(jadeViewsPaths, ['jade:views']);
+    gulp.watch(jadeAppModulePaths, ['jade:app']);
+    gulp.watch(jadeModulePaths, ['jade:ignite_modules']);
     gulp.watch(resourcePaths, ['copy:resource:app']);
     gulp.watch(resourceModulePaths, ['copy:resource:ignite_modules']);
     gulp.watch(appModulePaths, ['watch:ignite-modules']);
 });
+
+gulp.task('set-watch', () =>global.isWatching = true);

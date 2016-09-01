@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import alertTemplateUrl from '../views/templates/alert.jade';
+import alertTemplateUrl from '../views/templates/alert.tpl.jade';
 
 const igniteConsoleCfg = angular.module('ignite-console.config', ['ngAnimate', 'mgcrea.ngStrap']);
 

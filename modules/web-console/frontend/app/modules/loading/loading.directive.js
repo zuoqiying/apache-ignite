@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './loading.jade';
+import templateUrl from './loading.tpl.jade';
 import './loading.css';
 
 export default ['igniteLoading', ['IgniteLoading', '$templateCache', '$compile', (Loading, $templateCache, $compile) => {

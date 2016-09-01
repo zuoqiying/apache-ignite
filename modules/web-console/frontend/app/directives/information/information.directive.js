@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './information.jade';
+import templateUrl from './information.tpl.jade';
 
 export default ['igniteInformation', [() => {
     return {

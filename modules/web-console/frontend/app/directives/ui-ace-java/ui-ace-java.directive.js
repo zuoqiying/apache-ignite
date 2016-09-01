@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './ui-ace-java.jade';
+import templateUrl from './ui-ace-java.tpl.jade';
 import controller from './ui-ace-java.controller';
 
 export default ['igniteUiAceJava', ['GeneratorJava', (generator) => {
