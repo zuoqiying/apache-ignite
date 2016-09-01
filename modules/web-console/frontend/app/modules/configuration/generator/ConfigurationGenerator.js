@@ -120,8 +120,21 @@ const DEFAULT = {
     networkTimeout: 5000,
     networkSendRetryDelay: 1000,
     networkSendRetryCount: 3,
-    waitForSegmentOnStart: false,
-    discoveryStartupDelay: 60000
+    discoveryStartupDelay: 60000,
+    connector: {
+        port: 11211,
+        portRange: 100,
+        idleTimeout: 7000,
+        idleQueryCursorTimeout: 600000,
+        idleQueryCursorCheckFrequency: 60000,
+        receiveBufferSize: 32768,
+        sendBufferSize: 32768,
+        sendQueueLimit: 0,
+        directBuffer: false,
+        noDelay: true,
+        sslEnabled: false,
+        sslClientAuth: false
+    }
 };
 
 export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
@@ -309,7 +322,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate atomics group.
-        static clusterAtomics(atomics, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterAtomics(atomics, cfg = this.igniteConfigurationBean()) {
             const acfg = new Bean('org.apache.ignite.configuration.AtomicConfiguration', 'atomicCfg',
                 atomics, DEFAULT.atomics);
 
@@ -328,7 +341,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate binary group.
-        static clusterBinary(binary, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterBinary(binary, cfg = this.igniteConfigurationBean()) {
             const binaryCfg = new Bean('org.apache.ignite.configuration.BinaryConfiguration', 'binaryCfg',
                 binary, DEFAULT.binary);
 
@@ -365,7 +378,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate cache key configurations.
-        static clusterCacheKeyConfiguration(keyCfgs, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterCacheKeyConfiguration(keyCfgs, cfg = this.igniteConfigurationBean()) {
             const items = _.reduce(keyCfgs, (acc, keyCfg) => {
                 if (keyCfg.typeName && keyCfg.affinityKeyFieldName) {
                     acc.push(new Bean('org.apache.ignite.cache.CacheKeyConfiguration', null, keyCfg)
@@ -385,7 +398,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate collision group.
-        static clusterCollision(collision, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
             let colSpi;
 
             switch (collision.kind) {
@@ -483,7 +496,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate REST access configuration.
-        static clusterConnector(connector, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterConnector(connector, cfg = this.igniteConfigurationBean()) {
             return cfg;
         }
 
@@ -493,7 +506,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate discovery group.
-        static clusterDiscovery(disco, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterDiscovery(disco, cfg = this.igniteConfigurationBean()) {
             return cfg;
         }
 
