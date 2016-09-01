@@ -20,6 +20,23 @@ import { EmptyBean, Bean, MethodBean } from './Beans';
 const DEFAULT = {
     localHost: '0.0.0.0',
     discovery: {
+        localPort: 47500,
+        localPortRange: 100,
+        socketTimeout: 5000,
+        ackTimeout: 5000,
+        maxAckTimeout: 600000,
+        networkTimeout: 5000,
+        joinTimeout: 0,
+        threadPriority: 10,
+        heartbeatFrequency: 2000,
+        maxMissedHeartbeats: 1,
+        maxMissedClientHeartbeats: 5,
+        topHistorySize: 1000,
+        reconnectCount: 10,
+        statisticsPrintFrequency: 0,
+        ipFinderCleanFrequency: 60000,
+        forceServerMode: false,
+        clientReconnectDisabled: false,
         Multicast: {
             multicastGroup: '228.1.2.4',
             multicastPort: 47400,
@@ -135,6 +152,10 @@ const DEFAULT = {
         sslEnabled: false,
         sslClientAuth: false
     },
+    deploymentMode: {clsName: 'org.apache.ignite.configuration.DeploymentMode', value: 'SHARED'},
+    peerClassLoadingEnabled: false,
+    peerClassLoadingMissedResourcesCacheSize: 100,
+    peerClassLoadingThreadPoolSize: 2,
     failoverSpi: {
         JobStealing: {
             maximumFailoverAttempts: 5
@@ -505,16 +526,98 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate REST access configuration.
         static clusterConnector(connector, cfg = this.igniteConfigurationBean()) {
+            if (!_.isNil(connector) && connector.enabled) {
+                const connCfg = new Bean('org.apache.ignite.configuration.ConnectorConfiguration',
+                    'connectorConfiguration', connector, DEFAULT.connector);
+
+                connCfg.property('jettyPath')
+                    .property('host')
+                    .property('port')
+                    .property('portRange')
+                    .property('idleTimeout')
+                    .property('idleQueryCursorTimeout')
+                    .property('idleQueryCursorCheckFrequency')
+                    .property('receiveBufferSize')
+                    .property('sendBufferSize')
+                    .property('sendQueueLimit')
+                    .property('directBuffer')
+                    .property('noDelay')
+                    .property('selectorCount')
+                    .property('threadPoolSize')
+                    .emptyBeanProperty('messageInterceptor')
+                    .property('secretKey');
+
+                if (connector.sslEnabled) {
+                    connCfg.property('sslClientAuth')
+                        .emptyBeanProperty('sslFactory');
+                }
+
+                cfg.beanProperty('connectorConfiguration', connCfg);
+            }
+
             return cfg;
         }
 
         // Generate deployment group.
         static clusterDeployment(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            cfg.enumProperty('deploymentMode');
+
+            // TODO IGNITE-2052 Need empty line when deploymentMode is not equal to 'SHARED'
+
+            const p2pEnabled = cluster.peerClassLoadingEnabled;
+
+            if (!_.isNil(p2pEnabled)) {
+                cfg.property('peerClassLoadingEnabled');
+
+                if (p2pEnabled) {
+                    cfg.property('peerClassLoadingMissedResourcesCacheSize')
+                        .property('peerClassLoadingThreadPoolSize');
+
+                    // TODO IGNITE-2052 Generate array of String.
+                        //.arrayProperty('peerClassLoadingLocalClassPathExclude', 'peerClassLoadingLocalClassPathExclude',
+                        //    cluster.peerClassLoadingLocalClassPathExclude);
+                }
+            }
+
             return cfg;
         }
 
         // Generate discovery group.
-        static clusterDiscovery(disco, cfg = this.igniteConfigurationBean()) {
+        static clusterDiscovery(discovery, cfg = this.igniteConfigurationBean()) {
+            if (discovery) {
+                // TODO IGNITE-2052 The same bean that in general section.
+                const discoveryCfg = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery',
+                    discovery, DEFAULT.discovery);
+
+                // TODO IGNITE-2052 localAddress stay when editor cleared.
+                discoveryCfg.property('localAddress')
+                    .property('localPort')
+                    .property('localPortRange')
+                    .emptyBeanProperty('addressResolver')
+                    .property('socketTimeout')
+                    .property('ackTimeout')
+                    .property('maxAckTimeout')
+                    .property('networkTimeout')
+                    .property('joinTimeout')
+                    .property('threadPriority')
+                    .property('heartbeatFrequency')
+                    .property('maxMissedHeartbeats')
+                    .property('maxMissedClientHeartbeats')
+                    .property('topHistorySize')
+                    .emptyBeanProperty('listener')
+                    .emptyBeanProperty('dataExchange')
+                    .emptyBeanProperty('metricsProvider')
+                    .property('reconnectCount')
+                    .property('statisticsPrintFrequency')
+                    .property('ipFinderCleanFrequency')
+                    .emptyBeanProperty('authenticator')
+                    .property('forceServerMode')
+                    .property('clientReconnectDisabled');
+
+                if (discoveryCfg.nonEmpty())
+                    cfg.beanProperty('discoverySpi', discoveryCfg);
+            }
+
             return cfg;
         }
 
