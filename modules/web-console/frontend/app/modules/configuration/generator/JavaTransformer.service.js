@@ -22,7 +22,7 @@ import { MethodBean } from './Beans';
 
 import $generatorJava from './generator-java';
 
-export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (JavaTypes, generator) => {
+export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'ConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
 
@@ -122,6 +122,45 @@ export default ['JavaTransformer', ['JavaTypes', 'ConfigurationGenerator', (Java
                         break;
                     case 'DATASOURCE':
                         sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(DataSources.INSTANCE_${prop.id});`);
+
+                        break;
+                    case 'EVENT_TYPES':
+                        if (prop.eventTypes.length === 1) {
+                            const evtGrp = _.find(eventGroups, {value: _.head(prop.eventTypes)});
+
+                            evtGrp && sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${evtGrp.class}.${evtGrp.value});`);
+                        }
+                        else {
+                            _.forEach(prop.eventTypes, (value, ix) => {
+                                const evtGrp = _.find(eventGroups, {value});
+
+                                if (ix === 0)
+                                    sb.append(`int[] events = new int[${evtGrp.value}.length`);
+                                else
+                                    sb.append(`    + ${evtGrp.value}.length`);
+                            });
+
+                            sb.append('];');
+
+                            sb.emptyLine();
+
+                            sb.append('int k = 0;');
+
+                            _.forEach(prop.eventTypes, (value, idx) => {
+                                sb.emptyLine();
+
+                                const evtGrp = _.find(eventGroups, {value});
+
+                                sb.append(`System.arraycopy(${evtGrp.value}, 0, events, k, ${evtGrp.value}.length);`);
+
+                                if (idx < prop.eventTypes.length - 1)
+                                    sb.append(`k += ${evtGrp.value}.length;`);
+                            });
+
+                            sb.emptyLine();
+
+                            sb.append('cfg.setIncludeEventTypes(events);');
+                        }
 
                         break;
                     case 'ENUM':

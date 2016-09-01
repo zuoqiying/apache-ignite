@@ -22,7 +22,7 @@ import StringBuilder from './StringBuilder';
 
 import $generatorSpring from './generator-spring';
 
-export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (JavaTypes, generator) => {
+export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'ConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     return class SpringTransformer extends AbstractTransformer {
         static generator = generator;
 
@@ -77,6 +77,36 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
                         break;
                     case 'DATASOURCE':
                         sb.append(`<property name="${prop.name}" ref="${prop.id}"/>`);
+
+                        break;
+                    case 'EVENT_TYPES':
+                        sb.startBlock(`<property name="${prop.name}">`);
+
+                        if (prop.eventTypes.length === 1) {
+                            const evtGrp = _.find(eventGroups, {value: _.head(prop.eventTypes)});
+
+                            evtGrp && sb.append(`<util:constant static-field="${evtGrp.class}.${evtGrp.value}"/>`);
+                        }
+                        else {
+                            sb.startBlock('<list>');
+
+                            _.forEach(prop.eventTypes, (item, ix) => {
+                                ix > 0 && sb.emptyLine();
+
+                                const evtGrp = _.find(eventGroups, {value: item});
+
+                                if (evtGrp) {
+                                    sb.append(`<!-- EventType.${item} -->`);
+
+                                    _.forEach(evtGrp.events, (event) =>
+                                        sb.append(`<util:constant static-field="${evtGrp.class}.${event}"/>`));
+                                }
+                            });
+
+                            sb.endBlock('</list>');
+                        }
+
+                        sb.endBlock('</property>');
 
                         break;
                     case 'ARRAY':
@@ -197,10 +227,6 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
 
         static clusterConfiguration(cluster, clientNearCfg, res) {
             return $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
-        }
-
-        static clusterEvents(cluster, res) {
-            return $generatorSpring.clusterEvents(cluster, res);
         }
 
         static clusterFailover(cluster, res) {

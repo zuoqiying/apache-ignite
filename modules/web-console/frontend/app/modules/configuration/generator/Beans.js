@@ -217,6 +217,15 @@ export class Bean extends EmptyBean {
     dataSource(id, name, dialect) {
         this.properties.push({type: 'DATASOURCE', id, name, dialect});
     }
+
+    /**
+     * @param {String} id
+     * @param {String} name
+     * @param {Array<String>} eventTypes
+     */
+    eventTypes(id, name, eventTypes) {
+        this.properties.push({type: 'EVENT_TYPES', id, name, eventTypes});
+    }
 }
 
 export class MethodBean extends Bean {

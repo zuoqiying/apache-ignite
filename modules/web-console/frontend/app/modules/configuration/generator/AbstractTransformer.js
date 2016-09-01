@@ -84,4 +84,12 @@ export default class AbstractTransformer {
 
         return sb;
     }
+
+    static clusterEvents(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterEvents(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
 }

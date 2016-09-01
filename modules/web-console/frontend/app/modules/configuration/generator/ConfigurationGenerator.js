@@ -422,7 +422,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate communication group.
-        static clusterCommunication(cluster, cfg = this.igniteConfigurationBean()) {
+        static clusterCommunication(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             return cfg;
         }
 
@@ -432,7 +432,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate deployment group.
-        static clusterDeployment(cluster, cfg = this.igniteConfigurationBean()) {
+        static clusterDeployment(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             return cfg;
         }
 
@@ -441,8 +441,12 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
-        clusterEvents() {
+        // Generate events group.
+        static clusterEvents(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            if (!_.isEmpty(cluster.includeEventTypes))
+                cfg.eventTypes('events', 'includeEventTypes', cluster.includeEventTypes);
 
+            return cfg;
         }
 
         clusterFailover() {
