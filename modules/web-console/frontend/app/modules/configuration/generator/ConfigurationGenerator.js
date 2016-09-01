@@ -98,7 +98,30 @@ const DEFAULT = {
         },
         Custom: {
         }
-    }
+    },
+    communication: {
+        localPort: 47100,
+        localPortRange: 100,
+        sharedMemoryPort: 48100,
+        directBuffer: false,
+        directSendBuffer: false,
+        idleConnectionTimeout: 30000,
+        connectTimeout: 5000,
+        maxConnectTimeout: 600000,
+        reconnectCount: 10,
+        socketSendBuffer: 32768,
+        socketReceiveBuffer: 32768,
+        messageQueueLimit: 1024,
+        tcpNoDelay: true,
+        ackSendThreshold: 16,
+        unacknowledgedMessagesBufferSize: 0,
+        socketWriteTimeout: 2000
+    },
+    networkTimeout: 5000,
+    networkSendRetryDelay: 1000,
+    networkSendRetryCount: 3,
+    waitForSegmentOnStart: false,
+    discoveryStartupDelay: 60000
 };
 
 export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
@@ -286,7 +309,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate atomics group.
-        static clusterAtomics(atomics, cfg = this.igniteConfigurationBean()) {
+        static clusterAtomics(atomics, cfg = this.igniteConfigurationBean(cluster)) {
             const acfg = new Bean('org.apache.ignite.configuration.AtomicConfiguration', 'atomicCfg',
                 atomics, DEFAULT.atomics);
 
@@ -305,7 +328,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate binary group.
-        static clusterBinary(binary, cfg = this.igniteConfigurationBean()) {
+        static clusterBinary(binary, cfg = this.igniteConfigurationBean(cluster)) {
             const binaryCfg = new Bean('org.apache.ignite.configuration.BinaryConfiguration', 'binaryCfg',
                 binary, DEFAULT.binary);
 
@@ -342,7 +365,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate cache key configurations.
-        static clusterCacheKeyConfiguration(keyCfgs, cfg = this.igniteConfigurationBean()) {
+        static clusterCacheKeyConfiguration(keyCfgs, cfg = this.igniteConfigurationBean(cluster)) {
             const items = _.reduce(keyCfgs, (acc, keyCfg) => {
                 if (keyCfg.typeName && keyCfg.affinityKeyFieldName) {
                     acc.push(new Bean('org.apache.ignite.cache.CacheKeyConfiguration', null, keyCfg)
@@ -362,7 +385,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate collision group.
-        static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
+        static clusterCollision(collision, cfg = this.igniteConfigurationBean(cluster)) {
             let colSpi;
 
             switch (collision.kind) {
@@ -423,11 +446,44 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate communication group.
         static clusterCommunication(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            const commSpi = new Bean('org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi', 'communicationSpi',
+                cluster.communication, DEFAULT.communication);
+
+            commSpi.emptyBeanProperty('listener')
+                .property('localAddress')
+                .property('localPort')
+                .property('localPortRange')
+                .property('sharedMemoryPort')
+                .property('directBuffer')
+                .property('directSendBuffer')
+                .property('idleConnectionTimeout')
+                .property('connectTimeout')
+                .property('maxConnectTimeout')
+                .property('reconnectCount')
+                .property('socketSendBuffer')
+                .property('socketReceiveBuffer')
+                .property('messageQueueLimit')
+                .property('slowClientQueueLimit')
+                .property('tcpNoDelay')
+                .property('ackSendThreshold')
+                .property('unacknowledgedMessagesBufferSize')
+                .property('socketWriteTimeout')
+                .property('selectorsCount')
+                .emptyBeanProperty('addressResolver');
+
+            if (commSpi.nonEmpty())
+                cfg.beanProperty('communicationSpi', commSpi);
+
+            cfg.property('networkTimeout')
+                .property('networkSendRetryDelay')
+                .property('networkSendRetryCount')
+                .property('discoveryStartupDelay');
+
             return cfg;
         }
 
         // Generate REST access configuration.
-        static clusterConnector(connector, cfg = this.igniteConfigurationBean()) {
+        static clusterConnector(connector, cfg = this.igniteConfigurationBean(cluster)) {
             return cfg;
         }
 
@@ -437,7 +493,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate discovery group.
-        static clusterDiscovery(disco, cfg = this.igniteConfigurationBean()) {
+        static clusterDiscovery(disco, cfg = this.igniteConfigurationBean(cluster)) {
             return cfg;
         }
 
