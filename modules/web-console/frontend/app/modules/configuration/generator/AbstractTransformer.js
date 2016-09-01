@@ -53,8 +53,32 @@ export default class AbstractTransformer {
         return sb;
     }
 
-    static clusterCollision(collision, sb = new StringBuilder()) {
-        const cfg = this.generator.clusterCollision(collision);
+    static clusterCommunication(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterCommunication(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    static clusterConnector(connector, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterConnector(connector);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    static clusterDeployment(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterDeployment(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    static clusterDiscovery(disco, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterDiscovery(disco);
 
         this._setProperties(sb, cfg);
 

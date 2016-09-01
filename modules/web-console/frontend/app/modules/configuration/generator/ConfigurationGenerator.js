@@ -421,15 +421,23 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
-        clusterConnector() {
+        // Generate communication group.
+        static clusterCommunication(cluster, cfg = this.igniteConfigurationBean()) {
 
         }
 
-        clusterCommunication() {
+        // Generate REST access configuration.
+        static clusterConnector(connector, cfg = this.igniteConfigurationBean()) {
 
         }
 
-        clusterDeployment() {
+        // Generate deployment group.
+        static clusterDeployment(cluster, cfg = this.igniteConfigurationBean()) {
+
+        }
+
+        // Generate discovery group.
+        static clusterDiscovery(disco, cfg = this.igniteConfigurationBean()) {
 
         }
 
