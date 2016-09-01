@@ -122,7 +122,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate general section.
-        static clusterGeneral(cluster, cfg = this.igniteConfigurationBean(cluster), ) {
+        static clusterGeneral(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             cfg.stringProperty('name', 'gridName')
                 .stringProperty('localHost');
 
@@ -423,22 +423,22 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate communication group.
         static clusterCommunication(cluster, cfg = this.igniteConfigurationBean()) {
-
+            return cfg;
         }
 
         // Generate REST access configuration.
         static clusterConnector(connector, cfg = this.igniteConfigurationBean()) {
-
+            return cfg;
         }
 
         // Generate deployment group.
         static clusterDeployment(cluster, cfg = this.igniteConfigurationBean()) {
-
+            return cfg;
         }
 
         // Generate discovery group.
         static clusterDiscovery(disco, cfg = this.igniteConfigurationBean()) {
-
+            return cfg;
         }
 
         clusterEvents() {

@@ -195,24 +195,8 @@ export default ['SpringTransformer', ['JavaTypes', 'ConfigurationGenerator', (Ja
             return $generatorSpring.clusterCaches(caches, igfss, isSrvCfg, res);
         }
 
-        static clusterCommunication(cluster, res) {
-            return $generatorSpring.clusterCommunication(cluster, res);
-        }
-
         static clusterConfiguration(cluster, clientNearCfg, res) {
             return $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
-        }
-
-        static clusterConnector(connector, res) {
-            return $generatorSpring.clusterConnector(connector, res);
-        }
-
-        static clusterDeployment(cluster, res) {
-            return $generatorSpring.clusterDeployment(cluster, res);
-        }
-
-        static clusterDiscovery(disco, res) {
-            return $generatorSpring.clusterDiscovery(disco, res);
         }
 
         static clusterEvents(cluster, res) {
