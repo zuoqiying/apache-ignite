@@ -808,7 +808,6 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     cluster.sslContextFactory);
 
                 bean.property('keyAlgorithm')
-                    // TODO IGNITE-2052 Should be escaped '\' symbols in Java generator
                     .pathProperty('keyStoreFilePath')
                     // TODO IGNITE-2052 Should be get from secret properties
                     .property('keyStorePassword')
@@ -820,7 +819,6 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         _.map(cluster.sslContextFactory.trustManagers, (clsName) => new EmptyBean(clsName)),
                         'javax.net.ssl.TrustManager');
                 else {
-                    // TODO IGNITE-2052 Should be escaped '\' symbols in Java generator
                     bean.pathProperty('trustStoreFilePath')
                         // TODO IGNITE-2052 Should be get from secret properties
                         .property('trustStorePassword')
