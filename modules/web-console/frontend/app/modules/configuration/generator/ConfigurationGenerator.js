@@ -163,6 +163,21 @@ const DEFAULT = {
         Always: {
             maximumFailoverAttempts: 5
         }
+    },
+    marshalLocalJobs: false,
+    marshallerCacheKeepAliveTime: 10000,
+    metricsHistorySize: 10000,
+    metricsLogFrequency: 60000,
+    metricsUpdateFrequency: 2000,
+    clockSyncSamples: 8,
+    clockSyncFrequency: 120000,
+    timeServerPortBase: 31100,
+    timeServerPortRange: 100,
+    transactionConfiguration: {
+        defaultTxConcurrency: {clsName: 'org.apache.ignite.transactions.TransactionConcurrency', value: 'PESSIMISTIC'},
+        defaultTxIsolation: {clsName: 'org.apache.ignite.transactions.TransactionIsolation', value: 'REPEATABLE_READ'},
+        defaultTxTimeout: 0,
+        pessimisticTxLogLinger: 10000
     }
 };
 
@@ -672,11 +687,48 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate marshaller group.
         static clusterMarshaller(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            const marshaller = cluster.marshaller;
+
+            if (marshaller && marshaller.kind) {
+                let bean;
+
+                switch (marshaller.kind) {
+                    case 'OptimizedMarshaller':
+                        bean = new Bean('org.apache.ignite.marshaller.optimized.OptimizedMarshaller', 'marshaller',
+                            marshaller[marshaller.kind]);
+
+                        bean.property('poolSize')
+                            .property('requireSerializable');
+
+                        break;
+
+                    case 'JdkMarshaller':
+                        bean = new Bean('org.apache.ignite.marshaller.jdk.JdkMarshaller', 'marshaller',
+                            marshaller[marshaller.kind]);
+
+                        break;
+
+                    default:
+                }
+
+                if (bean)
+                    cfg.beanProperty('marshaller', bean);
+            }
+
+            cfg.property('marshalLocalJobs')
+                .property('marshallerCacheKeepAliveTime')
+                .property('marshallerCacheThreadPoolSize', 'marshallerCachePoolSize');
+
             return cfg;
         }
 
         // Generate metrics group.
         static clusterMetrics(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            cfg.property('metricsExpireTime');
+            cfg.property('metricsHistorySize');
+            cfg.property('metricsLogFrequency');
+            cfg.property('metricsUpdateFrequency');
+
             return cfg;
         }
 
@@ -687,16 +739,41 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate time group.
         static clusterTime(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            cfg.property('clockSyncSamples');
+            cfg.property('clockSyncFrequency');
+            cfg.property('timeServerPortBase');
+            cfg.property('timeServerPortRange');
+
             return cfg;
         }
 
         // Generate thread pools group.
         static clusterPools(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            cfg.property('publicThreadPoolSize');
+            cfg.property('systemThreadPoolSize');
+            cfg.property('managementThreadPoolSize');
+            cfg.property('igfsThreadPoolSize');
+            cfg.property('rebalanceThreadPoolSize');
+
             return cfg;
         }
 
         // Generate transactions group.
         static clusterTransactions(transactionConfiguration, cfg = this.igniteConfigurationBean()) {
+            const bean = new Bean('org.apache.ignite.configuration.TransactionConfiguration', 'transactionConfiguration',
+                transactionConfiguration, DEFAULT.transactionConfiguration);
+
+            bean.enumProperty('defaultTxConcurrency')
+                .enumProperty('defaultTxIsolation')
+                .property('defaultTxTimeout')
+                .property('pessimisticTxLogLinger')
+                .property('pessimisticTxLogSize')
+                .property('txSerializableEnabled')
+                .emptyBeanProperty('txManagerFactory');
+
+            if (bean.nonEmpty())
+                cfg.beanProperty('transactionConfiguration', bean);
+
             return cfg;
         }
 
