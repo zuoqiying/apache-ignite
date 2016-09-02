@@ -129,6 +129,15 @@ export default class AbstractTransformer {
     }
 
     // Generate swap group.
+    static clusterSsl(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterSsl(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate swap group.
     static clusterSwap(cluster, sb = new StringBuilder()) {
         const cfg = this.generator.clusterSwap(cluster);
 

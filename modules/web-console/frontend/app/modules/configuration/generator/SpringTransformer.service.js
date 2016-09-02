@@ -237,17 +237,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
             return $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
         }
 
-        /**
-         * Generate cluster's SSL configuration.
-         *
-         * @param cluster Cluster to get SSL configuration.
-         * @param res Optional configuration presentation builder object.
-         * @returns Configuration presentation builder object
-         */
-        static clusterSsl(cluster, res) {
-            return $generatorSpring.clusterSsl(cluster, res);
-        }
-
         // Generate user attributes group.
         static clusterUserAttributes(cluster, res) {
             return $generatorSpring.clusterUserAttributes(cluster, res);

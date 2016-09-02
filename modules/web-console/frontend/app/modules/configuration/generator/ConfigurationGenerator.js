@@ -795,6 +795,44 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
+        // Java code generator for cluster's SSL configuration.
+        static clusterSsl = function(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            if (cluster.sslEnabled && !_.isNil(cluster.sslContextFactory)) {
+
+                cluster.sslContextFactory.keyStorePassword =
+                    $generatorCommon.isDefinedAndNotEmpty(cluster.sslContextFactory.keyStoreFilePath) ? 'ssl.key.storage.password' : null;
+                cluster.sslContextFactory.trustStorePassword =
+                    $generatorCommon.isDefinedAndNotEmpty(cluster.sslContextFactory.trustStoreFilePath) ? 'ssl.trust.storage.password' : null;
+
+                const bean = new Bean('org.apache.ignite.ssl.SslContextFactory', 'sslContextFactory',
+                    cluster.sslContextFactory);
+
+                bean.property('keyAlgorithm')
+                    // TODO IGNITE-2052 Should be escaped '\' symbols in Java generator
+                    .pathProperty('keyStoreFilePath')
+                    // TODO IGNITE-2052 Should be get from secret properties
+                    .property('keyStorePassword')
+                    .property('keyStoreType')
+                    .property('protocol');
+
+                if ($generatorCommon.isDefinedAndNotEmpty(cluster.sslContextFactory.trustManagers))
+                    bean.arrayProperty('trustManagers', 'trustManagers',
+                        _.map(cluster.sslContextFactory.trustManagers, (clsName) => new EmptyBean(clsName)),
+                        'javax.net.ssl.TrustManager');
+                else {
+                    // TODO IGNITE-2052 Should be escaped '\' symbols in Java generator
+                    bean.pathProperty('trustStoreFilePath')
+                        // TODO IGNITE-2052 Should be get from secret properties
+                        .property('trustStorePassword')
+                        .property('trustStoreType');
+                }
+
+                cfg.beanProperty('sslContextFactory', bean);
+            }
+
+            return cfg;
+        };
+
         // Generate swap group.
         static clusterSwap(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             if (cluster.swapSpaceSpi && cluster.swapSpaceSpi.kind === 'FileSwapSpaceSpi') {
