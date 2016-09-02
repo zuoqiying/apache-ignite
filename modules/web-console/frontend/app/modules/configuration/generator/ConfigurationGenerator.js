@@ -189,10 +189,45 @@ const DEFAULT = {
     }
 };
 
+const DEFAULT_IGFS = {
+    defaultMode: {clsName: 'org.apache.ignite.igfs.IgfsMode', value: 'DUAL_ASYNC'},
+    secondaryFileSystem: {
+
+    },
+    ipcEndpointConfiguration: {
+        host: '127.0.0.1',
+        port: 10500,
+        memorySize: 262144,
+        tokenDirectoryPath: 'ipc/shmem'
+    },
+    fragmentizerConcurrentFiles: 0,
+    fragmentizerThrottlingBlockLength: 16777216,
+    fragmentizerThrottlingDelay: 200,
+    dualModeMaxPendingPutsSize: 0,
+    dualModePutExecutorServiceShutdown: false,
+    blockSize: 65536,
+    streamBufferSize: 65536,
+    maxSpaceSize: 0,
+    maximumTaskRangeLength: 0,
+    managementPort: 11400,
+    perNodeBatchSize: 100,
+    perNodeParallelBatchCount: 8,
+    prefetchBlocks: 0,
+    sequentialReadsBeforePrefetch: 0,
+    trashPurgeTimeout: 1000,
+    colocateMetadata: true,
+    relaxedConsistency: true,
+    pathModes: {keyClsName: 'java.lang.String', valClsName: 'org.apache.ignite.igfs.IgfsMode'}
+};
+
 export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
     class ConfigurationGenerator {
         static igniteConfigurationBean(cluster) {
             return new Bean('org.apache.ignite.configuration.IgniteConfiguration', 'cfg', cluster, DEFAULT);
+        }
+
+        static igfsConfigurationBean(igfs) {
+            return new Bean('org.apache.ignite.configuration.FileSystemConfiguration', 'igfs', igfs, DEFAULT_IGFS);
         }
 
         /**
@@ -814,10 +849,11 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     .property('keyStoreType')
                     .property('protocol');
 
-                if ($generatorCommon.isDefinedAndNotEmpty(cluster.sslContextFactory.trustManagers))
+                if (!_.isEmpty(cluster.sslContextFactory.trustManagers)) {
                     bean.arrayProperty('trustManagers', 'trustManagers',
                         _.map(cluster.sslContextFactory.trustManagers, (clsName) => new EmptyBean(clsName)),
                         'javax.net.ssl.TrustManager');
+                }
                 else {
                     bean.pathProperty('trustStoreFilePath')
                         // TODO IGNITE-2052 Should be get from secret properties
@@ -892,6 +928,112 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         cacheConfiguration() {
 
         }
+
+        // Generate IGFS general group.
+        static igfsGeneral = function(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+            if (!_.isEmpty(igfs.name)) {
+                igfs.dataCacheName = $generatorCommon.igfsDataCache(igfs).name;
+                igfs.metaCacheName = $generatorCommon.igfsMetaCache(igfs).name;
+
+                cfg.property('name')
+                    .property('dataCacheName')
+                    .property('metaCacheName')
+                    .enumProperty('defaultMode');
+            }
+
+            return cfg;
+        };
+
+        // Generate IGFS secondary file system group.
+        static igfsSecondFS = function(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+            if (igfs.secondaryFileSystemEnabled) {
+                const secondFs = igfs.secondaryFileSystem || {};
+
+                const nameDefined = !_.isEmpty(secondFs.userName);
+                const cfgDefined = !_.isEmpty(secondFs.cfgPath);
+
+                const bean = new Bean('org.apache.ignite.hadoop.fs.IgniteHadoopIgfsSecondaryFileSystem',
+                    'secondaryFileSystem', secondFs, DEFAULT_IGFS.secondaryFileSystem);
+
+                bean.stringConstructorArgument('uri');
+
+                if (cfgDefined || nameDefined)
+                    bean.stringConstructorArgument('cfgPath');
+
+                if (nameDefined)
+                    cfg.stringConstructorArgument('userName');
+
+                cfg.beanProperty('secondaryFileSystem', bean);
+            }
+
+            return cfg;
+        };
+
+        // Generate IGFS IPC group.
+        static igfsIPC = function(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+            if (igfs.ipcEndpointEnabled) {
+                const bean = new Bean('org.apache.ignite.igfs.IgfsIpcEndpointConfiguration', 'ipcEndpointConfiguration',
+                    igfs.ipcEndpointConfiguration, DEFAULT_IGFS.ipcEndpointConfiguration);
+
+                bean.enumProperty('type')
+                    .stringProperty('host')
+                    .property('port')
+                    .property('memorySize')
+                    .pathProperty('tokenDirectoryPath')
+                    .property('threadCount');
+
+                cfg.beanProperty('ipcEndpointConfiguration', bean);
+            }
+
+            return cfg;
+        };
+
+        // Generate IGFS fragmentizer group.
+        static igfsFragmentizer = function(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+            if (igfs.fragmentizerEnabled) {
+                cfg.property('fragmentizerConcurrentFiles');
+                cfg.property('fragmentizerThrottlingBlockLength');
+                cfg.property('fragmentizerThrottlingDelay');
+            }
+            else
+                cfg.property('fragmentizerEnabled');
+
+            return cfg;
+        };
+
+        // Generate IGFS Dual mode group.
+        static igfsDualMode = function(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+            cfg.property('dualModeMaxPendingPutsSize');
+
+            if (!_.isEmpty(igfs.dualModePutExecutorService))
+                cfg.emptyBean('dualModePutExecutorService');
+
+            cfg.property('dualModePutExecutorServiceShutdown');
+
+            return cfg;
+        };
+
+        // Generate IGFS miscellaneous group.
+        static igfsMisc = function(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+            cfg.property('blockSize');
+            cfg.property('streamBufferSize');
+            cfg.property('maxSpaceSize');
+            cfg.property('maximumTaskRangeLength');
+            cfg.property('managementPort');
+            cfg.property('perNodeBatchSize');
+            cfg.property('perNodeParallelBatchCount');
+            cfg.property('prefetchBlocks');
+            cfg.property('sequentialReadsBeforePrefetch');
+            cfg.property('trashPurgeTimeout');
+            cfg.property('colocateMetadata');
+            cfg.property('relaxedConsistency');
+
+            // TODO IGNITE-2052 Entries have fields that differ from (name, value)
+            // if (igfs.pathModes && igfs.pathModes.length > 0)
+            //    cfg.mapProperty('pathModes');
+
+            return cfg;
+        };
     }
 
     return ConfigurationGenerator;

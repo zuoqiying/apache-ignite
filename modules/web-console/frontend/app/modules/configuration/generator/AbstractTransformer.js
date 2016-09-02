@@ -128,7 +128,7 @@ export default class AbstractTransformer {
         return sb;
     }
 
-    // Generate swap group.
+    // Generate ssl group.
     static clusterSsl(cluster, sb = new StringBuilder()) {
         const cfg = this.generator.clusterSsl(cluster);
 
@@ -167,6 +167,60 @@ export default class AbstractTransformer {
     // Generate transactions group.
     static clusterTransactions(transactionConfiguration, sb = new StringBuilder()) {
         const cfg = this.generator.clusterTransactions(transactionConfiguration);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // // Generate IGFS general group.
+    static igfsGeneral(igfs, sb = new StringBuilder()) {
+        const cfg = this.generator.igfsGeneral(igfs);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate IGFS secondary file system group.
+    static igfsSecondFS(igfs, sb = new StringBuilder()) {
+        const cfg = this.generator.igfsSecondFS(igfs);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate IGFS IPC group.
+    static igfsIPC(igfs, sb = new StringBuilder()) {
+        const cfg = this.generator.igfsIPC(igfs);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate IGFS fragmentizer group.
+    static igfsFragmentizer(igfs, sb = new StringBuilder()) {
+        const cfg = this.generator.igfsFragmentizer(igfs);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate IGFS Dual mode group.
+    static igfsDualMode(igfs, sb = new StringBuilder()) {
+        const cfg = this.generator.igfsDualMode(igfs);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate IGFS miscellaneous group.
+    static igfsMisc(igfs, sb = new StringBuilder()) {
+        const cfg = this.generator.igfsMisc(igfs);
 
         this._setProperties(sb, cfg);
 

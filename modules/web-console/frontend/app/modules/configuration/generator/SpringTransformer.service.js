@@ -246,34 +246,5 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
         static igfss(igfss, res) {
             return $generatorSpring.igfss(igfss, res);
         }
-
-        // Generate IGFS dual mode configuration.
-        static igfsDualMode(igfs, res) {
-            return $generatorSpring.igfsDualMode(igfs, res);
-        }
-
-        // Generate IGFS IPC configuration.
-        static igfsIPC(igfs, res) {
-            return $generatorSpring.igfsIPC(igfs, res);
-        }
-
-        // Generate IGFS fragmentizer configuration.
-        static igfsFragmentizer(igfs, res) {
-            return $generatorSpring.igfsFragmentizer(igfs, res);
-        }
-
-        // Generate IGFS general configuration.
-        static igfsGeneral(igfs, res) {
-            return $generatorSpring.igfsGeneral(igfs, res);
-        }
-
-        // Generate IGFS misc configuration.
-        static igfsMisc(igfs, res) {
-            return $generatorSpring.igfsMisc(igfs, res);
-        }
-
-        static igfsSecondFS(igfs, res) {
-            return $generatorSpring.igfsSecondFS(igfs, res);
-        }
     };
 }]];
