@@ -229,26 +229,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
             return $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
         }
 
-        // Generate logger group.
-        static clusterLogger(logger, res) {
-            return $generatorSpring.clusterLogger(logger, res);
-        }
-
-        // Generate marshaller group.
-        static clusterMarshaller(cluster, res) {
-            return $generatorSpring.clusterMarshaller(cluster, res);
-        }
-
-        // Generate metrics group.
-        static clusterMetrics(cluster, res) {
-            return $generatorSpring.clusterMetrics(cluster, res);
-        }
-
-        // Generate thread pools group.
-        static clusterPools(cluster, res) {
-            return $generatorSpring.clusterPools(cluster, res);
-        }
-
         /**
          * Generate cluster's SSL configuration.
          *
@@ -258,21 +238,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
          */
         static clusterSsl(cluster, res) {
             return $generatorSpring.clusterSsl(cluster, res);
-        }
-
-        // Generate swap group.
-        static clusterSwap(cluster, res) {
-            return $generatorSpring.clusterSwap(cluster, res);
-        }
-
-        // Generate time group.
-        static clusterTime(cluster, res) {
-            return $generatorSpring.clusterTime(cluster, res);
-        }
-
-        // Generate transactions group.
-        static clusterTransactions(transactionConfiguration, res) {
-            return $generatorSpring.clusterTransactions(transactionConfiguration, res);
         }
 
         // Generate user attributes group.

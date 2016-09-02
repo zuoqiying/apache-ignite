@@ -492,7 +492,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 cluster.communication, DEFAULT.communication);
 
             commSpi.emptyBeanProperty('listener')
-                .property('localAddress')
+                .stringProperty('localAddress')
                 .property('localPort')
                 .property('localPortRange')
                 .property('sharedMemoryPort')
@@ -526,12 +526,12 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate REST access configuration.
         static clusterConnector(connector, cfg = this.igniteConfigurationBean()) {
-            if (!_.isNil(connector) && connector.enabled) {
-                const connCfg = new Bean('org.apache.ignite.configuration.ConnectorConfiguration',
-                    'connectorConfiguration', connector, DEFAULT.connector);
+            const connCfg = new Bean('org.apache.ignite.configuration.ConnectorConfiguration',
+                'connectorConfiguration', connector, DEFAULT.connector);
 
-                connCfg.property('jettyPath')
-                    .property('host')
+            if (connCfg.valueOf('enabled')) {
+                connCfg.stringProperty('jettyPath')
+                    .stringProperty('host')
                     .property('port')
                     .property('portRange')
                     .property('idleTimeout')
@@ -545,14 +545,15 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     .property('selectorCount')
                     .property('threadPoolSize')
                     .emptyBeanProperty('messageInterceptor')
-                    .property('secretKey');
+                    .stringProperty('secretKey');
 
-                if (connector.sslEnabled) {
+                if (connCfg.valueOf('sslEnabled')) {
                     connCfg.property('sslClientAuth')
                         .emptyBeanProperty('sslFactory');
                 }
 
-                cfg.beanProperty('connectorConfiguration', connCfg);
+                if (connCfg.nonEmpty())
+                    cfg.beanProperty('connectorConfiguration', connCfg);
             }
 
             return cfg;
@@ -560,23 +561,17 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate deployment group.
         static clusterDeployment(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            cfg.enumProperty('deploymentMode');
+            cfg.enumProperty('deploymentMode')
+                .property('peerClassLoadingEnabled');
 
             // TODO IGNITE-2052 Need empty line when deploymentMode is not equal to 'SHARED'
+            if (cfg.valueOf('peerClassLoadingEnabled')) {
+                cfg.property('peerClassLoadingMissedResourcesCacheSize')
+                    .property('peerClassLoadingThreadPoolSize');
 
-            const p2pEnabled = cluster.peerClassLoadingEnabled;
-
-            if (!_.isNil(p2pEnabled)) {
-                cfg.property('peerClassLoadingEnabled');
-
-                if (p2pEnabled) {
-                    cfg.property('peerClassLoadingMissedResourcesCacheSize')
-                        .property('peerClassLoadingThreadPoolSize');
-
-                    // TODO IGNITE-2052 Generate array of String.
-                        //.arrayProperty('peerClassLoadingLocalClassPathExclude', 'peerClassLoadingLocalClassPathExclude',
-                        //    cluster.peerClassLoadingLocalClassPathExclude);
-                }
+                // TODO IGNITE-2052 Generate array of String.
+                //.arrayProperty('peerClassLoadingLocalClassPathExclude', 'peerClassLoadingLocalClassPathExclude',
+                //    cluster.peerClassLoadingLocalClassPathExclude);
             }
 
             return cfg;
@@ -590,7 +585,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     discovery, DEFAULT.discovery);
 
                 // TODO IGNITE-2052 localAddress stay when editor cleared.
-                discoveryCfg.property('localAddress')
+                discoveryCfg.stringProperty('localAddress')
                     .property('localPort')
                     .property('localPortRange')
                     .emptyBeanProperty('addressResolver')
@@ -674,32 +669,39 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
-        clusterLogger() {
-
+        // Generate logger group.
+        static clusterLogger(logger, cfg = this.igniteConfigurationBean()) {
+            return cfg;
         }
 
-        clusterMarshaller() {
-
+        // Generate marshaller group.
+        static clusterMarshaller(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            return cfg;
         }
 
-        clusterMetrics() {
-
+        // Generate metrics group.
+        static clusterMetrics(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            return cfg;
         }
 
-        clusterSwap() {
-
+        // Generate swap group.
+        static clusterSwap(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            return cfg;
         }
 
-        clusterTime() {
-
+        // Generate time group.
+        static clusterTime(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            return cfg;
         }
 
-        clusterPools() {
-
+        // Generate thread pools group.
+        static clusterPools(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            return cfg;
         }
 
-        clusterTransactions() {
-
+        // Generate transactions group.
+        static clusterTransactions(transactionConfiguration, cfg = this.igniteConfigurationBean()) {
+            return cfg;
         }
 
         cacheConfiguration() {

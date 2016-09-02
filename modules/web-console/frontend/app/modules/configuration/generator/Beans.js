@@ -75,28 +75,37 @@ export class Bean extends EmptyBean {
         this.dflts = dflts;
     }
 
-    _property(acc, type, model, name) {
+    /**
+     * @param acc
+     * @param type
+     * @param model
+     * @param name
+     * @param {Function} empty Empty function.
+     * @returns {Bean}
+     * @private
+     */
+    _property(acc, type, model, name, empty) {
         if (!this.src)
             return this;
 
         const value = this.src[model];
 
-        if (!_.isNil(value) && value !== this.dflts[model])
+        if (!empty(value) && value !== this.dflts[model])
             acc.push({type, name, value});
 
         return this;
     }
 
     constructorArgument(model, name = model) {
-        return this._property(this.arguments, 'PROPERTY', model, name);
+        return this._property(this.arguments, 'PROPERTY', model, name, _.isNil);
     }
 
     stringConstructorArgument(model, name = model) {
-        return this._property(this.arguments, 'STRING', model, name);
+        return this._property(this.arguments, 'STRING', model, name, _.isEmpty);
     }
 
     classConstructorArgument(model, name = model) {
-        return this._property(this.arguments, 'CLASS', model, name);
+        return this._property(this.arguments, 'CLASS', model, name, _.isEmpty);
     }
 
     valueOf(path) {
@@ -113,11 +122,11 @@ export class Bean extends EmptyBean {
     }
 
     property(model, name = model) {
-        return this._property(this.properties, 'PROPERTY', model, name);
+        return this._property(this.properties, 'PROPERTY', model, name, _.isNil);
     }
 
     stringProperty(model, name = model) {
-        return this._property(this.properties, 'STRING', model, name);
+        return this._property(this.properties, 'STRING', model, name, _.isEmpty);
     }
 
     enumProperty(model, name = model) {

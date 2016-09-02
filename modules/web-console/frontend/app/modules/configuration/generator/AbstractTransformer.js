@@ -100,4 +100,67 @@ export default class AbstractTransformer {
 
         return sb;
     }
+
+    // Generate logger group.
+    static clusterLogger(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterLogger(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate marshaller group.
+    static clusterMarshaller(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterMarshaller(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate metrics group.
+    static clusterMetrics(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterMetrics(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate swap group.
+    static clusterSwap(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterSwap(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate time group.
+    static clusterTime(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterTime(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate thread pools group.
+    static clusterPools(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterPools(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate transactions group.
+    static clusterTransactions(transactionConfiguration, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterTransactions(transactionConfiguration);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
 }
