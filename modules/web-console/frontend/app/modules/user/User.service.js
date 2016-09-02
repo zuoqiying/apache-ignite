@@ -16,23 +16,27 @@
  */
 
 export default ['User', ['$q', '$injector', '$rootScope', '$state', '$http', function($q, $injector, $root, $state, $http) {
-    let user = null;
+    let user;
 
     return {
         load() {
-            return $http.post('/api/v1/user')
+            return user = $http.post('/api/v1/user')
                 .then(({data}) => {
-                    user = $root.user = data;
+                    $root.user = data;
 
-                    $root.$broadcast('user', user);
+                    $root.$broadcast('user', $root.user);
 
-                    return user;
+                    return $root.user;
                 })
-                .catch(({data}) => $q.reject(data));
+                .catch(({data}) => {
+                    user = null;
+
+                    return $q.reject(data);
+                });
         },
         read() {
             if (user)
-                return $q.resolve(user);
+                return user;
 
             return this.load();
         },

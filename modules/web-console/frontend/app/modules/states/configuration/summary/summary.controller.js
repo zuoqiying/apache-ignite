@@ -20,8 +20,8 @@ import JSZip from 'jszip';
 import saver from 'file-saver';
 
 export default [
-    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteLoading', '$filter', 'igniteConfigurationResource', 'JavaTypes', 'IgniteVersion', 'GeneratorDocker', 'GeneratorPom',
-    function($root, $scope, $http, LegacyUtils, Messages, Loading, $filter, Resource, JavaTypes, IgniteVersion, docker, pom) {
+    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteLoading', '$filter', 'igniteConfigurationResource', 'JavaTypes', 'IgniteVersion', 'GeneratorDocker', 'GeneratorPom', 'IgniteFormUtils',
+    function($root, $scope, $http, LegacyUtils, Messages, Loading, $filter, Resource, JavaTypes, IgniteVersion, docker, pom, FormUtils) {
         const ctrl = this;
 
         $scope.ui = { ready: false };
@@ -57,7 +57,7 @@ export default [
             return !row || !row._id || _.findIndex(rows, (item) => item._id === row._id) >= 0;
         };
 
-        $scope.widthIsSufficient = LegacyUtils.widthIsSufficient;
+        $scope.widthIsSufficient = FormUtils.widthIsSufficient;
         $scope.dialects = {};
 
         $scope.projectStructureOptions = {
