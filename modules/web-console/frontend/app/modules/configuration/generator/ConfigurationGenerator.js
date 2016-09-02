@@ -564,14 +564,11 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             cfg.enumProperty('deploymentMode')
                 .property('peerClassLoadingEnabled');
 
-            // TODO IGNITE-2052 Need empty line when deploymentMode is not equal to 'SHARED'
             if (cfg.valueOf('peerClassLoadingEnabled')) {
                 cfg.property('peerClassLoadingMissedResourcesCacheSize')
-                    .property('peerClassLoadingThreadPoolSize');
-
-                // TODO IGNITE-2052 Generate array of String.
-                //.arrayProperty('peerClassLoadingLocalClassPathExclude', 'peerClassLoadingLocalClassPathExclude',
-                //    cluster.peerClassLoadingLocalClassPathExclude);
+                    .property('peerClassLoadingThreadPoolSize')
+                    .arrayProperty('p2pLocClsPathExcl', 'peerClassLoadingLocalClassPathExclude',
+                       cluster.peerClassLoadingLocalClassPathExclude);
             }
 
             return cfg;
@@ -584,7 +581,6 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 const discoveryCfg = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery',
                     discovery, DEFAULT.discovery);
 
-                // TODO IGNITE-2052 localAddress stay when editor cleared.
                 discoveryCfg.stringProperty('localAddress')
                     .property('localPort')
                     .property('localPortRange')

@@ -172,37 +172,51 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                     case 'ARRAY':
                         const arrTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
 
-                        sb.append(`${arrTypeClsName}[] ${prop.id} = new ${arrTypeClsName}[${prop.items.length}];`);
+                        switch (arrTypeClsName) {
+                            case 'String':
+                                const values = _.map(prop.items, (item) => `"${item}"`).join(', ');
 
-                        sb.emptyLine();
+                                sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrTypeClsName}[] {${values}});`);
 
-                        _.forEach(prop.items, (nesterBean, idx) => {
-                            sb.append(`${prop.name}[${idx}] = ${this._newBean(nesterBean)};`);
+                                break;
+                            case 'Integer':
+                            case 'Long':
+                                sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrTypeClsName}[] {${prop.items.join(', ')}});`);
 
-                            const clsName = JavaTypes.shortClassName(nesterBean.clsName);
+                                break;
+                            default:
+                                sb.append(`${arrTypeClsName}[] ${prop.id} = new ${arrTypeClsName}[${prop.items.length}];`);
 
-                            _.forEach(nesterBean.properties, (p) => {
-                                switch (p.type) {
-                                    case 'PROPERTY':
-                                        sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}(${p.value});`);
+                                sb.emptyLine();
 
-                                        break;
-                                    case 'STRING':
-                                        sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}("${p.value}");`);
+                                _.forEach(prop.items, (nesterBean, idx) => {
+                                    sb.append(`${prop.name}[${idx}] = ${this._newBean(nesterBean)};`);
 
-                                        break;
-                                    case 'CLASS':
-                                        sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}(${JavaTypes.shortClassName(p.value)}.class);`);
+                                    const clsName = JavaTypes.shortClassName(nesterBean.clsName);
 
-                                        break;
-                                    default:
-                                }
-                            });
-                        });
+                                    _.forEach(nesterBean.properties, (p) => {
+                                        switch (p.type) {
+                                            case 'PROPERTY':
+                                                sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}(${p.value});`);
 
-                        sb.emptyLine();
+                                                break;
+                                            case 'STRING':
+                                                sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}("${p.value}");`);
 
-                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
+                                                break;
+                                            case 'CLASS':
+                                                sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}(${JavaTypes.shortClassName(p.value)}.class);`);
+
+                                                break;
+                                            default:
+                                        }
+                                    });
+                                });
+
+                                sb.emptyLine();
+
+                                sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
+                        }
 
                         break;
                     case 'COLLECTION':

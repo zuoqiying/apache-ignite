@@ -113,11 +113,19 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                         sb.startBlock(`<property name="${prop.name}">`);
                         sb.startBlock('<array>');
 
+                        const arrTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
+
                         _.forEach(prop.items, (item) => {
-                            if (_.isString(item) || _.isNumber(item))
-                                sb.append(`<value>${item}</value>`);
-                            else
-                                this.appendBean(sb, item);
+                            switch (arrTypeClsName) {
+                                case 'Integer':
+                                case 'Long':
+                                case 'String':
+                                    sb.append(`<value>${item}</value>`);
+
+                                    break;
+                                default:
+                                    this.appendBean(sb, item);
+                            }
                         });
 
                         sb.endBlock('</array>');
