@@ -108,6 +108,10 @@ export class Bean extends EmptyBean {
         return this._property(this.arguments, 'CLASS', model, name, _.isEmpty);
     }
 
+    pathConstructorArgument(model, name = model) {
+        return this._property(this.arguments, 'PATH', model, name, _.isEmpty);
+    }
+
     valueOf(path) {
         return (this.src && this.src[path]) || this.dflts[path];
     }
@@ -127,6 +131,10 @@ export class Bean extends EmptyBean {
 
     stringProperty(model, name = model) {
         return this._property(this.properties, 'STRING', model, name, _.isEmpty);
+    }
+
+    pathProperty(model, name = model) {
+        return this._property(this.properties, 'PATH', model, name, _.isEmpty);
     }
 
     enumProperty(model, name = model) {

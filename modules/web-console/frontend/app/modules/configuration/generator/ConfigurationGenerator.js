@@ -251,7 +251,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                             'ipFinder', cluster.discovery.Cloud, DEFAULT.discovery.Cloud);
 
                         ipFinder.stringProperty('credential')
-                            .stringProperty('credentialPath')
+                            .pathProperty('credentialPath')
                             .stringProperty('identity')
                             .stringProperty('provider')
                             .collectionProperty('regions', 'regions', cluster.discovery.Cloud.regions)
@@ -264,7 +264,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                         ipFinder.stringProperty('projectName')
                             .stringProperty('bucketName')
-                            .stringProperty('serviceAccountP12FilePath')
+                            .pathProperty('serviceAccountP12FilePath')
                             .stringProperty('serviceAccountId');
 
                         break;
@@ -282,7 +282,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.sharedfs.TcpDiscoverySharedFsIpFinder',
                             'ipFinder', cluster.discovery.SharedFs, DEFAULT.discovery.SharedFs);
 
-                        ipFinder.stringProperty('path');
+                        ipFinder.pathProperty('path');
 
                         break;
                     case 'ZooKeeper':
@@ -356,7 +356,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                                 ipFinder.beanProperty('retryPolicy', retryPolicyBean);
                         }
 
-                        ipFinder.stringProperty('basePath', '/services')
+                        ipFinder.pathProperty('basePath', '/services')
                             .stringProperty('serviceName')
                             .stringProperty('allowDuplicateRegistrations');
 
@@ -553,7 +553,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 'connectorConfiguration', connector, DEFAULT.connector);
 
             if (connCfg.valueOf('enabled')) {
-                connCfg.stringProperty('jettyPath')
+                connCfg.pathProperty('jettyPath')
                     .stringProperty('host')
                     .property('port')
                     .property('portRange')
@@ -702,7 +702,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                             'logger', logger.Log4j, DEFAULT.logger.Log4j);
 
                         if (loggerBean.valueOf('mode') === 'Path')
-                            loggerBean.stringConstructorArgument('path');
+                            loggerBean.pathConstructorArgument('path');
 
                         loggerBean.enumProperty('level');
                     }
@@ -713,7 +713,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         loggerBean = new Bean('org.apache.ignite.logger.log4j2.Log4J2Logger',
                             'logger', logger.Log4j2, DEFAULT.logger.Log4j2);
 
-                        loggerBean.stringConstructorArgument('path')
+                        loggerBean.pathConstructorArgument('path')
                             .enumProperty('level');
                     }
 
@@ -801,8 +801,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 const bean = new Bean('org.apache.ignite.spi.swapspace.file.FileSwapSpaceSpi', 'swapSpaceSpi',
                     cluster.swapSpaceSpi.FileSwapSpaceSpi);
 
-                // TODO IGNITE-2052 Should be escaped '\' symbols in Java generator
-                bean.stringProperty('baseDirectory')
+                bean.pathProperty('baseDirectory')
                     .property('readStripesNumber')
                     .property('maximumSparsity')
                     .property('maxWriteQueueSize')

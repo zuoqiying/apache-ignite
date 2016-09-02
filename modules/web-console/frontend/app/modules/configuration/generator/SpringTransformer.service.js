@@ -46,6 +46,7 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                     case 'CLASS':
                     case 'STRING':
                     case 'PROPERTY':
+                    case 'PATH':
                         sb.append(`<constructor-arg value="${arg.value}"/>`);
 
                         break;
@@ -72,6 +73,7 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                     case 'PROPERTY':
                     case 'STRING':
                     case 'ENUM':
+                    case 'PATH':
                         sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
 
                         break;

@@ -53,6 +53,8 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                         return arg.value;
                     case 'STRING':
                         return `"${arg.value}"`;
+                    case 'PATH':
+                        return `"${arg.value.replace(/\\/g, '\\\\')}"`;
                     case 'CLASS':
                         return `${JavaTypes.shortClassName(arg.value)}.class`;
                     default:
@@ -110,6 +112,10 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                 switch (prop.type) {
                     case 'STRING':
                         this._setProperty(sb, bean, prop.name, `"${prop.value}"`);
+
+                        break;
+                    case 'PATH':
+                        this._setProperty(sb, bean, prop.name, `"${prop.value.replace(/\\/g, '\\\\')}"`);
 
                         break;
                     case 'CLASS':
