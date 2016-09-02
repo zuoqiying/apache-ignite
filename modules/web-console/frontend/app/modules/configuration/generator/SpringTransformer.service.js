@@ -132,7 +132,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                         sb.endBlock('</property>');
 
                         break;
-
                     case 'COLLECTION':
                         sb.startBlock(`<property name="${prop.name}">`);
                         sb.startBlock('<list>');
@@ -148,7 +147,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                         sb.endBlock('</property>');
 
                         break;
-
                     case 'MAP':
                         sb.startBlock(`<property name="${prop.name}">`);
                         sb.startBlock('<map>');

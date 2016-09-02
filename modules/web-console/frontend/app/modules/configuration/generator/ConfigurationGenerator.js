@@ -164,6 +164,14 @@ const DEFAULT = {
             maximumFailoverAttempts: 5
         }
     },
+    logger: {
+        Log4j: {
+            level: {clsName: 'org.apache.logging.log4j.Level', value: null}
+        },
+        Log4j2: {
+            level: {clsName: 'org.apache.logging.log4j.Level', value: null}
+        }
+    },
     marshalLocalJobs: false,
     marshallerCacheKeepAliveTime: 10000,
     metricsHistorySize: 10000,
@@ -682,6 +690,61 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate logger group.
         static clusterLogger(logger, cfg = this.igniteConfigurationBean()) {
+            if (_.isNil(logger))
+                return cfg;
+
+            let loggerBean;
+
+            switch (logger.kind) {
+                case 'Log4j':
+                    if (logger.Log4j && (logger.Log4j.mode === 'Default' || logger.Log4j.mode === 'Path' && !_.isEmpty(logger.Log4j.path))) {
+                        loggerBean = new Bean('org.apache.ignite.logger.log4j.Log4JLogger',
+                            'logger', logger.Log4j, DEFAULT.logger.Log4j);
+
+                        if (loggerBean.valueOf('mode') === 'Path')
+                            loggerBean.stringConstructorArgument('path');
+
+                        loggerBean.enumProperty('level');
+                    }
+
+                    break;
+                case 'Log4j2':
+                    if (logger.Log4j2 && !_.isEmpty(logger.Log4j2.path)) {
+                        loggerBean = new Bean('org.apache.ignite.logger.log4j2.Log4J2Logger',
+                            'logger', logger.Log4j2, DEFAULT.logger.Log4j2);
+
+                        loggerBean.stringConstructorArgument('path')
+                            .enumProperty('level');
+                    }
+
+                    break;
+                case 'Null':
+                    loggerBean = new EmptyBean('org.apache.ignite.logger.NullLogger');
+
+                    break;
+                case 'Java':
+                    loggerBean = new EmptyBean('org.apache.ignite.logger.java.JavaLogger');
+
+                    break;
+                case 'JCL':
+                    loggerBean = new EmptyBean('org.apache.ignite.logger.jcl.JclLogger');
+
+                    break;
+                case 'SLF4J':
+                    loggerBean = new EmptyBean('org.apache.ignite.logger.slf4j.Slf4jLogger');
+
+                    break;
+                case 'Custom':
+                    if (logger.Custom && !_.isEmpty(logger.Custom.class))
+                        loggerBean = new EmptyBean(logger.Custom.class);
+
+                    break;
+                default:
+            }
+
+            if (loggerBean)
+                cfg.beanProperty('gridLogger', loggerBean);
+
             return cfg;
         }
 
