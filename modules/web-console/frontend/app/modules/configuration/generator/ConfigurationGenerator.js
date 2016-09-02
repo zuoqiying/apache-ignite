@@ -90,7 +90,7 @@ const DEFAULT = {
     binary: {
         compactFooter: true,
         typeConfigurations: {
-            enum: true
+            enum: false
         }
     },
     collision: {
@@ -411,7 +411,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     .emptyBeanProperty('idMapper')
                     .emptyBeanProperty('nameMapper')
                     .emptyBeanProperty('serializer')
-                    .enumProperty('enum');
+                    .property('enum');
 
                 if (typeCfg.nonEmpty())
                     typeCfgs.push(typeCfg);
@@ -797,6 +797,20 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate swap group.
         static clusterSwap(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            if (cluster.swapSpaceSpi && cluster.swapSpaceSpi.kind === 'FileSwapSpaceSpi') {
+                const bean = new Bean('org.apache.ignite.spi.swapspace.file.FileSwapSpaceSpi', 'swapSpaceSpi',
+                    cluster.swapSpaceSpi.FileSwapSpaceSpi);
+
+                // TODO IGNITE-2052 Should be escaped '\' symbols in Java generator
+                bean.stringProperty('baseDirectory')
+                    .property('readStripesNumber')
+                    .property('maximumSparsity')
+                    .property('maxWriteQueueSize')
+                    .property('writeBufferSize');
+
+                cfg.beanProperty('swapSpaceSpi', bean);
+            }
+
             return cfg;
         }
 
