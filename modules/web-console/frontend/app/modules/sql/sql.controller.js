@@ -1581,14 +1581,14 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         $scope.showResultQuery = function(paragraph) {
-            if (LegacyUtils.isDefined(paragraph)) {
+            if (!_.isNil(paragraph)) {
                 const scope = $scope.$new();
 
                 if (_.isNil(paragraph.queryArgs.query)) {
                     scope.title = 'SCAN query';
                     scope.content = [`SCAN query for cache: <b>${$scope.maskCacheName(paragraph.queryArgs.cacheName)}</b>`];
                 }
-                if (paragraph.queryArgs.query.startsWith(SCAN_CACHE_WITH_FILTER)) {
+                else if (paragraph.queryArgs.query.startsWith(SCAN_CACHE_WITH_FILTER)) {
                     scope.title = 'SCAN query';
 
                     let filter = '';
