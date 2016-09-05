@@ -48,6 +48,9 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                 return `new ${shortClsName}()`;
 
             const args = _.map(bean.arguments, (arg) => {
+                if (_.isNil(arg.value))
+                    return 'null';
+
                 switch (arg.type) {
                     case 'PROPERTY':
                         return arg.value;
@@ -58,7 +61,6 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                     case 'CLASS':
                         return `${JavaTypes.shortClassName(arg.value)}.class`;
                     default:
-                        return 'null';
                 }
             });
 
@@ -116,6 +118,10 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                         break;
                     case 'PATH':
                         this._setProperty(sb, bean, prop.name, `"${prop.value.replace(/\\/g, '\\\\')}"`);
+
+                        break;
+                    case 'PASSWORD':
+                        this._setProperty(sb, bean, prop.name, `props.getProperty("${prop.value}").toCharArray()`);
 
                         break;
                     case 'CLASS':
@@ -268,18 +274,37 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                         break;
                     case 'MAP':
-                        const keyCls = JavaTypes.shortClassName(prop.keyClsName);
-                        const valCls = JavaTypes.shortClassName(prop.valClsName);
+                        const keyClsName = JavaTypes.shortClassName(prop.keyClsName);
+                        const valClsName = JavaTypes.shortClassName(prop.valClsName);
 
-                        sb.append(`Map<${keyCls}, ${valCls}> ${prop.id} = new HashMap<>();`);
+                        sb.append(`Map<${keyClsName}, ${valClsName}> ${prop.id} = new HashMap<>();`);
 
                         sb.emptyLine();
 
-                        _.forEach(prop.value, (entry) => {
-                            sb.append(`${bean.id}.put("${entry.name}", "${entry.value}")`);
+                        const mapper = (shortCls, val) => {
+                            switch (shortCls) {
+                                case 'Serializable':
+                                case 'String':
+                                    return `"${val}"`;
+
+                                case 'Short':
+                                case 'Integer':
+                                case 'Long':
+                                    return val;
+
+                                default:
+                                    return `${shortCls}.${val}`;
+                            }
+                        };
+
+                        const keyMapper = mapper.bind(this, keyClsName);
+                        const valMapper = mapper.bind(this, valClsName);
+
+                        _.forEach(prop.entries, (entry) => {
+                            sb.append(`${bean.id}.put(${keyMapper(entry[prop.keyField])}, ${valMapper(entry[prop.valField])});`);
                         });
 
-                        if (!_.isEmpty(prop.value))
+                        if (_.nonEmpty(prop.entries))
                             sb.emptyLine();
 
                         sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);

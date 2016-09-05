@@ -45,13 +45,17 @@ export class Map {
     /**
      *
      * @param {String} keyClsName
+     * @param {String} keyField
      * @param {String} valClsName
+     * @param {String} valField
      * @param {String} id
      * @param {Array.<{String, String}>} items
      */
-    constructor(keyClsName, valClsName, id, items) {
+    constructor(keyClsName, keyField = 'name', valClsName, valField = 'value', id, items) {
         this.keyClsName = keyClsName;
+        this.keyField = keyField;
         this.valClsName = valClsName;
+        this.valField = valField;
 
         this.id = id;
 
@@ -80,36 +84,36 @@ export class Bean extends EmptyBean {
      * @param type
      * @param model
      * @param name
-     * @param {Function} empty Empty function.
+     * @param {Function} nonEmpty Non empty function.
      * @returns {Bean}
      * @private
      */
-    _property(acc, type, model, name, empty) {
+    _property(acc, type, model, name, nonEmpty = () => true) {
         if (!this.src)
             return this;
 
         const value = this.src[model];
 
-        if (!empty(value) && value !== this.dflts[model])
+        if (nonEmpty(value) && value !== this.dflts[model])
             acc.push({type, name, value});
 
         return this;
     }
 
     constructorArgument(model, name = model) {
-        return this._property(this.arguments, 'PROPERTY', model, name, _.isNil);
+        return this._property(this.arguments, 'PROPERTY', model, name, _.nonNil);
     }
 
     stringConstructorArgument(model, name = model) {
-        return this._property(this.arguments, 'STRING', model, name, _.isEmpty);
+        return this._property(this.arguments, 'STRING', model, name, _.nonEmpty);
     }
 
     classConstructorArgument(model, name = model) {
-        return this._property(this.arguments, 'CLASS', model, name, _.isEmpty);
+        return this._property(this.arguments, 'CLASS', model, name, _.nonEmpty);
     }
 
     pathConstructorArgument(model, name = model) {
-        return this._property(this.arguments, 'PATH', model, name, _.isEmpty);
+        return this._property(this.arguments, 'PATH', model, name, _.nonEmpty);
     }
 
     valueOf(path) {
@@ -126,15 +130,27 @@ export class Bean extends EmptyBean {
     }
 
     property(model, name = model) {
-        return this._property(this.properties, 'PROPERTY', model, name, _.isNil);
+        return this._property(this.properties, 'PROPERTY', model, name, _.nonNil);
+    }
+
+    virtualProperty(name, value) {
+        this.properties.push({type: 'PROPERTY', name, value});
+
+        return this;
+    }
+
+    passwordProperty(name, value) {
+        this.properties.push({type: 'PASSWORD', name, value});
+
+        return this;
     }
 
     stringProperty(model, name = model) {
-        return this._property(this.properties, 'STRING', model, name, _.isEmpty);
+        return this._property(this.properties, 'STRING', model, name, _.nonEmpty);
     }
 
     pathProperty(model, name = model) {
-        return this._property(this.properties, 'PATH', model, name, _.isEmpty);
+        return this._property(this.properties, 'PATH', model, name, _.nonEmpty);
     }
 
     enumProperty(model, name = model) {
@@ -156,7 +172,7 @@ export class Bean extends EmptyBean {
 
         const cls = this.src[model];
 
-        if (!_.isEmpty(cls) && cls !== this.dflts[model])
+        if (_.nonEmpty(cls) && cls !== this.dflts[model])
             this.properties.push({type: 'BEAN', name, value: new EmptyBean(cls)});
 
         return this;
@@ -215,11 +231,16 @@ export class Bean extends EmptyBean {
         const entries = this.src[name];
         const dflt = this.dflts[name];
 
-        if (!_.isEmpty(entries) && entries !== dflt.items) {
+        if (_.nonEmpty(entries) && entries !== dflt.items) {
             this.properties.push({
                 type: 'MAP',
+                id,
                 name,
-                value: new Map(dflt.keyClsName, dflt.valClsName, id, entries)
+                keyClsName: dflt.keyClsName,
+                keyField: dflt.keyField || 'name',
+                valClsName: dflt.valClsName,
+                valField: dflt.valField || 'value',
+                entries
             });
         }
 
