@@ -195,6 +195,7 @@ const DEFAULT_IGFS = {
 
     },
     ipcEndpointConfiguration: {
+        type: {clsName: 'org.apache.ignite.igfs.IgfsIpcEndpointType'},
         host: '127.0.0.1',
         port: 10500,
         memorySize: 262144,
@@ -998,7 +999,6 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 const bean = new Bean('org.apache.ignite.igfs.IgfsIpcEndpointConfiguration', 'ipcEndpointConfiguration',
                     igfs.ipcEndpointConfiguration, DEFAULT_IGFS.ipcEndpointConfiguration);
 
-                // TODO IGNITE-2052 Not work when enum is empty.
                 bean.enumProperty('type')
                     .stringProperty('host')
                     .property('port')
