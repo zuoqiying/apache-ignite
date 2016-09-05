@@ -47,10 +47,15 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                     case 'STRING':
                     case 'PROPERTY':
                     case 'PATH':
-                        sb.append(`<constructor-arg value="${arg.value}"/>`);
+                        if (_.isNil(arg.value)) {
+                            sb.startBlock('<constructor-arg>');
+                            sb.append('<null/>');
+                            sb.endBlock('</constructor-arg>');
+                        }
+                        else
+                            sb.append(`<constructor-arg value="${arg.value}"/>`);
 
                         break;
-
                     default:
                         // No-op.
                 }
@@ -75,6 +80,10 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                     case 'ENUM':
                     case 'PATH':
                         sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
+
+                        break;
+                    case 'PASSWORD':
+                        sb.append(`<property name="${prop.name}" value="\${${prop.value}}"/>`);
 
                         break;
                     case 'DATASOURCE':
@@ -153,8 +162,17 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                         sb.startBlock(`<property name="${prop.name}">`);
                         sb.startBlock('<map>');
 
+                        const keyClsName = JavaTypes.shortClassName(prop.keyClsName);
+                        const valClsName = JavaTypes.shortClassName(prop.valClsName);
+
+                        const isKeyEnum = JavaTypes.nonBuiltInClass(keyClsName);
+                        const isValEnum = JavaTypes.nonBuiltInClass(valClsName);
+
                         _.forEach(prop.entries, (entry) => {
-                            sb.append(`<entry key="${entry.name}" value="${entry.value}"/>`);
+                            const key = isKeyEnum ? `${keyClsName}.${entry[prop.keyField]}` : entry[prop.keyField];
+                            const val = isValEnum ? `${valClsName}.${entry[prop.valField]}` : entry[prop.valField];
+
+                            sb.append(`<entry key="${key}" value="${val}"/>`);
                         });
 
                         sb.endBlock('</map>');

@@ -218,7 +218,7 @@ const DEFAULT_IGFS = {
     trashPurgeTimeout: 1000,
     colocateMetadata: true,
     relaxedConsistency: true,
-    pathModes: {keyClsName: 'java.lang.String', valClsName: 'org.apache.ignite.igfs.IgfsMode'}
+    pathModes: {keyClsName: 'java.lang.String', keyField: 'path', valClsName: 'org.apache.ignite.igfs.IgfsMode', valField: 'mode'}
 };
 
 const DEFAULT_CACHE = {
@@ -430,7 +430,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                                     break;
                                 case 'Custom':
-                                    if (!_.isEmpty(policy.Custom.className))
+                                    if (_.nonEmpty(policy.Custom.className))
                                         retryPolicyBean = new EmptyBean(policy.Custom.className);
 
                                     break;
@@ -549,7 +549,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         .property('maximumStealingAttempts')
                         .property('stealingEnabled')
                         .emptyBeanProperty('externalCollisionListener')
-                        .mapProperty('stealingAttributes', 'stealingAttrs');
+                        .mapProperty('stealingAttrs', 'stealingAttributes');
 
                     break;
 
@@ -722,7 +722,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate events group.
         static clusterEvents(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            if (!_.isEmpty(cluster.includeEventTypes))
+            if (_.nonEmpty(cluster.includeEventTypes))
                 cfg.eventTypes('events', 'includeEventTypes', cluster.includeEventTypes);
 
             return cfg;
@@ -782,7 +782,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
             switch (logger.kind) {
                 case 'Log4j':
-                    if (logger.Log4j && (logger.Log4j.mode === 'Default' || logger.Log4j.mode === 'Path' && !_.isEmpty(logger.Log4j.path))) {
+                    if (logger.Log4j && (logger.Log4j.mode === 'Default' || logger.Log4j.mode === 'Path' && _.nonEmpty(logger.Log4j.path))) {
                         loggerBean = new Bean('org.apache.ignite.logger.log4j.Log4JLogger',
                             'logger', logger.Log4j, DEFAULT.logger.Log4j);
 
@@ -794,7 +794,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                     break;
                 case 'Log4j2':
-                    if (logger.Log4j2 && !_.isEmpty(logger.Log4j2.path)) {
+                    if (logger.Log4j2 && _.nonEmpty(logger.Log4j2.path)) {
                         loggerBean = new Bean('org.apache.ignite.logger.log4j2.Log4J2Logger',
                             'logger', logger.Log4j2, DEFAULT.logger.Log4j2);
 
@@ -820,7 +820,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                     break;
                 case 'Custom':
-                    if (logger.Custom && !_.isEmpty(logger.Custom.class))
+                    if (logger.Custom && _.nonEmpty(logger.Custom.class))
                         loggerBean = new EmptyBean(logger.Custom.class);
 
                     break;
@@ -882,33 +882,31 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Java code generator for cluster's SSL configuration.
         static clusterSsl = function(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            if (cluster.sslEnabled && !_.isNil(cluster.sslContextFactory)) {
-
-                cluster.sslContextFactory.keyStorePassword =
-                    $generatorCommon.isDefinedAndNotEmpty(cluster.sslContextFactory.keyStoreFilePath) ? 'ssl.key.storage.password' : null;
-                cluster.sslContextFactory.trustStorePassword =
-                    $generatorCommon.isDefinedAndNotEmpty(cluster.sslContextFactory.trustStoreFilePath) ? 'ssl.trust.storage.password' : null;
-
+            if (cluster.sslEnabled && _.nonNil(cluster.sslContextFactory)) {
                 const bean = new Bean('org.apache.ignite.ssl.SslContextFactory', 'sslContextFactory',
                     cluster.sslContextFactory);
 
                 bean.property('keyAlgorithm')
-                    .pathProperty('keyStoreFilePath')
-                    // TODO IGNITE-2052 Should be get from secret properties
-                    .property('keyStorePassword')
-                    .property('keyStoreType')
+                    .pathProperty('keyStoreFilePath');
+
+                if (_.nonEmpty(bean.valueOf('keyStoreFilePath')))
+                    bean.passwordProperty('keyStorePassword', 'ssl.key.storage.password');
+
+                bean.property('keyStoreType')
                     .property('protocol');
 
-                if (!_.isEmpty(cluster.sslContextFactory.trustManagers)) {
+                if (_.nonEmpty(cluster.sslContextFactory.trustManagers)) {
                     bean.arrayProperty('trustManagers', 'trustManagers',
                         _.map(cluster.sslContextFactory.trustManagers, (clsName) => new EmptyBean(clsName)),
                         'javax.net.ssl.TrustManager');
                 }
                 else {
-                    bean.pathProperty('trustStoreFilePath')
-                        // TODO IGNITE-2052 Should be get from secret properties
-                        .property('trustStorePassword')
-                        .property('trustStoreType');
+                    bean.pathProperty('trustStoreFilePath');
+
+                    if (_.nonEmpty(bean.valueOf('trustStoreFilePath')))
+                        bean.passwordProperty('trustStorePassword', 'ssl.trust.storage.password');
+
+                    bean.property('trustStoreType');
                 }
 
                 cfg.beanProperty('sslContextFactory', bean);
@@ -981,13 +979,10 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate IGFS general group.
         static igfsGeneral(igfs, cfg = this.igfsConfigurationBean(igfs)) {
-            if (!_.isEmpty(igfs.name)) {
-                igfs.dataCacheName = ConfigurationGenerator._igfsDataCache(igfs).name;
-                igfs.metaCacheName = ConfigurationGenerator._igfsMetaCache(igfs).name;
-
+            if (_.nonEmpty(igfs.name)) {
                 cfg.property('name')
-                    .property('dataCacheName')
-                    .property('metaCacheName')
+                    .virtualProperty('dataCacheName', igfs.name + '-data')
+                    .virtualProperty('metaCacheName', igfs.name + '-meta')
                     .enumProperty('defaultMode');
             }
 
@@ -1005,10 +1000,10 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 const bean = new Bean('org.apache.ignite.hadoop.fs.IgniteHadoopIgfsSecondaryFileSystem',
                     'secondaryFileSystem', secondFs, DEFAULT_IGFS.secondaryFileSystem);
 
+                // TODO IGNITE-2052 Use setFileSystemFactory
                 bean.stringConstructorArgument('uri');
 
                 if (cfgDefined || nameDefined)
-                    // TODO IGNITE-2052 Can be undefined. Should be shown when name is defined
                     bean.stringConstructorArgument('cfgPath');
 
                 if (nameDefined)
@@ -1054,12 +1049,9 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate IGFS Dual mode group.
         static igfsDualMode(igfs, cfg = this.igfsConfigurationBean(igfs)) {
-            cfg.property('dualModeMaxPendingPutsSize');
-
-            if (!_.isEmpty(igfs.dualModePutExecutorService))
-                cfg.emptyBeanProperty('dualModePutExecutorService');
-
-            cfg.property('dualModePutExecutorServiceShutdown');
+            cfg.property('dualModeMaxPendingPutsSize')
+                .emptyBeanProperty('dualModePutExecutorService')
+                .property('dualModePutExecutorServiceShutdown');
 
             return cfg;
         }
@@ -1077,11 +1069,8 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 .property('sequentialReadsBeforePrefetch')
                 .property('trashPurgeTimeout')
                 .property('colocateMetadata')
-                .property('relaxedConsistency');
-
-            // TODO IGNITE-2052 Entries have fields that differ from (name, value)
-            // if (igfs.pathModes && igfs.pathModes.length > 0)
-            //    cfg.mapProperty('pathModes');
+                .property('relaxedConsistency')
+                .mapProperty('pathModes', 'pathModes');
 
             return cfg;
         }
