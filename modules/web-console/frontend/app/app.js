@@ -246,9 +246,8 @@ angular
     $root.$meta = $meta;
     $root.gettingStarted = gettingStarted;
 }])
-.run(['$rootScope', 'User', 'IgniteAgentMonitor', ($root, User, agentMonitor) => {
-    User.read()
-        .then(() => agentMonitor.init());
+.run(['$rootScope', 'IgniteAgentMonitor', ($root, agentMonitor) => {
+    $root.$on('user', () => agentMonitor.init());
 }])
 .run(['$rootScope', ($root) => {
     $root.$on('$stateChangeStart', () => {
