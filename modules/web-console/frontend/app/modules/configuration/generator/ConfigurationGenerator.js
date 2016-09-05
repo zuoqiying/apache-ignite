@@ -221,6 +221,29 @@ const DEFAULT_IGFS = {
     pathModes: {keyClsName: 'java.lang.String', valClsName: 'org.apache.ignite.igfs.IgfsMode'}
 };
 
+const DEFAULT_CACHE = {
+    cacheMode: {clsName: 'org.apache.ignite.cache.CacheMode'},
+    atomicityMode: {clsName: 'org.apache.ignite.cache.CacheAtomicityMode'},
+    memoryMode: {clsName: 'org.apache.ignite.cache.CacheMemoryMode', value: 'ONHEAP_TIERED'},
+    offHeapMaxMemory: -1,
+    startSize: 1500000,
+    swapEnabled: false,
+    sqlOnheapRowCacheSize: 10240,
+    longQueryWarningTimeout: 3000,
+    snapshotableIndex: false,
+    sqlEscapeAll: false,
+
+    maxConcurrentAsyncOperations: 500,
+    defaultLockTimeout: 0,
+    atomicWriteOrderMode: {clsName: 'org.apache.ignite.cache.CacheAtomicWriteOrderMode'},
+    writeSynchronizationMode: {clsName: 'org.apache.ignite.cache.CacheWriteSynchronizationMode', value: 'PRIMARY_SYNC'}
+};
+
+const DEFAULT_EVICTION_POLICY = {
+    batchSize: 1,
+    maxSize: 100000
+};
+
 export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
     class ConfigurationGenerator {
         // Generate default data cache for specified igfs instance.
@@ -251,6 +274,10 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         static igfsConfigurationBean(igfs) {
             return new Bean('org.apache.ignite.configuration.FileSystemConfiguration', 'igfs', igfs, DEFAULT_IGFS);
+        }
+
+        static cacheConfigurationBean(cache) {
+            return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'cache', cache, DEFAULT_CACHE);
         }
 
         /**
@@ -1055,6 +1082,137 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             // TODO IGNITE-2052 Entries have fields that differ from (name, value)
             // if (igfs.pathModes && igfs.pathModes.length > 0)
             //    cfg.mapProperty('pathModes');
+
+            return cfg;
+        }
+
+        // Generate eviction policy object.
+        static evictionPolicy(evictPolicy, cfg) {
+            let cls;
+
+            switch (evictPolicy.kind) {
+                case 'LRU':
+                    cls = 'org.apache.ignite.cache.eviction.lru.LruEvictionPolicy';
+
+                    break;
+
+                case 'FIFO':
+                    cls = 'org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicy';
+
+                    break;
+
+                case 'SORTED':
+                    cls = 'org.apache.ignite.cache.eviction.sorted.SortedEvictionPolicy';
+
+                    break;
+
+                default:
+                    return cfg;
+            }
+
+            const bean = new Bean(cls, 'evictionPolicy', evictPolicy[evictPolicy.kind], DEFAULT_EVICTION_POLICY);
+
+            bean.property('batchSize')
+                .property('maxMemorySize')
+                .property('maxSize');
+
+            cfg.beanProperty('evictionPolicy', bean);
+
+            return cfg;
+        }
+
+        // Generate cache general group.
+        static cacheGeneral(cache, cfg = this.cacheConfigurationBean(cache)) {
+            cfg.stringProperty('name')
+                .enumProperty('cacheMode')
+                .enumProperty('atomicityMode');
+
+            if (cache.cacheMode === 'PARTITIONED' && cache.backups) {
+                cfg.property('backups')
+                    .property('readFromBackup');
+            }
+
+            cfg.property('copyOnRead');
+
+            if (cache.cacheMode === 'PARTITIONED' && cache.atomicityMode === 'TRANSACTIONAL')
+                cfg.property('invalidate');
+
+            return cfg;
+        }
+
+        // Generate cache memory group.
+        static cacheMemory(cache, cfg = this.cacheConfigurationBean(cache)) {
+            cfg.enumProperty('memoryMode', null, 'ONHEAP_TIERED');
+
+            if (cache.memoryMode !== 'OFFHEAP_VALUES')
+                cfg.property('offHeapMaxMemory');
+
+            ConfigurationGenerator.evictionPolicy(cache.evictionPolicy, cfg);
+
+            cfg.property('startSize')
+                .property('swapEnabled');
+
+            return cfg;
+        }
+
+        // Generate cache queries & Indexing group.
+        static cacheQuery(cache, cfg = this.cacheConfigurationBean(cache)) {
+            cfg.stringProperty('sqlSchema')
+                .property('sqlOnheapRowCacheSize')
+                .property('longQueryWarningTimeout');
+
+            const indexedTypes = _.flatMap(_.filter(cache.domains, (domain) => domain.queryMetadata === 'Annotations'),
+                (domain) => [domain.keyType, domain.valueType]);
+
+            // TODO IGNITE-2052 Should have domains list. Now only IDs exist.
+            // TODO IGNITE-2052 Should be array of .class
+            cfg.arrayProperty('indexedTypes', 'indexedTypes', indexedTypes);
+
+            // TODO IGNITE-2052 Should be array of .class
+            cfg.arrayProperty('sqlFunctionClasses', 'sqlFunctionClasses', cache.sqlFunctionClasses);
+
+            cfg.property('snapshotableIndex')
+                .property('sqlEscapeAll');
+
+            return cfg;
+        }
+
+        // Generate cache store group.
+        static cacheStore(cache, cfg = this.cacheConfigurationBean(cache)) {
+
+            return cfg;
+        }
+
+        // Generate cache concurrency control group.
+        static cacheConcurrency(cache, cfg = this.cacheConfigurationBean(cache)) {
+            cfg.property('maxConcurrentAsyncOperations')
+                .property('defaultLockTimeout')
+                .enumProperty('atomicWriteOrderMode')
+                .enumProperty('writeSynchronizationMode');
+
+            return cfg;
+        }
+
+        // Generate cache node filter group.
+        static cacheNodeFilter(cache, cfg = this.cacheConfigurationBean(cache)) {
+
+            return cfg;
+        }
+
+        // Generate cache rebalance group.
+        static cacheRebalance(cache, cfg = this.cacheConfigurationBean(cache)) {
+
+            return cfg;
+        }
+
+        // Generate server near cache group.
+        static cacheServerNearCache(cache, cfg = this.cacheConfigurationBean(cache)) {
+
+            return cfg;
+        }
+
+        // Generate cache statistics group.
+        static cacheStatistics(cache, cfg = this.cacheConfigurationBean(cache)) {
 
             return cfg;
         }

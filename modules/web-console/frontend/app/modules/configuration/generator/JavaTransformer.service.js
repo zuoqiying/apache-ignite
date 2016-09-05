@@ -180,9 +180,9 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                         switch (arrTypeClsName) {
                             case 'String':
-                                const values = _.map(prop.items, (item) => `"${item}"`).join(', ');
+                                const values = _.map(prop.items, (item) => `"${item}"`).join(',\n');
 
-                                sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrTypeClsName}[] {${values}});`);
+                                sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrTypeClsName}[] {\n${values}\n});`);
 
                                 break;
                             case 'Integer':

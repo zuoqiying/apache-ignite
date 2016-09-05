@@ -226,4 +226,85 @@ export default class AbstractTransformer {
 
         return sb;
     }
+
+    // Generate cache general group.
+    static cacheGeneral(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheGeneral(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate cache memory group.
+    static cacheMemory(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheMemory(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate cache queries & Indexing group.
+    static cacheQuery(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheQuery(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate cache store group.
+    static cacheStore(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheStore(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate cache concurrency control group.
+    static cacheConcurrency(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheConcurrency(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate cache node filter group.
+    static cacheNodeFilter(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheNodeFilter(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate cache rebalance group.
+    static cacheRebalance(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheRebalance(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate server near cache group.
+    static cacheServerNearCache(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheServerNearCache(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate cache statistics group.
+    static cacheStatistics(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheStatistics(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
 }
