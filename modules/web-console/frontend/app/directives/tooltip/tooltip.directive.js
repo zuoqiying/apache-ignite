@@ -1,8 +1,8 @@
 import templateUrl from './tooltip.tpl.jade';
-
+/* eslint-disable */
 angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap.helpers.dimensions'])
 
-    .provider('$tooltip', function () {
+    .provider('$tooltip', function() {
 
         var defaults = this.defaults = {
             animation: 'am-fade',
@@ -910,3 +910,4 @@ angular.module('mgcrea.ngStrap.tooltip', ['mgcrea.ngStrap.core', 'mgcrea.ngStrap
             }
         };
     }]);
+/* eslint-enable */
