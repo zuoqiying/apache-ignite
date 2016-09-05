@@ -1000,14 +1000,15 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 const bean = new Bean('org.apache.ignite.hadoop.fs.IgniteHadoopIgfsSecondaryFileSystem',
                     'secondaryFileSystem', secondFs, DEFAULT_IGFS.secondaryFileSystem);
 
-                // TODO IGNITE-2052 Use setFileSystemFactory
-                bean.stringConstructorArgument('uri');
+                bean.stringProperty('userName', 'defaultUserName');
 
-                if (cfgDefined || nameDefined)
-                    bean.stringConstructorArgument('cfgPath');
+                const factoryBean = new Bean('org.apache.ignite.hadoop.fs.CachingHadoopFileSystemFactory',
+                    'fac', secondFs);
 
-                if (nameDefined)
-                    bean.stringConstructorArgument('userName');
+                factoryBean.stringProperty('uri')
+                    .pathProperty('cfgPath', 'configPaths');
+
+                bean.beanProperty('fileSystemFactory', factoryBean);
 
                 cfg.beanProperty('secondaryFileSystem', bean);
             }
