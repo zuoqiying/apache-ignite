@@ -994,9 +994,6 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             if (igfs.secondaryFileSystemEnabled) {
                 const secondFs = igfs.secondaryFileSystem || {};
 
-                const nameDefined = !_.isEmpty(secondFs.userName);
-                const cfgDefined = !_.isEmpty(secondFs.cfgPath);
-
                 const bean = new Bean('org.apache.ignite.hadoop.fs.IgniteHadoopIgfsSecondaryFileSystem',
                     'secondaryFileSystem', secondFs, DEFAULT_IGFS.secondaryFileSystem);
 
