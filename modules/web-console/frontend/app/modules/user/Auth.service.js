@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteLegacyUtils', 'IgniteMessages', 'gettingStarted', 'User', 'IgniteAgentMonitor',
-    ($http, $root, $state, $window, LegacyUtils, Messages, gettingStarted, User, agentMonitor) => {
+export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteErrorPopover', 'IgniteMessages', 'gettingStarted', 'User', 'IgniteAgentMonitor',
+    ($http, $root, $state, $window, ErrorPopover, Messages, gettingStarted, User, agentMonitor) => {
         return {
             forgotPassword(userInfo) {
                 $http.post('/api/v1/password/forgot', userInfo)
                     .success(() => $state.go('password.send'))
-                    .error((err) => LegacyUtils.showPopoverMessage(null, null, 'forgot_email', Messages.errorMessage(null, err)));
+                    .error((err) => ErrorPopover.show('forgot_email', Messages.errorMessage(null, err)));
             },
             auth(action, userInfo) {
                 $http.post('/api/v1/' + action, userInfo)
@@ -41,7 +41,7 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteLega
                                 $root.gettingStarted.tryShow();
                             });
                     })
-                    .catch((err) => LegacyUtils.showPopoverMessage(null, null, action + '_email', Messages.errorMessage(null, err)));
+                    .catch((err) => ErrorPopover.show(action + '_email', Messages.errorMessage(null, err)));
             },
             logout() {
                 $http.post('/api/v1/logout')

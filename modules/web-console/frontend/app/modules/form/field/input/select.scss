@@ -15,15 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './table.jade';
-
-export default ['igniteFormGroupTable', [() => {
-    return {
-        restrict: 'E',
-        scope: {},
-        templateUrl,
-        replace: true,
-        transclude: true,
-        require: ['^form', '^igniteFormGroup']
-    };
-}]];
+.select.dropdown-menu.ng-leave {
+    transition: none !important; /* disable transitions */
+    animation: none 0s !important; /* disable keyframe animations */
+}
