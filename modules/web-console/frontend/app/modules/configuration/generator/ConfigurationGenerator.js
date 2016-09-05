@@ -222,6 +222,28 @@ const DEFAULT_IGFS = {
 
 export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
     class ConfigurationGenerator {
+        // Generate default data cache for specified igfs instance.
+        static _igfsDataCache(igfs) {
+            return {
+                name: igfs.name + '-data',
+                cacheMode: 'PARTITIONED',
+                atomicityMode: 'TRANSACTIONAL',
+                writeSynchronizationMode: 'FULL_SYNC',
+                backups: 0,
+                igfsAffinnityGroupSize: igfs.affinnityGroupSize || 512
+            };
+        }
+
+        // Generate default meta cache for specified igfs instance.
+        static _igfsMetaCache(igfs) {
+            return {
+                name: igfs.name + '-meta',
+                cacheMode: 'REPLICATED',
+                atomicityMode: 'TRANSACTIONAL',
+                writeSynchronizationMode: 'FULL_SYNC'
+            };
+        }
+
         static igniteConfigurationBean(cluster) {
             return new Bean('org.apache.ignite.configuration.IgniteConfiguration', 'cfg', cluster, DEFAULT);
         }
@@ -887,21 +909,21 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate time group.
         static clusterTime(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            cfg.property('clockSyncSamples');
-            cfg.property('clockSyncFrequency');
-            cfg.property('timeServerPortBase');
-            cfg.property('timeServerPortRange');
+            cfg.property('clockSyncSamples')
+                .property('clockSyncFrequency')
+                .property('timeServerPortBase')
+                .property('timeServerPortRange');
 
             return cfg;
         }
 
         // Generate thread pools group.
         static clusterPools(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            cfg.property('publicThreadPoolSize');
-            cfg.property('systemThreadPoolSize');
-            cfg.property('managementThreadPoolSize');
-            cfg.property('igfsThreadPoolSize');
-            cfg.property('rebalanceThreadPoolSize');
+            cfg.property('publicThreadPoolSize')
+                .property('systemThreadPoolSize')
+                .property('managementThreadPoolSize')
+                .property('igfsThreadPoolSize')
+                .property('rebalanceThreadPoolSize');
 
             return cfg;
         }
@@ -930,10 +952,10 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate IGFS general group.
-        static igfsGeneral(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+        static igfsGeneral(igfs, cfg = this.igfsConfigurationBean(igfs)) {
             if (!_.isEmpty(igfs.name)) {
-                igfs.dataCacheName = $generatorCommon.igfsDataCache(igfs).name;
-                igfs.metaCacheName = $generatorCommon.igfsMetaCache(igfs).name;
+                igfs.dataCacheName = ConfigurationGenerator._igfsDataCache(igfs).name;
+                igfs.metaCacheName = ConfigurationGenerator._igfsMetaCache(igfs).name;
 
                 cfg.property('name')
                     .property('dataCacheName')
@@ -945,7 +967,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate IGFS secondary file system group.
-        static igfsSecondFS(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+        static igfsSecondFS(igfs, cfg = this.igfsConfigurationBean(igfs)) {
             if (igfs.secondaryFileSystemEnabled) {
                 const secondFs = igfs.secondaryFileSystem || {};
 
@@ -958,10 +980,11 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 bean.stringConstructorArgument('uri');
 
                 if (cfgDefined || nameDefined)
+                    // TODO IGNITE-2052 Can be undefined. Should be shown when name is defined
                     bean.stringConstructorArgument('cfgPath');
 
                 if (nameDefined)
-                    cfg.stringConstructorArgument('userName');
+                    bean.stringConstructorArgument('userName');
 
                 cfg.beanProperty('secondaryFileSystem', bean);
             }
@@ -970,11 +993,12 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate IGFS IPC group.
-        static igfsIPC(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+        static igfsIPC(igfs, cfg = this.igfsConfigurationBean(igfs)) {
             if (igfs.ipcEndpointEnabled) {
                 const bean = new Bean('org.apache.ignite.igfs.IgfsIpcEndpointConfiguration', 'ipcEndpointConfiguration',
                     igfs.ipcEndpointConfiguration, DEFAULT_IGFS.ipcEndpointConfiguration);
 
+                // TODO IGNITE-2052 Not work when enum is empty.
                 bean.enumProperty('type')
                     .stringProperty('host')
                     .property('port')
@@ -989,11 +1013,11 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate IGFS fragmentizer group.
-        static igfsFragmentizer(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+        static igfsFragmentizer(igfs, cfg = this.igfsConfigurationBean(igfs)) {
             if (igfs.fragmentizerEnabled) {
-                cfg.property('fragmentizerConcurrentFiles');
-                cfg.property('fragmentizerThrottlingBlockLength');
-                cfg.property('fragmentizerThrottlingDelay');
+                cfg.property('fragmentizerConcurrentFiles')
+                    .property('fragmentizerThrottlingBlockLength')
+                    .property('fragmentizerThrottlingDelay');
             }
             else
                 cfg.property('fragmentizerEnabled');
@@ -1002,11 +1026,11 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate IGFS Dual mode group.
-        static igfsDualMode(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+        static igfsDualMode(igfs, cfg = this.igfsConfigurationBean(igfs)) {
             cfg.property('dualModeMaxPendingPutsSize');
 
             if (!_.isEmpty(igfs.dualModePutExecutorService))
-                cfg.emptyBean('dualModePutExecutorService');
+                cfg.emptyBeanProperty('dualModePutExecutorService');
 
             cfg.property('dualModePutExecutorServiceShutdown');
 
@@ -1014,7 +1038,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate IGFS miscellaneous group.
-        static igfsMisc(igfs, cfg = this.igniteConfigurationBean(igfs)) {
+        static igfsMisc(igfs, cfg = this.igfsConfigurationBean(igfs)) {
             cfg.property('blockSize')
                 .property('streamBufferSize')
                 .property('maxSpaceSize')
