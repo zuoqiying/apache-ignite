@@ -128,9 +128,10 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
 
                         _.forEach(prop.items, (item) => {
                             switch (arrTypeClsName) {
-                                case 'Integer':
-                                case 'Long':
                                 case 'String':
+                                case 'Class':
+                                case 'int':
+                                case 'Integer':
                                     sb.append(`<value>${item}</value>`);
 
                                     break;

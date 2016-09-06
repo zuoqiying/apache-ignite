@@ -1144,21 +1144,17 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate cache queries & Indexing group.
         static cacheQuery(cache, cfg = this.cacheConfigurationBean(cache)) {
-            cfg.stringProperty('sqlSchema')
-                .property('sqlOnheapRowCacheSize')
-                .property('longQueryWarningTimeout');
-
             const indexedTypes = _.flatMap(_.filter(cache.domains, (domain) => domain.queryMetadata === 'Annotations'),
                 (domain) => [domain.keyType, domain.valueType]);
 
-            // TODO IGNITE-2052 Should have domains list. Now only IDs exist.
-            // TODO IGNITE-2052 Should be array of .class
-            cfg.arrayProperty('indexedTypes', 'indexedTypes', indexedTypes);
-
-            // TODO IGNITE-2052 Should be array of .class
-            cfg.arrayProperty('sqlFunctionClasses', 'sqlFunctionClasses', cache.sqlFunctionClasses);
-
-            cfg.property('snapshotableIndex')
+            cfg.stringProperty('sqlSchema')
+                .property('sqlOnheapRowCacheSize')
+                .property('longQueryWarningTimeout')
+                // TODO IGNITE-2052 Should have domains list. Now only IDs exist.
+                // TODO IGNITE-2052 Should be array of .class
+                .arrayProperty('indexedTypes', 'indexedTypes', indexedTypes, 'java.lang.Class')
+                .arrayProperty('sqlFunctionClasses', 'sqlFunctionClasses', cache.sqlFunctionClasses, 'java.lang.Class')
+                .property('snapshotableIndex')
                 .property('sqlEscapeAll');
 
             return cfg;

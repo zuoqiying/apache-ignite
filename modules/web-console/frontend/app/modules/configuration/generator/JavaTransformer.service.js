@@ -102,6 +102,22 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
             this._setProperties(sb, bean, limitLines);
         }
 
+        static _toObject(clsName, ...items) {
+            switch (clsName) {
+                case 'Serializable':
+                case 'String':
+                    return _.map(items, (item) => `"${item}"`);
+                case 'Path':
+                    return _.map(items, (item) => `"${item.replace(/\\/g, '\\\\')}"`);
+                case 'Class':
+                    return _.map(items, (item) => `${JavaTypes.shortClassName(item)}.class`);
+                case 'CharProperty':
+                    return _.map(items, (item) => `props.getProperty("${item}").toCharArray()`);
+                default:
+                    return items;
+            }
+        }
+
         /**
          *
          * @param {StringBuilder} sb
@@ -182,22 +198,30 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                         break;
                     case 'ARRAY':
-                        const arrTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
+                        const arrType = JavaTypes.shortClassName(prop.typeClsName);
 
-                        switch (arrTypeClsName) {
+                        const arr = this._toObject(arrType, ...prop.items);
+
+                        switch (arrType) {
                             case 'String':
-                                const values = _.map(prop.items, (item) => `"${item}"`).join(',\n');
-
-                                sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrTypeClsName}[] {\n${values}\n});`);
-
-                                break;
+                            case 'Class':
+                            case 'int':
                             case 'Integer':
-                            case 'Long':
-                                sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrTypeClsName}[] {${prop.items.join(', ')}});`);
+                                if (arr.length > 1) {
+                                    sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrType}[] {`);
+
+                                    const lastIdx = arr.length - 1;
+
+                                    _.forEach(arr, (item, idx) => sb.append(item + (lastIdx !== idx ? ',' : '')));
+
+                                    sb.endBlock('});');
+                                }
+                                else
+                                    sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrType}[] {${_.head(arr)}});`);
 
                                 break;
                             default:
-                                sb.append(`${arrTypeClsName}[] ${prop.id} = new ${arrTypeClsName}[${prop.items.length}];`);
+                                sb.append(`${arrType}[] ${prop.id} = new ${arrType}[${prop.items.length}];`);
 
                                 sb.emptyLine();
 
