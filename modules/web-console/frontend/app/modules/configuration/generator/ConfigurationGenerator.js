@@ -1179,7 +1179,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate cache node filter group.
-        static cacheNodeFilter(cache, cfg = this.cacheConfigurationBean(cache)) {
+        static cacheNodeFilter(cache, igfss, cfg = this.cacheConfigurationBean(cache)) {
 
             return cfg;
         }

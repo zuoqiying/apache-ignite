@@ -281,8 +281,8 @@ export default class AbstractTransformer {
     }
 
     // Generate cache node filter group.
-    static cacheNodeFilter(cache, sb = new StringBuilder()) {
-        const cfg = this.generator.cacheNodeFilter(cache);
+    static cacheNodeFilter(cache, igfss, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheNodeFilter(cache, igfss);
 
         this._setProperties(sb, cfg);
 
