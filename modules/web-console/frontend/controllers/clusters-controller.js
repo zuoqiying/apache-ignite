@@ -33,7 +33,9 @@ export default ['clustersController', [
             connector: {},
             discovery: {},
             marshaller: {},
-            sslContextFactory: {},
+            sslContextFactory: {
+                trustManagers: []
+            },
             swapSpaceSpi: {},
             transactionConfiguration: {},
             collision: {}
