@@ -1143,15 +1143,17 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate cache queries & Indexing group.
-        static cacheQuery(cache, cfg = this.cacheConfigurationBean(cache)) {
-            const indexedTypes = _.flatMap(_.filter(cache.domains, (domain) => domain.queryMetadata === 'Annotations'),
-                (domain) => [domain.keyType, domain.valueType]);
+        static cacheQuery(cache, domains, cfg = this.cacheConfigurationBean(cache)) {
+            const indexedTypes = _.reduce(domains, (acc, domain) => {
+                if (domain.queryMetadata === 'Annotations')
+                    acc.push(domain.keyType, domain.valueType);
+
+                return acc;
+            }, []);
 
             cfg.stringProperty('sqlSchema')
                 .property('sqlOnheapRowCacheSize')
                 .property('longQueryWarningTimeout')
-                // TODO IGNITE-2052 Should have domains list. Now only IDs exist.
-                // TODO IGNITE-2052 Should be array of .class
                 .arrayProperty('indexedTypes', 'indexedTypes', indexedTypes, 'java.lang.Class')
                 .arrayProperty('sqlFunctionClasses', 'sqlFunctionClasses', cache.sqlFunctionClasses, 'java.lang.Class')
                 .property('snapshotableIndex')
@@ -1161,7 +1163,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate cache store group.
-        static cacheStore(cache, cfg = this.cacheConfigurationBean(cache)) {
+        static cacheStore(cache, domains, cfg = this.cacheConfigurationBean(cache)) {
 
             return cfg;
         }

@@ -254,8 +254,8 @@ export default class AbstractTransformer {
     }
 
     // Generate cache queries & Indexing group.
-    static cacheQuery(cache, sb = new StringBuilder()) {
-        const cfg = this.generator.cacheQuery(cache);
+    static cacheQuery(cache, domains, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheQuery(cache, domains);
 
         this._setProperties(sb, cfg);
 
@@ -263,8 +263,8 @@ export default class AbstractTransformer {
     }
 
     // Generate cache store group.
-    static cacheStore(cache, sb = new StringBuilder()) {
-        const cfg = this.generator.cacheStore(cache);
+    static cacheStore(cache, domains, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheStore(cache, domains);
 
         this._setProperties(sb, cfg);
 
