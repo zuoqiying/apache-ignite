@@ -1757,7 +1757,7 @@ $generatorJava.cacheConcurrency = function(cache, varName, res) {
     $generatorJava.property(res, varName, cache, 'maxConcurrentAsyncOperations', null, null, 500);
     $generatorJava.property(res, varName, cache, 'defaultLockTimeout', null, null, 0);
     $generatorJava.enumProperty(res, varName, cache, 'atomicWriteOrderMode', 'org.apache.ignite.cache.CacheAtomicWriteOrderMode');
-    $generatorJava.enumProperty(res, varName, cache, 'writeSynchronizationMode', 'org.apache.ignite.cache.CacheWriteSynchronizationMode', null, null, 'PRIMARY_SYNC');
+    $generatorJava.enumProperty(res, varName, cache, 'writeSynchronizationMode', 'org.apache.ignite.cache.CacheWriteSynchronizationMode', null, 'PRIMARY_SYNC');
 
     res.needEmptyLine = true;
 
