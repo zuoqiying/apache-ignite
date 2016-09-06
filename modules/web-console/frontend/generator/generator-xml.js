@@ -1142,7 +1142,7 @@ $generatorXml.cacheMemory = function(cache, res) {
 };
 
 // Generate cache query & indexing group.
-$generatorXml.cacheQuery = function(cache, res) {
+$generatorXml.cacheQuery = function(cache, domains, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1150,7 +1150,7 @@ $generatorXml.cacheQuery = function(cache, res) {
     $generatorXml.property(res, cache, 'sqlOnheapRowCacheSize', null, 10240);
     $generatorXml.property(res, cache, 'longQueryWarningTimeout', null, 3000);
 
-    const indexedTypes = _.filter(cache.domains, (domain) => domain.queryMetadata === 'Annotations');
+    const indexedTypes = _.filter(domains, (domain) => domain.queryMetadata === 'Annotations');
 
     if (indexedTypes.length > 0) {
         res.startBlock('<property name="indexedTypes">');
@@ -1689,7 +1689,7 @@ $generatorXml.cacheConfiguration = function(cache, res) {
 
     $generatorXml.cacheGeneral(cache, res);
     $generatorXml.cacheMemory(cache, res);
-    $generatorXml.cacheQuery(cache, res);
+    $generatorXml.cacheQuery(cache, cache.domains, res);
     $generatorXml.cacheStore(cache, cache.domains, res);
 
     const igfs = _.get(cache, 'nodeFilter.IGFS.instance');
