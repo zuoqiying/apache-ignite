@@ -47,6 +47,11 @@ public interface CacheDataRow {
     public GridCacheVersion version();
 
     /**
+     * @return Expire time.
+     */
+    public long expireTime();
+
+    /**
      * @return Partition for this key.
      */
     public int partition();

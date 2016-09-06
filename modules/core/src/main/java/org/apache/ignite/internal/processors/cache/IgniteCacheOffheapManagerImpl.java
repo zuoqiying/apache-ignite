@@ -55,13 +55,13 @@ import org.apache.ignite.internal.util.GridEmptyCloseableIterator;
 import org.apache.ignite.internal.util.lang.GridCloseableIterator;
 import org.apache.ignite.internal.util.lang.GridCursor;
 import org.apache.ignite.internal.util.lang.GridIterator;
+import org.apache.ignite.internal.util.lang.IgniteInClosure2X;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.jetbrains.annotations.Nullable;
-
-import static org.apache.ignite.internal.IgniteComponentType.INDEXING;
 
 /**
  *
@@ -77,12 +77,50 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     /** */
     protected final ConcurrentMap<Integer, CacheDataStore> partDataStores = new ConcurrentHashMap<>();
 
+    /** */
+    private PendingEntriesTree pendingEntries;
+
+    /** */
+    private static final PendingRow START_PENDING_ROW = new PendingRow(Long.MIN_VALUE, 0);
+
+
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
+        super.start0();
+
+        final PageMemory pageMem = cctx.shared().database().pageMemory();
+
         indexingEnabled = INDEXING.inClassPath() && GridQueryProcessor.isEnabled(cctx.config());
 
-        if (cctx.affinityNode() && cctx.isLocal()) {
-            assert cctx.cache() instanceof GridLocalCache : cctx.cache();
+        if (cctx.affinityNode()) {
+            int cacheId = cctx.cacheId();
+
+            final Metas metas = getOrAllocateMetas(pageMem, cacheId);
+
+            cctx.shared().database().checkpointReadLock();
+
+            try {
+                reuseList = new ReuseList(cacheId, pageMem, cctx.shared().wal(), metas.rootIds(), metas.isInitNew());
+                freeList = new FreeList(cctx, reuseList);
+
+                metaStore = new MetadataStorage(pageMem, cctx.shared().wal(),
+                    cacheId, reuseList, metas.metastoreRoot(), metas.isInitNew());
+
+                if (cctx.ttl().eagerTtlEnabled()) {
+                    String name = "PendingEntries";
+
+                    final RootPage rootPage = metaStore.getOrAllocateForTree("PendingEntries");
+
+                    pendingEntries = new PendingEntriesTree(cctx,
+                        name,
+                        cctx.shared().database().pageMemory(),
+                        rootPage.pageId().pageId(),
+                        reuseList,
+                        rootPage.isAllocated());
+                }
+
+                if (cctx.isLocal()) {
+                    assert cctx.cache() instanceof GridLocalCache : cctx.cache();
 
             locCacheDataStore = getOrCreateCacheDataStore(0, (CacheDataStore.Listener)cctx.cache());
         }
@@ -119,10 +157,13 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     @Override protected void stop0(final boolean cancel, final boolean destroy) {
         super.stop0(cancel, destroy);
 
-        if (destroy && !cctx.kernalContext().clientNode()) {
+        if (destroy && cctx.affinityNode()) {
             destroyCacheDataStructures();
 
-            cctx.shared().database().pageMemory().clear(cctx.cacheId());
+            PageMemory pageMemory = cctx.shared().database().pageMemory();
+
+            if (pageMemory != null)
+                pageMemory.clear(cctx.cacheId());
         }
     }
 
@@ -131,8 +172,9 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      */
     protected void destroyCacheDataStructures() {
         try {
-            if (locCacheDataStore != null)
-                locCacheDataStore.destroy();
+            if (cctx.affinityNode()) {
+                if (locCacheDataStore != null)
+                    locCacheDataStore.destroy();
 
             for (CacheDataStore store : partDataStores.values())
                 store.destroy();
@@ -272,18 +314,18 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         int partId,
         GridDhtLocalPartition part
     ) throws IgniteCheckedException {
+        assert expireTime >= 0;
+
         dataStore(part).update(key, partId, val, ver, expireTime);
     }
 
     /** {@inheritDoc} */
     @Override public void remove(
         KeyCacheObject key,
-        CacheObject prevVal,
-        GridCacheVersion prevVer,
         int partId,
         GridDhtLocalPartition part
     ) throws IgniteCheckedException {
-        dataStore(part).remove(key, prevVal, prevVer, partId);
+        dataStore(part).remove(key, partId);
     }
 
     /** {@inheritDoc} */
@@ -577,7 +619,11 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             rootPage.pageId().pageId(),
             rootPage.isAllocated());
 
-        return new CacheDataStoreImpl(idxName, p, rowStore, dataTree, lsnr);
+        CacheDataStoreImpl dataStore = new CacheDataStoreImpl(idxName, rowStore, dataTree, lsnr);
+
+        partDataStores.put(p, dataStore);
+
+        return dataStore;
     }
 
     /** {@inheritDoc} */
@@ -605,6 +651,35 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      */
     private String treeName(int p) {
         return BPlusTree.treeName("p-" + p, "CacheData");
+    }
+
+    /** {@inheritDoc} */
+    @Override public void expire(IgniteInClosure2X<GridCacheEntryEx, GridCacheVersion> c) throws IgniteCheckedException {
+        if (pendingEntries != null) {
+            GridCacheVersion obsoleteVer = null;
+
+            long now = U.currentTimeMillis();
+
+            GridCursor<PendingRow> cur = pendingEntries.find(START_PENDING_ROW, new PendingRow(now, 0));
+
+            while (cur.next()) {
+                PendingRow row = cur.get();
+
+                assert row.key != null && row.link != 0 && row.expireTime != 0 : row;
+
+                if (pendingEntries.remove(row) != null) {
+                    if (obsoleteVer == null)
+                        obsoleteVer = cctx.versions().next();
+
+                    c.apply(cctx.cache().entryEx(row.key), obsoleteVer);
+                }
+            }
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override public long expiredSize() throws IgniteCheckedException {
+        return pendingEntries != null ? pendingEntries.size() : 0;
     }
 
     /**
@@ -651,7 +726,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             CacheObject val,
             GridCacheVersion ver,
             long expireTime) throws IgniteCheckedException {
-            DataRow dataRow = new DataRow(cctx, key.hashCode(), key, val, ver, p);
+            DataRow dataRow = new DataRow(key.hashCode(), key, val, ver, p, expireTime);
 
             rowStore.addRow(dataRow);
 
@@ -659,21 +734,34 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             DataRow old = dataTree.put(dataRow);
 
+            if (old == null)
+                lsnr.onInsert();
+
             if (indexingEnabled) {
                 GridCacheQueryManager qryMgr = cctx.queries();
 
                 assert qryMgr.enabled();
 
-                qryMgr.store(key, p, val, ver, expireTime, dataRow.link());
+                if (old != null)
+                    qryMgr.store(key, p, old.value(), old.version(), val, ver, expireTime, dataRow.link());
+                else
+                    qryMgr.store(key, p, null, null, val, ver, expireTime, dataRow.link());
             }
 
             if (old != null) {
                 assert old.link() != 0 : old;
 
+                if (pendingEntries != null && old.expireTime() != 0)
+                    pendingEntries.remove(new PendingRow(old.expireTime(), old.link()));
+
                 rowStore.removeRow(old.link());
             }
-            else
-                lsnr.onInsert();
+
+            if (pendingEntries != null && expireTime != 0) {
+                pendingEntries.put(new PendingRow(expireTime, dataRow.link()));
+
+                cctx.ttl().onPendingEntryAdded(expireTime);
+            }
         }
 
         /** {@inheritDoc} */
@@ -693,6 +781,17 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             if (dataRow != null) {
                 assert dataRow.link() != 0 : dataRow;
+
+                if (indexingEnabled) {
+                    GridCacheQueryManager qryMgr = cctx.queries();
+
+                    assert qryMgr.enabled();
+
+                    qryMgr.remove(key, partId, dataRow.value(), dataRow.version());
+                }
+
+                if (pendingEntries != null && dataRow.expireTime() != 0)
+                    pendingEntries.remove(new PendingRow(dataRow.expireTime(), dataRow.link()));
 
                 rowStore.removeRow(dataRow.link());
 
@@ -773,7 +872,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      */
     private static class DataRow extends KeySearchRow {
         /** */
-        int part = -1;
+        protected int part = -1;
 
         /**
          * @param cctx Cache context.
@@ -795,13 +894,15 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          * @param val Value.
          * @param ver Version.
          * @param part Partition.
+         * @param expireTime Expire time.
          */
-        DataRow(GridCacheContext<?, ?> cctx, int hash, KeyCacheObject key, CacheObject val, GridCacheVersion ver, int part) {
-            super(cctx, hash, key, 0);
+        DataRow(int hash, KeyCacheObject key, CacheObject val, GridCacheVersion ver, int part, long expireTime) {
+            super(hash, key, 0);
 
             this.val = val;
             this.ver = ver;
             this.part = part;
+            this.expireTime = expireTime;
         }
 
         /** {@inheritDoc} */
@@ -1047,9 +1148,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         /** {@inheritDoc} */
         @Override public void storeByOffset(ByteBuffer buf, int off, KeySearchRow row) {
-            DataRow row0 = (DataRow)row;
-
-            assert row0.link() != 0;
+            assert row.link() != 0;
 
             store0(buf, off, row.link(), row.hash);
         }

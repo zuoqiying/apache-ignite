@@ -24,8 +24,10 @@ import org.apache.ignite.internal.processors.cache.CacheObjectContext;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
+import org.apache.ignite.internal.processors.cache.database.tree.io.CacheVersionIO;
 import org.apache.ignite.internal.processors.cache.database.tree.io.DataPageIO;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.processors.cacheobject.IgniteCacheObjectProcessor;
 
 /**
  * Insert into data page.
@@ -41,14 +43,21 @@ public class DataPageInsertRecord extends PageDeltaRecord implements CacheDataRo
     private GridCacheVersion ver;
 
     /** */
+    private long expireTime;
+
+    /** */
     private int rowSize;
+
+    /** */
+    private byte[] remainder;
 
     /**
      * @param cacheId Cache ID.
      * @param pageId Page ID.
      * @param key Key.
-     * @param val value.
-     * @param ver version.
+     * @param val Value.
+     * @param ver Version.
+     * @param expireTime Expire time.
      * @param rowSize Row size.
      */
     public DataPageInsertRecord(
@@ -57,6 +66,7 @@ public class DataPageInsertRecord extends PageDeltaRecord implements CacheDataRo
         KeyCacheObject key,
         CacheObject val,
         GridCacheVersion ver,
+        long expireTime,
         int rowSize
     ) {
         super(cacheId, pageId);
@@ -64,12 +74,28 @@ public class DataPageInsertRecord extends PageDeltaRecord implements CacheDataRo
         this.key = key;
         this.val = val;
         this.ver = ver;
+        this.expireTime = expireTime;
         this.rowSize = rowSize;
     }
 
     /** {@inheritDoc} */
     @Override public GridCacheContext<?, ?> cacheContext() {
         throw new IllegalStateException("cacheContext should be never called on insert record.");
+    }
+
+    /**
+     * @param cacheId Cache ID.
+     * @param pageId Page ID.
+     * @param remainder Remainder of the record.
+     */
+    public DataPageInsertRecord(
+        int cacheId,
+        long pageId,
+        byte[] remainder
+    ) {
+        super(cacheId, pageId);
+
+        this.remainder = remainder;
     }
 
     /**
@@ -93,6 +119,11 @@ public class DataPageInsertRecord extends PageDeltaRecord implements CacheDataRo
         return ver;
     }
 
+    /** {@inheritDoc} */
+    @Override public long expireTime() {
+        return expireTime;
+    }
+
     /**
      * @return Row size in bytes.
      */
@@ -103,9 +134,19 @@ public class DataPageInsertRecord extends PageDeltaRecord implements CacheDataRo
     /** {@inheritDoc} */
     @Override public void applyDelta(GridCacheContext<?,?> cctx, ByteBuffer buf)
         throws IgniteCheckedException {
-        DataPageIO io = DataPageIO.VERSIONS.forPage(buf);
-
+        IgniteCacheObjectProcessor co = cctx.cacheObjects();
         CacheObjectContext coctx = cctx.cacheObjectContext();
+
+        assert remainder != null;
+
+        ByteBuffer in = ByteBuffer.wrap(remainder);
+
+        key = co.toKeyCacheObject(coctx, in);
+        val = co.toCacheObject(coctx, in);
+        ver = CacheVersionIO.read(in, false);
+        expireTime = in.getLong();
+
+        DataPageIO io = DataPageIO.VERSIONS.forPage(buf);
 
         io.addRow(coctx, buf, this, rowSize);
     }

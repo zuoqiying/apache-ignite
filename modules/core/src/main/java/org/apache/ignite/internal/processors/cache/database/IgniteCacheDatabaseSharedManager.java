@@ -17,9 +17,12 @@
 
 package org.apache.ignite.internal.processors.cache.database;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cluster.ClusterNode;
-import org.apache.ignite.configuration.DatabaseConfiguration;
+import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.mem.DirectMemoryProvider;
@@ -29,17 +32,15 @@ import org.apache.ignite.internal.pagemem.MetaPageUtils;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.backup.BackupFuture;
 import org.apache.ignite.internal.pagemem.PageMemory;
-import org.apache.ignite.internal.pagemem.backup.BackupMessage;
+import org.apache.ignite.internal.pagemem.backup.BackupFuture;
+import org.apache.ignite.internal.pagemem.backup.StartFullBackupAckDiscoveryMessage;
 import org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter;
 import org.apache.ignite.internal.processors.cache.database.freelist.FreeList;
 import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.UUID;
 
 /**
  *
@@ -59,11 +60,11 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
-        DatabaseConfiguration dbCfg = cctx.kernalContext().config().getDatabaseConfiguration();
+        MemoryConfiguration dbCfg = cctx.kernalContext().config().getMemoryConfiguration();
 
         if (!cctx.kernalContext().clientNode()) {
             if (dbCfg == null)
-                dbCfg = new DatabaseConfiguration();
+                dbCfg = new MemoryConfiguration();
 
             pageMem = initMemory(dbCfg);
 
@@ -166,12 +167,20 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     }
 
     /**
+     * @param cctx Stopped cache context.
+     */
+    public void onCacheStop(GridCacheContext cctx) {
+        // No-op
+    }
+
+    /**
      * @param backupMsg Backup message.
      * @param initiator Initiator node.
      * @return Backup init future or {@code null} if backup is not available.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable public IgniteInternalFuture startBackup(BackupMessage backupMsg, ClusterNode initiator)
+    @Nullable public IgniteInternalFuture startBackup(StartFullBackupAckDiscoveryMessage backupMsg,
+        ClusterNode initiator)
         throws IgniteCheckedException {
         return null;
     }
@@ -201,7 +210,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
      * @param dbCfg Database configuration.
      * @return Page memory instance.
      */
-    protected PageMemory initMemory(DatabaseConfiguration dbCfg) {
+    protected PageMemory initMemory(MemoryConfiguration dbCfg) {
         String path = dbCfg.getFileCacheAllocationPath();
 
         int concLvl = dbCfg.getConcurrencyLevel();
