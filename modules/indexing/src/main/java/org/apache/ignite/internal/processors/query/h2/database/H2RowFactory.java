@@ -57,7 +57,7 @@ public class H2RowFactory {
         // TODO Avoid extra garbage generation. In upcoming H2 1.4.193 Row will become an interface,
         // TODO we need to refactor all this to return CacheDataRowAdapter implementing Row here.
 
-        final CacheDataRowAdapter rowBuilder = new CacheDataRowAdapter(cctx, link);
+        final CacheDataRowAdapter rowBuilder = new CacheDataRowAdapter(link);
 
         rowBuilder.initFromLink(cctx, false);
 

@@ -77,6 +77,6 @@ public class RowStore {
      * @param row Row.
      */
     public void addRow(CacheDataRow row) throws IgniteCheckedException {
-        freeList.insertRow(row);
+        freeList.insertRow(cctx, row);
     }
 }

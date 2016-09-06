@@ -69,13 +69,24 @@ public class FreeList {
     /** */
     private final ConcurrentHashMap8<Integer, GridFutureAdapter<FreeTree>> trees = new ConcurrentHashMap8<>();
 
-    /** */
-    private final PageHandler<CacheDataRow, Integer> writeRow = new PageHandler<CacheDataRow, Integer>() {
+    /**
+     *
+     */
+    private class WriteRowPageHandler extends PageHandler<CacheDataRow, Integer> {
+        /** */
+        private final GridCacheContext cctx;
+
+        /**
+         *
+         */
+        private WriteRowPageHandler(GridCacheContext cctx) {
+            this.cctx = cctx;
+        }
+
+        /** {@inheritDoc} */
         @Override public Integer run(long pageId, Page page, ByteBuffer buf, CacheDataRow row, int written)
             throws IgniteCheckedException {
             DataPageIO io = DataPageIO.VERSIONS.forPage(buf);
-
-            GridCacheContext<?, ?> cctx = row.cacheContext();
 
             CacheObjectContext coctx = cctx.cacheObjectContext();
 
@@ -85,8 +96,8 @@ public class FreeList {
             assert freeSpace > 0 : freeSpace;
 
             // If the full row does not fit into this page write only a fragment.
-            written = freeSpace >= rowSize ? addRow(cctx, page, buf, io, row, rowSize) :
-                addRowFragment(cctx, page, buf, io, row, written, rowSize);
+            written = freeSpace >= rowSize ? addRow(coctx, page, buf, io, row, rowSize) :
+                addRowFragment(coctx, page, buf, io, row, written, rowSize);
 
             // Reread free space after update.
             freeSpace = io.getFreeSpace(buf);
@@ -99,7 +110,7 @@ public class FreeList {
         }
 
         /**
-         * @param cctx Cache context.
+         * @param coctx Cache object context.
          * @param page Page.
          * @param buf Buffer.
          * @param io IO.
@@ -109,31 +120,25 @@ public class FreeList {
          * @throws IgniteCheckedException If failed.
          */
         private int addRow(
-            GridCacheContext<?, ?> cctx,
+            CacheObjectContext coctx,
             Page page,
             ByteBuffer buf,
             DataPageIO io,
             CacheDataRow row,
             int rowSize
         ) throws IgniteCheckedException {
-            io.addRow(cctx.cacheObjectContext(), buf, row, rowSize);
+            io.addRow(coctx, buf, row, rowSize);
 
             // TODO This record must contain only a reference to a logical WAL record with the actual data.
-            if (isWalDeltaRecordNeeded(wal, page)) {
-                wal.log(new DataPageInsertRecord(cctx.cacheId(),
-                    page.id(),
-                    row.key(),
-                    row.value(),
-                    row.version(),
-                    row.expireTime(),
-                    rowSize));
-            }
+            if (isWalDeltaRecordNeeded(wal, page))
+                wal.log(new DataPageInsertRecord(cctx.cacheId(), page.id(),
+                    row.key(), row.value(), row.version(), row.expireTime(), rowSize));
 
             return rowSize;
         }
 
         /**
-         * @param cctx Cache context.
+         * @param coctx Cache object context.
          * @param page Page.
          * @param buf Buffer.
          * @param io IO.
@@ -144,7 +149,7 @@ public class FreeList {
          * @throws IgniteCheckedException If failed.
          */
         private int addRowFragment(
-            GridCacheContext<?, ?> cctx,
+            CacheObjectContext coctx,
             Page page,
             ByteBuffer buf,
             DataPageIO io,
@@ -155,7 +160,7 @@ public class FreeList {
             // Read last link before the fragment write, because it will be updated there.
             long lastLink = row.link();
 
-            int payloadSize = io.addRowFragment(cctx.cacheObjectContext(), buf, row, written, rowSize);
+            int payloadSize = io.addRowFragment(coctx, buf, row, written, rowSize);
 
             assert payloadSize > 0 : payloadSize;
 
@@ -172,10 +177,23 @@ public class FreeList {
 
             return written + payloadSize;
         }
-    };
+    }
 
-    /** */
-    private final PageHandler<FreeTree, Long> removeRow = new PageHandler<FreeTree, Long>() {
+    /**
+     *
+     */
+    private class RemoveRowPageHandler extends PageHandler<FreeTree, Long> {
+        /** */
+        private final GridCacheContext cctx;
+
+        /**
+         *
+         */
+        private RemoveRowPageHandler(GridCacheContext cctx) {
+            this.cctx = cctx;
+        }
+
+        /** {@inheritDoc} */
         @Override public Long run(long pageId, Page page, ByteBuffer buf, FreeTree tree, int itemId) throws IgniteCheckedException {
             assert tree != null;
 
@@ -188,7 +206,7 @@ public class FreeList {
             long nextLink = io.removeRow(buf, (byte)itemId);
 
             if (isWalDeltaRecordNeeded(wal, page))
-                wal.log(new DataPageRemoveRecord(page.fullId().cacheId(), page.id(), itemId));
+                wal.log(new DataPageRemoveRecord(cctx.cacheId(), page.id(), itemId));
 
             int newFreeSpace = io.getFreeSpace(buf);
 
@@ -207,7 +225,7 @@ public class FreeList {
             // For common case boxed 0L will be cached inside of Long, so no garbage will be produced.
             return nextLink;
         }
-    };
+    }
 
     /**
      * @param wal Write-ahead log manager.
@@ -285,6 +303,8 @@ public class FreeList {
 
         long nextLink;
 
+        RemoveRowPageHandler removeRow = new RemoveRowPageHandler(cctx);
+
         try (Page page = pageMem.page(cctx.cacheId(), pageId)) {
             nextLink = writePage(pageId, page, removeRow, tree, itemId);
         }
@@ -317,9 +337,8 @@ public class FreeList {
      * @param row Row.
      * @throws IgniteCheckedException If failed.
      */
-    public void insertRow(CacheDataRow row) throws IgniteCheckedException {
+    public void insertRow(GridCacheContext cctx, CacheDataRow row) throws IgniteCheckedException {
         assert row.link() == 0 : row.link();
-        GridCacheContext<?, ?> cctx = row.cacheContext();
 
         final int rowSize = getRowSize(cctx.cacheObjectContext(), row);
 
@@ -348,7 +367,7 @@ public class FreeList {
                 // If it is an existing page, we do not need to initialize it.
                 DataPageIO init = item == null ? DataPageIO.VERSIONS.latest() : null;
 
-                written = writePage(page.id(), page, writeRow, init, wal, row, written);
+                written = writePage(page.id(), page, new WriteRowPageHandler(cctx), init, wal, row, written);
             }
         }
         while (written != COMPLETE);

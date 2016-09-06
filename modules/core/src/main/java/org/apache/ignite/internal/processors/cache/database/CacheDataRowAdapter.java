@@ -47,9 +47,6 @@ public class CacheDataRowAdapter implements CacheDataRow {
     protected long link;
 
     /** */
-    protected GridCacheContext<?, ?> cctx;
-
-    /** */
     @GridToStringInclude
     protected KeyCacheObject key;
 
@@ -65,19 +62,11 @@ public class CacheDataRowAdapter implements CacheDataRow {
     protected GridCacheVersion ver;
 
     /**
-     * @param cctx Cache context associated with the row.
      * @param link Link.
      */
-    public CacheDataRowAdapter(GridCacheContext<?, ?> cctx, long link) {
-        this.cctx = cctx;
-
+    public CacheDataRowAdapter(long link) {
         // Link can be 0 here.
         this.link = link;
-    }
-
-    /** {@inheritDoc} */
-    @Override public GridCacheContext<?, ?> cacheContext() {
-        return cctx;
     }
 
     /**

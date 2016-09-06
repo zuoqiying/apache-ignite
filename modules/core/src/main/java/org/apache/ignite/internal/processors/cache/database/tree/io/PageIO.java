@@ -20,6 +20,7 @@ package org.apache.ignite.internal.processors.cache.database.tree.io;
 import java.nio.ByteBuffer;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.internal.pagemem.Page;
+import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.wal.IgniteWriteAheadLogManager;
 import org.apache.ignite.internal.processors.cache.IgniteCacheOffheapManagerImpl;
 import org.apache.ignite.internal.processors.cache.database.MetadataStorage;
@@ -260,6 +261,9 @@ public abstract class PageIO {
      * @param pageId Page ID.
      */
     public void initNewPage(ByteBuffer buf, long pageId) {
+        if (getType() == 2 && pageId == 1125899906842624L)
+            System.out.println("???");
+
         setType(buf, getType());
         setVersion(buf, getVersion());
         setPageId(buf, pageId);

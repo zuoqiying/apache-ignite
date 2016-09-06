@@ -27,11 +27,6 @@ import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
  */
 public interface CacheDataRow {
     /**
-     * @return Cache context associated with the row.
-     */
-    public GridCacheContext<?, ?> cacheContext();
-
-    /**
      * @return Cache key.
      */
     public KeyCacheObject key();
