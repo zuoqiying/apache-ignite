@@ -253,7 +253,7 @@ export default ['igfsController', [
         // Add new IGFS.
         $scope.createItem = function(linkId) {
             if ($scope.tableReset(true)) {
-                $timeout(() => FormUtils.ensureActivePanel($scope.ui, 'general', 'igfsName'));
+                $timeout(() => FormUtils.ensureActivePanel($scope.ui, 'general', 'igfsNameInput'));
 
                 $scope.selectItem(null, prepareNewItem(linkId));
             }
@@ -264,7 +264,7 @@ export default ['igfsController', [
             ErrorPopover.hide();
 
             if (LegacyUtils.isEmptyString(item.name))
-                return ErrorPopover.show('igfsName', 'IGFS name should not be empty!', $scope.ui, 'general');
+                return ErrorPopover.show('igfsNameInput', 'IGFS name should not be empty!', $scope.ui, 'general');
 
             if (!LegacyUtils.checkFieldValidators($scope.ui))
                 return false;

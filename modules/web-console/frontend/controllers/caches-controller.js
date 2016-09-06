@@ -233,7 +233,7 @@ export default ['cachesController', [
 
         // Add new cache.
         $scope.createItem = function(linkId) {
-            $timeout(() => FormUtils.ensureActivePanel($scope.ui, 'general', 'cacheName'));
+            $timeout(() => FormUtils.ensureActivePanel($scope.ui, 'general', 'cacheNameInput'));
 
             $scope.selectItem(null, prepareNewItem(linkId));
         };
@@ -266,7 +266,7 @@ export default ['cachesController', [
 
             if (!checkRes.checked) {
                 if (_.get(checkRes.secondObj, 'discovery.kind') === 'Jdbc') {
-                    return ErrorPopover.show(checkRes.firstObj.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialect' : 'blobDialect',
+                    return ErrorPopover.show(checkRes.firstObj.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialectInput' : 'blobDialectInput',
                         'Found cluster "' + failCluster.label + '" with the same data source bean name "' +
                         checkRes.secondObj.discovery.Jdbc.dataSourceBean + '" and different database: "' +
                         LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in current cache and "' +
@@ -274,7 +274,7 @@ export default ['cachesController', [
                         $scope.ui, 'store', 10000);
                 }
 
-                return ErrorPopover.show(checkRes.firstObj.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialect' : 'blobDialect',
+                return ErrorPopover.show(checkRes.firstObj.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialectInput' : 'blobDialectInput',
                     'Found cache "' + checkRes.secondObj.name + '" in cluster "' + failCluster.label + '" ' +
                     'with the same data source bean name "' + checkRes.firstObj.cacheStoreFactory[checkRes.firstObj.cacheStoreFactory.kind].dataSourceBean +
                     '" and different database: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in current cache and "' +
@@ -299,7 +299,7 @@ export default ['cachesController', [
             });
 
             if (!checkRes.checked) {
-                return ErrorPopover.show('sqlSchema',
+                return ErrorPopover.show('sqlSchemaInput',
                     'Found cache "' + checkRes.secondCache.name + '" in cluster "' + failCluster.label + '" ' +
                     'with the same SQL schema name "' + checkRes.firstCache.sqlSchema + '"',
                     $scope.ui, 'query', 10000);
@@ -330,10 +330,10 @@ export default ['cachesController', [
             }
 
             if ((item.readThrough || item.writeThrough) && !cacheStoreFactorySelected)
-                return ErrorPopover.show('cacheStoreFactory', (item.readThrough ? 'Read' : 'Write') + ' through are enabled but store is not configured!', $scope.ui, 'store');
+                return ErrorPopover.show('cacheStoreFactoryInput', (item.readThrough ? 'Read' : 'Write') + ' through are enabled but store is not configured!', $scope.ui, 'store');
 
             if (item.writeBehindEnabled && !cacheStoreFactorySelected)
-                return ErrorPopover.show('cacheStoreFactory', 'Write behind enabled but store is not configured!', $scope.ui, 'store');
+                return ErrorPopover.show('cacheStoreFactoryInput', 'Write behind enabled but store is not configured!', $scope.ui, 'store');
 
             if (cacheStoreFactorySelected && !item.readThrough && !item.writeThrough)
                 return ErrorPopover.show('readThroughLabel', 'Store is configured but read/write through are not enabled!', $scope.ui, 'store');
@@ -346,19 +346,19 @@ export default ['cachesController', [
             ErrorPopover.hide();
 
             if (LegacyUtils.isEmptyString(item.name))
-                return ErrorPopover.show('cacheName', 'Cache name should not be empty!', $scope.ui, 'general');
+                return ErrorPopover.show('cacheNameInput', 'Cache name should not be empty!', $scope.ui, 'general');
 
             if (item.memoryMode === 'ONHEAP_TIERED' && item.offHeapMaxMemory > 0 && !LegacyUtils.isDefined(item.evictionPolicy.kind))
-                return ErrorPopover.show('evictionPolicyKind', 'Eviction policy should not be configured!', $scope.ui, 'memory');
+                return ErrorPopover.show('evictionPolicyKindInput', 'Eviction policy should be configured!', $scope.ui, 'memory');
 
             if (!LegacyUtils.checkFieldValidators($scope.ui))
                 return false;
 
             if (item.memoryMode === 'OFFHEAP_VALUES' && !_.isEmpty(item.domains))
-                return ErrorPopover.show('memoryMode', 'Query indexing could not be enabled while values are stored off-heap!', $scope.ui, 'memory');
+                return ErrorPopover.show('memoryModeInput', 'Query indexing could not be enabled while values are stored off-heap!', $scope.ui, 'memory');
 
             if (item.memoryMode === 'OFFHEAP_TIERED' && item.offHeapMaxMemory === -1)
-                return ErrorPopover.show('offHeapMode', 'Invalid value!', $scope.ui, 'memory');
+                return ErrorPopover.show('offHeapModeInput', 'Invalid value!', $scope.ui, 'memory');
 
             if (!checkSQLSchemas())
                 return false;
@@ -367,7 +367,7 @@ export default ['cachesController', [
                 return false;
 
             if (item.writeBehindFlushSize === 0 && item.writeBehindFlushFrequency === 0)
-                return ErrorPopover.show('writeBehindFlushSize', 'Both "Flush frequency" and "Flush size" are not allowed as 0!', $scope.ui, 'store');
+                return ErrorPopover.show('writeBehindFlushSizeInput', 'Both "Flush frequency" and "Flush size" are not allowed as 0!', $scope.ui, 'store');
 
             if (item.nodeFilter && item.nodeFilter.kind === 'OnNodes' && _.isEmpty(item.nodeFilter.OnNodes.nodeIds))
                 return ErrorPopover.show('nodeFilter-title', 'At least one node ID should be specified!', $scope.ui, 'nodeFilter');

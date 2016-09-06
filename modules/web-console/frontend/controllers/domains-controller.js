@@ -726,11 +726,19 @@ export default ['domainsController', [
         }
 
         function _saveDomainModel() {
-            if (LegacyUtils.isEmptyString($scope.ui.packageName))
-                return ErrorPopover.show('domainPackageName', 'Package could not be empty');
+            if (LegacyUtils.isEmptyString($scope.ui.packageName)) {
+                ErrorPopover.show('domainPackageNameInput', 'Package could not be empty');
 
-            if (!LegacyUtils.isValidJavaClass('Package', $scope.ui.packageName, false, 'domainPackageName', true))
+                Focus.move('domainPackageNameInput');
+
                 return false;
+            }
+
+            if (!LegacyUtils.isValidJavaClass('Package', $scope.ui.packageName, false, 'domainPackageNameInput', true)) {
+                Focus.move('domainPackageNameInput');
+
+                return false;
+            }
 
             const batch = [];
             const checkedCaches = [];
@@ -1202,7 +1210,7 @@ export default ['domainsController', [
             if ($scope.tableReset(true)) {
                 $timeout(() => {
                     FormUtils.ensureActivePanel($scope.ui, 'query');
-                    FormUtils.ensureActivePanel($scope.ui, 'general', 'keyType');
+                    FormUtils.ensureActivePanel($scope.ui, 'general', 'keyTypeInput');
                 });
 
                 $scope.selectItem(null, prepareNewItem(cacheId));
@@ -1231,10 +1239,10 @@ export default ['domainsController', [
         function checkStoreConfiguration(item) {
             if (LegacyUtils.domainForStoreConfigured(item)) {
                 if (LegacyUtils.isEmptyString(item.databaseSchema))
-                    return ErrorPopover.show('databaseSchema', 'Database schema should not be empty', $scope.ui, 'store');
+                    return ErrorPopover.show('databaseSchemaInput', 'Database schema should not be empty', $scope.ui, 'store');
 
                 if (LegacyUtils.isEmptyString(item.databaseTable))
-                    return ErrorPopover.show('databaseTable', 'Database table should not be empty', $scope.ui, 'store');
+                    return ErrorPopover.show('databaseTableInput', 'Database table should not be empty', $scope.ui, 'store');
 
                 if (_.isEmpty(item.keyFields))
                     return ErrorPopover.show('keyFields', 'Key fields are not specified', $scope.ui, 'store');
@@ -1345,7 +1353,7 @@ export default ['domainsController', [
         }
 
         function _newNameIsValidJavaClass(newName) {
-            return LegacyUtils.isValidJavaClass('New name for value type', newName, false, 'copy-new-name');
+            return LegacyUtils.isValidJavaClass('New name for value type', newName, false, 'copy-new-nameInput');
         }
 
         // Save domain model with new name.
