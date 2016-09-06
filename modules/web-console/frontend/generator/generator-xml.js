@@ -1153,6 +1153,8 @@ $generatorXml.cacheQuery = function(cache, domains, res) {
     const indexedTypes = _.filter(domains, (domain) => domain.queryMetadata === 'Annotations');
 
     if (indexedTypes.length > 0) {
+        res.softEmptyLine();
+
         res.startBlock('<property name="indexedTypes">');
         res.startBlock('<list>');
 

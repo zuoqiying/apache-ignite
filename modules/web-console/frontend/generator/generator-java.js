@@ -1412,8 +1412,6 @@ $generatorJava.cacheQuery = function(cache, domains, varName, res) {
     $generatorJava.property(res, varName, cache, 'sqlOnheapRowCacheSize', null, null, 10240);
     $generatorJava.property(res, varName, cache, 'longQueryWarningTimeout', null, null, 3000);
 
-    res.softEmptyLine();
-
     const indexedTypes = _.reduce(domains, (acc, domain) => {
         if (domain.queryMetadata === 'Annotations') {
             acc.push(domain.keyType);
@@ -1423,8 +1421,11 @@ $generatorJava.cacheQuery = function(cache, domains, varName, res) {
         return acc;
     }, []);
 
-    if (indexedTypes.length > 0)
+    if (indexedTypes.length > 0) {
+        res.softEmptyLine();
+
         $generatorJava.multiparamProperty(res, varName, {indexedTypes}, 'indexedTypes', 'class');
+    }
 
     res.softEmptyLine();
 
