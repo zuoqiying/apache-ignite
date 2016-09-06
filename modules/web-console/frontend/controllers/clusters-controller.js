@@ -31,7 +31,12 @@ export default ['clustersController', [
             cacheKeyConfiguration: [],
             communication: {},
             connector: {},
-            discovery: {},
+            discovery: {
+                Cloud: {
+                    regions: [],
+                    zones: []
+                }
+            },
             marshaller: {},
             sslContextFactory: {
                 trustManagers: []
