@@ -872,16 +872,16 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate metrics group.
         static clusterMetrics(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            cfg.property('metricsExpireTime');
-            cfg.property('metricsHistorySize');
-            cfg.property('metricsLogFrequency');
-            cfg.property('metricsUpdateFrequency');
+            cfg.property('metricsExpireTime')
+                .property('metricsHistorySize')
+                .property('metricsLogFrequency')
+                .property('metricsUpdateFrequency');
 
             return cfg;
         }
 
         // Java code generator for cluster's SSL configuration.
-        static clusterSsl = function(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterSsl(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             if (cluster.sslEnabled && _.nonNil(cluster.sslContextFactory)) {
                 const bean = new Bean('org.apache.ignite.ssl.SslContextFactory', 'sslContextFactory',
                     cluster.sslContextFactory);
@@ -913,7 +913,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             }
 
             return cfg;
-        };
+        }
 
         // Generate swap group.
         static clusterSwap(cluster, cfg = this.igniteConfigurationBean(cluster)) {
