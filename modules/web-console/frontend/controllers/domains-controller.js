@@ -1477,18 +1477,18 @@ export default ['domainsController', [
 
                     // Found duplicate by key.
                     if (idx >= 0 && idx !== index) {
-                        if (!stopEdit)
-                            return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Field with such ' + pairField.dupObjName + ' already exists!', $scope.ui, 'query');
+                        if (stopEdit)
+                            return false;
 
-                        return false;
+                        return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Field with such ' + pairField.dupObjName + ' already exists!', $scope.ui, 'query');
                     }
                 }
 
                 if (pairField.classValidation && !LegacyUtils.isValidJavaClass(pairField.msg, pairValue.value, true, LegacyTable.tableFieldId(index, 'Value' + pairField.id), false, $scope.ui, 'query')) {
-                    if (!stopEdit)
-                        return LegacyTable.tableFocusInvalidField(index, 'Value' + pairField.id);
+                    if (stopEdit)
+                        return false;
 
-                    return false;
+                    return LegacyTable.tableFocusInvalidField(index, 'Value' + pairField.id);
                 }
             }
 

@@ -92,10 +92,10 @@ export default ['igfsController', [
 
                 // Found duplicate.
                 if (idx >= 0 && idx !== index) {
-                    if (!stopEdit)
-                        return ErrorPopover.show(LegacyTable.tableFieldId(index, 'KeyPathMode'), 'Such path already exists!', $scope.ui, 'misc');
+                    if (stopEdit)
+                        return false;
 
-                    return false;
+                    return ErrorPopover.show(LegacyTable.tableFieldId(index, 'KeyPathMode'), 'Such path already exists!', $scope.ui, 'misc');
                 }
             }
 

@@ -66,10 +66,10 @@ export default ['clustersController', [
 
                     // Found duplicate by key.
                     if (idx >= 0 && idx !== index) {
-                        if (!stopEdit)
-                            return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Attribute with such ' + pairField.dupObjName + ' already exists!', $scope.ui, pairField.group);
+                        if (stopEdit)
+                            return false;
 
-                        return false;
+                        return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Attribute with such ' + pairField.dupObjName + ' already exists!', $scope.ui, pairField.group);
                     }
                 }
             }
