@@ -1462,7 +1462,7 @@ export default ['domainsController', [
             aliases: {id: 'Alias', idPrefix: 'Value', searchCol: 'alias', valueCol: 'value', dupObjName: 'alias'}
         };
 
-        $scope.tablePairValid = function(item, field, index) {
+        $scope.tablePairValid = function(item, field, index, stopEdit) {
             const pairField = pairFields[field.model];
 
             const pairValue = LegacyTable.tablePairValue(field, index);
@@ -1476,12 +1476,20 @@ export default ['domainsController', [
                     });
 
                     // Found duplicate by key.
-                    if (idx >= 0 && idx !== index)
-                        return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Field with such ' + pairField.dupObjName + ' already exists!', $scope.ui, 'query');
+                    if (idx >= 0 && idx !== index) {
+                        if (!stopEdit)
+                            return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Field with such ' + pairField.dupObjName + ' already exists!', $scope.ui, 'query');
+
+                        return false;
+                    }
                 }
 
-                if (pairField.classValidation && !LegacyUtils.isValidJavaClass(pairField.msg, pairValue.value, true, LegacyTable.tableFieldId(index, 'Value' + pairField.id), false, $scope.ui, 'query'))
-                    return LegacyTable.tableFocusInvalidField(index, 'Value' + pairField.id);
+                if (pairField.classValidation && !LegacyUtils.isValidJavaClass(pairField.msg, pairValue.value, true, LegacyTable.tableFieldId(index, 'Value' + pairField.id), false, $scope.ui, 'query')) {
+                    if (!stopEdit)
+                        return LegacyTable.tableFocusInvalidField(index, 'Value' + pairField.id);
+
+                    return false;
+                }
             }
 
             return true;

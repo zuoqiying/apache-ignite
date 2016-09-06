@@ -80,7 +80,7 @@ export default ['igfsController', [
                 LegacyTable.tableRemove(item, field, index);
         };
 
-        $scope.tablePairValid = function(item, field, index) {
+        $scope.tablePairValid = function(item, field, index, stopEdit) {
             const pairValue = LegacyTable.tablePairValue(field, index);
 
             const model = item[field.model];
@@ -91,8 +91,12 @@ export default ['igfsController', [
                 });
 
                 // Found duplicate.
-                if (idx >= 0 && idx !== index)
-                    return ErrorPopover.show(LegacyTable.tableFieldId(index, 'KeyPathMode'), 'Such path already exists!', $scope.ui, 'misc');
+                if (idx >= 0 && idx !== index) {
+                    if (!stopEdit)
+                        return ErrorPopover.show(LegacyTable.tableFieldId(index, 'KeyPathMode'), 'Such path already exists!', $scope.ui, 'misc');
+
+                    return false;
+                }
             }
 
             return true;

@@ -51,7 +51,7 @@ export default ['clustersController', [
             'collision.JobStealing.stealingAttributes': {id: 'CAttribute', idPrefix: 'Key', searchCol: 'name', valueCol: 'key', dupObjName: 'name', group: 'collision'}
         };
 
-        $scope.tablePairValid = function(item, field, index) {
+        $scope.tablePairValid = function(item, field, index, stopEdit) {
             const pairField = pairFields[field.model];
 
             const pairValue = LegacyTable.tablePairValue(field, index);
@@ -65,8 +65,12 @@ export default ['clustersController', [
                     });
 
                     // Found duplicate by key.
-                    if (idx >= 0 && idx !== index)
-                        return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Attribute with such ' + pairField.dupObjName + ' already exists!', $scope.ui, pairField.group);
+                    if (idx >= 0 && idx !== index) {
+                        if (!stopEdit)
+                            return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Attribute with such ' + pairField.dupObjName + ' already exists!', $scope.ui, pairField.group);
+
+                        return false;
+                    }
                 }
             }
 
