@@ -261,9 +261,6 @@ public abstract class PageIO {
      * @param pageId Page ID.
      */
     public void initNewPage(ByteBuffer buf, long pageId) {
-        if (getType() == 2 && pageId == 1125899906842624L)
-            System.out.println("???");
-
         setType(buf, getType());
         setVersion(buf, getVersion());
         setPageId(buf, pageId);

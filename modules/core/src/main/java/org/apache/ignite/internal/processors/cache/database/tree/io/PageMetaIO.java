@@ -76,9 +76,6 @@ public class PageMetaIO extends PageIO {
     public long[] getRootIds(@NotNull ByteBuffer buf) {
         int pagesNum = getPagesNum(buf);
 
-        if (pagesNum > 1000)
-            System.out.println("???");
-
         if (pagesNum > 0) {
 
             long[] rootIds = new long[pagesNum - 1];
