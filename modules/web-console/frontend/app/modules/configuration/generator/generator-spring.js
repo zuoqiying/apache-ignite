@@ -1142,7 +1142,7 @@ $generatorSpring.cacheMemory = function(cache, res) {
 };
 
 // Generate cache query & indexing group.
-$generatorSpring.cacheQuery = function(cache, res) {
+$generatorSpring.cacheQuery = function(cache, domains, res) {
     if (!res)
         res = $generatorCommon.builder();
 
@@ -1150,9 +1150,11 @@ $generatorSpring.cacheQuery = function(cache, res) {
     $generatorSpring.property(res, cache, 'sqlOnheapRowCacheSize', null, 10240);
     $generatorSpring.property(res, cache, 'longQueryWarningTimeout', null, 3000);
 
-    const indexedTypes = _.filter(cache.domains, (domain) => domain.queryMetadata === 'Annotations');
+    const indexedTypes = _.filter(domains, (domain) => domain.queryMetadata === 'Annotations');
 
     if (indexedTypes.length > 0) {
+        res.softEmptyLine();
+
         res.startBlock('<property name="indexedTypes">');
         res.startBlock('<list>');
 
@@ -1689,7 +1691,7 @@ $generatorSpring.cacheConfiguration = function(cache, res) {
 
     $generatorSpring.cacheGeneral(cache, res);
     $generatorSpring.cacheMemory(cache, res);
-    $generatorSpring.cacheQuery(cache, res);
+    $generatorSpring.cacheQuery(cache, cache.domains, res);
     $generatorSpring.cacheStore(cache, cache.domains, res);
 
     const igfs = _.get(cache, 'nodeFilter.IGFS.instance');
