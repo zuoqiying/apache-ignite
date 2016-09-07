@@ -1136,9 +1136,12 @@ export default ['domainsController', [
                 });
 
                 $scope.$watch('backupItem', function(val) {
+                    if (!$scope.ui.inputForm)
+                        return;
+
                     const form = $scope.ui.inputForm;
 
-                    if (form.$pristine || (form.$valid && ModelNormalizer.isEqual(__original_value, val)))
+                    if (form.$valid && ModelNormalizer.isEqual(__original_value, val))
                         form.$setPristine();
                     else
                         form.$setDirty();
@@ -1151,12 +1154,15 @@ export default ['domainsController', [
             .catch(Messages.showError)
             .then(() => {
                 $scope.ui.ready = true;
-                $scope.ui.inputForm.$setPristine();
+                $scope.ui.inputForm && $scope.ui.inputForm.$setPristine();
 
                 Loading.finish('loadingDomainModelsScreen');
             });
 
         const clearFormDefaults = (ngFormCtrl) => {
+            if (!ngFormCtrl)
+                return;
+
             ngFormCtrl.$defaults = {};
 
             _.forOwn(ngFormCtrl, (value, key) => {
@@ -1191,8 +1197,11 @@ export default ['domainsController', [
                     $scope.backupItem = emptyDomain;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
-                $scope.ui.inputForm.$error = {};
-                $scope.ui.inputForm.$setPristine();
+
+                if ($scope.ui.inputForm) {
+                    $scope.ui.inputForm.$error = {};
+                    $scope.ui.inputForm.$setPristine();
+                }
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -1206,7 +1215,7 @@ export default ['domainsController', [
                     $state.go('base.configuration.domains');
             }
 
-            FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, selectItem);
+            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm && $scope.ui.inputForm.$dirty, selectItem);
         };
 
         // Add new domain model.

@@ -155,9 +155,12 @@ export default ['cachesController', [
                 });
 
                 $scope.$watch('backupItem', function(val) {
+                    if (!$scope.ui.inputForm)
+                        return;
+
                     const form = $scope.ui.inputForm;
 
-                    if (form.$pristine || (form.$valid && ModelNormalizer.isEqual(__original_value, val)))
+                    if (form.$valid && ModelNormalizer.isEqual(__original_value, val))
                         form.$setPristine();
                     else
                         form.$setDirty();
@@ -172,7 +175,8 @@ export default ['cachesController', [
             .catch(Messages.showError)
             .then(() => {
                 $scope.ui.ready = true;
-                $scope.ui.inputForm.$setPristine();
+                $scope.ui.inputForm && $scope.ui.inputForm.$setPristine();
+
                 Loading.finish('loadingCachesScreen');
             });
 
@@ -201,8 +205,11 @@ export default ['cachesController', [
                     $scope.backupItem = emptyCache;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
-                $scope.ui.inputForm.$error = {};
-                $scope.ui.inputForm.$setPristine();
+
+                if ($scope.ui.inputForm) {
+                    $scope.ui.inputForm.$error = {};
+                    $scope.ui.inputForm.$setPristine();
+                }
 
                 setOffHeapMode($scope.backupItem);
 
@@ -212,7 +219,7 @@ export default ['cachesController', [
                     $state.go('base.configuration.caches');
             }
 
-            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm.$dirty, selectItem);
+            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm && $scope.ui.inputForm.$dirty, selectItem);
         };
 
         $scope.linkId = () => $scope.backupItem._id ? $scope.backupItem._id : 'create';

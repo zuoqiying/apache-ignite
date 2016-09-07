@@ -250,9 +250,12 @@ export default ['clustersController', [
                 });
 
                 $scope.$watch('backupItem', function(val) {
+                    if (!$scope.ui.inputForm)
+                        return;
+
                     const form = $scope.ui.inputForm;
 
-                    if (form.$pristine || (form.$valid && ModelNormalizer.isEqual(__original_value, val)))
+                    if (form.$valid && ModelNormalizer.isEqual(__original_value, val))
                         form.$setPristine();
                     else
                         form.$setDirty();
@@ -271,7 +274,7 @@ export default ['clustersController', [
             .catch(Messages.showError)
             .then(() => {
                 $scope.ui.ready = true;
-                $scope.ui.inputForm.$setPristine();
+                $scope.ui.inputForm && $scope.ui.inputForm.$setPristine();
 
                 Loading.finish('loadingClustersScreen');
             });
@@ -298,8 +301,11 @@ export default ['clustersController', [
                     $scope.backupItem = emptyCluster;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
-                $scope.ui.inputForm.$error = {};
-                $scope.ui.inputForm.$setPristine();
+
+                if ($scope.ui.inputForm) {
+                    $scope.ui.inputForm.$error = {};
+                    $scope.ui.inputForm.$setPristine();
+                }
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -307,7 +313,7 @@ export default ['clustersController', [
                     $state.go('base.configuration.clusters');
             }
 
-            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm.$dirty, selectItem);
+            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm && $scope.ui.inputForm.$dirty, selectItem);
         };
 
         $scope.linkId = () => $scope.backupItem._id ? $scope.backupItem._id : 'create';
