@@ -47,12 +47,16 @@ export default ['domainsController', [
             return name ? name.replace(/[^A-Za-z_0-9/.]+/g, '_') : 'org';
         };
 
-        $root.$on('user', (event, user) => {
-            if ($scope.ui.packageName)
-                $scope.ui.packageNameUserInput = $scope.ui.packageName;
+        const _packageNameUpdate = (event, user) => {
+            if (_.isNil(user))
+                return;
 
-            $scope.ui.packageName = _toJavaPackage(user.email.replace('@', '.').split('.').reverse().join('.') + '.model');
-        });
+            $scope.ui.packageNameUserInput = _toJavaPackage(user.email.replace('@', '.').split('.').reverse().join('.') + '.model');
+        };
+
+        _packageNameUpdate(null, $root.user);
+
+        $scope.$on('$destroy', $root.$on('user', _packageNameUpdate));
 
         $scope.ui.builtinKeys = true;
         $scope.ui.usePrimitives = true;
@@ -419,7 +423,7 @@ export default ['domainsController', [
                         $scope.ui.selectedJdbcDriverJar = {};
 
                         return IgniteAgentMonitor.drivers()
-                            .then(function(drivers) {
+                            .then((drivers) => {
                                 $scope.ui.packageName = $scope.ui.packageNameUserInput;
 
                                 if (drivers && drivers.length > 0) {
