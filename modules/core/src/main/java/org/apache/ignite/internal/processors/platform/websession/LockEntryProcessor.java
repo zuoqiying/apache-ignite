@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.platform.websession;
 
 import org.apache.ignite.cache.CacheEntryProcessor;
+import org.apache.ignite.internal.util.typedef.internal.S;
 
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
@@ -30,7 +31,7 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
     private static final long serialVersionUID = 0L;
 
     /** {@inheritDoc} */
-    @Override public Object process(MutableEntry<String, SessionStateData> entry, Object... objects)
+    @Override public Object process(MutableEntry<String, SessionStateData> entry, Object... args)
         throws EntryProcessorException {
         // Arg contains lock info: node id + thread id
         // Return result is either BinarizableSessionStateStoreData (when not locked) or lockAge (when locked)
@@ -45,7 +46,7 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
         if (data.locked())
             return data.lockTime();
 
-        LockInfo lockInfo = (LockInfo)objects[0];
+        LockInfo lockInfo = (LockInfo)args[0];
 
         // Not locked: lock and return result
         data.lock(lockInfo);
@@ -54,5 +55,10 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
         entry.setValue(data);
 
         return data;
+    }
+
+    /** {@inheritDoc */
+    @Override public String toString() {
+        return S.toString(LockEntryProcessor.class, this);
     }
 }

@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.platform.websession;
 
 import org.apache.ignite.cache.CacheEntryProcessor;
+import org.apache.ignite.internal.util.typedef.internal.S;
 
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
@@ -30,7 +31,7 @@ public class SetAndUnlockEntryProcessor implements CacheEntryProcessor<String, S
     private static final long serialVersionUID = 0L;
 
     /** {@inheritDoc} */
-    @Override public Object process(MutableEntry<String, SessionStateData> entry, Object... objects)
+    @Override public Object process(MutableEntry<String, SessionStateData> entry, Object... args)
         throws EntryProcessorException {
         assert entry.exists();
 
@@ -39,7 +40,7 @@ public class SetAndUnlockEntryProcessor implements CacheEntryProcessor<String, S
         assert data != null;
         assert data.lockNodeId() != null;
 
-        SessionStateData newData = (SessionStateData)objects[0];
+        SessionStateData newData = (SessionStateData)args[0];
 
         if (!data.lockNodeId().equals(newData.lockNodeId()))
             throw new IllegalStateException("Can not unlock session data: lock node id check failed.");
@@ -57,5 +58,10 @@ public class SetAndUnlockEntryProcessor implements CacheEntryProcessor<String, S
         entry.setValue(data);
 
         return null;
+    }
+
+    /** {@inheritDoc */
+    @Override public String toString() {
+        return S.toString(SetAndUnlockEntryProcessor.class, this);
     }
 }
