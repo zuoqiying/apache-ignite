@@ -79,13 +79,13 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
         /**
          * @param {StringBuilder} sb
-         * @param {Bean} parent
+         * @param {String} id
          * @param {Bean} propertyName
          * @param {String|Bean} value
          * @private
          */
-        static _setProperty(sb, parent, propertyName, value) {
-            sb.append(`${parent.id}.set${_.upperFirst(propertyName)}(${value});`);
+        static _setProperty(sb, id, propertyName, value) {
+            sb.append(`${id}.set${_.upperFirst(propertyName)}(${value});`);
         }
 
         /**
@@ -113,8 +113,13 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                     return _.map(items, (item) => `${JavaTypes.shortClassName(item)}.class`);
                 case 'CharProperty':
                     return _.map(items, (item) => `props.getProperty("${item}").toCharArray()`);
-                default:
+                case 'Short':
+                case 'Integer':
+                case 'Long':
                     return items;
+
+                default:
+                    return _.map(items, (item) => `${clsName}.${item}`);
             }
         }
 
@@ -129,43 +134,41 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
             _.forEach(bean.properties, (prop) => {
                 switch (prop.type) {
                     case 'STRING':
-                        this._setProperty(sb, bean, prop.name, `"${prop.value}"`);
+                        this._setProperty(sb, bean.id, prop.name, `"${prop.value}"`);
 
                         break;
                     case 'PATH':
-                        this._setProperty(sb, bean, prop.name, `"${prop.value.replace(/\\/g, '\\\\')}"`);
+                        this._setProperty(sb, bean.id, prop.name, `"${prop.value.replace(/\\/g, '\\\\')}"`);
 
                         break;
                     case 'PASSWORD':
-                        this._setProperty(sb, bean, prop.name, `props.getProperty("${prop.value}").toCharArray()`);
+                        this._setProperty(sb, bean.id, prop.name, `props.getProperty("${prop.value}").toCharArray()`);
 
                         break;
                     case 'CLASS':
-                        this._setProperty(sb, bean, prop.name, `${JavaTypes.shortClassName(prop.value)}.class`);
+                        this._setProperty(sb, bean.id, prop.name, `${JavaTypes.shortClassName(prop.value)}.class`);
 
                         break;
                     case 'PROPERTY':
-                        this._setProperty(sb, bean, prop.name, prop.value);
+                        this._setProperty(sb, bean.id, prop.name, prop.value);
 
                         break;
                     case 'DATASOURCE':
-                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(DataSources.INSTANCE_${prop.id});`);
+                        this._setProperty(sb, bean.id, prop.name, `DataSources.INSTANCE_${prop.id}`);
 
                         break;
                     case 'EVENT_TYPES':
                         if (prop.eventTypes.length === 1) {
                             const evtGrp = _.find(eventGroups, {value: _.head(prop.eventTypes)});
 
-                            evtGrp && sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${evtGrp.class}.${evtGrp.value});`);
+                            if (evtGrp)
+                                this._setProperty(sb, bean.id, prop.name, `${evtGrp.class}.${evtGrp.value}`);
                         }
                         else {
-                            _.forEach(prop.eventTypes, (value, ix) => {
-                                const evtGrp = _.find(eventGroups, {value});
+                            sb.append(`int[] events = new int[${_.head(prop.eventTypes).value}.length`);
 
-                                if (ix === 0)
-                                    sb.append(`int[] events = new int[${evtGrp.value}.length`);
-                                else
-                                    sb.append(`    + ${evtGrp.value}.length`);
+                            _.forEach(_.tail(prop.eventTypes), (evtGrp) => {
+                                sb.append(`    + ${evtGrp.value}.length`);
                             });
 
                             sb.append('];');
@@ -174,15 +177,19 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                             sb.append('int k = 0;');
 
+                            let evtGrp;
+
                             _.forEach(prop.eventTypes, (value, idx) => {
                                 sb.emptyLine();
 
-                                const evtGrp = _.find(eventGroups, {value});
+                                evtGrp = _.find(eventGroups, {value});
 
-                                sb.append(`System.arraycopy(${evtGrp.value}, 0, events, k, ${evtGrp.value}.length);`);
+                                if (evtGrp) {
+                                    sb.append(`System.arraycopy(${evtGrp.value}, 0, events, k, ${evtGrp.value}.length);`);
 
-                                if (idx < prop.eventTypes.length - 1)
-                                    sb.append(`k += ${evtGrp.value}.length;`);
+                                    if (idx < prop.eventTypes.length - 1)
+                                        sb.append(`k += ${evtGrp.value}.length;`);
+                                }
                             });
 
                             sb.emptyLine();
@@ -194,30 +201,30 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                     case 'ENUM':
                         const value = `${JavaTypes.shortClassName(prop.clsName)}.${prop.value}`;
 
-                        this._setProperty(sb, bean, prop.name, value);
+                        this._setProperty(sb, bean.id, prop.name, value);
 
                         break;
                     case 'ARRAY':
                         const arrType = JavaTypes.shortClassName(prop.typeClsName);
-
-                        const arr = this._toObject(arrType, ...prop.items);
 
                         switch (arrType) {
                             case 'String':
                             case 'Class':
                             case 'int':
                             case 'Integer':
-                                if (arr.length > 1) {
+                                const arrItems = this._toObject(arrType, ...prop.items);
+
+                                if (arrItems.length > 1) {
                                     sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrType}[] {`);
 
-                                    const lastIdx = arr.length - 1;
+                                    const lastIdx = arrItems.length - 1;
 
-                                    _.forEach(arr, (item, idx) => sb.append(item + (lastIdx !== idx ? ',' : '')));
+                                    _.forEach(arrItems, (item, idx) => sb.append(item + (lastIdx !== idx ? ',' : '')));
 
                                     sb.endBlock('});');
                                 }
                                 else
-                                    sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrType}[] {${_.head(arr)}});`);
+                                    this._setProperty(sb, bean.id, prop.name, `new ${arrType}[] {${_.head(arrItems)}}`);
 
                                 break;
                             default:
@@ -225,33 +232,21 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                                 sb.emptyLine();
 
-                                _.forEach(prop.items, (nesterBean, idx) => {
-                                    sb.append(`${prop.name}[${idx}] = ${this._newBean(nesterBean)};`);
+                                _.forEach(prop.items, (nested, idx) => {
+                                    const nestedId = `${prop.id}[${idx}]`;
 
-                                    const clsName = JavaTypes.shortClassName(nesterBean.clsName);
+                                    const clsName = JavaTypes.shortClassName(nested.clsName);
 
-                                    _.forEach(nesterBean.properties, (p) => {
-                                        switch (p.type) {
-                                            case 'PROPERTY':
-                                                sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}(${p.value});`);
+                                    sb.append(`${nestedId} = ${this._newBean(nested)};`);
 
-                                                break;
-                                            case 'STRING':
-                                                sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}("${p.value}");`);
-
-                                                break;
-                                            case 'CLASS':
-                                                sb.append(`((${clsName})${prop.id}[${idx}]).set${_.upperFirst(p.name)}(${JavaTypes.shortClassName(p.value)}.class);`);
-
-                                                break;
-                                            default:
-                                        }
+                                    _.forEach(nested.properties, (p) => {
+                                        this._setProperty(sb, `((${clsName})${nestedId})`, prop.name, this._toObject(p.type, p.value));
                                     });
                                 });
 
                                 sb.emptyLine();
 
-                                sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
+                                this._setProperty(sb, bean.id, prop.name, prop.id);
                         }
 
                         break;
@@ -305,24 +300,8 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                         sb.emptyLine();
 
-                        const mapper = (shortCls, val) => {
-                            switch (shortCls) {
-                                case 'Serializable':
-                                case 'String':
-                                    return `"${val}"`;
-
-                                case 'Short':
-                                case 'Integer':
-                                case 'Long':
-                                    return val;
-
-                                default:
-                                    return `${shortCls}.${val}`;
-                            }
-                        };
-
-                        const keyMapper = mapper.bind(this, keyClsName);
-                        const valMapper = mapper.bind(this, valClsName);
+                        const keyMapper = this._toObject.bind(this, keyClsName);
+                        const valMapper = this._toObject.bind(this, valClsName);
 
                         _.forEach(prop.entries, (entry) => {
                             sb.append(`${bean.id}.put(${keyMapper(entry[prop.keyField])}, ${valMapper(entry[prop.valField])});`);
@@ -331,7 +310,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                         if (_.nonEmpty(prop.entries))
                             sb.emptyLine();
 
-                        sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${prop.id});`);
+                        this._setProperty(sb, bean.id, prop.name, prop.id);
 
                         break;
                     default:
@@ -342,12 +321,12 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                             sb.emptyLine();
 
-                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${embedded.id});`);
+                            this._setProperty(sb, bean.id, prop.name, embedded.id);
                         }
                         else {
                             const shortClsName = JavaTypes.shortClassName(embedded.clsName);
 
-                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(new ${shortClsName}());`);
+                            this._setProperty(sb, bean.id, prop.name, `new ${shortClsName}()`);
                         }
                 }
             });
