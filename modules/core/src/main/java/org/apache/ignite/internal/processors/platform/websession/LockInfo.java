@@ -23,6 +23,7 @@ import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
+import org.apache.ignite.internal.util.typedef.internal.S;
 
 import java.sql.Timestamp;
 import java.util.UUID;
@@ -31,51 +32,56 @@ import java.util.UUID;
  * Web session lock info.
  */
 public class LockInfo implements Binarylizable {
-    /** */
-    private long lockId;
+    /** ID. */
+    private long id;
 
-    /** */
-    private UUID lockNodeId;
+    /** Node ID. */
+    private UUID nodeId;
 
-    /** */
-    private Timestamp lockTime;
+    /** Time. */
+    private Timestamp time;
 
     /**
-     * Gets the lock id.
+     * @return Lock ID.
      */
-    public long getLockId() {
-        return lockId;
+    public long id() {
+        return id;
     }
 
     /**
-     * Gets the lock node id.
+     * @return Node ID.
      */
-    public UUID getLockNodeId() {
-        return lockNodeId;
+    public UUID nodeId() {
+        return nodeId;
     }
 
     /**
-     * Gets the lock time.
+     * @return Time.
      */
-    public Timestamp getLockTime() {
-        return lockTime;
+    public Timestamp getTime() {
+        return time;
     }
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
         BinaryRawWriter raw = writer.rawWriter();
 
-        raw.writeLong(lockId);
-        raw.writeUuid(lockNodeId);
-        raw.writeTimestamp(lockTime);
+        raw.writeLong(id);
+        raw.writeUuid(nodeId);
+        raw.writeTimestamp(time);
     }
 
     /** {@inheritDoc} */
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
         BinaryRawReader raw = reader.rawReader();
 
-        lockId = raw.readLong();
-        lockNodeId = raw.readUuid();
-        lockTime = raw.readTimestamp();
+        id = raw.readLong();
+        nodeId = raw.readUuid();
+        time = raw.readTimestamp();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(LockInfo.class, this);
     }
 }

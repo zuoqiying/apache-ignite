@@ -55,9 +55,9 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
         LockInfo lockInfo = (LockInfo)objects[0];
 
         // Not locked: lock and return result
-        data.setLockNodeId(lockInfo.getLockNodeId());
-        data.setLockId(lockInfo.getLockId());
-        data.setLockTime(lockInfo.getLockTime());
+        data.setLockNodeId(lockInfo.nodeId());
+        data.setLockId(lockInfo.id());
+        data.setLockTime(lockInfo.getTime());
 
         // Apply.
         entry.setValue(data);
