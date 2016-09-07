@@ -462,7 +462,7 @@ mixin caches(model, tip)
 //- Mixin for XML and Java preview.
 mixin preview-xml-java(master, generator, detail)
     ignite-ui-ace-tabs
-        .preview-panel(ng-init='mode = false')
+        .preview-panel
             .preview-legend
                 a(ng-class='{active: !mode, inactive: mode}' ng-click='mode = false') XML
                 | &nbsp;
