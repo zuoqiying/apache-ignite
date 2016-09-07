@@ -105,6 +105,20 @@ public class SessionStateData implements Binarylizable {
         lockTime = null;
     }
 
+    /**
+     * Apply changes from another instance.
+     *
+     * @param other Data.
+     */
+    public void applyChanges(SessionStateData other) {
+        assert other != null;
+        assert items != null;
+
+        timeout = other.timeout;
+        staticObjects = other.staticObjects;
+        items.applyChanges(other.items);
+    }
+
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
         BinaryRawWriter raw = writer.rawWriter();
@@ -127,20 +141,6 @@ public class SessionStateData implements Binarylizable {
         lockTime = raw.readTimestamp();
         items = raw.readObject();
         staticObjects = raw.readByteArray();
-    }
-
-    /**
-     * Apply changes from another instance.
-     *
-     * @param other Data.
-     */
-    public void applyChanges(SessionStateData other) {
-        assert other != null;
-        assert items != null;
-
-        timeout = other.timeout;
-        staticObjects = other.staticObjects;
-        items.applyChanges(other.items);
     }
 
     /** {@inheritDoc} */

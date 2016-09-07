@@ -23,6 +23,7 @@ import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
+import org.apache.ignite.internal.util.typedef.internal.S;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,27 @@ public class KeyValueDirtyTrackedCollection implements Binarylizable {
 
     /** */
     private List<String> removedKeys;
+
+    /**
+     * Apply changes from another instance.
+     *
+     * @param other Items.
+     */
+    public void applyChanges(KeyValueDirtyTrackedCollection other) {
+        assert other != null;
+
+        if (other.removedKeys != null) {
+            for (String key : other.removedKeys)
+                entries.remove(key);
+        }
+        else {
+            // Not a diff: remove all
+            entries.clear();
+        }
+
+        for (Map.Entry<String, byte[]> e : other.entries.entrySet())
+            entries.put(e.getKey(), e.getValue());
+    }
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
@@ -79,24 +101,8 @@ public class KeyValueDirtyTrackedCollection implements Binarylizable {
         }
     }
 
-    /**
-     * Apply changes from another instance.
-     *
-     * @param other Items.
-     */
-    public void applyChanges(KeyValueDirtyTrackedCollection other) {
-        assert other != null;
-
-        if (other.removedKeys != null) {
-            for (String key : other.removedKeys)
-                entries.remove(key);
-        }
-        else {
-            // Not a diff: remove all
-            entries.clear();
-        }
-
-        for (Map.Entry<String, byte[]> e : other.entries.entrySet())
-            entries.put(e.getKey(), e.getValue());
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(KeyValueDirtyTrackedCollection.class, this);
     }
 }
