@@ -21,7 +21,6 @@ import org.apache.ignite.cache.CacheEntryProcessor;
 
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
-import java.sql.Timestamp;
 
 /**
  * Entry processor that locks web session data.
@@ -43,21 +42,13 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
 
         assert data != null;
 
-        if (data.getLockNodeId() != null) {
-            // Already locked: return lock time.
-            Timestamp lockTime = data.getLockTime();
-
-            assert lockTime != null;
-
-            return lockTime;
-        }
+        if (data.locked())
+            return data.lockTime();
 
         LockInfo lockInfo = (LockInfo)objects[0];
 
         // Not locked: lock and return result
-        data.setLockNodeId(lockInfo.nodeId());
-        data.setLockId(lockInfo.id());
-        data.setLockTime(lockInfo.getTime());
+        data.lock(lockInfo);
 
         // Apply.
         entry.setValue(data);

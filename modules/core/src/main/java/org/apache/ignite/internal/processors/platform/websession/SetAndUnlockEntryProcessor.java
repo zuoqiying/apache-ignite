@@ -37,18 +37,18 @@ public class SetAndUnlockEntryProcessor implements CacheEntryProcessor<String, S
         SessionStateData data = entry.getValue();
 
         assert data != null;
-        assert data.getLockNodeId() != null;
+        assert data.lockNodeId() != null;
 
         SessionStateData newData = (SessionStateData)objects[0];
 
-        if (!data.getLockNodeId().equals(newData.getLockNodeId()))
+        if (!data.lockNodeId().equals(newData.lockNodeId()))
             throw new IllegalStateException("Can not unlock session data: lock node id check failed.");
 
-        if (data.getLockId() != newData.getLockId())
+        if (data.lockId() != newData.lockId())
             throw new IllegalStateException("Can not unlock session data: lock id check failed.");
 
         // Unlock.
-        data.setLockNodeId(null);
+        data.unlock();
 
         // Update values.
         data.applyChanges(newData);

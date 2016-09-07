@@ -23,6 +23,8 @@ import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
+import org.apache.ignite.internal.util.typedef.internal.S;
 
 import java.sql.Timestamp;
 import java.util.UUID;
@@ -32,66 +34,75 @@ import java.util.UUID;
  */
 @SuppressWarnings({"ReturnOfDateField", "AssignmentToDateFieldFromParameter"})
 public class SessionStateData implements Binarylizable {
-    /** */
-    private int timeout;
-
-    /** */
-    private UUID lockNodeId;
-
-    /** */
-    private long lockId;
-
-    /** */
-    private Timestamp lockTime;
-
-    /** */
+    /** Items. */
     private KeyValueDirtyTrackedCollection items;
 
-    /** */
+    /** Static objects. */
+    @GridToStringExclude
     private byte[] staticObjects;
 
-    /**
-     * Gets the lock node id.
-     */
-    public UUID getLockNodeId() {
-        return lockNodeId;
-    }
+    /** Timeout. */
+    private int timeout;
+
+    /** Lock ID. */
+    private long lockId;
+
+    /** Lock node ID. */
+    private UUID lockNodeId;
+
+    /** Lock time. */
+    private Timestamp lockTime;
 
     /**
-     * Sets the lock node id.
-     *
+     * @return Lock ID.
      */
-    public void setLockNodeId(UUID lockNodeId) {
-        this.lockNodeId = lockNodeId;
-    }
-
-    /**
-     * Gets the lock id.
-     *
-     */
-    public long getLockId() {
+    public long lockId() {
         return lockId;
     }
 
     /**
-     * Sets the lock id.
+     * @return Lock node ID.
      */
-    public void setLockId(long lockId) {
-        this.lockId = lockId;
+    public UUID lockNodeId() {
+        return lockNodeId;
     }
 
     /**
-     * Gets the lock time.
+     * @return Lock time.
      */
-    public Timestamp getLockTime() {
+    public Timestamp lockTime() {
         return lockTime;
     }
 
     /**
-     * Sets the lock time.
+     * @return {@code True} if locked.
      */
-    public void setLockTime(Timestamp lockTime) {
-        this.lockTime = lockTime;
+    public boolean locked() {
+        return lockTime == null;
+    }
+
+    /**
+     * Set lock info.
+     *
+     * @param lock Lock.
+     */
+    public void lock(LockInfo lock) {
+        assert !locked();
+
+        lockId = lock.id();
+        lockNodeId = lock.nodeId();
+        lockTime = lock.time();
+    }
+
+    /**
+     * Clear lock info.
+     */
+    public void unlock() {
+        assert locked();
+
+        lockId = 0;
+        lockNodeId = null;
+        lockTime = null;
     }
 
     /** {@inheritDoc} */
@@ -130,5 +141,10 @@ public class SessionStateData implements Binarylizable {
         timeout = other.timeout;
         staticObjects = other.staticObjects;
         items.applyChanges(other.items);
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(SessionStateData.class, this);
     }
 }

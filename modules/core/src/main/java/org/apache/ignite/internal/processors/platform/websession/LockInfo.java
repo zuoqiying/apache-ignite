@@ -58,7 +58,7 @@ public class LockInfo implements Binarylizable {
     /**
      * @return Time.
      */
-    public Timestamp getTime() {
+    public Timestamp time() {
         return time;
     }
 
