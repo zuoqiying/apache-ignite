@@ -20,6 +20,7 @@ namespace Apache.Ignite.Core.Impl.Cache
     using System;
     using Apache.Ignite.Core.Binary;
     using Apache.Ignite.Core.Cache.Query;
+    using Apache.Ignite.Core.Impl.Binary;
 
     /// <summary>
     /// Extended Cache interface for internal needs.
@@ -42,10 +43,10 @@ namespace Apache.Ignite.Core.Impl.Cache
         /// </summary>
         /// <typeparam name="T">The type of the result.</typeparam>
         /// <param name="opCode">The operation code.</param>
-        /// <param name="args">The arguments.</param>
+        /// <param name="writeAction">The write action.</param>
         /// <returns>
         /// Result of the processing.
         /// </returns>
-        T Invoke<T>(int opCode, params object[] args);
+        T Invoke<T>(int opCode, Action<IBinaryRawWriter> writeAction);
     }
 }

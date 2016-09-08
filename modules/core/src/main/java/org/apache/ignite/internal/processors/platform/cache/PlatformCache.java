@@ -471,13 +471,12 @@ public class PlatformCache extends PlatformAbstractTarget {
 
                 case OP_INVOKE_INTERNAL: {
                     int opCode = reader.readInt();
-                    Object[] args = reader.readObjectArray();
 
-                    Object key = args[0];
+                    String key = reader.readString();
 
                     switch (opCode) {
                         case OP_INVOKE_INTERNAL_SESSION_LOCK: {
-                            SessionStateLockInfo lockInfo = (SessionStateLockInfo)args[1];
+                            SessionStateLockInfo lockInfo = reader.readObject();
 
                             Object res = cacheRaw.invoke(key, new LockEntryProcessor(), lockInfo);
 
@@ -485,7 +484,7 @@ public class PlatformCache extends PlatformAbstractTarget {
                         }
 
                         case OP_INVOKE_INTERNAL_SESSION_UNLOCK: {
-                            SessionStateLockInfo lockInfo = (SessionStateLockInfo)args[1];
+                            SessionStateLockInfo lockInfo = reader.readObject();
 
                             cacheRaw.invoke(key, new UnlockEntryProcessor(), lockInfo);
 
@@ -493,7 +492,7 @@ public class PlatformCache extends PlatformAbstractTarget {
                         }
 
                         case OP_INVOKE_INTERNAL_SESSION_SET_AND_UNLOCK:
-                            SessionStateData data = (SessionStateData)args[1];
+                            SessionStateData data = reader.readObject();
 
                             cacheRaw.invoke(key, new SetAndUnlockEntryProcessor(), data);
 

@@ -434,7 +434,11 @@ namespace Apache.Ignite.AspNet
         /// </summary>
         private SessionStateLockResult LockItem(string key, long lockId)
         {
-            return ((ICacheInternal) Cache).Invoke<SessionStateLockResult>((int) Op.Lock, key, GetLockInfo(lockId));
+            return ((ICacheInternal) Cache).Invoke<SessionStateLockResult>((int) Op.Lock, w =>
+            {
+                w.WriteString(key);
+                w.WriteObject(GetLockInfo(lockId));
+            });
         }
 
         /// <summary>
@@ -442,7 +446,11 @@ namespace Apache.Ignite.AspNet
         /// </summary>
         private void UnlockItem(string key, long lockId)
         {
-            ((ICacheInternal) Cache).Invoke<object>((int) Op.Unlock, key, GetLockInfo(lockId));
+            ((ICacheInternal) Cache).Invoke<object>((int) Op.Unlock, w =>
+            {
+                w.WriteString(key);
+                w.WriteObject(GetLockInfo(lockId));
+            });
         }
 
         /// <summary>
@@ -454,7 +462,11 @@ namespace Apache.Ignite.AspNet
 
             var cache = _expiryCacheHolder.GetCacheWithExpiry(data.Timeout * 60);
 
-            ((ICacheInternal) cache).Invoke<object>((int) Op.SetAndUnlock, key, data);
+            ((ICacheInternal) cache).Invoke<object>((int) Op.SetAndUnlock, w =>
+            {
+                w.WriteString(key);
+                w.WriteObject(data);
+            });
         }
     }
 }
