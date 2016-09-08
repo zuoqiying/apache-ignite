@@ -55,6 +55,27 @@ public class SessionStateData implements Binarylizable {
     private Timestamp lockTime;
 
     /**
+     * @return Items.
+     */
+    public KeyValueDirtyTrackedCollection items() {
+        return items;
+    }
+
+    /**
+     * @return Static objects.
+     */
+    public byte[] staticObjects() {
+        return staticObjects;
+    }
+
+    /**
+     * @return Timeout.
+     */
+    public int timeout() {
+        return timeout;
+    }
+
+    /**
      * @return Lock ID.
      */
     public long lockId() {
@@ -100,23 +121,32 @@ public class SessionStateData implements Binarylizable {
     }
 
     /**
-     * Update session state and release the lock.
+     * Unlock session state data.
      *
-     * @param update Updated data.
-     * @return Result.
+     * @return Unlocked data.
      */
-    public SessionStateData updateAndUnlock(@Nullable SessionStateData update) {
+    public SessionStateData unlock() {
         assert isLocked();
 
-        SessionStateData res = copyWithoutLockInfo();
+        return copyWithoutLockInfo();
+    }
 
-        if (update != null) {
-            assert items != null;
+    /**
+     * Update session state and release the lock.
+     *
+     * @param items Items.
+     * @param staticObjects Static objects.
+     * @param timeout Timeout.
+     * @return Result.
+     */
+    public SessionStateData updateAndUnlock(KeyValueDirtyTrackedCollection items, byte[] staticObjects, int timeout) {
+        assert items != null;
 
-            res.timeout = update.timeout;
-            res.staticObjects = update.staticObjects;
-            res.items.applyChanges(update.items);
-        }
+        SessionStateData res = unlock();
+
+        res.items.applyChanges(items);
+        res.staticObjects = staticObjects;
+        res.timeout = timeout;
 
         return res;
     }

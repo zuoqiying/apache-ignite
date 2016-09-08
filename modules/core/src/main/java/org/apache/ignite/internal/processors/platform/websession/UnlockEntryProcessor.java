@@ -49,7 +49,7 @@ public class UnlockEntryProcessor implements CacheEntryProcessor<String, Session
             throw new IllegalStateException("Can not unlock session data: lock id check failed.");
 
         // Unlock.
-        data = data.updateAndUnlock(null);
+        data = data.unlock();
 
         entry.setValue(data);
 
