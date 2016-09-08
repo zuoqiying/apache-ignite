@@ -1967,8 +1967,7 @@ public class IgnitionEx {
 
             cacheCfgs.add(utilitySystemCache());
 
-            if (cfg.getPlatformConfiguration() instanceof PlatformDotNetConfiguration)
-                cacheCfgs.add(utilitySystemCachePlatform());
+            cacheCfgs.add(utilitySystemCachePlatform());
 
             if (IgniteComponentType.HADOOP.inClassPath())
                 cacheCfgs.add(CU.hadoopSystemCache());
@@ -2171,13 +2170,11 @@ public class IgnitionEx {
 
             cache.setName(CU.UTILITY_CACHE_NAME_PLATFORM);
             cache.setCacheMode(REPLICATED);
-            cache.setAtomicityMode(ATOMIC);
+            cache.setAtomicityMode(TRANSACTIONAL);
             cache.setSwapEnabled(false);
             cache.setRebalanceMode(SYNC);
             cache.setWriteSynchronizationMode(FULL_SYNC);
-            cache.setAffinity(new RendezvousAffinityFunction(false, 20));
             cache.setNodeFilter(CacheConfiguration.ALL_NODES);
-            cache.setStartSize(300);
             cache.setRebalanceOrder(-2);//Prior to other system caches.
             cache.setCopyOnRead(false);
 
