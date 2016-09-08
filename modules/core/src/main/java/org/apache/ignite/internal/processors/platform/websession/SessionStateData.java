@@ -86,23 +86,25 @@ public class SessionStateData implements Binarylizable {
      *
      * @param lock Lock.
      */
-    public void lock(SessionStateLockInfo lock) {
+    public SessionStateData lock(SessionStateLockInfo lock) {
         assert !isLocked();
 
-        lockId = lock.id();
-        lockNodeId = lock.nodeId();
-        lockTime = lock.time();
+        SessionStateData res = getCopy();
+
+        res.lockId = lock.id();
+        res.lockNodeId = lock.nodeId();
+        res.lockTime = lock.time();
+
+        return res;
     }
 
     /**
      * Clear lock info.
      */
-    public void unlock() {
+    public SessionStateData unlock() {
         assert isLocked();
 
-        lockId = 0;
-        lockNodeId = null;
-        lockTime = null;
+        return getCopy();
     }
 
     /**
@@ -146,5 +148,17 @@ public class SessionStateData implements Binarylizable {
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(SessionStateData.class, this);
+    }
+
+    /**
+     * Gets a copy of this instance with non-lock properties set.
+     */
+    private SessionStateData getCopy() {
+        SessionStateData res = new SessionStateData();
+
+        res.staticObjects = staticObjects;
+        res.items = items;
+        res.timeout = timeout;
+        return res;
     }
 }
