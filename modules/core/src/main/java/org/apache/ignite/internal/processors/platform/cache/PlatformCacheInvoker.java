@@ -78,6 +78,7 @@ public class PlatformCacheInvoker {
 
                 break;
         }
+
         return res;
     }
 }
