@@ -238,16 +238,16 @@ namespace Apache.Ignite.AspNet
                 return null;
             }
 
-            var data = lockResult as SessionStateData;
-
-            if (data == null)
+            if (!lockResult.Success)
             {
                 // Already locked.
                 Log("GetItemExclusive already locked", id, context);
 
                 locked = true;
 
-                lockAge = DateTime.UtcNow - (DateTime)lockResult;
+                Debug.Assert(lockResult.LockTime != null);
+
+                lockAge = DateTime.UtcNow - lockResult.LockTime.Value;
 
                 return null;
             }
@@ -256,7 +256,7 @@ namespace Apache.Ignite.AspNet
 
             locked = false;
 
-            return new IgniteSessionStateStoreData(data);
+            return new IgniteSessionStateStoreData(lockResult.Data);
         }
 
         /// <summary>
@@ -432,9 +432,9 @@ namespace Apache.Ignite.AspNet
         /// <summary>
         /// Locks the item.
         /// </summary>
-        private object LockItem(string key, long lockId)
+        private SessionStateLockResult LockItem(string key, long lockId)
         {
-            return ((ICacheInternal) Cache).Invoke<object>((int) Op.Lock, key, GetLockInfo(lockId));
+            return ((ICacheInternal) Cache).Invoke<SessionStateLockResult>((int) Op.Lock, key, GetLockInfo(lockId));
         }
 
         /// <summary>

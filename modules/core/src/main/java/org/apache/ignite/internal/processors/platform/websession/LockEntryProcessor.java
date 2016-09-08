@@ -37,14 +37,14 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
         // Return result is either BinarizableSessionStateStoreData (when not locked) or lockAge (when locked)
 
         if (!entry.exists())
-            return null;
+            return null;  // TODO: ?
 
         SessionStateData data = entry.getValue();
 
         assert data != null;
 
         if (data.isLocked())
-            return new SessionStateLockEntryResult(false, null, data.lockTime());
+            return new SessionStateLockResult(false, null, data.lockTime());
 
         SessionStateLockInfo lockInfo = (SessionStateLockInfo)args[0];
 
@@ -54,7 +54,7 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
         // Apply.
         entry.setValue(data);
 
-        return new SessionStateLockEntryResult(true, data, null);
+        return new SessionStateLockResult(true, data, null);
     }
 
     /** {@inheritDoc */

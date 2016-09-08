@@ -24,7 +24,7 @@ namespace Apache.Ignite.Core.Impl.AspNet
     /// <summary>
     /// Result of the session state lock processor.
     /// </summary>
-    public class SessionStateLockEntryResult
+    public class SessionStateLockResult
     {
         /** Success flag. */
         private readonly bool _success;
@@ -36,10 +36,10 @@ namespace Apache.Ignite.Core.Impl.AspNet
         private readonly DateTime? _lockTime;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SessionStateLockEntryResult"/> class.
+        /// Initializes a new instance of the <see cref="SessionStateLockResult"/> class.
         /// </summary>
         /// <param name="reader">The reader.</param>
-        public SessionStateLockEntryResult(IBinaryRawReader reader)
+        public SessionStateLockResult(IBinaryRawReader reader)
         {
             _success = reader.ReadBoolean();
             _data = reader.ReadObject<SessionStateData>();
@@ -71,6 +71,14 @@ namespace Apache.Ignite.Core.Impl.AspNet
         public DateTime? LockTime
         {
             get { return _lockTime; }
+        }
+
+        /// <summary>
+        /// Returns a <see cref="string" /> that represents this instance.
+        /// </summary>
+        public override string ToString()
+        {
+            return string.Format("{0} [Success={1}]", GetType().Name, _success);
         }
     }
 }
