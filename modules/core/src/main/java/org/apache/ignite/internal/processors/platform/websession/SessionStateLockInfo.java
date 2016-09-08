@@ -31,7 +31,7 @@ import java.util.UUID;
 /**
  * Web session lock info.
  */
-public class LockInfo implements Binarylizable {
+public class SessionStateLockInfo implements Binarylizable {
     /** ID. */
     private long id;
 
@@ -82,6 +82,6 @@ public class LockInfo implements Binarylizable {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(LockInfo.class, this);
+        return S.toString(SessionStateLockInfo.class, this);
     }
 }
