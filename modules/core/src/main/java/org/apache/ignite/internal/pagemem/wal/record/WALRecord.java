@@ -46,6 +46,9 @@ public abstract class WALRecord {
         /** */
         HEADER_RECORD,
 
+        /** */
+        PAGE_ALLOCATED_RECORD,
+
         // Delta records.
 
         /** */
