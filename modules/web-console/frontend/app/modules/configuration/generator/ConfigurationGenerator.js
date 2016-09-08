@@ -236,7 +236,17 @@ const DEFAULT_CACHE = {
     maxConcurrentAsyncOperations: 500,
     defaultLockTimeout: 0,
     atomicWriteOrderMode: {clsName: 'org.apache.ignite.cache.CacheAtomicWriteOrderMode'},
-    writeSynchronizationMode: {clsName: 'org.apache.ignite.cache.CacheWriteSynchronizationMode', value: 'PRIMARY_SYNC'}
+    writeSynchronizationMode: {clsName: 'org.apache.ignite.cache.CacheWriteSynchronizationMode', value: 'PRIMARY_SYNC'},
+    rebalanceMode: {clsName: 'org.apache.ignite.cache.CacheRebalanceMode', value: 'ASYNC'},
+    rebalanceThreadPoolSize: 1,
+    rebalanceBatchSize: 524288,
+    rebalanceBatchesPrefetchCount: 2,
+    rebalanceOrder: 0,
+    rebalanceDelay: 0,
+    rebalanceTimeout: 10000,
+    rebalanceThrottle: 0,
+    statisticsEnabled: false,
+    managementEnabled: false
 };
 
 const DEFAULT_EVICTION_POLICY = {
@@ -1074,36 +1084,38 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate eviction policy object.
-        static evictionPolicy(evictPolicy, cfg) {
-            let cls;
+        static evictionPolicy(evictPolicy, cfg, varName = 'evictionPolicy') {
+            if (evictPolicy) {
+                let cls;
 
-            switch (evictPolicy.kind) {
-                case 'LRU':
-                    cls = 'org.apache.ignite.cache.eviction.lru.LruEvictionPolicy';
+                switch (evictPolicy.kind) {
+                    case 'LRU':
+                        cls = 'org.apache.ignite.cache.eviction.lru.LruEvictionPolicy';
 
-                    break;
+                        break;
 
-                case 'FIFO':
-                    cls = 'org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicy';
+                    case 'FIFO':
+                        cls = 'org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicy';
 
-                    break;
+                        break;
 
-                case 'SORTED':
-                    cls = 'org.apache.ignite.cache.eviction.sorted.SortedEvictionPolicy';
+                    case 'SORTED':
+                        cls = 'org.apache.ignite.cache.eviction.sorted.SortedEvictionPolicy';
 
-                    break;
+                        break;
 
-                default:
-                    return cfg;
+                    default:
+                        return cfg;
+                }
+
+                const bean = new Bean(cls, varName, evictPolicy[evictPolicy.kind], DEFAULT_EVICTION_POLICY);
+
+                bean.property('batchSize')
+                    .property('maxMemorySize')
+                    .property('maxSize');
+
+                cfg.beanProperty(varName, bean);
             }
-
-            const bean = new Bean(cls, 'evictionPolicy', evictPolicy[evictPolicy.kind], DEFAULT_EVICTION_POLICY);
-
-            bean.property('batchSize')
-                .property('maxMemorySize')
-                .property('maxSize');
-
-            cfg.beanProperty('evictionPolicy', bean);
 
             return cfg;
         }
@@ -1180,24 +1192,96 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate cache node filter group.
         static cacheNodeFilter(cache, igfss, cfg = this.cacheConfigurationBean(cache)) {
+            const kind = _.get(cache, 'nodeFilter.kind');
+
+            if (kind && cache.nodeFilter[kind]) {
+                let bean = null;
+
+                switch (kind) {
+                    case 'IGFS':
+                        const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
+
+                        if (foundIgfs) {
+                            bean = new Bean('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate', 'nodeFilter', foundIgfs);
+
+                            // TODO IGNITE-2052 Arguments in Java is not generated.
+                            bean.constructorArgument('name');
+                        }
+
+                        break;
+
+                    case 'OnNodes':
+                        const nodes = cache.nodeFilter.OnNodes.nodeIds;
+
+                        if ($generatorCommon.isDefinedAndNotEmpty(nodes)) {
+                            bean = new Bean('org.apache.ignite.internal.util.lang.GridNodePredicate', 'nodeFilter');
+
+                            // TODO IGNITE-2052 should be array of uuid from nodes array java.util.UUID.fromString("nid")
+                            bean.constructorArgument(nodes, 'java.lang.UUID');
+                        }
+
+                        break;
+
+                    case 'Custom':
+                        bean = new Bean(cache.nodeFilter.Custom.className, 'nodeFilter');
+
+                        break;
+
+                    default:
+                        return cfg;
+                }
+
+                if (bean)
+                    cfg.beanProperty('nodeFilter', bean);
+            }
 
             return cfg;
         }
 
         // Generate cache rebalance group.
         static cacheRebalance(cache, cfg = this.cacheConfigurationBean(cache)) {
+            if (cache.cacheMode !== 'LOCAL') {
+                cfg.enumProperty('rebalanceMode')
+                    .property('rebalanceThreadPoolSize')
+                    .property('rebalanceBatchSize')
+                    .property('rebalanceBatchesPrefetchCount')
+                    .property('rebalanceOrder')
+                    .property('rebalanceDelay')
+                    .property('rebalanceTimeout')
+                    .property('rebalanceThrottle');
+            }
+
+            if (cache.igfsAffinnityGroupSize) {
+                const bean = new Bean('org.apache.ignite.igfs.IgfsGroupDataBlocksKeyMapper', 'affinityMapper', cache);
+
+                bean.constructorArgument('igfsAffinnityGroupSize');
+
+                cfg.beanProperty('affinityMapper', bean);
+            }
 
             return cfg;
         }
 
         // Generate server near cache group.
         static cacheServerNearCache(cache, cfg = this.cacheConfigurationBean(cache)) {
+            if (cache.cacheMode === 'PARTITIONED' && cache.nearCacheEnabled) {
+                const bean = new Bean('org.apache.ignite.configuration.NearCacheConfiguration', 'nearConfiguration',
+                    cache.nearConfiguration, {nearStartSize: 375000});
+
+                bean.property('nearStartSize');
+
+                ConfigurationGenerator.evictionPolicy(cache.nearConfiguration.nearEvictionPolicy, bean, 'nearEvictionPolicy');
+
+                cfg.beanProperty('nearConfiguration', bean);
+            }
 
             return cfg;
         }
 
         // Generate cache statistics group.
         static cacheStatistics(cache, cfg = this.cacheConfigurationBean(cache)) {
+            cfg.property('statisticsEnabled')
+                .property('managementEnabled');
 
             return cfg;
         }
