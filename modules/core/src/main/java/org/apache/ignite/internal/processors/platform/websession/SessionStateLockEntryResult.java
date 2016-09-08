@@ -31,7 +31,7 @@ import java.sql.Timestamp;
  * Result of the {@link LockEntryProcessor} execution.
  */
 @SuppressWarnings({"AssignmentToDateFieldFromParameter", "ReturnOfDateField"})
-public class LockEntryResult implements Binarylizable {
+public class SessionStateLockEntryResult implements Binarylizable {
     /** Success flag. */
     private boolean success;
 
@@ -48,7 +48,7 @@ public class LockEntryResult implements Binarylizable {
      * @param data Session data.
      * @param lockTime Lock time.
      */
-    public LockEntryResult(boolean success, SessionStateData data, Timestamp lockTime) {
+    public SessionStateLockEntryResult(boolean success, SessionStateData data, Timestamp lockTime) {
         this.success = success;
         this.data = data;
         this.lockTime = lockTime;
@@ -95,6 +95,6 @@ public class LockEntryResult implements Binarylizable {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(LockEntryResult.class, this);
+        return S.toString(SessionStateLockEntryResult.class, this);
     }
 }
