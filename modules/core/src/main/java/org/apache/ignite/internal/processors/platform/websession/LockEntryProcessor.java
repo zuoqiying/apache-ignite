@@ -33,11 +33,8 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
     /** {@inheritDoc} */
     @Override public Object process(MutableEntry<String, SessionStateData> entry, Object... args)
         throws EntryProcessorException {
-        // Arg contains lock info: node id + thread id
-        // Return result is either BinarizableSessionStateStoreData (when not locked) or lockAge (when locked)
-
         if (!entry.exists())
-            return null;  // TODO: ?
+            return null;
 
         SessionStateData data = entry.getValue();
 
