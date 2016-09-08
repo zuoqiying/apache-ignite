@@ -599,6 +599,7 @@ namespace Apache.Ignite.Core.Impl.Binary
             AddSystemType(0, r => new KeyValueDirtyTrackedCollection(r));
             AddSystemType(0, r => new SessionStateData(r));
             AddSystemType(0, r => new SessionStateLockInfo(r));
+            AddSystemType(0, r => new SessionStateLockResult(r));
         }
     }
 }

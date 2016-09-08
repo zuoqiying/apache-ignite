@@ -20,11 +20,12 @@ namespace Apache.Ignite.Core.Impl.AspNet
     using System;
     using System.Diagnostics;
     using Apache.Ignite.Core.Binary;
+    using Apache.Ignite.Core.Impl.Binary;
 
     /// <summary>
     /// Result of the session state lock processor.
     /// </summary>
-    public class SessionStateLockResult
+    public class SessionStateLockResult : IBinaryWriteAware
     {
         /** Success flag. */
         private readonly bool _success;
@@ -79,6 +80,14 @@ namespace Apache.Ignite.Core.Impl.AspNet
         public override string ToString()
         {
             return string.Format("{0} [Success={1}]", GetType().Name, _success);
+        }
+
+        /// <summary>
+        /// Writes this object to the given writer.
+        /// </summary>
+        public void WriteBinary(IBinaryWriter writer)
+        {
+            throw new NotSupportedException(GetType() + " is only written from native code.");
         }
     }
 }

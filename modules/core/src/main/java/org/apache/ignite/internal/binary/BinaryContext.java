@@ -79,6 +79,7 @@ import org.apache.ignite.internal.processors.platform.PlatformJavaObjectFactoryP
 import org.apache.ignite.internal.processors.platform.websession.KeyValueDirtyTrackedCollection;
 import org.apache.ignite.internal.processors.platform.websession.SessionStateLockInfo;
 import org.apache.ignite.internal.processors.platform.websession.SessionStateData;
+import org.apache.ignite.internal.processors.platform.websession.SessionStateLockResult;
 import org.apache.ignite.internal.util.lang.GridMapEntry;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
@@ -323,6 +324,7 @@ public class BinaryContext {
 
         registerPredefinedType(SessionStateData.class, 0);
         registerPredefinedType(SessionStateLockInfo.class, 0);
+        registerPredefinedType(SessionStateLockResult.class, 0);
         registerPredefinedType(KeyValueDirtyTrackedCollection.class, 0);
 
         // IDs range [200..1000] is used by Ignite internal APIs.
