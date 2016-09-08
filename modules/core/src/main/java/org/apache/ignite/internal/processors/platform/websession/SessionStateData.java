@@ -77,8 +77,8 @@ public class SessionStateData implements Binarylizable {
     /**
      * @return {@code True} if locked.
      */
-    public boolean locked() {
-        return lockTime == null;
+    public boolean isLocked() {
+        return lockTime != null;
     }
 
     /**
@@ -87,7 +87,7 @@ public class SessionStateData implements Binarylizable {
      * @param lock Lock.
      */
     public void lock(LockInfo lock) {
-        assert !locked();
+        assert !isLocked();
 
         lockId = lock.id();
         lockNodeId = lock.nodeId();
@@ -98,7 +98,7 @@ public class SessionStateData implements Binarylizable {
      * Clear lock info.
      */
     public void unlock() {
-        assert locked();
+        assert isLocked();
 
         lockId = 0;
         lockNodeId = null;
