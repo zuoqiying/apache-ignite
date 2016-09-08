@@ -1390,7 +1390,7 @@ $generatorJava.cacheMemory = function(cache, varName, res) {
 
     res.softEmptyLine();
 
-    $generatorJava.evictionPolicy(res, varName, cache.evictionPolicy, 'evictionPolicy');
+    $generatorJava.evictionPolicy(res, varName, cache._evictionPolicy, '_evictionPolicy');
 
     $generatorJava.property(res, varName, cache, 'startSize', null, null, 1500000);
     $generatorJava.property(res, varName, cache, 'swapEnabled', null, null, false);

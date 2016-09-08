@@ -39,6 +39,10 @@ export class EmptyBean {
     nonEmpty() {
         return !this.isEmpty();
     }
+
+    findProperty(name) {
+        return _.find(this.properties, {name});
+    }
 }
 
 export class Map {

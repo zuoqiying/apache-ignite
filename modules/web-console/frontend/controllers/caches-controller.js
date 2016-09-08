@@ -348,7 +348,7 @@ export default ['cachesController', [
             if (LegacyUtils.isEmptyString(item.name))
                 return ErrorPopover.show('cacheName', 'Cache name should not be empty!', $scope.ui, 'general');
 
-            if (item.memoryMode === 'ONHEAP_TIERED' && item.offHeapMaxMemory > 0 && !LegacyUtils.isDefined(item.evictionPolicy.kind))
+            if (item.memoryMode === 'ONHEAP_TIERED' && item.offHeapMaxMemory > 0 && !LegacyUtils.isDefined(item._evictionPolicy.kind))
                 return ErrorPopover.show('evictionPolicyKind', 'Eviction policy should not be configured!', $scope.ui, 'memory');
 
             if (!LegacyUtils.checkFieldValidators($scope.ui))

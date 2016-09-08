@@ -84,7 +84,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                     -var swapEnabled = model + '.swapEnabled'
                     -var offHeapMaxMemory = model + '.offHeapMaxMemory'
 
-                    +evictionPolicy(model + '.evictionPolicy', '"evictionPolicy"', 'true',
+                    +evictionPolicy(model + '._evictionPolicy', '"evictionPolicy"', 'true',
                         onHeapTired  + ' && (' + swapEnabled + '|| _.isNumber(' + offHeapMaxMemory + ') &&' + offHeapMaxMemory + ' >= 0)',
                         'Optional cache eviction policy<br/>\
                         Must be set for entries to be evicted from on-heap to off-heap or swap\

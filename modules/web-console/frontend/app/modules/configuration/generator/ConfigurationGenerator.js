@@ -15,234 +15,11 @@
  * limitations under the License.
  */
 
+import DFLT_CLUSTER from 'app/data/cluster.json';
+import DFLT_CACHE from 'app/data/cache.json';
+import DFLT_IGFS from 'app/data/igfs.json';
+
 import { EmptyBean, Bean, MethodBean } from './Beans';
-
-const DEFAULT = {
-    localHost: '0.0.0.0',
-    discovery: {
-        localPort: 47500,
-        localPortRange: 100,
-        socketTimeout: 5000,
-        ackTimeout: 5000,
-        maxAckTimeout: 600000,
-        networkTimeout: 5000,
-        joinTimeout: 0,
-        threadPriority: 10,
-        heartbeatFrequency: 2000,
-        maxMissedHeartbeats: 1,
-        maxMissedClientHeartbeats: 5,
-        topHistorySize: 1000,
-        reconnectCount: 10,
-        statisticsPrintFrequency: 0,
-        ipFinderCleanFrequency: 60000,
-        forceServerMode: false,
-        clientReconnectDisabled: false,
-        Multicast: {
-            multicastGroup: '228.1.2.4',
-            multicastPort: 47400,
-            responseWaitTime: 500,
-            addressRequestAttempts: 2,
-            localAddress: '0.0.0.0'
-        },
-        Vm: {
-
-        },
-        Jdbc: {
-            initSchema: false
-        },
-        SharedFs: {
-            path: 'disco/tcp'
-        },
-        ZooKeeper: {
-            basePath: '/services',
-            serviceName: 'ignite',
-            allowDuplicateRegistrations: false,
-            ExponentialBackoff: {
-                baseSleepTimeMs: 1000,
-                maxRetries: 10
-            },
-            BoundedExponentialBackoffRetry: {
-                baseSleepTimeMs: 1000,
-                maxSleepTimeMs: 2147483647,
-                maxRetries: 10
-            },
-            UntilElapsed: {
-                maxElapsedTimeMs: 60000,
-                sleepMsBetweenRetries: 1000
-            },
-            RetryNTimes: {
-                n: 10,
-                sleepMsBetweenRetries: 1000
-            },
-            OneTime: {
-                sleepMsBetweenRetry: 1000
-            },
-            Forever: {
-                retryIntervalMs: 1000
-            }
-        }
-    },
-    atomics: {
-        atomicSequenceReserveSize: 1000,
-        backups: 0,
-        cacheMode: {clsName: 'org.apache.ignite.cache.CacheMode', value: 'PARTITIONED'}
-    },
-    binary: {
-        compactFooter: true,
-        typeConfigurations: {
-            enum: false
-        }
-    },
-    collision: {
-        kind: null,
-        JobStealing: {
-            activeJobsThreshold: 95,
-            waitJobsThreshold: 0,
-            messageExpireTime: 1000,
-            maximumStealingAttempts: 5,
-            stealingEnabled: true,
-            stealingAttributes: {keyClsName: 'java.util.String', valClsName: 'java.io.Serializable'}
-        },
-        FifoQueue: {
-
-        },
-        PriorityQueue: {
-            priorityAttributeKey: 'grid.task.priority',
-            jobPriorityAttributeKey: 'grid.job.priority',
-            defaultPriority: 0,
-            starvationIncrement: 1,
-            starvationPreventionEnabled: true
-        },
-        Custom: {
-        }
-    },
-    communication: {
-        localPort: 47100,
-        localPortRange: 100,
-        sharedMemoryPort: 48100,
-        directBuffer: false,
-        directSendBuffer: false,
-        idleConnectionTimeout: 30000,
-        connectTimeout: 5000,
-        maxConnectTimeout: 600000,
-        reconnectCount: 10,
-        socketSendBuffer: 32768,
-        socketReceiveBuffer: 32768,
-        messageQueueLimit: 1024,
-        tcpNoDelay: true,
-        ackSendThreshold: 16,
-        unacknowledgedMessagesBufferSize: 0,
-        socketWriteTimeout: 2000
-    },
-    networkTimeout: 5000,
-    networkSendRetryDelay: 1000,
-    networkSendRetryCount: 3,
-    discoveryStartupDelay: 60000,
-    connector: {
-        port: 11211,
-        portRange: 100,
-        idleTimeout: 7000,
-        idleQueryCursorTimeout: 600000,
-        idleQueryCursorCheckFrequency: 60000,
-        receiveBufferSize: 32768,
-        sendBufferSize: 32768,
-        sendQueueLimit: 0,
-        directBuffer: false,
-        noDelay: true,
-        sslEnabled: false,
-        sslClientAuth: false
-    },
-    deploymentMode: {clsName: 'org.apache.ignite.configuration.DeploymentMode', value: 'SHARED'},
-    peerClassLoadingEnabled: false,
-    peerClassLoadingMissedResourcesCacheSize: 100,
-    peerClassLoadingThreadPoolSize: 2,
-    failoverSpi: {
-        JobStealing: {
-            maximumFailoverAttempts: 5
-        },
-        Always: {
-            maximumFailoverAttempts: 5
-        }
-    },
-    logger: {
-        Log4j: {
-            level: {clsName: 'org.apache.logging.log4j.Level', value: null}
-        },
-        Log4j2: {
-            level: {clsName: 'org.apache.logging.log4j.Level', value: null}
-        }
-    },
-    marshalLocalJobs: false,
-    marshallerCacheKeepAliveTime: 10000,
-    metricsHistorySize: 10000,
-    metricsLogFrequency: 60000,
-    metricsUpdateFrequency: 2000,
-    clockSyncSamples: 8,
-    clockSyncFrequency: 120000,
-    timeServerPortBase: 31100,
-    timeServerPortRange: 100,
-    transactionConfiguration: {
-        defaultTxConcurrency: {clsName: 'org.apache.ignite.transactions.TransactionConcurrency', value: 'PESSIMISTIC'},
-        defaultTxIsolation: {clsName: 'org.apache.ignite.transactions.TransactionIsolation', value: 'REPEATABLE_READ'},
-        defaultTxTimeout: 0,
-        pessimisticTxLogLinger: 10000
-    }
-};
-
-const DEFAULT_IGFS = {
-    defaultMode: {clsName: 'org.apache.ignite.igfs.IgfsMode', value: 'DUAL_ASYNC'},
-    secondaryFileSystem: {
-
-    },
-    ipcEndpointConfiguration: {
-        type: {clsName: 'org.apache.ignite.igfs.IgfsIpcEndpointType'},
-        host: '127.0.0.1',
-        port: 10500,
-        memorySize: 262144,
-        tokenDirectoryPath: 'ipc/shmem'
-    },
-    fragmentizerConcurrentFiles: 0,
-    fragmentizerThrottlingBlockLength: 16777216,
-    fragmentizerThrottlingDelay: 200,
-    dualModeMaxPendingPutsSize: 0,
-    dualModePutExecutorServiceShutdown: false,
-    blockSize: 65536,
-    streamBufferSize: 65536,
-    maxSpaceSize: 0,
-    maximumTaskRangeLength: 0,
-    managementPort: 11400,
-    perNodeBatchSize: 100,
-    perNodeParallelBatchCount: 8,
-    prefetchBlocks: 0,
-    sequentialReadsBeforePrefetch: 0,
-    trashPurgeTimeout: 1000,
-    colocateMetadata: true,
-    relaxedConsistency: true,
-    pathModes: {keyClsName: 'java.lang.String', keyField: 'path', valClsName: 'org.apache.ignite.igfs.IgfsMode', valField: 'mode'}
-};
-
-const DEFAULT_CACHE = {
-    cacheMode: {clsName: 'org.apache.ignite.cache.CacheMode'},
-    atomicityMode: {clsName: 'org.apache.ignite.cache.CacheAtomicityMode'},
-    memoryMode: {clsName: 'org.apache.ignite.cache.CacheMemoryMode', value: 'ONHEAP_TIERED'},
-    offHeapMaxMemory: -1,
-    startSize: 1500000,
-    swapEnabled: false,
-    sqlOnheapRowCacheSize: 10240,
-    longQueryWarningTimeout: 3000,
-    snapshotableIndex: false,
-    sqlEscapeAll: false,
-
-    maxConcurrentAsyncOperations: 500,
-    defaultLockTimeout: 0,
-    atomicWriteOrderMode: {clsName: 'org.apache.ignite.cache.CacheAtomicWriteOrderMode'},
-    writeSynchronizationMode: {clsName: 'org.apache.ignite.cache.CacheWriteSynchronizationMode', value: 'PRIMARY_SYNC'}
-};
-
-const DEFAULT_EVICTION_POLICY = {
-    batchSize: 1,
-    maxSize: 100000
-};
 
 export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
     class ConfigurationGenerator {
@@ -269,15 +46,15 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         static igniteConfigurationBean(cluster) {
-            return new Bean('org.apache.ignite.configuration.IgniteConfiguration', 'cfg', cluster, DEFAULT);
+            return new Bean('org.apache.ignite.configuration.IgniteConfiguration', 'cfg', cluster, DFLT_CLUSTER);
         }
 
         static igfsConfigurationBean(igfs) {
-            return new Bean('org.apache.ignite.configuration.FileSystemConfiguration', 'igfs', igfs, DEFAULT_IGFS);
+            return new Bean('org.apache.ignite.configuration.FileSystemConfiguration', 'igfs', igfs, DFLT_IGFS);
         }
 
         static cacheConfigurationBean(cache) {
-            return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'cache', cache, DEFAULT_CACHE);
+            return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'cache', cache, DFLT_CACHE);
         }
 
         /**
@@ -300,21 +77,22 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 .stringProperty('localHost');
 
             if (cluster.discovery) {
-                const discovery = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery', cluster.discovery, DEFAULT.discovery);
+                const discovery = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery',
+                    cluster.discovery, DFLT_CLUSTER.discovery);
 
                 let ipFinder;
 
                 switch (discovery.valueOf('kind')) {
                     case 'Vm':
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder',
-                            'ipFinder', cluster.discovery.Vm, DEFAULT.discovery.Vm);
+                            'ipFinder', cluster.discovery.Vm, DFLT_CLUSTER.discovery.Vm);
 
                         ipFinder.collectionProperty('addrs', 'addresses', cluster.discovery.Vm.addresses);
 
                         break;
                     case 'Multicast':
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder',
-                            'ipFinder', cluster.discovery.Multicast, DEFAULT.discovery.Multicast);
+                            'ipFinder', cluster.discovery.Multicast, DFLT_CLUSTER.discovery.Multicast);
 
                         ipFinder.stringProperty('multicastGroup')
                             .property('multicastPort')
@@ -326,14 +104,14 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         break;
                     case 'S3':
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.s3.TcpDiscoveryS3IpFinder',
-                            'ipFinder', cluster.discovery.S3, DEFAULT.discovery.S3);
+                            'ipFinder', cluster.discovery.S3, DFLT_CLUSTER.discovery.S3);
 
                         ipFinder.stringProperty('bucketName');
 
                         break;
                     case 'Cloud':
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.cloud.TcpDiscoveryCloudIpFinder',
-                            'ipFinder', cluster.discovery.Cloud, DEFAULT.discovery.Cloud);
+                            'ipFinder', cluster.discovery.Cloud, DFLT_CLUSTER.discovery.Cloud);
 
                         ipFinder.stringProperty('credential')
                             .pathProperty('credentialPath')
@@ -345,7 +123,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         break;
                     case 'GoogleStorage':
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.gce.TcpDiscoveryGoogleStorageIpFinder',
-                            'ipFinder', cluster.discovery.GoogleStorage, DEFAULT.discovery.GoogleStorage);
+                            'ipFinder', cluster.discovery.GoogleStorage, DFLT_CLUSTER.discovery.GoogleStorage);
 
                         ipFinder.stringProperty('projectName')
                             .stringProperty('bucketName')
@@ -355,7 +133,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         break;
                     case 'Jdbc':
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder',
-                            'ipFinder', cluster.discovery.Jdbc, DEFAULT.discovery.Jdbc);
+                            'ipFinder', cluster.discovery.Jdbc, DFLT_CLUSTER.discovery.Jdbc);
 
                         ipFinder.property('initSchema');
 
@@ -365,14 +143,14 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         break;
                     case 'SharedFs':
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.sharedfs.TcpDiscoverySharedFsIpFinder',
-                            'ipFinder', cluster.discovery.SharedFs, DEFAULT.discovery.SharedFs);
+                            'ipFinder', cluster.discovery.SharedFs, DFLT_CLUSTER.discovery.SharedFs);
 
                         ipFinder.pathProperty('path');
 
                         break;
                     case 'ZooKeeper':
                         const src = cluster.discovery.ZooKeeper;
-                        const dflt = DEFAULT.discovery.ZooKeeper;
+                        const dflt = DFLT_CLUSTER.discovery.ZooKeeper;
 
                         ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.zk.TcpDiscoveryZookeeperIpFinder',
                             'ipFinder', src, dflt);
@@ -395,8 +173,8 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                                     break;
                                 case 'BoundedExponentialBackoff':
-                                    retryPolicyBean = new Bean('org.apache.curator.retry.BoundedExponentialBackoffRetry', null,
-                                        policy.BoundedExponentialBackoffRetry, dflt.BoundedExponentialBackoffRetry)
+                                    retryPolicyBean = new Bean('org.apache.curator.retry.BoundedExponentialBackoffRetry',
+                                        null, policy.BoundedExponentialBackoffRetry, dflt.BoundedExponentialBackoffRetry)
                                         .constructorArgument('baseSleepTimeMs')
                                         .constructorArgument('maxSleepTimeMs')
                                         .constructorArgument('maxRetries');
@@ -461,7 +239,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         // Generate atomics group.
         static clusterAtomics(atomics, cfg = this.igniteConfigurationBean()) {
             const acfg = new Bean('org.apache.ignite.configuration.AtomicConfiguration', 'atomicCfg',
-                atomics, DEFAULT.atomics);
+                atomics, DFLT_CLUSTER.atomics);
 
             acfg.enumProperty('cacheMode')
                 .property('atomicSequenceReserveSize');
@@ -480,7 +258,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         // Generate binary group.
         static clusterBinary(binary, cfg = this.igniteConfigurationBean()) {
             const binaryCfg = new Bean('org.apache.ignite.configuration.BinaryConfiguration', 'binaryCfg',
-                binary, DEFAULT.binary);
+                binary, DFLT_CLUSTER.binary);
 
             binaryCfg.emptyBeanProperty('idMapper')
                 .emptyBeanProperty('nameMapper')
@@ -490,7 +268,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
             _.forEach(binary.typeConfigurations, (type) => {
                 const typeCfg = new MethodBean('org.apache.ignite.binary.BinaryTypeConfiguration',
-                    JavaTypes.toJavaName('binaryType', type.typeName), type, DEFAULT.binary.typeConfigurations);
+                    JavaTypes.toJavaName('binaryType', type.typeName), type, DFLT_CLUSTER.binary.typeConfigurations);
 
                 typeCfg.stringProperty('typeName')
                     .emptyBeanProperty('idMapper')
@@ -502,7 +280,8 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     typeCfgs.push(typeCfg);
             });
 
-            binaryCfg.collectionProperty('types', 'typeConfigurations', typeCfgs, 'java.util.Collection', 'org.apache.ignite.binary.BinaryTypeConfiguration');
+            binaryCfg.collectionProperty('types', 'typeConfigurations', typeCfgs, 'java.util.Collection',
+                'org.apache.ignite.binary.BinaryTypeConfiguration');
 
             binaryCfg.property('compactFooter');
 
@@ -529,7 +308,8 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             if (_.isEmpty(items))
                 return cfg;
 
-            cfg.arrayProperty('cacheKeyConfiguration', 'keyConfigurations', items, 'org.apache.ignite.cache.CacheKeyConfiguration');
+            cfg.arrayProperty('cacheKeyConfiguration', 'keyConfigurations', items,
+                'org.apache.ignite.cache.CacheKeyConfiguration');
 
             return cfg;
         }
@@ -541,7 +321,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             switch (collision.kind) {
                 case 'JobStealing':
                     colSpi = new Bean('org.apache.ignite.spi.collision.jobstealing.JobStealingCollisionSpi',
-                        'colSpi', collision.JobStealing, DEFAULT.collision.JobStealing);
+                        'colSpi', collision.JobStealing, DFLT_CLUSTER.collision.JobStealing);
 
                     colSpi.property('activeJobsThreshold')
                         .property('waitJobsThreshold')
@@ -555,7 +335,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                 case 'FifoQueue':
                     colSpi = new Bean('org.apache.ignite.spi.collision.fifoqueue.FifoQueueCollisionSpi',
-                        'colSpi', collision.FifoQueue, DEFAULT.collision.FifoQueue);
+                        'colSpi', collision.FifoQueue, DFLT_CLUSTER.collision.FifoQueue);
 
                     colSpi.property('parallelJobsNumber')
                         .property('waitingJobsNumber');
@@ -564,7 +344,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                 case 'PriorityQueue':
                     colSpi = new Bean('org.apache.ignite.spi.collision.priorityqueue.PriorityQueueCollisionSpi',
-                        'colSpi', collision.PriorityQueue, DEFAULT.collision.PriorityQueue);
+                        'colSpi', collision.PriorityQueue, DFLT_CLUSTER.collision.PriorityQueue);
 
                     colSpi.property('parallelJobsNumber')
                         .property('waitingJobsNumber')
@@ -578,7 +358,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                 case 'Custom':
                     colSpi = new Bean(collision.Custom.class,
-                        'colSpi', collision.PriorityQueue, DEFAULT.collision.PriorityQueue);
+                        'colSpi', collision.PriorityQueue, DFLT_CLUSTER.collision.PriorityQueue);
 
                     break;
 
@@ -597,7 +377,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         // Generate communication group.
         static clusterCommunication(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             const commSpi = new Bean('org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi', 'communicationSpi',
-                cluster.communication, DEFAULT.communication);
+                cluster.communication, DFLT_CLUSTER.communication);
 
             commSpi.emptyBeanProperty('listener')
                 .stringProperty('localAddress')
@@ -635,7 +415,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         // Generate REST access configuration.
         static clusterConnector(connector, cfg = this.igniteConfigurationBean()) {
             const connCfg = new Bean('org.apache.ignite.configuration.ConnectorConfiguration',
-                'connectorConfiguration', connector, DEFAULT.connector);
+                'connectorConfiguration', connector, DFLT_CLUSTER.connector);
 
             if (connCfg.valueOf('enabled')) {
                 connCfg.pathProperty('jettyPath')
@@ -685,9 +465,12 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         // Generate discovery group.
         static clusterDiscovery(discovery, cfg = this.igniteConfigurationBean()) {
             if (discovery) {
-                // TODO IGNITE-2052 The same bean that in general section.
-                const discoveryCfg = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery',
-                    discovery, DEFAULT.discovery);
+                let discoveryCfg = cfg.findProperty('discovery');
+
+                if (_.isNil(discoveryCfg)) {
+                    discoveryCfg = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery',
+                        discovery, DFLT_CLUSTER.discovery);
+                }
 
                 discoveryCfg.stringProperty('localAddress')
                     .property('localPort')
@@ -738,7 +521,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 switch (spi.kind) {
                     case 'JobStealing':
                         failoverSpi = new Bean('org.apache.ignite.spi.failover.jobstealing.JobStealingFailoverSpi',
-                            'failoverSpi', spi.JobStealing, DEFAULT.failoverSpi.JobStealing);
+                            'failoverSpi', spi.JobStealing, DFLT_CLUSTER.failoverSpi.JobStealing);
 
                         failoverSpi.property('maximumFailoverAttempts');
 
@@ -750,7 +533,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         break;
                     case 'Always':
                         failoverSpi = new Bean('org.apache.ignite.spi.failover.always.AlwaysFailoverSpi',
-                            'failoverSpi', spi.Always, DEFAULT.failoverSpi.Always);
+                            'failoverSpi', spi.Always, DFLT_CLUSTER.failoverSpi.Always);
 
                         failoverSpi.property('maximumFailoverAttempts');
 
@@ -784,7 +567,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 case 'Log4j':
                     if (logger.Log4j && (logger.Log4j.mode === 'Default' || logger.Log4j.mode === 'Path' && _.nonEmpty(logger.Log4j.path))) {
                         loggerBean = new Bean('org.apache.ignite.logger.log4j.Log4JLogger',
-                            'logger', logger.Log4j, DEFAULT.logger.Log4j);
+                            'logger', logger.Log4j, DFLT_CLUSTER.logger.Log4j);
 
                         if (loggerBean.valueOf('mode') === 'Path')
                             loggerBean.pathConstructorArgument('path');
@@ -796,7 +579,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 case 'Log4j2':
                     if (logger.Log4j2 && _.nonEmpty(logger.Log4j2.path)) {
                         loggerBean = new Bean('org.apache.ignite.logger.log4j2.Log4J2Logger',
-                            'logger', logger.Log4j2, DEFAULT.logger.Log4j2);
+                            'logger', logger.Log4j2, DFLT_CLUSTER.logger.Log4j2);
 
                         loggerBean.pathConstructorArgument('path')
                             .enumProperty('level');
@@ -957,7 +740,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         // Generate transactions group.
         static clusterTransactions(transactionConfiguration, cfg = this.igniteConfigurationBean()) {
             const bean = new Bean('org.apache.ignite.configuration.TransactionConfiguration', 'transactionConfiguration',
-                transactionConfiguration, DEFAULT.transactionConfiguration);
+                transactionConfiguration, DFLT_CLUSTER.transactionConfiguration);
 
             bean.enumProperty('defaultTxConcurrency')
                 .enumProperty('defaultTxIsolation')
@@ -995,7 +778,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 const secondFs = igfs.secondaryFileSystem || {};
 
                 const bean = new Bean('org.apache.ignite.hadoop.fs.IgniteHadoopIgfsSecondaryFileSystem',
-                    'secondaryFileSystem', secondFs, DEFAULT_IGFS.secondaryFileSystem);
+                    'secondaryFileSystem', secondFs, DFLT_IGFS.secondaryFileSystem);
 
                 bean.stringProperty('userName', 'defaultUserName');
 
@@ -1017,7 +800,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         static igfsIPC(igfs, cfg = this.igfsConfigurationBean(igfs)) {
             if (igfs.ipcEndpointEnabled) {
                 const bean = new Bean('org.apache.ignite.igfs.IgfsIpcEndpointConfiguration', 'ipcEndpointConfiguration',
-                    igfs.ipcEndpointConfiguration, DEFAULT_IGFS.ipcEndpointConfiguration);
+                    igfs.ipcEndpointConfiguration, DFLT_IGFS.ipcEndpointConfiguration);
 
                 bean.enumProperty('type')
                     .stringProperty('host')
@@ -1073,37 +856,43 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
-        // Generate eviction policy object.
-        static evictionPolicy(evictPolicy, cfg) {
-            let cls;
+        /**
+         * Generate eviction policy object.
+         * @param {Object} cfg Parent configuration.
+         * @param {String} name Property name.
+         * @param {Object} src Source.
+         * @param {Object} dflt Default.
+         * @returns {Object} Parent configuration.
+         * @private
+         */
+        static _evictionPolicy(cfg, name, src, dflt) {
+            let bean;
 
-            switch (evictPolicy.kind) {
+            switch (src.kind) {
                 case 'LRU':
-                    cls = 'org.apache.ignite.cache.eviction.lru.LruEvictionPolicy';
+                    bean = new Bean('org.apache.ignite.cache.eviction.lru.LruEvictionPolicy', '_evictionPolicy',
+                        src.LRU, dflt.LRU);
 
                     break;
-
                 case 'FIFO':
-                    cls = 'org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicy';
+                    bean = new Bean('org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicy', '_evictionPolicy',
+                        src.FIFO, dflt.FIFO);
 
                     break;
-
                 case 'SORTED':
-                    cls = 'org.apache.ignite.cache.eviction.sorted.SortedEvictionPolicy';
+                    bean = new Bean('org.apache.ignite.cache.eviction.sorted.SortedEvictionPolicy', '_evictionPolicy',
+                        src.SORTED, dflt.SORTED);
 
                     break;
-
                 default:
                     return cfg;
             }
-
-            const bean = new Bean(cls, 'evictionPolicy', evictPolicy[evictPolicy.kind], DEFAULT_EVICTION_POLICY);
 
             bean.property('batchSize')
                 .property('maxMemorySize')
                 .property('maxSize');
 
-            cfg.beanProperty('evictionPolicy', bean);
+            cfg.beanProperty(name, bean);
 
             return cfg;
         }
@@ -1134,7 +923,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             if (cache.memoryMode !== 'OFFHEAP_VALUES')
                 cfg.property('offHeapMaxMemory');
 
-            ConfigurationGenerator.evictionPolicy(cache.evictionPolicy, cfg);
+            this._evictionPolicy(cfg, 'evictionPolicy', cache._evictionPolicy, DFLT_CACHE.evictionPolicy);
 
             cfg.property('startSize')
                 .property('swapEnabled');
