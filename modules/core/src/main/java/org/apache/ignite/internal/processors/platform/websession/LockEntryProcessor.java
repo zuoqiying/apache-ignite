@@ -46,7 +46,7 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
         if (data.isLocked())
             return data.lockTime();
 
-        LockInfo lockInfo = (LockInfo)args[0];
+        SessionStateLockInfo lockInfo = (SessionStateLockInfo)args[0];
 
         // Not locked: lock and return result
         data.lock(lockInfo);

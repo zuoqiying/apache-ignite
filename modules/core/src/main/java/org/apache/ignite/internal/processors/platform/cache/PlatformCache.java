@@ -50,7 +50,7 @@ import org.apache.ignite.internal.processors.platform.utils.PlatformListenable;
 import org.apache.ignite.internal.processors.platform.utils.PlatformUtils;
 import org.apache.ignite.internal.processors.platform.utils.PlatformWriterClosure;
 import org.apache.ignite.internal.processors.platform.websession.LockEntryProcessor;
-import org.apache.ignite.internal.processors.platform.websession.LockInfo;
+import org.apache.ignite.internal.processors.platform.websession.SessionStateLockInfo;
 import org.apache.ignite.internal.processors.platform.websession.SessionStateData;
 import org.apache.ignite.internal.processors.platform.websession.SetAndUnlockEntryProcessor;
 import org.apache.ignite.internal.processors.platform.websession.UnlockEntryProcessor;
@@ -477,7 +477,7 @@ public class PlatformCache extends PlatformAbstractTarget {
 
                     switch (opCode) {
                         case OP_INVOKE_INTERNAL_SESSION_LOCK: {
-                            LockInfo lockInfo = (LockInfo)args[1];
+                            SessionStateLockInfo lockInfo = (SessionStateLockInfo)args[1];
 
                             Object res = cacheRaw.invoke(key, new LockEntryProcessor(), lockInfo);
 
@@ -485,7 +485,7 @@ public class PlatformCache extends PlatformAbstractTarget {
                         }
 
                         case OP_INVOKE_INTERNAL_SESSION_UNLOCK: {
-                            LockInfo lockInfo = (LockInfo)args[1];
+                            SessionStateLockInfo lockInfo = (SessionStateLockInfo)args[1];
 
                             cacheRaw.invoke(key, new UnlockEntryProcessor(), lockInfo);
 

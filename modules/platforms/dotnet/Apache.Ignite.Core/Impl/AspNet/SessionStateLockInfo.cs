@@ -25,7 +25,7 @@ namespace Apache.Ignite.Core.Impl.AspNet
     /// <summary>
     /// Lock info.
     /// </summary>
-    public struct LockInfo : IBinaryWriteAware, IEquatable<LockInfo>
+    public struct SessionStateLockInfo : IBinaryWriteAware, IEquatable<SessionStateLockInfo>
     {
         /** */
         private readonly long _lockId;
@@ -37,12 +37,12 @@ namespace Apache.Ignite.Core.Impl.AspNet
         private readonly DateTime _lockTime;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LockInfo"/> struct.
+        /// Initializes a new instance of the <see cref="SessionStateLockInfo"/> struct.
         /// </summary>
         /// <param name="lockId">The lock identifier.</param>
         /// <param name="lockNodeId">The lock node identifier.</param>
         /// <param name="lockTime">The lock time.</param>
-        public LockInfo(long lockId, Guid lockNodeId, DateTime lockTime)
+        public SessionStateLockInfo(long lockId, Guid lockNodeId, DateTime lockTime)
         {
             _lockId = lockId;
             _lockNodeId = lockNodeId;
@@ -50,10 +50,10 @@ namespace Apache.Ignite.Core.Impl.AspNet
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LockInfo"/> struct.
+        /// Initializes a new instance of the <see cref="SessionStateLockInfo"/> struct.
         /// </summary>
         /// <param name="reader">The reader.</param>
-        public LockInfo(IBinaryRawReader reader)
+        public SessionStateLockInfo(IBinaryRawReader reader)
         {
             _lockId = reader.ReadLong();
 
@@ -110,7 +110,7 @@ namespace Apache.Ignite.Core.Impl.AspNet
         /// <returns>
         /// true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
         /// </returns>
-        public bool Equals(LockInfo other)
+        public bool Equals(SessionStateLockInfo other)
         {
             return _lockTime.Equals(other._lockTime) && _lockId == other._lockId 
                 && _lockNodeId.Equals(other._lockNodeId);
@@ -126,7 +126,7 @@ namespace Apache.Ignite.Core.Impl.AspNet
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
-            return obj is LockInfo && Equals((LockInfo) obj);
+            return obj is SessionStateLockInfo && Equals((SessionStateLockInfo) obj);
         }
 
         /// <summary>
@@ -150,7 +150,7 @@ namespace Apache.Ignite.Core.Impl.AspNet
         /// <summary>
         /// Implements the operator ==.
         /// </summary>
-        public static bool operator ==(LockInfo left, LockInfo right)
+        public static bool operator ==(SessionStateLockInfo left, SessionStateLockInfo right)
         {
             return left.Equals(right);
         }
@@ -158,7 +158,7 @@ namespace Apache.Ignite.Core.Impl.AspNet
         /// <summary>
         /// Implements the operator !=.
         /// </summary>
-        public static bool operator !=(LockInfo left, LockInfo right)
+        public static bool operator !=(SessionStateLockInfo left, SessionStateLockInfo right)
         {
             return !left.Equals(right);
         }

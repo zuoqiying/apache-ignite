@@ -40,7 +40,7 @@ public class UnlockEntryProcessor implements CacheEntryProcessor<String, Session
         assert data != null;
         assert data.lockNodeId() != null;
 
-        LockInfo lockInfo = (LockInfo)args[0];
+        SessionStateLockInfo lockInfo = (SessionStateLockInfo)args[0];
 
         if (!data.lockNodeId().equals(lockInfo.nodeId()))
             throw new IllegalStateException("Can not unlock session data: lock node id check failed.");

@@ -398,9 +398,9 @@ namespace Apache.Ignite.AspNet
         /// <summary>
         /// Gets the lock info.
         /// </summary>
-        private LockInfo GetLockInfo(long lockId)
+        private SessionStateLockInfo GetLockInfo(long lockId)
         {
-            return new LockInfo(lockId, Cache.Ignite.GetCluster().GetLocalNode().Id, DateTime.UtcNow);
+            return new SessionStateLockInfo(lockId, Cache.Ignite.GetCluster().GetLocalNode().Id, DateTime.UtcNow);
         }
 
         /// <summary>

@@ -86,7 +86,7 @@ public class SessionStateData implements Binarylizable {
      *
      * @param lock Lock.
      */
-    public void lock(LockInfo lock) {
+    public void lock(SessionStateLockInfo lock) {
         assert !isLocked();
 
         lockId = lock.id();

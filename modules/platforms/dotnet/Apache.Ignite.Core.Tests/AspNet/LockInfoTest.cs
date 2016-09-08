@@ -22,7 +22,7 @@ namespace Apache.Ignite.Core.Tests.AspNet
     using NUnit.Framework;
 
     /// <summary>
-    /// Tests for <see cref="LockInfo"/>.
+    /// Tests for <see cref="SessionStateLockInfo"/>.
     /// </summary>
     public class LockInfoTest
     {
@@ -32,9 +32,9 @@ namespace Apache.Ignite.Core.Tests.AspNet
         [Test]
         public void TestEquality()
         {
-            var lock1 = new LockInfo(1, Guid.NewGuid(), DateTime.UtcNow);
-            var lock2 = new LockInfo(2, Guid.NewGuid(), DateTime.UtcNow.AddDays(1));
-            var lock3 = new LockInfo(lock1.LockId, lock1.LockNodeId, lock1.LockTime);
+            var lock1 = new SessionStateLockInfo(1, Guid.NewGuid(), DateTime.UtcNow);
+            var lock2 = new SessionStateLockInfo(2, Guid.NewGuid(), DateTime.UtcNow.AddDays(1));
+            var lock3 = new SessionStateLockInfo(lock1.LockId, lock1.LockNodeId, lock1.LockTime);
 
             Assert.AreEqual(lock1, lock3);
             Assert.AreEqual(lock1.GetHashCode(), lock3.GetHashCode());
@@ -55,7 +55,7 @@ namespace Apache.Ignite.Core.Tests.AspNet
         [Test]
         public void TestSerialization()
         {
-            var lock1 = new LockInfo(2, Guid.NewGuid(), DateTime.UtcNow.AddDays(1));
+            var lock1 = new SessionStateLockInfo(2, Guid.NewGuid(), DateTime.UtcNow.AddDays(1));
             var lock2 = TestUtils.SerializeDeserialize(lock1);
 
             Assert.AreEqual(lock1, lock2);
