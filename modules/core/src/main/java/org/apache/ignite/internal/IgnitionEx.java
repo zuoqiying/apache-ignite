@@ -79,7 +79,6 @@ import org.apache.ignite.logger.java.JavaLogger;
 import org.apache.ignite.marshaller.Marshaller;
 import org.apache.ignite.marshaller.jdk.JdkMarshaller;
 import org.apache.ignite.mxbean.IgnitionMXBean;
-import org.apache.ignite.platform.dotnet.PlatformDotNetConfiguration;
 import org.apache.ignite.plugin.segmentation.SegmentationPolicy;
 import org.apache.ignite.resources.SpringApplicationContextResource;
 import org.apache.ignite.spi.IgniteSpi;
