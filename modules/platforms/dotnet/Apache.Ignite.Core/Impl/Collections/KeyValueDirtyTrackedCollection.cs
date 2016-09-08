@@ -70,25 +70,18 @@ namespace Apache.Ignite.Core.Impl.Collections
             {
                 var key = reader.ReadString();
 
-                var entry = new Entry(key, true, reader.Marshaller, reader.ReadByteArray());
+                var valBytes = reader.ReadByteArray();
 
-                _dict[key] = _list.Count;
-
-                _list.Add(entry);
-            }
-
-            if (_isDiff)
-            {
-                // Read removed keys.
-                count = reader.ReadInt();
-
-                if (count > 0)
+                if (valBytes != null)
                 {
-                    _removedKeys = new HashSet<string>();
+                    var entry = new Entry(key, true, reader.Marshaller, valBytes);
 
-                    for (var i = 0; i < count; i++)
-                        _removedKeys.Add(reader.ReadString());
+                    _dict[key] = _list.Count;
+
+                    _list.Add(entry);
                 }
+                else
+                    AddRemovedKey(key);
             }
 
             _isNew = false;
@@ -221,6 +214,24 @@ namespace Apache.Ignite.Core.Impl.Collections
 
                 raw.WriteInt(count);  // reserve count
 
+                // Write removed keys as [key + null].
+                if (_removedKeys != null)
+                {
+                    // Filter out existing keys.
+                    var removed = new HashSet<string>(_removedKeys);
+
+                    foreach (var entry in _list)
+                        removed.Remove(entry.Key);
+
+                    foreach (var removedKey in removed)
+                    {
+                        raw.WriteString(removedKey);
+                        raw.WriteByteArray(null);
+
+                        count++;
+                    }
+                }
+
                 // Write dirty items.
                 foreach (var entry in _list)
                 {
@@ -235,31 +246,13 @@ namespace Apache.Ignite.Core.Impl.Collections
                     count++;
                 }
 
-                // Write dirty item count.
+                // Write item count.
                 var pos = stream.Position;
 
                 stream.Seek(countPos, SeekOrigin.Begin);
                 stream.WriteInt(count);
                 stream.Seek(pos, SeekOrigin.Begin);
 
-                // Write removed keys.
-                if (_removedKeys != null)
-                {
-                    // Filter out existing keys.
-                    var removed = new HashSet<string>(_removedKeys);
-
-                    foreach (var entry in _list)
-                        removed.Remove(entry.Key);
-
-                    raw.WriteInt(removed.Count);
-
-                    foreach (var removedKey in removed)
-                        raw.WriteString(removedKey);
-                }
-                else
-                {
-                    raw.WriteInt(0);
-                }
             }
         }
 

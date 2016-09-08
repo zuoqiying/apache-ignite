@@ -25,8 +25,6 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -38,8 +36,8 @@ public class KeyValueDirtyTrackedCollection implements Binarylizable {
     /** Entry order is important. */
     private SortedMap<String, byte[]> entries;
 
-    /** */
-    private List<String> removedKeys;
+    /** Whether this is a diff. */
+    private boolean isDiff;
 
     /**
      * Apply changes from another instance.
@@ -49,26 +47,27 @@ public class KeyValueDirtyTrackedCollection implements Binarylizable {
     public void applyChanges(KeyValueDirtyTrackedCollection other) {
         assert other != null;
 
-        if (other.removedKeys != null) {
-            for (String key : other.removedKeys)
-                entries.remove(key);
-        }
-        else {
+        if (!other.isDiff) {
             // Not a diff: remove all
             entries.clear();
         }
 
-        for (Map.Entry<String, byte[]> e : other.entries.entrySet())
-            entries.put(e.getKey(), e.getValue());
+        for (Map.Entry<String, byte[]> e : other.entries.entrySet()) {
+            String key = e.getKey();
+            byte[] value = e.getValue();
+
+            if (value != null)
+                entries.put(key, value);
+            else
+                entries.remove(key);   // Null value indicates removed key.
+        }
     }
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
-        assert removedKeys == null;  // Can't write diff.
-
         BinaryRawWriter raw = writer.rawWriter();
 
-        raw.writeBoolean(true);  // Always full mode.
+        raw.writeBoolean(!isDiff);
 
         raw.writeInt(entries.size());
 
@@ -82,7 +81,7 @@ public class KeyValueDirtyTrackedCollection implements Binarylizable {
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
         BinaryRawReader raw = reader.rawReader();
 
-        boolean isDiff = !raw.readBoolean();
+        isDiff = !raw.readBoolean();
 
         int count = raw.readInt();
 
@@ -90,15 +89,6 @@ public class KeyValueDirtyTrackedCollection implements Binarylizable {
 
         for (int i = 0; i < count; i++)
             entries.put(raw.readString(), raw.readByteArray());
-
-        if (isDiff) {
-            count = raw.readInt();
-
-            removedKeys = new ArrayList<>(count);
-
-            for (int i = 0; i < count; i++)
-                removedKeys.add(raw.readString());
-        }
     }
 
     /** {@inheritDoc} */
