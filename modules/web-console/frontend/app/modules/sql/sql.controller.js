@@ -1195,7 +1195,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             _showLoading(paragraph, false);
 
-            if (_.isNil(paragraph.result) || paragraph.scanExplain())
+            if (_.isNil(paragraph.result) || 'none' === paragraph.result || paragraph.scanExplain())
                 paragraph.result = 'table';
             else if (paragraph.chart()) {
                 let resetCharts = queryChanged;
