@@ -187,7 +187,12 @@ public class PlatformNoopProcessor extends GridProcessorAdapter implements Platf
     }
 
     /** {@inheritDoc} */
-    @Override public PlatformUtilityCache utilityCache() {
-        return null;
+    @Override public void onUtilityCacheStarted(GridKernalContext ctx) {
+        // No-op.
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onContinuousProcessorStarted(GridKernalContext ctx) {
+        // No-op.
     }
 }

@@ -20,6 +20,7 @@ package org.apache.ignite.internal.processors.platform;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.processors.GridProcessor;
 import org.apache.ignite.internal.processors.platform.cache.store.PlatformCacheStore;
 import org.jetbrains.annotations.Nullable;
@@ -277,9 +278,16 @@ public interface PlatformProcessor extends GridProcessor {
     public void loggerLog(int level, String message, String category, String errorInfo);
 
     /**
-     * Gets the platform utility cache.
+     * Called when platform utility cache is started.
      *
-     * @return Platform utility cache.
+     * @param ctx Kernal context.
      */
-    public PlatformUtilityCache utilityCache();
+    public void onUtilityCacheStarted(GridKernalContext ctx);
+
+    /**
+     * Called when continuous processor is started.
+     *
+     * @param ctx Kernal context.
+     */
+    public void onContinuousProcessorStarted(GridKernalContext ctx);
 }

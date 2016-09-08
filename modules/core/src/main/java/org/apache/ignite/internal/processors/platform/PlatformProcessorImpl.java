@@ -88,9 +88,6 @@ public class PlatformProcessorImpl extends GridProcessorAdapter implements Platf
     /** Interop configuration. */
     private final PlatformConfigurationEx interopCfg;
 
-    /** Platform utility cache. */
-    private final PlatformUtilityCache utilityCache;
-
     /** Whether processor is started. */
     private boolean started;
 
@@ -122,8 +119,6 @@ public class PlatformProcessorImpl extends GridProcessorAdapter implements Platf
         }
 
         platformCtx = new PlatformContextImpl(ctx, interopCfg.gate(), interopCfg.memory(), interopCfg.platform());
-
-        utilityCache = new PlatformUtilityCache();
 
         if (interopCfg.logger() != null)
             interopCfg.logger().setContext(platformCtx);
@@ -164,8 +159,6 @@ public class PlatformProcessorImpl extends GridProcessorAdapter implements Platf
 
     /** {@inheritDoc} */
     @Override public void onKernalStop(boolean cancel) {
-        utilityCache.onKernalStop();
-
         startLatch.countDown();
     }
 
@@ -479,6 +472,16 @@ public class PlatformProcessorImpl extends GridProcessorAdapter implements Platf
         }
     }
 
+    /** {@inheritDoc} */
+    @Override public void onUtilityCacheStarted(GridKernalContext ctx) {
+        // No-op.
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onContinuousProcessorStarted(GridKernalContext ctx) {
+        // No-op.
+    }
+
     /**
      * Gets the near cache config.
      *
@@ -490,11 +493,6 @@ public class PlatformProcessorImpl extends GridProcessorAdapter implements Platf
 
         BinaryRawReaderEx reader = platformCtx.reader(platformCtx.memory().get(memPtr));
         return PlatformConfigurationUtils.readNearConfiguration(reader);
-    }
-
-    /** {@inheritDoc} */
-    @Override public PlatformUtilityCache utilityCache() {
-        return utilityCache;
     }
 
     /**
