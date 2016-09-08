@@ -91,6 +91,7 @@
     <Compile Include="Discovery\Tcp\Package-Info.cs" />
     <Compile Include="Discovery\Tcp\Static\Package-Info.cs" />
     <Compile Include="Impl\AspNet\SessionStateData.cs" />
+    <Compile Include="Impl\AspNet\SessionStateLockEntryResult.cs" />
     <Compile Include="Impl\AspNet\SessionStateLockInfo.cs" />
     <Compile Include="Impl\Binary\BinaryReflectiveSerializerInternal.cs" />
     <Compile Include="Impl\Binary\IBinarySerializerInternal.cs" />

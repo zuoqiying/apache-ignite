@@ -24,7 +24,7 @@ namespace Apache.Ignite.Core.Tests.AspNet
     /// <summary>
     /// Tests for <see cref="SessionStateLockInfo"/>.
     /// </summary>
-    public class LockInfoTest
+    public class SessionStateLockInfoTest
     {
         /// <summary>
         /// Tests the equality.

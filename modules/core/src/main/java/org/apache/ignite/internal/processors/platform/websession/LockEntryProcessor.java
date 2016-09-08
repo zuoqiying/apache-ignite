@@ -44,7 +44,7 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
         assert data != null;
 
         if (data.isLocked())
-            return new LockEntryResult(false, null, data.lockTime());
+            return new SessionStateLockEntryResult(false, null, data.lockTime());
 
         SessionStateLockInfo lockInfo = (SessionStateLockInfo)args[0];
 
@@ -54,7 +54,7 @@ public class LockEntryProcessor implements CacheEntryProcessor<String, SessionSt
         // Apply.
         entry.setValue(data);
 
-        return new LockEntryResult(true, data, null);
+        return new SessionStateLockEntryResult(true, data, null);
     }
 
     /** {@inheritDoc */
