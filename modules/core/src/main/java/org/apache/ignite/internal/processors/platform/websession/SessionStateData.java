@@ -25,6 +25,7 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Timestamp;
 import java.util.UUID;
@@ -89,7 +90,7 @@ public class SessionStateData implements Binarylizable {
     public SessionStateData lock(SessionStateLockInfo lock) {
         assert !isLocked();
 
-        SessionStateData res = getCopy();
+        SessionStateData res = copyWithoutLockInfo();
 
         res.lockId = lock.id();
         res.lockNodeId = lock.nodeId();
@@ -99,26 +100,40 @@ public class SessionStateData implements Binarylizable {
     }
 
     /**
-     * Clear lock info.
+     * Update session state and release the lock.
+     *
+     * @param update Updated data.
+     * @return Result.
      */
-    public SessionStateData unlock() {
+    public SessionStateData updateAndUnlock(@Nullable SessionStateData update) {
         assert isLocked();
 
-        return getCopy();
+        SessionStateData res = copyWithoutLockInfo();
+
+        if (update != null) {
+            assert items != null;
+
+            res.timeout = update.timeout;
+            res.staticObjects = update.staticObjects;
+            res.items.applyChanges(update.items);
+        }
+
+        return res;
     }
 
     /**
-     * Apply changes from another instance.
+     * Gets a copy of this instance with non-lock properties set.
      *
-     * @param other Data.
+     * @return Copied state data.
      */
-    public void applyChanges(SessionStateData other) {
-        assert other != null;
-        assert items != null;
+    private SessionStateData copyWithoutLockInfo() {
+        SessionStateData res = new SessionStateData();
 
-        timeout = other.timeout;
-        staticObjects = other.staticObjects;
-        items.applyChanges(other.items);
+        res.staticObjects = staticObjects;
+        res.items = items;
+        res.timeout = timeout;
+
+        return res;
     }
 
     /** {@inheritDoc} */
@@ -148,17 +163,5 @@ public class SessionStateData implements Binarylizable {
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(SessionStateData.class, this);
-    }
-
-    /**
-     * Gets a copy of this instance with non-lock properties set.
-     */
-    private SessionStateData getCopy() {
-        SessionStateData res = new SessionStateData();
-
-        res.staticObjects = staticObjects;
-        res.items = items;
-        res.timeout = timeout;
-        return res;
     }
 }
