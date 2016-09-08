@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.platform.cache;
 
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.binary.BinaryRawReader;
 import org.apache.ignite.cache.CacheEntryProcessor;
 import org.apache.ignite.cache.CacheMetrics;
 import org.apache.ignite.cache.CachePartialUpdateException;
@@ -49,11 +50,6 @@ import org.apache.ignite.internal.processors.platform.utils.PlatformFutureUtils;
 import org.apache.ignite.internal.processors.platform.utils.PlatformListenable;
 import org.apache.ignite.internal.processors.platform.utils.PlatformUtils;
 import org.apache.ignite.internal.processors.platform.utils.PlatformWriterClosure;
-import org.apache.ignite.internal.processors.platform.websession.LockEntryProcessor;
-import org.apache.ignite.internal.processors.platform.websession.SessionStateLockInfo;
-import org.apache.ignite.internal.processors.platform.websession.SessionStateData;
-import org.apache.ignite.internal.processors.platform.websession.SetAndUnlockEntryProcessor;
-import org.apache.ignite.internal.processors.platform.websession.UnlockEntryProcessor;
 import org.apache.ignite.internal.util.GridConcurrentFactory;
 import org.apache.ignite.internal.util.future.IgniteFutureImpl;
 import org.apache.ignite.internal.util.typedef.C1;
@@ -63,6 +59,7 @@ import org.apache.ignite.lang.IgniteFuture;
 import org.jetbrains.annotations.Nullable;
 
 import javax.cache.Cache;
+import javax.cache.CacheException;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CompletionListener;
@@ -201,15 +198,6 @@ public class PlatformCache extends PlatformAbstractTarget {
     /** */
     public static final int OP_INVOKE_INTERNAL = 41;
 
-    /** */
-    public static final int OP_INVOKE_INTERNAL_SESSION_LOCK = 1;
-
-    /** */
-    public static final int OP_INVOKE_INTERNAL_SESSION_UNLOCK = 2;
-
-    /** */
-    public static final int OP_INVOKE_INTERNAL_SESSION_SET_AND_UNLOCK = 3;
-
     /** Underlying JCache in binary mode. */
     private final IgniteCacheProxy cache;
 
@@ -220,13 +208,13 @@ public class PlatformCache extends PlatformAbstractTarget {
     private final boolean keepBinary;
 
     /** */
-    private static final GetAllWriter WRITER_GET_ALL = new GetAllWriter();
+    private static final PlatformFutureUtils.Writer WRITER_GET_ALL = new GetAllWriter();
 
     /** */
-    private static final EntryProcessorInvokeWriter WRITER_INVOKE = new EntryProcessorInvokeWriter();
+    private static final PlatformFutureUtils.Writer WRITER_INVOKE = new EntryProcessorInvokeWriter();
 
     /** */
-    private static final EntryProcessorInvokeAllWriter WRITER_INVOKE_ALL = new EntryProcessorInvokeAllWriter();
+    private static final PlatformFutureUtils.Writer WRITER_INVOKE_ALL = new EntryProcessorInvokeAllWriter();
 
     /** Map with currently active locks. */
     private final ConcurrentMap<Long, Lock> lockMap = GridConcurrentFactory.newMap();
@@ -297,7 +285,7 @@ public class PlatformCache extends PlatformAbstractTarget {
         if (cache.isAsync())
             return this;
 
-        return new PlatformCache(platformCtx, (IgniteCache)cacheRaw.withAsync(), keepBinary);
+        return new PlatformCache(platformCtx, cacheRaw.withAsync(), keepBinary);
     }
 
     /**
@@ -469,38 +457,8 @@ public class PlatformCache extends PlatformAbstractTarget {
                     });
                 }
 
-                case OP_INVOKE_INTERNAL: {
-                    int opCode = reader.readInt();
-
-                    String key = reader.readString();
-
-                    switch (opCode) {
-                        case OP_INVOKE_INTERNAL_SESSION_LOCK: {
-                            SessionStateLockInfo lockInfo = reader.readObject();
-
-                            Object res = cacheRaw.invoke(key, new LockEntryProcessor(), lockInfo);
-
-                            return writeResult(mem, res);
-                        }
-
-                        case OP_INVOKE_INTERNAL_SESSION_UNLOCK: {
-                            SessionStateLockInfo lockInfo = reader.readObject();
-
-                            cacheRaw.invoke(key, new UnlockEntryProcessor(), lockInfo);
-
-                            return FALSE;
-                        }
-
-                        case OP_INVOKE_INTERNAL_SESSION_SET_AND_UNLOCK:
-                            SessionStateData data = reader.readObject();
-
-                            cacheRaw.invoke(key, new SetAndUnlockEntryProcessor(), data);
-
-                            return FALSE;
-                    }
-
-                    return writeResult(mem, null);
-                }
+                case OP_INVOKE_INTERNAL:
+                    return writeResult(mem, PlatformCacheInvoker.invoke(reader, cacheRaw));
 
                 case OP_LOCK:
                     return registerLock(cache.lock(reader.readObjectDetached()));
@@ -720,7 +678,7 @@ public class PlatformCache extends PlatformAbstractTarget {
             return new PlatformCachePartialUpdateException((CachePartialUpdateCheckedException)e, platformCtx, keepBinary);
 
         if (e.getCause() instanceof EntryProcessorException)
-            return (EntryProcessorException) e.getCause();
+            return (Exception)e.getCause();
 
         return super.convertException(e);
     }
@@ -798,7 +756,7 @@ public class PlatformCache extends PlatformAbstractTarget {
      * Clears the contents of the cache, without notifying listeners or CacheWriters.
      *
      * @throws IllegalStateException if the cache is closed.
-     * @throws javax.cache.CacheException if there is a problem during the clear
+     * @throws CacheException if there is a problem during the clear
      */
     public void clear() throws IgniteCheckedException {
         cache.clear();
@@ -807,7 +765,7 @@ public class PlatformCache extends PlatformAbstractTarget {
     /**
      * Removes all entries.
      *
-     * @throws org.apache.ignite.IgniteCheckedException In case of error.
+     * @throws IgniteCheckedException In case of error.
      */
     public void removeAll() throws IgniteCheckedException {
         cache.removeAll();
@@ -1024,7 +982,7 @@ public class PlatformCache extends PlatformAbstractTarget {
     /**
      * Reads text query.
      */
-    private Query readTextQuery(BinaryRawReaderEx reader) {
+    private Query readTextQuery(BinaryRawReader reader) {
         boolean loc = reader.readBoolean();
         String txt = reader.readString();
         String typ = reader.readString();
@@ -1143,7 +1101,7 @@ public class PlatformCache extends PlatformAbstractTarget {
          * @param update Expiry for update.
          * @param access Expiry for access.
          */
-        public InteropExpiryPolicy(long create, long update, long access) {
+        private InteropExpiryPolicy(long create, long update, long access) {
             this.create = convert(create);
             this.update = convert(update);
             this.access = convert(access);
