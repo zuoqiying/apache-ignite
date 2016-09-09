@@ -57,6 +57,10 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'cache', cache, DFLT_CACHE);
         }
 
+        static domainConfigurationBean(domain) {
+            return new Bean('', 'cache', domain);
+        }
+
         /**
          * Function to generate ignite configuration.
          *
@@ -951,8 +955,109 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
+        // Return JDBC dialect full class name for specified database.
+        static _jdbcDialectClassName(db) {
+            const dialectClsName = JDBC_DIALECTS[db];
+
+            return dialectClsName ? dialectClsName : 'Unknown database: ' + (db || 'Choose JDBC dialect');
+        }
+
         // Generate cache store group.
         static cacheStore(cache, domains, cfg = this.cacheConfigurationBean(cache)) {
+            if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind) {
+                const factoryKind = cache.cacheStoreFactory.kind;
+
+                const storeFactory = cache.cacheStoreFactory[factoryKind];
+
+                let bean;
+
+                if (storeFactory) {
+                    if (factoryKind === 'CacheJdbcPojoStoreFactory') {
+                        // TODO IGNITE-2052 implement generation of correct store factory.
+                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory', storeFactory);
+
+                        storeFactory.dialectClass = ConfigurationGenerator._jdbcDialectClassName(storeFactory.dialect);
+
+                        bean.property('dataSourceBean')
+                            .emptyBeanProperty('dialectClass', 'dialect');
+
+                        const domainConfigs = _.filter(domains, function(domain) {
+                            return !_.isNil(domain.databaseTable);
+                        });
+
+                        if (domainConfigs.length > 0) {
+                            const types = [];
+
+                            // TODO IGNITE-2052 In Java generation every type should be generated in separate method.
+                            _.forEach(domainConfigs, function(domain) {
+                                const typeBean = new Bean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
+                                    angular.merge({}, domain, {cacheName: cache.name}))
+                                    .stringProperty('cacheName')
+                                    .property('keyType')
+                                    .property('valueType');
+
+                                ConfigurationGenerator.domainStore(domain, typeBean);
+
+                                types.push(typeBean);
+                            });
+
+                            bean.arrayProperty('types', 'types', types, 'org.apache.ignite.cache.store.jdbc.JdbcType');
+                        }
+                    }
+                    else if (factoryKind === 'CacheJdbcBlobStoreFactory') {
+                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory', 'cacheStoreFactory', storeFactory);
+
+                        if (storeFactory.connectVia === 'DataSource')
+                            bean.property('dataSourceBean');
+                        else {
+                            storeFactory.password = '${ds.' + storeFactory.user + '.password}';
+
+                            cfg.property('connectionUrl')
+                                .property('user')
+                                .property('password');
+                        }
+
+                        bean.property('initSchema')
+                            .stringProperty('createTableQuery')
+                            .stringProperty('loadQuery')
+                            .stringProperty('insertQuery')
+                            .stringProperty('updateQuery')
+                            .stringProperty('deleteQuery');
+                    }
+                    else {
+                        bean = new Bean('org.apache.ignite.cache.store.hibernate.CacheHibernateBlobStoreFactory', 'cacheStoreFactory', storeFactory);
+
+                        // TODO IGNITE-2052 Should be translated to Properties variable.
+                        bean.mapProperty('hibernateProperties');
+                    }
+
+                    // TODO IGNITE-2052 Common generation of datasources.
+                    // if (storeFactory.dataSourceBean && (storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect)) {
+                    //    if (!_.find(res.datasources, { dataSourceBean: storeFactory.dataSourceBean})) {
+                    //        res.datasources.push({
+                    //            dataSourceBean: storeFactory.dataSourceBean,
+                    //            dialect: storeFactory.dialect
+                    //        });
+                    //    }
+                    // }
+
+                    if (bean)
+                        cfg.beanProperty('cacheStoreFactory', bean);
+                }
+            }
+
+            cfg.property('storeKeepBinary')
+                .property('loadPreviousValue')
+                .property('readThrough')
+                .property('writeThrough');
+
+            if (cache.writeBehindEnabled) {
+                cfg.property('writeBehindEnabled')
+                    .property('writeBehindBatchSize')
+                    .property('writeBehindFlushSize')
+                    .property('writeBehindFlushFrequency')
+                    .property('writeBehindFlushThreadCount');
+            }
 
             return cfg;
         }
@@ -969,24 +1074,220 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate cache node filter group.
         static cacheNodeFilter(cache, igfss, cfg = this.cacheConfigurationBean(cache)) {
+            const kind = _.get(cache, 'nodeFilter.kind');
+
+            if (kind && cache.nodeFilter[kind]) {
+                let bean = null;
+
+                switch (kind) {
+                    case 'IGFS':
+                        const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
+
+                        if (foundIgfs) {
+                            bean = new Bean('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate', 'nodeFilter', foundIgfs);
+
+                            // TODO IGNITE-2052 Arguments in Java is not generated.
+                            bean.constructorArgument('name');
+                        }
+
+                        break;
+
+                    case 'OnNodes':
+                        const nodes = cache.nodeFilter.OnNodes.nodeIds;
+
+                        if ($generatorCommon.isDefinedAndNotEmpty(nodes)) {
+                            bean = new Bean('org.apache.ignite.internal.util.lang.GridNodePredicate', 'nodeFilter');
+
+                            // TODO IGNITE-2052 should be array of uuid from nodes array java.util.UUID.fromString("nid")
+                            bean.constructorArgument(nodes, 'java.lang.UUID');
+                        }
+
+                        break;
+
+                    case 'Custom':
+                        bean = new Bean(cache.nodeFilter.Custom.className, 'nodeFilter');
+
+                        break;
+
+                    default:
+                        return cfg;
+                }
+
+                if (bean)
+                    cfg.beanProperty('nodeFilter', bean);
+            }
 
             return cfg;
         }
 
         // Generate cache rebalance group.
         static cacheRebalance(cache, cfg = this.cacheConfigurationBean(cache)) {
+            if (cache.cacheMode !== 'LOCAL') {
+                cfg.enumProperty('rebalanceMode')
+                    .property('rebalanceThreadPoolSize')
+                    .property('rebalanceBatchSize')
+                    .property('rebalanceBatchesPrefetchCount')
+                    .property('rebalanceOrder')
+                    .property('rebalanceDelay')
+                    .property('rebalanceTimeout')
+                    .property('rebalanceThrottle');
+            }
+
+            if (cache.igfsAffinnityGroupSize) {
+                const bean = new Bean('org.apache.ignite.igfs.IgfsGroupDataBlocksKeyMapper', 'affinityMapper', cache);
+
+                bean.constructorArgument('igfsAffinnityGroupSize');
+
+                cfg.beanProperty('affinityMapper', bean);
+            }
 
             return cfg;
         }
 
         // Generate server near cache group.
         static cacheServerNearCache(cache, cfg = this.cacheConfigurationBean(cache)) {
+            if (cache.cacheMode === 'PARTITIONED' && cache.nearCacheEnabled) {
+                const bean = new Bean('org.apache.ignite.configuration.NearCacheConfiguration', 'nearConfiguration',
+                    cache.nearConfiguration, {nearStartSize: 375000});
+
+                bean.property('nearStartSize');
+
+                ConfigurationGenerator.evictionPolicy(cache.nearConfiguration.nearEvictionPolicy, bean, 'nearEvictionPolicy');
+
+                cfg.beanProperty('nearConfiguration', bean);
+            }
 
             return cfg;
         }
 
         // Generate cache statistics group.
         static cacheStatistics(cache, cfg = this.cacheConfigurationBean(cache)) {
+            cfg.property('statisticsEnabled')
+                .property('managementEnabled');
+
+            return cfg;
+        }
+
+        // Generate domain model db fields.
+        static _domainModelDatabaseFields(domain, cfg, fieldProp) {
+            const fields = domain[fieldProp];
+
+            if (fields && fields.length > 0) {
+                const fieldBeans = [];
+
+                _.forEach(fields, function(field) {
+                    const fieldBean = new Bean('org.apache.ignite.cache.store.jdbc.JdbcTypeField', 'typeField', field,
+                        {databaseFieldType: {clsName: 'java.sql.Types'}})
+                        .stringProperty('databaseFieldName')
+                        // TODO IGNITE-2052 There was generation something like <util:constant static-field="java.sql.Types.INTEGER"/>
+                        .enumProperty('databaseFieldType')
+                        .stringProperty('javaFieldName')
+                        // TODO IGNITE-2052 Should be a .class property
+                        .property('javaFieldType');
+
+                    fieldBeans.push(fieldBean);
+                });
+
+                cfg.arrayProperty(fieldProp, fieldProp, fieldBeans, 'org.apache.ignite.cache.store.jdbc.JdbcTypeField');
+            }
+        }
+
+        // Extract domain model metadata location.
+        static _domainQueryMetadata(domain) {
+            return domain.queryMetadata ? domain.queryMetadata : 'Configuration';
+        }
+
+        // Generate domain model for general group.
+        static domainModelGeneral(domain, cfg = this.domainConfigurationBean(domain)) {
+            switch (ConfigurationGenerator._domainQueryMetadata(domain)) {
+                case 'Annotations':
+                    if (!_.isNil(domain.keyType) || !_.isNil(domain.valueType)) {
+                        cfg.arrayProperty('indexedTypes', 'indexedTypes',
+                            // TODO IGNITE-2052 Should be full class name.
+                            [!_.isNil(domain.keyType) ? domain.keyType : '???',
+                                !_.isNil(domain.valueType) ? domain.valueType : '???'],
+                            'java.lang.Class');
+                    }
+
+                    break;
+
+                case 'Configuration':
+                    // TODO IGNITE-2052 Should be full class name.
+                    cfg.stringProperty('keyType')
+                        .stringProperty('valueType');
+
+                    break;
+
+                default:
+            }
+
+            return cfg;
+        }
+
+
+        // Generate domain model query fields.
+        static _domainModelQueryFields(domain, cfg) {
+            const fields = domain.fields;
+
+            if (fields && fields.length > 0)
+                // TODO IGNITE-2052 Differ from required field names.
+                cfg.mapProperty('fields');
+        }
+
+        // Generate domain model query fields.
+        static _domainModelQueryAliases(domain, cfg) {
+            const aliases = domain.aliases;
+
+            if (aliases && aliases.length > 0)
+                // TODO IGNITE-2052 Differ from required field names.
+                cfg.mapProperty('aliases');
+        }
+
+        // Generate domain model indexes.
+        static _domainModelQueryIndexes(domain, cfg) {
+            const indexes = domain.indexes;
+
+            if (indexes && indexes.length > 0) {
+                const indexBeans = [];
+
+                _.forEach(indexes, function(index) {
+                    const bean = new Bean('org.apache.ignite.cache.QueryIndex', 'index', index,
+                        {indexType: {clsName: 'org.apache.ignite.cache.QueryIndexType'}})
+                        .stringProperty('name')
+                        // TODO IGNITE-2052 Enum fields is not generated in array bean.
+                        .enumProperty('indexType');
+
+                    const fields = index.fields;
+
+                    if (fields && fields.length > 0)
+                        // TODO IGNITE-2052 Differ from required field names.
+                        bean.mapProperty('fields');
+
+                    indexBeans.push(bean);
+                });
+
+                cfg.arrayProperty('indexes', 'indexes', indexBeans, 'org.apache.ignite.cache.QueryIndex');
+            }
+        }
+
+        // Generate domain model for query group.
+        static domainModelQuery(domain, cfg = this.domainConfigurationBean(domain)) {
+            if (ConfigurationGenerator._domainQueryMetadata(domain) === 'Configuration') {
+                ConfigurationGenerator._domainModelQueryFields(domain, cfg);
+                ConfigurationGenerator._domainModelQueryAliases(domain, cfg);
+                ConfigurationGenerator._domainModelQueryIndexes(domain, cfg);
+            }
+
+            return cfg;
+        }
+
+        // Generate domain model for store group.
+        static domainStore(domain, cfg = this.domainConfigurationBean(domain)) {
+            cfg.property('databaseSchema')
+                .property('databaseTable');
+
+            ConfigurationGenerator._domainModelDatabaseFields(domain, cfg, 'keyFields');
+            ConfigurationGenerator._domainModelDatabaseFields(domain, cfg, 'valueFields');
 
             return cfg;
         }
