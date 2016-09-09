@@ -35,7 +35,7 @@ mixin ignite-form-field-number(label, model, name, disabled, required, placehold
             data-ignite-form-panel-field=''
         )&attributes(attributes.attributes)
 
-    div
+    .ignite-form-field
         +ignite-form-field__label(label, name, required)
         .ignite-form-field__control
             i.tipField.fa.fa-question-circle(bs-tooltip data-title=tip)
