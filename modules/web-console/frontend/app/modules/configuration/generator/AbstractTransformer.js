@@ -315,4 +315,31 @@ export default class AbstractTransformer {
 
         return sb;
     }
+
+    // Generate domain model for general group.
+    static domainModelGeneral(domain, sb = new StringBuilder()) {
+        const cfg = this.generator.domainModelGeneral(domain);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate domain model for query group.
+    static domainModelQuery(domain, sb = new StringBuilder()) {
+        const cfg = this.generator.domainModelQuery(domain);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate domain model for store group.
+    static domainStore(domain, sb = new StringBuilder()) {
+        const cfg = this.generator.domainStore(domain);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
 }

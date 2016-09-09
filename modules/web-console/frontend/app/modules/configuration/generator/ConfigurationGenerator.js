@@ -309,6 +309,10 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'cache', cache, DEFAULT_CACHE);
         }
 
+        static domainConfigurationBean(domain) {
+            return new Bean('', 'cache', domain);
+        }
+
         /**
          * Function to generate ignite configuration.
          *
@@ -910,7 +914,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Java code generator for cluster's SSL configuration.
-        static clusterSsl = function(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterSsl(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             if (cluster.sslEnabled && _.nonNil(cluster.sslContextFactory)) {
                 const bean = new Bean('org.apache.ignite.ssl.SslContextFactory', 'sslContextFactory',
                     cluster.sslContextFactory);
@@ -942,7 +946,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             }
 
             return cfg;
-        };
+        }
 
         // Generate swap group.
         static clusterSwap(cluster, cfg = this.igniteConfigurationBean(cluster)) {
@@ -1194,11 +1198,11 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Return JDBC dialect full class name for specified database.
-        static _jdbcDialectClassName = function(db) {
+        static _jdbcDialectClassName(db) {
             const dialectClsName = JDBC_DIALECTS[db];
 
             return dialectClsName ? dialectClsName : 'Unknown database: ' + (db || 'Choose JDBC dialect');
-        };
+        }
 
         // Generate cache store group.
         static cacheStore(cache, domains, cfg = this.cacheConfigurationBean(cache)) {
@@ -1407,7 +1411,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate domain model db fields.
-        static _domainModelDatabaseFields = function(domain, cfg, fieldProp) {
+        static _domainModelDatabaseFields(domain, cfg, fieldProp) {
             const fields = domain[fieldProp];
 
             if (fields && fields.length > 0) {
@@ -1428,10 +1432,98 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                 cfg.arrayProperty(fieldProp, fieldProp, fieldBeans, 'org.apache.ignite.cache.store.jdbc.JdbcTypeField');
             }
-        };
+        }
+
+        // Extract domain model metadata location.
+        static _domainQueryMetadata(domain) {
+            return domain.queryMetadata ? domain.queryMetadata : 'Configuration';
+        }
+
+        // Generate domain model for general group.
+        static domainModelGeneral(domain, cfg = this.domainConfigurationBean(domain)) {
+            switch (ConfigurationGenerator._domainQueryMetadata(domain)) {
+                case 'Annotations':
+                    if (!_.isNil(domain.keyType) || !_.isNil(domain.valueType)) {
+                        cfg.arrayProperty('indexedTypes', 'indexedTypes',
+                            // TODO IGNITE-2052 Should be full class name.
+                            [!_.isNil(domain.keyType) ? domain.keyType : '???',
+                                !_.isNil(domain.valueType) ? domain.valueType : '???'],
+                            'java.lang.Class');
+                    }
+
+                    break;
+
+                case 'Configuration':
+                    // TODO IGNITE-2052 Should be full class name.
+                    cfg.stringProperty('keyType')
+                        .stringProperty('valueType');
+
+                    break;
+
+                default:
+            }
+
+            return cfg;
+        }
+
+
+        // Generate domain model query fields.
+        static _domainModelQueryFields(domain, cfg) {
+            const fields = domain.fields;
+
+            if (fields && fields.length > 0)
+                // TODO IGNITE-2052 Differ from required field names.
+                cfg.mapProperty('fields');
+        }
+
+        // Generate domain model query fields.
+        static _domainModelQueryAliases(domain, cfg) {
+            const aliases = domain.aliases;
+
+            if (aliases && aliases.length > 0)
+                // TODO IGNITE-2052 Differ from required field names.
+                cfg.mapProperty('aliases');
+        }
+
+        // Generate domain model indexes.
+        static _domainModelQueryIndexes(domain, cfg) {
+            const indexes = domain.indexes;
+
+            if (indexes && indexes.length > 0) {
+                const indexBeans = [];
+
+                _.forEach(indexes, function(index) {
+                    const bean = new Bean('org.apache.ignite.cache.QueryIndex', 'index', index,
+                        {indexType: {clsName: 'org.apache.ignite.cache.QueryIndexType'}})
+                        .stringProperty('name')
+                        .enumProperty('indexType');
+
+                    const fields = index.fields;
+
+                    if (fields && fields.length > 0)
+                        // TODO IGNITE-2052 Differ from required field names.
+                        bean.mapProperty('fields');
+
+                    indexBeans.push(bean);
+                });
+
+                cfg.arrayProperty('indexes', 'indexes', indexBeans, 'org.apache.ignite.cache.QueryIndex');
+            }
+        }
+
+        // Generate domain model for query group.
+        static domainModelQuery(domain, cfg = this.domainConfigurationBean(domain)) {
+            if (ConfigurationGenerator._domainQueryMetadata(domain) === 'Configuration') {
+                ConfigurationGenerator._domainModelQueryFields(domain, cfg);
+                ConfigurationGenerator._domainModelQueryAliases(domain, cfg);
+                ConfigurationGenerator._domainModelQueryIndexes(domain, cfg);
+            }
+
+            return cfg;
+        }
 
         // Generate domain model for store group.
-        static domainStore = function(domain, cfg = this.cacheConfigurationBean(domain)) {
+        static domainStore(domain, cfg = this.domainConfigurationBean(domain)) {
             cfg.property('databaseSchema')
                 .property('databaseTable');
 
@@ -1439,7 +1531,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             ConfigurationGenerator._domainModelDatabaseFields(domain, cfg, 'valueFields');
 
             return cfg;
-        };
+        }
     }
 
     return ConfigurationGenerator;
