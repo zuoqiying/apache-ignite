@@ -232,7 +232,15 @@ const DEFAULT_CACHE = {
     longQueryWarningTimeout: 3000,
     snapshotableIndex: false,
     sqlEscapeAll: false,
-
+    storeKeepBinary: false,
+    loadPreviousValue: false,
+    readThrough: false,
+    writeThrough: false,
+    writeBehindEnabled: false,
+    writeBehindBatchSize: 512,
+    writeBehindFlushSize: 10240,
+    writeBehindFlushFrequency: 5000,
+    writeBehindFlushThreadCount: 1,
     maxConcurrentAsyncOperations: 500,
     defaultLockTimeout: 0,
     atomicWriteOrderMode: {clsName: 'org.apache.ignite.cache.CacheAtomicWriteOrderMode'},
@@ -252,6 +260,17 @@ const DEFAULT_CACHE = {
 const DEFAULT_EVICTION_POLICY = {
     batchSize: 1,
     maxSize: 100000
+};
+
+// Pairs of supported databases and their JDBC dialects.
+const JDBC_DIALECTS = {
+    Generic: 'org.apache.ignite.cache.store.jdbc.dialect.BasicJdbcDialect',
+    Oracle: 'org.apache.ignite.cache.store.jdbc.dialect.OracleDialect',
+    DB2: 'org.apache.ignite.cache.store.jdbc.dialect.DB2Dialect',
+    SQLServer: 'org.apache.ignite.cache.store.jdbc.dialect.SQLServerDialect',
+    MySQL: 'org.apache.ignite.cache.store.jdbc.dialect.MySQLDialect',
+    PostgreSQL: 'org.apache.ignite.cache.store.jdbc.dialect.BasicJdbcDialect',
+    H2: 'org.apache.ignite.cache.store.jdbc.dialect.H2Dialect'
 };
 
 export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
@@ -1174,8 +1193,109 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
+        // Return JDBC dialect full class name for specified database.
+        static _jdbcDialectClassName = function(db) {
+            const dialectClsName = JDBC_DIALECTS[db];
+
+            return dialectClsName ? dialectClsName : 'Unknown database: ' + (db || 'Choose JDBC dialect');
+        };
+
         // Generate cache store group.
         static cacheStore(cache, domains, cfg = this.cacheConfigurationBean(cache)) {
+            if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind) {
+                const factoryKind = cache.cacheStoreFactory.kind;
+
+                const storeFactory = cache.cacheStoreFactory[factoryKind];
+
+                let bean;
+
+                if (storeFactory) {
+                    if (factoryKind === 'CacheJdbcPojoStoreFactory') {
+                        // TODO IGNITE-2052 implement generation of correct store factory.
+                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory', storeFactory);
+
+                        storeFactory.dialectClass = ConfigurationGenerator._jdbcDialectClassName(storeFactory.dialect);
+
+                        bean.property('dataSourceBean')
+                            .emptyBeanProperty('dialectClass', 'dialect');
+
+                        const domainConfigs = _.filter(domains, function(domain) {
+                            return !_.isNil(domain.databaseTable);
+                        });
+
+                        if (domainConfigs.length > 0) {
+                            const types = [];
+
+                            // TODO IGNITE-2052 In Java generation every type should be generated in separate method.
+                            _.forEach(domainConfigs, function(domain) {
+                                const typeBean = new Bean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
+                                    angular.merge({}, domain, {cacheName: cache.name}))
+                                    .stringProperty('cacheName')
+                                    .property('keyType')
+                                    .property('valueType');
+
+                                ConfigurationGenerator.domainStore(domain, typeBean);
+
+                                types.push(typeBean);
+                            });
+
+                            bean.arrayProperty('types', 'types', types, 'org.apache.ignite.cache.store.jdbc.JdbcType');
+                        }
+                    }
+                    else if (factoryKind === 'CacheJdbcBlobStoreFactory') {
+                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory', 'cacheStoreFactory', storeFactory);
+
+                        if (storeFactory.connectVia === 'DataSource')
+                            bean.property('dataSourceBean');
+                        else {
+                            storeFactory.password = '${ds.' + storeFactory.user + '.password}';
+
+                            cfg.property('connectionUrl')
+                                .property('user')
+                                .property('password');
+                        }
+
+                        bean.property('initSchema')
+                            .stringProperty('createTableQuery')
+                            .stringProperty('loadQuery')
+                            .stringProperty('insertQuery')
+                            .stringProperty('updateQuery')
+                            .stringProperty('deleteQuery');
+                    }
+                    else {
+                        bean = new Bean('org.apache.ignite.cache.store.hibernate.CacheHibernateBlobStoreFactory', 'cacheStoreFactory', storeFactory);
+
+                        // TODO IGNITE-2052 Should be translated to Properties variable.
+                        bean.mapProperty('hibernateProperties');
+                    }
+
+                    // TODO IGNITE-2052 Common generation of datasources.
+                    // if (storeFactory.dataSourceBean && (storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect)) {
+                    //    if (!_.find(res.datasources, { dataSourceBean: storeFactory.dataSourceBean})) {
+                    //        res.datasources.push({
+                    //            dataSourceBean: storeFactory.dataSourceBean,
+                    //            dialect: storeFactory.dialect
+                    //        });
+                    //    }
+                    // }
+
+                    if (bean)
+                        cfg.beanProperty('cacheStoreFactory', bean);
+                }
+            }
+
+            cfg.property('storeKeepBinary')
+                .property('loadPreviousValue')
+                .property('readThrough')
+                .property('writeThrough');
+
+            if (cache.writeBehindEnabled) {
+                cfg.property('writeBehindEnabled')
+                    .property('writeBehindBatchSize')
+                    .property('writeBehindFlushSize')
+                    .property('writeBehindFlushFrequency')
+                    .property('writeBehindFlushThreadCount');
+            }
 
             return cfg;
         }
@@ -1285,6 +1405,41 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
             return cfg;
         }
+
+        // Generate domain model db fields.
+        static _domainModelDatabaseFields = function(domain, cfg, fieldProp) {
+            const fields = domain[fieldProp];
+
+            if (fields && fields.length > 0) {
+                const fieldBeans = [];
+
+                _.forEach(fields, function(field) {
+                    const fieldBean = new Bean('org.apache.ignite.cache.store.jdbc.JdbcTypeField', 'typeField', field,
+                        {databaseFieldType: {clsName: 'java.sql.Types'}})
+                        .stringProperty('databaseFieldName')
+                        // TODO IGNITE-2052 There was generation something like <util:constant static-field="java.sql.Types.INTEGER"/>
+                        .enumProperty('databaseFieldType')
+                        .stringProperty('javaFieldName')
+                        // TODO IGNITE-2052 Should be a .class property
+                        .property('javaFieldType');
+
+                    fieldBeans.push(fieldBean);
+                });
+
+                cfg.arrayProperty(fieldProp, fieldProp, fieldBeans, 'org.apache.ignite.cache.store.jdbc.JdbcTypeField');
+            }
+        };
+
+        // Generate domain model for store group.
+        static domainStore = function(domain, cfg = this.cacheConfigurationBean(domain)) {
+            cfg.property('databaseSchema')
+                .property('databaseTable');
+
+            ConfigurationGenerator._domainModelDatabaseFields(domain, cfg, 'keyFields');
+            ConfigurationGenerator._domainModelDatabaseFields(domain, cfg, 'valueFields');
+
+            return cfg;
+        };
     }
 
     return ConfigurationGenerator;
