@@ -16,7 +16,15 @@
   "longQueryWarningTimeout": 3000,
   "snapshotableIndex": false,
   "sqlEscapeAll": false,
-
+  "storeKeepBinary": false,
+  "loadPreviousValue": false,
+  "readThrough": false,
+  "writeThrough": false,
+  "writeBehindEnabled": false,
+  "writeBehindBatchSize": 512,
+  "writeBehindFlushSize": 10240,
+  "writeBehindFlushFrequency": 5000,
+  "writeBehindFlushThreadCount": 1,
   "maxConcurrentAsyncOperations": 500,
   "defaultLockTimeout": 0,
   "atomicWriteOrderMode": {
@@ -26,6 +34,19 @@
     "clsName": "org.apache.ignite.cache.CacheWriteSynchronizationMode",
     "value": "PRIMARY_SYNC"
   },
+  "rebalanceMode": {
+    "clsName": "org.apache.ignite.cache.CacheRebalanceMode",
+    "value": "ASYNC"
+  },
+  "rebalanceThreadPoolSize": 1,
+  "rebalanceBatchSize": 524288,
+  "rebalanceBatchesPrefetchCount": 2,
+  "rebalanceOrder": 0,
+  "rebalanceDelay": 0,
+  "rebalanceTimeout": 10000,
+  "rebalanceThrottle": 0,
+  "statisticsEnabled": false,
+  "managementEnabled": false,
   "evictionPolicy": {
     "LRU": {
       "batchSize": 1,
