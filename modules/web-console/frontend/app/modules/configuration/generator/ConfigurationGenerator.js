@@ -1496,6 +1496,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     const bean = new Bean('org.apache.ignite.cache.QueryIndex', 'index', index,
                         {indexType: {clsName: 'org.apache.ignite.cache.QueryIndexType'}})
                         .stringProperty('name')
+                        // TODO IGNITE-2052 Enum fields is not generated in array bean.
                         .enumProperty('indexType');
 
                     const fields = index.fields;
