@@ -1,49 +1,92 @@
-.details-row, 
+.details-row,
 .settings-row {
-  .ignite-form-field__label, 
-  .ignite-form-field__control {
-    display: inline-block;
-    vertical-align: middle;
-    float: none;
-  }
+    &_small-label {
+
+        @media (min-width: $screen-xs-min) {
+            .ignite-form-field__label {
+                @include make-xs-column(4);
+            }
+
+            .ignite-form-field__control {
+                @include make-xs-column(8);
+            }
+        }
+
+        @media (min-width: $screen-sm-min) {
+            .ignite-form-field__label {
+                @include make-sm-column(2);
+            }
+
+            .ignite-form-field__control {
+                @include make-sm-column(10);
+            }
+        }
+
+        @media (min-width: $screen-md-min) {
+            .ignite-form-field__label {
+                @include make-md-column(2);
+            }
+
+            .ignite-form-field__control {
+                @include make-md-column(10);
+            }
+        }
+
+        @media (min-width: $screen-lg-min) {
+            .ignite-form-field__label {
+                @include make-lg-column(2);
+            }
+
+            .ignite-form-field__control {
+                @include make-lg-column(10);
+            }
+        }
+    }
+
+    .ignite-form-field__label,
+    .ignite-form-field__control {
+        display: inline-block;
+        vertical-align: middle;
+        float: none;
+    }
 }
 
 @media (min-width: $screen-xs-min) {
-  .ignite-form-field__label {
-    @include make-xs-column(4);
-  }
+    .ignite-form-field__label {
+        @include make-xs-column(4);
+    }
 
-  .ignite-form-field__control {
-    @include make-xs-column(8);
-  }
+    .ignite-form-field__control {
+        @include make-xs-column(8);
+    }
 }
 
 @media (min-width: $screen-sm-min) {
-  .ignite-form-field__label {
-    @include make-sm-column(4);
-  }
+    .ignite-form-field__label {
+        @include make-sm-column(4);
+    }
 
-  .ignite-form-field__control {
-    @include make-sm-column(8);
-  }
+    .ignite-form-field__control {
+        @include make-sm-column(8);
+    }
 }
 
 @media (min-width: $screen-md-min) {
-  .ignite-form-field__label {
-    @include make-md-column(4);
-  }
+    .ignite-form-field__label {
+        @include make-md-column(4);
+    }
 
-  .ignite-form-field__control {
-    @include make-md-column(8);
-  }
+    .ignite-form-field__control {
+        @include make-md-column(8);
+    }
 }
 
 @media (min-width: $screen-lg-min) {
-  .ignite-form-field__label {
-    @include make-lg-column(4);
-  }
+    .ignite-form-field__label {
+        @include make-lg-column(4);
+    }
 
-  .ignite-form-field__control {
-    @include make-lg-column(8);
-  }
+    .ignite-form-field__control {
+        @include make-lg-column(8);
+    }
 }

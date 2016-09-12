@@ -176,6 +176,12 @@ mixin text(lbl, model, name, required, placeholder, tip)
         if  block
             block
 
+//- Mixin for password field.
+mixin password(lbl, model, name, required, placeholder, tip)
+    +ignite-form-field-password(lbl, model, name, false, required, placeholder, tip)
+        if  block
+            block
+
 //- Mixin for text field with enabled condition with options.
 mixin text-options(lbl, model, name, options, enabled, required, placeholder, tip)
     +form-field-datalist(lbl, model, name, '!('+enabled+')', required, placeholder, options, tip)
