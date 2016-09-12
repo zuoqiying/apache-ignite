@@ -47,12 +47,16 @@ export default ['domainsController', [
             return name ? name.replace(/[^A-Za-z_0-9/.]+/g, '_') : 'org';
         };
 
-        $root.$on('user', (event, user) => {
-            if ($scope.ui.packageName)
-                $scope.ui.packageNameUserInput = $scope.ui.packageName;
+        const _packageNameUpdate = (event, user) => {
+            if (_.isNil(user))
+                return;
 
-            $scope.ui.packageName = _toJavaPackage(user.email.replace('@', '.').split('.').reverse().join('.') + '.model');
-        });
+            $scope.ui.packageNameUserInput = _toJavaPackage(user.email.replace('@', '.').split('.').reverse().join('.') + '.model');
+        };
+
+        _packageNameUpdate(null, $root.user);
+
+        $scope.$on('$destroy', $root.$on('user', _packageNameUpdate));
 
         $scope.ui.builtinKeys = true;
         $scope.ui.usePrimitives = true;
@@ -381,8 +385,10 @@ export default ['domainsController', [
         $scope.showImportDomainModal = function() {
             LegacyTable.tableReset();
 
-            FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, function() {
-                if ($scope.ui.inputForm.$dirty)
+            const dirty = $scope.ui.inputForm && $scope.ui.inputForm.$dirty;
+
+            FormUtils.confirmUnsavedChanges(dirty, function() {
+                if (dirty)
                     $scope.backupItem = $scope.selectedItem ? angular.copy($scope.selectedItem) : prepareNewItem();
 
                 const demo = $root.IgniteDemoMode;
@@ -419,7 +425,7 @@ export default ['domainsController', [
                         $scope.ui.selectedJdbcDriverJar = {};
 
                         return IgniteAgentMonitor.drivers()
-                            .then(function(drivers) {
+                            .then((drivers) => {
                                 $scope.ui.packageName = $scope.ui.packageNameUserInput;
 
                                 if (drivers && drivers.length > 0) {
@@ -437,7 +443,7 @@ export default ['domainsController', [
 
                                     $scope.ui.selectedJdbcDriverJar = $scope.jdbcDriverJars[0].value;
 
-                                    FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, () => {
+                                    FormUtils.confirmUnsavedChanges(dirty, () => {
                                         $scope.importDomain.action = 'connect';
                                         $scope.importDomain.tables = [];
 
@@ -726,11 +732,19 @@ export default ['domainsController', [
         }
 
         function _saveDomainModel() {
-            if (LegacyUtils.isEmptyString($scope.ui.packageName))
-                return ErrorPopover.show('domainPackageName', 'Package could not be empty');
+            if (LegacyUtils.isEmptyString($scope.ui.packageName)) {
+                ErrorPopover.show('domainPackageNameInput', 'Package could not be empty');
 
-            if (!LegacyUtils.isValidJavaClass('Package', $scope.ui.packageName, false, 'domainPackageName', true))
+                Focus.move('domainPackageNameInput');
+
                 return false;
+            }
+
+            if (!LegacyUtils.isValidJavaClass('Package', $scope.ui.packageName, false, 'domainPackageNameInput', true)) {
+                Focus.move('domainPackageNameInput');
+
+                return false;
+            }
 
             const batch = [];
             const checkedCaches = [];
@@ -1124,9 +1138,12 @@ export default ['domainsController', [
                 });
 
                 $scope.$watch('backupItem', function(val) {
+                    if (!$scope.ui.inputForm)
+                        return;
+
                     const form = $scope.ui.inputForm;
 
-                    if (form.$pristine || (form.$valid && ModelNormalizer.isEqual(__original_value, val)))
+                    if (form.$valid && ModelNormalizer.isEqual(__original_value, val))
                         form.$setPristine();
                     else
                         form.$setDirty();
@@ -1139,12 +1156,15 @@ export default ['domainsController', [
             .catch(Messages.showError)
             .then(() => {
                 $scope.ui.ready = true;
-                $scope.ui.inputForm.$setPristine();
+                $scope.ui.inputForm && $scope.ui.inputForm.$setPristine();
 
                 Loading.finish('loadingDomainModelsScreen');
             });
 
         const clearFormDefaults = (ngFormCtrl) => {
+            if (!ngFormCtrl)
+                return;
+
             ngFormCtrl.$defaults = {};
 
             _.forOwn(ngFormCtrl, (value, key) => {
@@ -1179,8 +1199,11 @@ export default ['domainsController', [
                     $scope.backupItem = emptyDomain;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
-                $scope.ui.inputForm.$error = {};
-                $scope.ui.inputForm.$setPristine();
+
+                if ($scope.ui.inputForm) {
+                    $scope.ui.inputForm.$error = {};
+                    $scope.ui.inputForm.$setPristine();
+                }
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -1194,7 +1217,7 @@ export default ['domainsController', [
                     $state.go('base.configuration.domains');
             }
 
-            FormUtils.confirmUnsavedChanges($scope.ui.inputForm.$dirty, selectItem);
+            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm && $scope.ui.inputForm.$dirty, selectItem);
         };
 
         // Add new domain model.
@@ -1202,7 +1225,7 @@ export default ['domainsController', [
             if ($scope.tableReset(true)) {
                 $timeout(() => {
                     FormUtils.ensureActivePanel($scope.ui, 'query');
-                    FormUtils.ensureActivePanel($scope.ui, 'general', 'keyType');
+                    FormUtils.ensureActivePanel($scope.ui, 'general', 'keyTypeInput');
                 });
 
                 $scope.selectItem(null, prepareNewItem(cacheId));
@@ -1231,10 +1254,10 @@ export default ['domainsController', [
         function checkStoreConfiguration(item) {
             if (LegacyUtils.domainForStoreConfigured(item)) {
                 if (LegacyUtils.isEmptyString(item.databaseSchema))
-                    return ErrorPopover.show('databaseSchema', 'Database schema should not be empty', $scope.ui, 'store');
+                    return ErrorPopover.show('databaseSchemaInput', 'Database schema should not be empty', $scope.ui, 'store');
 
                 if (LegacyUtils.isEmptyString(item.databaseTable))
-                    return ErrorPopover.show('databaseTable', 'Database table should not be empty', $scope.ui, 'store');
+                    return ErrorPopover.show('databaseTableInput', 'Database table should not be empty', $scope.ui, 'store');
 
                 if (_.isEmpty(item.keyFields))
                     return ErrorPopover.show('keyFields', 'Key fields are not specified', $scope.ui, 'store');
@@ -1345,7 +1368,7 @@ export default ['domainsController', [
         }
 
         function _newNameIsValidJavaClass(newName) {
-            return LegacyUtils.isValidJavaClass('New name for value type', newName, false, 'copy-new-name');
+            return LegacyUtils.isValidJavaClass('New name for value type', newName, false, 'copy-new-nameInput');
         }
 
         // Save domain model with new name.
@@ -1454,7 +1477,7 @@ export default ['domainsController', [
             aliases: {id: 'Alias', idPrefix: 'Value', searchCol: 'alias', valueCol: 'value', dupObjName: 'alias'}
         };
 
-        $scope.tablePairValid = function(item, field, index) {
+        $scope.tablePairValid = function(item, field, index, stopEdit) {
             const pairField = pairFields[field.model];
 
             const pairValue = LegacyTable.tablePairValue(field, index);
@@ -1468,12 +1491,20 @@ export default ['domainsController', [
                     });
 
                     // Found duplicate by key.
-                    if (idx >= 0 && idx !== index)
+                    if (idx >= 0 && idx !== index) {
+                        if (stopEdit)
+                            return false;
+
                         return ErrorPopover.show(LegacyTable.tableFieldId(index, pairField.idPrefix + pairField.id), 'Field with such ' + pairField.dupObjName + ' already exists!', $scope.ui, 'query');
+                    }
                 }
 
-                if (pairField.classValidation && !LegacyUtils.isValidJavaClass(pairField.msg, pairValue.value, true, LegacyTable.tableFieldId(index, 'Value' + pairField.id), false, $scope.ui, 'query'))
+                if (pairField.classValidation && !LegacyUtils.isValidJavaClass(pairField.msg, pairValue.value, true, LegacyTable.tableFieldId(index, 'Value' + pairField.id), false, $scope.ui, 'query')) {
+                    if (stopEdit)
+                        return false;
+
                     return LegacyTable.tableFocusInvalidField(index, 'Value' + pairField.id);
+                }
             }
 
             return true;

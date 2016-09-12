@@ -1009,6 +1009,19 @@ $generatorSpring.clusterTime = function(cluster, res) {
     return res;
 };
 
+// Generate OBC configuration group.
+$generatorSpring.clusterODBC = function(odbc, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    if (odbc.odbcEnabled)
+        $generatorSpring.beanProperty(res, odbc, 'odbcConfiguration', $generatorCommon.ODBC_CONFIGURATION, true);
+
+    res.needEmptyLine = true;
+
+    return res;
+};
+
 // Generate thread pools group.
 $generatorSpring.clusterPools = function(cluster, res) {
     if (!res)
@@ -2002,6 +2015,8 @@ $generatorSpring.clusterConfiguration = function(cluster, clientNearCfg, res) {
     $generatorSpring.clusterFailover(cluster, res);
 
     $generatorSpring.clusterLogger(cluster.logger, res);
+
+    $generatorSpring.clusterODBC(cluster.odbc, res);
 
     $generatorSpring.clusterMarshaller(cluster, res);
 

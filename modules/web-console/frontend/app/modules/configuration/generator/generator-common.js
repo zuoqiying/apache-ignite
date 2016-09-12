@@ -481,6 +481,14 @@ $generatorCommon.IGFS_IPC_CONFIGURATION = {
     }
 };
 
+$generatorCommon.ODBC_CONFIGURATION = {
+    className: 'org.apache.ignite.configuration.OdbcConfiguration',
+    fields: {
+        endpointAddress: {dflt: '0.0.0.0:10800..10810'},
+        maxOpenCursors: {dflt: 128}
+    }
+};
+
 // Check that cache has datasource.
 $generatorCommon.cacheHasDatasource = function(cache) {
     if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind) {

@@ -106,7 +106,7 @@ export default class ErrorPopover {
             this._popover.hide();
 
         if (ui) {
-            this.FormUtils.ensureActivePanel(ui, panelId);
+            this.FormUtils.ensureActivePanel(ui, panelId, id);
 
             this.$timeout(() => this._show(id, message, showTime), ui.isPanelLoaded(panelId) ? 200 : 500);
         }
