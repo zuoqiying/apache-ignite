@@ -91,7 +91,7 @@ export default ['domainsController', [
                     case 'fields':
                     case 'aliases':
                         if (LegacyTable.tablePairSaveVisible(field, index))
-                            return LegacyTable.tablePairSave($scope.tablePairValid, $scope.backupItem, field, index, stopEdit);
+                            return LegacyTable.tablePairSave($scope.tablePairValid, $scope.backupItem, field, index, stopEdit) || stopEdit;
 
                         break;
 
@@ -1265,12 +1265,12 @@ export default ['domainsController', [
                 if (indexes && indexes.length > 0) {
                     if (_.find(indexes, function(index, i) {
                         if (_.isEmpty(index.fields))
-                            return !showPopoverMessage('indexes' + i, 'Index fields are not specified', $scope.ui, 'query');
+                            return !ErrorPopover.show('indexes' + i, 'Index fields are not specified', $scope.ui, 'query');
 
                         if (_.find(index.fields, (field) =>
                             !_.find(item.fields, (configuredField) => configuredField.name === field.name)
                         ))
-                            return !showPopoverMessage('indexes' + i, 'Index contain not configured fields', $scope.ui, 'query');
+                            return !ErrorPopover.show('indexes' + i, 'Index contain not configured fields', $scope.ui, 'query');
                     }))
                         return false;
                 }
@@ -1769,8 +1769,12 @@ export default ['domainsController', [
                 const idx = _.findIndex(fields, (fld) => fld.name === indexItemValue.name);
 
                 // Found duplicate.
-                if (idx >= 0 && idx !== curIdx)
+                if (idx >= 0 && idx !== curIdx) {
+                    if (stopEdit)
+                        return true;
+
                     return ErrorPopover.show(LegacyTable.tableFieldId(curIdx, 'FieldName' + (index.indexType === 'SORTED' ? 'S' : '') + indexIdx + (curIdx >= 0 ? '-' : '')), 'Field with such name already exists in index!', $scope.ui, 'query');
+                }
             }
 
             LegacyTable.tableReset();
