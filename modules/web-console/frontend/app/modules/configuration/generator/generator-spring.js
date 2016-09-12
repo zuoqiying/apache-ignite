@@ -1129,7 +1129,7 @@ $generatorSpring.cacheMemory = function(cache, res) {
 
     res.softEmptyLine();
 
-    $generatorSpring.evictionPolicy(res, cache._evictionPolicy, '_evictionPolicy');
+    $generatorSpring.evictionPolicy(res, cache.evictionPolicy, 'evictionPolicy');
 
     res.softEmptyLine();
 

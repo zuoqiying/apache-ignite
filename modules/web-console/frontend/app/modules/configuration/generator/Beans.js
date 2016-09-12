@@ -184,7 +184,7 @@ export class Bean extends EmptyBean {
 
     /**
      * @param {String} name
-     * @param {Bean|MethodBean} value
+     * @param {EmptyBean|Bean|MethodBean} value
      * @returns {Bean}
      */
     beanProperty(name, value) {

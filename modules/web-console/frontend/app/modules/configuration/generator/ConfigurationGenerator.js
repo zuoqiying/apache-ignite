@@ -18,33 +18,12 @@
 import DFLT_CLUSTER from 'app/data/cluster.json';
 import DFLT_CACHE from 'app/data/cache.json';
 import DFLT_IGFS from 'app/data/igfs.json';
+import DFLT_DIALECTS from 'app/data/dialects.json';
 
 import { EmptyBean, Bean, MethodBean } from './Beans';
 
 export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
     class ConfigurationGenerator {
-        // Generate default data cache for specified igfs instance.
-        static _igfsDataCache(igfs) {
-            return {
-                name: igfs.name + '-data',
-                cacheMode: 'PARTITIONED',
-                atomicityMode: 'TRANSACTIONAL',
-                writeSynchronizationMode: 'FULL_SYNC',
-                backups: 0,
-                igfsAffinnityGroupSize: igfs.affinnityGroupSize || 512
-            };
-        }
-
-        // Generate default meta cache for specified igfs instance.
-        static _igfsMetaCache(igfs) {
-            return {
-                name: igfs.name + '-meta',
-                cacheMode: 'REPLICATED',
-                atomicityMode: 'TRANSACTIONAL',
-                writeSynchronizationMode: 'FULL_SYNC'
-            };
-        }
-
         static igniteConfigurationBean(cluster) {
             return new Bean('org.apache.ignite.configuration.IgniteConfiguration', 'cfg', cluster, DFLT_CLUSTER);
         }
@@ -336,7 +315,6 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         .mapProperty('stealingAttrs', 'stealingAttributes');
 
                     break;
-
                 case 'FifoQueue':
                     colSpi = new Bean('org.apache.ignite.spi.collision.fifoqueue.FifoQueueCollisionSpi',
                         'colSpi', collision.FifoQueue, DFLT_CLUSTER.collision.FifoQueue);
@@ -345,7 +323,6 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         .property('waitingJobsNumber');
 
                     break;
-
                 case 'PriorityQueue':
                     colSpi = new Bean('org.apache.ignite.spi.collision.priorityqueue.PriorityQueueCollisionSpi',
                         'colSpi', collision.PriorityQueue, DFLT_CLUSTER.collision.PriorityQueue);
@@ -359,13 +336,11 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         .property('starvationPreventionEnabled');
 
                     break;
-
                 case 'Custom':
                     colSpi = new Bean(collision.Custom.class,
                         'colSpi', collision.PriorityQueue, DFLT_CLUSTER.collision.PriorityQueue);
 
                     break;
-
                 default:
                     return cfg;
             }
@@ -766,12 +741,13 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate IGFS general group.
         static igfsGeneral(igfs, cfg = this.igfsConfigurationBean(igfs)) {
-            if (_.nonEmpty(igfs.name)) {
-                cfg.property('name')
-                    .virtualProperty('dataCacheName', igfs.name + '-data')
-                    .virtualProperty('metaCacheName', igfs.name + '-meta')
-                    .enumProperty('defaultMode');
-            }
+            if (_.isEmpty(igfs.name))
+                return cfg;
+
+            cfg.property('name')
+                .virtualProperty('dataCacheName', igfs.name + '-data')
+                .virtualProperty('metaCacheName', igfs.name + '-meta')
+                .enumProperty('defaultMode');
 
             return cfg;
         }
@@ -874,17 +850,17 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
             switch (src.kind) {
                 case 'LRU':
-                    bean = new Bean('org.apache.ignite.cache.eviction.lru.LruEvictionPolicy', '_evictionPolicy',
+                    bean = new Bean('org.apache.ignite.cache.eviction.lru.LruEvictionPolicy', 'evictionPlc',
                         src.LRU, dflt.LRU);
 
                     break;
                 case 'FIFO':
-                    bean = new Bean('org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicy', '_evictionPolicy',
+                    bean = new Bean('org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicy', 'evictionPlc',
                         src.FIFO, dflt.FIFO);
 
                     break;
                 case 'SORTED':
-                    bean = new Bean('org.apache.ignite.cache.eviction.sorted.SortedEvictionPolicy', '_evictionPolicy',
+                    bean = new Bean('org.apache.ignite.cache.eviction.sorted.SortedEvictionPolicy', 'evictionPlc',
                         src.SORTED, dflt.SORTED);
 
                     break;
@@ -907,14 +883,14 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                 .enumProperty('cacheMode')
                 .enumProperty('atomicityMode');
 
-            if (cache.cacheMode === 'PARTITIONED' && cache.backups) {
+            if (cfg.valueOf('cacheMode') === 'PARTITIONED' && cfg.valueOf('backups')) {
                 cfg.property('backups')
                     .property('readFromBackup');
             }
 
             cfg.property('copyOnRead');
 
-            if (cache.cacheMode === 'PARTITIONED' && cache.atomicityMode === 'TRANSACTIONAL')
+            if (cfg.valueOf('cacheMode') === 'PARTITIONED' && cfg.valueOf('atomicityMode') === 'TRANSACTIONAL')
                 cfg.property('invalidate');
 
             return cfg;
@@ -922,12 +898,12 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate cache memory group.
         static cacheMemory(cache, cfg = this.cacheConfigurationBean(cache)) {
-            cfg.enumProperty('memoryMode', null, 'ONHEAP_TIERED');
+            cfg.enumProperty('memoryMode');
 
-            if (cache.memoryMode !== 'OFFHEAP_VALUES')
+            if (cfg.valueOf('memoryMode') !== 'OFFHEAP_VALUES')
                 cfg.property('offHeapMaxMemory');
 
-            this._evictionPolicy(cfg, 'evictionPolicy', cache._evictionPolicy, DFLT_CACHE.evictionPolicy);
+            this._evictionPolicy(cfg, 'evictionPolicy', cache.evictionPolicy, DFLT_CACHE.evictionPolicy);
 
             cfg.property('startSize')
                 .property('swapEnabled');
@@ -955,13 +931,6 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
-        // Return JDBC dialect full class name for specified database.
-        static _jdbcDialectClassName(db) {
-            const dialectClsName = JDBC_DIALECTS[db];
-
-            return dialectClsName ? dialectClsName : 'Unknown database: ' + (db || 'Choose JDBC dialect');
-        }
-
         // Generate cache store group.
         static cacheStore(cache, domains, cfg = this.cacheConfigurationBean(cache)) {
             if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind) {
@@ -976,27 +945,26 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         // TODO IGNITE-2052 implement generation of correct store factory.
                         bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory', storeFactory);
 
-                        storeFactory.dialectClass = ConfigurationGenerator._jdbcDialectClassName(storeFactory.dialect);
+                        const dialectClsName = DFLT_DIALECTS[storeFactory.dialect] ||
+                            'Unknown database: ' + (storeFactory.dialect || 'Choose JDBC dialect');
 
                         bean.property('dataSourceBean')
-                            .emptyBeanProperty('dialectClass', 'dialect');
+                            .beanProperty('dialect', new EmptyBean(dialectClsName));
 
-                        const domainConfigs = _.filter(domains, function(domain) {
-                            return !_.isNil(domain.databaseTable);
-                        });
+                        const domainConfigs = _.filter(domains, (domain) => _.nonNil(domain.databaseTable));
 
                         if (domainConfigs.length > 0) {
                             const types = [];
 
                             // TODO IGNITE-2052 In Java generation every type should be generated in separate method.
-                            _.forEach(domainConfigs, function(domain) {
-                                const typeBean = new Bean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
+                            _.forEach(domainConfigs, (domain) => {
+                                const typeBean = new MethodBean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
                                     angular.merge({}, domain, {cacheName: cache.name}))
                                     .stringProperty('cacheName')
                                     .property('keyType')
                                     .property('valueType');
 
-                                ConfigurationGenerator.domainStore(domain, typeBean);
+                                this.domainStore(domain, typeBean);
 
                                 types.push(typeBean);
                             });
@@ -1084,10 +1052,9 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                         const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
 
                         if (foundIgfs) {
-                            bean = new Bean('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate', 'nodeFilter', foundIgfs);
-
                             // TODO IGNITE-2052 Arguments in Java is not generated.
-                            bean.constructorArgument('name');
+                            bean = new Bean('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate', 'nodeFilter', foundIgfs)
+                                .constructorArgument('name');
                         }
 
                         break;
@@ -1152,7 +1119,8 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
                 bean.property('nearStartSize');
 
-                ConfigurationGenerator.evictionPolicy(cache.nearConfiguration.nearEvictionPolicy, bean, 'nearEvictionPolicy');
+                this._evictionPolicy(bean, 'nearEvictionPolicy',
+                    bean.valueOf('nearEvictionPolicy'), DFLT_CACHE.evictionPolicy);
 
                 cfg.beanProperty('nearConfiguration', bean);
             }
@@ -1199,7 +1167,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate domain model for general group.
         static domainModelGeneral(domain, cfg = this.domainConfigurationBean(domain)) {
-            switch (ConfigurationGenerator._domainQueryMetadata(domain)) {
+            switch (this._domainQueryMetadata(domain)) {
                 case 'Annotations':
                     if (!_.isNil(domain.keyType) || !_.isNil(domain.valueType)) {
                         cfg.arrayProperty('indexedTypes', 'indexedTypes',
@@ -1272,10 +1240,10 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate domain model for query group.
         static domainModelQuery(domain, cfg = this.domainConfigurationBean(domain)) {
-            if (ConfigurationGenerator._domainQueryMetadata(domain) === 'Configuration') {
-                ConfigurationGenerator._domainModelQueryFields(domain, cfg);
-                ConfigurationGenerator._domainModelQueryAliases(domain, cfg);
-                ConfigurationGenerator._domainModelQueryIndexes(domain, cfg);
+            if (this._domainQueryMetadata(domain) === 'Configuration') {
+                this._domainModelQueryFields(domain, cfg);
+                this._domainModelQueryAliases(domain, cfg);
+                this._domainModelQueryIndexes(domain, cfg);
             }
 
             return cfg;
@@ -1286,8 +1254,8 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             cfg.property('databaseSchema')
                 .property('databaseTable');
 
-            ConfigurationGenerator._domainModelDatabaseFields(domain, cfg, 'keyFields');
-            ConfigurationGenerator._domainModelDatabaseFields(domain, cfg, 'valueFields');
+            this._domainModelDatabaseFields(domain, cfg, 'keyFields');
+            this._domainModelDatabaseFields(domain, cfg, 'valueFields');
 
             return cfg;
         }
