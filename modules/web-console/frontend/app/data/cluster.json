@@ -84,7 +84,8 @@
       "stealingEnabled": true,
       "stealingAttributes": {
         "keyClsName": "java.util.String",
-        "valClsName": "java.io.Serializable"
+        "valClsName": "java.io.Serializable",
+        "items": []
       }
     },
     "PriorityQueue": {
@@ -178,5 +179,10 @@
     },
     "defaultTxTimeout": 0,
     "pessimisticTxLogLinger": 10000
+  },
+  "attributes": {
+    "keyClsName": "java.util.String",
+    "valClsName": "java.util.String",
+    "items": []
   }
 }

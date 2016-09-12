@@ -148,9 +148,6 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             IGFS: {
                 igfs: {type: ObjectId, ref: 'Igfs'}
             },
-            OnNodes: {
-                nodeIds: [String]
-            },
             Custom: {
                 className: String
             }

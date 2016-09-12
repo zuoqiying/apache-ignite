@@ -42,28 +42,55 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
             sb.startBlock(`<bean class="${bean.clsName}">`);
 
             _.forEach(bean.arguments, (arg) => {
-                switch (arg.type) {
-                    case 'CLASS':
-                    case 'STRING':
-                    case 'PROPERTY':
-                    case 'PATH':
-                        if (_.isNil(arg.value)) {
-                            sb.startBlock('<constructor-arg>');
-                            sb.append('<null/>');
-                            sb.endBlock('</constructor-arg>');
-                        }
-                        else
-                            sb.append(`<constructor-arg value="${arg.value}"/>`);
-
-                        break;
-                    default:
-                        // No-op.
+                if (_.isNil(arg.value)) {
+                    sb.startBlock('<constructor-arg>');
+                    sb.append('<null/>');
+                    sb.endBlock('</constructor-arg>');
                 }
+                else
+                    sb.append(`<constructor-arg value="${arg.value}"/>`);
             });
 
             this._setProperties(sb, bean);
 
             sb.endBlock('</bean>');
+        }
+
+        static _toObject(clsName, ...items) {
+            return _.map(items, (item) => {
+                if (_.isNil(item))
+                    return 'null';
+
+                switch (clsName) {
+                    case 'PropertyChar':
+                        return `\${${item}}`;
+                    case 'Property':
+                        return `props.getProperty("${item}")`;
+
+                    default:
+                        return item;
+                }
+            });
+        }
+
+        static _setCollection(sb, prop, tag) {
+            sb.startBlock(`<property name="${prop.name}">`);
+            sb.startBlock(`<${tag}>`);
+
+            const arrClsName = JavaTypes.shortClassName(prop.typeClsName);
+
+            const isBean = JavaTypes.nonBuiltInClass(arrClsName) && JavaTypes.nonEnum(arrClsName);
+
+            _.forEach(prop.items, (item) => {
+                if (isBean)
+                    this.appendBean(sb, item);
+                else
+                    sb.append(`<value>${item}</value>`);
+            });
+
+            sb.endBlock(`</${tag}>`);
+            sb.endBlock('</property>');
+
         }
 
         /**
@@ -74,15 +101,8 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
          */
         static _setProperties(sb, bean) {
             _.forEach(bean.properties, (prop) => {
-                switch (prop.type) {
-                    case 'PROPERTY':
-                    case 'STRING':
-                    case 'ENUM':
-                    case 'PATH':
-                        sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
-
-                        break;
-                    case 'PASSWORD':
+                switch (JavaTypes.shortClassName(prop.clsName).toUpperCase()) {
+                    case 'PROPERTYCHAR':
                         sb.append(`<property name="${prop.name}" value="\${${prop.value}}"/>`);
 
                         break;
@@ -121,42 +141,12 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
 
                         break;
                     case 'ARRAY':
-                        sb.startBlock(`<property name="${prop.name}">`);
-                        sb.startBlock('<array>');
-
-                        const arrTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
-
-                        _.forEach(prop.items, (item) => {
-                            switch (arrTypeClsName) {
-                                case 'String':
-                                case 'Class':
-                                case 'int':
-                                case 'Integer':
-                                    sb.append(`<value>${item}</value>`);
-
-                                    break;
-                                default:
-                                    this.appendBean(sb, item);
-                            }
-                        });
-
-                        sb.endBlock('</array>');
-                        sb.endBlock('</property>');
+                    case 'VARARG':
+                        this._setCollection(sb, prop, 'array');
 
                         break;
                     case 'COLLECTION':
-                        sb.startBlock(`<property name="${prop.name}">`);
-                        sb.startBlock('<list>');
-
-                        _.forEach(prop.items, (item) => {
-                            if (_.isString(item) || _.isNumber(item))
-                                sb.append(`<value>${item}</value>`);
-                            else
-                                this.appendBean(sb, item);
-                        });
-
-                        sb.endBlock('</list>');
-                        sb.endBlock('</property>');
+                        this._setCollection(sb, prop, 'list');
 
                         break;
                     case 'MAP':
@@ -180,14 +170,18 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                         sb.endBlock('</property>');
 
                         break;
-
-                    default:
+                    case 'BEAN':
                         sb.startBlock(`<property name="${prop.name}">`);
 
                         this.appendBean(sb, prop.value);
 
                         sb.endBlock('</property>');
+
+                        break;
+                    default:
+                        sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
                 }
+
             });
 
             return sb;
@@ -254,11 +248,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
 
         static clusterConfiguration(cluster, clientNearCfg, res) {
             return $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
-        }
-
-        // Generate user attributes group.
-        static clusterUserAttributes(cluster, res) {
-            return $generatorSpring.clusterUserAttributes(cluster, res);
         }
 
         // Generate IGFSs configs.

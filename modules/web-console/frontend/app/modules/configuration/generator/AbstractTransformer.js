@@ -181,6 +181,15 @@ export default class AbstractTransformer {
         return sb;
     }
 
+    // Generate user attributes group.
+    static clusterUserAttributes(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterUserAttributes(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
     // // Generate IGFS general group.
     static igfsGeneral(igfs, sb = new StringBuilder()) {
         const cfg = this.generator.igfsGeneral(igfs);

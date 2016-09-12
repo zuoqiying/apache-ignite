@@ -1,0 +1,15 @@
+{
+  "queryMetadata": "Configuration",
+  "fields": {
+    "keyClsName": "java.util.String",
+    "valClsName": "java.util.String",
+    "valField": "className",
+    "items": []
+  },
+  "aliases": {
+    "keyClsName": "java.util.String",
+    "valClsName": "java.util.String",
+    "valField": "alias",
+    "items": []
+  }
+}

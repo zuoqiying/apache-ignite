@@ -20,12 +20,36 @@ import _ from 'lodash';
 // Java built-in class names.
 import JAVA_CLASSES from '../data/java-classes.json';
 
+import DFLT_CLUSTER from 'app/data/cluster.json';
+import DFLT_CACHE from 'app/data/cache.json';
+import DFLT_IGFS from 'app/data/igfs.json';
+
 // Java build-in primitive.
 import JAVA_PRIMITIVES from '../data/java-primitives.json';
 
 import JAVA_KEYWORDS from '../data/java-keywords.json';
 
 export default class JavaTypes {
+    constructor() {
+        this.enumClasses = _.uniq(this._enumClassesAcc(_.merge(DFLT_CLUSTER, DFLT_CACHE, DFLT_IGFS), []));
+        this.shortEnumClasses = _.map(this.enumClasses, (cls) => this.shortClassName(cls));
+    }
+
+    _enumClassesAcc(obj, res) {
+        return _.reduce(obj, (acc, val, key) => {
+            if (key === 'clsName')
+                acc.push(val);
+            else if (_.isObject(val))
+                this._enumClassesAcc(val, acc);
+
+            return acc;
+        }, res);
+    }
+
+    nonEnum(shortClsName) {
+        return !_.includes(this.shortEnumClasses, shortClsName) && !_.includes(this.enumClasses, shortClsName);
+    }
+
     /**
      * @param {String} clsName Class name to check.
      * @returns boolean 'true' if given class name non a Java built-in type.

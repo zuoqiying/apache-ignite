@@ -18,26 +18,10 @@
 import _ from 'lodash';
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
-import { MethodBean } from './Beans';
 
 import $generatorJava from './generator-java';
 
-import DFLT_CLUSTER from 'app/data/cluster.json';
-import DFLT_CACHE from 'app/data/cache.json';
-import DFLT_IGFS from 'app/data/igfs.json';
-
 export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'ConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
-    const enumClassesAcc = (obj, res) => _.reduce(obj, (acc, val, key) => {
-        if (key === 'clsName')
-            acc.push(JavaTypes.shortClassName(val));
-        else if (_.isObject(val))
-            enumClassesAcc(val, acc);
-
-        return acc;
-    }, res);
-
-    const enumClasses = _.uniq(enumClassesAcc(_.merge(DFLT_CLUSTER, DFLT_CACHE, DFLT_IGFS), []));
-
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
 
@@ -63,20 +47,9 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                 return `new ${shortClsName}()`;
 
             const args = _.map(bean.arguments, (arg) => {
-                if (_.isNil(arg.value))
-                    return 'null';
+                const shortArgClsName = JavaTypes.shortClassName(arg.clsName);
 
-                switch (arg.type) {
-                    case 'PROPERTY':
-                        return arg.value;
-                    case 'STRING':
-                        return `"${arg.value}"`;
-                    case 'PATH':
-                        return `"${arg.value.replace(/\\/g, '\\\\')}"`;
-                    case 'CLASS':
-                        return `${JavaTypes.shortClassName(arg.value)}.class`;
-                    default:
-                }
+                return this._toObject(shortArgClsName, arg.value);
             });
 
             return `new ${shortClsName}(${args.join(', ')})`;
@@ -118,28 +91,76 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
         }
 
         static _isBean(clsName) {
-            return JavaTypes.nonBuiltInClass(clsName) && !_.includes(enumClasses, clsName);
+            return JavaTypes.nonBuiltInClass(clsName) && JavaTypes.nonEnum(clsName);
         }
 
         static _toObject(clsName, ...items) {
-            if (_.includes(enumClasses, clsName))
+            if (!JavaTypes.nonEnum(clsName))
                 return _.map(items, (item) => `${clsName}.${item}`);
 
-            switch (clsName) {
-                case 'Serializable':
-                case 'String':
-                    return _.map(items, (item) => `"${item}"`);
-                case 'Path':
-                    return _.map(items, (item) => `"${item.replace(/\\/g, '\\\\')}"`);
-                case 'Class':
-                    return _.map(items, (item) => `${JavaTypes.shortClassName(item)}.class`);
-                case 'PropertyChar':
-                    return _.map(items, (item) => `props.getProperty("${item}").toCharArray()`);
-                case 'Property':
-                    return _.map(items, (item) => `props.getProperty("${item}")`);
+            return _.map(items, (item) => {
+                if (_.isNil(item))
+                    return 'null';
 
-                default:
-                    return items;
+                switch (clsName) {
+                    case 'Serializable':
+                    case 'String':
+                        return `"${item}"`;
+                    case 'Path':
+                        return `"${item.replace(/\\/g, '\\\\')}"`;
+                    case 'Class':
+                        return `${JavaTypes.shortClassName(item)}.class`;
+                    case 'UUID':
+                        return `UUID.fromString("${item}")`;
+                    case 'PropertyChar':
+                        return `props.getProperty("${item}").toCharArray()`;
+                    case 'Property':
+                        return `props.getProperty("${item}")`;
+
+                    default:
+                        return item;
+                }
+            });
+        }
+
+        static _setArray(sb, bean, prop, arrWrapper) {
+            const arrType = JavaTypes.shortClassName(prop.typeClsName);
+
+            if (this._isBean(arrType)) {
+                sb.append(`${arrType}[] ${prop.id} = new ${arrType}[${prop.items.length}];`);
+
+                sb.emptyLine();
+
+                _.forEach(prop.items, (nested, idx) => {
+                    const nestedId = `${prop.id}[${idx}]`;
+
+                    const clsName = JavaTypes.shortClassName(nested.clsName);
+
+                    sb.append(`${nestedId} = ${this._newBean(nested)};`);
+
+                    _.forEach(nested.properties, (p) => {
+                        this._setProperty(sb, `((${clsName})${nestedId})`, prop.name, this._toObject(p.type, p.value));
+                    });
+                });
+
+                sb.emptyLine();
+
+                this._setProperty(sb, bean.id, prop.name, prop.id);
+            }
+            else {
+                const arrItems = this._toObject(arrType, ...prop.items);
+
+                if (arrItems.length > 1) {
+                    sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(${arrWrapper ? `new ${arrType}[] {` : ''}`);
+
+                    const lastIdx = arrItems.length - 1;
+
+                    _.forEach(arrItems, (item, idx) => sb.append(item + (lastIdx !== idx ? ',' : '')));
+
+                    sb.endBlock(arrWrapper ? '});' : ');');
+                }
+                else
+                    this._setProperty(sb, bean.id, prop.name, `new ${arrType}[] {${_.head(arrItems)}}`);
             }
         }
 
@@ -152,35 +173,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
          */
         static _setProperties(sb = new StringBuilder(), bean, limitLines = false) {
             _.forEach(bean.properties, (prop) => {
-                switch (prop.type) {
-                    case 'STRING':
-                        this._setProperty(sb, bean.id, prop.name, this._toObject('String', prop.value));
-
-                        break;
-                    case 'PATH':
-                        this._setProperty(sb, bean.id, prop.name, this._toObject('Path', prop.value));
-
-                        break;
-                    case 'CLASS':
-                        this._setProperty(sb, bean.id, prop.name, this._toObject('Class', prop.value));
-
-                        break;
-                    case 'NUMBER':
-                        this._setProperty(sb, bean.id, prop.name, prop.value);
-
-                        break;
-                    case 'ENUM':
-                        this._setProperty(sb, bean.id, prop.name, this._toObject(prop.clsName, prop.value));
-
-                        break;
-                    case 'PROPERTY_CHARS':
-                        this._setProperty(sb, bean.id, prop.name, this._toObject('PropertyChar', prop.value));
-
-                        break;
-                    case 'PROPERTY_STRING':
-                        this._setProperty(sb, bean.id, prop.name, this._toObject('Property', prop.value));
-
-                        break;
+                switch (JavaTypes.shortClassName(prop.clsName).toUpperCase()) {
                     case 'DATASOURCE':
                         this._setProperty(sb, bean.id, prop.name, `DataSources.INSTANCE_${prop.id}`);
 
@@ -226,48 +219,16 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                         }
 
                         break;
+                    case 'VARARG':
+                        this._setArray(sb, bean, prop, false);
+
+                        break;
                     case 'ARRAY':
-                        const arrType = JavaTypes.shortClassName(prop.typeClsName);
-
-                        if (this._isBean(arrType)) {
-                            sb.append(`${arrType}[] ${prop.id} = new ${arrType}[${prop.items.length}];`);
-
-                            sb.emptyLine();
-
-                            _.forEach(prop.items, (nested, idx) => {
-                                const nestedId = `${prop.id}[${idx}]`;
-
-                                const clsName = JavaTypes.shortClassName(nested.clsName);
-
-                                sb.append(`${nestedId} = ${this._newBean(nested)};`);
-
-                                _.forEach(nested.properties, (p) => {
-                                    this._setProperty(sb, `((${clsName})${nestedId})`, prop.name, this._toObject(p.type, p.value));
-                                });
-                            });
-
-                            sb.emptyLine();
-
-                            this._setProperty(sb, bean.id, prop.name, prop.id);
-                        }
-                        else {
-                            const arrItems = this._toObject(arrType, ...prop.items);
-
-                            if (arrItems.length > 1) {
-                                sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(new ${arrType}[] {`);
-
-                                const lastIdx = arrItems.length - 1;
-
-                                _.forEach(arrItems, (item, idx) => sb.append(item + (lastIdx !== idx ? ',' : '')));
-
-                                sb.endBlock('});');
-                            }
-                            else
-                                this._setProperty(sb, bean.id, prop.name, `new ${arrType}[] {${_.head(arrItems)}}`);
-                        }
+                        this._setArray(sb, bean, prop, true);
 
                         break;
                     case 'COLLECTION':
+                    case 'ARRAYLIST':
                         const clsName = JavaTypes.shortClassName(prop.clsName);
                         const implClsName = JavaTypes.shortClassName(prop.implClsName);
 
@@ -337,7 +298,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                         this._setProperty(sb, bean.id, prop.name, prop.id);
 
                         break;
-                    default:
+                    case 'BEAN':
                         const embedded = prop.value;
 
                         if (embedded.nonEmpty()) {
@@ -347,11 +308,12 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                             this._setProperty(sb, bean.id, prop.name, embedded.id);
                         }
-                        else {
-                            const shortClsName = JavaTypes.shortClassName(embedded.clsName);
+                        else
+                            this._setProperty(sb, bean.id, prop.name, this._newBean(embedded));
 
-                            this._setProperty(sb, bean.id, prop.name, `new ${shortClsName}()`);
-                        }
+                        break;
+                    default:
+                        this._setProperty(sb, bean.id, prop.name, this._toObject(prop.clsName, prop.value));
                 }
             });
 
