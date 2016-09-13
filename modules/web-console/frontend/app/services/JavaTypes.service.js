@@ -23,15 +23,15 @@ import JAVA_CLASSES from '../data/java-classes.json';
 import DFLT_CLUSTER from 'app/data/cluster.json';
 import DFLT_CACHE from 'app/data/cache.json';
 import DFLT_IGFS from 'app/data/igfs.json';
+import DFLT_DOMAIN from 'app/data/domain.json';
 
 // Java build-in primitive.
 import JAVA_PRIMITIVES from '../data/java-primitives.json';
-
 import JAVA_KEYWORDS from '../data/java-keywords.json';
 
 export default class JavaTypes {
     constructor() {
-        this.enumClasses = _.uniq(this._enumClassesAcc(_.merge(DFLT_CLUSTER, DFLT_CACHE, DFLT_IGFS), []));
+        this.enumClasses = _.uniq(this._enumClassesAcc(_.merge(DFLT_CLUSTER, DFLT_CACHE, DFLT_IGFS, DFLT_DOMAIN), []));
         this.shortEnumClasses = _.map(this.enumClasses, (cls) => this.shortClassName(cls));
     }
 

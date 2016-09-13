@@ -127,19 +127,18 @@ export default class AbstractTransformer {
         return sb;
     }
 
-
-    // Generate marshaller group.
-    static clusterODBC(cluster, sb = new StringBuilder()) {
-        const cfg = this.generator.clusterODBC(cluster);
+    // Generate metrics group.
+    static clusterMetrics(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterMetrics(cluster);
 
         this._setProperties(sb, cfg);
 
         return sb;
     }
 
-    // Generate metrics group.
-    static clusterMetrics(cluster, sb = new StringBuilder()) {
-        const cfg = this.generator.clusterMetrics(cluster);
+    // Generate ODBC group.
+    static clusterODBC(odbc, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterODBC(odbc);
 
         this._setProperties(sb, cfg);
 

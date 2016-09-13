@@ -48,7 +48,7 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                     sb.endBlock('</constructor-arg>');
                 }
                 else
-                    sb.append(`<constructor-arg value="${arg.value}"/>`);
+                    sb.append(`<constructor-arg value="${this._toObject(arg.clsName, arg.value)}"/>`);
             });
 
             this._setProperties(sb, bean);
@@ -58,15 +58,12 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
 
         static _toObject(clsName, ...items) {
             return _.map(items, (item) => {
-                if (_.isNil(item))
-                    return 'null';
-
                 switch (clsName) {
+                    case 'Property':
                     case 'PropertyChar':
                         return `\${${item}}`;
-                    case 'Property':
-                        return `props.getProperty("${item}")`;
-
+                    case 'Class':
+                        return JavaTypes.fullClassName(item);
                     default:
                         return item;
                 }
@@ -101,11 +98,9 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
          */
         static _setProperties(sb, bean) {
             _.forEach(bean.properties, (prop) => {
-                switch (JavaTypes.shortClassName(prop.clsName).toUpperCase()) {
-                    case 'PROPERTYCHAR':
-                        sb.append(`<property name="${prop.name}" value="\${${prop.value}}"/>`);
+                const clsName = JavaTypes.shortClassName(prop.clsName);
 
-                        break;
+                switch (clsName.toUpperCase()) {
                     case 'DATASOURCE':
                         sb.append(`<property name="${prop.name}" ref="${prop.id}"/>`);
 
@@ -149,7 +144,8 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                         this._setCollection(sb, prop, 'list');
 
                         break;
-                    case 'MAP':
+                    case 'HASHMAP':
+                    case 'LINKEDHASHMAP':
                         sb.startBlock(`<property name="${prop.name}">`);
                         sb.startBlock('<map>');
 
@@ -179,9 +175,8 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
 
                         break;
                     default:
-                        sb.append(`<property name="${prop.name}" value="${prop.value}"/>`);
+                        sb.append(`<property name="${prop.name}" value="${this._toObject(clsName, prop.value)}"/>`);
                 }
-
             });
 
             return sb;

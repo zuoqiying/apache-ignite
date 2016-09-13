@@ -1,15 +1,29 @@
 {
   "queryMetadata": "Configuration",
   "fields": {
-    "keyClsName": "java.util.String",
-    "valClsName": "java.util.String",
+    "clsName": "java.util.LinkedHashMap",
+    "keyClsName": "java.lang.String",
+    "valClsName": "java.lang.String",
     "valField": "className",
-    "items": []
+    "entries": []
   },
   "aliases": {
-    "keyClsName": "java.util.String",
-    "valClsName": "java.util.String",
+    "keyClsName": "java.lang.String",
+    "valClsName": "java.lang.String",
+    "keyField": "field",
     "valField": "alias",
-    "items": []
+    "entries": []
+  },
+  "indexes": {
+    "indexType": {
+      "clsName": "org.apache.ignite.cache.QueryIndexType"
+    },
+    "fields": {
+      "clsName": "java.util.LinkedHashMap",
+      "keyClsName": "java.lang.String",
+      "valClsName": "java.lang.Boolean",
+      "valField": "direction",
+      "entries": []
+    }
   }
 }

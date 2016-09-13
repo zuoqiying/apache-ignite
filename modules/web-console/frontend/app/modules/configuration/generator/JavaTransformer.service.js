@@ -57,16 +57,6 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
         /**
          * @param {StringBuilder} sb
-         * @param {Bean} bean
-         */
-        static _defineBean(sb, bean) {
-            const shortClsName = JavaTypes.shortClassName(bean.clsName);
-
-            sb.append(`${shortClsName} ${bean.id} = ${this._newBean(bean)};`);
-        }
-
-        /**
-         * @param {StringBuilder} sb
          * @param {String} id
          * @param {Bean} propertyName
          * @param {String|Bean} value
@@ -79,30 +69,39 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
         /**
          * @param {StringBuilder} sb
          * @param {Bean} bean
+         * @param {Array.<String>} vars
          * @param {Boolean} limitLines
          * @private
          */
-        static constructBean(sb, bean, limitLines = false) {
-            this._defineBean(sb, bean);
+        static constructBean(sb, bean, vars, limitLines = false) {
+            if (_.includes(vars, bean.id))
+                sb.append(`${bean.id} = ${this._newBean(bean)};`);
+            else {
+                vars.push(bean.id);
+
+                const shortClsName = JavaTypes.shortClassName(bean.clsName);
+
+                sb.append(`${shortClsName} ${bean.id} = ${this._newBean(bean)};`);
+            }
 
             sb.emptyLine();
 
-            this._setProperties(sb, bean, limitLines);
+            this._setProperties(sb, bean, vars, limitLines);
         }
 
         static _isBean(clsName) {
             return JavaTypes.nonBuiltInClass(clsName) && JavaTypes.nonEnum(clsName);
         }
 
-        static _toObject(clsName, ...items) {
-            if (!JavaTypes.nonEnum(clsName))
-                return _.map(items, (item) => `${clsName}.${item}`);
+        static _toObject(shortClsName, ...items) {
+            if (!JavaTypes.nonEnum(shortClsName))
+                return _.map(items, (item) => `${shortClsName}.${item}`);
 
             return _.map(items, (item) => {
                 if (_.isNil(item))
                     return 'null';
 
-                switch (clsName) {
+                switch (shortClsName) {
                     case 'Serializable':
                     case 'String':
                         return `"${item}"`;
@@ -123,7 +122,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
             });
         }
 
-        static _setArray(sb, bean, prop, arrWrapper) {
+        static _setArray(sb, bean, prop, vars, limitLines, arrWrapper) {
             const arrType = JavaTypes.shortClassName(prop.typeClsName);
 
             if (this._isBean(arrType)) {
@@ -132,18 +131,15 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                 sb.emptyLine();
 
                 _.forEach(prop.items, (nested, idx) => {
-                    const nestedId = `${prop.id}[${idx}]`;
+                    nested = _.cloneDeep(nested);
+                    nested.id = `${prop.id}[${idx}]`;
 
-                    const clsName = JavaTypes.shortClassName(nested.clsName);
+                    sb.append(`${nested.id} = ${this._newBean(nested)};`);
 
-                    sb.append(`${nestedId} = ${this._newBean(nested)};`);
+                    this._setProperties(sb, nested, vars, limitLines);
 
-                    _.forEach(nested.properties, (p) => {
-                        this._setProperty(sb, `((${clsName})${nestedId})`, prop.name, this._toObject(p.type, p.value));
-                    });
+                    sb.emptyLine();
                 });
-
-                sb.emptyLine();
 
                 this._setProperty(sb, bean.id, prop.name, prop.id);
             }
@@ -168,12 +164,15 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
          *
          * @param {StringBuilder} sb
          * @param {Bean} bean
+         * @param {Array.<String>} vars
          * @param {Boolean} limitLines
          * @returns {StringBuilder}
          */
-        static _setProperties(sb = new StringBuilder(), bean, limitLines = false) {
+        static _setProperties(sb = new StringBuilder(), bean, vars = [], limitLines = false) {
             _.forEach(bean.properties, (prop) => {
-                switch (JavaTypes.shortClassName(prop.clsName).toUpperCase()) {
+                const clsName = JavaTypes.shortClassName(prop.clsName);
+
+                switch (clsName.toUpperCase()) {
                     case 'DATASOURCE':
                         this._setProperty(sb, bean.id, prop.name, `DataSources.INSTANCE_${prop.id}`);
 
@@ -220,16 +219,15 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                         break;
                     case 'VARARG':
-                        this._setArray(sb, bean, prop, false);
+                        this._setArray(sb, bean, prop, vars, limitLines, false);
 
                         break;
                     case 'ARRAY':
-                        this._setArray(sb, bean, prop, true);
+                        this._setArray(sb, bean, prop, vars, limitLines, true);
 
                         break;
                     case 'COLLECTION':
                     case 'ARRAYLIST':
-                        const clsName = JavaTypes.shortClassName(prop.clsName);
                         const implClsName = JavaTypes.shortClassName(prop.implClsName);
 
                         const colTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
@@ -242,7 +240,13 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                             sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(Arrays.asList(${items.join(', ')}));`);
                         }
                         else {
-                            sb.append(`${clsName}<${colTypeClsName}> ${prop.id} = new ${implClsName}<>();`);
+                            if (_.includes(vars, prop.id))
+                                sb.append(`${prop.id} = new ${implClsName}<>();`);
+                            else {
+                                vars.push(prop.id);
+
+                                sb.append(`${clsName}<${colTypeClsName}> ${prop.id} = new ${implClsName}<>();`);
+                            }
 
                             sb.emptyLine();
 
@@ -257,15 +261,10 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                             }
                             else {
                                 _.forEach(prop.items, (item) => {
-                                    this._defineBean(sb, item);
+                                    this.constructBean(sb, item, vars, limitLines);
 
-                                    sb.emptyLine();
-
-                                    if (item.properties.length) {
-                                        this._setProperties(sb, item, limitLines);
-
+                                    if (item.nonEmpty())
                                         sb.emptyLine();
-                                    }
 
                                     sb.append(`${prop.id}.add(${item.id});`);
 
@@ -277,11 +276,18 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                         }
 
                         break;
-                    case 'MAP':
+                    case 'HASHMAP':
+                    case 'LINKEDHASHMAP':
                         const keyClsName = JavaTypes.shortClassName(prop.keyClsName);
                         const valClsName = JavaTypes.shortClassName(prop.valClsName);
 
-                        sb.append(`Map<${keyClsName}, ${valClsName}> ${prop.id} = new HashMap<>();`);
+                        if (_.includes(vars, prop.id))
+                            sb.append(`${prop.id} = new ${clsName}<>();`);
+                        else {
+                            vars.push(prop.id);
+
+                            sb.append(`${clsName}<${keyClsName}, ${valClsName}> ${prop.id} = new ${clsName}<>();`);
+                        }
 
                         sb.emptyLine();
 
@@ -289,7 +295,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                         const valMapper = this._toObject.bind(this, valClsName);
 
                         _.forEach(prop.entries, (entry) => {
-                            sb.append(`${bean.id}.put(${keyMapper(entry[prop.keyField])}, ${valMapper(entry[prop.valField])});`);
+                            sb.append(`${prop.id}.put(${keyMapper(entry[prop.keyField])}, ${valMapper(entry[prop.valField])});`);
                         });
 
                         if (_.nonEmpty(prop.entries))
@@ -302,7 +308,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
                         const embedded = prop.value;
 
                         if (embedded.nonEmpty()) {
-                            this.constructBean(sb, embedded);
+                            this.constructBean(sb, embedded, vars, limitLines);
 
                             sb.emptyLine();
 
@@ -313,7 +319,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
 
                         break;
                     default:
-                        this._setProperty(sb, bean.id, prop.name, this._toObject(prop.clsName, prop.value));
+                        this._setProperty(sb, bean.id, prop.name, this._toObject(clsName, prop.value));
                 }
             });
 

@@ -225,20 +225,20 @@ export class Bean extends EmptyBean {
 
     /**
      * @param {String} id
-     * @param {String} name
      * @param {String} model
+     * @param {String} [name]
      * @returns {Bean}
      */
     mapProperty(id, model, name = model) {
         if (!this.src)
             return this;
 
-        const entries = this.src[model];
-        const dflt = this.dflts[model];
+        const entries = _.isString(model) ? this.src[model] : model;
+        const dflt = _.isString(model) ? this.dflts[model] : this.dflts[name];
 
-        if (_.nonEmpty(entries) && entries !== dflt.items) {
+        if (_.nonEmpty(entries) && entries !== dflt.entries) {
             this.properties.push({
-                clsName: 'Map',
+                clsName: dflt.clsName || 'java.util.HashMap',
                 id,
                 name,
                 keyClsName: dflt.keyClsName,

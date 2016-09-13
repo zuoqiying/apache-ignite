@@ -435,7 +435,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             if (cfg.valueOf('peerClassLoadingEnabled')) {
                 cfg.intProperty('peerClassLoadingMissedResourcesCacheSize')
                     .intProperty('peerClassLoadingThreadPoolSize')
-                    .arrayProperty('p2pLocClsPathExcl', 'peerClassLoadingLocalClassPathExclude',
+                    .varArgProperty('p2pLocClsPathExcl', 'peerClassLoadingLocalClassPathExclude',
                        cluster.peerClassLoadingLocalClassPathExclude);
             }
 
@@ -645,7 +645,11 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate ODBC group.
         static clusterODBC(odbc, cfg = this.igniteConfigurationBean()) {
-            const bean = new Bean('org.apache.ignite.configuration.OdbcConfiguration', 'odbcConfiguration', odbc, DFLT_CLUSTER.odbcConfiguration);
+            if (!odbc.odbcEnabled)
+                return cfg;
+
+            const bean = new Bean('org.apache.ignite.configuration.OdbcConfiguration', 'odbcConfiguration',
+                odbc, DFLT_CLUSTER.odbcConfiguration);
 
             bean.stringProperty('endpointAddress')
                 .intProperty('maxOpenCursors');
@@ -774,40 +778,23 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
-        // Generate domain model indexes.
-        static _domainModelQueryIndexes(domain, cfg) {
-            const indexes = domain.indexes;
-
-            if (indexes && indexes.length > 0) {
-                const indexBeans = [];
-
-                _.forEach(indexes, function(index) {
-                    const bean = new Bean('org.apache.ignite.cache.QueryIndex', 'index', index,
-                        {indexType: {clsName: 'org.apache.ignite.cache.QueryIndexType'}})
-                        .stringProperty('name')
-                        // TODO IGNITE-2052 Enum fields is not generated in array bean.
-                        .enumProperty('indexType');
-
-                    const fields = index.fields;
-
-                    if (fields && fields.length > 0)
-                    // TODO IGNITE-2052 Differ from required field names.
-                        bean.mapProperty('fields');
-
-                    indexBeans.push(bean);
-                });
-
-                cfg.arrayProperty('indexes', 'indexes', indexBeans, 'org.apache.ignite.cache.QueryIndex');
-            }
-        }
-
         // Generate domain model for query group.
         static domainModelQuery(domain, cfg = this.domainConfigurationBean(domain)) {
             if (cfg.valueOf('queryMetadata') === 'Configuration') {
-                cfg.mapProperty('fields', 'fields')
+                const fields = _.map(cfg.valueOf('fields'),
+                    (e) => ({name: e.name, className: JavaTypes.fullClassName(e.className)}));
+
+                cfg.mapProperty('fields', fields, 'fields')
                     .mapProperty('aliases', 'aliases');
 
-                this._domainModelQueryIndexes(domain, cfg);
+                const indexes = _.map(domain.indexes, (index) =>
+                    new Bean('org.apache.ignite.cache.QueryIndex', 'index', index, DFLT_DOMAIN.indexes)
+                        .stringProperty('name')
+                        .enumProperty('indexType')
+                        .mapProperty('indFlds', 'fields')
+                );
+
+                cfg.collectionProperty('indexes', 'indexes', indexes, 'java.util.Collection', 'org.apache.ignite.cache.QueryIndex');
             }
 
             return cfg;
