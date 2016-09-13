@@ -187,7 +187,7 @@ export default ['domainsController', [
                 return fields;
 
             if (cur && !_.find(fields, {value: cur}))
-                fields.push({value: cur, label: cur + ' (Removed)'});
+                fields.push({value: cur, label: cur + ' (Unknown field)'});
 
             return fields;
         };
@@ -1263,14 +1263,12 @@ export default ['domainsController', [
                 const indexes = item.indexes;
 
                 if (indexes && indexes.length > 0) {
-                    if (_.find(indexes, function(index, i) {
+                    if (_.find(indexes, function(index, idx) {
                         if (_.isEmpty(index.fields))
-                            return !ErrorPopover.show('indexes' + i, 'Index fields are not specified', $scope.ui, 'query');
+                            return !ErrorPopover.show('indexes' + idx, 'Index fields are not specified', $scope.ui, 'query');
 
-                        if (_.find(index.fields, (field) =>
-                            !_.find(item.fields, (configuredField) => configuredField.name === field.name)
-                        ))
-                            return !ErrorPopover.show('indexes' + i, 'Index contain not configured fields', $scope.ui, 'query');
+                        if (_.find(index.fields, (field) => !_.find(item.fields, (configuredField) => configuredField.name === field.name)))
+                            return !ErrorPopover.show('indexes' + idx, 'Index contains not configured fields', $scope.ui, 'query');
                     }))
                         return false;
                 }
@@ -1694,7 +1692,7 @@ export default ['domainsController', [
                 const index = $scope.backupItem.indexes[indexIdx];
 
                 LegacyTable.tableState(field, -1, 'table-index-fields');
-                LegacyTable.tableFocusInvalidField(-1, 'FieldName' + (index.indexType === 'SORTED' ? 'S' : '') + indexIdx);
+                LegacyTable.tableFocusInvalidField(-1, 'FieldName' + indexIdx);
 
                 field.newFieldName = null;
                 field.newDirection = true;
@@ -1750,7 +1748,7 @@ export default ['domainsController', [
                 field.curDirection = indexItem.direction;
                 field.indexIdx = indexIdx;
 
-                Focus.move('curFieldName' + (index.indexType === 'SORTED' ? 'S' : '') + field.indexIdx + '-' + curIdx);
+                Focus.move('curFieldName' + field.indexIdx + '-' + curIdx);
             }
         };
 
@@ -1773,7 +1771,9 @@ export default ['domainsController', [
                     if (stopEdit)
                         return true;
 
-                    return ErrorPopover.show(LegacyTable.tableFieldId(curIdx, 'FieldName' + (index.indexType === 'SORTED' ? 'S' : '') + indexIdx + (curIdx >= 0 ? '-' : '')), 'Field with such name already exists in index!', $scope.ui, 'query');
+                    return ErrorPopover.show(LegacyTable.tableFieldId(curIdx,
+                        'FieldName' + indexIdx + (curIdx >= 0 ? '-' : '')),
+                        'Field with such name already exists in index!', $scope.ui, 'query');
                 }
             }
 
