@@ -1301,7 +1301,7 @@ $generatorJava.clusterODBC = function(odbc, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    if (odbc.odbcEnabled) {
+    if (odbc && odbc.odbcEnabled) {
         $generatorJava.beanProperty(res, 'cfg', odbc, 'odbcConfiguration', 'odbcConfiguration',
             $generatorCommon.ODBC_CONFIGURATION.className, $generatorCommon.ODBC_CONFIGURATION.fields, true);
     }

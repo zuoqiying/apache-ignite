@@ -1014,7 +1014,7 @@ $generatorXml.clusterODBC = function(odbc, res) {
     if (!res)
         res = $generatorCommon.builder();
 
-    if (odbc.odbcEnabled)
+    if (odbc && odbc.odbcEnabled)
         $generatorXml.beanProperty(res, odbc, 'odbcConfiguration', $generatorCommon.ODBC_CONFIGURATION, true);
 
     res.needEmptyLine = true;
