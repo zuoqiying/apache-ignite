@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-// Directive for copy to clipboard.
-
+// Directive to workaround known issue with type ahead edit lost cursor position.
 export default ['igniteRetainSelection', ['$timeout', ($timeout) => {
     let promise;
 
