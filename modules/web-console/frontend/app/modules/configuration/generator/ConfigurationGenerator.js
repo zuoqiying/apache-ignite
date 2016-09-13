@@ -643,6 +643,18 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
             return cfg;
         }
 
+        // Generate ODBC group.
+        static clusterODBC(odbc, cfg = this.igniteConfigurationBean()) {
+            const bean = new Bean('org.apache.ignite.configuration.OdbcConfiguration', 'odbcConfiguration', odbc, DFLT_CLUSTER.odbcConfiguration);
+
+            bean.stringProperty('endpointAddress')
+                .intProperty('maxOpenCursors');
+
+            cfg.beanProperty('odbcConfiguration', bean);
+
+            return cfg;
+        }
+
         // Java code generator for cluster's SSL configuration.
         static clusterSsl(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             if (cluster.sslEnabled && _.nonNil(cluster.sslContextFactory)) {

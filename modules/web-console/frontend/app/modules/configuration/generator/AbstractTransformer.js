@@ -127,6 +127,16 @@ export default class AbstractTransformer {
         return sb;
     }
 
+
+    // Generate marshaller group.
+    static clusterODBC(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterODBC(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
     // Generate metrics group.
     static clusterMetrics(cluster, sb = new StringBuilder()) {
         const cfg = this.generator.clusterMetrics(cluster);

@@ -184,5 +184,9 @@
     "keyClsName": "java.util.String",
     "valClsName": "java.util.String",
     "items": []
+  },
+  "odbcConfiguration": {
+    "endpointAddress": "0.0.0.0:10800..10810",
+    "maxOpenCursors": 128
   }
 }
