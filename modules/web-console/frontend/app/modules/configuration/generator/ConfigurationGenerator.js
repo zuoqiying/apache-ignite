@@ -23,7 +23,7 @@ import DFLT_DIALECTS from 'app/data/dialects.json';
 
 import { EmptyBean, Bean, MethodBean } from './Beans';
 
-export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
+export default ['JavaTypes', (JavaTypes) => {
     class ConfigurationGenerator {
         static igniteConfigurationBean(cluster) {
             return new Bean('org.apache.ignite.configuration.IgniteConfiguration', 'cfg', cluster, DFLT_CLUSTER);
@@ -1214,4 +1214,4 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
     }
 
     return ConfigurationGenerator;
-}]];
+}];

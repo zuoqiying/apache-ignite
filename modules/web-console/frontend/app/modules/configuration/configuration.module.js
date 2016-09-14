@@ -39,7 +39,7 @@ angular
 .provider(...igniteEventGroups)
 .provider(...igniteSidebar)
 .directive(...igniteSidebarDirective)
-.service(...ConfigurationGenerator)
+.service('IgniteConfigurationGenerator', ConfigurationGenerator)
 .service(...PlatformGenerator)
 .service(...SpringTransformer)
 .service(...JavaTransformer)

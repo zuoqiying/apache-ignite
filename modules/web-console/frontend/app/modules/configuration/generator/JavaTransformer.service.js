@@ -21,7 +21,7 @@ import StringBuilder from './StringBuilder';
 
 import $generatorJava from './generator-java';
 
-export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'ConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
+export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
 
