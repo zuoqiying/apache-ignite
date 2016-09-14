@@ -815,9 +815,12 @@ public class DataStreamerImpl<K, V> implements IgniteDataStreamer<K, V>, Delayed
                 res = Collections.singletonList(node);
         }
 
-        if (F.isEmpty(res))
-            throw new ClusterTopologyServerNotFoundException("Failed to find server node for cache (all affinity " +
-                "nodes have left the grid or cache was stopped): " + cacheName);
+        if (F.isEmpty(res)) {
+            String errMessage = "Failed to find server node for cache (all affinity " +
+                    "nodes have left the grid or cache was stopped): " + cacheName;
+            log.warning(errMessage);
+            throw new ClusterTopologyServerNotFoundException(errMessage);
+        }
 
         return res;
     }
