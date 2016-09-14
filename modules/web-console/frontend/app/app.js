@@ -68,6 +68,7 @@ import igniteUiAcePojos from './directives/ui-ace-pojos/ui-ace-pojos.directive';
 import igniteUiAcePom from './directives/ui-ace-pom/ui-ace-pom.directive';
 import igniteUiAceDocker from './directives/ui-ace-docker/ui-ace-docker.directive';
 import igniteUiAceTabs from './directives/ui-ace-tabs.directive';
+import igniteRetainSelection from './directives/retain-selection.directive';
 
 // Services.
 import ChartColors from './services/ChartColors.service';
@@ -194,6 +195,7 @@ angular
 .directive(...igniteUiAcePom)
 .directive(...igniteUiAceDocker)
 .directive(...igniteUiAceTabs)
+.directive(...igniteRetainSelection)
 // Services.
 .service(...ChartColors)
 .service(...Clone)
