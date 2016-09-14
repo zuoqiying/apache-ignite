@@ -126,22 +126,34 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'Configura
             const arrType = JavaTypes.shortClassName(prop.typeClsName);
 
             if (this._isBean(arrType)) {
-                sb.append(`${arrType}[] ${prop.id} = new ${arrType}[${prop.items.length}];`);
-
-                sb.emptyLine();
-
-                _.forEach(prop.items, (nested, idx) => {
-                    nested = _.cloneDeep(nested);
-                    nested.id = `${prop.id}[${idx}]`;
-
-                    sb.append(`${nested.id} = ${this._newBean(nested)};`);
-
-                    this._setProperties(sb, nested, vars, limitLines);
+                if (arrWrapper) {
+                    sb.append(`${arrType}[] ${prop.id} = new ${arrType}[${prop.items.length}];`);
 
                     sb.emptyLine();
-                });
 
-                this._setProperty(sb, bean.id, prop.name, prop.id);
+                    _.forEach(prop.items, (nested, idx) => {
+                        nested = _.cloneDeep(nested);
+                        nested.id = `${prop.id}[${idx}]`;
+
+                        sb.append(`${nested.id} = ${this._newBean(nested)};`);
+
+                        this._setProperties(sb, nested, vars, limitLines);
+
+                        sb.emptyLine();
+                    });
+
+                    this._setProperty(sb, bean.id, prop.name, prop.id);
+                } else {
+                    sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(`);
+
+                    const lastIdx = prop.items.length - 1;
+
+                    _.forEach(prop.items, (item, idx) => {
+                        sb.append(this._newBean(item) + (lastIdx !== idx ? ',' : ''));
+                    });
+
+                    sb.endBlock(');');
+                }
             }
             else {
                 const arrItems = this._toObject(arrType, ...prop.items);

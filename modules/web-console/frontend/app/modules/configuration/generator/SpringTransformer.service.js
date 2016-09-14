@@ -47,6 +47,11 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                     sb.append('<null/>');
                     sb.endBlock('</constructor-arg>');
                 }
+                else if (arg.constant) {
+                    sb.startBlock('<constructor-arg>');
+                    sb.append(`<util:constant static-field="${arg.clsName}.${arg.value}"/>`);
+                    sb.endBlock('</constructor-arg>');
+                }
                 else
                     sb.append(`<constructor-arg value="${this._toObject(arg.clsName, arg.value)}"/>`);
             });
@@ -62,7 +67,7 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
                     case 'Property':
                     case 'PropertyChar':
                         return `\${${item}}`;
-                    case 'Class':
+                    case 'java.lang.Class':
                         return JavaTypes.fullClassName(item);
                     default:
                         return item;
@@ -98,9 +103,7 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
          */
         static _setProperties(sb, bean) {
             _.forEach(bean.properties, (prop) => {
-                const clsName = JavaTypes.shortClassName(prop.clsName);
-
-                switch (clsName.toUpperCase()) {
+                switch (JavaTypes.shortClassName(prop.clsName).toUpperCase()) {
                     case 'DATASOURCE':
                         sb.append(`<property name="${prop.name}" ref="${prop.id}"/>`);
 
@@ -175,7 +178,7 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'Configu
 
                         break;
                     default:
-                        sb.append(`<property name="${prop.name}" value="${this._toObject(clsName, prop.value)}"/>`);
+                        sb.append(`<property name="${prop.name}" value="${this._toObject(prop.clsName, prop.value)}"/>`);
                 }
             });
 

@@ -102,6 +102,19 @@ export class Bean extends EmptyBean {
         return this._property(this.arguments, 'Path', model, null, _.nonEmpty);
     }
 
+    constantConstructorArgument(model) {
+        if (!this.src)
+            return this;
+
+        const value = this.src[model];
+        const dflt = this.dflts[model];
+
+        if (_.nonNil(value) && value !== dflt.value)
+            this.arguments.push({clsName: dflt.clsName, constant: true, value});
+
+        return this;
+    }
+
     valueOf(path) {
         return (this.src && this.src[path]) || this.dflts[path];
     }
@@ -150,7 +163,7 @@ export class Bean extends EmptyBean {
         const value = this.src[model];
         const dflt = this.dflts[model];
 
-        if (!_.isNil(value) && value !== dflt.value)
+        if (_.nonNil(value) && value !== dflt.value)
             this.properties.push({clsName: dflt.clsName, name, value, mapper: dflt.mapper });
 
         return this;

@@ -38,7 +38,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
         }
 
         static domainConfigurationBean(domain) {
-            return new Bean('', 'cache', domain, DFLT_DOMAIN);
+            return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'cache', domain, DFLT_DOMAIN);
         }
 
         /**
@@ -802,36 +802,27 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
 
         // Generate domain model db fields.
-        static _domainModelDatabaseFields(domain, cfg, fieldProp) {
-            const fields = domain[fieldProp];
+        static _domainModelDatabaseFields(cfg, propName, domain) {
+            const fields = _.map(domain[propName], (field) => {
+                return new Bean('org.apache.ignite.cache.store.jdbc.JdbcTypeField', 'typeField', field, DFLT_DOMAIN.typeField)
+                    .stringConstructorArgument('databaseFieldName')
+                    .constantConstructorArgument('databaseFieldType')
+                    .stringConstructorArgument('javaFieldName')
+                    .classConstructorArgument('javaFieldType');
+            });
 
-            if (fields && fields.length > 0) {
-                const fieldBeans = [];
+            cfg.varArgProperty(propName, propName, fields, 'org.apache.ignite.cache.store.jdbc.JdbcTypeField');
 
-                _.forEach(fields, (field) => {
-                    const fieldBean = new Bean('org.apache.ignite.cache.store.jdbc.JdbcTypeField', 'typeField', field,
-                        {databaseFieldType: {clsName: 'java.sql.Types'}})
-                        .stringProperty('databaseFieldName')
-                        // TODO IGNITE-2052 There was generation something like <util:constant static-field="java.sql.Types.INTEGER"/>
-                        .enumProperty('databaseFieldType')
-                        .stringProperty('javaFieldName')
-                        // TODO IGNITE-2052 Should be a .class property
-                        .intProperty('javaFieldType');
-
-                    fieldBeans.push(fieldBean);
-                });
-
-                cfg.arrayProperty(fieldProp, fieldProp, fieldBeans, 'org.apache.ignite.cache.store.jdbc.JdbcTypeField');
-            }
+            return cfg;
         }
 
         // Generate domain model for store group.
         static domainStore(domain, cfg = this.domainConfigurationBean(domain)) {
-            cfg.intProperty('databaseSchema')
-                .intProperty('databaseTable');
+            cfg.stringProperty('databaseSchema')
+                .stringProperty('databaseTable');
 
-            this._domainModelDatabaseFields(domain, cfg, 'keyFields');
-            this._domainModelDatabaseFields(domain, cfg, 'valueFields');
+            this._domainModelDatabaseFields(cfg, 'keyFields', domain);
+            this._domainModelDatabaseFields(cfg, 'valueFields', domain);
 
             return cfg;
         }
@@ -1078,7 +1069,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
 
         // Generate cache rebalance group.
         static cacheRebalance(cache, cfg = this.cacheConfigurationBean(cache)) {
-            if (cache.cacheMode !== 'LOCAL') {
+            if (cfg.valueOf('cacheMode') !== 'LOCAL') {
                 cfg.enumProperty('rebalanceMode')
                     .intProperty('rebalanceThreadPoolSize')
                     .intProperty('rebalanceBatchSize')
@@ -1089,7 +1080,7 @@ export default ['ConfigurationGenerator', ['JavaTypes', (JavaTypes) => {
                     .intProperty('rebalanceThrottle');
             }
 
-            if (cache.igfsAffinnityGroupSize) {
+            if (cfg.includes('igfsAffinnityGroupSize')) {
                 const bean = new Bean('org.apache.ignite.igfs.IgfsGroupDataBlocksKeyMapper', 'affinityMapper', cache)
                     .intConstructorArgument('igfsAffinnityGroupSize');
 

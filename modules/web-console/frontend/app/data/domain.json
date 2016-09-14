@@ -25,5 +25,10 @@
       "valField": "direction",
       "entries": []
     }
+  },
+  "typeField": {
+    "databaseFieldType": {
+      "clsName": "java.sql.Types"
+    }
   }
 }
