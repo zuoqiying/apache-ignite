@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
+// H2 SQL keywords.
+import SQL_KEYWORDS from 'app/data/sql-keywords.json';
+
 // Controller for Domain model screen.
 export default ['domainsController', [
-    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
-    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource, ErrorPopover, FormUtils) {
+    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils', 'JavaTypes',
+    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource, ErrorPopover, FormUtils, JavaTypes) {
         UnsavedChangesGuard.install($scope);
 
         const emptyDomain = {empty: true};
@@ -533,6 +536,10 @@ export default ['domainsController', [
             return 'Associate with ' + cacheName;
         };
 
+        function isValidJavaIdentifier(s) {
+            return !_.includes(SQL_KEYWORDS, s.toUpperCase()) && JavaTypes.validIdentifier(s) && !JavaTypes.isKeyword(s);
+        }
+
         function toJavaClassName(name) {
             const len = name.length;
 
@@ -554,7 +561,7 @@ export default ['domainsController', [
                     buf += ch.toLocaleLowerCase();
             }
 
-            if (LegacyUtils.isValidJavaIdentifier('', buf))
+            if (isValidJavaIdentifier(buf))
                 return buf;
 
             return 'Class' + buf;
@@ -565,7 +572,7 @@ export default ['domainsController', [
 
             const fieldName = javaName.charAt(0).toLocaleLowerCase() + javaName.slice(1);
 
-            if (LegacyUtils.isValidJavaIdentifier('', fieldName))
+            if (isValidJavaIdentifier(fieldName))
                 return fieldName;
 
             return 'field' + javaName;
