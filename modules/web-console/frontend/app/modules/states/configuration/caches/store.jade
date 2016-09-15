@@ -166,10 +166,10 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                                             table.links-edit(id='hibernateProps' st-table=hibernateProperties)
                                                 tbody
                                                     tr(ng-repeat='item in #{hibernateProperties}')
-                                                        td.col-sm-12(ng-show='!tableEditing(hibernatePropsTbl, $index)')
+                                                        td.col-sm-12(ng-hide='tableEditing(hibernatePropsTbl, $index)')
                                                             a.labelFormField(ng-click='tableStartEdit(backupItem, hibernatePropsTbl, $index)') {{item.name}} = {{item.value}}
                                                             +btn-remove('tableRemove(backupItem, hibernatePropsTbl, $index)', '"Remove Property"')
-                                                        td.col-sm-12(ng-show='tableEditing(hibernatePropsTbl, $index)')
+                                                        td.col-sm-12(ng-if='tableEditing(hibernatePropsTbl, $index)')
                                                             +table-pair-edit('hibernatePropsTbl', 'cur', 'Property name', 'Property value', false, false, '{{::hibernatePropsTbl.focusId + $index}}', '$index', '=')
                                                 tfoot(ng-show='tableNewItemActive(hibernatePropsTbl)')
                                                     tr
