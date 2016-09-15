@@ -82,7 +82,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
             return;
 
         pendingEntries = cctx.config().getNearConfiguration() != null ? new GridConcurrentSkipListSetEx() : null;
-        cctx.shared().ttlCleanup().register(cctx.ttl());
+        cctx.shared().ttl().register(this);
     }
 
     /**
@@ -98,7 +98,8 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
     @Override protected void onKernalStop0(boolean cancel) {
         if (null != pendingEntries)
             pendingEntries.clear();
-        cctx.shared().ttlCleanup().unregister(cctx.ttl());
+
+        cctx.shared().ttl().unregister(this);
     }
 
     /**
@@ -155,8 +156,8 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
     /**
      * Processes specified amount of expired entries.
      *
-     * @param amount limit of processed entries by single call; '-1' - no limit.
-     * @return boolean true, if unprocessed expired entries remains
+     * @param amount Limit of processed entries by single call, {@code -1} for no limit.
+     * @return {@code True} if unprocessed expired entries remains.
      */
     public boolean expire(int amount) {
         long now = U.currentTimeMillis();
@@ -167,7 +168,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
 
                 int limit = (-1 != amount) ? amount : pendingEntries.sizex();
 
-                for (int count = limit; count > 0; count--) {
+                for (int cnt = limit; cnt > 0; cnt--) {
                     EntryWrapper e = pendingEntries.firstx();
 
                     if (e == null || e.expireTime > now)
@@ -189,14 +190,13 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
             U.error(log, "Failed to process entry expiration: " + e, e);
         }
 
-        if ((-1 == amount) || (pendingEntries == null)) {
-            // we processed all expired entries
-            return false;
-        } else {
-            // check if expired entries remains in pending queue
+        if ((-1 != amount) && (pendingEntries != null)) {
             EntryWrapper e = pendingEntries.firstx();
+
             return e != null && e.expireTime <= now;
         }
+
+        return false;
     }
 
     /**
