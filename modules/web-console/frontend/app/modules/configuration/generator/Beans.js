@@ -128,12 +128,16 @@ export class Bean extends EmptyBean {
         });
     }
 
-    intProperty(model, name = model) {
-        return this._property(this.properties, 'PROPERTY', model, name, _.nonNil);
+    boolProperty(model, name = model) {
+        return this._property(this.properties, 'boolean', model, name, _.nonNil);
     }
 
-    virtualProperty(name, value) {
-        this.properties.push({type: 'PROPERTY', name, value});
+    intProperty(model, name = model) {
+        return this._property(this.properties, 'int', model, name, _.nonNil);
+    }
+
+    property(clsName, name, value) {
+        this.properties.push({clsName, name, value});
 
         return this;
     }
@@ -265,13 +269,27 @@ export class Bean extends EmptyBean {
         return this;
     }
 
+    propsProperty(id, model, name = model) {
+        if (!this.src)
+            return this;
+
+        const entries = this.src[model];
+
+        if (entries && entries.length)
+            this.properties.push({clsName: 'java.util.Properties', id, name, entries});
+
+        return this;
+    }
+
     /**
      * @param {String} id
      * @param {String} name
      * @param {String} dialect
      */
     dataSource(id, name, dialect) {
-        this.properties.push({type: 'DATASOURCE', id, name, dialect});
+        this.properties.push({clsName: 'DataSource', id, name, dialect});
+
+        return this;
     }
 
     /**

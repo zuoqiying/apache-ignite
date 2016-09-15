@@ -38,7 +38,7 @@ export default ['JavaTypes', (JavaTypes) => {
         }
 
         static domainConfigurationBean(domain) {
-            return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'cache', domain, DFLT_DOMAIN);
+            return new Bean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type', domain, DFLT_DOMAIN);
         }
 
         /**
@@ -53,6 +53,10 @@ export default ['JavaTypes', (JavaTypes) => {
             this.clusterAtomics(cluster.atomics, cfg);
 
             return cfg;
+        }
+
+        static dialectClsName(dialect) {
+            return DFLT_DIALECTS[dialect] || 'Unknown database: ' + (dialect || 'Choose JDBC dialect');
         }
 
         // Generate general section.
@@ -122,7 +126,7 @@ export default ['JavaTypes', (JavaTypes) => {
                         ipFinder.intProperty('initSchema');
 
                         if (ipFinder.includes('dataSourceBean', 'dialect'))
-                            ipFinder.dataSource(ipFinder.valueOf('dataSourceBean'), 'dataSource', ipFinder.valueOf('dialect'));
+                            ipFinder.dataSource(ipFinder.valueOf('dataSourceBean'), 'dataSource', this.dialectClsName(ipFinder.valueOf('dialect')));
 
                         break;
                     case 'SharedFs':
@@ -311,7 +315,7 @@ export default ['JavaTypes', (JavaTypes) => {
                         .intProperty('waitJobsThreshold')
                         .intProperty('messageExpireTime')
                         .intProperty('maximumStealingAttempts')
-                        .intProperty('stealingEnabled')
+                        .boolProperty('stealingEnabled')
                         .emptyBeanProperty('externalCollisionListener')
                         .mapProperty('stealingAttrs', 'stealingAttributes');
 
@@ -334,7 +338,7 @@ export default ['JavaTypes', (JavaTypes) => {
                         .intProperty('jobPriorityAttributeKey')
                         .intProperty('defaultPriority')
                         .intProperty('starvationIncrement')
-                        .intProperty('starvationPreventionEnabled');
+                        .boolProperty('starvationPreventionEnabled');
 
                     break;
                 case 'Custom':
@@ -430,7 +434,7 @@ export default ['JavaTypes', (JavaTypes) => {
         // Generate deployment group.
         static clusterDeployment(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             cfg.enumProperty('deploymentMode')
-                .intProperty('peerClassLoadingEnabled');
+                .boolProperty('peerClassLoadingEnabled');
 
             if (cfg.valueOf('peerClassLoadingEnabled')) {
                 cfg.intProperty('peerClassLoadingMissedResourcesCacheSize')
@@ -743,7 +747,7 @@ export default ['JavaTypes', (JavaTypes) => {
                 .intProperty('defaultTxTimeout')
                 .intProperty('pessimisticTxLogLinger')
                 .intProperty('pessimisticTxLogSize')
-                .intProperty('txSerializableEnabled')
+                .boolProperty('txSerializableEnabled')
                 .emptyBeanProperty('txManagerFactory');
 
             if (bean.nonEmpty())
@@ -901,7 +905,7 @@ export default ['JavaTypes', (JavaTypes) => {
             this._evictionPolicy(cfg, 'evictionPolicy', cache.evictionPolicy, DFLT_CACHE.evictionPolicy);
 
             cfg.intProperty('startSize')
-                .intProperty('swapEnabled');
+                .boolProperty('swapEnabled');
 
             return cfg;
         }
@@ -927,102 +931,100 @@ export default ['JavaTypes', (JavaTypes) => {
         }
 
         // Generate cache store group.
-        static cacheStore(cache, domains, cfg = this.cacheConfigurationBean(cache)) {
-            if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind) {
-                const factoryKind = cache.cacheStoreFactory.kind;
+        static cacheStore(cache, domains, ccfg = this.cacheConfigurationBean(cache)) {
+            const kind = _.get(cache, 'cacheStoreFactory.kind');
 
-                const storeFactory = cache.cacheStoreFactory[factoryKind];
+            if (kind && cache.cacheStoreFactory[kind]) {
+                let bean = null;
 
-                let bean;
+                const storeFactory = cache.cacheStoreFactory[kind];
 
-                if (storeFactory) {
-                    if (factoryKind === 'CacheJdbcPojoStoreFactory') {
-                        // TODO IGNITE-2052 implement generation of correct store factory.
-                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory', storeFactory);
+                switch (kind) {
+                    case 'CacheJdbcPojoStoreFactory':
+                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory',
+                            storeFactory);
 
-                        const dialectClsName = DFLT_DIALECTS[storeFactory.dialect] ||
-                            'Unknown database: ' + (storeFactory.dialect || 'Choose JDBC dialect');
+                        const dialectClsName = this.dialectClsName(storeFactory.dialect);
 
-                        bean.intProperty('dataSourceBean')
+                        bean.dataSource(bean.valueOf('dataSourceBean'), 'dataSourceBean', dialectClsName)
                             .beanProperty('dialect', new EmptyBean(dialectClsName));
 
-                        const domainConfigs = _.filter(domains, (domain) => _.nonNil(domain.databaseTable));
+                        const setType = (typeBean, propName) => {
+                            if (JavaTypes.nonBuiltInClass(typeBean.valueOf(propName)))
+                                typeBean.stringProperty(propName);
+                            else
+                                typeBean.classProperty(propName);
+                        };
 
-                        if (domainConfigs.length > 0) {
-                            const types = [];
+                        const types = _.reduce(domains, (acc, domain) => {
+                            if (_.isNil(domain.databaseTable))
+                                return acc;
 
-                            // TODO IGNITE-2052 In Java generation every type should be generated in separate method.
-                            _.forEach(domainConfigs, (domain) => {
-                                const typeBean = new MethodBean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
-                                    angular.merge({}, domain, {cacheName: cache.name}))
-                                    .stringProperty('cacheName')
-                                    .intProperty('keyType')
-                                    .intProperty('valueType');
+                            const typeBean = new MethodBean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
+                                _.merge({}, domain, {cacheName: cache.name}))
+                                .stringProperty('cacheName');
 
-                                this.domainStore(domain, typeBean);
+                            setType(typeBean, 'keyType');
+                            setType(typeBean, 'valueType');
 
-                                types.push(typeBean);
-                            });
+                            this.domainStore(domain, typeBean);
 
-                            bean.arrayProperty('types', 'types', types, 'org.apache.ignite.cache.store.jdbc.JdbcType');
-                        }
-                    }
-                    else if (factoryKind === 'CacheJdbcBlobStoreFactory') {
-                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory', 'cacheStoreFactory', storeFactory);
+                            acc.push(typeBean);
 
-                        if (storeFactory.connectVia === 'DataSource')
-                            bean.intProperty('dataSourceBean');
+                            return acc;
+                        }, []);
+
+                        bean.arrayProperty('types', 'types', types, 'org.apache.ignite.cache.store.jdbc.JdbcType');
+
+                        break;
+                    case 'CacheJdbcBlobStoreFactory':
+                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory', 'cacheStoreFactory',
+                            storeFactory);
+
+                        if (bean.valueOf('connectVia') === 'DataSource')
+                            bean.dataSource(bean.valueOf('dataSourceBean'), 'dataSourceBean', this.dialectClsName(storeFactory.dialect));
                         else {
-                            storeFactory.password = '${ds.' + storeFactory.user + '.password}';
-
-                            cfg.intProperty('connectionUrl')
-                                .intProperty('user')
-                                .intProperty('password');
+                            ccfg.stringProperty('connectionUrl')
+                                .stringProperty('user')
+                                .property('Property', 'password', `ds.${storeFactory.user}.password`);
                         }
 
-                        bean.intProperty('initSchema')
+                        bean.boolProperty('initSchema')
                             .stringProperty('createTableQuery')
                             .stringProperty('loadQuery')
                             .stringProperty('insertQuery')
                             .stringProperty('updateQuery')
                             .stringProperty('deleteQuery');
-                    }
-                    else {
-                        bean = new Bean('org.apache.ignite.cache.store.hibernate.CacheHibernateBlobStoreFactory', 'cacheStoreFactory', storeFactory);
 
-                        // TODO IGNITE-2052 Should be translated to Properties variable.
-                        bean.mapProperty('hibernateProperties');
-                    }
+                        break;
+                    case 'CacheHibernateBlobStoreFactory':
+                        bean = new Bean('org.apache.ignite.cache.store.hibernate.CacheHibernateBlobStoreFactory',
+                            'cacheStoreFactory', storeFactory);
 
-                    // TODO IGNITE-2052 Common generation of datasources.
-                    // if (storeFactory.dataSourceBean && (storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : null) : storeFactory.dialect)) {
-                    //    if (!_.find(res.datasources, { dataSourceBean: storeFactory.dataSourceBean})) {
-                    //        res.datasources.push({
-                    //            dataSourceBean: storeFactory.dataSourceBean,
-                    //            dialect: storeFactory.dialect
-                    //        });
-                    //    }
-                    // }
+                        bean.propsProperty('props', 'hibernateProperties');
 
-                    if (bean)
-                        cfg.beanProperty('cacheStoreFactory', bean);
+                        break;
+                    default:
                 }
+
+                if (bean)
+                    ccfg.beanProperty('cacheStoreFactory', bean);
             }
 
-            cfg.intProperty('storeKeepBinary')
-                .intProperty('loadPreviousValue')
-                .intProperty('readThrough')
-                .intProperty('writeThrough');
+            ccfg.boolProperty('storeKeepBinary')
+                .boolProperty('loadPreviousValue')
+                .boolProperty('readThrough')
+                .boolProperty('writeThrough');
 
-            if (cache.writeBehindEnabled) {
-                cfg.intProperty('writeBehindEnabled')
+            if (ccfg.valueOf('writeBehindEnabled')) {
+                ccfg.boolProperty('writeBehindEnabled')
                     .intProperty('writeBehindBatchSize')
                     .intProperty('writeBehindFlushSize')
                     .intProperty('writeBehindFlushFrequency')
                     .intProperty('writeBehindFlushThreadCount');
             }
 
-            return cfg;
+            return ccfg;
         }
 
         // Generate cache concurrency control group.
@@ -1109,8 +1111,8 @@ export default ['JavaTypes', (JavaTypes) => {
 
         // Generate cache statistics group.
         static cacheStatistics(cache, cfg = this.cacheConfigurationBean(cache)) {
-            cfg.intProperty('statisticsEnabled')
-                .intProperty('managementEnabled');
+            cfg.boolProperty('statisticsEnabled')
+                .boolProperty('managementEnabled');
 
             return cfg;
         }
@@ -1120,9 +1122,9 @@ export default ['JavaTypes', (JavaTypes) => {
             if (_.isEmpty(igfs.name))
                 return cfg;
 
-            cfg.intProperty('name')
-                .virtualProperty('dataCacheName', igfs.name + '-data')
-                .virtualProperty('metaCacheName', igfs.name + '-meta')
+            cfg.stringProperty('name')
+                .property('java.lang.String', 'dataCacheName', igfs.name + '-data')
+                .property('java.lang.String', 'metaCacheName', igfs.name + '-meta')
                 .enumProperty('defaultMode');
 
             return cfg;
@@ -1179,7 +1181,7 @@ export default ['JavaTypes', (JavaTypes) => {
                     .intProperty('fragmentizerThrottlingDelay');
             }
             else
-                cfg.intProperty('fragmentizerEnabled');
+                cfg.boolProperty('fragmentizerEnabled');
 
             return cfg;
         }

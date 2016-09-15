@@ -21,6 +21,8 @@ import StringBuilder from './StringBuilder';
 
 import $generatorJava from './generator-java';
 
+const STORE_FACTORY = ['org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory'];
+
 export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
@@ -30,11 +32,15 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
         }
 
         static commentBlock(sb, ...lines) {
-            sb.append('/**');
+            if (lines.length === 1)
+                sb.append(`/** ${_.head(lines)} **/`);
+            else {
+                sb.append('/**');
 
-            _.forEach(lines, (line) => sb.append(` * ${line}`));
+                _.forEach(lines, (line) => sb.append(` * ${line}`));
 
-            sb.append(' **/');
+                sb.append(' **/');
+            }
         }
 
         /**
@@ -87,6 +93,46 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
             sb.emptyLine();
 
             this._setProperties(sb, bean, vars, limitLines);
+        }
+
+        /**
+         * @param {StringBuilder} sb
+         * @param {Bean} bean
+         * @param {Array.<String>} vars
+         * @param {Boolean} limitLines
+         * @private
+         */
+        static constructStoreFactory(sb, bean, vars, limitLines = false) {
+            const shortClsName = JavaTypes.shortClassName(bean.clsName);
+
+            if (_.includes(vars, bean.id))
+                sb.startBlock(`${bean.id} = ${this._newBean(bean)} {`);
+            else {
+                vars.push(bean.id);
+
+                sb.startBlock(`${shortClsName} ${bean.id} = ${this._newBean(bean)} {`);
+            }
+
+            this.commentBlock(sb, '{@inheritDoc}');
+            sb.startBlock(`@Override public ${shortClsName} create() {`);
+
+            sb.append(`setDataSource(DataSources.INSTANCE_${bean.findProperty('dataSourceBean').id});`);
+
+            sb.emptyLine();
+
+            sb.append('return super.create();');
+
+            sb.endBlock('};');
+
+            sb.endBlock('};');
+
+            sb.emptyLine();
+
+            const storeFactory = _.cloneDeep(bean);
+
+            _.remove(storeFactory.properties, (p) => _.includes(['dataSourceBean', 'dialect'], p.name));
+
+            this._setProperties(sb, storeFactory, vars, limitLines);
         }
 
         static _isBean(clsName) {
@@ -316,10 +362,31 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
                         this._setProperty(sb, bean.id, prop.name, prop.id);
 
                         break;
+                    case 'PROPERTIES':
+                        sb.append(`Properties ${prop.id} = new Properties();`);
+
+                        sb.emptyLine();
+
+                        _.forEach(prop.entries, (entry) => {
+                            sb.append(`${prop.id}.setProperty(${this._toObject('String', entry.name)}, ${this._toObject('String', entry.value)});`);
+                        });
+
+                        sb.emptyLine();
+
+                        this._setProperty(sb, bean.id, prop.name, prop.id);
+
+                        break;
                     case 'BEAN':
                         const embedded = prop.value;
 
-                        if (embedded.nonEmpty()) {
+                        if (_.includes(STORE_FACTORY, embedded.clsName)) {
+                            this.constructStoreFactory(sb, embedded, vars, limitLines);
+
+                            sb.emptyLine();
+
+                            this._setProperty(sb, bean.id, prop.name, embedded.id);
+                        }
+                        else if (embedded.nonEmpty()) {
                             this.constructBean(sb, embedded, vars, limitLines);
 
                             sb.emptyLine();

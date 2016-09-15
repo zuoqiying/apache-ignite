@@ -169,6 +169,18 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteC
                         sb.endBlock('</property>');
 
                         break;
+                    case 'PROPERTIES':
+                        sb.startBlock(`<property name="${prop.name}">`);
+                        sb.startBlock('<props>');
+
+                        _.forEach(prop.entries, (entry) => {
+                            sb.append(`<prop key="${entry.name}">${entry.value}</prop>`);
+                        });
+
+                        sb.endBlock('</props>');
+                        sb.endBlock('</property>');
+
+                        break;
                     case 'BEAN':
                         sb.startBlock(`<property name="${prop.name}">`);
 
