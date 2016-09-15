@@ -16,25 +16,18 @@
  */
 package org.apache.ignite.internal.processors.datastreamer;
 
-import org.apache.ignite.*;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.internal.IgniteInterruptedCheckedException;
-import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.stream.StreamReceiver;
+import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.testframework.GridStringLogger;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
-
-import java.util.Collection;
-
-import static org.apache.ignite.cache.CacheMode.PARTITIONED;
-import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
 
 /**
  * Test data streamer logging if target cache have no data nodes
  */
 public class DataStreamerNoDataNodeTest extends GridCommonAbstractTest {
-
     /** */
     private GridStringLogger strLog;
 
@@ -47,6 +40,7 @@ public class DataStreamerNoDataNodeTest extends GridCommonAbstractTest {
 
         cfg.setCacheConfiguration(cacheConfiguration());
         cfg.setGridLogger(strLog = new GridStringLogger());
+
         return cfg;
     }
 
@@ -59,7 +53,7 @@ public class DataStreamerNoDataNodeTest extends GridCommonAbstractTest {
         CacheConfiguration cacheCfg = defaultCacheConfiguration();
 
         cacheCfg.setName(CACHE_NAME);
-        cacheCfg.setNodeFilter(node -> false);
+        cacheCfg.setNodeFilter(F.alwaysFalse());
 
         return cacheCfg;
     }
@@ -71,12 +65,12 @@ public class DataStreamerNoDataNodeTest extends GridCommonAbstractTest {
     public void testNoDataNodesCacheStreaming() throws Exception {
         Ignite ignite = startGrid(1);
 
-        try (IgniteDataStreamer ids = ignite.dataStreamer(CACHE_NAME)) {
-            ids.addData(1, 1);
+        try (IgniteDataStreamer streamer = ignite.dataStreamer(CACHE_NAME)) {
+            streamer.addData(1, 1);
 
-            String result = strLog.toString();
+            String res = strLog.toString();
 
-            assert result.contains("Failed to find server node for cache (all affinity nodes have left the grid or cache was stopped): NoDataNodesCache") : result;
+            assertTrue(res, res.contains("Failed to find server node for cache (all affinity nodes have left the grid or cache was stopped): NoDataNodesCache"));
         }
         finally {
             stopAllGrids();
