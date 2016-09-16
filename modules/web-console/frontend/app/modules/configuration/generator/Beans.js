@@ -82,20 +82,22 @@ export class Bean extends EmptyBean {
         return this;
     }
 
-    constructorArgument(clsName, model) {
-        return this._property(this.arguments, clsName, model, null, _.nonEmpty);
+    constructorArgument(clsName, value) {
+        this.properties.push({clsName, value});
+
+        return this;
     }
 
     stringConstructorArgument(model) {
-        return this.constructorArgument('java.lang.String', model);
+        return this._property(this.arguments, 'java.lang.String', model, null, _.nonEmpty);
     }
 
     intConstructorArgument(model) {
-        return this.constructorArgument('int', model);
+        return this._property(this.arguments, 'int', model, null, _.nonEmpty);
     }
 
     classConstructorArgument(model) {
-        return this.constructorArgument('java.lang.Class', model);
+        return this._property(this.arguments, 'java.lang.Class', model, null, _.nonEmpty);
     }
 
     pathConstructorArgument(model) {
@@ -111,6 +113,18 @@ export class Bean extends EmptyBean {
 
         if (_.nonNil(value) && value !== dflt.value)
             this.arguments.push({clsName: dflt.clsName, constant: true, value});
+
+        return this;
+    }
+
+    /**
+     * @param {String} id
+     * @param {String} name
+     * @param {EmptyBean|Bean|MethodBean} value
+     * @returns {Bean}
+     */
+    beanConstructorArgument(id, name, value) {
+        this.properties.push({clsName: 'Bean', name, value});
 
         return this;
     }
