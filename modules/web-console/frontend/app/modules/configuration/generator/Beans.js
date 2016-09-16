@@ -123,8 +123,8 @@ export class Bean extends EmptyBean {
      * @param {EmptyBean|Bean|MethodBean} value
      * @returns {Bean}
      */
-    beanConstructorArgument(id, name, value) {
-        this.properties.push({clsName: 'Bean', name, value});
+    beanConstructorArgument(id, value) {
+        this.properties.push({clsName: 'Bean', id, value});
 
         return this;
     }
