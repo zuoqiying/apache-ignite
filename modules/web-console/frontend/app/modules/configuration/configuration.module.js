@@ -20,6 +20,10 @@ import angular from 'angular';
 import igniteEventGroups from './EventGroups.provider';
 import igniteSidebar from './Sidebar.provider';
 
+import clusterDefaults from './generator/defaults/cluster.provider';
+import cacheDefaults from './generator/defaults/cache.provider';
+import igfsDefaults from './generator/defaults/igfs.provider';
+
 import ConfigurationGenerator from './generator/ConfigurationGenerator';
 import PlatformGenerator from './generator/PlatformGenerator';
 
@@ -36,6 +40,9 @@ angular
 .module('ignite-console.configuration', [
 
 ])
+.provider('igniteClusterDefaults', clusterDefaults)
+.provider('igniteCacheDefaults', cacheDefaults)
+.provider('igniteIgfsDefaults', igfsDefaults)
 .provider(...igniteEventGroups)
 .provider(...igniteSidebar)
 .directive(...igniteSidebarDirective)
