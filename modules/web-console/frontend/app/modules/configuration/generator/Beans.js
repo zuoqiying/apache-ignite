@@ -74,16 +74,16 @@ export class Bean extends EmptyBean {
         if (!this.src)
             return this;
 
-        const value = this.src[model];
+        const value = _.get(this.src, model);
 
-        if (nonEmpty(value) && value !== this.dflts[model])
+        if (nonEmpty(value) && value !== _.get(this.dflts, model))
             acc.push({clsName, name, value});
 
         return this;
     }
 
     constructorArgument(clsName, value) {
-        this.properties.push({clsName, value});
+        this.arguments.push({clsName, value});
 
         return this;
     }
@@ -108,10 +108,10 @@ export class Bean extends EmptyBean {
         if (!this.src)
             return this;
 
-        const value = this.src[model];
-        const dflt = this.dflts[model];
+        const value = _.get(this.src, model);
+        const dflt = _.get(this.dflts, model);
 
-        if (_.nonNil(value) && value !== dflt.value)
+        if (_.nonNil(value) && _.nonNil(dflt) && value !== dflt.value)
             this.arguments.push({clsName: dflt.clsName, constant: true, value});
 
         return this;
@@ -119,7 +119,6 @@ export class Bean extends EmptyBean {
 
     /**
      * @param {String} id
-     * @param {String} name
      * @param {EmptyBean|Bean|MethodBean} value
      * @returns {Bean}
      */
@@ -130,15 +129,15 @@ export class Bean extends EmptyBean {
     }
 
     valueOf(path) {
-        return (this.src && this.src[path]) || this.dflts[path];
+        return _.get(this.src, path) || _.get(this.dflts, path);
     }
 
     includes(...paths) {
         return this.src && _.every(paths, (path) => {
-            const value = this.src[path];
-            const dflt = this.dflts[path];
+            const value = _.get(this.src, path);
+            const dflt = _.get(this.dflts, path);
 
-            return !_.isNil(value) && value !== dflt;
+            return _.nonNil(value) && value !== dflt;
         });
     }
 
@@ -178,11 +177,11 @@ export class Bean extends EmptyBean {
         if (!this.src)
             return this;
 
-        const value = this.src[model];
-        const dflt = this.dflts[model];
+        const value = _.get(this.src, model);
+        const dflt = _.get(this.dflts, model);
 
-        if (_.nonNil(value) && value !== dflt.value)
-            this.properties.push({clsName: dflt.clsName, name, value, mapper: dflt.mapper });
+        if (_.nonNil(value) && _.nonNil(dflt) && value !== dflt.value)
+            this.properties.push({clsName: dflt.clsName, name, value, mapper: dflt.mapper});
 
         return this;
     }
@@ -191,9 +190,10 @@ export class Bean extends EmptyBean {
         if (!this.src)
             return this;
 
-        const cls = this.src[model];
+        const cls = _.get(this.src, model);
+        const dflt = _.get(this.dflts, model);
 
-        if (_.nonEmpty(cls) && cls !== this.dflts[model])
+        if (_.nonEmpty(cls) && cls !== dflt)
             this.properties.push({clsName: 'Bean', name, value: new EmptyBean(cls)});
 
         return this;
@@ -264,10 +264,10 @@ export class Bean extends EmptyBean {
         if (!this.src)
             return this;
 
-        const entries = _.isString(model) ? this.src[model] : model;
-        const dflt = _.isString(model) ? this.dflts[model] : this.dflts[name];
+        const entries = _.isString(model) ? _.get(this.src, model) : model;
+        const dflt = _.isString(model) ? _.get(this.dflts, model) : _.get(this.dflts, name);
 
-        if (_.nonEmpty(entries) && entries !== dflt.entries) {
+        if (_.nonEmpty(entries) && _.nonNil(dflt) && entries !== dflt.entries) {
             this.properties.push({
                 clsName: dflt.clsName || 'java.util.HashMap',
                 id,
@@ -287,9 +287,9 @@ export class Bean extends EmptyBean {
         if (!this.src)
             return this;
 
-        const entries = this.src[model];
+        const entries = _.get(this.src, model);
 
-        if (entries && entries.length)
+        if (_.nonEmpty(entries))
             this.properties.push({clsName: 'java.util.Properties', id, name, entries});
 
         return this;
