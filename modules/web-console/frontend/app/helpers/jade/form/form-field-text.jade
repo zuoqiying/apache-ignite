@@ -28,7 +28,7 @@ mixin ignite-form-field-input(name, model, disabled, required, placeholder)
         data-ng-focus='tableReset()'
 
         data-ignite-form-panel-field=''
-    )&attributes(attributes ? attributes.attributes ? attributes.attributes : attributes : {})
+    )&attributes(attributes ? attributes.attributes ? attributes.attributes : attributes: {})
 
 mixin ignite-form-field-text(label, model, name, disabled, required, placeholder, tip)
     -var errLbl = label.substring(0, label.length - 1)

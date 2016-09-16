@@ -67,6 +67,7 @@ import igniteUiAcePojos from './directives/ui-ace-pojos/ui-ace-pojos.directive';
 import igniteUiAcePom from './directives/ui-ace-pom/ui-ace-pom.directive';
 import igniteUiAceTabs from './directives/ui-ace-tabs.directive';
 import igniteUiAceXml from './directives/ui-ace-xml/ui-ace-xml.directive';
+import igniteRetainSelection from './directives/retain-selection.directive';
 
 // Services.
 import ChartColors from './services/ChartColors.service';
@@ -75,18 +76,16 @@ import Confirm from './services/Confirm.service.js';
 import ConfirmBatch from './services/ConfirmBatch.service.js';
 import CopyToClipboard from './services/CopyToClipboard.service';
 import Countries from './services/Countries.service';
+import ErrorPopover from './services/ErrorPopover.service';
 import Focus from './services/Focus.service';
+import FormUtils from './services/FormUtils.service';
 import InetAddress from './services/InetAddress.service';
 import JavaTypes from './services/JavaTypes.service';
+import LegacyTable from './services/LegacyTable.service';
+import LegacyUtils from './services/LegacyUtils.service';
 import Messages from './services/Messages.service';
 import ModelNormalizer from './services/ModelNormalizer.service.js';
-import LegacyTable from './services/LegacyTable.service';
-import ErrorPopover from './services/ErrorPopover.service';
-import FormUtils from './services/FormUtils.service';
-import LegacyUtils from './services/LegacyUtils.service';
 import UnsavedChangesGuard from './services/UnsavedChangesGuard.service';
-
-// Providers.
 
 // Filters.
 import byName from './filters/byName.filter';
@@ -192,7 +191,10 @@ angular
 .directive(...igniteUiAcePom)
 .directive(...igniteUiAceTabs)
 .directive(...igniteUiAceXml)
+.directive(...igniteRetainSelection)
 // Services.
+.service('JavaTypes', JavaTypes)
+.service('IgniteErrorPopover', ErrorPopover)
 .service(...ChartColors)
 .service(...Clone)
 .service(...Confirm)
@@ -201,11 +203,9 @@ angular
 .service(...Countries)
 .service(...Focus)
 .service(...InetAddress)
-.service(...JavaTypes)
 .service(...Messages)
 .service(...ModelNormalizer)
 .service(...LegacyTable)
-.service('IgniteErrorPopover', ErrorPopover)
 .service(...FormUtils)
 .service(...LegacyUtils)
 .service(...UnsavedChangesGuard)

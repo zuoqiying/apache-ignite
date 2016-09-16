@@ -78,7 +78,7 @@ mixin td-ellipses-lbl(w, lbl)
                             tr
                                 th.header(colspan='2')
                                     .col-sm-4.pull-right(style='margin-bottom: 5px')
-                                        input.form-control(type='text' st-search='name' placeholder='Filter schemas...' ng-model='importDomain.displayedSchemasFilter' ng-change='selectSchema()')
+                                        input.form-control(type='text' st-search='name' placeholder='Filter schemas...' ng-model='importDomain.displayedSchemasFilter' )
                             tr
                                 th(width='30px')
                                     +chk('importDomain.allSchemasSelected',  'selectAllSchemas()', 'Select all schemas')
