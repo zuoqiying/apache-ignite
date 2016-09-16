@@ -17,11 +17,6 @@
 
 import _ from 'lodash';
 
-import DFLT_CLUSTER from 'app/data/cluster.json';
-import DFLT_CACHE from 'app/data/cache.json';
-import DFLT_IGFS from 'app/data/igfs.json';
-import DFLT_DOMAIN from 'app/data/domain.json';
-
 // Java built-in class names.
 import JAVA_CLASSES from '../data/java-classes.json';
 
@@ -47,8 +42,10 @@ const VALID_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
  * Utility service for various check on java types.
  */
 export default class JavaTypes {
-    constructor() {
-        this.enumClasses = _.uniq(this._enumClassesAcc(_.merge(DFLT_CLUSTER, DFLT_CACHE, DFLT_IGFS, DFLT_DOMAIN), []));
+    static $inject = ['igniteClusterDefaults', 'igniteCacheDefaults', 'igniteIgfsDefaults'];
+
+    constructor(clusterDflts, cacheDflts, igfsDflts) {
+        this.enumClasses = _.uniq(this._enumClassesAcc(_.merge(clusterDflts, cacheDflts, igfsDflts), []));
         this.shortEnumClasses = _.map(this.enumClasses, (cls) => this.shortClassName(cls));
     }
 
