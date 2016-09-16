@@ -1296,6 +1296,21 @@ $generatorJava.clusterTime = function(cluster, res) {
     return res;
 };
 
+// Generate ODBC configuration group.
+$generatorJava.clusterODBC = function(odbc, res) {
+    if (!res)
+        res = $generatorCommon.builder();
+
+    if (odbc && odbc.odbcEnabled) {
+        $generatorJava.beanProperty(res, 'cfg', odbc, 'odbcConfiguration', 'odbcConfiguration',
+            $generatorCommon.ODBC_CONFIGURATION.className, $generatorCommon.ODBC_CONFIGURATION.fields, true);
+    }
+
+    res.needEmptyLine = true;
+
+    return res;
+};
+
 // Generate thread pools group.
 $generatorJava.clusterPools = function(cluster, res) {
     if (!res)
@@ -2871,6 +2886,8 @@ $generatorJava.clusterConfiguration = function(cluster, clientNearCfg, res) {
     $generatorJava.clusterFailover(cluster, res);
 
     $generatorJava.clusterLogger(cluster.logger, res);
+
+    $generatorJava.clusterODBC(cluster.odbc, res);
 
     $generatorJava.clusterMarshaller(cluster, res);
 

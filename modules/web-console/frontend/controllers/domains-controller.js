@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
+// H2 SQL keywords.
+import SQL_KEYWORDS from 'app/data/sql-keywords.json';
+
 // Controller for Domain model screen.
 export default ['domainsController', [
-    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
-    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource, ErrorPopover, FormUtils) {
+    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils', 'JavaTypes',
+    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource, ErrorPopover, FormUtils, JavaTypes) {
         UnsavedChangesGuard.install($scope);
 
         const emptyDomain = {empty: true};
@@ -533,6 +536,10 @@ export default ['domainsController', [
             return 'Associate with ' + cacheName;
         };
 
+        function isValidJavaIdentifier(s) {
+            return !_.includes(SQL_KEYWORDS, s.toUpperCase()) && JavaTypes.validIdentifier(s) && !JavaTypes.isKeyword(s);
+        }
+
         function toJavaClassName(name) {
             const len = name.length;
 
@@ -554,13 +561,21 @@ export default ['domainsController', [
                     buf += ch.toLocaleLowerCase();
             }
 
-            return buf;
+            if (isValidJavaIdentifier(buf))
+                return buf;
+
+            return 'Class' + buf;
         }
 
-        function toJavaName(dbName) {
+        function toJavaFieldName(dbName) {
             const javaName = toJavaClassName(dbName);
 
-            return javaName.charAt(0).toLocaleLowerCase() + javaName.slice(1);
+            const fieldName = javaName.charAt(0).toLocaleLowerCase() + javaName.slice(1);
+
+            if (isValidJavaIdentifier(fieldName))
+                return fieldName;
+
+            return 'field' + javaName;
         }
 
         function _fillCommonCachesOrTemplates(item) {
@@ -588,6 +603,7 @@ export default ['domainsController', [
                     item.cacheOrTemplate = item.cachesOrTemplates[0].value;
             };
         }
+
         /**
          * Load list of database tables.
          */
@@ -753,7 +769,7 @@ export default ['domainsController', [
             let containDup = false;
 
             function queryField(name, jdbcType) {
-                return {name: toJavaName(name), className: jdbcType.javaType};
+                return {name: toJavaFieldName(name), className: jdbcType.javaType};
             }
 
             function dbField(name, jdbcType, nullable) {
@@ -761,7 +777,7 @@ export default ['domainsController', [
                     jdbcType,
                     databaseFieldName: name,
                     databaseFieldType: jdbcType.dbName,
-                    javaFieldName: toJavaName(name),
+                    javaFieldName: toJavaFieldName(name),
                     javaFieldType: nullable ? jdbcType.javaType :
                         ($scope.ui.usePrimitives && jdbcType.primitiveType ? jdbcType.primitiveType : jdbcType.javaType)
                 };
@@ -820,7 +836,7 @@ export default ['domainsController', [
                             indexes.push({
                                 name: idx.name, indexType: 'SORTED', fields: _.map(fields, function(fieldName) {
                                     return {
-                                        name: toJavaName(fieldName),
+                                        name: toJavaFieldName(fieldName),
                                         direction: idx.fields[fieldName]
                                     };
                                 })
