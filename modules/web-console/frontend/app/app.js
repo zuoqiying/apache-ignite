@@ -43,7 +43,6 @@ import './modules/navbar/navbar.module';
 import './modules/configuration/configuration.module';
 import './modules/getting-started/GettingStarted.provider';
 import './modules/dialog/dialog.module';
-import './modules/version/Version.provider';
 import './modules/ace.module';
 import './modules/socket.module';
 import './modules/loading/loading.module';
@@ -166,7 +165,6 @@ angular
     'ignite-console.navbar',
     'ignite-console.configuration',
     'ignite-console.getting-started',
-    'ignite-console.version',
     'ignite-console.loading',
     // Ignite configuration module.
     'ignite-console.config',

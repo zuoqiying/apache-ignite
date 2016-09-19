@@ -15,18 +15,11 @@
  * limitations under the License.
  */
 
-import angular from 'angular';
-
-angular
-    .module('ignite-console.version', [])
-    .provider('IgniteVersion', function() {
-        const version = {
-            version: '1.7.0'
-        };
-
-        this.update = (newVersion) => {
-            version.version = newVersion;
-        };
-
-        this.$get = [() => version];
-    });
+/**
+ * Utility service for version.
+ */
+export default () => {
+    return {
+        ignite: '1.7.0'
+    };
+};
