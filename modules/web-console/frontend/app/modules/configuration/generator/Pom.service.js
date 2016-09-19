@@ -170,7 +170,7 @@ class GeneratorPom {
 
         res.needEmptyLine = true;
 
-        res.line('<!-- ' + $generatorCommon.mainComment() + ' -->');
+        res.line('<!-- ' + $generatorCommon.mainComment('Maven project') + ' -->');
 
         res.needEmptyLine = true;
 
