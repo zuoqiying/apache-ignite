@@ -28,16 +28,20 @@ export class EmptyBean {
         this.clsName = clsName;
     }
 
-    isEmptyConstructor() {
-        return _.isEmpty(this.arguments);
-    }
-
     isEmpty() {
-        return _.isEmpty(this.properties);
+        return _.isEmpty(this.arguments) && _.isEmpty(this.properties);
     }
 
     nonEmpty() {
         return !this.isEmpty();
+    }
+
+    isComplex() {
+        return this.nonEmpty() || !!_.find(this.arguments, (arg) => arg.clsName === 'Bean');
+    }
+
+    nonComplex() {
+        return !this.isComplex();
     }
 
     findProperty(name) {
@@ -123,7 +127,7 @@ export class Bean extends EmptyBean {
      * @returns {Bean}
      */
     beanConstructorArgument(id, value) {
-        this.properties.push({clsName: 'Bean', id, value});
+        this.arguments.push({clsName: 'Bean', id, value});
 
         return this;
     }

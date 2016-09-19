@@ -49,7 +49,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
         static _newBean(bean) {
             const shortClsName = JavaTypes.shortClassName(bean.clsName);
 
-            if (bean.isEmptyConstructor())
+            if (_.isEmpty(bean.arguments))
                 return `new ${shortClsName}()`;
 
             const args = _.map(bean.arguments, (arg) => {
@@ -80,6 +80,14 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
          * @private
          */
         static constructBean(sb, bean, vars, limitLines = false) {
+            _.forEach(bean.arguments, (arg) => {
+                if (arg.clsName === 'Bean' && arg.value.nonEmpty()) {
+                    this.constructBean(sb, arg.value, vars, limitLines);
+
+                    sb.emptyLine();
+                }
+            });
+
             if (_.includes(vars, bean.id))
                 sb.append(`${bean.id} = ${this._newBean(bean)};`);
             else {
@@ -90,9 +98,11 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
                 sb.append(`${shortClsName} ${bean.id} = ${this._newBean(bean)};`);
             }
 
-            sb.emptyLine();
+            if (_.nonEmpty(bean.properties)) {
+                sb.emptyLine();
 
-            this._setProperties(sb, bean, vars, limitLines);
+                this._setProperties(sb, bean, vars, limitLines);
+            }
         }
 
         /**
@@ -161,7 +171,11 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
                         return `props.getProperty("${item}").toCharArray()`;
                     case 'Property':
                         return `props.getProperty("${item}")`;
+                    case 'Bean':
+                        if (item.isComplex())
+                            return item.id;
 
+                        return this._newBean(item);
                     default:
                         return item;
                 }
@@ -321,9 +335,6 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
                                 _.forEach(prop.items, (item) => {
                                     this.constructBean(sb, item, vars, limitLines);
 
-                                    if (item.nonEmpty())
-                                        sb.emptyLine();
-
                                     sb.append(`${prop.id}.add(${item.id});`);
 
                                     sb.emptyLine();
@@ -386,7 +397,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
 
                             this._setProperty(sb, bean.id, prop.name, embedded.id);
                         }
-                        else if (embedded.nonEmpty()) {
+                        else if (_.nonEmpty(embedded.properties) || embedded.isComplex()) {
                             this.constructBean(sb, embedded, vars, limitLines);
 
                             sb.emptyLine();
