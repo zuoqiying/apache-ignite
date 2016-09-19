@@ -84,8 +84,12 @@ export default class NotebookData {
     }
 
     load() {
-        if (this.demo)
-            return;
+        if (this.demo) {
+            if (this.initLatch)
+                return this.initLatch;
+
+            return this.initLatch = this.$q.when(this.notebooks = [DEMO_NOTEBOOK]);
+        }
 
         return this.initLatch = this.$http.get('/api/v1/notebooks')
             .then(({data}) => this.notebooks = data)
