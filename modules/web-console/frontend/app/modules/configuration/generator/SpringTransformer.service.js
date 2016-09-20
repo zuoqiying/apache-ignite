@@ -52,6 +52,11 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteC
                     sb.append(`<util:constant static-field="${arg.clsName}.${arg.value}"/>`);
                     sb.endBlock('</constructor-arg>');
                 }
+                else if (arg.clsName === 'Bean') {
+                    sb.startBlock('<constructor-arg>');
+                    this.appendBean(sb, arg.value);
+                    sb.endBlock('</constructor-arg>');
+                }
                 else
                     sb.append(`<constructor-arg value="${this._toObject(arg.clsName, arg.value)}"/>`);
             });
@@ -61,8 +66,8 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteC
             sb.endBlock('</bean>');
         }
 
-        static _toObject(clsName, ...items) {
-            return _.map(items, (item) => {
+        static _toObject(clsName, items) {
+            return _.map(_.isArray(items) ? items : [items], (item) => {
                 switch (clsName) {
                     case 'Property':
                     case 'PropertyChar':
@@ -70,21 +75,24 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteC
                     case 'java.lang.Class':
                         return JavaTypes.fullClassName(item);
                     default:
-                        return item;
+                        if (JavaTypes.nonEnum(clsName))
+                            return item;
+
+                        return `${clsName}.${item}`;
                 }
             });
+        }
+
+        static _isBean(clsName) {
+            return JavaTypes.nonBuiltInClass(clsName) && JavaTypes.nonEnum(clsName) && !JavaTypes.isJavaPrimitive(clsName);
         }
 
         static _setCollection(sb, prop, tag) {
             sb.startBlock(`<property name="${prop.name}">`);
             sb.startBlock(`<${tag}>`);
 
-            const arrClsName = JavaTypes.shortClassName(prop.typeClsName);
-
-            const isBean = JavaTypes.nonBuiltInClass(arrClsName) && JavaTypes.nonEnum(arrClsName);
-
             _.forEach(prop.items, (item) => {
-                if (isBean)
+                if (this._isBean(prop.typeClsName))
                     this.appendBean(sb, item);
                 else
                     sb.append(`<value>${item}</value>`);
@@ -92,7 +100,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteC
 
             sb.endBlock(`</${tag}>`);
             sb.endBlock('</property>');
-
         }
 
         /**
@@ -155,14 +162,28 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteC
                         const keyClsName = JavaTypes.shortClassName(prop.keyClsName);
                         const valClsName = JavaTypes.shortClassName(prop.valClsName);
 
-                        const isKeyEnum = JavaTypes.nonBuiltInClass(keyClsName);
-                        const isValEnum = JavaTypes.nonBuiltInClass(valClsName);
-
                         _.forEach(prop.entries, (entry) => {
-                            const key = isKeyEnum ? `${keyClsName}.${entry[prop.keyField]}` : entry[prop.keyField];
-                            const val = isValEnum ? `${valClsName}.${entry[prop.valField]}` : entry[prop.valField];
+                            const key = entry[prop.keyField];
+                            const val = entry[prop.valField];
 
-                            sb.append(`<entry key="${key}" value="${val}"/>`);
+                            if (keyClsName === 'Bean' || valClsName === 'Bean') {
+                                sb.startBlock('<entry>');
+                                sb.startBlock('<key>');
+                                if (keyClsName === 'Bean')
+                                    this.appendBean(sb, key);
+                                else
+                                    sb.append(this._toObject(keyClsName, key));
+                                sb.endBlock('</key>');
+                                sb.startBlock('<value>');
+                                if (valClsName === 'Bean')
+                                    this.appendBean(sb, val);
+                                else
+                                    sb.append(this._toObject(valClsName, val));
+                                sb.endBlock('</value>');
+                                sb.endBlock('</entry>');
+                            }
+                            else
+                                sb.append(`<entry key="${this._toObject(keyClsName, key)}" value="${this._toObject(valClsName, val)}"/>`);
                         });
 
                         sb.endBlock('</map>');

@@ -37,7 +37,7 @@ export class EmptyBean {
     }
 
     isComplex() {
-        return this.nonEmpty() || !!_.find(this.arguments, (arg) => arg.clsName === 'Bean');
+        return _.nonEmpty(this.properties) || !!_.find(this.arguments, (arg) => arg.clsName === 'Bean');
     }
 
     nonComplex() {
@@ -147,6 +147,10 @@ export class Bean extends EmptyBean {
 
     boolProperty(model, name = model) {
         return this._property(this.properties, 'boolean', model, name, _.nonNil);
+    }
+
+    byteProperty(model, name = model) {
+        return this._property(this.properties, 'byte', model, name, _.nonNil);
     }
 
     intProperty(model, name = model) {

@@ -34,14 +34,17 @@ export default class StringBuilder {
         return this;
     }
 
-    append(...lines) {
-        _.forEach(lines, (line) => this.lines.push(_.repeat(' ', this.indent * this.deep) + line));
+    append(lines) {
+        if (_.isArray(lines))
+            _.forEach(lines, (line) => this.lines.push(_.repeat(' ', this.indent * this.deep) + line));
+        else
+            this.lines.push(_.repeat(' ', this.indent * this.deep) + lines);
 
         return this;
     }
 
-    startBlock(...lines) {
-        this.append(...lines);
+    startBlock(lines) {
+        this.append(lines);
 
         this.deep++;
 

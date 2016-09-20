@@ -146,20 +146,24 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
         }
 
         static _isBean(clsName) {
-            return JavaTypes.nonBuiltInClass(clsName) && JavaTypes.nonEnum(clsName);
+            return JavaTypes.nonBuiltInClass(clsName) && JavaTypes.nonEnum(clsName) && !JavaTypes.isJavaPrimitive(clsName);
         }
 
-        static _toObject(shortClsName, ...items) {
-            if (!JavaTypes.nonEnum(shortClsName))
-                return _.map(items, (item) => `${shortClsName}.${item}`);
+        static _toObject(shortClsName, val) {
+            const items = _.isArray(val) ? val : [val];
 
-            return _.map(items, (item) => {
+            return _.map(items, (item, idx) => {
                 if (_.isNil(item))
                     return 'null';
 
                 switch (shortClsName) {
+                    case 'byte':
+                        return `(byte) ${item}`;
                     case 'Serializable':
                     case 'String':
+                        if (items.length > 1)
+                            return `"${item}"${idx !== items.length - 1 ? ' +' : ''}`;
+
                         return `"${item}"`;
                     case 'Path':
                         return `"${item.replace(/\\/g, '\\\\')}"`;
@@ -177,7 +181,10 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
 
                         return this._newBean(item);
                     default:
-                        return item;
+                        if (JavaTypes.nonEnum(shortClsName))
+                            return item;
+
+                        return `${shortClsName}.${item}`;
                 }
             });
         }
@@ -216,7 +223,7 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
                 }
             }
             else {
-                const arrItems = this._toObject(arrType, ...prop.items);
+                const arrItems = this._toObject(arrType, prop.items);
 
                 if (arrItems.length > 1) {
                     sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(${arrWrapper ? `new ${arrType}[] {` : ''}`);
@@ -360,11 +367,19 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
 
                         sb.emptyLine();
 
-                        const keyMapper = this._toObject.bind(this, keyClsName);
-                        const valMapper = this._toObject.bind(this, valClsName);
-
                         _.forEach(prop.entries, (entry) => {
-                            sb.append(`${prop.id}.put(${keyMapper(entry[prop.keyField])}, ${valMapper(entry[prop.valField])});`);
+                            const key = this._toObject(keyClsName, entry[prop.keyField]);
+                            const val = entry[prop.valField];
+
+                            if (_.isArray(val)) {
+                                sb.startBlock(`${prop.id}.put(${key},`);
+
+                                sb.append(this._toObject(valClsName, val));
+
+                                sb.endBlock(');');
+                            }
+                            else
+                                sb.append(`${prop.id}.put(${key}, ${this._toObject(valClsName, val)});`);
                         });
 
                         if (_.nonEmpty(prop.entries))
