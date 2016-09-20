@@ -78,7 +78,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                 .settings-row(data-ng-if=model + '.offHeapMode === 1 && ' + model + '.memoryMode !== "OFFHEAP_VALUES"')
                     +number-required('Off-heap memory max size:', model + '.offHeapMaxMemory', '"offHeapMaxMemory"', 'true',
                         model + '.offHeapMode === 1', '', 1,
-                        'Sets maximum amount of memory available to off-heap storage in bytes')
+                        'Maximum amount of memory available to off-heap storage in bytes')
                 .settings-row
                     -var onHeapTired = model + '.memoryMode === "ONHEAP_TIERED"'
                     -var swapEnabled = model + '.swapEnabled'
