@@ -17,8 +17,8 @@
 
 // Controller for Domain model screen.
 export default ['domainsController', [
-    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
-    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource, ErrorPopover, FormUtils) {
+    '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils', 'JavaTypes', 'SqlTypes',
+    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource, ErrorPopover, FormUtils, JavaTypes, SqlTypes) {
         UnsavedChangesGuard.install($scope);
 
         const emptyDomain = {empty: true};
@@ -556,10 +556,15 @@ export default ['domainsController', [
             return 'Associate with ' + cacheName;
         };
 
-        function toJavaClassName(name) {
+        function isValidJavaIdentifier(s) {
+            return JavaTypes.validIdentifier(s) && !JavaTypes.isKeyword(s) &&
+                SqlTypes.validIdentifier(s) && !SqlTypes.isKeyword(s);
+        }
+
+        function toJavaIdentifier(name) {
             const len = name.length;
 
-            let buf = '';
+            let ident = '';
 
             let capitalizeNext = true;
 
@@ -569,21 +574,35 @@ export default ['domainsController', [
                 if (ch === ' ' || ch === '_')
                     capitalizeNext = true;
                 else if (capitalizeNext) {
-                    buf += ch.toLocaleUpperCase();
+                    ident += ch.toLocaleUpperCase();
 
                     capitalizeNext = false;
                 }
                 else
-                    buf += ch.toLocaleLowerCase();
+                    ident += ch.toLocaleLowerCase();
             }
 
-            return buf;
+            return ident;
         }
 
-        function toJavaName(dbName) {
-            const javaName = toJavaClassName(dbName);
+        function toJavaClassName(name) {
+            const clazzName = toJavaIdentifier(name);
 
-            return javaName.charAt(0).toLocaleLowerCase() + javaName.slice(1);
+            if (isValidJavaIdentifier(clazzName))
+                return clazzName;
+
+            return 'Class' + clazzName;
+        }
+
+        function toJavaFieldName(dbName) {
+            const javaName = toJavaIdentifier(dbName);
+
+            const fieldName = javaName.charAt(0).toLocaleLowerCase() + javaName.slice(1);
+
+            if (isValidJavaIdentifier(fieldName))
+                return fieldName;
+
+            return 'field' + javaName;
         }
 
         function _fillCommonCachesOrTemplates(item) {
@@ -611,6 +630,7 @@ export default ['domainsController', [
                     item.cacheOrTemplate = item.cachesOrTemplates[0].value;
             };
         }
+
         /**
          * Load list of database tables.
          */
@@ -776,7 +796,7 @@ export default ['domainsController', [
             let containDup = false;
 
             function queryField(name, jdbcType) {
-                return {name: toJavaName(name), className: jdbcType.javaType};
+                return {name: toJavaFieldName(name), className: jdbcType.javaType};
             }
 
             function dbField(name, jdbcType, nullable) {
@@ -784,7 +804,7 @@ export default ['domainsController', [
                     jdbcType,
                     databaseFieldName: name,
                     databaseFieldType: jdbcType.dbName,
-                    javaFieldName: toJavaName(name),
+                    javaFieldName: toJavaFieldName(name),
                     javaFieldType: nullable ? jdbcType.javaType :
                         ($scope.ui.usePrimitives && jdbcType.primitiveType ? jdbcType.primitiveType : jdbcType.javaType)
                 };
@@ -821,9 +841,13 @@ export default ['domainsController', [
 
                         const fld = dbField(colName, jdbcType, nullable);
 
-                        if ($scope.ui.generateAliases && !_.find(aliases, {field: fld.javaFieldName}) &&
-                            fld.javaFieldName.toUpperCase() !== fld.databaseFieldName.toUpperCase())
-                            aliases.push({field: fld.javaFieldName, alias: fld.databaseFieldName});
+                        const dbName = fld.databaseFieldName;
+
+                        if ($scope.ui.generateAliases &&
+                            SqlTypes.validIdentifier(dbName) && !SqlTypes.isKeyword(dbName) &&
+                            !_.find(aliases, {field: fld.javaFieldName}) &&
+                            fld.javaFieldName.toUpperCase() !== dbName.toUpperCase())
+                            aliases.push({field: fld.javaFieldName, alias: dbName});
 
                         if (col.key) {
                             keyFields.push(fld);
@@ -843,7 +867,7 @@ export default ['domainsController', [
                             indexes.push({
                                 name: idx.name, indexType: 'SORTED', fields: _.map(fields, function(fieldName) {
                                     return {
-                                        name: toJavaName(fieldName),
+                                        name: toJavaFieldName(fieldName),
                                         direction: idx.fields[fieldName]
                                     };
                                 })
