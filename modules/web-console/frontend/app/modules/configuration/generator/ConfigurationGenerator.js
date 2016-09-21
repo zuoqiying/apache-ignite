@@ -60,162 +60,163 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             cfg.stringProperty('name', 'gridName')
                 .stringProperty('localHost');
 
-            if (cluster.discovery) {
-                const discovery = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery',
-                    cluster.discovery, clusterDflts.discovery);
+            if (_.isNil(cluster.discovery))
+                return cfg;
 
-                let ipFinder;
+            const discovery = new Bean('org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi', 'discovery',
+                cluster.discovery, clusterDflts.discovery);
 
-                switch (discovery.valueOf('kind')) {
-                    case 'Vm':
-                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder',
-                            'ipFinder', cluster.discovery.Vm, clusterDflts.discovery.Vm);
+            let ipFinder;
 
-                        ipFinder.collectionProperty('addrs', 'addresses', cluster.discovery.Vm.addresses);
+            switch (discovery.valueOf('kind')) {
+                case 'Vm':
+                    ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder',
+                        'ipFinder', cluster.discovery.Vm, clusterDflts.discovery.Vm);
 
-                        break;
-                    case 'Multicast':
-                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder',
-                            'ipFinder', cluster.discovery.Multicast, clusterDflts.discovery.Multicast);
+                    ipFinder.collectionProperty('addrs', 'addresses', cluster.discovery.Vm.addresses);
 
-                        ipFinder.stringProperty('multicastGroup')
-                            .intProperty('multicastPort')
-                            .intProperty('responseWaitTime')
-                            .intProperty('addressRequestAttempts')
-                            .stringProperty('localAddress')
-                            .collectionProperty('addrs', 'addresses', cluster.discovery.Multicast.addresses);
+                    break;
+                case 'Multicast':
+                    ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder',
+                        'ipFinder', cluster.discovery.Multicast, clusterDflts.discovery.Multicast);
 
-                        break;
-                    case 'S3':
-                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.s3.TcpDiscoveryS3IpFinder',
-                            'ipFinder', cluster.discovery.S3, clusterDflts.discovery.S3);
+                    ipFinder.stringProperty('multicastGroup')
+                        .intProperty('multicastPort')
+                        .intProperty('responseWaitTime')
+                        .intProperty('addressRequestAttempts')
+                        .stringProperty('localAddress')
+                        .collectionProperty('addrs', 'addresses', cluster.discovery.Multicast.addresses);
 
-                        ipFinder.stringProperty('bucketName');
+                    break;
+                case 'S3':
+                    ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.s3.TcpDiscoveryS3IpFinder',
+                        'ipFinder', cluster.discovery.S3, clusterDflts.discovery.S3);
 
-                        break;
-                    case 'Cloud':
-                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.cloud.TcpDiscoveryCloudIpFinder',
-                            'ipFinder', cluster.discovery.Cloud, clusterDflts.discovery.Cloud);
+                    ipFinder.stringProperty('bucketName');
 
-                        ipFinder.stringProperty('credential')
-                            .pathProperty('credentialPath')
-                            .stringProperty('identity')
-                            .stringProperty('provider')
-                            .collectionProperty('regions', 'regions', cluster.discovery.Cloud.regions)
-                            .collectionProperty('zones', 'zones', cluster.discovery.Cloud.zones);
+                    break;
+                case 'Cloud':
+                    ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.cloud.TcpDiscoveryCloudIpFinder',
+                        'ipFinder', cluster.discovery.Cloud, clusterDflts.discovery.Cloud);
 
-                        break;
-                    case 'GoogleStorage':
-                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.gce.TcpDiscoveryGoogleStorageIpFinder',
-                            'ipFinder', cluster.discovery.GoogleStorage, clusterDflts.discovery.GoogleStorage);
+                    ipFinder.stringProperty('credential')
+                        .pathProperty('credentialPath')
+                        .stringProperty('identity')
+                        .stringProperty('provider')
+                        .collectionProperty('regions', 'regions', cluster.discovery.Cloud.regions)
+                        .collectionProperty('zones', 'zones', cluster.discovery.Cloud.zones);
 
-                        ipFinder.stringProperty('projectName')
-                            .stringProperty('bucketName')
-                            .pathProperty('serviceAccountP12FilePath')
-                            .stringProperty('serviceAccountId');
+                    break;
+                case 'GoogleStorage':
+                    ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.gce.TcpDiscoveryGoogleStorageIpFinder',
+                        'ipFinder', cluster.discovery.GoogleStorage, clusterDflts.discovery.GoogleStorage);
 
-                        break;
-                    case 'Jdbc':
-                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder',
-                            'ipFinder', cluster.discovery.Jdbc, clusterDflts.discovery.Jdbc);
+                    ipFinder.stringProperty('projectName')
+                        .stringProperty('bucketName')
+                        .pathProperty('serviceAccountP12FilePath')
+                        .stringProperty('serviceAccountId');
 
-                        ipFinder.intProperty('initSchema');
+                    break;
+                case 'Jdbc':
+                    ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.jdbc.TcpDiscoveryJdbcIpFinder',
+                        'ipFinder', cluster.discovery.Jdbc, clusterDflts.discovery.Jdbc);
 
-                        if (ipFinder.includes('dataSourceBean', 'dialect'))
-                            ipFinder.dataSource(ipFinder.valueOf('dataSourceBean'), 'dataSource', this.dialectClsName(ipFinder.valueOf('dialect')));
+                    ipFinder.intProperty('initSchema');
 
-                        break;
-                    case 'SharedFs':
-                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.sharedfs.TcpDiscoverySharedFsIpFinder',
-                            'ipFinder', cluster.discovery.SharedFs, clusterDflts.discovery.SharedFs);
+                    if (ipFinder.includes('dataSourceBean', 'dialect'))
+                        ipFinder.dataSource(ipFinder.valueOf('dataSourceBean'), 'dataSource', this.dialectClsName(ipFinder.valueOf('dialect')));
 
-                        ipFinder.pathProperty('path');
+                    break;
+                case 'SharedFs':
+                    ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.sharedfs.TcpDiscoverySharedFsIpFinder',
+                        'ipFinder', cluster.discovery.SharedFs, clusterDflts.discovery.SharedFs);
 
-                        break;
-                    case 'ZooKeeper':
-                        const src = cluster.discovery.ZooKeeper;
-                        const dflt = clusterDflts.discovery.ZooKeeper;
+                    ipFinder.pathProperty('path');
 
-                        ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.zk.TcpDiscoveryZookeeperIpFinder',
-                            'ipFinder', src, dflt);
+                    break;
+                case 'ZooKeeper':
+                    const src = cluster.discovery.ZooKeeper;
+                    const dflt = clusterDflts.discovery.ZooKeeper;
 
-                        ipFinder.emptyBeanProperty('curator')
-                            .stringProperty('zkConnectionString');
+                    ipFinder = new Bean('org.apache.ignite.spi.discovery.tcp.ipfinder.zk.TcpDiscoveryZookeeperIpFinder',
+                        'ipFinder', src, dflt);
 
-                        if (src && src.retryPolicy && src.retryPolicy.kind) {
-                            const policy = src.retryPolicy;
+                    ipFinder.emptyBeanProperty('curator')
+                        .stringProperty('zkConnectionString');
 
-                            let retryPolicyBean;
+                    if (src && src.retryPolicy && src.retryPolicy.kind) {
+                        const policy = src.retryPolicy;
 
-                            switch (policy.kind) {
-                                case 'ExponentialBackoff':
-                                    retryPolicyBean = new Bean('org.apache.curator.retry.ExponentialBackoffRetry', null,
-                                        policy.ExponentialBackoff, dflt.ExponentialBackoff)
-                                        .intConstructorArgument('baseSleepTimeMs')
-                                        .intConstructorArgument('maxRetries')
-                                        .intConstructorArgument('maxSleepMs');
+                        let retryPolicyBean;
 
-                                    break;
-                                case 'BoundedExponentialBackoff':
-                                    retryPolicyBean = new Bean('org.apache.curator.retry.BoundedExponentialBackoffRetry',
-                                        null, policy.BoundedExponentialBackoffRetry, dflt.BoundedExponentialBackoffRetry)
-                                        .intConstructorArgument('baseSleepTimeMs')
-                                        .intConstructorArgument('maxSleepTimeMs')
-                                        .intConstructorArgument('maxRetries');
+                        switch (policy.kind) {
+                            case 'ExponentialBackoff':
+                                retryPolicyBean = new Bean('org.apache.curator.retry.ExponentialBackoffRetry', null,
+                                    policy.ExponentialBackoff, dflt.ExponentialBackoff)
+                                    .intConstructorArgument('baseSleepTimeMs')
+                                    .intConstructorArgument('maxRetries')
+                                    .intConstructorArgument('maxSleepMs');
 
-                                    break;
-                                case 'UntilElapsed':
-                                    retryPolicyBean = new Bean('org.apache.curator.retry.RetryUntilElapsed', null,
-                                        policy.UntilElapsed, dflt.UntilElapsed)
-                                        .intConstructorArgument('maxElapsedTimeMs')
-                                        .intConstructorArgument('sleepMsBetweenRetries');
+                                break;
+                            case 'BoundedExponentialBackoff':
+                                retryPolicyBean = new Bean('org.apache.curator.retry.BoundedExponentialBackoffRetry',
+                                    null, policy.BoundedExponentialBackoffRetry, dflt.BoundedExponentialBackoffRetry)
+                                    .intConstructorArgument('baseSleepTimeMs')
+                                    .intConstructorArgument('maxSleepTimeMs')
+                                    .intConstructorArgument('maxRetries');
 
-                                    break;
+                                break;
+                            case 'UntilElapsed':
+                                retryPolicyBean = new Bean('org.apache.curator.retry.RetryUntilElapsed', null,
+                                    policy.UntilElapsed, dflt.UntilElapsed)
+                                    .intConstructorArgument('maxElapsedTimeMs')
+                                    .intConstructorArgument('sleepMsBetweenRetries');
 
-                                case 'NTimes':
-                                    retryPolicyBean = new Bean('org.apache.curator.retry.RetryNTimes', null,
-                                        policy.NTimes, dflt.NTimes)
-                                        .intConstructorArgument('n')
-                                        .intConstructorArgument('sleepMsBetweenRetries');
+                                break;
 
-                                    break;
-                                case 'OneTime':
-                                    retryPolicyBean = new Bean('org.apache.curator.retry.RetryOneTime', null,
-                                        policy.OneTime, dflt.OneTime)
-                                        .intConstructorArgument('sleepMsBetweenRetry');
+                            case 'NTimes':
+                                retryPolicyBean = new Bean('org.apache.curator.retry.RetryNTimes', null,
+                                    policy.NTimes, dflt.NTimes)
+                                    .intConstructorArgument('n')
+                                    .intConstructorArgument('sleepMsBetweenRetries');
 
-                                    break;
-                                case 'Forever':
-                                    retryPolicyBean = new Bean('org.apache.curator.retry.RetryForever', null,
-                                        policy.Forever, dflt.Forever)
-                                        .intConstructorArgument('retryIntervalMs');
+                                break;
+                            case 'OneTime':
+                                retryPolicyBean = new Bean('org.apache.curator.retry.RetryOneTime', null,
+                                    policy.OneTime, dflt.OneTime)
+                                    .intConstructorArgument('sleepMsBetweenRetry');
 
-                                    break;
-                                case 'Custom':
-                                    if (_.nonEmpty(policy.Custom.className))
-                                        retryPolicyBean = new EmptyBean(policy.Custom.className);
+                                break;
+                            case 'Forever':
+                                retryPolicyBean = new Bean('org.apache.curator.retry.RetryForever', null,
+                                    policy.Forever, dflt.Forever)
+                                    .intConstructorArgument('retryIntervalMs');
 
-                                    break;
-                                default:
-                            }
+                                break;
+                            case 'Custom':
+                                if (_.nonEmpty(policy.Custom.className))
+                                    retryPolicyBean = new EmptyBean(policy.Custom.className);
 
-                            if (retryPolicyBean)
-                                ipFinder.beanProperty('retryPolicy', retryPolicyBean);
+                                break;
+                            default:
                         }
 
-                        ipFinder.pathProperty('basePath', '/services')
-                            .stringProperty('serviceName')
-                            .stringProperty('allowDuplicateRegistrations');
+                        if (retryPolicyBean)
+                            ipFinder.beanProperty('retryPolicy', retryPolicyBean);
+                    }
 
-                        break;
-                    default:
-                }
+                    ipFinder.pathProperty('basePath', '/services')
+                        .stringProperty('serviceName')
+                        .stringProperty('allowDuplicateRegistrations');
 
-                if (ipFinder)
-                    discovery.beanProperty('ipFinder', ipFinder);
-
-                cfg.beanProperty('discoverySpi', discovery);
+                    break;
+                default:
             }
+
+            if (ipFinder)
+                discovery.beanProperty('ipFinder', ipFinder);
+
+            cfg.beanProperty('discoverySpi', discovery);
 
             return cfg;
         }
@@ -279,7 +280,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             binaryCfg.collectionProperty('types', 'typeConfigurations', typeCfgs, 'java.util.Collection',
                 'org.apache.ignite.binary.BinaryTypeConfiguration');
 
-            binaryCfg.intProperty('compactFooter');
+            binaryCfg.boolProperty('compactFooter');
 
             if (binaryCfg.isEmpty())
                 return cfg;
@@ -839,9 +840,9 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             return cfg;
         }
 
-        static cacheDomains(domains, ccfg) {
-
-        }
+        // static cacheDomains(domains, ccfg) {
+        //     return ccfg;
+        // }
 
         /**
          * Generate eviction policy object.

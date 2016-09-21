@@ -18,7 +18,7 @@
 import templateUrl from './ui-ace-sharp.jade';
 import controller from './ui-ace-sharp.controller';
 
-export default ['igniteUiAceSharp', ['SharpTransformer', (generator) => {
+export default ['igniteUiAceSharp', ['IgniteSharpTransformer', (generator) => {
     const link = (scope, $el, attrs, [ctrl, igniteUiAceTabs, formCtrl, ngModelCtrl]) => {
         if (formCtrl && ngModelCtrl)
             formCtrl.$removeControl(ngModelCtrl);
@@ -57,7 +57,7 @@ export default ['igniteUiAceSharp', ['SharpTransformer', (generator) => {
                             return acc;
                         }, []);
 
-                        return generator.clusterCaches(caches, null, true, generator.clusterGeneral(cluster)).asString();
+                        return generator.clusterCaches(cluster, caches, null, true).asString();
                     };
 
                     break;

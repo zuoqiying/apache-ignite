@@ -19,11 +19,9 @@ import _ from 'lodash';
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
-import $generatorJava from './generator-java';
-
 const STORE_FACTORY = ['org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory'];
 
-export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
+export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
 
@@ -514,4 +512,4 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
     }
 
     return JavaTransformer;
-}]];
+}];

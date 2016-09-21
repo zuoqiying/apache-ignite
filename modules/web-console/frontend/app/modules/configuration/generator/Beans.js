@@ -93,7 +93,7 @@ export class Bean extends EmptyBean {
     }
 
     stringConstructorArgument(model) {
-        return this._property(this.arguments, 'java.lang.String', model, null, _.nonEmpty);
+        return this._property(this.arguments, 'String', model, null, _.nonEmpty);
     }
 
     intConstructorArgument(model) {
@@ -133,7 +133,7 @@ export class Bean extends EmptyBean {
     }
 
     valueOf(path) {
-        return _.get(this.src, path) || _.get(this.dflts, path);
+        return _.get(this.src, path) || _.get(this.dflts, path + '.value') || _.get(this.dflts, path);
     }
 
     includes(...paths) {
@@ -170,7 +170,7 @@ export class Bean extends EmptyBean {
     }
 
     stringProperty(model, name = model) {
-        return this._property(this.properties, 'java.lang.String', model, name, _.nonEmpty);
+        return this._property(this.properties, 'String', model, name, _.nonEmpty);
     }
 
     pathProperty(model, name = model) {
@@ -189,7 +189,7 @@ export class Bean extends EmptyBean {
         const dflt = _.get(this.dflts, model);
 
         if (_.nonNil(value) && _.nonNil(dflt) && value !== dflt.value)
-            this.properties.push({clsName: dflt.clsName, name, value, mapper: dflt.mapper});
+            this.properties.push({clsName: dflt.clsName, name, value: dflt.mapper ? dflt.mapper(value) : value});
 
         return this;
     }
@@ -225,7 +225,7 @@ export class Bean extends EmptyBean {
      * @param {String} typeClsName
      * @returns {Bean}
      */
-    arrayProperty(id, name, items, typeClsName = 'java.util.String') {
+    arrayProperty(id, name, items, typeClsName = 'String') {
         if (items.length)
             this.properties.push({clsName: 'Array', id, name, items, typeClsName});
 
@@ -239,7 +239,7 @@ export class Bean extends EmptyBean {
      * @param {String} typeClsName
      * @returns {Bean}
      */
-    varArgProperty(id, name, items, typeClsName = 'java.util.String') {
+    varArgProperty(id, name, items, typeClsName = 'String') {
         if (items.length)
             this.properties.push({clsName: 'VarArg', id, name, items, typeClsName});
 
@@ -255,7 +255,7 @@ export class Bean extends EmptyBean {
      * @param {String} implClsName
      * @returns {Bean}
      */
-    collectionProperty(id, name, items, clsName = 'java.util.Collection', typeClsName = 'java.lang.String', implClsName = 'java.util.ArrayList') {
+    collectionProperty(id, name, items, clsName = 'java.util.Collection', typeClsName = 'String', implClsName = 'java.util.ArrayList') {
         if (items.length)
             this.properties.push({id, name, items, clsName, typeClsName, implClsName});
 

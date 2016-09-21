@@ -21,6 +21,7 @@ import igniteEventGroups from './EventGroups.provider';
 import igniteSidebar from './Sidebar.provider';
 
 import clusterDefaults from './generator/defaults/cluster.provider';
+import clusterPlatformDefaults from './generator/defaults/cluster.platform.provider';
 import cacheDefaults from './generator/defaults/cache.provider';
 import igfsDefaults from './generator/defaults/igfs.provider';
 
@@ -41,15 +42,16 @@ angular
 
 ])
 .provider('igniteClusterDefaults', clusterDefaults)
+.provider('igniteClusterPlatformDefaults', clusterPlatformDefaults)
 .provider('igniteCacheDefaults', cacheDefaults)
 .provider('igniteIgfsDefaults', igfsDefaults)
 .provider(...igniteEventGroups)
 .provider(...igniteSidebar)
 .directive(...igniteSidebarDirective)
 .service('IgniteConfigurationGenerator', ConfigurationGenerator)
-.service(...PlatformGenerator)
-.service(...SpringTransformer)
-.service(...JavaTransformer)
-.service('SharpTransformer', SharpTransformer)
+.service('IgnitePlatformGenerator', PlatformGenerator)
+.service('SpringTransformer', SpringTransformer)
+.service('JavaTransformer', JavaTransformer)
+.service('IgniteSharpTransformer', SharpTransformer)
 .service(...GeneratorDocker)
 .service(...GeneratorPom);

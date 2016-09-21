@@ -16,6 +16,7 @@
  */
 
 import _ from 'lodash';
+import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
 const dateOptions = {
@@ -27,8 +28,10 @@ const dateOptions = {
     hour12: false
 };
 
-export default ['PlatformGenerator', (generator) => {
-    return class SharpTransformer {
+export default ['JavaTypes', 'IgnitePlatformGenerator', (JavaTypes, generator) => {
+    return class SharpTransformer extends AbstractTransformer {
+        static generator = generator;
+
         static commentBlock(sb, ...lines) {
             _.forEach(lines, (line) => sb.append(`// ${line}`));
         }
@@ -49,7 +52,7 @@ export default ['PlatformGenerator', (generator) => {
          * @param {Bean} bean
          */
         static _defineBean(sb, bean) {
-            const shortClsName = this.shortClassName(bean.clsName);
+            const shortClsName = JavaTypes.shortClassName(bean.clsName);
 
             sb.append(`var ${bean.id} = new ${shortClsName}();`);
         }
@@ -77,10 +80,46 @@ export default ['PlatformGenerator', (generator) => {
             sb.append(`${parent.id}.${propertyName} = ${bean.id};`);
         }
 
-        static shortClassName(clsName) {
-            const dotIdx = clsName.lastIndexOf('.');
+        static _toObject(clsName, val) {
+            const items = _.isArray(val) ? val : [val];
 
-            return dotIdx > 0 ? clsName.substr(dotIdx + 1) : clsName;
+            return _.map(items, (item, idx) => {
+                if (_.isNil(item))
+                    return 'null';
+
+                const shortClsName = JavaTypes.shortClassName(clsName);
+
+                switch (shortClsName) {
+                    // case 'byte':
+                    //     return `(byte) ${item}`;
+                    // case 'Serializable':
+                    case 'String':
+                        if (items.length > 1)
+                            return `"${item}"${idx !== items.length - 1 ? ' +' : ''}`;
+
+                        return `"${item}"`;
+                    // case 'Path':
+                    //     return `"${item.replace(/\\/g, '\\\\')}"`;
+                    // case 'Class':
+                    //     return `${this.shortClassName(item)}.class`;
+                    // case 'UUID':
+                    //     return `UUID.fromString("${item}")`;
+                    // case 'PropertyChar':
+                    //     return `props.getProperty("${item}").toCharArray()`;
+                    // case 'Property':
+                    //     return `props.getProperty("${item}")`;
+                    // case 'Bean':
+                    //     if (item.isComplex())
+                    //         return item.id;
+                    //
+                    //     return this._newBean(item);
+                    default:
+                        if (JavaTypes.nonEnum(shortClsName))
+                            return item;
+
+                        return `${shortClsName}.${item}`;
+                }
+            });
         }
 
         /**
@@ -91,8 +130,53 @@ export default ['PlatformGenerator', (generator) => {
          */
         static _setProperties(sb = new StringBuilder(), bean) {
             _.forEach(bean.properties, (prop) => {
-                switch (prop.type) {
-                    case 'BEAN':
+                switch (prop.clsName) {
+                    case 'ICollection':
+                        // const implClsName = JavaTypes.shortClassName(prop.implClsName);
+
+                        const colTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
+
+                        if (colTypeClsName === 'String') {
+                            const items = this._toObject(colTypeClsName, prop.items);
+
+                            sb.append(`${bean.id}.${prop.name} = {${items.join(', ')}};`);
+                        }
+                        // else {
+                        //     if (_.includes(vars, prop.id))
+                        //         sb.append(`${prop.id} = new ${implClsName}<>();`);
+                        //     else {
+                        //         vars.push(prop.id);
+                        //
+                        //         sb.append(`${clsName}<${colTypeClsName}> ${prop.id} = new ${implClsName}<>();`);
+                        //     }
+                        //
+                        //     sb.emptyLine();
+                        //
+                        //     if (nonBean) {
+                        //         const items = this._toObject(colTypeClsName, prop.items);
+                        //
+                        //         _.forEach(items, (item) => {
+                        //             sb.append(`${prop.id}.add("${item}");`);
+                        //
+                        //             sb.emptyLine();
+                        //         });
+                        //     }
+                        //     else {
+                        //         _.forEach(prop.items, (item) => {
+                        //             this.constructBean(sb, item, vars, limitLines);
+                        //
+                        //             sb.append(`${prop.id}.add(${item.id});`);
+                        //
+                        //             sb.emptyLine();
+                        //         });
+                        //
+                        //         this._setProperty(sb, bean.id, prop.name, prop.id);
+                        //     }
+                        // }
+
+                        break;
+
+                    case 'Bean':
                         const nestedBean = prop.value;
 
                         this._defineBean(sb, nestedBean);
@@ -106,16 +190,8 @@ export default ['PlatformGenerator', (generator) => {
                         this._setBeanProperty(sb, bean, prop.name, nestedBean);
 
                         break;
-
-                    case 'ENUM':
-                        const value = `${this.shortClassName(prop.clsName)}.${prop.mapper(prop.value)}`;
-
-                        this._setProperty(sb, bean, prop.name, value);
-
-                        break;
-
                     default:
-                        this._setProperty(sb, bean, prop.name, prop.value);
+                        this._setProperty(sb, bean, prop.name, this._toObject(prop.clsName, prop.value));
                 }
             });
 
@@ -171,23 +247,6 @@ export default ['PlatformGenerator', (generator) => {
             this._setProperties(sb, bean);
 
             return sb.asString();
-        }
-
-        static clusterGeneral(cluster, clientNearCfg, res) {
-            return $generatorJava.clusterGeneral(cluster, clientNearCfg, res);
-        }
-
-        static clusterCaches(caches, igfss, isSrvCfg, res) {
-            return $generatorJava.clusterCaches(caches, igfss, isSrvCfg, res);
-        }
-
-        // Generate atomics group.
-        static clusterAtomics(atomics, sb = new StringBuilder()) {
-            const cfg = generator.clusterAtomics(atomics);
-
-            this._setProperties(sb, cfg);
-
-            return sb;
         }
     };
 }];

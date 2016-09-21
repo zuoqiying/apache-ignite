@@ -22,7 +22,7 @@ import StringBuilder from './StringBuilder';
 
 import $generatorSpring from './generator-spring';
 
-export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
+export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     return class SpringTransformer extends AbstractTransformer {
         static generator = generator;
 
@@ -282,4 +282,4 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteC
             return $generatorSpring.igfss(igfss, res);
         }
     };
-}]];
+}];

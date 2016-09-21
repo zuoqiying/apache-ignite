@@ -15,18 +15,25 @@
  * limitations under the License.
  */
 
-const SERVER_CFG = 'ServerConfigurationFactory';
-const CLIENT_CFG = 'ClientConfigurationFactory';
+import _ from 'lodash';
 
-export default ['$scope', 'IgniteSharpTransformer', function($scope, generator) {
-    const ctrl = this;
+const enumValueMapper = (val) => _.capitalize(val);
 
-    delete ctrl.data;
+const DFLT_CLUSTER = {
+    atomics: {
+        cacheMode: {
+            clsName: 'Apache.Ignite.Core.Cache.Configuration.CacheMode',
+            mapper: enumValueMapper
+        }
+    }
+};
 
-    // Set default generator
-    ctrl.generator = (cluster) => {
-        const type = $scope.cfg ? CLIENT_CFG : SERVER_CFG;
-
-        return generator.cluster(cluster, 'config', type, $scope.cfg);
+export default function() {
+    this.append = (dflts) => {
+        _.merge(DFLT_CLUSTER, dflts);
     };
-}];
+
+    this.$get = ['igniteClusterDefaults', (clusterDefaults) => {
+        return _.merge({}, clusterDefaults, DFLT_CLUSTER);
+    }];
+}
