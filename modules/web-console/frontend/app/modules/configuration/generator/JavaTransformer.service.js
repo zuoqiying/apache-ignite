@@ -511,10 +511,6 @@ export default ['JavaTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteCon
 
             return sb.asString();
         }
-
-        static clusterCaches(caches, igfss, isSrvCfg, res) {
-            return $generatorJava.clusterCaches(caches, igfss, isSrvCfg, res);
-        }
     }
 
     return JavaTransformer;

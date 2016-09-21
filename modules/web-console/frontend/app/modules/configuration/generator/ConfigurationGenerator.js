@@ -220,6 +220,18 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             return cfg;
         }
 
+        static clusterCaches(cluster, caches, igfss, isSrvCfg, cfg = this.igniteConfigurationBean(cluster)) {
+            // const cfg = this.clusterGeneral(cluster, cfg);
+            //
+            // if (_.nonEmpty(caches)) {
+            //     const ccfgs = _.map(caches, (cache) => this.cacheConfiguration(cache));
+            //
+            //     cfg.collectionProperty('', '', ccfgs, );
+            // }
+
+            return this.clusterGeneral(cluster, cfg);
+        }
+
         // Generate atomics group.
         static clusterAtomics(atomics, cfg = this.igniteConfigurationBean()) {
             const acfg = new Bean('org.apache.ignite.configuration.AtomicConfiguration', 'atomicCfg',
@@ -827,7 +839,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             return cfg;
         }
 
-        cacheConfiguration() {
+        static cacheDomains(domains, ccfg) {
 
         }
 
@@ -1111,6 +1123,21 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                 .boolProperty('managementEnabled');
 
             return cfg;
+        }
+
+        static cacheConfiguration(cache, cfg = this.cacheConfigurationBean(cache)) {
+            this.cacheGeneral(cache, cfg);
+            this.cacheMemory(cache, cfg);
+            this.cacheQuery(cache, cache.domains, cfg);
+            this.cacheStore(cache, cache.domains, cfg);
+
+            const igfs = _.get(cache, 'nodeFilter.IGFS.instance');
+            this.cacheNodeFilter(cache, igfs ? [igfs] : [], cfg);
+            this.cacheConcurrency(cache, cfg);
+            this.cacheRebalance(cache, cfg);
+            this.cacheServerNearCache(cache, cfg);
+            this.cacheStatistics(cache, cfg);
+            // this.cacheDomains(cache.domains, cfg);
         }
 
         // Generate IGFS general group.

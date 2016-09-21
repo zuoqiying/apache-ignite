@@ -334,6 +334,15 @@ export default class AbstractTransformer {
         return sb;
     }
 
+    // Generate caches configs.
+    static clusterCaches(cluster, caches, igfss, isSrvCfg, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterCaches(cluster, caches);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
     // Generate domain model for general group.
     static domainModelGeneral(domain, sb = new StringBuilder()) {
         const cfg = this.generator.domainModelGeneral(domain);

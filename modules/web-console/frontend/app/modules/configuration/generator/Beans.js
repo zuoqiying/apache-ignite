@@ -255,7 +255,7 @@ export class Bean extends EmptyBean {
      * @param {String} implClsName
      * @returns {Bean}
      */
-    collectionProperty(id, name, items, clsName = 'java.util.Collection', typeClsName = 'java.util.String', implClsName = 'java.util.ArrayList') {
+    collectionProperty(id, name, items, clsName = 'java.util.Collection', typeClsName = 'java.lang.String', implClsName = 'java.util.ArrayList') {
         if (items.length)
             this.properties.push({id, name, items, clsName, typeClsName, implClsName});
 

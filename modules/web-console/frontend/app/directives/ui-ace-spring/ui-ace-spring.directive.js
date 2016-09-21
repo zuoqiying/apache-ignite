@@ -57,7 +57,7 @@ export default ['igniteUiAceSpring', ['SpringTransformer', (generator) => {
                             return acc;
                         }, []);
 
-                        return generator.clusterCaches(caches, null, true, generator.clusterGeneral(cluster)).asString();
+                        return generator.clusterCaches(cluster, caches, null, true).asString();
                     };
 
                     break;

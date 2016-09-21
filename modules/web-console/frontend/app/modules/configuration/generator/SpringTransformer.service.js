@@ -273,10 +273,6 @@ export default ['SpringTransformer', ['JavaTypes', 'igniteEventGroups', 'IgniteC
             return $generatorSpring.cluster(cluster, clientNearCfg);
         }
 
-        static clusterCaches(caches, igfss, isSrvCfg, res) {
-            return $generatorSpring.clusterCaches(caches, igfss, isSrvCfg, res);
-        }
-
         static clusterConfiguration(cluster, clientNearCfg, res) {
             return $generatorSpring.clusterConfiguration(cluster, clientNearCfg, res);
         }
