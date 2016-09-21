@@ -154,7 +154,29 @@ export default ['domainsController', [
             }
         };
 
-        $scope.tablePairSave = LegacyTable.tablePairSave;
+        $scope.tablePairSave = (pairValid, item, field, index, stopEdit) => {
+            // On change of field name update that field in index fields.
+            if (index >= 0 && field.type === 'fields') {
+                const newName = LegacyTable.tablePairValue(field, index).key;
+                const oldName = _.get(item, field.model)[index][field.keyName];
+
+                const saved = LegacyTable.tablePairSave(pairValid, item, field, index, stopEdit);
+
+                if (saved && oldName !== newName) {
+                    _.forEach($scope.backupItem.indexes, (idx) => {
+                        _.forEach(idx.fields, (fld) => {
+                            if (fld.name === oldName)
+                                fld.name = newName;
+                        });
+                    });
+                }
+
+                return saved;
+            }
+
+            return LegacyTable.tablePairSave(pairValid, item, field, index, stopEdit);
+        };
+
         $scope.tablePairSaveVisible = LegacyTable.tablePairSaveVisible;
 
         $scope.queryFieldsTbl = {
@@ -1713,8 +1735,6 @@ export default ['domainsController', [
 
         $scope.tableIndexNewItem = function(field, indexIdx) {
             if ($scope.tableReset(true)) {
-                const index = $scope.backupItem.indexes[indexIdx];
-
                 LegacyTable.tableState(field, -1, 'table-index-fields');
                 LegacyTable.tableFocusInvalidField(-1, 'FieldName' + indexIdx);
 
