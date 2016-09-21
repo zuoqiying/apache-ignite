@@ -97,7 +97,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                         'Flag indicating whether SQL indexes should support snapshots')
                 .settings-row
                     +checkbox('Escape table and filed names', model + '.sqlEscapeAll', '"sqlEscapeAll"',
-                        'If set then all the SQL table and field names will be escaped with double quotes<br/>\
+                        'If enabled than all the SQL table and field names will be escaped with double quotes like "tableName"."fieldName"<br/>\
                         This enforces case sensitivity for field names and also allows having special characters in table and field names')
             .col-sm-6
                 +preview-xml-java(model, 'cacheQuery', 'domains')
