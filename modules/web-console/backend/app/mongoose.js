@@ -17,14 +17,13 @@
 
 'use strict';
 
-const AppErrorException = require('./AppErrorException');
+// Fire me up!
 
-class AuthFailedException extends AppErrorException {
-    constructor(message) {
-        super(message);
+module.exports = {
+    implements: 'mongoose',
+    inject: ['require(mongoose)']
+};
 
-        this.httpCode = 401;
-    }
-}
-
-module.exports = AuthFailedException;
+module.exports.factory = (mongoose) => {
+    return mongoose;
+};

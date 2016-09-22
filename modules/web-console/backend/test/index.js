@@ -15,16 +15,21 @@
  * limitations under the License.
  */
 
-'use strict';
+const Mocha = require('mocha');
+const glob = require('glob');
+const path = require('path');
 
-const AppErrorException = require('./AppErrorException');
+const mocha = new Mocha({ui: 'tdd', reporter: process.env.MOCHA_REPORTER || 'spec'});
+const testPath = ['./test/unit/**/*.js', './test/routes/**/*.js'];
 
-class AuthFailedException extends AppErrorException {
-    constructor(message) {
-        super(message);
+if (process.env.IGNITE_MODULES)
+    testPath.push(path.join(process.env.IGNITE_MODULES, 'backend', 'test', 'unit', '**', '*.js'));
 
-        this.httpCode = 401;
-    }
-}
+testPath
+    .map((mask) => glob.sync(mask))
+    .reduce((acc, items) => acc.concat(items), [])
+    .map(mocha.addFile.bind(mocha));
 
-module.exports = AuthFailedException;
+const runner = mocha.run();
+
+runner.on('end', (failures) => process.exit(failures));
