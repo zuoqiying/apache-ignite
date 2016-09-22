@@ -15,18 +15,16 @@
  * limitations under the License.
  */
 
-import angular from 'angular';
+package org.apache.ignite.internal.processors.cache;
 
-angular
-    .module('ignite-console.version', [])
-    .provider('IgniteVersion', function() {
-        const version = {
-            version: '1.7.0'
-        };
+import org.apache.ignite.cache.CacheMemoryMode;
 
-        this.update = (newVersion) => {
-            version.version = newVersion;
-        };
-
-        this.$get = [() => version];
-    });
+/**
+ *
+ */
+public class GridCacheInterceptorAtomicOffheapRebalanceTest extends GridCacheInterceptorAtomicRebalanceTest {
+    /** {@inheritDoc} */
+    @Override protected CacheMemoryMode memoryMode() {
+        return CacheMemoryMode.OFFHEAP_TIERED;
+    }
+}
