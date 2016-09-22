@@ -30,13 +30,15 @@ angular
 .factory('sessionRecoverer', ['$injector', '$q', ($injector, $q) => {
     return {
         responseError: (response) => {
-            const $state = $injector.get('$state');
-
             // Session has expired
-            if (response.status === 401 && $state.current.name !== 'signin')
-                $state.go('signin');
+            if (response.status === 401) {
+                $injector.get('User').clean();
 
-            $injector.get('User').clean();
+                const $state = $injector.get('$state');
+
+                if ($state.current.name !== 'signin')
+                    $state.go('signin');
+            }
 
             return $q.reject(response);
         }

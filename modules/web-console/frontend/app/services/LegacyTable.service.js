@@ -154,7 +154,7 @@ export default ['IgniteLegacyTable',
             },
             tablePairValue: _tablePairValue,
             tablePairSave(pairValid, item, field, index, stopEdit) {
-                const valid = pairValid(item, field, index);
+                const valid = pairValid(item, field, index, stopEdit);
 
                 if (valid) {
                     const pairValue = _tablePairValue(field, index);

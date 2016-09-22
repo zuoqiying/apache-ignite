@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+/**
+ * Service to show/hide error popover.
+ */
 export default class ErrorPopover {
     static $inject = ['$popover', '$anchorScroll', '$location', '$timeout', 'IgniteFormUtils'];
 
@@ -106,7 +109,7 @@ export default class ErrorPopover {
             this._popover.hide();
 
         if (ui) {
-            this.FormUtils.ensureActivePanel(ui, panelId);
+            this.FormUtils.ensureActivePanel(ui, panelId, id);
 
             this.$timeout(() => this._show(id, message, showTime), ui.isPanelLoaded(panelId) ? 200 : 500);
         }
