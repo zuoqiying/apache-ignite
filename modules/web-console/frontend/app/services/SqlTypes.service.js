@@ -15,18 +15,31 @@
  * limitations under the License.
  */
 
-import angular from 'angular';
+import _ from 'lodash';
 
-angular
-    .module('ignite-console.version', [])
-    .provider('IgniteVersion', function() {
-        const version = {
-            version: '1.7.0'
-        };
+// List of H2 reserved SQL keywords.
+import H2_SQL_KEYWORDS from '../data/sql-keywords.json';
 
-        this.update = (newVersion) => {
-            version.version = newVersion;
-        };
+// Regular expression to check H2 SQL identifier.
+const VALID_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_$]*$/im;
 
-        this.$get = [() => version];
-    });
+/**
+ * Utility service for various check on SQL types.
+ */
+export default class SqlTypes {
+    /**
+     * @param value {String} Value to check.
+     * @returns {boolean} 'true' if given text is valid Java class name.
+     */
+    validIdentifier(value) {
+        return !!(value && VALID_IDENTIFIER.test(value));
+    }
+
+    /**
+     * @param value {String} Value to check.
+     * @returns {boolean} 'true' if given text is one of H2 reserved keywords.
+     */
+    isKeyword(value) {
+        return !!(value && _.includes(H2_SQL_KEYWORDS, value.toUpperCase()));
+    }
+}

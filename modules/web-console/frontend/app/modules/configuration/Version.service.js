@@ -15,19 +15,11 @@
  * limitations under the License.
  */
 
-export default ['$scope', 'GeneratorPom', 'IgniteVersion', function($scope, pom, Version) {
-    const ctrl = this;
-
-    // Watchers definition.
-    const clusterWatcher = (value) => {
-        delete ctrl.data;
-
-        if (!value)
-            return;
-
-        ctrl.data = pom.generate($scope.cluster, Version.ignite).asString();
+/**
+ * Utility service for version.
+ */
+export default () => {
+    return {
+        ignite: '1.7.0'
     };
-
-    // Setup watchers.
-    $scope.$watch('cluster', clusterWatcher);
-}];
+};
