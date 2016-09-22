@@ -68,8 +68,6 @@ import igniteUiAceTabs from './directives/ui-ace-tabs.directive';
 import igniteUiAceXml from './directives/ui-ace-xml/ui-ace-xml.directive';
 import igniteRetainSelection from './directives/retain-selection.directive';
 
-import './directives/tooltip/tooltip.directive';
-
 // Services.
 import ChartColors from './services/ChartColors.service';
 import Clone from './services/Clone.service.js';
