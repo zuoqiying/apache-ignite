@@ -143,23 +143,9 @@ mixin td-ellipses-lbl(w, lbl)
                             button.btn.btn-primary(ng-click='applyDefaults()') Apply
                 .import-domain-model-wizard-page(ng-show='importDomain.action == "options"')
                     - var form = 'optionsForm'
-                    form.form-horizontal(name='optionsForm' novalidate)
-                        .settings-row
-                            .col-xs-4.col-sm-2.col-md-2.required
-                                label.required Package:
-                            .col-xs-8.col-sm-10.col-md-10
-                                - var name = '"domainPackageName"'
-                                i.tipField.fa.fa-question-circle(bs-tooltip='' data-title='Package that will be used for POJOs generation')
-
-                                +form-field-feedback(name, 'javaPackageName', 'Package name is invalid')
-                                +form-field-feedback(name, 'javaKeywords', 'Package name could not contains reserved java keyword')
-
-                                .input-tip
-                                    +ignite-form-field-input(name, 'ui.packageName', false, true, 'Enter package name')(
-                                        data-java-keywords='true'
-                                        data-java-package-name='package-only'
-                                        ng-model-options='{allowInvalid: true}'
-                                    )
+                    form.form-horizontal(name=form novalidate)
+                        .settings-row.settings-row_small-label
+                            +java-package('Package:', 'ui.packageName', '"domainPackageName"', true, true, 'Package that will be used for POJOs generation')(data-container='.modal-domain-import')
                         .settings-row
                             +checkbox('Use Java built-in types for keys', 'ui.builtinKeys', '"domainBuiltinKeys"', 'Use Java built-in types like "Integer", "Long", "String" instead of POJO generation in case when table primary key contains only one field')
                         .settings-row

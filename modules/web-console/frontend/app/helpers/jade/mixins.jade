@@ -146,6 +146,27 @@ mixin java-class-typeahead(lbl, model, name, options, enabled, required, placeho
         +form-field-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
         +form-field-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
 
+//- Mixin for java package field with enabled condition.
+mixin java-package(lbl, model, name, enabled, required, tip)
+    -var errLbl = lbl.substring(0, lbl.length - 1)
+
+    if enabled === false || enabled === true
+        -var disabled = !enabled
+    else
+        -var disabled = '!('+enabled+')'
+
+    +ignite-form-field-text(lbl, model, name, disabled, required, 'Enter package name', tip)(
+        data-java-keywords='true'
+        data-java-package-name='true'
+    )
+        if  block
+            block
+
+        +form-field-feedback(name, 'javaPackageName', 'Package name is invalid')
+        +form-field-feedback(name, 'javaKeywords', 'Package name could not contains reserved java keyword')
+
+
+
 //- Mixin for text field with IP address check.
 mixin text-ip-address(lbl, model, name, enabled, placeholder, tip)
     +ignite-form-field-text(lbl, model, name, '!('+enabled+')', false, placeholder, tip)(data-ipaddress='true')
