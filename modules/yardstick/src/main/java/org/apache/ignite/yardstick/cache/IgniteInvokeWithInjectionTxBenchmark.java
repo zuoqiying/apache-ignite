@@ -15,18 +15,16 @@
  * limitations under the License.
  */
 
-import angular from 'angular';
+package org.apache.ignite.yardstick.cache;
 
-angular
-    .module('ignite-console.version', [])
-    .provider('IgniteVersion', function() {
-        const version = {
-            version: '1.6.0'
-        };
+import org.apache.ignite.IgniteCache;
 
-        this.update = (newVersion) => {
-            version.version = newVersion;
-        };
-
-        this.$get = [() => version];
-    });
+/**
+ * Ignite benchmark that performs invoke operations.
+ */
+public class IgniteInvokeWithInjectionTxBenchmark extends IgniteInvokeWithInjectionBenchmark {
+    /** {@inheritDoc} */
+    @Override protected IgniteCache<Integer, Object> cache() {
+        return ignite().cache("tx");
+    }
+}

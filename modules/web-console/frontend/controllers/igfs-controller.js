@@ -80,7 +80,7 @@ export default ['igfsController', [
                 LegacyTable.tableRemove(item, field, index);
         };
 
-        $scope.tablePairValid = function(item, field, index) {
+        $scope.tablePairValid = function(item, field, index, stopEdit) {
             const pairValue = LegacyTable.tablePairValue(field, index);
 
             const model = item[field.model];
@@ -91,8 +91,12 @@ export default ['igfsController', [
                 });
 
                 // Found duplicate.
-                if (idx >= 0 && idx !== index)
+                if (idx >= 0 && idx !== index) {
+                    if (stopEdit)
+                        return false;
+
                     return ErrorPopover.show(LegacyTable.tableFieldId(index, 'KeyPathMode'), 'Such path already exists!', $scope.ui, 'misc');
+                }
             }
 
             return true;
@@ -181,9 +185,12 @@ export default ['igfsController', [
                 });
 
                 $scope.$watch('backupItem', function(val) {
+                    if (!$scope.ui.inputForm)
+                        return;
+
                     const form = $scope.ui.inputForm;
 
-                    if (form.$pristine || (form.$valid && ModelNormalizer.isEqual(__original_value, val)))
+                    if (form.$valid && ModelNormalizer.isEqual(__original_value, val))
                         form.$setPristine();
                     else
                         form.$setDirty();
@@ -196,7 +203,8 @@ export default ['igfsController', [
             .catch(Messages.showError)
             .then(() => {
                 $scope.ui.ready = true;
-                $scope.ui.inputForm.$setPristine();
+                $scope.ui.inputForm && $scope.ui.inputForm.$setPristine();
+
                 Loading.finish('loadingIgfsScreen');
             });
 
@@ -224,8 +232,11 @@ export default ['igfsController', [
                     $scope.backupItem = emptyIgfs;
 
                 $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
-                $scope.ui.inputForm.$error = {};
-                $scope.ui.inputForm.$setPristine();
+
+                if ($scope.ui.inputForm) {
+                    $scope.ui.inputForm.$error = {};
+                    $scope.ui.inputForm.$setPristine();
+                }
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
@@ -233,7 +244,7 @@ export default ['igfsController', [
                     $state.go('base.configuration.igfs');
             }
 
-            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm.$dirty, selectItem);
+            FormUtils.confirmUnsavedChanges($scope.backupItem && $scope.ui.inputForm && $scope.ui.inputForm.$dirty, selectItem);
         };
 
         $scope.linkId = () => $scope.backupItem._id ? $scope.backupItem._id : 'create';
@@ -253,7 +264,7 @@ export default ['igfsController', [
         // Add new IGFS.
         $scope.createItem = function(linkId) {
             if ($scope.tableReset(true)) {
-                $timeout(() => FormUtils.ensureActivePanel($scope.ui, 'general', 'igfsName'));
+                $timeout(() => FormUtils.ensureActivePanel($scope.ui, 'general', 'igfsNameInput'));
 
                 $scope.selectItem(null, prepareNewItem(linkId));
             }
@@ -264,7 +275,7 @@ export default ['igfsController', [
             ErrorPopover.hide();
 
             if (LegacyUtils.isEmptyString(item.name))
-                return ErrorPopover.show('igfsName', 'IGFS name should not be empty!', $scope.ui, 'general');
+                return ErrorPopover.show('igfsNameInput', 'IGFS name should not be empty!', $scope.ui, 'general');
 
             if (!LegacyUtils.checkFieldValidators($scope.ui))
                 return false;
