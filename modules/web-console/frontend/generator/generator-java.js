@@ -1701,7 +1701,7 @@ $generatorJava.cacheStore = function(cache, domains, cacheVarName, res) {
 
                 res.line(cacheVarName + '.setCacheStoreFactory(' + varName + ');');
             }
-            else
+            else if (factoryKind === 'CacheHibernateBlobStoreFactory')
                 $generatorJava.beanProperty(res, cacheVarName, storeFactory, 'cacheStoreFactory', varName, storeFactoryDesc.className, storeFactoryDesc.fields, true);
 
             res.needEmptyLine = true;

@@ -51,43 +51,43 @@ const DFLT_COMPLETIONS = [{
 }, {
     caption: 'map',
     meta: 'map - Map node',
-    snippet: '<map>\n\t${cursor}\n</map>'
+    snippet: '<map>\n\t${1}\n</map>'
 }, {
     caption: 'map',
     meta: 'map - Map node with id attribute',
-    snippet: '<map id=\"${id}\">\n\t${cursor}\n</map>'
+    snippet: '<map id=\"${1:id}\">\n\t${2}\n</map>'
 }, {
     caption: 'map',
     meta: 'map - Map node with id and map-class attributes',
-    snippet: '<map id=\"${id}\" map-class=\"${class}\">\n\t${cursor}\n</map>'
+    snippet: '<map id=\"${1:id}\" map-class=\"${2:class}\">\n\t${3}\n</map>'
 }, {
     caption: 'properties',
     meta: 'properties - Properties node with id and location attributes',
-    snippet: '<properties id=\"${id}\" location=\"${location}\"/>'
+    snippet: '<properties id=\"${1:id}\" location=\"${2:location}\"/>'
 }, {
     caption: 'property',
     meta: 'property - Property node with name attribute',
-    snippet: '<property name=\"${name}\">\n\t${cursor}\n</property>'
+    snippet: '<property name=\"${1:name}\">\n\t${2}\n</property>'
 }, {
     caption: 'property',
     meta: 'property - Property node with name and value attributes',
-    snippet: '<property name=\"${name}\" value=\"${value}\"/>'
+    snippet: '<property name=\"${1:name}\" value=\"${2:value}\"/>'
 }, {
     caption: 'set',
     meta: 'set - Set node',
-    snippet: '<set>\n\t${cursor}\n</set>'
+    snippet: '<set>\n\t${1}\n</set>'
 }, {
     caption: 'set',
     meta: 'set - Set node with id attribute',
-    snippet: '<set id=\"${id}\">\n\t${cursor}\n</set>'
+    snippet: '<set id=\"${1:id}\">\n\t${2}\n</set>'
 }, {
     caption: 'set',
     meta: 'set - Set node with id and set-class attributes',
-    snippet: '<set id=\"${id}\" set-class=\"${class}\">\n\t${cursor}\n</set>'
+    snippet: '<set id=\"${1:id}\" set-class=\"${2:class}\">\n\t${3}\n</set>'
 }, {
     caption: 'value',
     meta: 'value - Value node',
-    snippet: '<value>${cursor}</value>'
+    snippet: '<value>${1}</value>'
 }];
 
 // Controller for Caches screen.
@@ -667,8 +667,8 @@ export default ['cachesController', [
                 const lastEditable = editor.session.getLength() - 2;
 
                 // Change selection to exclude not editable part.
-                if (editor.selection.selectionAnchor.row < 2) {
-                    editor.selection.selectionAnchor.row = 2;
+                if (editor.selection.selectionAnchor.row < firstEditable) {
+                    editor.selection.selectionAnchor.row = firstEditable;
                     editor.selection.selectionAnchor.column = 0;
                 }
 
@@ -678,7 +678,7 @@ export default ['cachesController', [
                 }
 
                 const skipInBegin = cur.row <= 1 ||
-                    (e.command.name === 'backspace' && cur.row === 2 && cur.column === 0);
+                    (e.command.name === 'backspace' && cur.row === firstEditable && cur.column === 0);
                 const skipInLast = cur.row >= lastEditable ||
                     (e.command.name === 'del' && cur.row === lastEditable - 1 &&
                         cur.column === editor.session.$rowLengthCache[cur.row]);
@@ -689,8 +689,8 @@ export default ['cachesController', [
                 if (AVAILABLE_CMDS.indexOf(e.command.name) !== -1)
                     return;
 
-                const endOfFirstRow = cur.row == 1 && editor.session.$rowLengthCache[1] === cur.column;
-                const startOfLastRow = cur.row == lastEditable && cur.column === 0;
+                const endOfFirstRow = cur.row === 1 && editor.session.$rowLengthCache[1] === cur.column;
+                const startOfLastRow = cur.row === lastEditable && cur.column === 0;
 
                 const newLine = e.command.name === 'insertstring' && e.args === '\n';
 
