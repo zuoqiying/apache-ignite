@@ -56,7 +56,7 @@ mixin hard-link(ref, txt)
                         ignite-ui-ace-tabs.summary-tabs
                             div(bs-tabs data-bs-active-pane="tabsServer.activeTab" template='configuration/summary-tabs.html')
                                 div(bs-pane title='XML')
-                                    ignite-ui-ace-xml(ng-if='tabsServer.activeTab == 0 || tabsServer.init[0]' ng-init='tabsServer.init[0] = true' data-master='cluster' data-no-deep-watch)
+                                    ignite-ui-ace-spring(ng-if='tabsServer.activeTab == 0 || tabsServer.init[0]' ng-init='tabsServer.init[0] = true' data-master='cluster' data-no-deep-watch)
                                 div(bs-pane title='Java')
                                     ignite-ui-ace-java(ng-if='tabsServer.activeTab == 1 || tabsServer.init[1]' ng-init='tabsServer.init[1] = true' data-master='cluster' data-no-deep-watch)
                                 div(bs-pane title='POM')
