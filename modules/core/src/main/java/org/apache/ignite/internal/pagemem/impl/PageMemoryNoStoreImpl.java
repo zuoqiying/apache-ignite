@@ -18,27 +18,43 @@
 package org.apache.ignite.internal.pagemem.impl;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
-import org.apache.ignite.internal.mem.DirectMemory;
+import org.apache.ignite.configuration.MemoryConfiguration;
+import org.apache.ignite.configuration.PageMemoryConfiguration;
+import org.apache.ignite.configuration.PageMemoryConfigurationLink;
 import org.apache.ignite.internal.mem.DirectMemoryRegion;
 import org.apache.ignite.internal.mem.DirectMemoryProvider;
 import org.apache.ignite.internal.mem.OutOfMemoryException;
+import org.apache.ignite.internal.mem.file.MappedFileMemoryProvider;
+import org.apache.ignite.internal.mem.unsafe.UnsafeMemoryProvider;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
+import org.apache.ignite.internal.processors.cache.database.freelist.FreeList;
+import org.apache.ignite.internal.processors.cache.database.freelist.FreeListImpl;
+import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
 import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.OffheapReadWriteLock;
 import org.apache.ignite.internal.util.offheap.GridOffHeapOutOfMemoryException;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lifecycle.LifecycleAware;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentHashMap8;
 import sun.misc.JavaNioAccess;
 import sun.misc.SharedSecrets;
@@ -111,9 +127,6 @@ public class PageMemoryNoStoreImpl implements PageMemory {
     /** */
     private final IgniteLogger log;
 
-    /** Direct memory allocator. */
-    private final DirectMemoryProvider directMemoryProvider;
-
     /** Segments array. */
     private Segment[] segments;
 
@@ -129,8 +142,12 @@ public class PageMemoryNoStoreImpl implements PageMemory {
     /** */
     private int idxMask;
 
-    /** */
-    private AtomicInteger selector = new AtomicInteger();
+
+    private final ConcurrentHashMap8<Integer, PageMemoryRegion> cahcePageMemory = new ConcurrentHashMap8<>();
+
+    private final Map<PageMemoryConfigurationLink, PageMemoryRegion> memoryRegions;
+
+    private final GridCacheSharedContext<?, ?> sharedCtx;
 
     /** */
     private ConcurrentHashMap8<Integer, Long> cacheMetaPages = new ConcurrentHashMap8<>();
@@ -138,46 +155,93 @@ public class PageMemoryNoStoreImpl implements PageMemory {
     /** */
     private OffheapReadWriteLock rwLock;
 
-    /**
-     * @param directMemoryProvider Memory allocator to use.
-     * @param sharedCtx Cache shared context.
-     * @param pageSize Page size.
-     */
-    public PageMemoryNoStoreImpl(
-        IgniteLogger log,
-        DirectMemoryProvider directMemoryProvider,
-        GridCacheSharedContext<?, ?> sharedCtx,
-        int pageSize
-    ) {
-        assert log != null || sharedCtx != null;
 
-        this.log = sharedCtx != null ? sharedCtx.logger(PageMemoryNoStoreImpl.class) : log;
-        this.directMemoryProvider = directMemoryProvider;
+    public PageMemoryNoStoreImpl(@NotNull  MemoryConfiguration memCfg,
+        @NotNull GridCacheSharedContext<?, ?> sharedCtx,
+        @Nullable IgniteLogger log) {
+        this.sharedCtx = sharedCtx;
 
-        sysPageSize = pageSize + PAGE_OVERHEAD;
-
+        this.log = log != null ? log : sharedCtx.logger(PageMemoryNoStoreImpl.class) ;
         // TODO configure concurrency level.
-        rwLock = new OffheapReadWriteLock(128);
+        this.rwLock = new OffheapReadWriteLock(128);
+
+        sysPageSize = memCfg.getPageSize() + PAGE_OVERHEAD;
+
+        String consId = String.valueOf(sharedCtx.discovery().consistentId());
+
+        consId = consId.replaceAll("[:,\\.]", "_");
+
+        Map<PageMemoryConfigurationLink, PageMemoryRegion> map = new LinkedHashMap<>();
+
+        int segmentCount = 0;
+
+        for (PageMemoryConfiguration pageMemoryConfiguration : memCfg.getPageMemoryConfigurations()) {
+            int concLvl = pageMemoryConfiguration.getConcurrencyLevel();
+
+            if (concLvl < 2)
+                pageMemoryConfiguration.setConcLvl(concLvl = Runtime.getRuntime().availableProcessors());
+
+            segmentCount += concLvl;
+
+            long fragmentSize = pageMemoryConfiguration.getSize() / concLvl;
+
+            if (fragmentSize < 1024 * 1024)
+                fragmentSize = 1024 * 1024;
+
+            long[] sizes = new long[concLvl];
+
+            for (int i = 0; i < concLvl; i++)
+                sizes[i] = fragmentSize;
+
+            String path = pageMemoryConfiguration.getTmpFsPath();
+
+            DirectMemoryProvider memProvider = path == null ?
+                new UnsafeMemoryProvider(sizes) :
+                new MappedFileMemoryProvider(log, buildPath(path, consId), true, sizes);
+
+            map.put(pageMemoryConfiguration.getLink(), new PageMemoryRegion(memProvider, segmentCount - concLvl, segmentCount));
+        }
+
+        memoryRegions = map;
     }
+
+    /**
+     * @param path Path to the working directory.
+     * @param consId Consistent ID of the local node.
+     * @return DB storage path.
+     */
+    protected File buildPath(String path, String consId) {
+        String igniteHomeStr = U.getIgniteHome();
+
+        File igniteHome = igniteHomeStr != null ? new File(igniteHomeStr) : null;
+
+        File workDir = igniteHome == null ? new File(path) : new File(igniteHome, path);
+
+        return new File(workDir, consId);
+    }
+
 
     /** {@inheritDoc} */
     @Override public void start() throws IgniteException {
-        if (directMemoryProvider instanceof LifecycleAware)
-            ((LifecycleAware)directMemoryProvider).start();
+        List<Segment> segments = new ArrayList<>();
 
-        DirectMemory memory = directMemoryProvider.memory();
+
+        for (PageMemoryRegion region : memoryRegions.values()) {
+            if (region.directMemoryProvider instanceof LifecycleAware)
+                ((LifecycleAware)region.directMemoryProvider).start();
+
+            for (int i = region.startIdx; i < region.lastIdx; i++) {
+                segments.add(new Segment(i, region.directMemoryProvider.memory().regions().get(i - region.startIdx)));
+
+                segments.get(i).init();
+            }
+        }
 
         nioAccess = SharedSecrets.getJavaNioAccess();
 
-        segments = new Segment[memory.regions().size()];
+        this.segments = segments.toArray(new Segment[segments.size()]);
 
-        for (int i = 0; i < segments.length; i++) {
-            segments[i] = new Segment(i, memory.regions().get(i));
-
-            segments[i].init();
-        }
-
-        segBits = Integer.SIZE - Integer.numberOfLeadingZeros(segments.length - 1);
+        segBits = Integer.SIZE - Integer.numberOfLeadingZeros(segments.size() - 1);
         idxBits = PageIdUtils.PAGE_IDX_SIZE - segBits;
 
         segMask = ~(-1 << segBits);
@@ -190,15 +254,19 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         if (log.isDebugEnabled())
             log.debug("Stopping page memory.");
 
-        if (directMemoryProvider instanceof LifecycleAware)
-            ((LifecycleAware)directMemoryProvider).stop();
+        for (PageMemoryRegion region : memoryRegions.values()) {
+            DirectMemoryProvider directMemoryProvider = region.directMemoryProvider;
 
-        if (directMemoryProvider instanceof Closeable) {
-            try {
-                ((Closeable)directMemoryProvider).close();
-            }
-            catch (IOException e) {
-                throw new IgniteException(e);
+            if (directMemoryProvider instanceof LifecycleAware)
+                ((LifecycleAware)directMemoryProvider).stop();
+
+            if (directMemoryProvider instanceof Closeable) {
+                try {
+                    ((Closeable)directMemoryProvider).close();
+                }
+                catch (IOException e) {
+                    throw new IgniteException(e);
+                }
             }
         }
     }
@@ -208,7 +276,11 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         long relPtr = INVALID_REL_PTR;
         long absPtr = 0;
 
-        for (Segment seg : segments) {
+        PageMemoryRegion region = cahcePageMemory.get(cacheId);
+
+        for (int i = region.startIdx; i < region.lastIdx; i++) {
+            Segment seg = segments[i];
+
             relPtr = seg.borrowFreePage();
 
             if (relPtr != INVALID_REL_PTR) {
@@ -220,10 +292,13 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
         // No segments conatined a free page.
         if (relPtr == INVALID_REL_PTR) {
-            int segAllocIdx = nextRoundRobinIndex();
+            int segAllocIdx = region.nextRoundRobinIndex();
 
-            for (int i = 0; i < segments.length; i++) {
-                int idx = (segAllocIdx + i) % segments.length;
+            for (int i = region.startIdx; i < region.lastIdx; i++) {
+                int idx = segAllocIdx + i;
+
+                if (idx >= region.lastIdx)
+                    idx = idx % (region.lastIdx - region.startIdx)  + region.startIdx;
 
                 Segment seg = segments[idx];
 
@@ -316,19 +391,42 @@ public class PageMemoryNoStoreImpl implements PageMemory {
             freePage(cacheId, metaPageId);
     }
 
-    /** */
-    private int nextRoundRobinIndex() {
-        while (true) {
-            int idx = selector.get();
+    @Override public void registerCache(int i, PageMemoryConfigurationLink configuration) {
+        PageMemoryRegion value = memoryRegions.get(configuration);
 
-            int nextIdx = idx + 1;
+        assert value != null;
 
-            if (nextIdx >= segments.length)
-                nextIdx = 0;
+        cahcePageMemory.putIfAbsent(i, value);
+    }
 
-            if (selector.compareAndSet(idx, nextIdx))
-                return nextIdx;
+    @Override public ReuseList reuseList(int cacheId) {
+        return getFreeListImpl(cacheId);
+    }
+
+    private FreeListImpl getFreeListImpl(int cacheId) {
+        PageMemoryRegion region = cahcePageMemory.get(cacheId);
+
+        FreeListImpl list = region.freeList;
+
+        if (list == null) {
+
+            try {
+                PageMemoryRegion.freeListUpdater.compareAndSet(region, null,
+                    new FreeListImpl(cacheId, "", this, null, sharedCtx.wal(), 0L, true));
+
+                list = region.freeList;
+            }
+            catch (IgniteCheckedException e) {
+                throw new IllegalStateException();
+            }
+
         }
+
+        return list;
+    }
+
+    @Override public FreeList freeList(int cacheId) {
+        return getFreeListImpl(cacheId);
     }
 
     /**
@@ -731,6 +829,47 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
                     return pageIdx;
                 }
+            }
+        }
+    }
+
+    private static class PageMemoryRegion {
+        private static final AtomicIntegerFieldUpdater<PageMemoryRegion> updater =
+            AtomicIntegerFieldUpdater.newUpdater(PageMemoryRegion.class, "selector");
+
+        private static final AtomicReferenceFieldUpdater<PageMemoryRegion, FreeListImpl> freeListUpdater =
+            AtomicReferenceFieldUpdater.newUpdater(PageMemoryRegion.class, FreeListImpl.class, "freeList");
+
+        /** Direct memory allocator. */
+        private final DirectMemoryProvider directMemoryProvider;
+
+        private final int startIdx; //inclusive
+        private final int lastIdx;  //exclusive
+
+        private volatile int selector = 0;
+
+        private volatile FreeListImpl freeList;
+
+        public PageMemoryRegion(DirectMemoryProvider directMemoryProvider, int startIdx, int lastIdx) {
+            assert startIdx < lastIdx;
+
+            this.directMemoryProvider = directMemoryProvider;
+            this.startIdx = startIdx;
+            this.lastIdx = lastIdx;
+        }
+
+        /** */
+        private int nextRoundRobinIndex() {
+            while (true) {
+                int idx = selector;
+
+                int nextIdx = idx + 1;
+
+                if (nextIdx >= lastIdx)
+                    nextIdx = startIdx;
+
+                if (updater.compareAndSet(this, idx, nextIdx))
+                    return nextIdx;
             }
         }
     }

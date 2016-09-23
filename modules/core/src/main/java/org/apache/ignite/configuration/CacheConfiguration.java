@@ -389,6 +389,9 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
     /** Query entities. */
     private Collection<QueryEntity> qryEntities;
 
+    /** Page memory configuration. */
+    private PageMemoryConfigurationLink pageMemoryConfiguration;
+
     /** Partition loss policy. */
     private PartitionLossPolicy partitionLossPolicy = DFLT_PARTITION_LOSS_POLICY;
 
@@ -454,6 +457,7 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
         name = cc.getName();
         nearCfg = cc.getNearConfiguration();
         nodeFilter = cc.getNodeFilter();
+        pageMemoryConfiguration = cc.getPageMemoryConfiguration();
         partitionLossPolicy = cc.getPartitionLossPolicy();
         pluginCfgs = cc.getPluginConfigurations();
         qryEntities = cc.getQueryEntities() == Collections.<QueryEntity>emptyList() ? null : cc.getQueryEntities();
@@ -1956,6 +1960,20 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
     }
 
     /**
+     *
+     */
+    public PageMemoryConfigurationLink getPageMemoryConfiguration() {
+        return pageMemoryConfiguration;
+    }
+
+    /**
+     * @param pageMemoryConfiguration Page memory configuration.
+     */
+    public void setPageMemoryConfiguration(PageMemoryConfigurationLink pageMemoryConfiguration) {
+        this.pageMemoryConfiguration = pageMemoryConfiguration;
+    }
+
+    /**
      * Gets array of cache plugin configurations.
      *
      * @return Cache plugin configurations.
@@ -2185,7 +2203,7 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
 
                 txtIdx.setIndexType(QueryIndexType.FULLTEXT);
 
-                txtIdx.setFieldNames(Arrays.asList(_VAL), true);
+                txtIdx.setFieldNames(Collections.singletonList(_VAL), true);
             }
             else
                 txtIdx.getFields().put(_VAL, true);

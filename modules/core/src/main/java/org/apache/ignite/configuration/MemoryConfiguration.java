@@ -18,8 +18,11 @@
 package org.apache.ignite.configuration;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentMap;
 import org.apache.ignite.internal.util.typedef.internal.A;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.jsr166.ConcurrentHashMap8;
 
 /**
  * Database configuration used to configure database.
@@ -27,6 +30,9 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 public class MemoryConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
+
+    private static final PageMemoryConfigurationLink DEFAULT_PAGE_MEMORY_CONFIGURATION
+        = new PageMemoryConfigurationLink("DEFAULT");
 
     /** Default cache size is 1Gb. */
     public static final long DFLT_PAGE_CACHE_SIZE = 1024 * 1024 * 1024;
@@ -43,8 +49,18 @@ public class MemoryConfiguration implements Serializable {
     /** Amount of memory allocated for the page cache. */
     private long pageCacheSize = DFLT_PAGE_CACHE_SIZE;
 
-    /** Concurrency level. */
-    private int concLvl;
+    /** Default concurrency level. */
+    private int dfltConcurrencyLevel; //TODO
+
+    /** Default configuration. */
+    private PageMemoryConfiguration dfltCfg =
+        new PageMemoryConfiguration(DEFAULT_PAGE_MEMORY_CONFIGURATION, 1024 * 1024 * 1024, 0, null);
+
+
+
+    /** Page memory configuration map. */
+    private ConcurrentMap<PageMemoryConfigurationLink, PageMemoryConfiguration> pageMemoryConfigurations
+        = new ConcurrentHashMap8<>();
 
     /**
      * @return Page size.
@@ -76,32 +92,58 @@ public class MemoryConfiguration implements Serializable {
     public void setFileCacheAllocationPath(String fileCacheAllocationPath) {
         this.fileCacheAllocationPath = fileCacheAllocationPath;
     }
+//
+//    /**
+//     * @return Page cache size, in bytes.
+//     */
+//    public long getPageCacheSize() {
+//        return pageCacheSize;
+//    }
+//
+//    /**
+//     * @param pageCacheSize Page cache size, in bytes.
+//     */
+//    public void setPageCacheSize(long pageCacheSize) {
+//        this.pageCacheSize = pageCacheSize;
+//    }
 
     /**
-     * @return Page cache size, in bytes.
+     * @param pageMemoryCfg Page memory config.
      */
-    public long getPageCacheSize() {
-        return pageCacheSize;
+    public boolean addPageMemoryConfiguration(PageMemoryConfiguration pageMemoryCfg) {
+        return pageMemoryConfigurations.putIfAbsent(pageMemoryCfg.getLink(), pageMemoryCfg) == null;
     }
 
     /**
-     * @param pageCacheSize Page cache size, in bytes.
+     * @param link Link.
      */
-    public void setPageCacheSize(long pageCacheSize) {
-        this.pageCacheSize = pageCacheSize;
+    public PageMemoryConfiguration getPageMemoryConfiguration(PageMemoryConfigurationLink link) {
+        return pageMemoryConfigurations.get(link);
     }
 
     /**
-     * @return Concurrency level.
+     *
      */
-    public int getConcurrencyLevel() {
-        return concLvl;
+    public Collection<PageMemoryConfiguration> getPageMemoryConfigurations() {
+        if (!pageMemoryConfigurations.containsKey(dfltCfg.getLink()))
+            pageMemoryConfigurations.putIfAbsent(dfltCfg.getLink(), dfltCfg);
+
+        return pageMemoryConfigurations.values();
     }
 
-    /**
-     * @param concLvl Concurrency level.
-     */
-    public void setConcurrencyLevel(int concLvl) {
-        this.concLvl = concLvl;
+    public int getDefaultConcurrencyLevel() {
+        return dfltConcurrencyLevel;
+    }
+
+    public void setDefaultConcurrencyLevel(int dfltConcurrencyLevel) {
+        this.dfltConcurrencyLevel = dfltConcurrencyLevel;
+    }
+
+    public PageMemoryConfiguration getDefaultConfiguration() {
+        return dfltCfg;
+    }
+
+    public void setDefaultConfiguration(PageMemoryConfiguration dfltConfiguration) {
+        this.dfltCfg = dfltConfiguration;
     }
 }

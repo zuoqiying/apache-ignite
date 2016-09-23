@@ -86,18 +86,18 @@ public abstract class IgniteDbPutGetAbstractTest extends GridCommonAbstractTest 
         MemoryConfiguration dbCfg = new MemoryConfiguration();
 
         if (isLargePage()) {
-            dbCfg.setConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
+            dbCfg.setDefaultConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
 
             dbCfg.setPageSize(16 * 1024);
 
-            dbCfg.setPageCacheSize(200 * 1024 * 1024);
+//            dbCfg.setPageCacheSize(200 * 1024 * 1024);
         }
         else {
-            dbCfg.setConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
+            dbCfg.setDefaultConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
 
             dbCfg.setPageSize(1024);
 
-            dbCfg.setPageCacheSize(200 * 1024 * 1024);
+//            dbCfg.setPageCacheSize(200 * 1024 * 1024);
         }
 
         cfg.setMemoryConfiguration(dbCfg);
@@ -184,7 +184,7 @@ public abstract class IgniteDbPutGetAbstractTest extends GridCommonAbstractTest 
      */
     protected boolean isLargePage() {
         return false;
-    };
+    }
 
     public void testGradualRandomPutAllRemoveAll() {
         IgniteEx ig = grid(0);

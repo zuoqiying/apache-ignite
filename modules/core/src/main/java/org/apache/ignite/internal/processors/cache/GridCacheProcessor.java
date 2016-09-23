@@ -59,6 +59,7 @@ import org.apache.ignite.configuration.DeploymentMode;
 import org.apache.ignite.configuration.FileSystemConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.NearCacheConfiguration;
+import org.apache.ignite.configuration.PageMemoryConfigurationLink;
 import org.apache.ignite.configuration.TransactionConfiguration;
 import org.apache.ignite.events.EventType;
 import org.apache.ignite.internal.GridKernalContext;
@@ -71,7 +72,6 @@ import org.apache.ignite.internal.IgniteTransactionsEx;
 import org.apache.ignite.internal.binary.BinaryContext;
 import org.apache.ignite.internal.binary.BinaryMarshaller;
 import org.apache.ignite.internal.binary.GridBinaryMarshaller;
-import org.apache.ignite.internal.events.DiscoveryCustomEvent;
 import org.apache.ignite.internal.managers.discovery.DiscoveryCustomMessage;
 import org.apache.ignite.internal.pagemem.backup.StartFullBackupAckDiscoveryMessage;
 import org.apache.ignite.internal.pagemem.store.IgnitePageStoreManager;
@@ -761,6 +761,13 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             }
 
             for (DynamicCacheDescriptor desc : registeredCaches.values()) {
+                PageMemoryConfigurationLink configuration = desc.cacheConfiguration().getPageMemoryConfiguration();
+
+                if (configuration == null)
+                    configuration = ctx.config().getMemoryConfiguration().getDefaultConfiguration().getLink();
+
+                sharedCtx.database().pageMemory().registerCache(desc.cacheId(), configuration);
+
                 if (ctx.config().isDaemon() && !CU.isMarshallerCache(desc.cacheConfiguration().getName()))
                     continue;
 

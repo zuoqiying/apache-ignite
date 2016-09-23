@@ -25,15 +25,21 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.configuration.MemoryConfiguration;
+import org.apache.ignite.configuration.PageMemoryConfiguration;
+import org.apache.ignite.configuration.PageMemoryConfigurationLink;
+import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
 import org.apache.ignite.internal.mem.DirectMemoryProvider;
 import org.apache.ignite.internal.mem.file.MappedFileMemoryProvider;
 import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageMemory;
+import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
+import org.mockito.Mockito;
 
 /**
  *
@@ -180,10 +186,32 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
         for (int i = 0; i < sizes.length; i++)
             sizes[i] = 1024 * 1024;
 
-        DirectMemoryProvider provider = new MappedFileMemoryProvider(log(), memDir, true,
-            sizes);
+        DirectMemoryProvider provider = new MappedFileMemoryProvider(log(), memDir, true, sizes);
 
-        return new PageMemoryNoStoreImpl(log(), provider, null, PAGE_SIZE);
+        MemoryConfiguration configuration = new MemoryConfiguration();
+
+        configuration.setPageSize(PAGE_SIZE);
+
+        PageMemoryConfigurationLink link = new PageMemoryConfigurationLink("first");
+
+        configuration.addPageMemoryConfiguration(
+            new PageMemoryConfiguration(
+                link,
+                10 * 1024 * 1024, 10, "pagemem"));
+
+        GridCacheSharedContext cctx = Mockito.mock(GridCacheSharedContext.class);
+
+        GridDiscoveryManager discovery = Mockito.mock(GridDiscoveryManager.class);
+
+        Mockito.when(cctx.discovery()).thenReturn(discovery);
+
+        Mockito.when(discovery.consistentId()).thenReturn("abc");
+
+        PageMemoryNoStoreImpl store = new PageMemoryNoStoreImpl(configuration, cctx, log());
+
+        store.registerCache(0, link);
+
+        return store;
     }
 
     /**

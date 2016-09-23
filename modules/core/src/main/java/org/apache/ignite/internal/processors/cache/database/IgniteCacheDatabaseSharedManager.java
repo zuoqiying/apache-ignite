@@ -17,18 +17,13 @@
 
 package org.apache.ignite.internal.processors.cache.database;
 
-import java.io.File;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.internal.IgniteInternalFuture;
-import org.apache.ignite.internal.mem.DirectMemoryProvider;
-import org.apache.ignite.internal.mem.file.MappedFileMemoryProvider;
-import org.apache.ignite.internal.mem.unsafe.UnsafeMemoryProvider;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.pagemem.backup.StartFullBackupAckDiscoveryMessage;
 import org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl;
@@ -37,7 +32,6 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter
 import org.apache.ignite.internal.processors.cache.database.freelist.FreeList;
 import org.apache.ignite.internal.processors.cache.database.freelist.FreeListImpl;
 import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
-import org.apache.ignite.internal.util.typedef.internal.U;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,9 +40,6 @@ import org.jetbrains.annotations.Nullable;
 public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdapter {
     /** */
     protected PageMemory pageMem;
-
-    /** */
-    private FreeListImpl freeList;
 
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
@@ -70,25 +61,21 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
      * @throws IgniteCheckedException If failed.
      */
     protected void initDataStructures() throws IgniteCheckedException {
-        freeList = new FreeListImpl(0, cctx.gridName(), pageMem, null, cctx.wal(), 0L, true);
+
     }
 
     /**
-     * @return Node-global free list.
+     * @param cacheId Cache id.
      */
-    public FreeList globalFreeList() {
-        assert freeList != null : "Non initialized";
-
-        return freeList;
+    public FreeList freeList(int cacheId) {
+        return pageMem.freeList(cacheId);
     }
 
     /**
-     * @return Node-global reuse list.
+     * @param cacheId Cache id.
      */
-    public ReuseList globalReuseList() {
-        assert freeList != null : "Non initialized";
-
-        return freeList;
+    public ReuseList reuseList(int cacheId) {
+        return pageMem.reuseList(cacheId);
     }
 
     /** {@inheritDoc} */
@@ -186,52 +173,6 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
      * @return Page memory instance.
      */
     protected PageMemory initMemory(MemoryConfiguration dbCfg) {
-        String path = dbCfg.getFileCacheAllocationPath();
-
-        int concLvl = dbCfg.getConcurrencyLevel();
-
-        if (concLvl < 2)
-            concLvl = Runtime.getRuntime().availableProcessors();
-
-        long fragmentSize = dbCfg.getPageCacheSize() / concLvl;
-
-        if (fragmentSize < 1024 * 1024)
-            fragmentSize = 1024 * 1024;
-
-        String consId = String.valueOf(cctx.discovery().consistentId());
-
-        consId = consId.replaceAll("[:,\\.]", "_");
-
-        File allocPath = path == null ? null : buildPath(path, consId);
-
-        long[] sizes = new long[concLvl];
-
-        for (int i = 0; i < concLvl; i++)
-            sizes[i] = fragmentSize;
-
-        DirectMemoryProvider memProvider = path == null ?
-            new UnsafeMemoryProvider(sizes) :
-            new MappedFileMemoryProvider(
-                log,
-                allocPath,
-                true,
-                sizes);
-
-        return new PageMemoryNoStoreImpl(log, memProvider, cctx, dbCfg.getPageSize());
-    }
-
-    /**
-     * @param path Path to the working directory.
-     * @param consId Consistent ID of the local node.
-     * @return DB storage path.
-     */
-    protected File buildPath(String path, String consId) {
-        String igniteHomeStr = U.getIgniteHome();
-
-        File igniteHome = igniteHomeStr != null ? new File(igniteHomeStr) : null;
-
-        File workDir = igniteHome == null ? new File(path) : new File(igniteHome, path);
-
-        return new File(workDir, consId);
+        return new PageMemoryNoStoreImpl(dbCfg, cctx, log);
     }
 }

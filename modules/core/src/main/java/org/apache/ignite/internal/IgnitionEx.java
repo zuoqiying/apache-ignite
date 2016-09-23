@@ -1950,7 +1950,7 @@ public class IgnitionEx {
             if (myCfg.getMemoryConfiguration() == null) {
                 MemoryConfiguration dbCfg = new MemoryConfiguration();
 
-                dbCfg.setConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
+                dbCfg.setDefaultConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
 
                 myCfg.setMemoryConfiguration(dbCfg);
             }

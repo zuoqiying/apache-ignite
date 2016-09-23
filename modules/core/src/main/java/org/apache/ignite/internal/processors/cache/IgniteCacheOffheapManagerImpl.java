@@ -121,7 +121,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                 name,
                 cctx.shared().database().pageMemory(),
                 rootPage,
-                cctx.shared().database().globalReuseList(),
+                cctx.shared().database().reuseList(cctx.cacheId()),
                 true);
         }
     }
@@ -565,7 +565,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      * @throws IgniteCheckedException If failed.
      */
     private long allocateForTree() throws IgniteCheckedException {
-        long pageId = cctx.shared().database().globalReuseList().takeRecycledPage();
+        long pageId = cctx.shared().database().reuseList(cctx.cacheId()).takeRecycledPage();
 
         if (pageId == 0L)
             pageId = cctx.shared().database().pageMemory().allocatePage(cctx.cacheId(), 0, FLAG_IDX);
@@ -582,7 +582,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
     /** {@inheritDoc} */
     @Override public ReuseList reuseListForIndex(String idxName) {
-        return cctx.shared().database().globalReuseList();
+        return cctx.shared().database().reuseList(cctx.cacheId());
     }
 
     /** {@inheritDoc} */
@@ -655,14 +655,14 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
         final long rootPage = allocateForTree();
 
-        FreeList freeList = cctx.shared().database().globalFreeList();
+        FreeList freeList = cctx.shared().database().freeList(cctx.cacheId());
 
         CacheDataRowStore rowStore = new CacheDataRowStore(cctx, freeList);
 
         String idxName = treeName(p);
 
         CacheDataTree dataTree = new CacheDataTree(idxName,
-            cctx.shared().database().globalReuseList(),
+            cctx.shared().database().reuseList(cctx.cacheId()),
             rowStore,
             cctx,
             dbMgr.pageMemory(),
