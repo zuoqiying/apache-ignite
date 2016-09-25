@@ -19,7 +19,13 @@ package org.apache.ignite.configuration;
 
 import java.io.Serializable;
 
+/**
+ *
+ */
 public class PageMemoryConfigurationLink implements Serializable{
+    /** Serial version uid. */
+    public static final long serialVersionUID = 0;
+
     /** Name. */
     private final String name;
 

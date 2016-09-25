@@ -173,7 +173,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
         Map<PageMemoryConfigurationLink, PageMemoryRegion> map = new LinkedHashMap<>();
 
-        int segmentCount = 0;
+        int segmentCnt = 0;
 
         for (PageMemoryConfiguration pageMemoryConfiguration : memCfg.getPageMemoryConfigurations()) {
             int concLvl = pageMemoryConfiguration.getConcurrencyLevel();
@@ -181,7 +181,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
             if (concLvl < 2)
                 pageMemoryConfiguration.setConcLvl(concLvl = Runtime.getRuntime().availableProcessors());
 
-            segmentCount += concLvl;
+            segmentCnt += concLvl;
 
             long fragmentSize = pageMemoryConfiguration.getSize() / concLvl;
 
@@ -199,7 +199,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
                 new UnsafeMemoryProvider(sizes) :
                 new MappedFileMemoryProvider(log, buildPath(path, consId), true, sizes);
 
-            map.put(pageMemoryConfiguration.getLink(), new PageMemoryRegion(memProvider, segmentCount - concLvl, segmentCount));
+            map.put(pageMemoryConfiguration.getLink(), new PageMemoryRegion(memProvider, segmentCnt - concLvl, segmentCnt));
         }
 
         memoryRegions = map;
@@ -219,7 +219,6 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
         return new File(workDir, consId);
     }
-
 
     /** {@inheritDoc} */
     @Override public void start() throws IgniteException {

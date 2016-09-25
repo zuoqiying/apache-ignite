@@ -39,6 +39,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
+import org.jetbrains.annotations.NotNull;
 import org.mockito.Mockito;
 
 /**
@@ -199,6 +200,15 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
                 link,
                 10 * 1024 * 1024, 10, "pagemem"));
 
+        PageMemoryNoStoreImpl store = new PageMemoryNoStoreImpl(configuration, getGridCacheSharedContext(), log());
+
+        store.registerCache(0, link);
+
+        return store;
+    }
+
+    @NotNull
+    private GridCacheSharedContext getGridCacheSharedContext() {
         GridCacheSharedContext cctx = Mockito.mock(GridCacheSharedContext.class);
 
         GridDiscoveryManager discovery = Mockito.mock(GridDiscoveryManager.class);
@@ -207,11 +217,7 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
 
         Mockito.when(discovery.consistentId()).thenReturn("abc");
 
-        PageMemoryNoStoreImpl store = new PageMemoryNoStoreImpl(configuration, cctx, log());
-
-        store.registerCache(0, link);
-
-        return store;
+        return cctx;
     }
 
     /**
