@@ -171,7 +171,6 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
         return PageMemoryTestUtils.memory(10, PAGE_SIZE, 10, CACHE_ID, memDir.getAbsolutePath(), true);
     }
 
-
     /**
      * @param page Page to write.
      * @param val Value to write.

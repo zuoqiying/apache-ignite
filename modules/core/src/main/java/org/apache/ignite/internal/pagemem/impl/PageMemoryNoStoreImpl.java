@@ -224,8 +224,10 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
     /** {@inheritDoc} */
     @Override public void start() throws IgniteException {
-        List<Segment> segments = new ArrayList<>();
+        if (segments != null)
+            throw new IllegalStateException("Already started");
 
+        List<Segment> segments = new ArrayList<>();
 
         for (PageMemoryRegion region : memoryRegions.values()) {
             if (region.directMemoryProvider instanceof LifecycleAware)

@@ -66,8 +66,6 @@ public class MetadataStorageSelfTest extends GridCommonAbstractTest {
 
         Map<Integer, Map<String, RootPage>> allocatedIdxs = new HashMap<>();
 
-        mem.start();
-
         try {
             final Map<Integer, MetadataStorage> storeMap = new HashMap<>();
 

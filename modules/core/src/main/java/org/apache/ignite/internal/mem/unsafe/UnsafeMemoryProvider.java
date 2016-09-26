@@ -52,6 +52,9 @@ public class UnsafeMemoryProvider implements DirectMemoryProvider, LifecycleAwar
 
     /** {@inheritDoc} */
     @Override public void start() throws IgniteException {
+        if (regions != null)
+            throw new IllegalStateException("Already started!");
+
         regions = new ArrayList<>();
 
         long allocated = 0;

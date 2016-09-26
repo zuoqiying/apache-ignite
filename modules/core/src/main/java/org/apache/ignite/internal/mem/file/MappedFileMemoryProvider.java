@@ -77,6 +77,9 @@ public class MappedFileMemoryProvider implements DirectMemoryProvider, Lifecycle
 
     /** {@inheritDoc} */
     @Override public void start() throws IgniteException {
+        if (mappedFiles != null)
+            throw new IllegalStateException("Already started!");
+
         if (!allocationPath.exists()) {
             if (!allocationPath.mkdirs())
                 throw new IgniteException("Failed to initialize allocation path (make sure directory is " +

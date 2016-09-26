@@ -17,20 +17,16 @@
 
 package org.apache.ignite.internal.pagemem.impl;
 
-import java.nio.ByteBuffer;
+import java.lang.reflect.Field;
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.configuration.PageMemoryConfiguration;
 import org.apache.ignite.configuration.PageMemoryConfigurationLink;
 import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
-import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
-import org.apache.ignite.internal.util.typedef.CIX2;
-import org.apache.ignite.testframework.junits.GridTestKernalContext;
+import org.apache.ignite.testframework.junits.logger.GridTestLog4jLogger;
 import org.jetbrains.annotations.NotNull;
-import org.mockito.Mockito;
 
 public class PageMemoryTestUtils {
 
@@ -56,14 +52,18 @@ public class PageMemoryTestUtils {
     ) throws IgniteCheckedException {
         MemoryConfiguration memCfg = new MemoryConfiguration();
 
-        memCfg.setPageSize(pageSize);
+        try {
+            memCfg.setPageSize(pageSize);
+        } catch (IllegalArgumentException ex) {
+            setPageSize(memCfg, pageSize);
+        }
 
         PageMemoryConfigurationLink link = new PageMemoryConfigurationLink("default");
 
         memCfg.setDefaultConfiguration(new PageMemoryConfiguration(link,
             sizeInMb * 1024 * 1024, concurrencyLevel, mappedFilePath));
 
-        PageMemoryNoStoreImpl memory = new PageMemoryNoStoreImpl(memCfg, getGridCacheSharedContext(), null, clean);
+        PageMemoryNoStoreImpl memory = new PageMemoryNoStoreImpl(memCfg, getGridCacheSharedContext(), new GridTestLog4jLogger(), clean);
 
         memory.start();
 
@@ -73,16 +73,31 @@ public class PageMemoryTestUtils {
         return memory;
     }
 
+    private static void setPageSize(MemoryConfiguration cfg, int size) {
+        try {
+            Field pageSizeField = MemoryConfiguration.class.getDeclaredField("pageSize");
 
+            pageSizeField.setAccessible(true);
+
+            pageSizeField.set(cfg, size);
+        } catch (Exception ex) {
+            throw new IllegalStateException();
+        }
+    }
+
+    /**
+     *
+     */
+    @SuppressWarnings("unchecked")
     @NotNull private static GridCacheSharedContext getGridCacheSharedContext() {
-        GridCacheSharedContext cctx = Mockito.mock(GridCacheSharedContext.class);
-
-        GridDiscoveryManager discovery = Mockito.mock(GridDiscoveryManager.class);
-
-        Mockito.when(cctx.discovery()).thenReturn(discovery);
-
-        Mockito.when(discovery.consistentId()).thenReturn("abc");
-
-        return cctx;
+        return new GridCacheSharedContext(null, null, null, null, null, null, null, null, null, null, null, null, null) {
+            @Override public GridDiscoveryManager discovery() {
+                return new GridDiscoveryManager(null) {
+                    @Override public Object consistentId() {
+                        return "abc";
+                    }
+                };
+            }
+        };
     }
 }

@@ -30,17 +30,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.Lock;
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.configuration.MemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfigurationLink;
-import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
-import org.apache.ignite.internal.mem.unsafe.UnsafeMemoryProvider;
 import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl;
-import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
+import org.apache.ignite.internal.pagemem.impl.PageMemoryTestUtils;
 import org.apache.ignite.internal.processors.cache.database.DataStructure;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
 import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusIO;
@@ -57,9 +52,7 @@ import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.testframework.GridTestUtils;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
-import org.jetbrains.annotations.NotNull;
 import org.jsr166.ConcurrentHashMap8;
-import org.mockito.Mockito;
 
 import static org.apache.ignite.internal.processors.cache.database.tree.BPlusTree.rnd;
 
@@ -73,7 +66,7 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
     private static final short LONG_LEAF_IO = 30001;
 
     /** */
-    protected static final int PAGE_SIZE = 1024;
+    protected static final int PAGE_SIZE = 256;
 
     /** */
     protected static final long MB = 1024 * 1024;
@@ -127,8 +120,6 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
         rnd = new Random(seed);
 
         pageMem = createPageMemory();
-
-        pageMem.start();
 
         reuseList = createReuseList(CACHE_ID, pageMem, 0, true);
     }
@@ -1232,31 +1223,7 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
     }
 
     protected PageMemory createPageMemory() throws Exception {
-        MemoryConfiguration configuration = new MemoryConfiguration();
-
-        configuration.setPageSize(PAGE_SIZE);
-
-        PageMemoryConfigurationLink link = new PageMemoryConfigurationLink("first");
-
-        configuration.addPageMemoryConfiguration(
-                new PageMemoryConfiguration(
-                        link,
-                        1024 * MB, CPUS, "pagemem"));
-
-        return new PageMemoryNoStoreImpl(null, getGridCacheSharedContext(), log, true);
-    }
-
-    @NotNull
-    private GridCacheSharedContext getGridCacheSharedContext() {
-        GridCacheSharedContext cctx = Mockito.mock(GridCacheSharedContext.class);
-
-        GridDiscoveryManager discovery = Mockito.mock(GridDiscoveryManager.class);
-
-        Mockito.when(cctx.discovery()).thenReturn(discovery);
-
-        Mockito.when(discovery.consistentId()).thenReturn("abc");
-
-        return cctx;
+        return PageMemoryTestUtils.memory(1024, PAGE_SIZE, CPUS, CACHE_ID, "pagemem", true);
     }
 
     /**
