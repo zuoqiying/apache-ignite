@@ -92,20 +92,6 @@ public class MemoryConfiguration implements Serializable {
     public void setFileCacheAllocationPath(String fileCacheAllocationPath) {
         this.fileCacheAllocationPath = fileCacheAllocationPath;
     }
-//
-//    /**
-//     * @return Page cache size, in bytes.
-//     */
-//    public long getPageCacheSize() {
-//        return pageCacheSize;
-//    }
-//
-//    /**
-//     * @param pageCacheSize Page cache size, in bytes.
-//     */
-//    public void setPageCacheSize(long pageCacheSize) {
-//        this.pageCacheSize = pageCacheSize;
-//    }
 
     /**
      * @param pageMemoryCfg Page memory config.

@@ -173,6 +173,6 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
      * @return Page memory instance.
      */
     protected PageMemory initMemory(MemoryConfiguration dbCfg) {
-        return new PageMemoryNoStoreImpl(dbCfg, cctx, log);
+        return new PageMemoryNoStoreImpl(dbCfg, cctx, log, true);
     }
 }

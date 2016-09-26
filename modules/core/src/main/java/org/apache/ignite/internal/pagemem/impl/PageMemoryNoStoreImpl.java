@@ -158,7 +158,9 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
     public PageMemoryNoStoreImpl(@NotNull  MemoryConfiguration memCfg,
         @NotNull GridCacheSharedContext<?, ?> sharedCtx,
-        @Nullable IgniteLogger log) {
+        @Nullable IgniteLogger log,
+        boolean clean
+    ) {
         this.sharedCtx = sharedCtx;
 
         this.log = log != null ? log : sharedCtx.logger(PageMemoryNoStoreImpl.class) ;
@@ -197,7 +199,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
             DirectMemoryProvider memProvider = path == null ?
                 new UnsafeMemoryProvider(sizes) :
-                new MappedFileMemoryProvider(log, buildPath(path, consId), true, sizes);
+                new MappedFileMemoryProvider(log, buildPath(path, consId), clean, sizes);
 
             map.put(pageMemoryConfiguration.getLink(), new PageMemoryRegion(memProvider, segmentCnt - concLvl, segmentCnt));
         }

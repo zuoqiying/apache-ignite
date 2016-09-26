@@ -73,7 +73,7 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
     private static final short LONG_LEAF_IO = 30001;
 
     /** */
-    protected static final int PAGE_SIZE = 256;
+    protected static final int PAGE_SIZE = 1024;
 
     /** */
     protected static final long MB = 1024 * 1024;
@@ -82,7 +82,7 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
     protected static final int CPUS = Runtime.getRuntime().availableProcessors();
 
     /** */
-    private static final int CACHE_ID = 100500;
+    protected static final int CACHE_ID = 100500;
 
     /** */
     protected static int MAX_PER_PAGE = 0;
@@ -1243,7 +1243,7 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
                         link,
                         1024 * MB, CPUS, "pagemem"));
 
-        return new PageMemoryNoStoreImpl(null, getGridCacheSharedContext(), log);
+        return new PageMemoryNoStoreImpl(null, getGridCacheSharedContext(), log, true);
     }
 
     @NotNull

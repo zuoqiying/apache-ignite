@@ -17,22 +17,13 @@
 
 package org.apache.ignite.internal.processors.database;
 
-import org.apache.ignite.configuration.MemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfigurationLink;
-import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
-import org.apache.ignite.internal.mem.DirectMemoryProvider;
 import org.apache.ignite.internal.pagemem.FullPageId;
-import org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl;
-import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
+import org.apache.ignite.internal.pagemem.impl.PageMemoryTestUtils;
 import org.apache.ignite.internal.processors.cache.database.MetadataStorage;
-import org.apache.ignite.internal.mem.file.MappedFileMemoryProvider;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.database.RootPage;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
-import org.jetbrains.annotations.NotNull;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.util.HashMap;
@@ -69,9 +60,9 @@ public class MetadataStorageSelfTest extends GridCommonAbstractTest {
      * @throws Exception
      */
     private void metaAllocation() throws Exception {
-        PageMemory mem = memory(true);
-
         int[] cacheIds = new int[]{1, "partitioned".hashCode(), "replicated".hashCode()};
+
+        PageMemory mem = memory(cacheIds, true);
 
         Map<Integer, Map<String, RootPage>> allocatedIdxs = new HashMap<>();
 
@@ -156,31 +147,7 @@ public class MetadataStorageSelfTest extends GridCommonAbstractTest {
      *      new empty page memory.
      * @return Page memory instance.
      */
-    protected PageMemory memory(boolean clean) throws Exception {
-        MemoryConfiguration configuration = new MemoryConfiguration();
-
-        configuration.setPageSize(PAGE_SIZE);
-
-        PageMemoryConfigurationLink link = new PageMemoryConfigurationLink("first");
-
-        configuration.addPageMemoryConfiguration(
-                new PageMemoryConfiguration(
-                        link,
-                        10 * 1024 * 1024, 10, "pagemem"));
-
-        return new PageMemoryNoStoreImpl(null, getGridCacheSharedContext(), log);
-    }
-
-    @NotNull
-    private GridCacheSharedContext getGridCacheSharedContext() {
-        GridCacheSharedContext cctx = Mockito.mock(GridCacheSharedContext.class);
-
-        GridDiscoveryManager discovery = Mockito.mock(GridDiscoveryManager.class);
-
-        Mockito.when(cctx.discovery()).thenReturn(discovery);
-
-        Mockito.when(discovery.consistentId()).thenReturn("abc");
-
-        return cctx;
+    protected PageMemory memory(int[] cacheIds, boolean clean) throws Exception {
+        return PageMemoryTestUtils.memory(10, PAGE_SIZE, 10, cacheIds, "pagemem", clean);
     }
 }

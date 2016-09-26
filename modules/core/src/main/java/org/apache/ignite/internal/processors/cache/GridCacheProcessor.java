@@ -1776,6 +1776,13 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             caches.put(maskNull(cacheCtx.name()), cacheCtx.cache());
 
+            PageMemoryConfigurationLink configuration = ccfg.getPageMemoryConfiguration();
+
+            if (configuration == null)
+                configuration = ctx.config().getMemoryConfiguration().getDefaultConfiguration().getLink();
+
+            sharedCtx.database().pageMemory().registerCache(CU.cacheId(cfg.getName()), configuration);
+
             startCache(cacheCtx.cache());
             onKernalStart(cacheCtx.cache());
         }

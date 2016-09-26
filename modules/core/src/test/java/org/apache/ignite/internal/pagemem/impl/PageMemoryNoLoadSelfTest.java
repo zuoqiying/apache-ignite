@@ -25,22 +25,13 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.configuration.MemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfigurationLink;
-import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
-import org.apache.ignite.internal.mem.DirectMemoryProvider;
-import org.apache.ignite.internal.mem.file.MappedFileMemoryProvider;
 import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageMemory;
-import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
-import org.jetbrains.annotations.NotNull;
-import org.mockito.Mockito;
 
 /**
  *
@@ -48,6 +39,7 @@ import org.mockito.Mockito;
 public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
     /** */
     protected static final int PAGE_SIZE = 8 * 1024;
+    public static final int CACHE_ID = 0;
 
     /** {@inheritDoc} */
     @Override protected void afterTest() throws Exception {
@@ -59,8 +51,6 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
      */
     public void testPageTearingInner() throws Exception {
         PageMemory mem = memory();
-
-        mem.start();
 
         try {
             FullPageId fullId1 = allocatePage(mem);
@@ -102,8 +92,6 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
      */
     public void testPageTearingSequential() throws Exception {
         PageMemory mem = memory();
-
-        mem.start();
 
         try {
             int pagesCnt = 1024;
@@ -155,8 +143,6 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
     public void testPageHandleDeallocation() throws Exception {
         PageMemory mem = memory();
 
-        mem.start();
-
         try {
             int pages = 3 * 1024 * 1024 / (8 * 1024);
 
@@ -182,43 +168,9 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
     protected PageMemory memory() throws Exception {
         File memDir = U.resolveWorkDirectory("pagemem", false);
 
-        long[] sizes = new long[10];
-
-        for (int i = 0; i < sizes.length; i++)
-            sizes[i] = 1024 * 1024;
-
-        DirectMemoryProvider provider = new MappedFileMemoryProvider(log(), memDir, true, sizes);
-
-        MemoryConfiguration configuration = new MemoryConfiguration();
-
-        configuration.setPageSize(PAGE_SIZE);
-
-        PageMemoryConfigurationLink link = new PageMemoryConfigurationLink("first");
-
-        configuration.addPageMemoryConfiguration(
-            new PageMemoryConfiguration(
-                link,
-                10 * 1024 * 1024, 10, "pagemem"));
-
-        PageMemoryNoStoreImpl store = new PageMemoryNoStoreImpl(configuration, getGridCacheSharedContext(), log());
-
-        store.registerCache(0, link);
-
-        return store;
+        return PageMemoryTestUtils.memory(10, PAGE_SIZE, 10, CACHE_ID, memDir.getAbsolutePath(), true);
     }
 
-    @NotNull
-    private GridCacheSharedContext getGridCacheSharedContext() {
-        GridCacheSharedContext cctx = Mockito.mock(GridCacheSharedContext.class);
-
-        GridDiscoveryManager discovery = Mockito.mock(GridDiscoveryManager.class);
-
-        Mockito.when(cctx.discovery()).thenReturn(discovery);
-
-        Mockito.when(discovery.consistentId()).thenReturn("abc");
-
-        return cctx;
-    }
 
     /**
      * @param page Page to write.
@@ -262,6 +214,6 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
      * @return Page.
      */
     public static FullPageId allocatePage(PageIdAllocator mem) throws IgniteCheckedException {
-        return new FullPageId(mem.allocatePage(0, -1, PageIdAllocator.FLAG_DATA), 0);
+        return new FullPageId(mem.allocatePage(CACHE_ID, -1, PageIdAllocator.FLAG_DATA), 0);
     }
 }
