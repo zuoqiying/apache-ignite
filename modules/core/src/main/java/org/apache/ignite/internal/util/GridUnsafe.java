@@ -999,10 +999,7 @@ public abstract class GridUnsafe {
      * @return address.
      */
     public static long allocateMemory(long size) {
-        long l = UNSAFE.allocateMemory(size);
-        System.out.println("ALLOCATE - " + l);
-        new Throwable().printStackTrace();
-        return l;
+        return UNSAFE.allocateMemory(size);
     }
 
     /**
@@ -1058,7 +1055,6 @@ public abstract class GridUnsafe {
      */
     public static void freeMemory(long addr) {
         UNSAFE.freeMemory(addr);
-        System.out.println("FREE MEMORY" + addr);
     }
 
     /**

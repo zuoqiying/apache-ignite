@@ -766,7 +766,8 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                 if (configuration == null)
                     configuration = ctx.config().getMemoryConfiguration().getDefaultConfiguration().getLink();
 
-                sharedCtx.database().pageMemory().registerCache(desc.cacheId(), configuration);
+                if (!context().kernalContext().clientNode())
+                    sharedCtx.database().pageMemory().registerCache(desc.cacheId(), configuration);
 
                 if (ctx.config().isDaemon() && !CU.isMarshallerCache(desc.cacheConfiguration().getName()))
                     continue;
@@ -1781,7 +1782,8 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             if (configuration == null)
                 configuration = ctx.config().getMemoryConfiguration().getDefaultConfiguration().getLink();
 
-            sharedCtx.database().pageMemory().registerCache(CU.cacheId(cfg.getName()), configuration);
+            if (!context().kernalContext().clientNode())
+                sharedCtx.database().pageMemory().registerCache(CU.cacheId(cfg.getName()), configuration);
 
             startCache(cacheCtx.cache());
             onKernalStart(cacheCtx.cache());
