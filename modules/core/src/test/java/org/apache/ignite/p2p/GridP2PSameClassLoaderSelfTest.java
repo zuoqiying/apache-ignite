@@ -55,7 +55,7 @@ public class GridP2PSameClassLoaderSelfTest extends GridCommonAbstractTest {
 
     /** */
     static {
-        String path = GridTestProperties.getProperty("p2p.uri.cls");
+        String path = GridTestProperties.getP2PUriClass();
 
         try {
             CLASS_LOADER = new URLClassLoader(new URL[] {new URL(path)},

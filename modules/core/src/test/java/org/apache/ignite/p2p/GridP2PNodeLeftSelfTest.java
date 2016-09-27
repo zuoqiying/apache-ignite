@@ -38,7 +38,7 @@ public class GridP2PNodeLeftSelfTest extends GridCommonAbstractTest {
 
     /** */
     static {
-        String path = GridTestProperties.getProperty("p2p.uri.cls");
+        String path = GridTestProperties.getP2PUriClass();
 
         try {
             urlClsLdr1 = new URLClassLoader(

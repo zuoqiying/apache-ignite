@@ -1403,7 +1403,7 @@ public abstract class GridAbstractTest extends TestCase {
      * @return External class loader.
      */
     protected static ClassLoader getExternalClassLoader() {
-        String path = GridTestProperties.getProperty("p2p.uri.cls");
+        String path = GridTestProperties.getP2PUriClass();
 
         try {
             return new URLClassLoader(new URL[] {new URL(path)}, U.gridClassLoader());

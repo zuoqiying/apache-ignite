@@ -38,18 +38,12 @@ import org.jetbrains.annotations.Nullable;
  * <ul>
  * <li>
  *     Default properties and log4j.xml configuration is loaded directly from
- *     {@code ${IGNITE_HOME}/modules/tests/config} folder. Default properties can be
- *     accessed via {@link #getDefaultProperties()} and {@link #getDefaultProperty(String)} methods.
+ *     {@code ${IGNITE_HOME}/modules/tests/config} folder.
  *   </li>
  * <li>
  *     User is able to override any default property and log4j configuration in
  *     {@code ${IGNITE_HOME}/modules/tests/config/${username}} folder, where {@code username}
- *     is the system user name. User properties can be accessed via {@link #getProperties()} and
- *     {@link #getProperties(String)} methods.
- *   </li>
- * <li>
- *     Any test may utilize its own sub-folder. To access configuration specific to some sub-folder
- *     use {@link #getProperties(String)} and {@link #getProperty(String, String)} methods.
+ *     is the system user name.
  *   </li>
  * </ul>
  */
@@ -81,7 +75,6 @@ public final class GridTestProperties {
     /** */
     public static final String BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER = "binary.marshaller.use.simple.name.mapper";
 
-    /** */
     static {
         // Initialize IGNITE_HOME system property.
         String igniteHome = System.getProperty("IGNITE_HOME");
@@ -96,6 +89,7 @@ public final class GridTestProperties {
         // Load default properties.
         File cfgFile = getTestConfigurationFile(null, TESTS_PROP_FILE);
 
+        assert cfgFile != null;
         assert cfgFile.exists();
         assert !cfgFile.isDirectory();
 
@@ -132,6 +126,8 @@ public final class GridTestProperties {
         if (log4jFile == null)
             log4jFile = getTestConfigurationFile(null, cfgFile);
 
+        assert log4jFile != null;
+
         DOMConfigurator.configure(log4jFile.getAbsolutePath());
 
         System.out.println("Configured log4j from: " + log4jFile);
@@ -143,29 +139,21 @@ public final class GridTestProperties {
     }
 
     /**
-     * @return Default properties.
-     */
-    public static synchronized Map<String, String> getDefaultProperties() {
-        return dfltProps;
-    }
-
-    /**
-     * @param name Default property name.
-     * @return Default property value.
-     */
-    public static synchronized String getDefaultProperty(String name) {
-        return dfltProps.get(name);
-    }
-
-    /**
      * @return Properties.
      */
-    public static synchronized Map<String, String> getProperties() {
+    private static synchronized Map<String, String> getProperties() {
         String user = System.getProperty("user.name");
 
         assert user != null;
 
         return getProperties(user);
+    }
+
+    /**
+     * @return P2P URI class.
+     */
+    public static String getP2PUriClass() {
+        return getProperty("p2p.uri.cls");
     }
 
     /**
@@ -188,7 +176,7 @@ public final class GridTestProperties {
      * @param dir Directory path.
      * @return Properties.
      */
-    public static synchronized Map<String, String> getProperties(String dir) {
+    private static synchronized Map<String, String> getProperties(String dir) {
         Map<String, String> props = pathProps.get(dir);
 
         if (props == null) {
@@ -212,7 +200,7 @@ public final class GridTestProperties {
      * @param dir Directory path.
      * @return Property value.
      */
-    public static synchronized String getProperty(String name, String dir) {
+    private static synchronized String getProperty(String name, String dir) {
         return getProperties(dir).get(name);
     }
 

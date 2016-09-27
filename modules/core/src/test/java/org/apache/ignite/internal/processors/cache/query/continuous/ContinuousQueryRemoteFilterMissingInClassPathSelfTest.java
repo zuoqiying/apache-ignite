@@ -46,7 +46,7 @@ public class ContinuousQueryRemoteFilterMissingInClassPathSelfTest extends GridC
 
     static {
         try {
-            URLS = new URL[] {new URL(GridTestProperties.getProperty("p2p.uri.cls"))};
+            URLS = new URL[] {new URL(GridTestProperties.getP2PUriClass())};
         }
         catch (MalformedURLException e) {
             throw new RuntimeException("Define property p2p.uri.cls", e);
