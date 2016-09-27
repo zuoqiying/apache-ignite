@@ -95,14 +95,20 @@ public final class GridTestProperties {
 
         dfltProps = Collections.unmodifiableMap(loadFromFile(new HashMap<String, String>(), cfgFile));
 
-        if ("false".equals(System.getProperty("IGNITE_TEST_PROP_DISABLE_LOG4J", "false"))) {
-            String user = System.getProperty("user.name");
+        // Configure log4j logger.
+        if ("false".equals(System.getProperty("IGNITE_TEST_PROP_DISABLE_LOG4J", "false")))
+            configureLog4j(currentUser());
+    }
 
-            assert user != null;
+    /**
+     * @return Current user.
+     */
+    private static String currentUser() {
+        String user = System.getProperty("user.name");
 
-            // Configure log4j logger.
-            configureLog4j(user);
-        }
+        assert user != null;
+
+        return user;
     }
 
     /**
@@ -142,11 +148,24 @@ public final class GridTestProperties {
      * @return Properties.
      */
     private static synchronized Map<String, String> getProperties() {
-        String user = System.getProperty("user.name");
+        String user = currentUser();
 
-        assert user != null;
+        Map<String, String> props = pathProps.get(user);
 
-        return getProperties(user);
+        if (props == null) {
+            props = new HashMap<>();
+
+            // Load default properties.
+            props.putAll(dfltProps);
+
+            // Load properties from specified folder
+            // potentially overriding defaults.
+            loadProperties(props, user);
+
+            pathProps.put(user, props);
+        }
+
+        return props;
     }
 
     /**
@@ -173,26 +192,10 @@ public final class GridTestProperties {
     }
 
     /**
-     * @param dir Directory path.
-     * @return Properties.
+     * Reset properties.
      */
-    private static synchronized Map<String, String> getProperties(String dir) {
-        Map<String, String> props = pathProps.get(dir);
-
-        if (props == null) {
-            props = new HashMap<>();
-
-            // Load default properties.
-            props.putAll(dfltProps);
-
-            // Load properties from specified folder
-            // potentially overriding defaults.
-            loadProperties(props, dir);
-
-            pathProps.put(dir, props);
-        }
-
-        return props;
+    public static synchronized void resetProperties() {
+        pathProps.remove(currentUser());
     }
 
     /**
