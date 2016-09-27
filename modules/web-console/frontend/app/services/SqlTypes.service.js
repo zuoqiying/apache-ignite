@@ -20,8 +20,18 @@ import _ from 'lodash';
 // List of H2 reserved SQL keywords.
 import H2_SQL_KEYWORDS from '../data/sql-keywords.json';
 
+// List of JDBC type descriptors.
+import JDBC_TYPES from '../data/jdbc-types.json';
+
 // Regular expression to check H2 SQL identifier.
 const VALID_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_$]*$/im;
+
+// Descriptor for unknown JDBC type.
+const UNKNOWN_JDBC_TYPE = {
+    dbName: 'Unknown',
+    signed: {javaType: 'Unknown', primitiveType: 'Unknown'},
+    unsigned: {javaType: 'Unknown', primitiveType: 'Unknown'}
+};
 
 /**
  * Utility service for various check on SQL types.
@@ -41,5 +51,17 @@ export default class SqlTypes {
      */
     isKeyword(value) {
         return !!(value && _.includes(H2_SQL_KEYWORDS, value.toUpperCase()));
+    }
+
+    /**
+     * Find JDBC type descriptor for specified JDBC type and options.
+     *
+     * @param dbType {Number} Column db type.
+     * @return {String} Java type.
+     */
+    findJdbcType(dbType) {
+        const jdbcType = _.find(JDBC_TYPES, (item) => item.dbType === dbType);
+
+        return jdbcType ? jdbcType : UNKNOWN_JDBC_TYPE;
     }
 }

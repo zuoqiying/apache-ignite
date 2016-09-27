@@ -60,4 +60,9 @@ suite('SqlTypesTestsSuite', () => {
         assert.equal(INSTANCE.isKeyword(''), false);
         assert.equal(INSTANCE.isKeyword(' '), false);
     });
+
+    test('findJdbcType', () => {
+        assert.equal(INSTANCE.findJdbcType(0).dbName, 'NULL');
+        assert.equal(INSTANCE.findJdbcType(5555).dbName, 'Unknown');
+    })
 });

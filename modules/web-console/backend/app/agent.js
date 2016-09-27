@@ -504,6 +504,38 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo)
 
             return this.executeRest(cmd);
         }
+
+        /**
+         * Stops given node IDs.
+         * @param {Boolean} demo Is need run command on demo node.
+         * @param {Array.<String>} nids Nodes IDs.
+         * @returns {Promise}
+         */
+        stopNodes(demo, nids) {
+            const cmd = new Command(demo, 'exe')
+                .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
+                .addParam('p1', nids)
+                .addParam('p2', 'org.apache.ignite.internal.visor.node.VisorNodeStopTask')
+                .addParam('p3', 'java.lang.Void');
+
+            return this.executeRest(cmd);
+        }
+
+        /**
+         * Restarts given node IDs.
+         * @param {Boolean} demo Is need run command on demo node.
+         * @param {Array.<String>} nids Nodes IDs.
+         * @returns {Promise}
+         */
+        restartNodes(demo, nids) {
+            const cmd = new Command(demo, 'exe')
+                .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
+                .addParam('p1', nids)
+                .addParam('p2', 'org.apache.ignite.internal.visor.node.VisorNodeRestartTask')
+                .addParam('p3', 'java.lang.Void');
+
+            return this.executeRest(cmd);
+        }
     }
 
     /**

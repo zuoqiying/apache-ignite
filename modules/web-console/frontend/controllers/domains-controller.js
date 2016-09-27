@@ -772,18 +772,16 @@ export default ['domainsController', [
             let containKey = true;
             let containDup = false;
 
-            function queryField(name, jdbcType) {
-                return {name: toJavaFieldName(name), className: jdbcType.javaType};
-            }
+            function dbField(name, jdbcType, nullable, unsigned) {
+                const javaTypes = (unsigned && jdbcType.unsigned) ? jdbcType.unsigned : jdbcType.signed;
+                const javaFieldType = (!nullable && javaTypes.primitiveType && $scope.ui.usePrimitives) ? javaTypes.primitiveType : javaTypes.javaType;
 
-            function dbField(name, jdbcType, nullable) {
                 return {
-                    jdbcType,
                     databaseFieldName: name,
                     databaseFieldType: jdbcType.dbName,
+                    javaType: javaTypes.javaType,
                     javaFieldName: toJavaFieldName(name),
-                    javaFieldType: nullable ? jdbcType.javaType :
-                        ($scope.ui.usePrimitives && jdbcType.primitiveType ? jdbcType.primitiveType : jdbcType.javaType)
+                    javaFieldType
                 };
             }
 
@@ -810,13 +808,9 @@ export default ['domainsController', [
                     let _containKey = false;
 
                     _.forEach(table.cols, function(col) {
-                        const colName = col.name;
-                        const jdbcType = LegacyUtils.findJdbcType(col.type);
-                        const nullable = col.nullable;
+                        const fld = dbField(col.name, SqlTypes.findJdbcType(col.type), col.nullable, col.unsigned);
 
-                        qryFields.push(queryField(colName, jdbcType));
-
-                        const fld = dbField(colName, jdbcType, nullable);
+                        qryFields.push({name: fld.javaFieldName, className: fld.javaType});
 
                         const dbName = fld.databaseFieldName;
 
@@ -852,9 +846,7 @@ export default ['domainsController', [
                         });
                     }
 
-                    const domainFound = _.find($scope.domains, function(domain) {
-                        return domain.valueType === valType;
-                    });
+                    const domainFound = _.find($scope.domains, (domain) => domain.valueType === valType);
 
                     const newDomain = {
                         confirm: false,
@@ -888,17 +880,13 @@ export default ['domainsController', [
                     if ($scope.ui.builtinKeys && newDomain.keyFields.length === 1) {
                         const keyField = newDomain.keyFields[0];
 
-                        newDomain.keyType = keyField.jdbcType.javaType;
+                        newDomain.keyType = keyField.javaType;
 
                         // Exclude key column from query fields and indexes.
-                        newDomain.fields = _.filter(newDomain.fields, function(field) {
-                            return field.name !== keyField.javaFieldName;
-                        });
+                        newDomain.fields = _.filter(newDomain.fields, (field) => field.name !== keyField.javaFieldName);
 
                         _.forEach(newDomain.indexes, function(index) {
-                            index.fields = _.filter(index.fields, function(field) {
-                                return field.name !== keyField.javaFieldName;
-                            });
+                            index.fields = _.filter(index.fields, (field) => field.name !== keyField.javaFieldName);
                         });
 
                         newDomain.indexes = _.filter(newDomain.indexes, (index) => !_.isEmpty(index.fields));
