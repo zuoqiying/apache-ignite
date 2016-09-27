@@ -34,6 +34,7 @@ import org.apache.ignite.compute.ComputeTaskAdapter;
 import org.apache.ignite.configuration.DeploymentMode;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.resources.IgniteInstanceResource;
+import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 
@@ -104,11 +105,11 @@ public class GridP2PLocalDeploymentSelfTest extends GridCommonAbstractTest {
             Ignite ignite3 = startGrid(3);
 
             ClassLoader ldr1 = new URLClassLoader(
-                new URL[] {new URL ( getProperty("p2p.uri.cls")) }, getClass().getClassLoader());
+                new URL[] {new URL ( GridTestProperties.getP2PUriClass()) }, getClass().getClassLoader());
             ClassLoader ldr2 = new URLClassLoader(
-                new URL[] {new URL ( getProperty("p2p.uri.cls")) }, getClass().getClassLoader());
+                new URL[] {new URL ( GridTestProperties.getP2PUriClass()) }, getClass().getClassLoader());
             ClassLoader ldr3 = new URLClassLoader(
-                new URL[] {new URL ( getProperty("p2p.uri.cls")) }, getClass().getClassLoader());
+                new URL[] {new URL ( GridTestProperties.getP2PUriClass()) }, getClass().getClassLoader());
 
             Class taskCls = ldr1.loadClass("org.apache.ignite.tests.p2p.P2PTestTaskExternalPath1");
 
@@ -145,9 +146,9 @@ public class GridP2PLocalDeploymentSelfTest extends GridCommonAbstractTest {
             Ignite ignite2 = startGrid(2);
 
             ClassLoader ldr1 = new URLClassLoader(
-                new URL[] {new URL ( getProperty("p2p.uri.cls")) }, getClass().getClassLoader());
+                new URL[] {new URL ( GridTestProperties.getP2PUriClass()) }, getClass().getClassLoader());
             ClassLoader ldr2 = new URLClassLoader(
-                new URL[] {new URL ( getProperty("p2p.uri.cls")) }, getClass().getClassLoader());
+                new URL[] {new URL ( GridTestProperties.getP2PUriClass()) }, getClass().getClassLoader());
 
             Class task1 = ldr1.loadClass("org.apache.ignite.tests.p2p.P2PTestTaskExternalPath1");
             Class task2 = ldr2.loadClass("org.apache.ignite.tests.p2p.P2PTestTaskExternalPath1");

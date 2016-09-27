@@ -27,6 +27,7 @@ import org.apache.ignite.configuration.DeploymentMode;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.spi.deployment.local.LocalDeploymentSpi;
 import org.apache.ignite.testframework.GridTestClassLoader;
+import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.IgniteTestResources;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
@@ -126,7 +127,7 @@ public class GridP2PUndeploySelfTest extends GridCommonAbstractTest {
             Ignite ignite1 = startGrid(1);
             Ignite ignite2 = startGrid(2);
 
-            ClassLoader ldr = new URLClassLoader(new URL[] {new URL(getProperty("p2p.uri.cls"))},
+            ClassLoader ldr = new URLClassLoader(new URL[] {new URL(GridTestProperties.getP2PUriClass())},
                 GridP2PSameClassLoaderSelfTest.class.getClassLoader());
 
             Class<? extends ComputeTask<?, ?>> task1 =
