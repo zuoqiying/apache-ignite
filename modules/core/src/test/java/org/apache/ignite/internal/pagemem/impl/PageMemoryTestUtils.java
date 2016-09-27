@@ -20,8 +20,8 @@ package org.apache.ignite.internal.pagemem.impl;
 import java.lang.reflect.Field;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.configuration.MemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfigurationLink;
+import org.apache.ignite.configuration.MemoryPoolConfiguration;
+import org.apache.ignite.configuration.MemoryPoolLink;
 import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
@@ -58,9 +58,9 @@ public class PageMemoryTestUtils {
             setPageSize(memCfg, pageSize);
         }
 
-        PageMemoryConfigurationLink link = new PageMemoryConfigurationLink("default");
+        MemoryPoolLink link = new MemoryPoolLink("default");
 
-        memCfg.setDefaultConfiguration(new PageMemoryConfiguration(link,
+        memCfg.setDefaultConfiguration(new MemoryPoolConfiguration(link,
             sizeInMb * 1024 * 1024, concurrencyLevel, mappedFilePath));
 
         PageMemoryNoStoreImpl memory = new PageMemoryNoStoreImpl(memCfg, getGridCacheSharedContext(), new GridTestLog4jLogger(), clean);

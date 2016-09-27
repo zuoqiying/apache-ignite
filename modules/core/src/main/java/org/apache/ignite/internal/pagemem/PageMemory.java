@@ -18,7 +18,7 @@
 package org.apache.ignite.internal.pagemem;
 
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.configuration.PageMemoryConfigurationLink;
+import org.apache.ignite.configuration.MemoryPoolLink;
 import org.apache.ignite.internal.processors.cache.database.freelist.FreeList;
 import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
 import org.apache.ignite.lifecycle.LifecycleAware;
@@ -66,7 +66,7 @@ public interface PageMemory extends LifecycleAware, PageIdAllocator {
      */
     public void clear(int cacheId);
 
-    void registerCache(int i, PageMemoryConfigurationLink configuration);
+    void registerCache(int i, MemoryPoolLink configuration);
 
     ReuseList reuseList(int cacheId);
 

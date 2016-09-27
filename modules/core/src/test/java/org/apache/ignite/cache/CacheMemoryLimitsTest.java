@@ -23,8 +23,8 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.MemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfigurationLink;
+import org.apache.ignite.configuration.MemoryPoolConfiguration;
+import org.apache.ignite.configuration.MemoryPoolLink;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.mem.OutOfMemoryException;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
@@ -38,16 +38,16 @@ public class CacheMemoryLimitsTest extends GridCommonAbstractTest {
     @Override protected IgniteConfiguration getConfiguration() throws Exception {
         IgniteConfiguration configuration = super.getConfiguration();
 
-        PageMemoryConfigurationLink first = new PageMemoryConfigurationLink("first");
-        PageMemoryConfiguration pageMemoryConfiguration1 = new PageMemoryConfiguration(first, 1024 * 1024 * 32, 4, null);
+        MemoryPoolLink first = new MemoryPoolLink("first");
+        MemoryPoolConfiguration memoryPoolConfiguration1 = new MemoryPoolConfiguration(first, 1024 * 1024 * 32, 4, null);
 
-        PageMemoryConfigurationLink second = new PageMemoryConfigurationLink("second");
-        PageMemoryConfiguration pageMemoryConfiguration2 = new PageMemoryConfiguration(second, 1024 * 1024 * 32, 4, null);
+        MemoryPoolLink second = new MemoryPoolLink("second");
+        MemoryPoolConfiguration memoryPoolConfiguration2 = new MemoryPoolConfiguration(second, 1024 * 1024 * 32, 4, null);
 
         MemoryConfiguration cfg = new MemoryConfiguration();
 
-        cfg.addPageMemoryConfiguration(pageMemoryConfiguration1);
-        cfg.addPageMemoryConfiguration(pageMemoryConfiguration2);
+        cfg.addPageMemoryConfiguration(memoryPoolConfiguration1);
+        cfg.addPageMemoryConfiguration(memoryPoolConfiguration2);
 
         configuration.setMemoryConfiguration(cfg);
 

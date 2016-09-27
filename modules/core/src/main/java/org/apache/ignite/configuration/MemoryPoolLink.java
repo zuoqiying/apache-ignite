@@ -22,14 +22,14 @@ import java.io.Serializable;
 /**
  *
  */
-public class PageMemoryConfigurationLink implements Serializable{
+public class MemoryPoolLink implements Serializable{
     /** Serial version uid. */
     public static final long serialVersionUID = 0;
 
     /** Name. */
     private final String name;
 
-    public PageMemoryConfigurationLink(String name) {
+    public MemoryPoolLink(String name) {
         this.name = name;
     }
 
@@ -39,7 +39,7 @@ public class PageMemoryConfigurationLink implements Serializable{
         if (o == null || getClass() != o.getClass())
             return false;
 
-        PageMemoryConfigurationLink link = (PageMemoryConfigurationLink)o;
+        MemoryPoolLink link = (MemoryPoolLink)o;
 
         return name != null ? name.equals(link.name) : link.name == null;
 

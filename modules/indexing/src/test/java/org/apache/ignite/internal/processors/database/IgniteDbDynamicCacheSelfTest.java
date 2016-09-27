@@ -38,7 +38,7 @@ public class IgniteDbDynamicCacheSelfTest extends GridCommonAbstractTest {
 
         MemoryConfiguration dbCfg = new MemoryConfiguration();
 
-        dbCfg.setDefaultConfiguration(new PageMemoryConfiguration(new PageMemoryConfigurationLink("default"),
+        dbCfg.setDefaultConfiguration(new MemoryPoolConfiguration(new MemoryPoolLink("default"),
                 200 * 1024 * 1024, Runtime.getRuntime().availableProcessors() * 2, null));
 
         cfg.setMemoryConfiguration(dbCfg);

@@ -34,8 +34,8 @@ import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.configuration.MemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfigurationLink;
+import org.apache.ignite.configuration.MemoryPoolConfiguration;
+import org.apache.ignite.configuration.MemoryPoolLink;
 import org.apache.ignite.internal.mem.DirectMemoryRegion;
 import org.apache.ignite.internal.mem.DirectMemoryProvider;
 import org.apache.ignite.internal.mem.OutOfMemoryException;
@@ -145,7 +145,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
     private final ConcurrentHashMap8<Integer, PageMemoryRegion> cahcePageMemory = new ConcurrentHashMap8<>();
 
-    private final Map<PageMemoryConfigurationLink, PageMemoryRegion> memoryRegions;
+    private final Map<MemoryPoolLink, PageMemoryRegion> memoryRegions;
 
     private final GridCacheSharedContext<?, ?> sharedCtx;
 
@@ -173,19 +173,21 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
         consId = consId.replaceAll("[:,\\.]", "_");
 
-        Map<PageMemoryConfigurationLink, PageMemoryRegion> map = new LinkedHashMap<>();
+        Map<MemoryPoolLink, PageMemoryRegion> map = new LinkedHashMap<>();
 
         int segmentCnt = 0;
 
-        for (PageMemoryConfiguration pageMemoryConfiguration : memCfg.getPageMemoryConfigurations()) {
-            int concLvl = pageMemoryConfiguration.getConcurrencyLevel();
+        String dfltAllocationPath = memCfg.getFileCacheAllocationPath();
+
+        for (MemoryPoolConfiguration memoryPoolConfiguration : memCfg.getPageMemoryConfigurations()) {
+            int concLvl = memoryPoolConfiguration.getConcurrencyLevel();
 
             if (concLvl < 2)
-                pageMemoryConfiguration.setConcLvl(concLvl = Runtime.getRuntime().availableProcessors());
+                memoryPoolConfiguration.setConcLvl(concLvl = Runtime.getRuntime().availableProcessors());
 
             segmentCnt += concLvl;
 
-            long fragmentSize = pageMemoryConfiguration.getSize() / concLvl;
+            long fragmentSize = memoryPoolConfiguration.getSize() / concLvl;
 
             if (fragmentSize < 1024 * 1024)
                 fragmentSize = 1024 * 1024;
@@ -195,29 +197,37 @@ public class PageMemoryNoStoreImpl implements PageMemory {
             for (int i = 0; i < concLvl; i++)
                 sizes[i] = fragmentSize;
 
-            String path = pageMemoryConfiguration.getTmpFsPath();
+            String path = memoryPoolConfiguration.getTmpFsPath();
 
-            DirectMemoryProvider memProvider = path == null ?
+            File allocPath = path != null ? buildPath(path, consId) :
+                dfltAllocationPath != null ? buildPath(dfltAllocationPath, consId) : null;
+
+            DirectMemoryProvider memProvider = allocPath == null ?
                 new UnsafeMemoryProvider(sizes) :
-                new MappedFileMemoryProvider(log, buildPath(path, consId), clean, sizes);
+                new MappedFileMemoryProvider(log, allocPath, clean, sizes);
 
-            map.put(pageMemoryConfiguration.getLink(), new PageMemoryRegion(memProvider, segmentCnt - concLvl, segmentCnt));
+            map.put(memoryPoolConfiguration.getLink(), new PageMemoryRegion(memProvider, segmentCnt - concLvl, segmentCnt));
         }
 
         memoryRegions = map;
     }
 
     /**
-     * @param path Path to the working directory.
+     * @param path   Path to the working directory.
      * @param consId Consistent ID of the local node.
      * @return DB storage path.
      */
-    protected File buildPath(String path, String consId) {
+    private File buildPath(String path, String consId) {
+        File pathAsFile = new File(path);
+
+        if (pathAsFile.isAbsolute())
+            return new File(pathAsFile, consId);
+
         String igniteHomeStr = U.getIgniteHome();
 
         File igniteHome = igniteHomeStr != null ? new File(igniteHomeStr) : null;
 
-        File workDir = igniteHome == null ? new File(path) : new File(igniteHome, path);
+        File workDir = igniteHome == null ? pathAsFile : new File(igniteHome, path);
 
         return new File(workDir, consId);
     }
@@ -394,7 +404,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
             freePage(cacheId, metaPageId);
     }
 
-    @Override public void registerCache(int i, PageMemoryConfigurationLink configuration) {
+    @Override public void registerCache(int i, MemoryPoolLink configuration) {
         PageMemoryRegion value = memoryRegions.get(configuration);
 
         assert value != null;

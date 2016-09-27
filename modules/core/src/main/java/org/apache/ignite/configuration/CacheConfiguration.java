@@ -23,7 +23,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -390,7 +389,7 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
     private Collection<QueryEntity> qryEntities;
 
     /** Page memory configuration. */
-    private PageMemoryConfigurationLink pageMemoryConfiguration;
+    private MemoryPoolLink pageMemoryConfiguration;
 
     /** Partition loss policy. */
     private PartitionLossPolicy partitionLossPolicy = DFLT_PARTITION_LOSS_POLICY;
@@ -1962,14 +1961,14 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
     /**
      *
      */
-    public PageMemoryConfigurationLink getPageMemoryConfiguration() {
+    public MemoryPoolLink getPageMemoryConfiguration() {
         return pageMemoryConfiguration;
     }
 
     /**
      * @param pageMemoryConfiguration Page memory configuration.
      */
-    public void setPageMemoryConfiguration(PageMemoryConfigurationLink pageMemoryConfiguration) {
+    public void setPageMemoryConfiguration(MemoryPoolLink pageMemoryConfiguration) {
         this.pageMemoryConfiguration = pageMemoryConfiguration;
     }
 

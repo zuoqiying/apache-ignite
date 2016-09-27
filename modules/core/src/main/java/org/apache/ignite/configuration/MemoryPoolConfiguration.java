@@ -20,12 +20,12 @@ package org.apache.ignite.configuration;
 /**
  *
  */
-public class PageMemoryConfiguration {
-
-    private final PageMemoryConfigurationLink link;
+public class MemoryPoolConfiguration {
+    /** Link. */
+    private final MemoryPoolLink link;
 
     /** Size. */
-    private long size;
+    private final long size;
 
     /** path for memory-mapped file (optional) */
     private String tmpFsPath;
@@ -36,10 +36,18 @@ public class PageMemoryConfiguration {
     /**
      * @param link Link.
      * @param size Size.
+     */
+    public MemoryPoolConfiguration(MemoryPoolLink link, long size) {
+        this(link, size, 0, null);
+    }
+
+    /**
+     * @param link Link.
+     * @param size Size.
      * @param concLvl Conc lvl.
      * @param tmpFsPath Tmp fs path.
      */
-    public PageMemoryConfiguration(PageMemoryConfigurationLink link, long size, int concLvl, String tmpFsPath) {
+    public MemoryPoolConfiguration(MemoryPoolLink link, long size, int concLvl, String tmpFsPath) {
         this.link = link;
         this.size = size;
         this.concLvl = concLvl;
@@ -49,7 +57,7 @@ public class PageMemoryConfiguration {
     /**
      *
      */
-    public PageMemoryConfigurationLink getLink() {
+    public MemoryPoolLink getLink() {
         return link;
     }
 
@@ -72,10 +80,6 @@ public class PageMemoryConfiguration {
      */
     public int getConcurrencyLevel() {
         return concLvl;
-    }
-
-    public void setSize(long size) {
-        this.size = size;
     }
 
     public void setTmpFsPath(String tmpFsPath) {

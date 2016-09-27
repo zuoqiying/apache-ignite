@@ -31,8 +31,8 @@ public class MemoryConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
-    private static final PageMemoryConfigurationLink DEFAULT_PAGE_MEMORY_CONFIGURATION
-        = new PageMemoryConfigurationLink("DEFAULT");
+    private static final MemoryPoolLink DEFAULT_PAGE_MEMORY_CONFIGURATION
+        = new MemoryPoolLink("DEFAULT");
 
     /** Default cache size is 1Gb. */
     public static final long DFLT_PAGE_CACHE_SIZE = 1024 * 1024 * 1024;
@@ -53,13 +53,13 @@ public class MemoryConfiguration implements Serializable {
     private int dfltConcurrencyLevel; //TODO
 
     /** Default configuration. */
-    private PageMemoryConfiguration dfltCfg =
-        new PageMemoryConfiguration(DEFAULT_PAGE_MEMORY_CONFIGURATION, 1024 * 1024 * 1024, 0, null);
+    private MemoryPoolConfiguration dfltCfg =
+        new MemoryPoolConfiguration(DEFAULT_PAGE_MEMORY_CONFIGURATION, 1024 * 1024 * 1024, 0, null);
 
 
 
     /** Page memory configuration map. */
-    private ConcurrentMap<PageMemoryConfigurationLink, PageMemoryConfiguration> pageMemoryConfigurations
+    private ConcurrentMap<MemoryPoolLink, MemoryPoolConfiguration> pageMemoryConfigurations
         = new ConcurrentHashMap8<>();
 
     /**
@@ -96,21 +96,21 @@ public class MemoryConfiguration implements Serializable {
     /**
      * @param pageMemoryCfg Page memory config.
      */
-    public boolean addPageMemoryConfiguration(PageMemoryConfiguration pageMemoryCfg) {
+    public boolean addPageMemoryConfiguration(MemoryPoolConfiguration pageMemoryCfg) {
         return pageMemoryConfigurations.putIfAbsent(pageMemoryCfg.getLink(), pageMemoryCfg) == null;
     }
 
     /**
      * @param link Link.
      */
-    public PageMemoryConfiguration getPageMemoryConfiguration(PageMemoryConfigurationLink link) {
+    public MemoryPoolConfiguration getPageMemoryConfiguration(MemoryPoolLink link) {
         return pageMemoryConfigurations.get(link);
     }
 
     /**
      *
      */
-    public Collection<PageMemoryConfiguration> getPageMemoryConfigurations() {
+    public Collection<MemoryPoolConfiguration> getPageMemoryConfigurations() {
         if (!pageMemoryConfigurations.containsKey(dfltCfg.getLink()))
             pageMemoryConfigurations.putIfAbsent(dfltCfg.getLink(), dfltCfg);
 
@@ -125,11 +125,11 @@ public class MemoryConfiguration implements Serializable {
         this.dfltConcurrencyLevel = dfltConcurrencyLevel;
     }
 
-    public PageMemoryConfiguration getDefaultConfiguration() {
+    public MemoryPoolConfiguration getDefaultConfiguration() {
         return dfltCfg;
     }
 
-    public void setDefaultConfiguration(PageMemoryConfiguration dfltConfiguration) {
+    public void setDefaultConfiguration(MemoryPoolConfiguration dfltConfiguration) {
         this.dfltCfg = dfltConfiguration;
     }
 }

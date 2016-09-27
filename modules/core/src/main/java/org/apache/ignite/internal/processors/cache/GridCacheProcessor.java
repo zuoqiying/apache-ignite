@@ -59,7 +59,7 @@ import org.apache.ignite.configuration.DeploymentMode;
 import org.apache.ignite.configuration.FileSystemConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.NearCacheConfiguration;
-import org.apache.ignite.configuration.PageMemoryConfigurationLink;
+import org.apache.ignite.configuration.MemoryPoolLink;
 import org.apache.ignite.configuration.TransactionConfiguration;
 import org.apache.ignite.events.EventType;
 import org.apache.ignite.internal.GridKernalContext;
@@ -761,7 +761,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             }
 
             for (DynamicCacheDescriptor desc : registeredCaches.values()) {
-                PageMemoryConfigurationLink configuration = desc.cacheConfiguration().getPageMemoryConfiguration();
+                MemoryPoolLink configuration = desc.cacheConfiguration().getPageMemoryConfiguration();
 
                 if (configuration == null)
                     configuration = ctx.config().getMemoryConfiguration().getDefaultConfiguration().getLink();
@@ -1776,7 +1776,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             caches.put(maskNull(cacheCtx.name()), cacheCtx.cache());
 
-            PageMemoryConfigurationLink configuration = ccfg.getPageMemoryConfiguration();
+            MemoryPoolLink configuration = ccfg.getPageMemoryConfiguration();
 
             if (configuration == null)
                 configuration = ctx.config().getMemoryConfiguration().getDefaultConfiguration().getLink();
