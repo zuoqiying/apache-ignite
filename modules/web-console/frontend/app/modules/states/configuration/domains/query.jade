@@ -55,7 +55,8 @@ mixin table-index-item-edit(prefix, index, sortAvailable, idAddition)
         ignite-form-panel-chevron
         label(id='query-title') Domain model for SQL query
         ignite-form-field-tooltip.tipLabel
-            | Domain model properties for fields queries
+            | Domain model properties for fields queries#[br]
+            | #[a(href="https://apacheignite.readme.io/docs/cache-queries" target="_blank") More info about query configuration]
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id='query')
         .panel-body
