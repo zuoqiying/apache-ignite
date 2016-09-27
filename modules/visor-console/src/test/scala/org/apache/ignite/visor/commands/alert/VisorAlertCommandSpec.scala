@@ -35,9 +35,6 @@ class VisorAlertCommandSpec extends VisorRuntimeBaseSpec(1) {
     /** */
     val ipFinder = new TcpDiscoveryVmIpFinder(true)
 
-    /**  */
-    val out = new java.io.ByteArrayOutputStream
-
     /**
      * Creates grid configuration for provided grid host.
      *
@@ -57,47 +54,6 @@ class VisorAlertCommandSpec extends VisorRuntimeBaseSpec(1) {
         cfg.setDiscoverySpi(discoSpi.asInstanceOf[DiscoverySpi])
 
         cfg
-    }
-
-    override def afterAll() {
-        super.afterAll()
-
-        out.close()
-    }
-
-    /**
-     * Redirect stdout and compare output with specified text.
-     *
-     * @param block Function to execute.
-     * @param text Text to compare with.
-     * @param exp If `true` then stdout must contain `text` otherwise must not.
-     */
-    private[this] def checkOut(block: => Unit, text: String, exp: Boolean = true) {
-        try {
-            Console.withOut(out)(block)
-
-            assertResult(exp)(out.toString.contains(text))
-        }
-        finally {
-            out.reset()
-        }
-    }
-
-    /**
-     * Redirect stdout and compare output with specified regexp.
-     *
-     * @param block Function to execute.
-     * @param regex Regexp to match with.
-     */
-    private[this] def matchOut(block: => Unit, regex: String) {
-        try {
-            Console.withOut(out)(block)
-
-            assertResult(true)(Pattern.compile(regex, Pattern.MULTILINE).matcher(out.toString).find())
-        }
-        finally {
-            out.reset()
-        }
     }
 
     describe("An 'alert' visor command") {

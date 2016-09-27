@@ -30,9 +30,7 @@ class VisorOpenCommandSpec extends VisorRuntimeBaseSpec(3) {
         }
 
         it("should print error message when already connected") {
-            intercept[IgniteException] {
-                openVisor()
-            }
+            checkOut(openVisor(), "(wrn) <visor>: Visor is already connected. Disconnect first.")
         }
     }
 }

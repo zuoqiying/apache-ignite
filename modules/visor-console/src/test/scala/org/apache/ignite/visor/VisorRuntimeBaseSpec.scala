@@ -17,6 +17,8 @@
 
 package org.apache.ignite.visor
 
+import java.util.regex.Pattern
+
 import org.apache.ignite.Ignition
 import org.apache.ignite.configuration.IgniteConfiguration
 import org.apache.ignite.visor.commands.open.VisorOpenCommand._
@@ -30,6 +32,9 @@ abstract class VisorRuntimeBaseSpec(private[this] val num: Int) extends FunSpec 
     with BeforeAndAfterAll with BeforeAndAfterEach {
     assert(num >= 1)
 
+    /**  */
+    val out = new java.io.ByteArrayOutputStream
+
     /**
      * Gets grid configuration.
      *
@@ -42,6 +47,41 @@ abstract class VisorRuntimeBaseSpec(private[this] val num: Int) extends FunSpec 
         cfg.setGridName(name)
 
         cfg
+    }
+
+    /**
+      * Redirect stdout and compare output with specified text.
+      *
+      * @param block Function to execute.
+      * @param text Text to compare with.
+      * @param exp If `true` then stdout must contain `text` otherwise must not.
+      */
+    protected def checkOut(block: => Unit, text: String, exp: Boolean = true) {
+        try {
+            Console.withOut(out)(block)
+
+            assertResult(exp)(out.toString.contains(text))
+        }
+        finally {
+            out.reset()
+        }
+    }
+
+    /**
+      * Redirect stdout and compare output with specified regexp.
+      *
+      * @param block Function to execute.
+      * @param regex Regexp to match with.
+      */
+    protected def matchOut(block: => Unit, regex: String) {
+        try {
+            Console.withOut(out)(block)
+
+            assertResult(true)(Pattern.compile(regex, Pattern.MULTILINE).matcher(out.toString).find())
+        }
+        finally {
+            out.reset()
+        }
     }
 
     protected def openVisor() {
@@ -65,6 +105,8 @@ abstract class VisorRuntimeBaseSpec(private[this] val num: Int) extends FunSpec 
      */
     override def afterAll() {
         (1 to num).foreach((n: Int) => Ignition.stop("node-" + n, false))
+
+        out.close()
     }
 
     override protected def beforeEach() {
