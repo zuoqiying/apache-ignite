@@ -1181,8 +1181,8 @@ public abstract class GridAbstractTest extends TestCase {
 
         cfg.setNodeId(null);
 
-        if (GridTestProperties.getProperty(GridTestProperties.BINARY_COMPACT_FOOTERS) != null) {
-            if (!Boolean.valueOf(GridTestProperties.getProperty(GridTestProperties.BINARY_COMPACT_FOOTERS))) {
+        if (getProperty(GridTestProperties.BINARY_COMPACT_FOOTERS) != null) {
+            if (!Boolean.valueOf(getProperty(GridTestProperties.BINARY_COMPACT_FOOTERS))) {
                 BinaryConfiguration bCfg = cfg.getBinaryConfiguration();
 
                 if (bCfg == null) {
@@ -1195,7 +1195,7 @@ public abstract class GridAbstractTest extends TestCase {
             }
         }
 
-        if (Boolean.valueOf(GridTestProperties.getProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER))) {
+        if (Boolean.valueOf(getProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER))) {
             BinaryConfiguration bCfg = cfg.getBinaryConfiguration();
 
             if (bCfg == null) {
@@ -1791,7 +1791,7 @@ public abstract class GridAbstractTest extends TestCase {
      * @return Default test case timeout.
      */
     private long getDefaultTestTimeout() {
-        String timeout = GridTestProperties.getProperty("test.timeout");
+        String timeout = getProperty("test.timeout");
 
         if (timeout != null)
             return Long.parseLong(timeout);
@@ -1873,6 +1873,26 @@ public abstract class GridAbstractTest extends TestCase {
             else
                 return IgniteProcessProxy.ignite(name);
         }
+    }
+
+    /**
+     * Get test property.
+     *
+     * @param key Key.
+     * @return Test property.
+     */
+    protected String getProperty(String key) {
+        return GridTestProperties.getProperty(key);
+    }
+
+    /**
+     * Set test property.
+     *
+     * @param key Key.
+     * @param val Value.
+     */
+    protected void setProperty(String key, String val) {
+        GridTestProperties.setProperty(key, val);
     }
 
     /**

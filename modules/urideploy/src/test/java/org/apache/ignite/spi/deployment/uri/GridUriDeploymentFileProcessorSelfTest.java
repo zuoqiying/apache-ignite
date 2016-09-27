@@ -21,11 +21,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.internal.util.lang.GridAbsPredicate;
 import org.apache.ignite.internal.util.lang.GridAbsPredicateX;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.spi.GridSpiTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTestConfig;
 import org.apache.ignite.util.antgar.IgniteDeploymentGarAntTask;
@@ -77,16 +75,16 @@ public class GridUriDeploymentFileProcessorSelfTest extends GridUriDeploymentAbs
         throws Exception {
         info("This test checks broken tasks. All exceptions that might happen are the part of the test.");
 
-        String tmpDirName = GridTestProperties.getProperty("ant.gar.tmpdir");
-        String srcDirName = GridTestProperties.getProperty("ant.gar.srcdir");
+        String tmpDirName = getProperty("ant.gar.tmpdir");
+        String srcDirName = getProperty("ant.gar.srcdir");
         String baseDirName = tmpDirName + File.separator + System.currentTimeMillis();
         String metaDirName = baseDirName + File.separator + "META-INF";
         String garDescDirName =
-            U.resolveIgnitePath(GridTestProperties.getProperty("deploy.gar.descriptor.dir")) +
+            U.resolveIgnitePath(getProperty("deploy.gar.descriptor.dir")) +
             File.separator + garDescFileName;
 
         // Make base, META-INF and deployment dirs.
-        File destDir = new File(GridTestProperties.getProperty("deploy.uri.file2.path"));
+        File destDir = new File(getProperty("deploy.uri.file2.path"));
 
         if (!destDir.exists()) {
             boolean mkdir = destDir.mkdirs();
@@ -156,7 +154,7 @@ public class GridUriDeploymentFileProcessorSelfTest extends GridUriDeploymentAbs
      */
     @GridSpiTestConfig
     public List<String> getUriList() {
-        File destDir = new File(GridTestProperties.getProperty("deploy.uri.file2.path"));
+        File destDir = new File(getProperty("deploy.uri.file2.path"));
 
         if (!destDir.exists()) {
             boolean mkdir = destDir.mkdirs();
@@ -166,7 +164,7 @@ public class GridUriDeploymentFileProcessorSelfTest extends GridUriDeploymentAbs
 
         List<String> uriList = new ArrayList<>();
 
-        uriList.add(GridTestProperties.getProperty("deploy.uri.file2"));
+        uriList.add(getProperty("deploy.uri.file2"));
 
         return uriList;
     }

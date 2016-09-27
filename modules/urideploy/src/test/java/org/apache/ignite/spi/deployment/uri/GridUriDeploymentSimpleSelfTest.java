@@ -29,7 +29,6 @@ import org.apache.ignite.compute.ComputeTaskAdapter;
 import org.apache.ignite.compute.ComputeTaskName;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.spi.deployment.DeploymentResource;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.spi.GridSpiAbstractTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTestConfig;
@@ -45,7 +44,7 @@ public class GridUriDeploymentSimpleSelfTest extends GridSpiAbstractTest<UriDepl
     @GridSpiTestConfig
     public List<String> getUriList() {
         // No real gar file is required. Add one just to avoid failure because of missed default directory.
-        return Collections.singletonList(GridTestProperties.getProperty("ant.urideployment.gar.uri").
+        return Collections.singletonList(getProperty("ant.urideployment.gar.uri").
             replace("EXTDATA", U.resolveIgnitePath("modules/extdata").getAbsolutePath()));
     }
 

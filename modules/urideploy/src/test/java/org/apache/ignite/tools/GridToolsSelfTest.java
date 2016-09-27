@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 import org.apache.ignite.util.antgar.IgniteDeploymentGarAntTask;
@@ -41,13 +40,13 @@ public class GridToolsSelfTest extends GridCommonAbstractTest {
      */
     @SuppressWarnings({"TypeMayBeWeakened"})
     public void testCorrectAntGarTask() throws Exception {
-        String tmpDirName = GridTestProperties.getProperty("ant.gar.tmpdir");
-        String srcDirName = GridTestProperties.getProperty("ant.gar.srcdir");
+        String tmpDirName = getProperty("ant.gar.tmpdir");
+        String srcDirName = getProperty("ant.gar.srcdir");
         String baseDirName = tmpDirName + File.separator + System.currentTimeMillis() + "_0";
         String metaDirName = baseDirName + File.separator + "META-INF";
         String garFileName = baseDirName + ".gar";
         String garDescDirName =
-            U.resolveIgnitePath(GridTestProperties.getProperty("ant.gar.descriptor.dir")).getAbsolutePath()
+            U.resolveIgnitePath(getProperty("ant.gar.descriptor.dir")).getAbsolutePath()
             + File.separator + "ignite.xml";
 
         // Make base and META-INF dir.
@@ -127,13 +126,13 @@ public class GridToolsSelfTest extends GridCommonAbstractTest {
      * @throws Exception If failed.
      */
     public void testAntGarTaskWithExternalP2PDescriptor() throws Exception {
-        String tmpDirName = GridTestProperties.getProperty("ant.gar.tmpdir");
-        String srcDirName = GridTestProperties.getProperty("ant.gar.srcdir");
+        String tmpDirName = getProperty("ant.gar.tmpdir");
+        String srcDirName = getProperty("ant.gar.srcdir");
         String baseDirName = tmpDirName + File.separator + System.currentTimeMillis() + "_1";
         String metaDirName = baseDirName + File.separator + "META-INF";
         String garFileName = baseDirName + ".gar";
         String garDescrDirName =
-            U.resolveIgnitePath(GridTestProperties.getProperty("ant.gar.descriptor.dir")).getAbsolutePath();
+            U.resolveIgnitePath(getProperty("ant.gar.descriptor.dir")).getAbsolutePath();
 
         // Make base and META-INF dir.
         boolean mkdir = new File(baseDirName).mkdirs();
@@ -173,13 +172,13 @@ public class GridToolsSelfTest extends GridCommonAbstractTest {
      * @throws Exception If failed.
      */
     public void testAntGarTaskWithDoubleP2PDescriptor() throws Exception {
-        String tmpDirName = GridTestProperties.getProperty("ant.gar.tmpdir");
-        String srcDirName = GridTestProperties.getProperty("ant.gar.srcdir");
+        String tmpDirName = getProperty("ant.gar.tmpdir");
+        String srcDirName = getProperty("ant.gar.srcdir");
         String baseDirName = tmpDirName + File.separator + System.currentTimeMillis() + "_2";
         String metaDirName = baseDirName + File.separator + "META-INF";
         String garFileName = baseDirName + ".gar";
         String garDescrDirName =
-            U.resolveIgnitePath(GridTestProperties.getProperty("ant.gar.descriptor.dir")).getAbsolutePath()
+            U.resolveIgnitePath(getProperty("ant.gar.descriptor.dir")).getAbsolutePath()
             + File.separator + "ignite.xml";
 
         // Make base and META-INF dir.
@@ -223,8 +222,8 @@ public class GridToolsSelfTest extends GridCommonAbstractTest {
      * @throws Exception If failed.
      */
     public void testAntGarTaskWithDirDescriptor() throws Exception {
-        String tmpDirName = GridTestProperties.getProperty("ant.gar.tmpdir");
-        String srcDirName = GridTestProperties.getProperty("ant.gar.srcdir");
+        String tmpDirName = getProperty("ant.gar.tmpdir");
+        String srcDirName = getProperty("ant.gar.srcdir");
         String baseDirName = tmpDirName + File.separator + System.currentTimeMillis() + "_3";
         String metaDirName = baseDirName + File.separator + "META-INF";
         String garFileName = baseDirName + ".gar";
@@ -268,8 +267,8 @@ public class GridToolsSelfTest extends GridCommonAbstractTest {
      */
     @SuppressWarnings({"TypeMayBeWeakened"})
     public void testAntGarTaskWithNullDescriptor() throws Exception {
-        String tmpDirName = GridTestProperties.getProperty("ant.gar.tmpdir");
-        String srcDirName = GridTestProperties.getProperty("ant.gar.srcdir");
+        String tmpDirName = getProperty("ant.gar.tmpdir");
+        String srcDirName = getProperty("ant.gar.srcdir");
         String baseDirName = tmpDirName + File.separator + System.currentTimeMillis() + "_4";
         String metaDirName = baseDirName + File.separator + "META-INF";
         String garFileName = baseDirName + ".gar";
@@ -311,8 +310,8 @@ public class GridToolsSelfTest extends GridCommonAbstractTest {
      * @throws Exception If failed.
      */
     public void testAntGarTaskWithFileBaseDir() throws Exception {
-        String tmpDirName = GridTestProperties.getProperty("ant.gar.tmpdir");
-        String srcDirName = GridTestProperties.getProperty("ant.gar.srcdir");
+        String tmpDirName = getProperty("ant.gar.tmpdir");
+        String srcDirName = getProperty("ant.gar.srcdir");
         String baseDirName = tmpDirName + File.separator + System.currentTimeMillis() + "_5";
         String metaDirName = baseDirName + File.separator + "META-INF";
         String garFileName = baseDirName + ".gar";
@@ -355,8 +354,8 @@ public class GridToolsSelfTest extends GridCommonAbstractTest {
      * @throws Exception If failed.
      */
     public void testAntGarTaskToString() throws Exception {
-        String tmpDirName = GridTestProperties.getProperty("ant.gar.tmpdir");
-        String srcDirName = GridTestProperties.getProperty("ant.gar.srcdir");
+        String tmpDirName = getProperty("ant.gar.tmpdir");
+        String srcDirName = getProperty("ant.gar.srcdir");
         String baseDirName = tmpDirName + File.separator + System.currentTimeMillis() + "_6";
         String metaDirName = baseDirName + File.separator + "META-INF";
         String garFileName = baseDirName + ".gar";

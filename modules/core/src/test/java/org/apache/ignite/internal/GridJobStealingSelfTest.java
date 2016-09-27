@@ -46,7 +46,6 @@ import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.resources.LoggerResource;
 import org.apache.ignite.spi.collision.jobstealing.JobStealingCollisionSpi;
 import org.apache.ignite.spi.failover.jobstealing.JobStealingFailoverSpi;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 import org.jetbrains.annotations.Nullable;
@@ -264,7 +263,7 @@ public class GridJobStealingSelfTest extends GridCommonAbstractTest {
 
         URL[] clsLdrUrls;
         try {
-            clsLdrUrls = new URL[] {new URL(GridTestProperties.getProperty("p2p.uri.cls"))};
+            clsLdrUrls = new URL[] {new URL(getProperty("p2p.uri.cls"))};
         }
         catch (MalformedURLException e) {
             throw new RuntimeException("Define property p2p.uri.cls", e);

@@ -49,7 +49,6 @@ import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.junit.Assert;
 
@@ -944,7 +943,7 @@ public class GridMessagingSelfTest extends GridCommonAbstractTest implements Ser
      * @throws Exception If error occurs.
      */
     public void testSendMessageWithExternalClassLoader() throws Exception {
-        URL[] urls = new URL[] { new URL(GridTestProperties.getProperty("p2p.uri.cls")) };
+        URL[] urls = new URL[] { new URL(getProperty("p2p.uri.cls")) };
 
         ClassLoader extLdr = new URLClassLoader(urls);
 

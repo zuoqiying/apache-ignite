@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.P2;
-import org.apache.ignite.testframework.config.GridTestProperties;
 
 /**
  * Tests for Messaging public API with disabled
@@ -53,7 +52,7 @@ public class GridMessagingNoPeerClassLoadingSelfTest extends GridMessagingSelfTe
      * @throws Exception If error occurs.
      */
     @Override public void testSendMessageWithExternalClassLoader() throws Exception {
-        URL[] urls = new URL[] { new URL(GridTestProperties.getProperty("p2p.uri.cls")) };
+        URL[] urls = new URL[] { new URL(getProperty("p2p.uri.cls")) };
 
         ClassLoader extLdr = new URLClassLoader(urls);
 

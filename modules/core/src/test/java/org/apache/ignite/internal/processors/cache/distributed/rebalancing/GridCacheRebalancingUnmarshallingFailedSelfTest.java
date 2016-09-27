@@ -115,7 +115,7 @@ public class GridCacheRebalancingUnmarshallingFailedSelfTest extends GridCommonA
      * @throws Exception e.
      */
     public void test() throws Exception {
-        String marshClsName = GridTestProperties.getProperty(GridTestProperties.MARSH_CLASS_NAME);
+        String marshClsName = getProperty(GridTestProperties.MARSH_CLASS_NAME);
 
         // This test passes with binary marshaller because we do not unmarshall keys.
         if (marshClsName != null && marshClsName.contains(BinaryMarshaller.class.getSimpleName()))

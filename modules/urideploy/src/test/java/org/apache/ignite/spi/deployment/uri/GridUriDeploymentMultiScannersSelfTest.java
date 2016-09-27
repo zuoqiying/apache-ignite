@@ -20,7 +20,6 @@ package org.apache.ignite.spi.deployment.uri;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.spi.GridSpiTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTestConfig;
 
@@ -44,10 +43,10 @@ public class GridUriDeploymentMultiScannersSelfTest extends GridUriDeploymentAbs
         List<String> uriList = new ArrayList<>();
 
         // Fake URI.
-        uriList.add(GridTestProperties.getProperty("deploy.uri.http"));
+        uriList.add(getProperty("deploy.uri.http"));
 
         // One real URI.
-        uriList.add(GridTestProperties.getProperty("ant.urideployment.gar.uri").
+        uriList.add(getProperty("ant.urideployment.gar.uri").
             replace("EXTDATA", U.resolveIgnitePath("modules/extdata").getAbsolutePath()));
 
         return uriList;

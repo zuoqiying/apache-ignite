@@ -23,7 +23,6 @@ import org.apache.ignite.compute.ComputeTaskFuture;
 import org.apache.ignite.internal.util.typedef.G;
 import org.apache.ignite.loadtest.GridLoadTestStatistics;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 
@@ -41,14 +40,14 @@ public class GridSessionLoadTest extends GridCommonAbstractTest {
      * @return Time for load test in minutes.
      */
     private int getTestDurationInMinutes() {
-        return Integer.valueOf(GridTestProperties.getProperty("load.test.duration"));
+        return Integer.valueOf(getProperty("load.test.duration"));
     }
 
     /**
      * @return Number of threads for the test.
      */
     private int getThreadCount() {
-        return Integer.valueOf(GridTestProperties.getProperty("load.test.threadnum"));
+        return Integer.valueOf(getProperty("load.test.threadnum"));
     }
 
     /** {@inheritDoc} */

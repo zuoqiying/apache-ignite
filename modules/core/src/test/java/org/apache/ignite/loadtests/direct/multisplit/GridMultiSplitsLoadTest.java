@@ -29,7 +29,6 @@ import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.apache.ignite.spi.discovery.DiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 
@@ -75,14 +74,14 @@ public class GridMultiSplitsLoadTest extends GridCommonAbstractTest {
      * @return Time for load test in minutes.
      */
     private int getTestDurationInMinutes() {
-        return Integer.valueOf(GridTestProperties.getProperty("load.test.duration"));
+        return Integer.valueOf(getProperty("load.test.duration"));
     }
 
     /**
      * @return Number of threads for the test.
      */
     private int getThreadCount() {
-        return Integer.valueOf(GridTestProperties.getProperty("load.test.threadnum"));
+        return Integer.valueOf(getProperty("load.test.threadnum"));
     }
 
     /**

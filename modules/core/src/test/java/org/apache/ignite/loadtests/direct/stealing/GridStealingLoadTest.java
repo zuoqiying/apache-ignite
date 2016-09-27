@@ -29,7 +29,6 @@ import org.apache.ignite.spi.discovery.DiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.failover.jobstealing.JobStealingFailoverSpi;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 
@@ -47,7 +46,7 @@ public class GridStealingLoadTest extends GridCommonAbstractTest {
      * @return Number of threads for the test.
      */
     private int getThreadCount() {
-        return Integer.valueOf(GridTestProperties.getProperty("load.test.threadnum"));
+        return Integer.valueOf(getProperty("load.test.threadnum"));
     }
 
     /** {@inheritDoc} */

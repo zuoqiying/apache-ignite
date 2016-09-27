@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.ignite.spi.deployment.uri.GridUriDeploymentAbstractSelfTest;
 import org.apache.ignite.spi.deployment.uri.UriDeploymentSpi;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.spi.GridSpiTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTestConfig;
 
@@ -35,7 +34,7 @@ public class GridFileDeploymentSelfTest extends GridUriDeploymentAbstractSelfTes
      */
     @GridSpiTestConfig
     public List<String> getUriList() {
-        return Collections.singletonList(GridTestProperties.getProperty("deploy.uri.file"));
+        return Collections.singletonList(getProperty("deploy.uri.file"));
     }
 
     /**

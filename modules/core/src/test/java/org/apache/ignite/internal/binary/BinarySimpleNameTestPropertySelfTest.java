@@ -20,7 +20,6 @@ package org.apache.ignite.internal.binary;
 import org.apache.ignite.IgniteBinary;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 import static org.apache.ignite.testframework.config.GridTestProperties.BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER;
@@ -41,16 +40,16 @@ public class BinarySimpleNameTestPropertySelfTest extends GridCommonAbstractTest
      * @throws Exception If failed.
      */
     public void testPropertyEnabled() throws Exception {
-        String useSimpleNameBackup = GridTestProperties.getProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER);
+        String useSimpleNameBackup = getProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER);
 
         try {
-            GridTestProperties.setProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER, "true");
+            setProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER, "true");
 
             checkProperty("TestClass");
         }
         finally {
             if (useSimpleNameBackup != null)
-                GridTestProperties.setProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER, "true");
+                setProperty(BINARY_MARSHALLER_USE_SIMPLE_NAME_MAPPER, "true");
         }
     }
 
@@ -73,10 +72,10 @@ public class BinarySimpleNameTestPropertySelfTest extends GridCommonAbstractTest
      * @throws Exception If failed.
      */
     private void checkProperty(String expTypeName) throws Exception {
-        String marshBackup = GridTestProperties.getProperty(MARSH_CLASS_NAME);
+        String marshBackup = getProperty(MARSH_CLASS_NAME);
 
         try {
-            GridTestProperties.setProperty(MARSH_CLASS_NAME, BinaryMarshaller.class.getName());
+            setProperty(MARSH_CLASS_NAME, BinaryMarshaller.class.getName());
 
             IgniteBinary binary = startGrid().binary();
 
@@ -88,7 +87,7 @@ public class BinarySimpleNameTestPropertySelfTest extends GridCommonAbstractTest
         }
         finally {
             if (marshBackup != null)
-                GridTestProperties.setProperty(MARSH_CLASS_NAME, marshBackup);
+                setProperty(MARSH_CLASS_NAME, marshBackup);
         }
     }
 }

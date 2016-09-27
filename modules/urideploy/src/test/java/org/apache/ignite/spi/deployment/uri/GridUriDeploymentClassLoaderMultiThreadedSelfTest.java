@@ -20,7 +20,6 @@ package org.apache.ignite.spi.deployment.uri;
 import java.net.URL;
 import java.util.concurrent.Callable;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,7 @@ public class GridUriDeploymentClassLoaderMultiThreadedSelfTest extends GridCommo
      */
     private void doTest() throws Exception {
         final GridUriDeploymentClassLoader ldr = new GridUriDeploymentClassLoader(
-            new URL[] { U.resolveIgniteUrl(GridTestProperties.getProperty("ant.urideployment.gar.file")) },
+            new URL[] { U.resolveIgniteUrl(getProperty("ant.urideployment.gar.file")) },
                 getClass().getClassLoader());
 
         multithreaded(
@@ -56,7 +55,7 @@ public class GridUriDeploymentClassLoaderMultiThreadedSelfTest extends GridCommo
         );
 
         final GridUriDeploymentClassLoader ldr0 = new GridUriDeploymentClassLoader(
-            new URL[] { U.resolveIgniteUrl(GridTestProperties.getProperty("ant.urideployment.gar.file")) },
+            new URL[] { U.resolveIgniteUrl(getProperty("ant.urideployment.gar.file")) },
             getClass().getClassLoader());
 
         multithreaded(

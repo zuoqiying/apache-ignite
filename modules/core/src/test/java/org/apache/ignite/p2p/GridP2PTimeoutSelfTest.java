@@ -25,7 +25,6 @@ import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.events.Event;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.testframework.GridTestExternalClassLoader;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 
@@ -64,7 +63,7 @@ public class GridP2PTimeoutSelfTest extends GridCommonAbstractTest {
             Ignite g1 = startGrid(1);
             Ignite g2 = startGrid(2);
 
-            String path = GridTestProperties.getProperty("p2p.uri.cls");
+            String path = getProperty("p2p.uri.cls");
 
             GridTestExternalClassLoader ldr = new GridTestExternalClassLoader(new URL[] {new URL(path)});
 
@@ -106,7 +105,7 @@ public class GridP2PTimeoutSelfTest extends GridCommonAbstractTest {
 
             ignite.compute().execute(GridP2PTestTask.class, 777); // Create events.
 
-            String path = GridTestProperties.getProperty("p2p.uri.cls");
+            String path = getProperty("p2p.uri.cls");
 
             GridTestExternalClassLoader ldr = new GridTestExternalClassLoader(new URL[] {new URL(path)});
 

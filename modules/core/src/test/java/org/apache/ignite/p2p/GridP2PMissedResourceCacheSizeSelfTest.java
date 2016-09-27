@@ -30,7 +30,6 @@ import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.GridTestExternalClassLoader;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 
@@ -136,7 +135,7 @@ public class GridP2PMissedResourceCacheSizeSelfTest extends GridCommonAbstractTe
             Ignite ignite1 = startGrid(1);
             Ignite ignite2 = startGrid(2);
 
-            String path = GridTestProperties.getProperty("p2p.uri.cls");
+            String path = getProperty("p2p.uri.cls");
 
             info("Using path: " + path);
 

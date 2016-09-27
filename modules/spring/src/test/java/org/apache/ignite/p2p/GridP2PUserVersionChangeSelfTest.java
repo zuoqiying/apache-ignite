@@ -39,7 +39,6 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.GridTestExternalClassLoader;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -140,7 +139,7 @@ public class GridP2PUserVersionChangeSelfTest extends GridCommonAbstractTest {
             Ignite ignite2 = startGrid(2);
 
             GridTestExternalClassLoader ldr = new GridTestExternalClassLoader(
-                new URL[] { new URL(GridTestProperties.getProperty("p2p.uri.cls")) },
+                new URL[] { new URL(getProperty("p2p.uri.cls")) },
                 Collections.singletonMap("META-INF/ignite.xml", makeUserVersion("1").getBytes()));
 
             Class task1 = ldr.loadClass(TEST_TASK_NAME);
@@ -189,7 +188,7 @@ public class GridP2PUserVersionChangeSelfTest extends GridCommonAbstractTest {
             Ignite ignite2 = startGrid(2);
 
             GridTestExternalClassLoader ldr = new GridTestExternalClassLoader(
-                new URL[] { new URL(GridTestProperties.getProperty("p2p.uri.cls")) });
+                new URL[] { new URL(getProperty("p2p.uri.cls")) });
 
             Class task1 = ldr.loadClass(TEST_TASK_NAME);
 
@@ -234,7 +233,7 @@ public class GridP2PUserVersionChangeSelfTest extends GridCommonAbstractTest {
             Ignite ignite2 = startGrid(2);
 
             GridTestExternalClassLoader ldr = new GridTestExternalClassLoader(
-                new URL[] { new URL(GridTestProperties.getProperty("p2p.uri.cls")) });
+                new URL[] { new URL(getProperty("p2p.uri.cls")) });
 
             Class task1 = ldr.loadClass(TEST_TASK_NAME);
 
@@ -297,7 +296,7 @@ public class GridP2PUserVersionChangeSelfTest extends GridCommonAbstractTest {
             Ignite ignite2 = startGrid("testCacheRedeployVersionChangeContinuousMode2");
 
             GridTestExternalClassLoader ldr = new GridTestExternalClassLoader(
-                new URL[] { new URL(GridTestProperties.getProperty("p2p.uri.cls")) },
+                new URL[] { new URL(getProperty("p2p.uri.cls")) },
                 Collections.singletonMap("META-INF/ignite.xml", makeUserVersion("1").getBytes()));
 
             Class rcrsCls = ldr.loadClass(TEST_RCRS_NAME);

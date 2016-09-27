@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.spi.deployment.uri.UriDeploymentSpi;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.spi.GridSpiAbstractTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTestConfig;
@@ -59,7 +58,7 @@ public class GridFileDeploymentUndeploySelfTest extends GridSpiAbstractTest<UriD
      */
     public void testUndeployGarFile() throws Exception {
         String garFilePath =
-            U.resolveIgnitePath(GridTestProperties.getProperty("ant.urideployment.gar.file")).getPath();
+            U.resolveIgnitePath(getProperty("ant.urideployment.gar.file")).getPath();
 
         File garFile = new File(garFilePath);
 

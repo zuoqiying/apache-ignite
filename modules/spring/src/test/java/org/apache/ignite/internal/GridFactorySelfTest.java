@@ -60,7 +60,6 @@ import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.http.GridEmbeddedHttpServer;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
@@ -373,7 +372,7 @@ public class GridFactorySelfTest extends GridCommonAbstractTest {
     @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter"})
     public void testStartMultipleGridsFromSpring() throws Exception {
         File cfgFile =
-            GridTestUtils.resolveIgnitePath(GridTestProperties.getProperty("loader.self.multipletest.config"));
+            GridTestUtils.resolveIgnitePath(getProperty("loader.self.multipletest.config"));
 
         assert cfgFile != null;
 

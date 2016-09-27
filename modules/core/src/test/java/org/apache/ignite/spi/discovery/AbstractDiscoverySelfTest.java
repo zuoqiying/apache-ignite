@@ -41,7 +41,6 @@ import org.apache.ignite.spi.IgniteSpi;
 import org.apache.ignite.spi.IgniteSpiAdapter;
 import org.apache.ignite.testframework.GridSpiTestContext;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.IgniteMock;
 import org.apache.ignite.testframework.junits.IgniteTestResources;
 import org.apache.ignite.testframework.junits.spi.GridSpiAbstractTest;
@@ -453,7 +452,7 @@ public abstract class AbstractDiscoverySelfTest<T extends IgniteSpi> extends Gri
 
         MBeanServer srv = MBeanServerFactory.createMBeanServer();
 
-        adaptor.setPort(Integer.valueOf(GridTestProperties.getProperty("discovery.mbeanserver.selftest.baseport")) +
+        adaptor.setPort(Integer.valueOf(getProperty("discovery.mbeanserver.selftest.baseport")) +
             idx);
 
         srv.registerMBean(adaptor, new ObjectName(HTTP_ADAPTOR_MBEAN_NAME));

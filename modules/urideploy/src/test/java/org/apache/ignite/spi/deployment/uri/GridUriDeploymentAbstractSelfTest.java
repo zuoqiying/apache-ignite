@@ -19,7 +19,6 @@ package org.apache.ignite.spi.deployment.uri;
 
 import org.apache.ignite.spi.deployment.DeploymentListener;
 import org.apache.ignite.spi.deployment.DeploymentResource;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.spi.GridSpiAbstractTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTestConfig;
 
@@ -46,7 +45,7 @@ public abstract class GridUriDeploymentAbstractSelfTest extends GridSpiAbstractT
      */
     @GridSpiTestConfig
     public String getTemporaryDirectoryPath() {
-        String path = GridTestProperties.getProperty("deploy.uri.tmpdir");
+        String path = getProperty("deploy.uri.tmpdir");
 
         assert path != null;
 

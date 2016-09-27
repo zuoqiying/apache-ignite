@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.spi.deployment.DeploymentListener;
 import org.apache.ignite.spi.deployment.DeploymentResource;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.spi.GridSpiTest;
 import org.apache.ignite.testframework.junits.spi.GridSpiTestConfig;
 
@@ -111,7 +110,7 @@ public class GridUriDeploymentMd5CheckSelfTest extends GridUriDeploymentAbstract
      * @return directory used as deployment source in this test.
      */
     private File getDeployDir() {
-        File tmpDir = new File(GridTestProperties.getProperty("deploy.uri.file2.path"));
+        File tmpDir = new File(getProperty("deploy.uri.file2.path"));
 
         if (! tmpDir.exists())
             tmpDir.mkdirs();
@@ -127,7 +126,7 @@ public class GridUriDeploymentMd5CheckSelfTest extends GridUriDeploymentAbstract
      * @return a valid .gar file path.
      */
     private File getGarFile() {
-        File gar = new File(GridTestProperties.getProperty("ant.urideployment.gar.file"));
+        File gar = new File(getProperty("ant.urideployment.gar.file"));
 
         assert gar.isFile();
 
@@ -163,7 +162,7 @@ public class GridUriDeploymentMd5CheckSelfTest extends GridUriDeploymentAbstract
     @GridSpiTestConfig
     public List<String> getUriList() {
         getDeployDir(); // Force creation.
-        return Collections.singletonList(GridTestProperties.getProperty("deploy.uri.file2"));
+        return Collections.singletonList(getProperty("deploy.uri.file2"));
     }
 
     /**

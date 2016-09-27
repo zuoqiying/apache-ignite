@@ -26,7 +26,6 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.apache.ignite.testframework.junits.common.GridCommonTest;
 
@@ -76,7 +75,7 @@ public class GridServletLoaderTest extends GridCommonAbstractTest {
             while (true) {
                 try {
                     jmx = getJMXConnector("localhost",
-                        Integer.valueOf(GridTestProperties.getProperty("tomcat.jmx.rmi.connector.port")));
+                        Integer.valueOf(getProperty("tomcat.jmx.rmi.connector.port")));
 
                     if (jmx != null)
                         break;

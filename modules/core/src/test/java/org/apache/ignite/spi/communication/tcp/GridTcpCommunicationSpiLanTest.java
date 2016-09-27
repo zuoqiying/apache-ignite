@@ -36,7 +36,6 @@ import org.apache.ignite.spi.communication.GridTestMessage;
 import org.apache.ignite.testframework.GridSpiTestContext;
 import org.apache.ignite.testframework.GridTestNode;
 import org.apache.ignite.testframework.GridTestUtils;
-import org.apache.ignite.testframework.config.GridTestProperties;
 import org.apache.ignite.testframework.junits.IgniteTestResources;
 import org.apache.ignite.testframework.junits.spi.GridSpiAbstractTest;
 import org.jsr166.ConcurrentLinkedDeque8;
@@ -262,7 +261,7 @@ public class GridTcpCommunicationSpiLanTest extends GridSpiAbstractTest<TcpCommu
         MBeanServer mbeanSrv = MBeanServerFactory.createMBeanServer();
 
         mbeanAdaptor.setPort(
-            Integer.valueOf(GridTestProperties.getProperty("comm.mbeanserver.selftest.baseport")));
+            Integer.valueOf(getProperty("comm.mbeanserver.selftest.baseport")));
 
         mbeanSrv.registerMBean(mbeanAdaptor, new ObjectName("mbeanAdaptor:protocol=HTTP"));
 
