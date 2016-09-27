@@ -196,15 +196,6 @@ public final class GridTestProperties {
     }
 
     /**
-     * @param name Property name.
-     * @param dir Directory path.
-     * @return Property value.
-     */
-    private static synchronized String getProperty(String name, String dir) {
-        return getProperties(dir).get(name);
-    }
-
-    /**
      * Substitutes environmental or system properties in the given string.
      *
      * @param str String to make substitution in.
