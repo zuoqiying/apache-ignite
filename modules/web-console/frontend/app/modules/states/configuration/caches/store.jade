@@ -20,10 +20,10 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var model = 'backupItem'
 
 mixin hibernateField(name, model, items, valid, save, newItem)
-    -var reset = newItem ? 'group.add = []' : 'field.edit = false'
-
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
     -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
+
+    -var onEscape = newItem ? 'group.add = []' : 'field.edit = false'
 
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
@@ -47,7 +47,8 @@ mixin hibernateField(name, model, items, valid, save, newItem)
         ignite-form-panel-chevron
         label Store
         ignite-form-field-tooltip.tipLabel
-            | Cache store settings
+            | Cache store settings#[br]
+            | #[a(href="https://apacheignite.readme.io/docs/persistent-store" target="_blank") More info about store]
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id=form)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
