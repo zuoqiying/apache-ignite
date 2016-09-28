@@ -448,7 +448,7 @@ export default ['cachesController', [
 
                     item.name = newName;
 
-                    if (!_.isNil(item.sqlSchema)) {
+                    if (!_.isEmpty(item.clusters) && !_.isNil(item.sqlSchema)) {
                         delete item.sqlSchema;
 
                         const scope = $scope.$new();
