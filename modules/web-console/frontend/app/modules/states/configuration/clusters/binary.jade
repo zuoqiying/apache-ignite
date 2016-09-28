@@ -45,7 +45,6 @@ mixin binary-types-java-class(lbl, model, name, enabled, required, remove, autof
                 .settings-row
                     +java-class('Serializer:', model + '.serializer', '"serializer"', 'true', 'false', 'Class with custom serialization logic for binary objects')
                 .settings-row
-                    -var form = 'binaryTypeConfigurations';
 
                     +ignite-form-group()
                         ignite-form-field-label
