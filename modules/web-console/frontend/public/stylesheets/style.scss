@@ -2170,3 +2170,15 @@ html,body,.splash-screen {
         padding: 0;
     }
 }
+
+// Fix for incorrect tooltip placement after fast show|hide.
+.tooltip.ng-leave {
+    transition: none !important; /* disable transitions */
+    animation: none 0s !important; /* disable keyframe animations */
+}
+
+// Fix for incorrect dropdown placement.
+.select.dropdown-menu.ng-leave {
+    transition: none !important; /* disable transitions */
+    animation: none 0s !important; /* disable keyframe animations */
+}

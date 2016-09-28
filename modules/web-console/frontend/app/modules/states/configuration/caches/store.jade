@@ -28,19 +28,19 @@ mixin hibernateField(name, model, items, valid, save, newItem)
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    if block
-        block
+    div(ignite-on-focus-out=onBlur)
+        if block
+            block
 
-    .input-tip
-        +ignite-form-field-input(name, model, false, 'true', 'key=value')(
-            data-ignite-property-unique=items
-            data-ignite-property-value-specified
-            data-ignite-form-field-input-autofocus='true'
+        .input-tip
+            +ignite-form-field-input(name, model, false, 'true', 'key=value')(
+                data-ignite-property-unique=items
+                data-ignite-property-value-specified
+                data-ignite-form-field-input-autofocus='true'
 
-            ng-blur=onBlur
-            ignite-on-enter=onEnter
-            ignite-on-escape=onEscape
-        )
+                ignite-on-enter=onEnter
+                ignite-on-escape=onEscape
+            )
 
 .panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')

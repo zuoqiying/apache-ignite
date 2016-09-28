@@ -15,26 +15,10 @@
  * limitations under the License.
  */
 
-.checkbox label .input-tip {
-	position: initial;
-}
-
-.input-tip .fa-floppy-o {
-	position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 2;
-
-    width: 34px;
-    height: 34px;
-
-    text-align: center;
-
-    display: inline-block;
-    line-height: 28px;
-    pointer-events: initial;
-}
-
-.input-tip .form-control-feedback {
-    height: auto;
-}
+export default [() => {
+    return ($scope, $element) => {
+        $element.on('click', () => {
+            $element.siblings('.input-tip').find('input').focus();
+        });
+    };
+}];

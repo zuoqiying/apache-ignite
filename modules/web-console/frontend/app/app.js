@@ -60,6 +60,8 @@ import igniteOnClickFocus from './directives/on-click-focus.directive.js';
 import igniteOnEnter from './directives/on-enter.directive.js';
 import igniteOnEnterFocusMove from './directives/on-enter-focus-move.directive.js';
 import igniteOnEscape from './directives/on-escape.directive.js';
+import igniteOnFocusOut from './directives/on-focus-out.directive.js';
+import igniteRestoreInputFocus from './directives/restore-input-focus.directive.js';
 import igniteUiAceDocker from './directives/ui-ace-docker/ui-ace-docker.directive';
 import igniteUiAceJava from './directives/ui-ace-java/ui-ace-java.directive';
 import igniteUiAcePojos from './directives/ui-ace-pojos/ui-ace-pojos.directive';
@@ -191,6 +193,8 @@ angular
 .directive(...igniteUiAceTabs)
 .directive(...igniteUiAceXml)
 .directive(...igniteRetainSelection)
+.directive('igniteOnFocusOut', igniteOnFocusOut)
+.directive('igniteRestoreInputFocus', igniteRestoreInputFocus)
 // Services.
 .service('IgniteErrorPopover', ErrorPopover)
 .service('JavaTypes', JavaTypes)
