@@ -31,7 +31,8 @@ mixin binary-types-java-class(lbl, model, name, enabled, required, remove, autof
         ignite-form-panel-chevron
         label Binary configuration
         ignite-form-field-tooltip.tipLabel
-            | Configuration of specific binary types
+            | Configuration of specific binary types#[br]
+            | #[a(href="https://apacheignite.readme.io/docs/binary-marshaller" target="_blank") More info about binary configuration]
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id=form)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
@@ -45,8 +46,6 @@ mixin binary-types-java-class(lbl, model, name, enabled, required, remove, autof
                 .settings-row
                     +java-class('Serializer:', model + '.serializer', '"serializer"', 'true', 'false', 'Class with custom serialization logic for binary objects')
                 .settings-row
-                    -var form = 'binaryTypeConfigurations';
-
                     +ignite-form-group()
                         ignite-form-field-label
                             | Type configurations

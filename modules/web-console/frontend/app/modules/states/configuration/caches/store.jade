@@ -20,34 +20,35 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var model = 'backupItem'
 
 mixin hibernateField(name, model, items, valid, save, newItem)
-    -var reset = newItem ? 'group.add = []' : 'field.edit = false'
-
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
     -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
+
+    -var onEscape = newItem ? 'group.add = []' : 'field.edit = false'
 
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    if block
-        block
+    div(ignite-on-focus-out=onBlur)
+        if block
+            block
 
-    .input-tip
-        +ignite-form-field-input(name, model, false, 'true', 'key=value')(
-            data-ignite-property-unique=items
-            data-ignite-property-value-specified
-            data-ignite-form-field-input-autofocus='true'
+        .input-tip
+            +ignite-form-field-input(name, model, false, 'true', 'key=value')(
+                data-ignite-property-unique=items
+                data-ignite-property-value-specified
+                data-ignite-form-field-input-autofocus='true'
 
-            ng-blur=onBlur
-            ignite-on-enter=onEnter
-            ignite-on-escape=onEscape
-        )
+                ignite-on-enter=onEnter
+                ignite-on-escape=onEscape
+            )
 
 .panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Store
         ignite-form-field-tooltip.tipLabel
-            | Cache store settings
+            | Cache store settings#[br]
+            | #[a(href="https://apacheignite.readme.io/docs/persistent-store" target="_blank") More info about store]
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id=form)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
