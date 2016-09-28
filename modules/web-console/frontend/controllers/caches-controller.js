@@ -17,8 +17,8 @@
 
 // Controller for Caches screen.
 export default ['cachesController', [
-    '$scope', '$http', '$state', '$filter', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
-    function($scope, $http, $state, $filter, $timeout, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, Resource, ErrorPopover, FormUtils) {
+    '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'igniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
+    function($scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Confirm, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, Resource, ErrorPopover, FormUtils) {
         UnsavedChangesGuard.install($scope);
 
         const emptyCache = {empty: true};
@@ -448,7 +448,20 @@ export default ['cachesController', [
 
                     item.name = newName;
 
-                    delete item.sqlSchema;
+                    if (!_.isEmpty(item.clusters) && !_.isNil(item.sqlSchema)) {
+                        delete item.sqlSchema;
+
+                        const scope = $scope.$new();
+
+                        scope.title = 'Info';
+                        scope.content = [
+                            'Use the same SQL schema name in one cluster in not allowed',
+                            'SQL schema name will be reset'
+                        ];
+
+                        // Show a basic modal from a controller
+                        $modal({scope, template: '/templates/message.html', placement: 'center', show: true});
+                    }
 
                     save(item);
                 });
