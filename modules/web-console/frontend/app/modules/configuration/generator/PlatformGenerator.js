@@ -18,10 +18,14 @@
 // import _ from 'lodash';
 import { Bean } from './Beans';
 
-export default ['JavaTypes', 'igniteClusterPlatformDefaults', (JavaTypes, clusterDflts) => {
+export default ['JavaTypes', 'igniteClusterPlatformDefaults', 'igniteCachePlatformDefaults', (JavaTypes, clusterDflts, cacheDflts) => {
     class PlatformGenerator {
         static igniteConfigurationBean(cluster) {
             return new Bean('Apache.Ignite.Core.IgniteConfiguration', 'cfg', cluster, clusterDflts);
+        }
+
+        static cacheConfigurationBean(cache) {
+            return new Bean('Apache.Ignite.Core.Cache.Configuration.CacheConfiguration', 'ccfg', cache, cacheDflts);
         }
 
         /**
@@ -139,16 +143,6 @@ export default ['JavaTypes', 'igniteClusterPlatformDefaults', (JavaTypes, cluste
             return cfg;
         }
 
-        // Generate cache key configurations.
-        static clusterCacheKeyConfiguration(keyCfgs, cfg = this.igniteConfigurationBean()) {
-            return cfg;
-        }
-
-        // Generate collision group.
-        static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
-            return cfg;
-        }
-
         // Generate communication group.
         static clusterCommunication(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             const commSpi = new Bean('Apache.Ignite.Core.Communication.Tcp.TcpCommunicationSpi', 'communicationSpi',
@@ -156,44 +150,34 @@ export default ['JavaTypes', 'igniteClusterPlatformDefaults', (JavaTypes, cluste
 
             commSpi.emptyBeanProperty('listener')
                 .stringProperty('localAddress')
-                .intProperty('localPort', 'LocalPort')
-                .intProperty('localPortRange', 'LocalPortRange')
+                .intProperty('localPort')
+                .intProperty('localPortRange')
                 // .intProperty('sharedMemoryPort')
-                .intProperty('directBuffer', 'DirectBuffer')
-                .intProperty('directSendBuffer', 'DirectSendBuffer')
-                .intProperty('idleConnectionTimeout', 'IdleConnectionTimeout')
-                .intProperty('connectTimeout', 'ConnectTimeout')
-                .intProperty('maxConnectTimeout', 'MaxConnectTimeout')
-                .intProperty('reconnectCount', 'ReconnectCount')
-                .intProperty('socketSendBuffer', 'SocketSendBufferSize')
-                .intProperty('socketReceiveBuffer', 'SocketReceiveBufferSize')
-                .intProperty('messageQueueLimit', 'MessageQueueLimit')
-                .intProperty('slowClientQueueLimit', 'SlowClientQueueLimit')
-                .intProperty('tcpNoDelay', 'TcpNoDelay')
-                .intProperty('ackSendThreshold', 'AckSendThreshold')
+                .intProperty('directBuffer')
+                .intProperty('directSendBuffer')
+                .intProperty('idleConnectionTimeout')
+                .intProperty('connectTimeout')
+                .intProperty('maxConnectTimeout')
+                .intProperty('reconnectCount')
+                .intProperty('socketSendBuffer')
+                .intProperty('socketReceiveBuffer')
+                .intProperty('messageQueueLimit')
+                .intProperty('slowClientQueueLimit')
+                .intProperty('tcpNoDelay')
+                .intProperty('ackSendThreshold')
                 .intProperty('unacknowledgedMessagesBufferSize')
                 // .intProperty('socketWriteTimeout')
-                .intProperty('selectorsCount', 'SelectorsCount');
+                .intProperty('selectorsCount');
                 // .emptyBeanProperty('addressResolver');
 
             if (commSpi.nonEmpty())
                 cfg.beanProperty('CommunicationSpi', commSpi);
 
             cfg.intProperty('networkTimeout', 'NetworkTimeout')
-                .intProperty('networkSendRetryDelay', 'NetworkSendRetryDelay')
-                .intProperty('networkSendRetryCount', 'NetworkSendRetryCount');
+                .intProperty('networkSendRetryDelay')
+                .intProperty('networkSendRetryCount');
                 // .intProperty('discoveryStartupDelay');
 
-            return cfg;
-        }
-
-        // Generate REST access configuration.
-        static clusterConnector(connector, cfg = this.igniteConfigurationBean()) {
-            return cfg;
-        }
-
-        // Generate deployment group.
-        static clusterDeployment(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             return cfg;
         }
 
@@ -207,24 +191,24 @@ export default ['JavaTypes', 'igniteClusterPlatformDefaults', (JavaTypes, cluste
                         discovery, clusterDflts.discovery);
                 }
 
-                discoveryCfg.stringProperty('localAddress', 'LocalAddress')
-                    .intProperty('localPort', 'LocalPort')
-                    .intProperty('localPortRange', 'LocalPortRange')
-                    .intProperty('socketTimeout', 'SocketTimeout')
-                    .intProperty('ackTimeout', 'AckTimeout')
-                    .intProperty('maxAckTimeout', 'MaxAckTimeout')
-                    .intProperty('networkTimeout', 'NetworkTimeout')
-                    .intProperty('joinTimeout', 'JoinTimeout')
-                    .intProperty('threadPriority', 'ThreadPriority')
-                    .intProperty('heartbeatFrequency', 'HeartbeatFrequency')
-                    .intProperty('maxMissedHeartbeats', 'MaxMissedHeartbeats')
-                    .intProperty('maxMissedClientHeartbeats', 'MaxMissedClientHeartbeats')
-                    .intProperty('topHistorySize', 'TopologyHistorySize')
-                    .intProperty('reconnectCount', 'ReconnectCount')
-                    .intProperty('statisticsPrintFrequency', 'StatisticsPrintFrequency')
-                    .intProperty('ipFinderCleanFrequency', 'IpFinderCleanFrequency')
-                    .intProperty('forceServerMode', 'ForceServerMode')
-                    .intProperty('clientReconnectDisabled', 'ClientReconnectDisabled');
+                discoveryCfg.stringProperty('localAddress')
+                    .intProperty('localPort')
+                    .intProperty('localPortRange')
+                    .intProperty('socketTimeout')
+                    .intProperty('ackTimeout')
+                    .intProperty('maxAckTimeout')
+                    .intProperty('networkTimeout')
+                    .intProperty('joinTimeout')
+                    .intProperty('threadPriority')
+                    .intProperty('heartbeatFrequency')
+                    .intProperty('maxMissedHeartbeats')
+                    .intProperty('maxMissedClientHeartbeats')
+                    .intProperty('topHistorySize')
+                    .intProperty('reconnectCount')
+                    .intProperty('statisticsPrintFrequency')
+                    .intProperty('ipFinderCleanFrequency')
+                    .intProperty('forceServerMode')
+                    .intProperty('clientReconnectDisabled');
 
                 if (discoveryCfg.nonEmpty())
                     cfg.beanProperty('discoverySpi', discoveryCfg);
@@ -241,53 +225,13 @@ export default ['JavaTypes', 'igniteClusterPlatformDefaults', (JavaTypes, cluste
             return cfg;
         }
 
-        // Generate failover group.
-        static clusterFailover(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            return cfg;
-        }
-
-        // Generate logger group.
-        static clusterLogger(logger, cfg = this.igniteConfigurationBean()) {
-            return cfg;
-        }
-
-        // Generate marshaller group.
-        static clusterMarshaller(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            return cfg;
-        }
-
         // Generate metrics group.
         static clusterMetrics(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            cfg.intProperty('metricsExpireTime', 'MetricsExpireTime')
-                .intProperty('metricsHistorySize', 'MetricsHistorySize')
-                .intProperty('metricsLogFrequency', 'MetricsLogFrequency')
-                .intProperty('metricsUpdateFrequency', 'MetricsUpdateFrequency');
+            cfg.intProperty('metricsExpireTime')
+                .intProperty('metricsHistorySize')
+                .intProperty('metricsLogFrequency')
+                .intProperty('metricsUpdateFrequency');
 
-            return cfg;
-        }
-
-        // Generate ODBC group.
-        static clusterODBC(odbc, cfg = this.igniteConfigurationBean()) {
-            return cfg;
-        }
-
-        // Java code generator for cluster's SSL configuration.
-        static clusterSsl(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            return cfg;
-        }
-
-        // Generate swap group.
-        static clusterSwap(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            return cfg;
-        }
-
-        // Generate time group.
-        static clusterTime(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            return cfg;
-        }
-
-        // Generate thread pools group.
-        static clusterPools(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             return cfg;
         }
 
@@ -325,6 +269,252 @@ export default ['JavaTypes', 'igniteClusterPlatformDefaults', (JavaTypes, cluste
             // }
 
             return this.clusterGeneral(cluster, cfg);
+        }
+
+        // Generate cache general group.
+        static cacheGeneral(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            ccfg.stringProperty('name')
+                .enumProperty('cacheMode')
+                .enumProperty('atomicityMode');
+
+            if (ccfg.valueOf('cacheMode') === 'PARTITIONED' && ccfg.valueOf('backups')) {
+                ccfg.intProperty('backups')
+                    .intProperty('readFromBackup');
+            }
+
+            ccfg.intProperty('copyOnRead');
+
+            if (ccfg.valueOf('cacheMode') === 'PARTITIONED' && ccfg.valueOf('atomicityMode') === 'TRANSACTIONAL')
+                ccfg.intProperty('invalidate');
+
+            return ccfg;
+        }
+
+        // Generate cache memory group.
+        static cacheMemory(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            ccfg.enumProperty('memoryMode');
+
+            if (ccfg.valueOf('memoryMode') !== 'OFFHEAP_VALUES')
+                ccfg.intProperty('offHeapMaxMemory');
+
+            // this._evictionPolicy(ccfg, 'evictionPolicy', cache.evictionPolicy, cacheDflts.evictionPolicy);
+
+            ccfg.intProperty('startSize')
+                .boolProperty('swapEnabled', 'EnableSwap');
+
+            return ccfg;
+        }
+
+        // Generate cache queries & Indexing group.
+        static cacheQuery(cache, domains, ccfg = this.cacheConfigurationBean(cache)) {
+            ccfg.intProperty('sqlOnheapRowCacheSize')
+                .intProperty('longQueryWarningTimeout');
+
+            return ccfg;
+        }
+
+        // Generate cache store group.
+        static cacheStore(cache, domains, ccfg = this.cacheConfigurationBean(cache)) {
+            const kind = _.get(cache, 'cacheStoreFactory.kind');
+
+            if (kind && cache.cacheStoreFactory[kind]) {
+                let bean = null;
+
+                const storeFactory = cache.cacheStoreFactory[kind];
+
+                switch (kind) {
+                    case 'CacheJdbcPojoStoreFactory':
+                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory',
+                            storeFactory);
+
+                        const id = bean.valueOf('dataSourceBean');
+
+                        bean.dataSource(id, 'dataSourceBean', this.dataSourceBean(id, storeFactory.dialect))
+                            .beanProperty('dialect', new EmptyBean(this.dialectClsName(storeFactory.dialect)));
+
+                        const setType = (typeBean, propName) => {
+                            if (JavaTypes.nonBuiltInClass(typeBean.valueOf(propName)))
+                                typeBean.stringProperty(propName);
+                            else
+                                typeBean.classProperty(propName);
+                        };
+
+                        const types = _.reduce(domains, (acc, domain) => {
+                            if (_.isNil(domain.databaseTable))
+                                return acc;
+
+                            const typeBean = new MethodBean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
+                                _.merge({}, domain, {cacheName: cache.name}))
+                                .stringProperty('cacheName');
+
+                            setType(typeBean, 'keyType');
+                            setType(typeBean, 'valueType');
+
+                            this.domainStore(domain, typeBean);
+
+                            acc.push(typeBean);
+
+                            return acc;
+                        }, []);
+
+                        bean.arrayProperty('types', 'types', types, 'org.apache.ignite.cache.store.jdbc.JdbcType');
+
+                        break;
+                    case 'CacheJdbcBlobStoreFactory':
+                        bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory', 'cacheStoreFactory',
+                            storeFactory);
+
+                        if (bean.valueOf('connectVia') === 'DataSource')
+                            bean.dataSource(bean.valueOf('dataSourceBean'), 'dataSourceBean', this.dialectClsName(storeFactory.dialect));
+                        else {
+                            ccfg.stringProperty('connectionUrl')
+                                .stringProperty('user')
+                                .property('Property', 'password', `ds.${storeFactory.user}.password`);
+                        }
+
+                        bean.boolProperty('initSchema')
+                            .stringProperty('createTableQuery')
+                            .stringProperty('loadQuery')
+                            .stringProperty('insertQuery')
+                            .stringProperty('updateQuery')
+                            .stringProperty('deleteQuery');
+
+                        break;
+                    case 'CacheHibernateBlobStoreFactory':
+                        bean = new Bean('org.apache.ignite.cache.store.hibernate.CacheHibernateBlobStoreFactory',
+                            'cacheStoreFactory', storeFactory);
+
+                        bean.propsProperty('props', 'hibernateProperties');
+
+                        break;
+                    default:
+                }
+
+                if (bean)
+                    ccfg.beanProperty('cacheStoreFactory', bean);
+            }
+
+            ccfg.boolProperty('storeKeepBinary')
+                .boolProperty('loadPreviousValue')
+                .boolProperty('readThrough')
+                .boolProperty('writeThrough');
+
+            if (ccfg.valueOf('writeBehindEnabled')) {
+                ccfg.boolProperty('writeBehindEnabled')
+                    .intProperty('writeBehindBatchSize')
+                    .intProperty('writeBehindFlushSize')
+                    .intProperty('writeBehindFlushFrequency')
+                    .intProperty('writeBehindFlushThreadCount');
+            }
+
+            return ccfg;
+        }
+
+        // Generate cache concurrency control group.
+        static cacheConcurrency(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            ccfg.intProperty('maxConcurrentAsyncOperations')
+                .intProperty('defaultLockTimeout')
+                .enumProperty('atomicWriteOrderMode')
+                .enumProperty('writeSynchronizationMode');
+
+            return ccfg;
+        }
+
+        // Generate cache node filter group.
+        static cacheNodeFilter(cache, igfss, ccfg = this.cacheConfigurationBean(cache)) {
+            const kind = _.get(cache, 'nodeFilter.kind');
+
+            if (kind && cache.nodeFilter[kind]) {
+                let bean = null;
+
+                switch (kind) {
+                    case 'IGFS':
+                        const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
+
+                        if (foundIgfs) {
+                            bean = new Bean('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate', 'nodeFilter', foundIgfs)
+                                .stringConstructorArgument('name');
+                        }
+
+                        break;
+                    case 'Custom':
+                        bean = new Bean(cache.nodeFilter.Custom.className, 'nodeFilter');
+
+                        break;
+                    default:
+                        return ccfg;
+                }
+
+                if (bean)
+                    ccfg.beanProperty('nodeFilter', bean);
+            }
+
+            return ccfg;
+        }
+
+        // Generate cache rebalance group.
+        static cacheRebalance(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            if (ccfg.valueOf('cacheMode') !== 'LOCAL') {
+                ccfg.enumProperty('rebalanceMode')
+                    .intProperty('rebalanceThreadPoolSize')
+                    .intProperty('rebalanceBatchSize')
+                    .intProperty('rebalanceBatchesPrefetchCount')
+                    .intProperty('rebalanceOrder')
+                    .intProperty('rebalanceDelay')
+                    .intProperty('rebalanceTimeout')
+                    .intProperty('rebalanceThrottle');
+            }
+
+            if (ccfg.includes('igfsAffinnityGroupSize')) {
+                const bean = new Bean('org.apache.ignite.igfs.IgfsGroupDataBlocksKeyMapper', 'affinityMapper', cache)
+                    .intConstructorArgument('igfsAffinnityGroupSize');
+
+                ccfg.beanProperty('affinityMapper', bean);
+            }
+
+            return ccfg;
+        }
+
+        // Generate server near cache group.
+        static cacheServerNearCache(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            if (cache.cacheMode === 'PARTITIONED' && cache.nearCacheEnabled) {
+                const bean = new Bean('org.apache.ignite.configuration.NearCacheConfiguration', 'nearConfiguration',
+                    cache.nearConfiguration, {nearStartSize: 375000});
+
+                bean.intProperty('nearStartSize');
+
+                this._evictionPolicy(bean, 'nearEvictionPolicy',
+                    bean.valueOf('nearEvictionPolicy'), cacheDflts.evictionPolicy);
+
+                ccfg.beanProperty('nearConfiguration', bean);
+            }
+
+            return ccfg;
+        }
+
+        // Generate cache statistics group.
+        static cacheStatistics(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            ccfg.boolProperty('statisticsEnabled')
+                .boolProperty('managementEnabled');
+
+            return ccfg;
+        }
+
+        static cacheConfiguration(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            this.cacheGeneral(cache, ccfg);
+            this.cacheMemory(cache, ccfg);
+            this.cacheQuery(cache, cache.domains, ccfg);
+            this.cacheStore(cache, cache.domains, ccfg);
+
+            const igfs = _.get(cache, 'nodeFilter.IGFS.instance');
+            this.cacheNodeFilter(cache, igfs ? [igfs] : [], ccfg);
+            this.cacheConcurrency(cache, ccfg);
+            this.cacheRebalance(cache, ccfg);
+            this.cacheServerNearCache(cache, ccfg);
+            this.cacheStatistics(cache, ccfg);
+            // this.cacheDomains(cache.domains, cfg);
+
+            return ccfg;
         }
     }
 

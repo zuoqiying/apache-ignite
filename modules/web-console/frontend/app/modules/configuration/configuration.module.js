@@ -24,6 +24,7 @@ import Version from './Version.service';
 import clusterDefaults from './generator/defaults/cluster.provider';
 import clusterPlatformDefaults from './generator/defaults/cluster.platform.provider';
 import cacheDefaults from './generator/defaults/cache.provider';
+import cachePlatformDefaults from './generator/defaults/cache.platform.provider';
 import igfsDefaults from './generator/defaults/igfs.provider';
 
 import ConfigurationGenerator from './generator/ConfigurationGenerator';
@@ -45,6 +46,7 @@ angular
 .provider('igniteClusterDefaults', clusterDefaults)
 .provider('igniteClusterPlatformDefaults', clusterPlatformDefaults)
 .provider('igniteCacheDefaults', cacheDefaults)
+.provider('igniteCachePlatformDefaults', cachePlatformDefaults)
 .provider('igniteIgfsDefaults', igfsDefaults)
 .provider(...igniteEventGroups)
 .provider(...igniteSidebar)

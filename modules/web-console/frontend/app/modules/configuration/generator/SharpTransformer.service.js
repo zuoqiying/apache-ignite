@@ -65,7 +65,7 @@ export default ['JavaTypes', 'IgnitePlatformGenerator', (JavaTypes, generator) =
          * @private
          */
         static _setProperty(sb, parent, propertyName, value) {
-            sb.append(`${parent.id}.${propertyName} = ${value};`);
+            sb.append(`${parent.id}.${_.upperFirst(propertyName)} = ${value};`);
         }
 
         /**
@@ -77,7 +77,7 @@ export default ['JavaTypes', 'IgnitePlatformGenerator', (JavaTypes, generator) =
          * @private
          */
         static _setBeanProperty(sb, parent, propertyName, bean) {
-            sb.append(`${parent.id}.${propertyName} = ${bean.id};`);
+            sb.append(`${parent.id}.${_.upperFirst(propertyName)} = ${bean.id};`);
         }
 
         static _toObject(clsName, val) {
@@ -139,7 +139,7 @@ export default ['JavaTypes', 'IgnitePlatformGenerator', (JavaTypes, generator) =
                         if (colTypeClsName === 'String') {
                             const items = this._toObject(colTypeClsName, prop.items);
 
-                            sb.append(`${bean.id}.${prop.name} = new {${items.join(', ')}};`);
+                            sb.append(`${bean.id}.${_.upperFirst(prop.name)} = new {${items.join(', ')}};`);
                         }
                         // else {
                         //     if (_.includes(vars, prop.id))
