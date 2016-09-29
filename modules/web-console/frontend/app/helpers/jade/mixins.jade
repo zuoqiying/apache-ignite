@@ -97,21 +97,21 @@ mixin ipaddress-port-range-feedback(name)
 mixin uuid-feedback(name)
     +form-field-feedback(name, 'uuid', 'Invalid node ID!')
 
-//- Mixin for checkbox.
-mixin checkbox(lbl, model, name, tip)
-    +form-field-checkbox(lbl, model, name, false, false, tip)
-
 //- Function that convert enabled state to corresponding disabled state.
 -var enabledToDisabled = function (enabled) {
 -    return (enabled === false || enabled === true) ? !enabled : '!(' + enabled + ')';
 -}
 
+//- Mixin for checkbox.
+mixin checkbox(lbl, model, name, tip)
+    +form-field-checkbox(lbl, model, name, false, false, tip)
+
 //- Mixin for checkbox with enabled condition.
 mixin checkbox-enabled(lbl, model, name, enabled, tip)
     +form-field-checkbox(lbl, model, name, enabledToDisabled(enabled), false, tip)
 
-//- Mixin for java name field with enabled condition.
-mixin java-class(lbl, model, name, enabled, required, tip)
+//- Mixin for Java class name field with auto focus condition.
+mixin java-class-autofocus(lbl, model, name, enabled, required, autofocus, tip)
     -var errLbl = lbl.substring(0, lbl.length - 1)
 
     +ignite-form-field-text(lbl, model, name, enabledToDisabled(enabled), required, 'Enter fully qualified class name', tip)(
@@ -119,6 +119,7 @@ mixin java-class(lbl, model, name, enabled, required, tip)
         data-java-package-specified='true'
         data-java-keywords='true'
         data-java-built-in-class='true'
+        data-ignite-form-field-input-autofocus=autofocus
     )
         if  block
             block
@@ -127,6 +128,10 @@ mixin java-class(lbl, model, name, enabled, required, tip)
         +form-field-feedback(name, 'javaKeywords', errLbl + ' could not contains reserved Java keyword!')
         +form-field-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
         +form-field-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
+
+//- Mixin for Java class name field.
+mixin java-class(lbl, model, name, enabled, required, tip)
+    +java-class-autofocus(lbl, model, name, enabled, required, 'false', tip)
 
 //- Mixin for text field with enabled condition with options.
 mixin java-class-typeahead(lbl, model, name, options, enabled, required, placeholder, tip)
