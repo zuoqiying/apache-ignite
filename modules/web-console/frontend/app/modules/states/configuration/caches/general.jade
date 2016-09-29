@@ -23,6 +23,9 @@ include ../../../../../app/helpers/jade/mixins.jade
     .panel-heading(bs-collapse-toggle)
         ignite-form-panel-chevron
         label General
+        ignite-form-field-tooltip.tipLabel
+            | Common cache configuration#[br]
+            | #[a(href="https://apacheignite.readme.io/docs/data-grid" target="_blank") More information about Data Grid]
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id='general')
         .panel-body
@@ -33,7 +36,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                     +clusters(model, 'Associate clusters with the current cache')
                 .settings-row
                     +dropdown-multiple('<span>Domain models:</span><a ui-sref="base.configuration.domains({linkId: linkId()})"> (add)</a>',
-                        model + '.domains', '"domains"', true, 'Choose domain models', 'No domain models configured', 'domains',
+                        model + '.domains', '"domains"', true, 'Choose domain models', 'No valid domain models configured', 'domains',
                         'Select domain models to describe types in cache')
                 .settings-row
                     +cacheMode('Mode:', model + '.cacheMode', '"cacheMode"', 'PARTITIONED')

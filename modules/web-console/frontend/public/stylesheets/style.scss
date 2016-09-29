@@ -21,6 +21,7 @@
 @import "~roboto-font/css/fonts.css";
 @import "./../../app/directives/information/information.scss";
 @import "./blocks/error";
+@import "./form-field";
 
 hr {
     margin: 20px 0;
@@ -2168,4 +2169,16 @@ html,body,.splash-screen {
         margin: 0;
         padding: 0;
     }
+}
+
+// Fix for incorrect tooltip placement after fast show|hide.
+.tooltip.ng-leave {
+    transition: none !important; /* Disable transitions. */
+    animation: none 0s !important; /* Disable keyframe animations. */
+}
+
+// Fix for incorrect dropdown placement.
+.select.dropdown-menu.ng-leave {
+    transition: none !important; /* Disable transitions. */
+    animation: none 0s !important; /* Disable keyframe animations. */
 }

@@ -20,34 +20,35 @@ include ../../../../../app/helpers/jade/mixins.jade
 -var model = 'backupItem'
 
 mixin hibernateField(name, model, items, valid, save, newItem)
-    -var reset = newItem ? 'group.add = []' : 'field.edit = false'
-
     -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
     -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
+
+    -var onEscape = newItem ? 'group.add = []' : 'field.edit = false'
 
     -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
     -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
 
-    if block
-        block
+    div(ignite-on-focus-out=onBlur)
+        if block
+            block
 
-    .input-tip
-        +ignite-form-field-input(name, model, false, 'true', 'key=value')(
-            data-ignite-property-unique=items
-            data-ignite-property-value-specified
-            data-ignite-form-field-input-autofocus='true'
+        .input-tip
+            +ignite-form-field-input(name, model, false, 'true', 'key=value')(
+                data-ignite-property-unique=items
+                data-ignite-property-value-specified
+                data-ignite-form-field-input-autofocus='true'
 
-            ng-blur=onBlur
-            ignite-on-enter=onEnter
-            ignite-on-escape=onEscape
-        )
+                ignite-on-enter=onEnter
+                ignite-on-escape=onEscape
+            )
 
 .panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
         label Store
         ignite-form-field-tooltip.tipLabel
-            | Cache store settings
+            | Cache store settings#[br]
+            | #[a(href="https://apacheignite.readme.io/docs/persistent-store" target="_blank") More info about store]
         ignite-form-revert
     .panel-collapse(role='tabpanel' bs-collapse-target id=form)
         .panel-body(ng-if='ui.isPanelLoaded("#{form}")')
@@ -231,11 +232,11 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                                     'Maximum batch size for write-behind cache store operations<br/>\
                                      Store operations(get or remove) are combined in a batch of this size to be passed to cache store')
                             .details-row
-                                +number('Flush size:', model + '.writeBehindFlushSize', '"writeBehindFlushSize"', enabled, '10240', '1',
+                                +number('Flush size:', model + '.writeBehindFlushSize', '"writeBehindFlushSize"', enabled, '10240', '0',
                                     'Maximum size of the write-behind cache<br/>\
                                      If cache size exceeds this value, all cached items are flushed to the cache store and write cache is cleared')
                             .details-row
-                                +number('Flush frequency:', model + '.writeBehindFlushFrequency', '"writeBehindFlushFrequency"', enabled, '5000', '1',
+                                +number('Flush frequency:', model + '.writeBehindFlushFrequency', '"writeBehindFlushFrequency"', enabled, '5000', '0',
                                     'Frequency with which write-behind cache is flushed to the cache store in milliseconds')
                             .details-row
                                 +number('Flush threads count:', model + '.writeBehindFlushThreadCount', '"writeBehindFlushThreadCount"', enabled, '1', '1',
