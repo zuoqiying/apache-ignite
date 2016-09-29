@@ -27,15 +27,13 @@ const igniteModulesTemp = path.resolve('ignite_modules_temp');
 const jadeViewsPaths = [
     './app/helpers/**/*.jade',
     './views/*.jade',
-    './views/**/*.jade',
-    '!**/*.tpl.jade'
+    './views/**/*.jade'
 ];
 
 const jadeAppModulePaths = [
     './app/helpers/**/*.jade',
     './app/modules/states/configuration/**/*.jade',
-    './app/modules/sql/*.jade',
-    '!**/*.tpl.jade'
+    './app/modules/sql/*.jade'
 ];
 
 const jadePaths = jadeViewsPaths.concat(jadeAppModulePaths);
@@ -47,8 +45,7 @@ const resourcePaths = [
 
 const jadeModulePaths = [
     './app/helpers/**/*.jade',
-    igniteModulesDir + '/**/view/**/*.jade',
-    '!**/*.tpl.jade'
+    igniteModulesDir + '/**/view/**/*.jade'
 ];
 
 const appModulePaths = [

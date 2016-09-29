@@ -16,8 +16,8 @@
  */
 
 import angular from 'angular';
-import templateNotFoundPage from '../../../views/404.tpl.jade';
-import templateNotAuthorizedPage from '../../../views/403.tpl.jade';
+import templateNotFoundPage from '../../../views/404.jade';
+import templateNotAuthorizedPage from '../../../views/403.jade';
 
 angular
     .module('ignite-console.states.errors', [

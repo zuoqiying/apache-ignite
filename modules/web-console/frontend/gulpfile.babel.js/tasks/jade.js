@@ -18,7 +18,6 @@
 import gulp from 'gulp';
 import ll from 'gulp-ll';
 import jade from 'gulp-jade';
-import sequence from 'gulp-sequence';
 
 import { jadeViewsPaths, jadeAppModulePaths, jadeModulePaths, destDir } from '../paths';
 

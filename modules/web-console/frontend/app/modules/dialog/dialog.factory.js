@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './dialog.tpl.jade';
+import templateUrl from './dialog.jade';
 
 export default ['IgniteDialog', ['$modal', ($modal) => {
     const defaults = {

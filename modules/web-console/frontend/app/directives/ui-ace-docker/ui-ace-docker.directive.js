@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import templateUrl from './ui-ace-docker.tpl.jade';
+import templateUrl from './ui-ace-docker.jade';
 import controller from './ui-ace-docker.controller';
 
 export default ['igniteUiAceDocker', [() => {

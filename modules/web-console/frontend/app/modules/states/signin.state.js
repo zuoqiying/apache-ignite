@@ -16,7 +16,7 @@
  */
 
 import angular from 'angular';
-import templateUrl from 'views/signin.tpl.jade';
+import templateUrl from 'views/signin.jade';
 
 angular
 .module('ignite-console.states.login', [
