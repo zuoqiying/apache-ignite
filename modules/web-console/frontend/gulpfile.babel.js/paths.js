@@ -24,9 +24,13 @@ const destDir = path.resolve('build');
 const igniteModulesDir = process.env.IGNITE_MODULES ? path.join(path.normalize(process.env.IGNITE_MODULES), 'frontend') : './ignite_modules';
 const igniteModulesTemp = path.resolve('ignite_modules_temp');
 
-const jadePaths = [
+const jadeViewsPaths = [
+    './app/helpers/**/*.jade',
     './views/*.jade',
-    './views/**/*.jade',
+    './views/**/*.jade'
+];
+
+const jadeAppModulePaths = [
     './app/helpers/**/*.jade',
     './app/modules/states/configuration/**/*.jade',
     './app/modules/sql/*.jade'
@@ -38,6 +42,7 @@ const resourcePaths = [
 ];
 
 const jadeModulePaths = [
+    './app/helpers/**/*.jade',
     igniteModulesDir + '/**/view/**/*.jade'
 ];
 
@@ -65,10 +70,11 @@ export {
     igniteModulesDir,
     igniteModulesTemp,
 
-    jadePaths,
-    resourcePaths,
-
+    jadeViewsPaths,
+    jadeAppModulePaths,
     jadeModulePaths,
+
+    resourcePaths,
     resourceModulePaths,
     appModulePaths
 };
