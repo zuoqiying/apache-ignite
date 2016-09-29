@@ -60,10 +60,12 @@ export default () => {
                 aggregateTimeout: 1000,
                 poll: 2000
             },
-            stats: {colors: true},
+            stats: {
+                colors: true,
+                chunks: false,
+            },
             port: 9000
         },
-        stats: {colors: true},
         plugins
     };
 };
