@@ -316,6 +316,9 @@ public class BinaryClassDescriptor {
 
                 stableSchema = schemaBuilder.build();
 
+                System.out.println(">>> REFLECTIVE CLASS [typeId=" + typeId + ", typeName=" + typeName +
+                    ", cls=" + cls.getName() + ']');
+
                 intfs = null;
 
                 break;
