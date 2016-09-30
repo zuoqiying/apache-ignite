@@ -52,6 +52,8 @@ import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.jetbrains.annotations.Nullable;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
 import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_DATA;
 import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_IDX;
 import static org.apache.ignite.internal.processors.cache.database.tree.io.PageIO.getPageId;
@@ -83,10 +85,9 @@ public abstract class PagesList extends DataStructure {
 
     /** */
     private final PageHandler<Void, Boolean> cutTail = new PageHandler<Void, Boolean>() {
-        @Override public Boolean run(long pageId, Page page, PageIO pageIo, ByteBuffer buf, Void ignore, int bucket)
+        @Override public Boolean run(Page page, PageIO pageIo, ByteBuffer buf, Void ignore, int bucket)
             throws IgniteCheckedException {
-            if (getPageId(buf) != pageId)
-                return Boolean.FALSE;
+            assert getPageId(buf) == page.id();
 
             PagesListNodeIO io = (PagesListNodeIO)pageIo;
 
@@ -97,11 +98,11 @@ public abstract class PagesList extends DataStructure {
             io.setNextId(buf, 0L);
 
             if (isWalDeltaRecordNeeded(wal, page))
-                wal.log(new PagesListSetNextRecord(cacheId, pageId, 0L));
+                wal.log(new PagesListSetNextRecord(cacheId, page.id(), 0L));
 
-            updateTail(bucket, tailId, pageId);
+            updateTail(bucket, tailId, page.id());
 
-            return Boolean.TRUE;
+            return TRUE;
         }
     };
 
@@ -138,7 +139,7 @@ public abstract class PagesList extends DataStructure {
         if (metaPageId != 0L) {
             if (initNew) {
                 try (Page page = page(metaPageId)) {
-                    initPage(metaPageId, page, this, PagesListMetaIO.VERSIONS.latest(), wal);
+                    initPage(page, this, PagesListMetaIO.VERSIONS.latest(), wal);
                 }
             }
             else {
@@ -148,7 +149,9 @@ public abstract class PagesList extends DataStructure {
 
                 while (nextPageId != 0) {
                     try (Page page = page(nextPageId)) {
-                        ByteBuffer buf = readLock(page);
+                        ByteBuffer buf = readLock(page); // No concurrent recycling on init.
+
+                        assert buf != null;
 
                         try {
                             PagesListMetaIO io = PagesListMetaIO.VERSIONS.forPage(buf);
@@ -163,7 +166,7 @@ public abstract class PagesList extends DataStructure {
                             nextPageId = next0;
                         }
                         finally {
-                            readUnlock(page);
+                            readUnlock(page, buf);
                         }
                     }
                 }
@@ -217,7 +220,7 @@ public abstract class PagesList extends DataStructure {
                                 if (curPage != null) {
                                     curIo.setNextMetaPageId(curBuf, nextPageId);
 
-                                    releaseAndClose(curPage);
+                                    releaseAndClose(curPage, curBuf);
                                     curPage = null;
                                 }
 
@@ -229,7 +232,7 @@ public abstract class PagesList extends DataStructure {
                                 curIo.initNewPage(curBuf, nextPageId);
                             }
                             else {
-                                releaseAndClose(curPage);
+                                releaseAndClose(curPage, curBuf);
                                 curPage = null;
 
                                 curPage = page(nextPageId);
@@ -249,13 +252,14 @@ public abstract class PagesList extends DataStructure {
             }
         }
         finally {
-            releaseAndClose(curPage);
+            releaseAndClose(curPage, curBuf);
         }
 
         while (nextPageId != 0L) {
             try (Page page = page(nextPageId)) {
+                ByteBuffer buf = writeLock(page);
+
                 try {
-                    ByteBuffer buf = writeLock(page);
                     PagesListMetaIO io = PagesListMetaIO.VERSIONS.forPage(buf);
 
                     io.resetCount(buf);
@@ -263,7 +267,7 @@ public abstract class PagesList extends DataStructure {
                     nextPageId = io.getNextMetaPageId(buf);
                 }
                 finally {
-                    writeUnlock(page, true);
+                    writeUnlock(page, buf, true);
                 }
             }
         }
@@ -271,14 +275,15 @@ public abstract class PagesList extends DataStructure {
 
     /**
      * @param page Page.
+     * @param buf Buffer.
      */
-    private void releaseAndClose(Page page) {
+    private void releaseAndClose(Page page, ByteBuffer buf) {
         if (page != null) {
             try {
                 // No special WAL record because we most likely changed the whole page.
                 page.fullPageWalRecordPolicy(true);
 
-                writeUnlock(page, true);
+                writeUnlock(page, buf, true);
             }
             finally {
                 page.close();
@@ -333,7 +338,7 @@ public abstract class PagesList extends DataStructure {
         long pageId = reuse ? allocatePage(null) : allocatePageNoReuse();
 
         try (Page page = page(pageId)) {
-            initPage(pageId, page, this, PagesListNodeIO.VERSIONS.latest(), wal);
+            initPage(page, this, PagesListNodeIO.VERSIONS.latest(), wal);
         }
 
         Stripe stripe = new Stripe(pageId);
@@ -457,7 +462,7 @@ public abstract class PagesList extends DataStructure {
                 long pageId = tail.tailId;
 
                 try (Page page = page(pageId)) {
-                    ByteBuffer buf = readLock(page);
+                    ByteBuffer buf = readLock(page); // No correctness guaranties.
 
                     try {
                         PagesListNodeIO io = PagesListNodeIO.VERSIONS.forPage(buf);
@@ -469,7 +474,7 @@ public abstract class PagesList extends DataStructure {
                         res += cnt;
                     }
                     finally {
-                        readUnlock(page);
+                        readUnlock(page, buf);
                     }
                 }
             }
@@ -496,7 +501,7 @@ public abstract class PagesList extends DataStructure {
             long tailId = stripe.tailId;
 
             try (Page tail = page(tailId)) {
-                ByteBuffer buf = writeLockPage(tail, bucket, lockAttempt++);
+                ByteBuffer buf = writeLockPage(tail, bucket, lockAttempt++); // Explicit check.
 
                 if (buf == null)
                     continue;
@@ -504,9 +509,6 @@ public abstract class PagesList extends DataStructure {
                 boolean ok = false;
 
                 try {
-                    if (PageIO.getPageId(buf) != tailId)
-                        continue; // Page was recycled -> retry.
-
                     PagesListNodeIO io = PageIO.getPageIO(buf);
 
                     ok = bag != null ?
@@ -524,7 +526,7 @@ public abstract class PagesList extends DataStructure {
                         return;
                 }
                 finally {
-                    writeUnlock(tail, ok);
+                    writeUnlock(tail, buf, ok);
                 }
             }
         }
@@ -609,7 +611,13 @@ public abstract class PagesList extends DataStructure {
                 wal.log(new PagesListSetNextRecord(cacheId, pageId, dataPageId));
 
             if (isWalDeltaRecordNeeded(wal, dataPage))
-                wal.log(new PagesListInitNewPageRecord(cacheId, dataPageId, pageId, 0L));
+                wal.log(new PagesListInitNewPageRecord(
+                    cacheId,
+                    dataPageId,
+                    io.getType(),
+                    io.getVersion(),
+                    dataPageId,
+                    pageId, 0L));
 
             updateTail(bucket, pageId, dataPageId);
         }
@@ -618,7 +626,9 @@ public abstract class PagesList extends DataStructure {
             long nextId = allocatePage(null);
 
             try (Page next = page(nextId)) {
-                ByteBuffer nextBuf = writeLock(next);
+                ByteBuffer nextBuf = writeLock(next); // Newly allocated page.
+
+                assert nextBuf != null;
 
                 try {
                     setupNextPage(io, pageId, buf, nextId, nextBuf);
@@ -629,10 +639,18 @@ public abstract class PagesList extends DataStructure {
                     int idx = io.addPage(nextBuf, dataPageId);
 
                     // Here we should never write full page, because it is known to be new.
-                    next.fullPageWalRecordPolicy(Boolean.FALSE);
+                    next.fullPageWalRecordPolicy(FALSE);
 
                     if (isWalDeltaRecordNeeded(wal, next))
-                        wal.log(new PagesListInitNewPageRecord(cacheId, nextId, pageId, dataPageId));
+                        wal.log(new PagesListInitNewPageRecord(
+                            cacheId,
+                            nextId,
+                            io.getType(),
+                            io.getVersion(),
+                            nextId,
+                            pageId,
+                            dataPageId
+                        ));
 
                     assert idx != -1;
 
@@ -644,7 +662,7 @@ public abstract class PagesList extends DataStructure {
                     updateTail(bucket, pageId, nextId);
                 }
                 finally {
-                    writeUnlock(next, true);
+                    writeUnlock(next, nextBuf, true);
                 }
             }
         }
@@ -676,7 +694,8 @@ public abstract class PagesList extends DataStructure {
         ByteBuffer prevBuf = buf;
         long prevId = pageId;
 
-        List<Page> locked = null;
+        List<Page> locked = null; // TODO may be unlock right away and do not keep all these pages locked?
+        List<ByteBuffer> lockedBufs = null;
 
         try {
             while ((nextId = bag.pollFreePage()) != 0L) {
@@ -684,12 +703,17 @@ public abstract class PagesList extends DataStructure {
 
                 if (idx == -1) { // Attempt to add page failed: the node page is full.
                     try (Page next = page(nextId)) {
-                        ByteBuffer nextBuf = writeLock(next);
+                        ByteBuffer nextBuf = writeLock(next); // Page from reuse bag can't be concurrently recycled.
 
-                        if (locked == null)
+                        assert nextBuf != null;
+
+                        if (locked == null) {
+                            lockedBufs = new ArrayList<>(2);
                             locked = new ArrayList<>(2);
+                        }
 
                         locked.add(next);
+                        lockedBufs.add(nextBuf);
 
                         setupNextPage(io, prevId, prevBuf, nextId, nextBuf);
 
@@ -697,10 +721,18 @@ public abstract class PagesList extends DataStructure {
                             wal.log(new PagesListSetNextRecord(cacheId, pageId, nextId));
 
                         // Here we should never write full page, because it is known to be new.
-                        next.fullPageWalRecordPolicy(Boolean.FALSE);
+                        next.fullPageWalRecordPolicy(FALSE);
 
                         if (isWalDeltaRecordNeeded(wal, next))
-                            wal.log(new PagesListInitNewPageRecord(cacheId, nextId, pageId, 0L));
+                            wal.log(new PagesListInitNewPageRecord(
+                                cacheId,
+                                nextId,
+                                io.getType(),
+                                io.getVersion(),
+                                nextId,
+                                pageId,
+                                0L
+                            ));
 
                         // Switch to this new page, which is now a part of our list
                         // to add the rest of the bag to the new page.
@@ -723,7 +755,7 @@ public abstract class PagesList extends DataStructure {
 
                 // Release write.
                 for (int i = 0; i < locked.size(); i++)
-                    writeUnlock(locked.get(i), true);
+                    writeUnlock(locked.get(i), lockedBufs.get(i), true);
             }
         }
 
@@ -750,7 +782,8 @@ public abstract class PagesList extends DataStructure {
      * @return Buffer if page is locket of {@code null} if can retry lock.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable private ByteBuffer writeLockPage(Page page, int bucket, int lockAttempt) throws IgniteCheckedException {
+    @Nullable private ByteBuffer writeLockPage(Page page, int bucket, int lockAttempt)
+        throws IgniteCheckedException {
         ByteBuffer buf = tryWriteLock(page);
 
         if (buf != null)
@@ -766,7 +799,7 @@ public abstract class PagesList extends DataStructure {
             }
         }
 
-        return lockAttempt < TRY_LOCK_ATTEMPTS ? null : writeLock(page);
+        return lockAttempt < TRY_LOCK_ATTEMPTS ? null : writeLock(page); // Must be explicitly checked further.
     }
 
     /**
@@ -787,15 +820,14 @@ public abstract class PagesList extends DataStructure {
             long tailId = stripe.tailId;
 
             try (Page tail = page(tailId)) {
-                ByteBuffer tailBuf = writeLockPage(tail, bucket, lockAttempt++);
+                ByteBuffer tailBuf = writeLockPage(tail, bucket, lockAttempt++); // Explicit check.
 
                 if (tailBuf == null)
                     continue;
 
-                try {
-                    if (getPageId(tailBuf) != tailId)
-                        continue;
+                boolean dirty = false;
 
+                try {
                     PagesListNodeIO io = PagesListNodeIO.VERSIONS.forPage(tailBuf);
 
                     if (io.getNextId(tailBuf) != 0)
@@ -807,6 +839,8 @@ public abstract class PagesList extends DataStructure {
                         if (isWalDeltaRecordNeeded(wal, tail))
                             wal.log(new PagesListRemovePageRecord(cacheId, tailId, pageId));
 
+                        dirty = true;
+
                         return pageId;
                     }
 
@@ -816,9 +850,9 @@ public abstract class PagesList extends DataStructure {
                     if (prevId != 0L) {
                         try (Page prev = page(prevId)) {
                             // Lock pages from next to previous.
-                            Boolean ok = writePage(prevId, prev, this, cutTail, null, bucket);
+                            Boolean ok = writePage(prev, this, cutTail, null, bucket, FALSE);
 
-                            assert ok;
+                            assert ok == TRUE: ok;
                         }
 
                         if (initIoVers != null) {
@@ -842,6 +876,8 @@ public abstract class PagesList extends DataStructure {
                                 wal.log(new RecycleRecord(cacheId, tail.id(), tailId));
                         }
 
+                        dirty = true;
+
                         return tailId;
                     }
 
@@ -853,7 +889,7 @@ public abstract class PagesList extends DataStructure {
                     return 0L;
                 }
                 finally {
-                    writeUnlock(tail, true);
+                    writeUnlock(tail, tailBuf, dirty);
                 }
             }
         }
@@ -881,14 +917,14 @@ public abstract class PagesList extends DataStructure {
 
             long recycleId = 0L;
 
-            ByteBuffer buf = writeLock(page);
+            ByteBuffer buf = writeLock(page); // Explicit check.
+
+            if (buf == null)
+                return false;
 
             boolean rmvd = false;
 
             try {
-                if (getPageId(buf) != pageId)
-                    return false;
-
                 PagesListNodeIO io = PagesListNodeIO.VERSIONS.forPage(buf);
 
                 rmvd = io.removePage(buf, dataPageId);
@@ -918,12 +954,12 @@ public abstract class PagesList extends DataStructure {
                     recycleId = mergeNoNext(pageId, page, buf, prevId, bucket);
             }
             finally {
-                writeUnlock(page, rmvd);
+                writeUnlock(page, buf, rmvd);
             }
 
             // Perform a fair merge after lock release (to have a correct locking order).
             if (nextId != 0L)
-                recycleId = merge(page, pageId, nextId, bucket);
+                recycleId = merge(pageId, page, nextId, bucket);
 
             if (recycleId != 0L)
                 reuseList.addForRecycle(new SingletonReuseBag(recycleId));
@@ -950,9 +986,9 @@ public abstract class PagesList extends DataStructure {
 
         if (prevId != 0L) { // Cut tail if we have a previous page.
             try (Page prev = page(prevId)) {
-                Boolean ok = writePage(prevId, prev, this, cutTail, null, bucket);
+                Boolean ok = writePage(prev, this, cutTail, null, bucket, FALSE);
 
-                assert ok; // Because we keep lock on current tail and do a world consistency check.
+                assert ok == TRUE: ok; // Because we keep lock on current tail and do a world consistency check.
             }
         }
         else // If we don't have a previous, then we are tail page of free list, just drop the stripe.
@@ -969,7 +1005,7 @@ public abstract class PagesList extends DataStructure {
      * @return Page ID to recycle.
      * @throws IgniteCheckedException If failed.
      */
-    private long merge(Page page, long pageId, long nextId, int bucket)
+    private long merge(long pageId, Page page, long nextId, int bucket)
         throws IgniteCheckedException {
         assert nextId != 0; // We should do mergeNoNext then.
 
@@ -978,20 +1014,24 @@ public abstract class PagesList extends DataStructure {
             try (Page next = nextId == 0L ? null : page(nextId)) {
                 boolean write = false;
 
-                ByteBuffer nextBuf = next == null ? null : writeLock(next);
-                ByteBuffer buf = writeLock(page);
+                ByteBuffer nextBuf = next == null ? null : writeLock(next); // Explicit check.
+                ByteBuffer buf = writeLock(page); // Explicit check.
+
+                if (buf == null) {
+                    if (nextBuf != null) // Unlock next page if needed.
+                        writeUnlock(next, nextBuf, false);
+
+                    return 0L; // Someone has merged or taken our empty page concurrently. Nothing to do here.
+                }
 
                 try {
-                    if (getPageId(buf) != pageId)
-                        return 0L; // Someone has merged or taken our empty page concurrently. Nothing to do here.
-
                     PagesListNodeIO io = PagesListNodeIO.VERSIONS.forPage(buf);
 
                     if (!io.isEmpty(buf))
                         return 0L; // No need to merge anymore.
 
                     // Check if we see a consistent state of the world.
-                    if (io.getNextId(buf) == nextId) {
+                    if (io.getNextId(buf) == nextId && (nextId == 0L) == (nextBuf == null)) {
                         long recycleId = doMerge(pageId, page, buf, io, next, nextId, nextBuf, bucket);
 
                         write = true;
@@ -1004,9 +1044,9 @@ public abstract class PagesList extends DataStructure {
                 }
                 finally {
                     if (next != null)
-                        writeUnlock(next, write);
+                        writeUnlock(next, nextBuf, write);
 
-                    writeUnlock(page, write);
+                    writeUnlock(page, buf, write);
                 }
             }
         }
@@ -1076,11 +1116,11 @@ public abstract class PagesList extends DataStructure {
         ByteBuffer nextBuf)
         throws IgniteCheckedException {
         try (Page prev = page(prevId)) {
-            ByteBuffer prevBuf = writeLock(prev);
+            ByteBuffer prevBuf = writeLock(prev); // No check, we keep a reference.
+
+            assert prevBuf != null;
 
             try {
-                assert getPageId(prevBuf) == prevId; // Because we keep a reference.
-
                 PagesListNodeIO prevIO = PagesListNodeIO.VERSIONS.forPage(prevBuf);
                 PagesListNodeIO nextIO = PagesListNodeIO.VERSIONS.forPage(nextBuf);
 
@@ -1099,7 +1139,7 @@ public abstract class PagesList extends DataStructure {
                     wal.log(new PagesListSetPreviousRecord(cacheId, nextId, prevId));
             }
             finally {
-                writeUnlock(prev, true);
+                writeUnlock(prev, prevBuf, true);
             }
         }
     }

@@ -18,7 +18,9 @@
 package org.apache.ignite.internal.processors.database;
 
 import org.apache.ignite.internal.pagemem.FullPageId;
+import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.impl.PageMemoryTestUtils;
+import org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl;
 import org.apache.ignite.internal.processors.cache.database.MetadataStorage;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.database.RootPage;
@@ -30,13 +32,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
  */
 public class MetadataStorageSelfTest extends GridCommonAbstractTest {
     /** Make sure page is small enough to trigger multiple pages in a linked list. */
-    public static final int PAGE_SIZE = 1024;
+    private static final int PAGE_SIZE = 1024;
 
     /** */
     private static File allocationPath;
@@ -57,7 +60,7 @@ public class MetadataStorageSelfTest extends GridCommonAbstractTest {
     }
 
     /**
-     * @throws Exception
+     * @throws Exception If failed.
      */
     private void metaAllocation() throws Exception {
         int[] cacheIds = new int[]{1, "partitioned".hashCode(), "replicated".hashCode()};
@@ -89,8 +92,9 @@ public class MetadataStorageSelfTest extends GridCommonAbstractTest {
                 MetadataStorage metaStore = storeMap.get(cacheId);
 
                 if (metaStore == null) {
-                    metaStore = new MetadataStorage(mem, null, cacheId, null,
-                        mem.allocatePage(cacheId, 0, PageMemory.FLAG_IDX), true);
+                    metaStore = new MetadataStorage(mem, null, new AtomicLong(), cacheId,
+                        PageIdAllocator.INDEX_PARTITION, PageMemory.FLAG_IDX,
+                        null, mem.allocatePage(cacheId, PageIdAllocator.INDEX_PARTITION, PageMemory.FLAG_IDX), true);
 
                     storeMap.put(cacheId, metaStore);
                 }
