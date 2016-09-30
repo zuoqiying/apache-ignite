@@ -133,9 +133,7 @@ export default ['igniteUiAceJava', ['JavaTransformer', (generator) => {
             master: '=',
             detail: '=',
             generator: '@',
-            cfg: '=?clusterCfg'
-        },
-        bindToController: {
+            cfg: '=?clusterCfg',
             data: '=?ngModel'
         },
         link,

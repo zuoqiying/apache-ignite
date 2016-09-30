@@ -45,9 +45,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
          * Function to generate ignite configuration.
          *
          * @param {Object} cluster Cluster to process.
+         * @param {Boolean} server
          * @return {Bean} Generated ignite configuration.
          */
-        static igniteConfiguration(cluster, serve) {
+        static igniteConfiguration(cluster, server) {
             const cfg = this.igniteConfigurationBean(cluster);
 
             this.clusterGeneral(cluster, cfg);
@@ -68,11 +69,11 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             this.clusterTime(cluster, cfg);
             this.clusterPools(cluster, cfg);
             this.clusterTransactions(cluster.transactionConfiguration, cfg);
-            this.clusterCaches(cluster, cluster.caches, cluster.igfss, serve, cfg);
+            this.clusterCaches(cluster, cluster.caches, cluster.igfss, server, cfg);
             this.clusterSsl(cluster, cfg);
 
             // TODO IGNITE-2052
-            // if (serve)
+            // if (server)
             //     $generatorSpring.igfss(cluster.igfss, res);
 
             this.clusterUserAttributes(cluster, cfg);
@@ -926,12 +927,9 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
          * @private
          */
         static _evictionPolicy(ccfg, name, src, dflt) {
-            if (_.isNil(_.get(src, 'kind')))
-                return ccfg;
-
             let bean;
 
-            switch (src.kind) {
+            switch (_.get(src, 'kind')) {
                 case 'LRU':
                     bean = new Bean('org.apache.ignite.cache.eviction.lru.LruEvictionPolicy', 'evictionPlc',
                         src.LRU, dflt.LRU);
@@ -1177,10 +1175,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         }
 
         // Generate server near cache group.
-        static cacheServerNearCache(cache, ccfg = this.cacheConfigurationBean(cache)) {
-            if (cache.cacheMode === 'PARTITIONED' && cache.nearCacheEnabled) {
+        static cacheNearServer(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            if (ccfg.valueOf('cacheMode') === 'PARTITIONED' && _.get(cache, 'nearConfiguration.enabled')) {
                 const bean = new Bean('org.apache.ignite.configuration.NearCacheConfiguration', 'nearConfiguration',
-                    cache.nearConfiguration, {nearStartSize: 375000});
+                    cache.nearConfiguration, cacheDflts.nearConfiguration);
 
                 bean.intProperty('nearStartSize');
 
@@ -1188,6 +1186,24 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                     bean.valueOf('nearEvictionPolicy'), cacheDflts.evictionPolicy);
 
                 ccfg.beanProperty('nearConfiguration', bean);
+            }
+
+            return ccfg;
+        }
+
+        // Generate client near cache group.
+        static cacheNearClient(cache, ccfg = this.cacheConfigurationBean(cache)) {
+            if (ccfg.valueOf('cacheMode') === 'PARTITIONED' && _.get(cache, 'clientNearConfiguration.enabled')) {
+                const bean = new Bean('org.apache.ignite.configuration.NearCacheConfiguration',
+                    JavaTypes.toJavaName('nearConfiguration', ccfg.valueOf('name')),
+                    cache.clientNearConfiguration, cacheDflts.clientNearConfiguration);
+
+                bean.intProperty('nearStartSize');
+
+                this._evictionPolicy(bean, 'nearEvictionPolicy',
+                    bean.valueOf('nearEvictionPolicy'), cacheDflts.evictionPolicy);
+
+                return bean;
             }
 
             return ccfg;
@@ -1211,7 +1227,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             this.cacheNodeFilter(cache, igfs ? [igfs] : [], ccfg);
             this.cacheConcurrency(cache, ccfg);
             this.cacheRebalance(cache, ccfg);
-            this.cacheServerNearCache(cache, ccfg);
+            this.cacheNearServer(cache, ccfg);
             this.cacheStatistics(cache, ccfg);
             // this.cacheDomains(cache.domains, cfg);
 

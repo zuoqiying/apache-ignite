@@ -330,8 +330,17 @@ export default class AbstractTransformer {
     }
 
     // Generate server near cache group.
-    static cacheServerNearCache(cache, sb = new StringBuilder()) {
-        const cfg = this.generator.cacheServerNearCache(cache);
+    static cacheNearServer(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheNearServer(cache);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
+    // Generate client near cache group.
+    static cacheNearClient(cache, sb = new StringBuilder()) {
+        const cfg = this.generator.cacheNearClient(cache);
 
         this._setProperties(sb, cfg);
 
@@ -395,6 +404,7 @@ export default class AbstractTransformer {
                         return true;
 
                     break;
+                case 'DATASOURCE':
                 case 'PROPERTY':
                 case 'PROPERTYCHAR':
                     return true;
@@ -409,8 +419,14 @@ export default class AbstractTransformer {
      * @param {Bean} bean
      */
     static collectDataSources(bean) {
-        return _.reduce(bean.properties, (acc, prop) => {
+        const dataSources = _.reduce(bean.properties, (acc, prop) => {
             switch (prop.clsName.toUpperCase()) {
+                case 'ARRAY':
+                case 'VARARG':
+                    if (this._isBean(prop.typeClsName))
+                        _.forEach(prop.items, (item) => acc.push(...this.collectDataSources(item)));
+
+                    break;
                 case 'BEAN':
                     acc.push(...this.collectDataSources(prop.value));
 
@@ -424,5 +440,7 @@ export default class AbstractTransformer {
 
             return acc;
         }, []);
+
+        return _.uniqBy(dataSources, (ds) => ds.id);
     }
 }

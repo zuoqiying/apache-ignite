@@ -226,10 +226,11 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
          * Build final XML.
          *
          * @param {Object} cluster
+         * @param {Boolean} client
          * @returns {StringBuilder}
          */
-        static cluster(cluster) {
-            const cfg = generator.igniteConfiguration(cluster);
+        static igniteConfiguration(cluster, client) {
+            const cfg = generator.igniteConfiguration(cluster, client);
             const sb = new StringBuilder();
 
             // 0. Add header.
@@ -273,13 +274,25 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 });
             }
 
+            if (client) {
+                const nearCaches = _.filter(cluster.caches, (cache) => _.get(cache, 'clientNearConfiguration.enabled'));
+
+                _.forEach(nearCaches, (cache) => {
+                    this.comment(sb, 'Configuration of near cache for cache "' + cache.name + '"');
+
+                    this.appendBean(sb, generator.cacheNearClient(cache), true);
+
+                    sb.emptyLine();
+                });
+            }
+
             // 3. Add main content.
             this.appendBean(sb, cfg);
 
             // 4. Close beans section.
             sb.endBlock('</beans>');
 
-            return sb.asString();
+            return sb;
         }
     };
 }];
