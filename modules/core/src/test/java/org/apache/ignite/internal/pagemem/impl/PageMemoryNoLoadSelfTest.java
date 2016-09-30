@@ -169,8 +169,6 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
     public void testPageIdRotation() throws Exception {
         PageMemory mem = memory();
 
-        mem.start();
-
         try {
             int pages = 5;
 
