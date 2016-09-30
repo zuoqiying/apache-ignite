@@ -1122,6 +1122,19 @@ public abstract class GridUnsafe {
     }
 
     /**
+     * Reference CAS
+     *
+     * @param obj Object.
+     * @param off Offset.
+     * @param exp Expected.
+     * @param upd Upd.
+     * @return {@code True} if operation completed successfully, {@code false} - otherwise.
+     */
+    public static boolean compareAndSwapObject(Object obj, long off, Object exp, Object upd) {
+        return UNSAFE.compareAndSwapObject(obj, off, exp, upd);
+    }
+
+    /**
      * Gets byte value with volatile semantic.
      *
      * @param obj Object.

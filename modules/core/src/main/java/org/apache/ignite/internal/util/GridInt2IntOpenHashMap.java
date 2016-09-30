@@ -16,7 +16,6 @@
 
 package org.apache.ignite.internal.util;
 
-
 import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Iterator;
@@ -29,6 +28,8 @@ import java.util.RandomAccess;
 import java.util.Set;
 
 /**
+ * Copy-paste of it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap (and other necessary classes) from fastutil project
+ *
  * A type-specific hash map with a fast, small-footprint implementation.
  *
  * <P>
@@ -43,92 +44,99 @@ import java.util.Set;
  * Note that {@link #clear()} does not modify the hash table size. Rather, a
  * family of {@linkplain #trim() trimming methods} lets you control the size of
  * the table; this is particularly useful if you reuse instances of this class.
- *
  */
-
-public class GridInt2IntOpenHashMap
+@SuppressWarnings("CommentAbsent") public class GridInt2IntOpenHashMap
     implements java.io.Serializable, Cloneable, Int2IntMap {
     /** 2<sup>32</sup> &middot; &phi;, &phi; = (&#x221A;5 &minus; 1)/2. */
     private static final int INT_PHI = 0x9E3779B9;
+
     /**
-     * The default return value for <code>get()</code>, <code>put()</code> and
-     * <code>remove()</code>.
-     */
-
-    protected int defRetValue;
-
-    /** Returns the least power of two smaller than or equal to 2<sup>30</sup> and larger than or equal to <code>Math.ceil( expected / f )</code>.
+     * Returns the least power of two smaller than or equal to 2<sup>30</sup> and larger than or equal to
+     * <code>Math.ceil( expected / f )</code>.
      *
      * @param expected the expected number of elements in a hash table.
      * @param f the load factor.
      * @return the minimum possible size for a backing array.
      * @throws IllegalArgumentException if the necessary size is larger than 2<sup>30</sup>.
      */
-    public static int arraySize( final int expected, final float f ) {
-        final long s = Math.max( 2, nextPowerOfTwo( (long)Math.ceil( expected / f ) ) );
-        if ( s > (1 << 30) ) throw new IllegalArgumentException( "Too large (" + expected + " expected elements with load factor " + f + ")" );
+    static int arraySize(final int expected, final float f) {
+        final long s = Math.max(2, nextPowerOfTwo((long)Math.ceil(expected / f)));
+        if (s > (1 << 30))
+            throw new IllegalArgumentException("Too large (" + expected + " expected elements with load factor " + f + ")");
         return (int)s;
     }
 
-    /** Return the least power of two greater than or equal to the specified value.
+    /**
+     * Return the least power of two greater than or equal to the specified value.
      *
      * <p>Note that this function will return 1 when the argument is 0.
      *
      * @param x a long integer smaller than or equal to 2<sup>62</sup>.
      * @return the least power of two greater than or equal to the specified value.
      */
-    public static long nextPowerOfTwo( long x ) {
-        if ( x == 0 ) return 1;
+    static long nextPowerOfTwo(long x) {
+        if (x == 0)
+            return 1;
         x--;
         x |= x >> 1;
         x |= x >> 2;
         x |= x >> 4;
         x |= x >> 8;
         x |= x >> 16;
-        return ( x | x >> 32 ) + 1;
+        return (x | x >> 32) + 1;
     }
 
-    /** Return the least power of two greater than or equal to the specified value.
+    /**
+     * Return the least power of two greater than or equal to the specified value.
      *
      * <p>Note that this function will return 1 when the argument is 0.
      *
      * @param x an integer smaller than or equal to 2<sup>30</sup>.
      * @return the least power of two greater than or equal to the specified value.
      */
-    public static int nextPowerOfTwo( int x ) {
-        if ( x == 0 ) return 1;
+    static int nextPowerOfTwo(int x) {
+        if (x == 0)
+            return 1;
         x--;
         x |= x >> 1;
         x |= x >> 2;
         x |= x >> 4;
         x |= x >> 8;
-        return ( x | x >> 16 ) + 1;
+        return (x | x >> 16) + 1;
     }
 
-    /** Quickly mixes the bits of an integer.
+    /**
+     * Quickly mixes the bits of an integer.
      *
      * @param x an integer.
      * @return a hash value obtained by mixing the bits of {@code x}.
      */
-    public final static int mix( final int x ) {
+    static int mix(final int x) {
         final int h = x * INT_PHI;
         return h ^ (h >>> 16);
     }
 
-    /** Returns the maximum number of entries that can be filled before rehashing.
+    /**
+     * Returns the maximum number of entries that can be filled before rehashing.
      *
      * @param n the size of the backing array.
      * @param f the load factor.
      * @return the maximum number of entries before rehashing.
      */
-    public static int maxFill( final int n, final float f ) {
-		/* We must guarantee that there is always at least
+    static int maxFill(final int n, final float f) {
+        /* We must guarantee that there is always at least
 		 * one free entry (even with pathological load factors). */
-        return Math.min( (int)Math.ceil( n * f ), n - 1 );
+        return Math.min((int)Math.ceil(n * f), n - 1);
     }
 
     private static final long serialVersionUID = 0L;
     private static final boolean ASSERTS = false;
+
+    /**
+     * The default return value for <code>get()</code>, <code>put()</code> and
+     * <code>remove()</code>.
+     */
+    private int defRetValue;
 
     /** The array of keys. */
     protected transient int[] key;
@@ -163,6 +171,7 @@ public class GridInt2IntOpenHashMap
 
     /** Cached collection of values. */
     protected transient IntCollection values;
+
     /**
      * Creates a new hash map.
      *
@@ -170,10 +179,8 @@ public class GridInt2IntOpenHashMap
      * The actual table size will be the least power of two greater than
      * <code>expected</code>/<code>f</code>.
      *
-     * @param expected
-     *            the expected number of elements in the hash set.
-     * @param f
-     *            the load factor.
+     * @param expected the expected number of elements in the hash set.
+     * @param f the load factor.
      */
 
     public GridInt2IntOpenHashMap(final int expected, final float f) {
@@ -194,17 +201,18 @@ public class GridInt2IntOpenHashMap
         value = new int[n + 1];
 
     }
+
     /**
      * Creates a new hash map with DEFAULT_LOAD_FACTOR as load
      * factor.
      *
-     * @param expected
-     *            the expected number of elements in the hash map.
+     * @param expected the expected number of elements in the hash map.
      */
 
     public GridInt2IntOpenHashMap(final int expected) {
         this(expected, .75f);
     }
+
     /**
      * Creates a new hash map with initial expected
      * DEFAULT_INITIAL_SIZE entries and
@@ -214,13 +222,12 @@ public class GridInt2IntOpenHashMap
     public GridInt2IntOpenHashMap() {
         this(16, .75f);
     }
+
     /**
      * Creates a new hash map copying a given one.
      *
-     * @param m
-     *            a {@link Map} to be copied into the new hash map.
-     * @param f
-     *            the load factor.
+     * @param m a {@link Map} to be copied into the new hash map.
+     * @param f the load factor.
      */
 
     public GridInt2IntOpenHashMap(
@@ -228,12 +235,12 @@ public class GridInt2IntOpenHashMap
         this(m.size(), f);
         putAll(m);
     }
+
     /**
      * Creates a new hash map with DEFAULT_LOAD_FACTOR as load
      * factor copying a given one.
      *
-     * @param m
-     *            a {@link Map} to be copied into the new hash map.
+     * @param m a {@link Map} to be copied into the new hash map.
      */
 
     public GridInt2IntOpenHashMap(final Map<? extends Integer, ? extends Integer> m) {
@@ -243,14 +250,10 @@ public class GridInt2IntOpenHashMap
     /**
      * Creates a new hash map using the elements of two parallel arrays.
      *
-     * @param k
-     *            the array of keys of the new hash map.
-     * @param v
-     *            the array of corresponding values in the new hash map.
-     * @param f
-     *            the load factor.
-     * @throws IllegalArgumentException
-     *             if <code>k</code> and <code>v</code> have different lengths.
+     * @param k the array of keys of the new hash map.
+     * @param v the array of corresponding values in the new hash map.
+     * @param f the load factor.
+     * @throws IllegalArgumentException if <code>k</code> and <code>v</code> have different lengths.
      */
 
     public GridInt2IntOpenHashMap(final int[] k, final int[] v, final float f) {
@@ -262,61 +265,60 @@ public class GridInt2IntOpenHashMap
         for (int i = 0; i < k.length; i++)
             this.put(k[i], v[i]);
     }
+
     /**
      * Creates a new hash map with DEFAULT_LOAD_FACTOR as load
      * factor using the elements of two parallel arrays.
      *
-     * @param k
-     *            the array of keys of the new hash map.
-     * @param v
-     *            the array of corresponding values in the new hash map.
-     * @throws IllegalArgumentException
-     *             if <code>k</code> and <code>v</code> have different lengths.
+     * @param k the array of keys of the new hash map.
+     * @param v the array of corresponding values in the new hash map.
+     * @throws IllegalArgumentException if <code>k</code> and <code>v</code> have different lengths.
      */
 
     public GridInt2IntOpenHashMap(final int[] k, final int[] v) {
         this(k, v, .75f);
     }
+
     private int realSize() {
         return containsNullKey ? size - 1 : size;
     }
 
-    private void ensureCapacity(final int capacity) {
-        final int needed = arraySize(capacity, f);
+    private void ensureCapacity(final int cap) {
+        final int needed = arraySize(cap, f);
         if (needed > n)
             rehash(needed);
     }
 
-    private void tryCapacity(final long capacity) {
-        final int needed = (int) Math.min(
+    private void tryCapacity(final long cap) {
+        final int needed = (int)Math.min(
             1 << 30,
-            Math.max(2, nextPowerOfTwo((long) Math.ceil(capacity
+            Math.max(2, nextPowerOfTwo((long)Math.ceil(cap
                 / f))));
         if (needed > n)
             rehash(needed);
     }
 
     private int removeEntry(final int pos) {
-        final int oldValue = value[pos];
+        final int oldVal = value[pos];
 
         size--;
 
         shiftKeys(pos);
         if (size < maxFill / 4 && n > 16)
             rehash(n / 2);
-        return oldValue;
+        return oldVal;
     }
 
     private int removeNullEntry() {
         containsNullKey = false;
 
-        final int oldValue = value[n];
+        final int oldVal = value[n];
 
         size--;
 
         if (size < maxFill / 4 && n > 16)
             rehash(n / 2);
-        return oldValue;
+        return oldVal;
     }
 
     /** {@inheritDoc} */
@@ -356,7 +358,8 @@ public class GridInt2IntOpenHashMap
                 return n;
             containsNullKey = true;
             pos = n;
-        } else {
+        }
+        else {
             int curr;
             final int[] key = this.key;
 
@@ -384,9 +387,9 @@ public class GridInt2IntOpenHashMap
         final int pos = insert(k, v);
         if (pos < 0)
             return defRetValue;
-        final int oldValue = value[pos];
+        final int oldVal = value[pos];
         value[pos] = v;
-        return oldValue;
+        return oldVal;
     }
 
     /**
@@ -395,8 +398,7 @@ public class GridInt2IntOpenHashMap
      * @deprecated Please use the corresponding type-specific method instead.
      */
     @Deprecated
-    @Override
-    public Integer put(final Integer ok, final Integer ov) {
+    @Override public Integer put(final Integer ok, final Integer ov) {
         final int v = ((ov).intValue());
 
         final int pos = insert(((ok).intValue()), v);
@@ -408,11 +410,11 @@ public class GridInt2IntOpenHashMap
     }
 
     private int addToValue(final int pos, final int incr) {
-        final int oldValue = value[pos];
+        final int oldVal = value[pos];
 
-        value[pos] = oldValue + incr;
+        value[pos] = oldVal + incr;
 
-        return oldValue;
+        return oldVal;
     }
 
     /**
@@ -424,12 +426,10 @@ public class GridInt2IntOpenHashMap
      * currently appears in the map, the key will be associated with the default
      * return value plus the given increment.
      *
-     * @param k
-     *            the key.
-     * @param incr
-     *            the increment.
-     * @return the old value, or the {@linkplain #defaultReturnValue() default
-     *         return value} if no value was present for the given key.
+     * @param k the key.
+     * @param incr the increment.
+     * @return the old value, or the {@linkplain #defaultReturnValue() default return value} if no value was present for
+     * the given key.
      */
     public int addTo(final int k, final int incr) {
         int pos;
@@ -439,7 +439,8 @@ public class GridInt2IntOpenHashMap
                 return addToValue(n, incr);
             pos = n;
             containsNullKey = true;
-        } else {
+        }
+        else {
             int curr;
             final int[] key = this.key;
 
@@ -468,8 +469,7 @@ public class GridInt2IntOpenHashMap
      * Shifts left entries with the specified hash code, starting at the
      * specified position, and empties the resulting free entry.
      *
-     * @param pos
-     *            a starting position.
+     * @param pos a starting position.
      */
     protected final void shiftKeys(int pos) {
         // Shift entries with the same hash.
@@ -477,10 +477,10 @@ public class GridInt2IntOpenHashMap
         int curr;
         final int[] key = this.key;
 
-        for (;;) {
+        for (; ; ) {
             pos = ((last = pos) + 1) & mask;
 
-            for (;;) {
+            for (; ; ) {
                 if (((curr = key[pos]) == (0))) {
                     key[last] = (0);
 
@@ -530,9 +530,8 @@ public class GridInt2IntOpenHashMap
      * @deprecated Please use the corresponding type-specific method instead.
      */
     @Deprecated
-    @Override
-    public Integer remove(final Object ok) {
-        final int k = ((((Integer) (ok)).intValue()));
+    @Override public Integer remove(final Object ok) {
+        final int k = ((((Integer)(ok)).intValue()));
         if (((k) == (0))) {
             if (containsNullKey)
                 return (Integer.valueOf(removeNullEntry()));
@@ -556,6 +555,7 @@ public class GridInt2IntOpenHashMap
                 return (Integer.valueOf(removeEntry(pos)));
         }
     }
+
     /** @deprecated Please use the corresponding type-specific method instead. */
     @Deprecated
     public Integer get(final Integer ok) {
@@ -636,7 +636,7 @@ public class GridInt2IntOpenHashMap
         final int key[] = this.key;
         if (containsNullKey && ((value[n]) == (v)))
             return true;
-        for (int i = n; i-- != 0;)
+        for (int i = n; i-- != 0; )
             if (!((key[i]) == (0)) && ((value[i]) == (v)))
                 return true;
         return false;
@@ -669,10 +669,8 @@ public class GridInt2IntOpenHashMap
     /**
      * A no-op for backward compatibility.
      *
-     * @param growthFactor
-     *            unused.
-     * @deprecated Since <code>fastutil</code> 6.1.0, hash tables are doubled
-     *             when they are too full.
+     * @param growthFactor unused.
+     * @deprecated Since <code>fastutil</code> 6.1.0, hash tables are doubled when they are too full.
      */
     @Deprecated
     public void growthFactor(int growthFactor) {
@@ -683,8 +681,7 @@ public class GridInt2IntOpenHashMap
      *
      * @return the growth factor of this set, which is fixed (2).
      * @see #growthFactor(int)
-     * @deprecated Since <code>fastutil</code> 6.1.0, hash tables are doubled
-     *             when they are too full.
+     * @deprecated Since <code>fastutil</code> 6.1.0, hash tables are doubled when they are too full.
      */
     @Deprecated
     public int growthFactor() {
@@ -694,7 +691,7 @@ public class GridInt2IntOpenHashMap
     public boolean containsValue(Object ov) {
         if (ov == null)
             return false;
-        return containsValue(((((Integer) (ov)).intValue())));
+        return containsValue(((((Integer)(ov)).intValue())));
     }
 
     public void defaultReturnValue(final int rv) {
@@ -708,7 +705,7 @@ public class GridInt2IntOpenHashMap
     public boolean containsKey(final Object ok) {
         if (ok == null)
             return false;
-        return containsKey(((((Integer) (ok)).intValue())));
+        return containsKey(((((Integer)(ok)).intValue())));
     }
 
     /**
@@ -729,13 +726,13 @@ public class GridInt2IntOpenHashMap
         if (ok == null)
             return null;
 
-        final int k = ((((Integer) (ok)).intValue()));
+        final int k = ((((Integer)(ok)).intValue()));
         return containsKey(k) ? (Integer.valueOf(get(k))) : null;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ObjectSet<Map.Entry<Integer, Integer>> entrySet() {
-        return (ObjectSet) int2IntEntrySet();
+        return (ObjectSet)int2IntEntrySet();
     }
 
     public boolean equals(Object o) {
@@ -744,7 +741,7 @@ public class GridInt2IntOpenHashMap
         if (!(o instanceof Map))
             return false;
 
-        Map<?, ?> m = (Map<?, ?>) o;
+        Map<?, ?> m = (Map<?, ?>)o;
         if (m.size() != size())
             return false;
         return entrySet().containsAll(m.entrySet());
@@ -766,7 +763,7 @@ public class GridInt2IntOpenHashMap
             else
                 s.append(", ");
 
-            e = (Entry) i.next();
+            e = (Entry)i.next();
 
             s.append(String.valueOf(e.getIntKey()));
             s.append("=>");
@@ -803,8 +800,7 @@ public class GridInt2IntOpenHashMap
         /**
          * {@inheritDoc}
          *
-         * @deprecated Please use the corresponding type-specific method
-         *             instead.
+         * @deprecated Please use the corresponding type-specific method instead.
          */
         @Deprecated
         public Integer getKey() {
@@ -818,8 +814,7 @@ public class GridInt2IntOpenHashMap
         /**
          * {@inheritDoc}
          *
-         * @deprecated Please use the corresponding type-specific method
-         *             instead.
+         * @deprecated Please use the corresponding type-specific method instead.
          */
         @Deprecated
         public Integer getValue() {
@@ -844,7 +839,7 @@ public class GridInt2IntOpenHashMap
         public boolean equals(final Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
-            Map.Entry<Integer, Integer> e = (Map.Entry<Integer, Integer>) o;
+            Map.Entry<Integer, Integer> e = (Map.Entry<Integer, Integer>)o;
 
             return ((key[index]) == (((e.getKey()).intValue())))
                 && ((value[index]) == (((e.getValue()).intValue())));
@@ -870,14 +865,10 @@ public class GridInt2IntOpenHashMap
      * elements is returned (it may be less than <code>max</code> if the
      * iterator emits less than <code>max</code> elements).
      *
-     * @param i
-     *            a type-specific iterator.
-     * @param array
-     *            an array to contain the output of the iterator.
-     * @param offset
-     *            the first element of the array to be returned.
-     * @param max
-     *            the maximum number of elements to unwrap.
+     * @param i a type-specific iterator.
+     * @param array an array to contain the output of the iterator.
+     * @param offset the first element of the array to be returned.
+     * @param max the maximum number of elements to unwrap.
      * @return the number of elements unwrapped.
      */
     public static <K> int unwrap(final Iterator<? extends K> i,
@@ -902,10 +893,8 @@ public class GridInt2IntOpenHashMap
      * iterator has no more elements or when the end of the array has been
      * reached.
      *
-     * @param i
-     *            a type-specific iterator.
-     * @param array
-     *            an array to contain the output of the iterator.
+     * @param i a type-specific iterator.
+     * @param array an array to contain the output of the iterator.
      * @return the number of elements unwrapped.
      */
     public static <K> int unwrap(final Iterator<? extends K> i, final K array[]) {
@@ -960,7 +949,7 @@ public class GridInt2IntOpenHashMap
 
             final int key[] = GridInt2IntOpenHashMap.this.key;
 
-            for (;;) {
+            for (; ; ) {
                 if (--pos < 0) {
                     // We are just enumerating elements from the wrapped list.
                     last = Integer.MIN_VALUE;
@@ -979,8 +968,7 @@ public class GridInt2IntOpenHashMap
          * Shifts left entries with the specified hash code, starting at the
          * specified position, and empties the resulting free entry.
          *
-         * @param pos
-         *            a starting position.
+         * @param pos a starting position.
          */
         private final void shiftKeys(int pos) {
             // Shift entries with the same hash.
@@ -988,10 +976,10 @@ public class GridInt2IntOpenHashMap
             int curr;
             final int[] key = GridInt2IntOpenHashMap.this.key;
 
-            for (;;) {
+            for (; ; ) {
                 pos = ((last = pos) + 1) & mask;
 
-                for (;;) {
+                for (; ; ) {
                     if (((curr = key[pos]) == (0))) {
                         key[last] = (0);
 
@@ -1022,7 +1010,8 @@ public class GridInt2IntOpenHashMap
             if (last == n) {
                 containsNullKey = false;
 
-            } else if (pos >= 0)
+            }
+            else if (pos >= 0)
                 shiftKeys(last);
             else {
                 // We're removing wrapped entries.
@@ -1067,19 +1056,19 @@ public class GridInt2IntOpenHashMap
         implements
         ObjectIterator<Int2IntMap.Entry> {
         private final MapEntry entry = new MapEntry();
+
         public MapEntry next() {
             entry.index = nextEntry();
             return entry;
         }
     }
+
     private final class MapEntrySet extends AbstractCollection<Entry>
         implements
         Cloneable, ObjectSet<Entry>, Collection<Entry>, Iterable<Entry> {
 
         protected MapEntrySet() {
         }
-
-
 
         public ObjectIterator<Int2IntMap.Entry> iterator() {
             return new EntryIterator();
@@ -1092,7 +1081,7 @@ public class GridInt2IntOpenHashMap
         public boolean contains(final Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
-            final Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
+            final Map.Entry<?, ?> e = (Map.Entry<?, ?>)o;
 
             if (e.getKey() == null || !(e.getKey() instanceof Integer))
                 return false;
@@ -1100,8 +1089,8 @@ public class GridInt2IntOpenHashMap
             if (e.getValue() == null || !(e.getValue() instanceof Integer))
                 return false;
 
-            final int k = ((((Integer) (e.getKey())).intValue()));
-            final int v = ((((Integer) (e.getValue())).intValue()));
+            final int k = ((((Integer)(e.getKey())).intValue()));
+            final int v = ((((Integer)(e.getValue())).intValue()));
 
             if (((k) == (0)))
                 return GridInt2IntOpenHashMap.this.containsNullKey
@@ -1129,7 +1118,7 @@ public class GridInt2IntOpenHashMap
         public boolean remove(final Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
-            final Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
+            final Map.Entry<?, ?> e = (Map.Entry<?, ?>)o;
 
             if (e.getKey() == null || !(e.getKey() instanceof Integer))
                 return false;
@@ -1137,8 +1126,8 @@ public class GridInt2IntOpenHashMap
             if (e.getValue() == null || !(e.getValue() instanceof Integer))
                 return false;
 
-            final int k = ((((Integer) (e.getKey())).intValue()));
-            final int v = ((((Integer) (e.getValue())).intValue()));
+            final int k = ((((Integer)(e.getKey())).intValue()));
+            final int v = ((((Integer)(e.getValue())).intValue()));
 
             if (((k) == (0))) {
                 if (containsNullKey && ((value[n]) == (v))) {
@@ -1190,7 +1179,7 @@ public class GridInt2IntOpenHashMap
             if (!(o instanceof Set))
                 return false;
 
-            Set<?> s = (Set<?>) o;
+            Set<?> s = (Set<?>)o;
             if (s.size() != size())
                 return false;
             return containsAll(s);
@@ -1228,7 +1217,7 @@ public class GridInt2IntOpenHashMap
         public <T> T[] toArray(T[] a) {
             final int size = size();
             if (a.length < size)
-                a = (T[]) java.lang.reflect.Array.newInstance(a.getClass()
+                a = (T[])java.lang.reflect.Array.newInstance(a.getClass()
                     .getComponentType(), size);
             unwrap(iterator(), a);
             if (size < a.length)
@@ -1239,10 +1228,8 @@ public class GridInt2IntOpenHashMap
         /**
          * Adds all elements of the given collection to this collection.
          *
-         * @param c
-         *            a collection.
-         * @return <code>true</code> if this collection changed as a result of the
-         *         call.
+         * @param c a collection.
+         * @return <code>true</code> if this collection changed as a result of the call.
          */
 
         public boolean addAll(Collection<? extends Entry> c) {
@@ -1271,10 +1258,8 @@ public class GridInt2IntOpenHashMap
          * Checks whether this collection contains all elements from the given
          * collection.
          *
-         * @param c
-         *            a collection.
-         * @return <code>true</code> if this collection contains all elements of the
-         *         argument.
+         * @param c a collection.
+         * @return <code>true</code> if this collection contains all elements of the argument.
          */
 
         public boolean containsAll(Collection<?> c) {
@@ -1291,10 +1276,8 @@ public class GridInt2IntOpenHashMap
         /**
          * Retains in this collection only elements from the given collection.
          *
-         * @param c
-         *            a collection.
-         * @return <code>true</code> if this collection changed as a result of the
-         *         call.
+         * @param c a collection.
+         * @return <code>true</code> if this collection changed as a result of the call.
          */
 
         public boolean retainAll(Collection<?> c) {
@@ -1316,10 +1299,8 @@ public class GridInt2IntOpenHashMap
          * Remove from this collection all elements in the given collection. If the
          * collection is an instance of this class, it uses faster iterators.
          *
-         * @param c
-         *            a collection.
-         * @return <code>true</code> if this collection changed as a result of the
-         *         call.
+         * @param c a collection.
+         * @return <code>true</code> if this collection changed as a result of the call.
          */
 
         public boolean removeAll(Collection<?> c) {
@@ -1386,6 +1367,7 @@ public class GridInt2IntOpenHashMap
         public KeyIterator() {
             super();
         }
+
         public int nextInt() {
             return key[nextEntry()];
         }
@@ -1429,7 +1411,7 @@ public class GridInt2IntOpenHashMap
             if (!(o instanceof Set))
                 return false;
 
-            Set<?> s = (Set<?>) o;
+            Set<?> s = (Set<?>)o;
             if (s.size() != size())
                 return false;
             return containsAll(s);
@@ -1459,7 +1441,7 @@ public class GridInt2IntOpenHashMap
 
         /** Delegates to the corresponding type-specific method. */
         public boolean remove(final Object o) {
-            return remove(((((Integer) (o)).intValue())));
+            return remove(((((Integer)(o)).intValue())));
         }
     }
 
@@ -1486,6 +1468,7 @@ public class GridInt2IntOpenHashMap
         public ValueIterator() {
             super();
         }
+
         public int nextInt() {
             return value[nextEntry()];
         }
@@ -1493,8 +1476,7 @@ public class GridInt2IntOpenHashMap
         /**
          * {@inheritDoc}
          *
-         * @deprecated Please use the corresponding type-specific method
-         *             instead.
+         * @deprecated Please use the corresponding type-specific method instead.
          */
         @Deprecated
         @Override
@@ -1568,7 +1550,8 @@ public class GridInt2IntOpenHashMap
             return true;
         try {
             rehash(l);
-        } catch (OutOfMemoryError cantDoIt) {
+        }
+        catch (OutOfMemoryError cantDoIt) {
             return false;
         }
         return true;
@@ -1590,19 +1573,19 @@ public class GridInt2IntOpenHashMap
      * you can call this method with a typical size to avoid keeping around a
      * very large table just because of a few large transient maps.
      *
-     * @param n
-     *            the threshold for the trimming.
+     * @param n the threshold for the trimming.
      * @return true if there was enough memory to trim the map.
      * @see #trim()
      */
 
     public boolean trim(final int n) {
-        final int l = nextPowerOfTwo((int) Math.ceil(n / f));
+        final int l = nextPowerOfTwo((int)Math.ceil(n / f));
         if (l >= n || size > maxFill(l, f))
             return true;
         try {
             rehash(l);
-        } catch (OutOfMemoryError cantDoIt) {
+        }
+        catch (OutOfMemoryError cantDoIt) {
             return false;
         }
         return true;
@@ -1617,8 +1600,7 @@ public class GridInt2IntOpenHashMap
      * disk-based rehashing). However, you should not override this method
      * unless you understand the internal workings of this class.
      *
-     * @param newN
-     *            the new size
+     * @param newN the new size
      */
 
     protected void rehash(final int newN) {
@@ -1631,12 +1613,14 @@ public class GridInt2IntOpenHashMap
         final int newValue[] = new int[newN + 1];
         int i = n, pos;
 
-        for (int j = realSize(); j-- != 0;) {
-            while (((key[--i]) == (0)));
+        for (int j = realSize(); j-- != 0; ) {
+            while (((key[--i]) == (0)))
+                ;
 
             if (!((newKey[pos = (mix((key[i])))
                 & mask]) == (0)))
-                while (!((newKey[pos = (pos + 1) & mask]) == (0)));
+                while (!((newKey[pos = (pos + 1) & mask]) == (0)))
+                    ;
 
             newKey[pos] = key[i];
             newValue[pos] = value[i];
@@ -1665,8 +1649,9 @@ public class GridInt2IntOpenHashMap
     public GridInt2IntOpenHashMap clone() {
         GridInt2IntOpenHashMap c;
         try {
-            c = (GridInt2IntOpenHashMap) super.clone();
-        } catch (CloneNotSupportedException cantHappen) {
+            c = (GridInt2IntOpenHashMap)super.clone();
+        }
+        catch (CloneNotSupportedException cantHappen) {
             throw new InternalError();
         }
 
@@ -1694,7 +1679,7 @@ public class GridInt2IntOpenHashMap
 
     public int hashCode() {
         int h = 0;
-        for (int j = realSize(), i = 0, t = 0; j-- != 0;) {
+        for (int j = realSize(), i = 0, t = 0; j-- != 0; ) {
             while (((key[i]) == (0)))
                 i++;
 
@@ -1718,7 +1703,7 @@ public class GridInt2IntOpenHashMap
 
         s.defaultWriteObject();
 
-        for (int j = size, e; j-- != 0;) {
+        for (int j = size, e; j-- != 0; ) {
             e = i.nextEntry();
             s.writeInt(key[e]);
             s.writeInt(value[e]);
@@ -1739,7 +1724,7 @@ public class GridInt2IntOpenHashMap
         int k;
         int v;
 
-        for (int i = size, pos; i-- != 0;) {
+        for (int i = size, pos; i-- != 0; ) {
 
             k = s.readInt();
             v = s.readInt();
@@ -1747,7 +1732,8 @@ public class GridInt2IntOpenHashMap
             if (((k) == (0))) {
                 pos = n;
                 containsNullKey = true;
-            } else {
+            }
+            else {
                 pos = (mix((k))) & mask;
                 while (!((key[pos]) == (0)))
                     pos = (pos + 1) & mask;
@@ -1759,6 +1745,7 @@ public class GridInt2IntOpenHashMap
         if (ASSERTS)
             checkTable();
     }
+
     private void checkTable() {
     }
 }
@@ -1810,8 +1797,7 @@ interface IntCollection extends Collection<Integer>, Iterable<Integer> {
      * Returns a type-specific iterator on this elements of this collection.
      *
      * @see #iterator()
-     * @deprecated As of <code>fastutil</code> 5, replaced by
-     *             {@link #iterator()}.
+     * @deprecated As of <code>fastutil</code> 5, replaced by {@link #iterator()}.
      */
     @Deprecated
     IntIterator intIterator();
@@ -1826,9 +1812,7 @@ interface IntCollection extends Collection<Integer>, Iterable<Integer> {
      * elements of this collection: no special value will be added after the
      * last one.
      *
-     * @param a
-     *            if this array is big enough, it will be used to store this
-     *            collection.
+     * @param a if this array is big enough, it will be used to store this collection.
      * @return a primitive type array containing the items of this collection.
      * @see Collection#toArray(Object[])
      */
@@ -1855,9 +1839,7 @@ interface IntCollection extends Collection<Integer>, Iterable<Integer> {
      * methods just writes all elements of this collection: no special value
      * will be added after the last one.
      *
-     * @param a
-     *            if this array is big enough, it will be used to store this
-     *            collection.
+     * @param a if this array is big enough, it will be used to store this collection.
      * @return a primitive type array containing the items of this collection.
      * @see Collection#toArray(Object[])
      */
@@ -1871,9 +1853,7 @@ interface IntCollection extends Collection<Integer>, Iterable<Integer> {
      * methods just writes all elements of this collection: no special value
      * will be added after the last one.
      *
-     * @param a
-     *            if this array is big enough, it will be used to store this
-     *            collection.
+     * @param a if this array is big enough, it will be used to store this collection.
      * @return a primitive type array containing the items of this collection.
      * @see Collection#toArray(Object[])
      */
@@ -1936,8 +1916,7 @@ interface IntIterator extends Iterator<Integer> {
      * {@link #next()} for <code>n</code> times (possibly stopping if
      * {@link #hasNext()} becomes false).
      *
-     * @param n
-     *            the number of elements to skip.
+     * @param n the number of elements to skip.
      * @return the number of elements actually skipped.
      * @see Iterator#next()
      */
@@ -1950,12 +1929,10 @@ interface Int2IntMap extends Map<Integer, Integer> {
     /**
      * Adds a pair to the map.
      *
-     * @param key
-     *            the key.
-     * @param value
-     *            the value.
-     * @return the old value, or the {@linkplain #defaultReturnValue() default
-     *         return value} if no value was present for the given key.
+     * @param key the key.
+     * @param value the value.
+     * @return the old value, or the {@linkplain #defaultReturnValue() default return value} if no value was present for
+     * the given key.
      */
 
     int put(int key, int value);
@@ -1963,11 +1940,9 @@ interface Int2IntMap extends Map<Integer, Integer> {
     /**
      * Returns the value to which the given key is mapped.
      *
-     * @param key
-     *            the key.
-     * @return the corresponding value, or the
-     *         {@linkplain #defaultReturnValue() default return value} if no
-     *         value was present for the given key.
+     * @param key the key.
+     * @return the corresponding value, or the {@linkplain #defaultReturnValue() default return value} if no value was
+     * present for the given key.
      */
 
     int get(int key);
@@ -1975,10 +1950,9 @@ interface Int2IntMap extends Map<Integer, Integer> {
     /**
      * Removes the mapping with the given key.
      *
-     * @param key
-     *            the key.
-     * @return the old value, or the {@linkplain #defaultReturnValue() default
-     *         return value} if no value was present for the given key.
+     * @param key the key.
+     * @return the old value, or the {@linkplain #defaultReturnValue() default return value} if no value was present for
+     * the given key.
      */
 
     int remove(int key);
@@ -1996,8 +1970,7 @@ interface Int2IntMap extends Map<Integer, Integer> {
      * denote that the map does not contain the specified key. It must be 0/
      * <code>false</code>/<code>null</code> by default.
      *
-     * @param rv
-     *            the new default return value.
+     * @param rv the new default return value.
      * @see #defaultReturnValue()
      */
 
@@ -2011,26 +1984,29 @@ interface Int2IntMap extends Map<Integer, Integer> {
 
     int defaultReturnValue();
 
-    /** Associates the specified value with the specified key in this function (optional operation).
+    /**
+     * Associates the specified value with the specified key in this function (optional operation).
      *
      * @param key the key.
      * @param value the value.
      * @return the old value, or <code>null</code> if no value was present for the given key.
-     * @see Map#put(Object,Object)
+     * @see Map#put(Object, Object)
      */
 
-    Integer put( Integer key, Integer value );
+    Integer put(Integer key, Integer value);
 
-    /** Returns the value associated by this function to the specified key.
+    /**
+     * Returns the value associated by this function to the specified key.
      *
      * @param key the key.
      * @return the corresponding value, or <code>null</code> if no value was present for the given key.
      * @see Map#get(Object)
      */
 
-    Integer get( Object key );
+    Integer get(Object key);
 
-    /** Returns true if this function contains a mapping for the specified key.
+    /**
+     * Returns true if this function contains a mapping for the specified key.
      *
      * <p>Note that for some kind of functions (e.g., hashes) this method
      * will always return true.
@@ -2040,27 +2016,30 @@ interface Int2IntMap extends Map<Integer, Integer> {
      * @see Map#containsKey(Object)
      */
 
-    boolean containsKey( Object key );
+    boolean containsKey(Object key);
 
-    /** Removes this key and the associated value from this function if it is present (optional operation).
+    /**
+     * Removes this key and the associated value from this function if it is present (optional operation).
      *
      * @param key the key.
      * @return the old value, or <code>null</code> if no value was present for the given key.
      * @see Map#remove(Object)
      */
 
-    Integer remove( Object key );
+    Integer remove(Object key);
 
-    /** Returns the intended number of keys in this function, or -1 if no such number exists.
+    /**
+     * Returns the intended number of keys in this function, or -1 if no such number exists.
      *
      * <p>Most function implementations will have some knowledge of the intended number of keys
      * in their domain. In some cases, however, this might not be possible.
      *
-     *  @return the intended number of keys in this function, or -1 if that number is not available.
+     * @return the intended number of keys in this function, or -1 if that number is not available.
      */
     int size();
 
-    /** Removes all associations from this function (optional operation).
+    /**
+     * Removes all associations from this function (optional operation).
      *
      * @see Map#clear()
      */
@@ -2078,8 +2057,6 @@ interface Int2IntMap extends Map<Integer, Integer> {
      */
 
     ObjectSet<Map.Entry<Integer, Integer>> entrySet();
-
-
 
     ObjectSet<Int2IntMap.Entry> int2IntEntrySet();
 
@@ -2125,8 +2102,7 @@ interface Int2IntMap extends Map<Integer, Integer> {
         /**
          * {@inheritDoc}
          *
-         * @deprecated Please use the corresponding type-specific method
-         *             instead.
+         * @deprecated Please use the corresponding type-specific method instead.
          */
         @Deprecated
         @Override
@@ -2140,8 +2116,7 @@ interface Int2IntMap extends Map<Integer, Integer> {
         /**
          * {@inheritDoc}
          *
-         * @deprecated Please use the corresponding type-specific method
-         *             instead.
+         * @deprecated Please use the corresponding type-specific method instead.
          */
         @Deprecated
         @Override
@@ -2186,8 +2161,7 @@ class IntArrayList extends AbstractIntCollection
      * <P>
      * This constructor is only meant to be used by the wrapping methods.
      *
-     * @param a
-     *            the array that will be used to back this array list.
+     * @param a the array that will be used to back this array list.
      */
 
     @SuppressWarnings("unused")
@@ -2199,8 +2173,7 @@ class IntArrayList extends AbstractIntCollection
     /**
      * Creates a new array list with given capacity.
      *
-     * @param capacity
-     *            the initial capacity of the array list (may be 0).
+     * @param capacity the initial capacity of the array list (may be 0).
      */
 
     public IntArrayList(final int capacity) {
@@ -2223,8 +2196,7 @@ class IntArrayList extends AbstractIntCollection
     /**
      * Creates a new array list and fills it with a given collection.
      *
-     * @param c
-     *            a collection that will be used to fill the array list.
+     * @param c a collection that will be used to fill the array list.
      */
 
     public IntArrayList(final Collection<? extends Integer> c) {
@@ -2237,7 +2209,7 @@ class IntArrayList extends AbstractIntCollection
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static IntIterator asIntIterator(final Iterator i) {
         if (i instanceof IntIterator)
-            return (IntIterator) i;
+            return (IntIterator)i;
         return new IteratorWrapper(i);
     }
 
@@ -2245,10 +2217,8 @@ class IntArrayList extends AbstractIntCollection
      * Ensures that the given index is nonnegative and not greater than the list
      * size.
      *
-     * @param index
-     *            an index.
-     * @throws IndexOutOfBoundsException
-     *             if the given index is negative or greater than the list size.
+     * @param index an index.
+     * @throws IndexOutOfBoundsException if the given index is negative or greater than the list size.
      */
     protected void ensureIndex(final int index) {
         if (index < 0)
@@ -2263,11 +2233,8 @@ class IntArrayList extends AbstractIntCollection
      * Ensures that the given index is nonnegative and smaller than the list
      * size.
      *
-     * @param index
-     *            an index.
-     * @throws IndexOutOfBoundsException
-     *             if the given index is negative or not smaller than the list
-     *             size.
+     * @param index an index.
+     * @throws IndexOutOfBoundsException if the given index is negative or not smaller than the list size.
      */
     protected void ensureRestrictedIndex(final int index) {
         if (index < 0)
@@ -2331,13 +2298,13 @@ class IntArrayList extends AbstractIntCollection
         if (!(o instanceof List))
             return false;
 
-        final List<?> l = (List<?>) o;
+        final List<?> l = (List<?>)o;
         int s = size();
         if (s != l.size())
             return false;
 
         if (l instanceof IntList) {
-            final IntListIterator i1 = listIterator(), i2 = ((IntList) l)
+            final IntListIterator i1 = listIterator(), i2 = ((IntList)l)
                 .listIterator();
             while (s-- != 0)
                 if (i1.nextInt() != i2.nextInt())
@@ -2359,13 +2326,10 @@ class IntArrayList extends AbstractIntCollection
      * {@link List}, this method performs a lexicographical
      * comparison; otherwise, it throws a <code>ClassCastException</code>.
      *
-     * @param l
-     *            a list.
-     * @return if the argument is a {@link List}, a negative integer,
-     *         zero, or a positive integer as this list is lexicographically
-     *         less than, equal to, or greater than the argument.
-     * @throws ClassCastException
-     *             if the argument is not a list.
+     * @param l a list.
+     * @return if the argument is a {@link List}, a negative integer, zero, or a positive integer as this list is
+     * lexicographically less than, equal to, or greater than the argument.
+     * @throws ClassCastException if the argument is not a list.
      */
 
     public int compareTo(final List<? extends Integer> l) {
@@ -2374,7 +2338,7 @@ class IntArrayList extends AbstractIntCollection
 
         if (l instanceof IntList) {
 
-            final IntListIterator i1 = listIterator(), i2 = ((IntList) l)
+            final IntListIterator i1 = listIterator(), i2 = ((IntList)l)
                 .listIterator();
             int r;
             int e1, e2;
@@ -2393,7 +2357,7 @@ class IntArrayList extends AbstractIntCollection
         int r;
 
         while (i1.hasNext() && i2.hasNext()) {
-            if ((r = ((Comparable<? super Integer>) i1.next()).compareTo(i2
+            if ((r = ((Comparable<? super Integer>)i1.next()).compareTo(i2
                 .next())) != 0)
                 return r;
         }
@@ -2467,12 +2431,12 @@ class IntArrayList extends AbstractIntCollection
 
     /** Delegates to the corresponding type-specific method. */
     public int indexOf(final Object ok) {
-        return indexOf(((((Integer) (ok)).intValue())));
+        return indexOf(((((Integer)(ok)).intValue())));
     }
 
     /** Delegates to the corresponding type-specific method. */
     public int lastIndexOf(final Object ok) {
-        return lastIndexOf(((((Integer) (ok)).intValue())));
+        return lastIndexOf(((((Integer)(ok)).intValue())));
     }
 
     /**
@@ -2553,6 +2517,7 @@ class IntArrayList extends AbstractIntCollection
         public boolean hasNext() {
             return i.hasNext();
         }
+
         public void remove() {
             i.remove();
         }
@@ -2589,9 +2554,7 @@ class IntArrayList extends AbstractIntCollection
      * Creates a new array list and fills it with a given type-specific
      * collection.
      *
-     * @param c
-     *            a type-specific collection that will be used to fill the array
-     *            list.
+     * @param c a type-specific collection that will be used to fill the array list.
      */
 
     public IntArrayList(final IntCollection c) {
@@ -2602,8 +2565,7 @@ class IntArrayList extends AbstractIntCollection
     /**
      * Creates a new array list and fills it with a given type-specific list.
      *
-     * @param l
-     *            a type-specific list that will be used to fill the array list.
+     * @param l a type-specific list that will be used to fill the array list.
      */
 
     public IntArrayList(final IntList l) {
@@ -2614,8 +2576,7 @@ class IntArrayList extends AbstractIntCollection
     /**
      * Creates a new array list and fills it with the elements of a given array.
      *
-     * @param a
-     *            an array whose elements will be used to fill the array list.
+     * @param a an array whose elements will be used to fill the array list.
      */
 
     public IntArrayList(final int a[]) {
@@ -2625,12 +2586,9 @@ class IntArrayList extends AbstractIntCollection
     /**
      * Creates a new array list and fills it with the elements of a given array.
      *
-     * @param a
-     *            an array whose elements will be used to fill the array list.
-     * @param offset
-     *            the first element to use.
-     * @param length
-     *            the number of elements to use.
+     * @param a an array whose elements will be used to fill the array list.
+     * @param offset the first element to use.
+     * @param length the number of elements to use.
      */
 
     public IntArrayList(final int a[], final int offset, final int length) {
@@ -2643,8 +2601,7 @@ class IntArrayList extends AbstractIntCollection
      * Creates a new array list and fills it with the elements returned by an
      * iterator..
      *
-     * @param i
-     *            an iterator whose returned elements will fill the array list.
+     * @param i an iterator whose returned elements will fill the array list.
      */
 
     public IntArrayList(final Iterator<? extends Integer> i) {
@@ -2657,9 +2614,7 @@ class IntArrayList extends AbstractIntCollection
      * Creates a new array list and fills it with the elements returned by a
      * type-specific iterator..
      *
-     * @param i
-     *            a type-specific iterator whose returned elements will fill the
-     *            array list.
+     * @param i a type-specific iterator whose returned elements will fill the array list.
      */
 
     public IntArrayList(final IntIterator i) {
@@ -2677,6 +2632,7 @@ class IntArrayList extends AbstractIntCollection
     public int[] elements() {
         return a;
     }
+
     /**
      * Wraps a given array into an array list of given size.
      *
@@ -2685,10 +2641,8 @@ class IntArrayList extends AbstractIntCollection
      * {@link #elements()} will be the same (see the comments in the class
      * documentation).
      *
-     * @param a
-     *            an array to wrap.
-     * @param length
-     *            the length of the resulting array list.
+     * @param a an array to wrap.
+     * @param length the length of the resulting array list.
      * @return a new array list of the given size, wrapping the given array.
      */
 
@@ -2713,7 +2667,6 @@ class IntArrayList extends AbstractIntCollection
         return true;
     }
 
-
     public IntList subList(final int from, final int to) {
         ensureIndex(from);
         ensureIndex(to);
@@ -2732,8 +2685,7 @@ class IntArrayList extends AbstractIntCollection
      * {@link #elements()} will be the same (see the comments in the class
      * documentation).
      *
-     * @param a
-     *            an array to wrap.
+     * @param a an array to wrap.
      * @return a new array list wrapping the given array.
      */
 
@@ -2745,8 +2697,7 @@ class IntArrayList extends AbstractIntCollection
      * Ensures that this array list can contain the given number of entries
      * without resizing.
      *
-     * @param capacity
-     *            the new minimum capacity for this array list.
+     * @param capacity the new minimum capacity for this array list.
      */
 
     public void ensureCapacity(final int capacity) {
@@ -2774,8 +2725,7 @@ class IntArrayList extends AbstractIntCollection
      * entries without resizing, and in case enlarging it at least by a factor
      * of two.
      *
-     * @param capacity
-     *            the new minimum capacity for this array list.
+     * @param capacity the new minimum capacity for this array list.
      */
 
     private void grow(final int capacity) {
@@ -2791,7 +2741,7 @@ class IntArrayList extends AbstractIntCollection
         final int preserve) {
 
         if (length > array.length) {
-            final int newLength = (int) Math.max(
+            final int newLength = (int)Math.max(
                 Math.min(2L * array.length, MAX_ARRAY_SIZE), length);
 
             final int t[] =
@@ -2840,7 +2790,7 @@ class IntArrayList extends AbstractIntCollection
     }
 
     public int lastIndexOf(final int k) {
-        for (int i = size; i-- != 0;)
+        for (int i = size; i-- != 0; )
             if (((k) == (a[i])))
                 return i;
         return -1;
@@ -2925,8 +2875,7 @@ class IntArrayList extends AbstractIntCollection
      * times, you can call this method with a typical size to avoid keeping
      * around a very large array just because of a few large transient lists.
      *
-     * @param n
-     *            the threshold for the trimming.
+     * @param n the threshold for the trimming.
      */
 
     public void trim(final int n) {
@@ -2944,15 +2893,10 @@ class IntArrayList extends AbstractIntCollection
      * Copies element of this type-specific list into the given array using
      * optimized system calls.
      *
-     * @param from
-     *            the start index (inclusive).
-     * @param a
-     *            the destination array.
-     * @param offset
-     *            the offset into the destination array where to store the first
-     *            element copied.
-     * @param length
-     *            the number of elements to be copied.
+     * @param from the start index (inclusive).
+     * @param a the destination array.
+     * @param offset the offset into the destination array where to store the first element copied.
+     * @param length the number of elements to be copied.
      */
 
     public void getElements(final int from, final int[] a, final int offset,
@@ -2966,19 +2910,20 @@ class IntArrayList extends AbstractIntCollection
         ensureOffsetLength(a.length, offset, length);
     }
 
-    public static void ensureOffsetLength( final int arrayLength, final int offset, final int length ) {
-        if ( offset < 0 ) throw new ArrayIndexOutOfBoundsException( "Offset (" + offset + ") is negative" );
-        if ( length < 0 ) throw new IllegalArgumentException( "Length (" + length + ") is negative" );
-        if ( offset + length > arrayLength ) throw new ArrayIndexOutOfBoundsException( "Last index (" + ( offset + length ) + ") is greater than array length (" + arrayLength + ")" );
+    public static void ensureOffsetLength(final int arrayLength, final int offset, final int length) {
+        if (offset < 0)
+            throw new ArrayIndexOutOfBoundsException("Offset (" + offset + ") is negative");
+        if (length < 0)
+            throw new IllegalArgumentException("Length (" + length + ") is negative");
+        if (offset + length > arrayLength)
+            throw new ArrayIndexOutOfBoundsException("Last index (" + (offset + length) + ") is greater than array length (" + arrayLength + ")");
     }
 
     /**
      * Removes elements of this type-specific list using optimized system calls.
      *
-     * @param from
-     *            the start index (inclusive).
-     * @param to
-     *            the end index (exclusive).
+     * @param from the start index (inclusive).
+     * @param to the end index (exclusive).
      */
     public void removeElements(final int from, final int to) {
         ensureFromTo(size, from, to);
@@ -2987,23 +2932,22 @@ class IntArrayList extends AbstractIntCollection
 
     }
 
-    public static void ensureFromTo( final int arrayLength, final int from, final int to ) {
-        if ( from < 0 ) throw new ArrayIndexOutOfBoundsException( "Start index (" + from + ") is negative" );
-        if ( from > to ) throw new IllegalArgumentException( "Start index (" + from + ") is greater than end index (" + to + ")" );
-        if ( to > arrayLength ) throw new ArrayIndexOutOfBoundsException( "End index (" + to + ") is greater than array length (" + arrayLength + ")" );
+    public static void ensureFromTo(final int arrayLength, final int from, final int to) {
+        if (from < 0)
+            throw new ArrayIndexOutOfBoundsException("Start index (" + from + ") is negative");
+        if (from > to)
+            throw new IllegalArgumentException("Start index (" + from + ") is greater than end index (" + to + ")");
+        if (to > arrayLength)
+            throw new ArrayIndexOutOfBoundsException("End index (" + to + ") is greater than array length (" + arrayLength + ")");
     }
 
     /**
      * Adds elements to this type-specific list using optimized system calls.
      *
-     * @param index
-     *            the index at which to add elements.
-     * @param a
-     *            the array containing the elements.
-     * @param offset
-     *            the offset of the first element to add.
-     * @param length
-     *            the number of elements to add.
+     * @param index the index at which to add elements.
+     * @param a the array containing the elements.
+     * @param offset the offset of the first element to add.
+     * @param length the number of elements to add.
      */
     public void addElements(final int index, final int a[], final int offset,
         final int length) {
@@ -3077,6 +3021,7 @@ class IntArrayList extends AbstractIntCollection
         size = j;
         return modified;
     }
+
     public IntListIterator listIterator(final int index) {
         ensureIndex(index);
 
@@ -3086,34 +3031,42 @@ class IntArrayList extends AbstractIntCollection
             public boolean hasNext() {
                 return pos < size;
             }
+
             public boolean hasPrevious() {
                 return pos > 0;
             }
+
             public int nextInt() {
                 if (!hasNext())
                     throw new NoSuchElementException();
                 return a[last = pos++];
             }
+
             public int previousInt() {
                 if (!hasPrevious())
                     throw new NoSuchElementException();
                 return a[last = --pos];
             }
+
             public int nextIndex() {
                 return pos;
             }
+
             public int previousIndex() {
                 return pos - 1;
             }
+
             public void add(int k) {
                 IntArrayList.this.add(pos++, k);
                 last = -1;
             }
+
             public void set(int k) {
                 if (last == -1)
                     throw new IllegalStateException();
                 IntArrayList.this.set(last, k);
             }
+
             public void remove() {
                 if (last == -1)
                     throw new IllegalStateException();
@@ -3144,10 +3097,8 @@ class IntArrayList extends AbstractIntCollection
      * This method exists only for sake of efficiency. The implementation
      * inherited from the abstract implementation would already work.
      *
-     * @param l
-     *            a type-specific array list.
-     * @return true if the argument contains the same elements of this
-     *         type-specific array list.
+     * @param l a type-specific array list.
+     * @return true if the argument contains the same elements of this type-specific array list.
      */
     public boolean equals(final IntArrayList l) {
         if (l == this)
@@ -3172,11 +3123,9 @@ class IntArrayList extends AbstractIntCollection
      * This method exists only for sake of efficiency. The implementation
      * inherited from the abstract implementation would already work.
      *
-     * @param l
-     *            an array list.
-     * @return a negative integer, zero, or a positive integer as this list is
-     *         lexicographically less than, equal to, or greater than the
-     *         argument.
+     * @param l an array list.
+     * @return a negative integer, zero, or a positive integer as this list is lexicographically less than, equal to, or
+     * greater than the argument.
      */
 
     public int compareTo(final IntArrayList l) {
@@ -3209,7 +3158,6 @@ class IntArrayList extends AbstractIntCollection
         for (int i = 0; i < size; i++)
             a[i] = s.readInt();
     }
-
 
     public static class IntSubList extends AbstractIntCollection
         implements
@@ -3340,7 +3288,6 @@ class IntArrayList extends AbstractIntCollection
             return -1;
         }
 
-
         public int indexOf(final int k) {
             final IntListIterator i = listIterator();
             int e;
@@ -3361,25 +3308,31 @@ class IntArrayList extends AbstractIntCollection
                 public boolean hasNext() {
                     return pos < size();
                 }
+
                 public boolean hasPrevious() {
                     return pos > 0;
                 }
+
                 public int nextInt() {
                     if (!hasNext())
                         throw new NoSuchElementException();
                     return l.getInt(from + (last = pos++));
                 }
+
                 public int previousInt() {
                     if (!hasPrevious())
                         throw new NoSuchElementException();
                     return l.getInt(from + (last = --pos));
                 }
+
                 public int nextIndex() {
                     return pos;
                 }
+
                 public int previousIndex() {
                     return pos - 1;
                 }
+
                 public void add(int k) {
                     if (last == -1)
                         throw new IllegalStateException();
@@ -3388,11 +3341,13 @@ class IntArrayList extends AbstractIntCollection
                     if (ASSERTS)
                         assertRange();
                 }
+
                 public void set(int k) {
                     if (last == -1)
                         throw new IllegalStateException();
                     IntSubList.this.set(last, k);
                 }
+
                 public void remove() {
                     if (last == -1)
                         throw new IllegalStateException();
@@ -3433,7 +3388,7 @@ class IntArrayList extends AbstractIntCollection
         }
 
         public boolean remove(final Object o) {
-            return rem(((((Integer) (o)).intValue())));
+            return rem(((((Integer)(o)).intValue())));
         }
 
         public boolean addAll(final int index, final IntCollection c) {
@@ -3462,10 +3417,8 @@ class IntArrayList extends AbstractIntCollection
          * Ensures that the given index is nonnegative and not greater than the list
          * size.
          *
-         * @param index
-         *            an index.
-         * @throws IndexOutOfBoundsException
-         *             if the given index is negative or greater than the list size.
+         * @param index an index.
+         * @throws IndexOutOfBoundsException if the given index is negative or greater than the list size.
          */
         protected void ensureIndex(final int index) {
             if (index < 0)
@@ -3480,11 +3433,8 @@ class IntArrayList extends AbstractIntCollection
          * Ensures that the given index is nonnegative and smaller than the list
          * size.
          *
-         * @param index
-         *            an index.
-         * @throws IndexOutOfBoundsException
-         *             if the given index is negative or not smaller than the list
-         *             size.
+         * @param index an index.
+         * @throws IndexOutOfBoundsException if the given index is negative or not smaller than the list size.
          */
         protected void ensureRestrictedIndex(final int index) {
             if (index < 0)
@@ -3548,13 +3498,13 @@ class IntArrayList extends AbstractIntCollection
             if (!(o instanceof List))
                 return false;
 
-            final List<?> l = (List<?>) o;
+            final List<?> l = (List<?>)o;
             int s = size();
             if (s != l.size())
                 return false;
 
             if (l instanceof IntList) {
-                final IntListIterator i1 = listIterator(), i2 = ((IntList) l)
+                final IntListIterator i1 = listIterator(), i2 = ((IntList)l)
                     .listIterator();
                 while (s-- != 0)
                     if (i1.nextInt() != i2.nextInt())
@@ -3576,13 +3526,10 @@ class IntArrayList extends AbstractIntCollection
          * {@link List}, this method performs a lexicographical
          * comparison; otherwise, it throws a <code>ClassCastException</code>.
          *
-         * @param l
-         *            a list.
-         * @return if the argument is a {@link List}, a negative integer,
-         *         zero, or a positive integer as this list is lexicographically
-         *         less than, equal to, or greater than the argument.
-         * @throws ClassCastException
-         *             if the argument is not a list.
+         * @param l a list.
+         * @return if the argument is a {@link List}, a negative integer, zero, or a positive integer as this list is
+         * lexicographically less than, equal to, or greater than the argument.
+         * @throws ClassCastException if the argument is not a list.
          */
 
         public int compareTo(final List<? extends Integer> l) {
@@ -3591,7 +3538,7 @@ class IntArrayList extends AbstractIntCollection
 
             if (l instanceof IntList) {
 
-                final IntListIterator i1 = listIterator(), i2 = ((IntList) l)
+                final IntListIterator i1 = listIterator(), i2 = ((IntList)l)
                     .listIterator();
                 int r;
                 int e1, e2;
@@ -3610,7 +3557,7 @@ class IntArrayList extends AbstractIntCollection
             int r;
 
             while (i1.hasNext() && i2.hasNext()) {
-                if ((r = ((Comparable<? super Integer>) i1.next()).compareTo(i2
+                if ((r = ((Comparable<? super Integer>)i1.next()).compareTo(i2
                     .next())) != 0)
                     return r;
             }
@@ -3684,12 +3631,12 @@ class IntArrayList extends AbstractIntCollection
 
         /** Delegates to the corresponding type-specific method. */
         public int indexOf(final Object ok) {
-            return indexOf(((((Integer) (ok)).intValue())));
+            return indexOf(((((Integer)(ok)).intValue())));
         }
 
         /** Delegates to the corresponding type-specific method. */
         public int lastIndexOf(final Object ok) {
-            return lastIndexOf(((((Integer) (ok)).intValue())));
+            return lastIndexOf(((((Integer)(ok)).intValue())));
         }
 
         /**
@@ -3794,8 +3741,7 @@ interface ObjectSet<K> extends Set<K>, Collection<K>, Iterable<K> {
      * Returns a type-specific iterator on this elements of this collection.
      *
      * @see #iterator()
-     * @deprecated As of <code>fastutil</code> 5, replaced by
-     *             {@link #iterator()}.
+     * @deprecated As of <code>fastutil</code> 5, replaced by {@link #iterator()}.
      */
     @Deprecated
     ObjectIterator<K> objectIterator();
@@ -3810,9 +3756,7 @@ interface ObjectSet<K> extends Set<K>, Collection<K>, Iterable<K> {
      * elements of this collection: no special value will be added after the
      * last one.
      *
-     * @param a
-     *            if this array is big enough, it will be used to store this
-     *            collection.
+     * @param a if this array is big enough, it will be used to store this collection.
      * @return a primitive type array containing the items of this collection.
      * @see Collection#toArray(Object[])
      */
@@ -3828,8 +3772,7 @@ interface ObjectIterator<K> extends Iterator<K> {
      * {@link #next()} for <code>n</code> times (possibly stopping if
      * {@link #hasNext()} becomes false).
      *
-     * @param n
-     *            the number of elements to skip.
+     * @param n the number of elements to skip.
      * @return the number of elements actually skipped.
      * @see Iterator#next()
      */
@@ -3855,7 +3798,7 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
     public int[] toIntArray(int a[]) {
         if (a == null || a.length < size())
             a = new int[size()];
-       unwrap(iterator(), a);
+        unwrap(iterator(), a);
         return a;
     }
 
@@ -3880,10 +3823,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
      * Adds all elements of the given type-specific collection to this
      * collection.
      *
-     * @param c
-     *            a type-specific collection.
-     * @return <code>true</code> if this collection changed as a result of the
-     *         call.
+     * @param c a type-specific collection.
+     * @return <code>true</code> if this collection changed as a result of the call.
      */
 
     public boolean addAll(IntCollection c) {
@@ -3901,10 +3842,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
      * Checks whether this collection contains all elements from the given
      * type-specific collection.
      *
-     * @param c
-     *            a type-specific collection.
-     * @return <code>true</code> if this collection contains all elements of the
-     *         argument.
+     * @param c a type-specific collection.
+     * @return <code>true</code> if this collection contains all elements of the argument.
      */
 
     public boolean containsAll(IntCollection c) {
@@ -3922,10 +3861,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
      * Retains in this collection only elements from the given type-specific
      * collection.
      *
-     * @param c
-     *            a type-specific collection.
-     * @return <code>true</code> if this collection changed as a result of the
-     *         call.
+     * @param c a type-specific collection.
+     * @return <code>true</code> if this collection changed as a result of the call.
      */
 
     public boolean retainAll(IntCollection c) {
@@ -3948,10 +3885,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
      * Remove from this collection all elements in the given type-specific
      * collection.
      *
-     * @param c
-     *            a type-specific collection.
-     * @return <code>true</code> if this collection changed as a result of the
-     *         call.
+     * @param c a type-specific collection.
+     * @return <code>true</code> if this collection changed as a result of the call.
      */
 
     public boolean removeAll(IntCollection c) {
@@ -3977,7 +3912,7 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
     public <T> T[] toArray(T[] a) {
         final int size = size();
         if (a.length < size)
-            a = (T[]) java.lang.reflect.Array.newInstance(a.getClass()
+            a = (T[])java.lang.reflect.Array.newInstance(a.getClass()
                 .getComponentType(), size);
         unwrap(iterator(), a);
         if (size < a.length)
@@ -3996,14 +3931,10 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
      * elements is returned (it may be less than <code>max</code> if the
      * iterator emits less than <code>max</code> elements).
      *
-     * @param i
-     *            a type-specific iterator.
-     * @param array
-     *            an array to contain the output of the iterator.
-     * @param offset
-     *            the first element of the array to be returned.
-     * @param max
-     *            the maximum number of elements to unwrap.
+     * @param i a type-specific iterator.
+     * @param array an array to contain the output of the iterator.
+     * @param offset the first element of the array to be returned.
+     * @param max the maximum number of elements to unwrap.
      * @return the number of elements unwrapped.
      */
     public static <K> int unwrap(final Iterator<? extends K> i,
@@ -4028,10 +3959,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
      * iterator has no more elements or when the end of the array has been
      * reached.
      *
-     * @param i
-     *            a type-specific iterator.
-     * @param array
-     *            an array to contain the output of the iterator.
+     * @param i a type-specific iterator.
+     * @param array an array to contain the output of the iterator.
      * @return the number of elements unwrapped.
      */
     public static <K> int unwrap(final Iterator<? extends K> i, final K array[]) {
@@ -4041,10 +3970,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
     /**
      * Adds all elements of the given collection to this collection.
      *
-     * @param c
-     *            a collection.
-     * @return <code>true</code> if this collection changed as a result of the
-     *         call.
+     * @param c a collection.
+     * @return <code>true</code> if this collection changed as a result of the call.
      */
 
     public boolean addAll(Collection<? extends Integer> c) {
@@ -4075,7 +4002,7 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
     public boolean remove(Object ok) {
         if (ok == null)
             return false;
-        return rem(((((Integer) (ok)).intValue())));
+        return rem(((((Integer)(ok)).intValue())));
     }
 
     /** Delegates to the corresponding type-specific method. */
@@ -4087,14 +4014,14 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
     public boolean rem(final Object o) {
         if (o == null)
             return false;
-        return rem(((((Integer) (o)).intValue())));
+        return rem(((((Integer)(o)).intValue())));
     }
 
     /** Delegates to the corresponding type-specific method. */
     public boolean contains(final Object o) {
         if (o == null)
             return false;
-        return contains(((((Integer) (o)).intValue())));
+        return contains(((((Integer)(o)).intValue())));
     }
 
     public boolean contains(final int k) {
@@ -4119,10 +4046,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
      * Checks whether this collection contains all elements from the given
      * collection.
      *
-     * @param c
-     *            a collection.
-     * @return <code>true</code> if this collection contains all elements of the
-     *         argument.
+     * @param c a collection.
+     * @return <code>true</code> if this collection contains all elements of the argument.
      */
 
     public boolean containsAll(Collection<?> c) {
@@ -4139,10 +4064,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
     /**
      * Retains in this collection only elements from the given collection.
      *
-     * @param c
-     *            a collection.
-     * @return <code>true</code> if this collection changed as a result of the
-     *         call.
+     * @param c a collection.
+     * @return <code>true</code> if this collection changed as a result of the call.
      */
 
     public boolean retainAll(Collection<?> c) {
@@ -4164,10 +4087,8 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
      * Remove from this collection all elements in the given collection. If the
      * collection is an instance of this class, it uses faster iterators.
      *
-     * @param c
-     *            a collection.
-     * @return <code>true</code> if this collection changed as a result of the
-     *         call.
+     * @param c a collection.
+     * @return <code>true</code> if this collection changed as a result of the call.
      */
 
     public boolean removeAll(Collection<?> c) {
@@ -4212,25 +4133,24 @@ abstract class AbstractIntCollection extends AbstractCollection<Integer>
 
 interface IntStack {
 
-
     void push(int k);
-
 
     int popInt();
 
     int topInt();
 
-
     int peekInt(int i);
 
-    /** Pushes the given object on the stack.
+    /**
+     * Pushes the given object on the stack.
      *
      * @param o the object that will become the new top of the stack.
      */
 
-    void push( Integer o );
+    void push(Integer o);
 
-    /** Pops the top off the stack.
+    /**
+     * Pops the top off the stack.
      *
      * @return the top of the stack.
      * @throws NoSuchElementException if the stack is empty.
@@ -4238,14 +4158,16 @@ interface IntStack {
 
     Integer pop();
 
-    /** Checks whether the stack is empty.
+    /**
+     * Checks whether the stack is empty.
      *
      * @return true if the stack is empty.
      */
 
     boolean isEmpty();
 
-    /** Peeks at the top of the stack (optional operation).
+    /**
+     * Peeks at the top of the stack (optional operation).
      *
      * @return the top of the stack.
      * @throws NoSuchElementException if the stack is empty.
@@ -4253,16 +4175,16 @@ interface IntStack {
 
     Integer top();
 
-    /** Peeks at an element on the stack (optional operation).
+    /**
+     * Peeks at an element on the stack (optional operation).
      *
      * @param i an index from the stop of the stack (0 represents the top).
      * @return the <code>i</code>-th element on the stack.
      * @throws IndexOutOfBoundsException if the designated element does not exist..
      */
 
-    Integer peek( int i );
+    Integer peek(int i);
 }
-
 
 interface IntListIterator
     extends
@@ -4270,6 +4192,7 @@ interface IntListIterator
     IntIterator, ObjectIterator<Integer>, Iterator<Integer> {
 
     void set(int k);
+
     void add(int k);
 
     /**
@@ -4289,15 +4212,15 @@ interface IntListIterator
      * {@link #previous()} for <code>n</code> times (possibly stopping if
      * {@link #hasPrevious()} becomes false).
      *
-     * @param n
-     *            the number of elements to skip back.
+     * @param n the number of elements to skip back.
      * @return the number of elements actually skipped.
      * @see Iterator#next()
      */
 
     int back(int n);
 
-    /** Returns the previous element from the collection.
+    /**
+     * Returns the previous element from the collection.
      *
      * @return the previous element from the collection.
      * @see ListIterator#previous()
@@ -4305,7 +4228,8 @@ interface IntListIterator
 
     Integer previous();
 
-    /** Returns whether there is a previous element.
+    /**
+     * Returns whether there is a previous element.
      *
      * @return whether there is a previous element.
      * @see ListIterator#hasPrevious()
@@ -4336,8 +4260,7 @@ interface IntList
      * Returns a type-specific list iterator on the list.
      *
      * @see #listIterator()
-     * @deprecated As of <code>fastutil</code> 5, replaced by
-     *             {@link #listIterator()}.
+     * @deprecated As of <code>fastutil</code> 5, replaced by {@link #listIterator()}.
      */
     @Deprecated
     IntListIterator intListIterator();
@@ -4347,8 +4270,7 @@ interface IntList
      * index.
      *
      * @see #listIterator(int)
-     * @deprecated As of <code>fastutil</code> 5, replaced by
-     *             {@link #listIterator(int)}.
+     * @deprecated As of <code>fastutil</code> 5, replaced by {@link #listIterator(int)}.
      */
     @Deprecated
     IntListIterator intListIterator(int index);
@@ -4372,9 +4294,8 @@ interface IntList
      * Returns a type-specific view of the portion of this list from the index
      * <code>from</code>, inclusive, to the index <code>to</code>, exclusive.
      *
-     * @see List#subList(int,int)
-     * @deprecated As of <code>fastutil</code> 5, replaced by
-     *             {@link #subList(int,int)}.
+     * @see List#subList(int, int)
+     * @deprecated As of <code>fastutil</code> 5, replaced by {@link #subList(int, int)}.
      */
     @Deprecated
     IntList intSubList(int from, int to);
@@ -4385,9 +4306,9 @@ interface IntList
      *
      * <P>
      * Note that this specification strengthens the one given in
-     * {@link List#subList(int,int)}.
+     * {@link List#subList(int, int)}.
      *
-     * @see List#subList(int,int)
+     * @see List#subList(int, int)
      */
     IntList subList(int from, int to);
 
@@ -4399,8 +4320,7 @@ interface IntList
      * are discarded. Otherwise, they are filled with 0/<code>null</code>/
      * <code>false</code>.
      *
-     * @param size
-     *            the new size.
+     * @param size the new size.
      */
 
     void size(int size);
@@ -4409,49 +4329,36 @@ interface IntList
      * Copies (hopefully quickly) elements of this type-specific list into the
      * given array.
      *
-     * @param from
-     *            the start index (inclusive).
-     * @param a
-     *            the destination array.
-     * @param offset
-     *            the offset into the destination array where to store the first
-     *            element copied.
-     * @param length
-     *            the number of elements to be copied.
+     * @param from the start index (inclusive).
+     * @param a the destination array.
+     * @param offset the offset into the destination array where to store the first element copied.
+     * @param length the number of elements to be copied.
      */
     void getElements(int from, int a[], int offset, int length);
 
     /**
      * Removes (hopefully quickly) elements of this type-specific list.
      *
-     * @param from
-     *            the start index (inclusive).
-     * @param to
-     *            the end index (exclusive).
+     * @param from the start index (inclusive).
+     * @param to the end index (exclusive).
      */
     void removeElements(int from, int to);
 
     /**
      * Add (hopefully quickly) elements to this type-specific list.
      *
-     * @param index
-     *            the index at which to add elements.
-     * @param a
-     *            the array containing the elements.
+     * @param index the index at which to add elements.
+     * @param a the array containing the elements.
      */
     void addElements(int index, int a[]);
 
     /**
      * Add (hopefully quickly) elements to this type-specific list.
      *
-     * @param index
-     *            the index at which to add elements.
-     * @param a
-     *            the array containing the elements.
-     * @param offset
-     *            the offset of the first element to add.
-     * @param length
-     *            the number of elements to add.
+     * @param index the index at which to add elements.
+     * @param a the array containing the elements.
+     * @param offset the offset of the first element to add.
+     * @param length the number of elements to add.
      */
     void addElements(int index, int a[], int offset, int length);
 
@@ -4461,22 +4368,22 @@ interface IntList
     boolean add(int key);
 
     /**
-     * @see List#add(int,Object)
+     * @see List#add(int, Object)
      */
     void add(int index, int key);
 
     /**
-     * @see List#add(int,Object)
+     * @see List#add(int, Object)
      */
     boolean addAll(int index, IntCollection c);
 
     /**
-     * @see List#add(int,Object)
+     * @see List#add(int, Object)
      */
     boolean addAll(int index, IntList c);
 
     /**
-     * @see List#add(int,Object)
+     * @see List#add(int, Object)
      */
     boolean addAll(IntList c);
 
@@ -4501,7 +4408,7 @@ interface IntList
     int removeInt(int index);
 
     /**
-     * @see List#set(int,Object)
+     * @see List#set(int, Object)
      */
     int set(int index, int k);
 
@@ -4517,6 +4424,7 @@ abstract class AbstractIntListIterator
     public void set(Integer ok) {
         set(ok.intValue());
     }
+
     /** Delegates to the corresponding type-specific method. */
     public void add(Integer ok) {
         add(ok.intValue());
@@ -4526,6 +4434,7 @@ abstract class AbstractIntListIterator
     public void set(int k) {
         throw new UnsupportedOperationException();
     }
+
     /** This method just throws an {@link UnsupportedOperationException}. */
     public void add(int k) {
         throw new UnsupportedOperationException();
@@ -4576,7 +4485,8 @@ abstract class AbstractIntListIterator
         return n - i - 1;
     }
 
-    /** Returns whether there is a previous element.
+    /**
+     * Returns whether there is a previous element.
      *
      * @return whether there is a previous element.
      * @see ListIterator#hasPrevious()
