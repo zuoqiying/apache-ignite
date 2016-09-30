@@ -890,10 +890,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         static _domainModelDatabaseFields(cfg, propName, domain) {
             const fields = _.map(domain[propName], (field) => {
                 return new Bean('org.apache.ignite.cache.store.jdbc.JdbcTypeField', 'typeField', field, cacheDflts.typeField)
-                    .stringConstructorArgument('databaseFieldName')
                     .constantConstructorArgument('databaseFieldType')
-                    .stringConstructorArgument('javaFieldName')
-                    .classConstructorArgument('javaFieldType');
+                    .stringConstructorArgument('databaseFieldName')
+                    .classConstructorArgument('javaFieldType')
+                    .stringConstructorArgument('javaFieldName');
             });
 
             cfg.varArgProperty(propName, propName, fields, 'org.apache.ignite.cache.store.jdbc.JdbcTypeField');

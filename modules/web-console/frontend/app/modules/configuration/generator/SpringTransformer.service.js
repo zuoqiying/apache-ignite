@@ -107,7 +107,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
          * @returns {StringBuilder}
          */
         static _setProperties(sb, bean) {
-            _.forEach(bean.properties, (prop) => {
+            _.forEach(bean.properties, (prop, idx) => {
                 switch (JavaTypes.shortClassName(prop.clsName).toUpperCase()) {
                     case 'DATASOURCE':
                         sb.append(`<property name="${prop.name}" ref="${prop.id}"/>`);
@@ -201,11 +201,17 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                         break;
                     case 'BEAN':
+                        if (idx !== 0)
+                            sb.emptyLine();
+
                         sb.startBlock(`<property name="${prop.name}">`);
 
                         this.appendBean(sb, prop.value);
 
                         sb.endBlock('</property>');
+
+                        if (idx !== bean.properties.length - 1 && JavaTypes.shortClassName(bean.properties[idx + 1].clsName).toUpperCase() !== 'BEAN')
+                            sb.emptyLine();
 
                         break;
                     default:
@@ -214,17 +220,6 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             });
 
             return sb;
-        }
-
-        /**
-         * @param {Bean} bean
-         * @param {StringBuilder} sb
-         * @returns {String}
-         */
-        static generateSection(bean, sb = new StringBuilder()) {
-            this._setProperties(sb, bean);
-
-            return sb.asString();
         }
 
         /**
