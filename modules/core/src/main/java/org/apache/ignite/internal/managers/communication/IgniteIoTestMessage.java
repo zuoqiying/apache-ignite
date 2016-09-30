@@ -17,14 +17,11 @@
 
 package org.apache.ignite.internal.managers.communication;
 
-import org.apache.ignite.internal.GridDirectTransient;
-import org.apache.ignite.internal.util.GridUnsafe;
+import java.nio.ByteBuffer;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
 import org.apache.ignite.plugin.extensions.communication.MessageWriter;
-
-import java.nio.ByteBuffer;
 
 /**
  *
@@ -37,22 +34,16 @@ public class IgniteIoTestMessage implements Message {
     private static final long serialVersionUID = 0L;
 
     /** */
-    @GridDirectTransient
     private long id;
 
     /** */
-    @GridDirectTransient
     private byte flags;
 
     /** */
-    @GridDirectTransient
     private boolean req;
 
     /** */
-    @GridDirectTransient
     private byte payload[];
-
-    private byte[] data;
 
     /**
      *
@@ -70,26 +61,20 @@ public class IgniteIoTestMessage implements Message {
         this.id = id;
         this.req = req;
         this.payload = payload;
-
-        data = new byte[10];
-
-        GridUnsafe.putByte(data, 0, (byte)0);
-        GridUnsafe.putBoolean(data, 1, req);
-        GridUnsafe.putLong(data, 2, id);
     }
 
     /**
      * @return Process from NIO thread flag.
      */
     public boolean processFromNioThread() {
-        return false;//isFlag(FLAG_PROC_FROM_NIO);
+        return isFlag(FLAG_PROC_FROM_NIO);
     }
 
     /**
      * @param procFromNioThread Process from NIO thread flag.
      */
     public void processFromNioThread(boolean procFromNioThread) {
-        //setFlag(procFromNioThread, FLAG_PROC_FROM_NIO);
+        setFlag(procFromNioThread, FLAG_PROC_FROM_NIO);
     }
 
     /**
@@ -130,26 +115,100 @@ public class IgniteIoTestMessage implements Message {
      * @return {@code True} for request.
      */
     public boolean request() {
-        return GridUnsafe.getBoolean(data, 1);
-        //return req;
+        return req;
     }
 
     /**
      * @return ID.
      */
     public long id() {
-        return GridUnsafe.getLong(data, 2);
-        //return id;
+        return id;
     }
 
     /** {@inheritDoc} */
     @Override public boolean writeTo(ByteBuffer buf, MessageWriter writer) {
+        writer.setBuffer(buf);
+
+        if (!writer.isHeaderWritten()) {
+            if (!writer.writeHeader(directType(), fieldsCount()))
+                return false;
+
+            writer.onHeaderWritten();
+        }
+
+        switch (writer.state()) {
+            case 0:
+                if (!writer.writeByte("flags", flags))
+                    return false;
+
+                writer.incrementState();
+
+            case 1:
+                if (!writer.writeLong("id", id))
+                    return false;
+
+                writer.incrementState();
+
+            case 2:
+                if (!writer.writeByteArray("payload", payload))
+                    return false;
+
+                writer.incrementState();
+
+            case 3:
+                if (!writer.writeBoolean("req", req))
+                    return false;
+
+                writer.incrementState();
+
+        }
+
         return true;
     }
 
     /** {@inheritDoc} */
     @Override public boolean readFrom(ByteBuffer buf, MessageReader reader) {
-        return true;
+        reader.setBuffer(buf);
+
+        if (!reader.beforeMessageRead())
+            return false;
+
+        switch (reader.state()) {
+            case 0:
+                flags = reader.readByte("flags");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 1:
+                id = reader.readLong("id");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 2:
+                payload = reader.readByteArray("payload");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 3:
+                req = reader.readBoolean("req");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+        }
+
+        return reader.afterMessageRead(IgniteIoTestMessageOrig.class);
     }
 
     /** {@inheritDoc} */

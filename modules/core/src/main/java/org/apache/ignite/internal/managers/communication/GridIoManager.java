@@ -649,6 +649,31 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                 closedTopics.add(e.getKey());
             }
         }
+
+//        Thread t = new Thread(
+//            new Runnable() {
+//                @Override public void run() {
+//                    for (;;) {
+//                        try {
+//                            Thread.sleep(5000);
+//                        }
+//                        catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
+//
+//                        synchronized (GridIoManager.class) {
+//                            log.info("Stats node=" + ctx.gridName() + " id=" + ctx.localNodeId());
+//
+//                            dumpStats();
+//                        }
+//                    }
+//                }
+//            }
+//        );
+//
+//        t.setDaemon(true);
+//
+//        t.start();
     }
 
     /** {@inheritDoc} */
