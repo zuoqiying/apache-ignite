@@ -25,6 +25,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -267,61 +268,118 @@ public class BinaryClassDescriptor {
                 break;
 
             case OBJECT:
-                // Must not use constructor to honor transient fields semantics.
-                ctor = null;
-                stableFieldsMeta = metaDataEnabled ? new HashMap<String, Integer>() : null;
+                if (Boolean.getBoolean("OLD")) {
+                    // Must not use constructor to honor transient fields semantics.
+                    ctor = null;
+                    ArrayList<BinaryFieldAccessor> fields0 = new ArrayList<>();
+                    stableFieldsMeta = metaDataEnabled ? new HashMap<String, Integer>() : null;
 
-                Map<String, BinaryFieldAccessor> fields0 = new TreeMap<>();
+                    BinarySchema.Builder schemaBuilder = BinarySchema.Builder.newBuilder();
 
-                Set<String> duplicates = duplicateFields(cls);
+                    Set<String> duplicates = duplicateFields(cls);
 
-                Collection<String> names = new HashSet<>();
-                Collection<Integer> ids = new HashSet<>();
+                    Collection<String> names = new HashSet<>();
+                    Collection<Integer> ids = new HashSet<>();
 
-                for (Class<?> c = cls; c != null && !c.equals(Object.class); c = c.getSuperclass()) {
-                    for (Field f : c.getDeclaredFields()) {
-                        if (serializeField(f)) {
-                            f.setAccessible(true);
+                    for (Class<?> c = cls; c != null && !c.equals(Object.class); c = c.getSuperclass()) {
+                        for (Field f : c.getDeclaredFields()) {
+                            if (serializeField(f)) {
+                                f.setAccessible(true);
 
-                            String name = f.getName();
+                                String name = f.getName();
 
-                            if (duplicates.contains(name))
-                                name = BinaryUtils.qualifiedFieldName(c, name);
+                                if (duplicates.contains(name))
+                                    name = BinaryUtils.qualifiedFieldName(c, name);
 
-                            boolean added = names.add(name);
+                                boolean added = names.add(name);
 
-                            assert added : name;
+                                assert added : name;
 
-                            int fieldId = this.mapper.fieldId(typeId, name);
+                                int fieldId = this.mapper.fieldId(typeId, name);
 
-                            if (!ids.add(fieldId))
-                                throw new BinaryObjectException("Duplicate field ID: " + name);
+                                if (!ids.add(fieldId))
+                                    throw new BinaryObjectException("Duplicate field ID: " + name);
 
-                            BinaryFieldAccessor fieldInfo = BinaryFieldAccessor.create(f, fieldId);
+                                BinaryFieldAccessor fieldInfo = BinaryFieldAccessor.create(f, fieldId);
 
-                            fields0.put(name, fieldInfo);
+                                fields0.add(fieldInfo);
 
-                            if (metaDataEnabled)
-                                stableFieldsMeta.put(name, fieldInfo.mode().typeId());
+                                schemaBuilder.addField(fieldId);
+
+                                if (metaDataEnabled)
+                                    stableFieldsMeta.put(name, fieldInfo.mode().typeId());
+                            }
                         }
                     }
+
+                    fields = fields0.toArray(new BinaryFieldAccessor[fields0.size()]);
+
+                    stableSchema = schemaBuilder.build();
+
+                    System.out.println(">>> OLD REFLECTIVE CLASS [typeId=" + typeId + ", typeName=" + typeName +
+                        ", schemaId=" + stableSchema.schemaId() + ']');
+
+                    intfs = null;
+
+                    break;
                 }
+                else {
+                    // Must not use constructor to honor transient fields semantics.
+                    ctor = null;
+                    stableFieldsMeta = metaDataEnabled ? new HashMap<String, Integer>() : null;
 
-                fields = fields0.values().toArray(new BinaryFieldAccessor[fields0.size()]);
+                    Map<String, BinaryFieldAccessor> fields0 = new TreeMap<>();
 
-                BinarySchema.Builder schemaBuilder = BinarySchema.Builder.newBuilder();
+                    Set<String> duplicates = duplicateFields(cls);
 
-                for (BinaryFieldAccessor field : fields)
-                    schemaBuilder.addField(field.id);
+                    Collection<String> names = new HashSet<>();
+                    Collection<Integer> ids = new HashSet<>();
 
-                stableSchema = schemaBuilder.build();
+                    for (Class<?> c = cls; c != null && !c.equals(Object.class); c = c.getSuperclass()) {
+                        for (Field f : c.getDeclaredFields()) {
+                            if (serializeField(f)) {
+                                f.setAccessible(true);
 
-                System.out.println(">>> REFLECTIVE CLASS [typeId=" + typeId + ", typeName=" + typeName +
-                    ", cls=" + cls.getName() + ']');
+                                String name = f.getName();
 
-                intfs = null;
+                                if (duplicates.contains(name))
+                                    name = BinaryUtils.qualifiedFieldName(c, name);
 
-                break;
+                                boolean added = names.add(name);
+
+                                assert added : name;
+
+                                int fieldId = this.mapper.fieldId(typeId, name);
+
+                                if (!ids.add(fieldId))
+                                    throw new BinaryObjectException("Duplicate field ID: " + name);
+
+                                BinaryFieldAccessor fieldInfo = BinaryFieldAccessor.create(f, fieldId);
+
+                                fields0.put(name, fieldInfo);
+
+                                if (metaDataEnabled)
+                                    stableFieldsMeta.put(name, fieldInfo.mode().typeId());
+                            }
+                        }
+                    }
+
+                    fields = fields0.values().toArray(new BinaryFieldAccessor[fields0.size()]);
+
+                    BinarySchema.Builder schemaBuilder = BinarySchema.Builder.newBuilder();
+
+                    for (BinaryFieldAccessor field : fields)
+                        schemaBuilder.addField(field.id);
+
+                    stableSchema = schemaBuilder.build();
+
+                    System.out.println(">>> NEW REFLECTIVE CLASS [typeId=" + typeId + ", typeName=" + typeName +
+                        ", schemaId=" + stableSchema.schemaId() + ']');
+
+                    intfs = null;
+
+                    break;
+                }
 
             default:
                 // Should never happen.
@@ -752,6 +810,18 @@ public class BinaryClassDescriptor {
                 break;
 
             case OBJECT:
+                // TODO: This causes overflow becuase system types are serialized as well.
+                if (obj.getClass() != BinaryMetadata.class && !stableSchemaUpdated) {
+                    BinaryMetadata meta = new BinaryMetadata(typeId, typeName, stableFieldsMeta,
+                        affKeyFieldName, Collections.singleton(stableSchema), false);
+
+                    ctx.updateMetadata(typeId, meta);
+
+                    schemaReg.addSchema(stableSchema.schemaId(), stableSchema);
+
+                    stableSchemaUpdated = true;
+                }
+
                 if (preWrite(writer, obj)) {
                     try {
                         for (BinaryFieldAccessor info : fields)
@@ -772,6 +842,8 @@ public class BinaryClassDescriptor {
                 assert false : "Invalid mode: " + mode;
         }
     }
+
+    private volatile boolean stableSchemaUpdated = false;
 
     /**
      * @param reader Reader.
