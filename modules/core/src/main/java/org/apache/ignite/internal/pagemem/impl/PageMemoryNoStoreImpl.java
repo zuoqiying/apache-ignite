@@ -54,7 +54,6 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lifecycle.LifecycleAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jsr166.ConcurrentHashMap8;
 import sun.misc.JavaNioAccess;
 import sun.misc.SharedSecrets;
 
@@ -175,7 +174,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
         String dfltAllocationPath = memCfg.getFileCacheAllocationPath();
 
-        for (MemoryPoolConfiguration pool : memCfg.getPageMemoryConfigurations()) {
+        for (MemoryPoolConfiguration pool : memCfg.getMemoryPoolConfigurations()) {
             int concLvl = pool.getConcurrencyLevel();
 
             if (concLvl < 2)

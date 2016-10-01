@@ -29,10 +29,14 @@ public class MemoryPoolLink implements Serializable{
     /** Name. */
     private final String name;
 
+    /**
+     * @param name Name.
+     */
     public MemoryPoolLink(String name) {
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -45,7 +49,15 @@ public class MemoryPoolLink implements Serializable{
 
     }
 
+    /** {@inheritDoc} */
     @Override public int hashCode() {
         return name != null ? name.hashCode() : 0;
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return "MemoryPoolLink{" +
+                "name='" + name + '\'' +
+                '}';
     }
 }

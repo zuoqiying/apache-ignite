@@ -56,10 +56,8 @@ public class MemoryConfiguration implements Serializable {
     private MemoryPoolConfiguration dfltCfg =
         new MemoryPoolConfiguration(DEFAULT_PAGE_MEMORY_CONFIGURATION, 1024 * 1024 * 1024, 0, null);
 
-
-
     /** Page memory configuration map. */
-    private ConcurrentMap<MemoryPoolLink, MemoryPoolConfiguration> pageMemoryConfigurations
+    private ConcurrentMap<MemoryPoolLink, MemoryPoolConfiguration> memoryPoolConfigurations
         = new ConcurrentHashMap8<>();
 
     /**
@@ -96,25 +94,29 @@ public class MemoryConfiguration implements Serializable {
     /**
      * @param pageMemoryCfg Page memory config.
      */
-    public boolean addPageMemoryConfiguration(MemoryPoolConfiguration pageMemoryCfg) {
-        return pageMemoryConfigurations.putIfAbsent(pageMemoryCfg.getLink(), pageMemoryCfg) == null;
+    public void addPageMemoryConfiguration(MemoryPoolConfiguration pageMemoryCfg) {
+        boolean added = memoryPoolConfigurations.putIfAbsent(pageMemoryCfg.getLink(), pageMemoryCfg) == null;
+
+        if (!added)
+            throw new IllegalStateException("Conflict! Another MemoryPoolConfiguration was registered with the same link!" +
+                    " Link - " + pageMemoryCfg.getLink().toString());
     }
 
     /**
      * @param link Link.
      */
     public MemoryPoolConfiguration getPageMemoryConfiguration(MemoryPoolLink link) {
-        return pageMemoryConfigurations.get(link);
+        return memoryPoolConfigurations.get(link);
     }
 
     /**
      *
      */
-    public Collection<MemoryPoolConfiguration> getPageMemoryConfigurations() {
-        if (!pageMemoryConfigurations.containsKey(dfltCfg.getLink()))
-            pageMemoryConfigurations.putIfAbsent(dfltCfg.getLink(), dfltCfg);
+    public Collection<MemoryPoolConfiguration> getMemoryPoolConfigurations() {
+        if (!memoryPoolConfigurations.containsKey(dfltCfg.getLink()))
+            memoryPoolConfigurations.putIfAbsent(dfltCfg.getLink(), dfltCfg);
 
-        return pageMemoryConfigurations.values();
+        return memoryPoolConfigurations.values();
     }
 
     public int getDefaultConcurrencyLevel() {
