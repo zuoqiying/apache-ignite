@@ -700,6 +700,9 @@ public abstract class GridSpiAbstractTest<T extends IgniteSpi> extends GridAbstr
         }
     }
 
+    /**
+     *
+     */
     private static class SecurityPermissionSetImpl implements SecurityPermissionSet {
         /** Serial version uid. */
         private static final long serialVersionUID = 0L;
@@ -716,6 +719,11 @@ public abstract class GridSpiAbstractTest<T extends IgniteSpi> extends GridAbstr
 
         /** {@inheritDoc} */
         @Override public Map<String, Collection<SecurityPermission>> cachePermissions() {
+            return Collections.emptyMap();
+        }
+
+        /** {@inheritDoc} */
+        @Override public Map<String, Map<String, Collection<SecurityPermission>>> igfsPermissions() {
             return Collections.emptyMap();
         }
 
