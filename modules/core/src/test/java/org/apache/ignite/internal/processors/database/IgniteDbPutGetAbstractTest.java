@@ -89,15 +89,11 @@ public abstract class IgniteDbPutGetAbstractTest extends GridCommonAbstractTest 
             dbCfg.setDefaultConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
 
             dbCfg.setPageSize(16 * 1024);
-
-//            dbCfg.setPageCacheSize(200 * 1024 * 1024);
         }
         else {
             dbCfg.setDefaultConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
 
             dbCfg.setPageSize(1024);
-
-//            dbCfg.setPageCacheSize(200 * 1024 * 1024);
         }
 
         cfg.setMemoryConfiguration(dbCfg);

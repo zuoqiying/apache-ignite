@@ -40,6 +40,8 @@ import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
     /** */
     protected static final int PAGE_SIZE = 8 * 1024;
+
+    /** Cache id. */
     public static final int CACHE_ID = 0;
 
     /** {@inheritDoc} */

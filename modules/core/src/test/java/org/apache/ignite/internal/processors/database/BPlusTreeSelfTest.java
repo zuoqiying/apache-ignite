@@ -1400,6 +1400,9 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
         }
     }
 
+    /**
+     *
+     */
     protected PageMemory createPageMemory() throws Exception {
         return PageMemoryTestUtils.memory(1024, PAGE_SIZE, CPUS, CACHE_ID, "pagemem", true);
     }

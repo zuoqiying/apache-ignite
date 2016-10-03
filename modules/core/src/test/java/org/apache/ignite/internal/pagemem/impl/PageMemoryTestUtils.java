@@ -28,8 +28,18 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.testframework.junits.logger.GridTestLog4jLogger;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Test utils for creation instance of PageMemory
+ */
 public class PageMemoryTestUtils {
-
+    /**
+     * @param sizeInMb Total size in mb.
+     * @param pageSize Page size.
+     * @param concurrencyLevel Concurrency level.
+     * @param cacheIdToRegister Cache id to register.
+     * @param mappedFilePath Mapped file path.
+     * @param clean Clean.
+     */
     public static PageMemory memory(
         int sizeInMb,
         int pageSize,
@@ -41,7 +51,14 @@ public class PageMemoryTestUtils {
         return memory(sizeInMb, pageSize, concurrencyLevel, new int[] {cacheIdToRegister}, mappedFilePath, clean);
     }
 
-
+    /**
+     * @param sizeInMb Total size in mb.
+     * @param pageSize Page size.
+     * @param concurrencyLevel Concurrency level.
+     * @param cacheIdsToRegister Cache ids to register.
+     * @param mappedFilePath Mapped file path.
+     * @param clean Clean.
+     */
     public static PageMemory memory(
         int sizeInMb,
         int pageSize,
@@ -73,6 +90,11 @@ public class PageMemoryTestUtils {
         return memory;
     }
 
+    /**
+     * Hacks memory configuration to set pageSize via reflection
+     * @param cfg Config.
+     * @param size Size.
+     */
     private static void setPageSize(MemoryConfiguration cfg, int size) {
         try {
             Field pageSizeField = MemoryConfiguration.class.getDeclaredField("pageSize");
@@ -86,7 +108,7 @@ public class PageMemoryTestUtils {
     }
 
     /**
-     *
+     * @return mock for cache shared context
      */
     @SuppressWarnings("unchecked")
     @NotNull private static GridCacheSharedContext getGridCacheSharedContext() {

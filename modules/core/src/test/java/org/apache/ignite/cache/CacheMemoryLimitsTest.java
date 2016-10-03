@@ -29,12 +29,18 @@ import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.mem.OutOfMemoryException;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
+/**
+ * Test that limits per memory pool work properly
+ */
 public class CacheMemoryLimitsTest extends GridCommonAbstractTest {
-
+    /**
+     * Default constructor.
+     */
     public CacheMemoryLimitsTest() {
         super(true);
     }
 
+    /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration() throws Exception {
         IgniteConfiguration configuration = super.getConfiguration();
 
@@ -77,6 +83,9 @@ public class CacheMemoryLimitsTest extends GridCommonAbstractTest {
     }
 
 
+    /**
+     *
+     */
     public void test() throws Exception {
         try {
             IgniteEx ex = grid();
@@ -111,10 +120,17 @@ public class CacheMemoryLimitsTest extends GridCommonAbstractTest {
         }
     }
 
+    /**
+     * @param e Exception.
+     */
     private boolean oomWasThrown(Throwable e) {
         return oomWasThrown0(e, new HashSet<>());
     }
 
+    /**
+     * @param e Exception.
+     * @param processed Processed.
+     */
     private boolean oomWasThrown0(Throwable e, Set<Throwable> processed) {
         if (!processed.add(e))
             return false;
