@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.util.nio;
 
 import java.net.InetSocketAddress;
+import org.apache.ignite.IgniteCheckedException;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -103,6 +104,11 @@ public interface GridNioSession {
      * @return Future representing result.
      */
     public GridNioFuture<?> send(Object msg);
+
+    /**
+     * @param msg Message to be sent.
+     */
+    public void sendNoFuture(Object msg) throws IgniteCheckedException;
 
     /**
      * Gets metadata associated with specified key.
