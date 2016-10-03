@@ -208,7 +208,7 @@ public class IgniteIoTestMessage implements Message {
 
         }
 
-        return reader.afterMessageRead(IgniteIoTestMessageOrig.class);
+        return reader.afterMessageRead(IgniteIoTestMessage.class);
     }
 
     /** {@inheritDoc} */
