@@ -389,7 +389,7 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
     private Collection<QueryEntity> qryEntities;
 
     /** Page memory configuration. */
-    private MemoryPoolLink pageMemoryConfiguration;
+    private MemoryPoolLink memoryPool;
 
     /** Partition loss policy. */
     private PartitionLossPolicy partitionLossPolicy = DFLT_PARTITION_LOSS_POLICY;
@@ -456,7 +456,7 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
         name = cc.getName();
         nearCfg = cc.getNearConfiguration();
         nodeFilter = cc.getNodeFilter();
-        pageMemoryConfiguration = cc.getPageMemoryConfiguration();
+        memoryPool = cc.getMemoryPool();
         partitionLossPolicy = cc.getPartitionLossPolicy();
         pluginCfgs = cc.getPluginConfigurations();
         qryEntities = cc.getQueryEntities() == Collections.<QueryEntity>emptyList() ? null : cc.getQueryEntities();
@@ -1959,17 +1959,17 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
     }
 
     /**
-     *
+     * @return link to memory pool which will be used for the cache
      */
-    public MemoryPoolLink getPageMemoryConfiguration() {
-        return pageMemoryConfiguration;
+    public MemoryPoolLink getMemoryPool() {
+        return memoryPool;
     }
 
     /**
-     * @param pageMemoryConfiguration Page memory configuration.
+     * @param memoryPool link to memory pool to use with the cache
      */
-    public void setPageMemoryConfiguration(MemoryPoolLink pageMemoryConfiguration) {
-        this.pageMemoryConfiguration = pageMemoryConfiguration;
+    public void setMemoryPool(MemoryPoolLink memoryPool) {
+        this.memoryPool = memoryPool;
     }
 
     /**

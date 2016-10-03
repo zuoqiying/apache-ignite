@@ -22,6 +22,7 @@ import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.MemoryConfiguration;
+import org.apache.ignite.configuration.MemoryPoolLink;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.pagemem.PageMemory;
@@ -35,6 +36,7 @@ import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsExchangeFuture;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.jetbrains.annotations.Nullable;
+import org.jsr166.ConcurrentHashMap8;
 
 /**
  *
@@ -42,6 +44,12 @@ import org.jetbrains.annotations.Nullable;
 public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdapter {
     /** */
     protected PageMemory pageMem;
+
+    /** Cache to free list. */
+    protected ConcurrentHashMap8<Integer, FreeListImpl> cacheToFreeList = new ConcurrentHashMap8<>();
+
+    /** Memory pool to free list. */
+    protected ConcurrentHashMap8<MemoryPoolLink, FreeListImpl> memoryPoolToFreeList = new ConcurrentHashMap8<>();
 
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
@@ -70,20 +78,56 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
      * @param cacheId Cache id.
      */
     public FreeList freeList(int cacheId) {
-        return pageMem.freeList(cacheId);
+        return getFreeListImpl(cacheId);
     }
 
     /**
      * @param cacheId Cache id.
      */
     public ReuseList reuseList(int cacheId) {
-        return pageMem.reuseList(cacheId);
+        return getFreeListImpl(cacheId);
     }
 
     /** {@inheritDoc} */
     @Override protected void stop0(boolean cancel) {
         if (pageMem != null)
             pageMem.stop();
+    }
+
+
+    /**
+     * @param cacheId Cache id.
+     */
+    private FreeListImpl getFreeListImpl(int cacheId) {
+        FreeListImpl freeList = cacheToFreeList.get(cacheId);
+
+        if (freeList == null) {
+            //actually there is only one FreeListImpl for each memory pool, cache to freeList map is used as index
+            MemoryPoolLink pool = pageMem.getMemoryPool(cacheId);
+
+            FreeListImpl poolFreeList = memoryPoolToFreeList.get(pool);
+
+            if (poolFreeList == null) {
+                try {
+                    FreeListImpl newFreeList = new FreeListImpl(cacheId, "", pageMem, null, cctx.wal(), 0L, true);
+
+                    FreeListImpl previousList = memoryPoolToFreeList.putIfAbsent(pool, newFreeList);
+
+                    if (previousList != null)
+                        freeList = previousList;
+                    else
+                        freeList = newFreeList;
+                }
+                catch (IgniteCheckedException e) {
+                    throw new IllegalStateException();
+                }
+            } else
+                freeList = poolFreeList;
+
+            cacheToFreeList.putIfAbsent(cacheId, freeList);
+        }
+
+        return freeList;
     }
 
     /**

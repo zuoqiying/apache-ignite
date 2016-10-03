@@ -45,7 +45,8 @@ import java.util.Set;
  * family of {@linkplain #trim() trimming methods} lets you control the size of
  * the table; this is particularly useful if you reuse instances of this class.
  */
-@SuppressWarnings("CommentAbsent") public class GridInt2IntOpenHashMap
+@SuppressWarnings("CommentAbsent")
+public class GridInt2IntOpenHashMap
     implements java.io.Serializable, Cloneable, Int2IntMap {
     /** 2<sup>32</sup> &middot; &phi;, &phi; = (&#x221A;5 &minus; 1)/2. */
     private static final int INT_PHI = 0x9E3779B9;

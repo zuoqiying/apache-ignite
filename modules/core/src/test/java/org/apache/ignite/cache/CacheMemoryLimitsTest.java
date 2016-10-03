@@ -54,21 +54,21 @@ public class CacheMemoryLimitsTest extends GridCommonAbstractTest {
         CacheConfiguration<Object, Object> ccfg1 = new CacheConfiguration<>();
 
         ccfg1.setName("cache-1");
-        ccfg1.setPageMemoryConfiguration(first);
+        ccfg1.setMemoryPool(first);
 
 
         CacheConfiguration<Object, Object> ccfg2 = new CacheConfiguration<>();
 
         ccfg2.setName("cache-2");
 
-        ccfg2.setPageMemoryConfiguration(first);
+        ccfg2.setMemoryPool(first);
 
 
         CacheConfiguration<Object, Object> ccfg3 = new CacheConfiguration<>();
 
         ccfg3.setName("cache-3");
 
-        ccfg3.setPageMemoryConfiguration(second);
+        ccfg3.setMemoryPool(second);
 
         configuration.setCacheConfiguration(ccfg1, ccfg2, ccfg3);
 

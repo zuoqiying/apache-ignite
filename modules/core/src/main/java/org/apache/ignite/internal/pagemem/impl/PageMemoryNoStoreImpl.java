@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
@@ -43,9 +42,6 @@ import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
-import org.apache.ignite.internal.processors.cache.database.freelist.FreeList;
-import org.apache.ignite.internal.processors.cache.database.freelist.FreeListImpl;
-import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList;
 import org.apache.ignite.internal.util.GridInt2IntOpenHashMap;
 import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.OffheapReadWriteLock;
@@ -140,17 +136,27 @@ public class PageMemoryNoStoreImpl implements PageMemory {
     /** */
     private int idxMask;
 
-    private volatile GridInt2IntOpenHashMap cachePageMemory;
+    /** Mapping of cache id to memory pool index */
+    private volatile GridInt2IntOpenHashMap cacheToMemoryPool;
 
+    /** Cache page memory offset (for CAS). */
     private final long cachePageMemoryOff;
 
+    /** Collection of all memory pools. */
     private final List<MemoryPool> memoryPools;
 
+    /** Cache shared context. */
     private final GridCacheSharedContext<?, ?> sharedCtx;
 
     /** */
     private OffheapReadWriteLock rwLock;
 
+    /**
+     * @param memCfg Mem config.
+     * @param sharedCtx Shared context.
+     * @param log Logger.
+     * @param clean Clean.
+     */
     public PageMemoryNoStoreImpl(@NotNull  MemoryConfiguration memCfg,
         @NotNull GridCacheSharedContext<?, ?> sharedCtx,
         @Nullable IgniteLogger log,
@@ -178,7 +184,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
             int concLvl = pool.getConcurrencyLevel();
 
             if (concLvl < 2)
-                pool.setConcLvl(concLvl = Runtime.getRuntime().availableProcessors());
+                pool.setConcurrencyLevel(concLvl = Runtime.getRuntime().availableProcessors());
 
             segmentCnt += concLvl;
 
@@ -207,7 +213,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         memoryPools = map;
 
         try {
-            this.cachePageMemoryOff = GridUnsafe.objectFieldOffset(PageMemoryNoStoreImpl.class.getDeclaredField("cachePageMemory"));
+            this.cachePageMemoryOff = GridUnsafe.objectFieldOffset(PageMemoryNoStoreImpl.class.getDeclaredField("cacheToMemoryPool"));
         }
         catch (NoSuchFieldException e) {
             throw new IllegalStateException();
@@ -291,7 +297,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         long relPtr = INVALID_REL_PTR;
         long absPtr = 0;
 
-        MemoryPool region = memoryPools.get(cachePageMemory.get(cacheId));
+        MemoryPool region = memoryPools.get(cacheToMemoryPool.get(cacheId));
 
         for (int i = region.startIdx; i < region.lastIdx; i++) {
             Segment seg = segments[i];
@@ -381,11 +387,12 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         return sysPageSize;
     }
 
-    @Override public void registerCache(int cacheId, MemoryPoolLink configuration) {
+    /** {@inheritDoc} */
+    @Override public void registerCache(int cacheId, MemoryPoolLink memoryPool) {
         int idx = -1;
 
         for (int i = 0; i < memoryPools.size(); i++) {
-            if (memoryPools.get(i).link.equals(configuration)) {
+            if (memoryPools.get(i).link.equals(memoryPool)) {
                 idx = i;
 
                 break;
@@ -396,7 +403,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
 
 
         while (true) {
-            GridInt2IntOpenHashMap map = cachePageMemory;
+            GridInt2IntOpenHashMap map = cacheToMemoryPool;
 
             GridInt2IntOpenHashMap cp;
 
@@ -413,34 +420,9 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         }
     }
 
-    @Override public ReuseList reuseList(int cacheId) {
-        return getFreeListImpl(cacheId);
-    }
-
-    private FreeListImpl getFreeListImpl(int cacheId) {
-        MemoryPool region = memoryPools.get(cachePageMemory.get(cacheId));
-
-        FreeListImpl list = region.freeList;
-
-        if (list == null) {
-
-            try {
-                MemoryPool.freeListUpdater.compareAndSet(region, null,
-                    new FreeListImpl(cacheId, "", this, null, sharedCtx.wal(), 0L, true));
-
-                list = region.freeList;
-            }
-            catch (IgniteCheckedException e) {
-                throw new IllegalStateException();
-            }
-
-        }
-
-        return list;
-    }
-
-    @Override public FreeList freeList(int cacheId) {
-        return getFreeListImpl(cacheId);
+    /** {@inheritDoc} */
+    @Override public MemoryPoolLink getMemoryPool(int cacheId) {
+        return memoryPools.get(cacheToMemoryPool.get(cacheId)).link;
     }
 
     /**
@@ -848,26 +830,36 @@ public class PageMemoryNoStoreImpl implements PageMemory {
         }
     }
 
+    /**
+     * Keep data which are needed to work with 'memory pool' abstraction
+     */
     private static class MemoryPool {
-        private static final AtomicIntegerFieldUpdater<MemoryPool> updater =
+        /** Selector field updater. */
+        private static final AtomicIntegerFieldUpdater<MemoryPool> selectorUpdater =
             AtomicIntegerFieldUpdater.newUpdater(MemoryPool.class, "selector");
 
-        private static final AtomicReferenceFieldUpdater<MemoryPool, FreeListImpl> freeListUpdater =
-            AtomicReferenceFieldUpdater.newUpdater(MemoryPool.class, FreeListImpl.class, "freeList");
-
-
+        /** Link. */
         private final MemoryPoolLink link;
+
         /** Direct memory allocator. */
         private final DirectMemoryProvider directMemoryProvider;
 
+        /** Start index of segments for the pool . */
         private final int startIdx; //inclusive
+
+        /** Last index of segments for the pool . */
         private final int lastIdx;  //exclusive
 
+        /** Selector to generate next segment id to allocate new page. */
         private volatile int selector = 0;
 
-        private volatile FreeListImpl freeList;
-
-        public MemoryPool(MemoryPoolLink link, DirectMemoryProvider directMemoryProvider, int startIdx, int lastIdx) {
+        /**
+         * @param link Link.
+         * @param directMemoryProvider Direct memory provider.
+         * @param startIdx Start index.
+         * @param lastIdx Last index.
+         */
+        MemoryPool(MemoryPoolLink link, DirectMemoryProvider directMemoryProvider, int startIdx, int lastIdx) {
             this.link = link;
             assert startIdx < lastIdx;
 
@@ -876,7 +868,9 @@ public class PageMemoryNoStoreImpl implements PageMemory {
             this.lastIdx = lastIdx;
         }
 
-        /** */
+        /**
+         * @return segment id (with using round robin policy)
+         **/
         private int nextRoundRobinIndex() {
             while (true) {
                 int idx = selector;
@@ -886,7 +880,7 @@ public class PageMemoryNoStoreImpl implements PageMemory {
                 if (nextIdx >= lastIdx)
                     nextIdx = startIdx;
 
-                if (updater.compareAndSet(this, idx, nextIdx))
+                if (selectorUpdater.compareAndSet(this, idx, nextIdx))
                     return nextIdx;
             }
         }

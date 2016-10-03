@@ -31,7 +31,8 @@ public class MemoryConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
-    private static final MemoryPoolLink DEFAULT_PAGE_MEMORY_CONFIGURATION
+    /** Default memory pool configuration. */
+    private static final MemoryPoolLink DEFAULT_MEMORY_POOL_CONFIGURATION
         = new MemoryPoolLink("DEFAULT");
 
     /** Default cache size is 1Gb. */
@@ -50,11 +51,11 @@ public class MemoryConfiguration implements Serializable {
     private long pageCacheSize = DFLT_PAGE_CACHE_SIZE;
 
     /** Default concurrency level. */
-    private int dfltConcurrencyLevel; //TODO
+    private int dfltConcurrencyLevel;
 
     /** Default configuration. */
     private MemoryPoolConfiguration dfltCfg =
-        new MemoryPoolConfiguration(DEFAULT_PAGE_MEMORY_CONFIGURATION, 1024 * 1024 * 1024, 0, null);
+        new MemoryPoolConfiguration(DEFAULT_MEMORY_POOL_CONFIGURATION, 1024 * 1024 * 1024, 0, null);
 
     /** Page memory configuration map. */
     private ConcurrentMap<MemoryPoolLink, MemoryPoolConfiguration> memoryPoolConfigurations
@@ -119,18 +120,34 @@ public class MemoryConfiguration implements Serializable {
         return memoryPoolConfigurations.values();
     }
 
+    /**
+     * @return default concurrency level (will be used for cache
+     * which configuration was not configured with this property)
+     */
     public int getDefaultConcurrencyLevel() {
         return dfltConcurrencyLevel;
     }
 
+    /**
+     * @param dfltConcurrencyLevel default concurrency level (will be used for cache
+     * which configuration was not configured with this property)
+     */
     public void setDefaultConcurrencyLevel(int dfltConcurrencyLevel) {
         this.dfltConcurrencyLevel = dfltConcurrencyLevel;
     }
 
+    /**
+     * @return default memory pool configuration (will be used for cache
+     * which configuration was not configured with this property)
+     */
     public MemoryPoolConfiguration getDefaultConfiguration() {
         return dfltCfg;
     }
 
+    /**
+     * @param dfltConfiguration default memory pool configuration (will be used for cache
+     * which configuration was not configured with this property)
+     */
     public void setDefaultConfiguration(MemoryPoolConfiguration dfltConfiguration) {
         this.dfltCfg = dfltConfiguration;
     }

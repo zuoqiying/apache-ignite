@@ -18,7 +18,8 @@
 package org.apache.ignite.configuration;
 
 /**
- *
+ * Memory pool is part of memory with certain size. Each cache is connected with certain pool (with default one
+ * if nothing else set). Memory pool can belong to many caches.
  */
 public class MemoryPoolConfiguration {
     /** Link. */
@@ -55,21 +56,21 @@ public class MemoryPoolConfiguration {
     }
 
     /**
-     *
+     * @return link for this memory pool configuration
      */
     public MemoryPoolLink getLink() {
         return link;
     }
 
     /**
-     *
+     * @return size of this memory pool
      */
     public long getSize() {
         return size;
     }
 
     /**
-     *
+     * @return path to memory-mapped file (can be relative or absolute)
      */
     public String getTmpFsPath() {
         return tmpFsPath;
@@ -82,11 +83,19 @@ public class MemoryPoolConfiguration {
         return concLvl;
     }
 
+    /**
+     * Will update tmpFsPath
+     * @param tmpFsPath path to memory-mapped file (can be relative or absolute)
+     */
     public void setTmpFsPath(String tmpFsPath) {
         this.tmpFsPath = tmpFsPath;
     }
 
-    public void setConcLvl(int concLvl) {
+    /**
+     * Update concurrency level
+     * @param concLvl Concurrency level.
+     */
+    public void setConcurrencyLevel(int concLvl) {
         this.concLvl = concLvl;
     }
 }

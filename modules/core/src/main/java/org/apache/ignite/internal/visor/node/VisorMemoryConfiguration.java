@@ -49,10 +49,10 @@ public class VisorMemoryConfiguration implements Serializable, LessNamingBean {
     public static VisorMemoryConfiguration from(MemoryConfiguration memCfg) {
         VisorMemoryConfiguration res = new VisorMemoryConfiguration();
 
-//TODO        res.concLvl = memCfg.getConcurrencyLevel();
-//TODO        res.fileCacheAllocationPath = memCfg.getFileCacheAllocationPath();
-//TODO        res.pageCacheSize = memCfg.getPageCacheSize();
-//TODO        res.pageSize = memCfg.getPageSize();
+//TODO  GG-11596      res.concLvl = memCfg.getConcurrencyLevel();
+//TODO  GG-11596      res.fileCacheAllocationPath = memCfg.getFileCacheAllocationPath();
+//TODO  GG-11596      res.pageCacheSize = memCfg.getPageCacheSize();
+//TODO  GG-11596     res.pageSize = memCfg.getPageSize();
 
         return res;
     }

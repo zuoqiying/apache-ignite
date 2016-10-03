@@ -51,9 +51,17 @@ public interface PageMemory extends LifecycleAware, PageIdAllocator {
      */
     public int systemPageSize();
 
-    void registerCache(int i, MemoryPoolLink configuration);
+    /**
+     * Connects cacheId with memory pool
+     *
+     * @param cacheId cache id which will be linked with memory pool
+     * @param memoryPool memory pool which will be used for the cache
+     */
+    public void registerCache(int cacheId, MemoryPoolLink memoryPool);
 
-    ReuseList reuseList(int cacheId);
-
-    FreeList freeList(int cacheId);
+    /**
+     * @param cacheId cache id
+     * @return link to memory pool which is used for the cache
+     */
+    public MemoryPoolLink getMemoryPool(int cacheId);
 }

@@ -761,7 +761,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             }
 
             for (DynamicCacheDescriptor desc : registeredCaches.values()) {
-                MemoryPoolLink configuration = desc.cacheConfiguration().getPageMemoryConfiguration();
+                MemoryPoolLink configuration = desc.cacheConfiguration().getMemoryPool();
 
                 if (configuration == null)
                     configuration = ctx.config().getMemoryConfiguration().getDefaultConfiguration().getLink();
@@ -1777,7 +1777,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             caches.put(maskNull(cacheCtx.name()), cacheCtx.cache());
 
-            MemoryPoolLink configuration = ccfg.getPageMemoryConfiguration();
+            MemoryPoolLink configuration = ccfg.getMemoryPool();
 
             if (configuration == null)
                 configuration = ctx.config().getMemoryConfiguration().getDefaultConfiguration().getLink();

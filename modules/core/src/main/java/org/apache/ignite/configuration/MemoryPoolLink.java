@@ -20,7 +20,8 @@ package org.apache.ignite.configuration;
 import java.io.Serializable;
 
 /**
- *
+ * Link to memory pool (configuration).
+ * Mainly used as memory pool id.
  */
 public class MemoryPoolLink implements Serializable{
     /** Serial version uid. */
