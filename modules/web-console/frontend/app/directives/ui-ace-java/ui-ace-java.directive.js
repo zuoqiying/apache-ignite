@@ -18,7 +18,7 @@
 import templateUrl from './ui-ace-java.jade';
 import controller from './ui-ace-java.controller';
 
-export default ['igniteUiAceJava', ['JavaTransformer', (generator) => {
+export default ['igniteUiAceJava', [() => {
     const link = (scope, $el, attrs, [ctrl, igniteUiAceTabs, formCtrl, ngModelCtrl]) => {
         if (formCtrl && ngModelCtrl)
             formCtrl.$removeControl(ngModelCtrl);
@@ -34,96 +34,12 @@ export default ['igniteUiAceJava', ['JavaTransformer', (generator) => {
         if (igniteUiAceTabs && igniteUiAceTabs.onChange)
             scope.onChange = igniteUiAceTabs.onChange;
 
-        const render = (data) => {
-            delete ctrl.data;
-
-            if (!data)
-                return;
-
-            return ctrl.generator(scope.master);
-        };
-
-        // Setup generator.
-        if (scope.generator) {
-            const method = scope.generator;
-
-            switch (method) {
-                case 'clusterCaches':
-                    ctrl.generator = (cluster) => {
-                        const caches = _.reduce(scope.detail, (acc, cache) => {
-                            if (_.includes(cluster.caches, cache.value))
-                                acc.push(cache.cache);
-
-                            return acc;
-                        }, []);
-
-                        return generator.clusterCaches(cluster, caches, null, true).asString();
-                    };
-
-                    break;
-
-                case 'igfss':
-                    ctrl.generator = (cluster) => {
-                        const igfss = _.reduce(scope.detail, (acc, igfs) => {
-                            if (_.includes(cluster.igfss, igfs.value))
-                                acc.push(igfs.igfs);
-
-                            return acc;
-                        }, []);
-
-                        return generator.igfss(igfss, 'cfg').asString();
-                    };
-
-                    break;
-
-                case 'cacheStore':
-                case 'cacheQuery':
-                    ctrl.generator = (cache) => {
-                        const domains = _.reduce(scope.detail, (acc, domain) => {
-                            if (_.includes(cache.domains, domain.value))
-                                acc.push(domain.meta);
-
-                            return acc;
-                        }, []);
-
-                        return generator[method](cache, domains).asString();
-                    };
-
-                    break;
-
-                case 'cacheNodeFilter':
-                    ctrl.generator = (cache) => {
-                        const igfss = _.reduce(scope.detail, (acc, igfs) => {
-                            acc.push(igfs.igfs);
-
-                            return acc;
-                        }, []);
-
-                        return generator.cacheNodeFilter(cache, igfss).asString();
-                    };
-
-                    break;
-
-                default:
-                    ctrl.generator = (data) => generator[method](data).asString();
-            }
-        }
-
-        if (!_.isUndefined(attrs.clusterCfg)) {
-            scope.$watch('cfg', (cfg) => {
-                if (!_.isUndefined(cfg))
-                    return;
-
-                scope.cfg = {};
-            });
-
-            scope.$watch('cfg', (data) => ctrl.data = render(data), true);
-        }
-
-        const noDeepWatch = !(typeof attrs.noDeepWatch !== 'undefined');
+        const deepWatch = _.isNil(ctrl.client);
 
         // Setup watchers.
-        scope.$watch('master', (data) => ctrl.data = render(data), noDeepWatch);
+        scope.$watch('master', () => {
+            ctrl.data = _.isNil(scope.master) ? null : ctrl.generate(scope.master, scope.detail).asString();
+        }, deepWatch);
     };
 
     return {
@@ -131,10 +47,12 @@ export default ['igniteUiAceJava', ['JavaTransformer', (generator) => {
         restrict: 'E',
         scope: {
             master: '=',
-            detail: '=',
+            detail: '='
+        },
+        bindToController: {
+            data: '=?ngModel',
             generator: '@',
-            cfg: '=?clusterCfg',
-            data: '=?ngModel'
+            client: '@'
         },
         link,
         templateUrl,

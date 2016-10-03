@@ -357,7 +357,7 @@ export default class AbstractTransformer {
     }
 
     // Generate caches configs.
-    static clusterCaches(cluster, caches, igfss, isSrvCfg, sb = new StringBuilder()) {
+    static clusterCaches(cluster, caches, igfss, client, sb = new StringBuilder()) {
         const cfg = this.generator.clusterCaches(cluster, caches);
 
         this._setProperties(sb, cfg);

@@ -441,7 +441,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
          * @param {Bean} bean
          * @returns {Array.<String>}
          */
-        collectClasses(bean) {
+        static collectClasses(bean) {
             const classes = [bean.clsName];
 
             _.forEach(bean.properties, (prop) => {
@@ -469,14 +469,16 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         /**
          * Build Java startup class with configuration.
          *
-         * @param {Bean} cfg
+         * @param {Bean} cluster
          * @param pkg Package name.
-         * @param clsName Class name for generate factory class otherwise generate code snippet.
-         * @param clientNearCfg Optional near cache configuration for client node.
-         * @param sb
-         * @returns {String}
+         * @param {String} clsName Class name for generate factory class otherwise generate code snippet.
+         * @param {Boolean} client Is client node.
+         * @returns {StringBuilder}
          */
-        static cluster(cfg, pkg, clsName, clientNearCfg, sb = new StringBuilder()) {
+        static igniteConfiguration(cluster, pkg, clsName, client) {
+            const cfg = generator.igniteConfiguration(cluster, client);
+            const sb = new StringBuilder();
+
             sb.append(`package ${pkg};`);
             sb.emptyLine();
 
@@ -493,7 +495,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             );
             sb.startBlock('public static IgniteConfiguration createConfiguration() throws Exception {');
 
-            this.constructBean(sb, cfg, true);
+            this.constructBean(sb, cfg, [], true);
 
             sb.emptyLine();
 
@@ -503,7 +505,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
             sb.endBlock('}');
 
-            return sb.asString();
+            return sb;
         }
     }
 

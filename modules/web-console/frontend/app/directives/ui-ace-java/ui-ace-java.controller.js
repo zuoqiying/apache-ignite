@@ -15,18 +15,74 @@
  * limitations under the License.
  */
 
-const SERVER_CFG = 'ServerConfigurationFactory';
-const CLIENT_CFG = 'ClientConfigurationFactory';
-
 export default ['$scope', 'JavaTransformer', function($scope, generator) {
     const ctrl = this;
 
     delete ctrl.data;
 
-    // Set default generator
-    ctrl.generator = (cluster) => {
-        const type = $scope.cfg ? CLIENT_CFG : SERVER_CFG;
+    const client = ctrl.client === 'true';
 
-        return generator.cluster(cluster, 'config', type, $scope.cfg);
-    };
+    // Setup generator.
+    switch (ctrl.generator) {
+        case 'igniteConfiguration':
+            const clsName = client ? 'ClientConfigurationFactory' : 'ServerConfigurationFactory';
+
+            ctrl.generate = (cluster) => generator.igniteConfiguration(cluster, 'config', clsName, client);
+
+            break;
+        case 'clusterCaches':
+            ctrl.generate = (cluster, caches) => {
+                const clusterCaches = _.reduce(caches, (acc, cache) => {
+                    if (_.includes(cluster.caches, cache.value))
+                        acc.push(cache.cache);
+
+                    return acc;
+                }, []);
+
+                return generator.clusterCaches(cluster, clusterCaches, null, client);
+            };
+
+            break;
+        case 'cacheStore':
+        case 'cacheQuery':
+            ctrl.generate = (cache, domains) => {
+                const cacheDomains = _.reduce(domains, (acc, domain) => {
+                    if (_.includes(cache.domains, domain.value))
+                        acc.push(domain.meta);
+
+                    return acc;
+                }, []);
+
+                return generator[ctrl.generate](cache, cacheDomains);
+            };
+
+            break;
+        case 'cacheNodeFilter':
+            ctrl.generate = (cache, igfss) => {
+                const cacheIgfss = _.reduce(igfss, (acc, igfs) => {
+                    acc.push(igfs.igfs);
+
+                    return acc;
+                }, []);
+
+                return generator.cacheNodeFilter(cache, cacheIgfss);
+            };
+
+            break;
+        case 'igfss':
+            ctrl.generate = (cluster, igfss) => {
+                const clusterIgfss = _.reduce(igfss, (acc, igfs) => {
+                    if (_.includes(cluster.igfss, igfs.value))
+                        acc.push(igfs.igfs);
+
+                    return acc;
+                }, []);
+
+                return generator.igfss(clusterIgfss);
+            };
+
+            break;
+        default:
+            ctrl.generate = (master) => generator[ctrl.generator](master);
+    }
 }];

@@ -35,7 +35,7 @@ export default ['$scope', 'SpringTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                return generator.clusterCaches(cluster, clusterCaches, null, true);
+                return generator.clusterCaches(cluster, clusterCaches, null, false);
             };
 
             break;
