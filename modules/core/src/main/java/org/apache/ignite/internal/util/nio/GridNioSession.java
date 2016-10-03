@@ -174,4 +174,6 @@ public interface GridNioSession {
      * @return Recovery descriptor if recovery is supported, {@code null otherwise.}
      */
     @Nullable public GridNioRecoveryDescriptor inRecoveryDescriptor();
+
+    public void systemMessage(Object msg);
 }

@@ -387,5 +387,10 @@ public class GridNioFilterChainSelfTest extends GridCommonAbstractTest {
         @Nullable @Override public GridNioRecoveryDescriptor inRecoveryDescriptor() {
             return null;
         }
+
+        /** {@inheritDoc} */
+        @Override public void systemMessage(Object msg) {
+            // No-op.
+        }
     }
 }

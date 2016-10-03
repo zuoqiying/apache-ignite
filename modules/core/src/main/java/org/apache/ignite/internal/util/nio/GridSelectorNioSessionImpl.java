@@ -68,6 +68,9 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     /** */
     final AtomicBoolean procWrite = new AtomicBoolean();
 
+    /** */
+    private Object sysMsg;
+
     /**
      * Creates session instance.
      *
@@ -318,6 +321,23 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     void onClosed() {
         if (sem != null)
             sem.release(1_000_000);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void systemMessage(Object sysMsg) {
+        this.sysMsg = sysMsg;
+    }
+
+    boolean hasSystemMessage() {
+        return sysMsg != null;
+    }
+
+    public Object systemMessage() {
+        Object ret = sysMsg;
+
+        sysMsg = null;
+
+        return ret;
     }
 
     /** {@inheritDoc} */

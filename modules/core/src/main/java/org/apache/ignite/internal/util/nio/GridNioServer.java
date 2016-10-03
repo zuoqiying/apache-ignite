@@ -973,6 +973,12 @@ public class GridNioServer<T> {
                     readBuf.compact();
                 else
                     readBuf.clear();
+
+                if (ses.hasSystemMessage() && !ses.procWrite.get()) {
+                    ses.procWrite.set(true);
+
+                    registerWrite(ses);
+                }
             }
             catch (IgniteCheckedException e) {
                 close(ses, e);
@@ -1049,21 +1055,25 @@ public class GridNioServer<T> {
 
                 while (true) {
                     if (req == null) {
-                        req = (NioOperationFuture<?>)ses.pollFuture();
+                        req = systemMessage(ses);
 
-                        if (req == null && buf.position() == 0) {
-                            if (ses.procWrite.get()) {
-                                boolean set = ses.procWrite.compareAndSet(true, false);
+                        if (req == null) {
+                            req = (NioOperationFuture<?>)ses.pollFuture();
 
-                                assert set;
+                            if (req == null && buf.position() == 0) {
+                                if (ses.procWrite.get()) {
+                                    boolean set = ses.procWrite.compareAndSet(true, false);
 
-                                if (ses.writeQueue().isEmpty())
-                                    key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
-                                else
-                                    ses.procWrite.set(true);
+                                    assert set;
+
+                                    if (ses.writeQueue().isEmpty())
+                                        key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
+                                    else
+                                        ses.procWrite.set(true);
+                                }
+
+                                break;
                             }
-
-                            break;
                         }
                     }
 
@@ -1088,7 +1098,10 @@ public class GridNioServer<T> {
                     while (finished) {
                         req.onDone();
 
-                        req = (NioOperationFuture<?>)ses.pollFuture();
+                        req = systemMessage(ses);
+
+                        if (req == null)
+                            req = (NioOperationFuture<?>)ses.pollFuture();
 
                         if (req == null)
                             break;
@@ -1197,6 +1210,27 @@ public class GridNioServer<T> {
         }
 
         /**
+         * @param ses Session.
+         * @return System message request.
+         */
+        private NioOperationFuture<?> systemMessage(GridSelectorNioSessionImpl ses) {
+            if (ses.hasSystemMessage()) {
+                Object msg = ses.systemMessage();
+
+                NioOperationFuture req = new NioOperationFuture<>(ses,
+                    NioOperation.REQUIRE_WRITE,
+                    (Message)msg,
+                    true);
+
+                assert !ses.hasSystemMessage();
+
+                return req;
+            }
+
+            return null;
+        }
+
+        /**
          * Processes write-ready event on the key.
          *
          * @param key Key that is ready to be written.
@@ -1222,21 +1256,25 @@ public class GridNioServer<T> {
             }
 
             if (req == null) {
-                req = (NioOperationFuture<?>)ses.pollFuture();
+                req = systemMessage(ses);
 
-                if (req == null && buf.position() == 0) {
-                    if (ses.procWrite.get()) {
-                        boolean set = ses.procWrite.compareAndSet(true, false);
+                if (req == null) {
+                    req = (NioOperationFuture<?>)ses.pollFuture();
 
-                        assert set;
+                    if (req == null && buf.position() == 0) {
+                        if (ses.procWrite.get()) {
+                            boolean set = ses.procWrite.compareAndSet(true, false);
 
-                        if (ses.writeQueue().isEmpty())
-                            key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
-                        else
-                            ses.procWrite.set(true);
+                            assert set;
+
+                            if (ses.writeQueue().isEmpty())
+                                key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
+                            else
+                                ses.procWrite.set(true);
+                        }
+
+                        return;
                     }
-
-                    return;
                 }
             }
 
@@ -1261,7 +1299,10 @@ public class GridNioServer<T> {
             while (finished) {
                 req.onDone();
 
-                req = (NioOperationFuture<?>)ses.pollFuture();
+                req = systemMessage(ses);
+
+                if (req == null)
+                    req = (NioOperationFuture<?>)ses.pollFuture();
 
                 if (req == null)
                     break;
@@ -1455,15 +1496,7 @@ public class GridNioServer<T> {
                             }
 
                             case REQUIRE_WRITE: {
-                                //Just register write key.
-                                SelectionKey key = req.session().key();
-
-                                if (key.isValid()) {
-                                    key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
-
-                                    // Update timestamp to protected against false write timeout.
-                                    ((GridNioSessionImpl)key.attachment()).bytesSent(0);
-                                }
+                                registerWrite(req.session());
 
                                 break;
                             }
@@ -1514,72 +1547,7 @@ public class GridNioServer<T> {
                             }
 
                             case DUMP_STATS: {
-                                StringBuilder sb = new StringBuilder();
-
-                                Set<SelectionKey> keys = selector.keys();
-
-                                sb.append(U.nl())
-                                    .append(">> Selector info [idx=").append(idx)
-                                    .append(", keysCnt=").append(keys.size())
-                                    .append("]").append(U.nl());
-
-                                for (SelectionKey key : keys) {
-                                    GridSelectorNioSessionImpl ses = (GridSelectorNioSessionImpl)key.attachment();
-
-                                    MessageWriter writer = ses.meta(MSG_WRITER.ordinal());
-                                    MessageReader reader = ses.meta(GridDirectParser.READER_META_KEY);
-
-                                    sb.append("    Connection info [")
-                                        .append("in=").append(ses.accepted())
-                                        .append(", rmtAddr=").append(ses.remoteAddress())
-                                        .append(", locAddr=").append(ses.localAddress());
-
-                                    GridNioRecoveryDescriptor outDesc = ses.outRecoveryDescriptor();
-
-                                    if (outDesc != null) {
-                                        sb.append(", msgsSent=").append(outDesc.sent())
-                                            .append(", msgsAckedByRmt=").append(outDesc.acked())
-                                            .append(", descIdHash=").append(System.identityHashCode(outDesc));
-                                    }
-                                    else
-                                        sb.append(", outRecoveryDesc=null");
-
-                                    GridNioRecoveryDescriptor inDesc = ses.inRecoveryDescriptor();
-
-                                    if (inDesc != null) {
-                                        sb.append(", msgsRcvd=").append(inDesc.received())
-                                            .append(", lastAcked=").append(inDesc.lastAcknowledged())
-                                            .append(", descIdHash=").append(System.identityHashCode(inDesc));
-                                    }
-                                    else
-                                        sb.append(", inRecoveryDesc=null");
-
-                                    sb.append(", bytesRcvd=").append(ses.bytesReceived())
-                                        .append(", bytesSent=").append(ses.bytesSent())
-                                        .append(", opQueueSize=").append(ses.writeQueueSize())
-                                        .append(", msgWriter=").append(writer != null ? writer.toString() : "null")
-                                        .append(", msgReader=").append(reader != null ? reader.toString() : "null");
-
-                                    int cnt = 0;
-
-                                    for (GridNioFuture<?> fut : ses.writeQueue()) {
-                                        if (cnt == 0)
-                                            sb.append(",\n opQueue=[").append(fut);
-                                        else
-                                            sb.append(',').append(fut);
-
-                                        if (++cnt == 5) {
-                                            sb.append(']');
-
-                                            break;
-                                        }
-                                    }
-
-
-                                    sb.append("]").append(U.nl());
-                                }
-
-                                U.warn(log, sb.toString());
+                                dumpStats();
 
                                 // Complete the request just in case (none should wait on this future).
                                 req.onDone(true);
@@ -1631,6 +1599,93 @@ public class GridNioServer<T> {
                     U.close(selector, log);
                 }
             }
+        }
+
+        /**
+         * @param ses Session.
+         */
+        final void registerWrite(GridSelectorNioSessionImpl ses) {
+            SelectionKey key = ses.key();
+
+            if (key.isValid()) {
+                if ((key.interestOps() & SelectionKey.OP_WRITE) == 0)
+                    key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+
+                // Update timestamp to protected against false write timeout.
+                ses.bytesSent(0);
+            }
+        }
+
+        /**
+         *
+         */
+        private void dumpStats() {
+            StringBuilder sb = new StringBuilder();
+
+            Set<SelectionKey> keys = selector.keys();
+
+            sb.append(U.nl())
+                .append(">> Selector info [idx=").append(idx)
+                .append(", keysCnt=").append(keys.size())
+                .append("]").append(U.nl());
+
+            for (SelectionKey key : keys) {
+                GridSelectorNioSessionImpl ses = (GridSelectorNioSessionImpl)key.attachment();
+
+                MessageWriter writer = ses.meta(MSG_WRITER.ordinal());
+                MessageReader reader = ses.meta(GridDirectParser.READER_META_KEY);
+
+                sb.append("    Connection info [")
+                    .append("in=").append(ses.accepted())
+                    .append(", rmtAddr=").append(ses.remoteAddress())
+                    .append(", locAddr=").append(ses.localAddress());
+
+                GridNioRecoveryDescriptor outDesc = ses.outRecoveryDescriptor();
+
+                if (outDesc != null) {
+                    sb.append(", msgsSent=").append(outDesc.sent())
+                        .append(", msgsAckedByRmt=").append(outDesc.acked())
+                        .append(", descIdHash=").append(System.identityHashCode(outDesc));
+                }
+                else
+                    sb.append(", outRecoveryDesc=null");
+
+                GridNioRecoveryDescriptor inDesc = ses.inRecoveryDescriptor();
+
+                if (inDesc != null) {
+                    sb.append(", msgsRcvd=").append(inDesc.received())
+                        .append(", lastAcked=").append(inDesc.lastAcknowledged())
+                        .append(", descIdHash=").append(System.identityHashCode(inDesc));
+                }
+                else
+                    sb.append(", inRecoveryDesc=null");
+
+                sb.append(", bytesRcvd=").append(ses.bytesReceived())
+                    .append(", bytesSent=").append(ses.bytesSent())
+                    .append(", opQueueSize=").append(ses.writeQueueSize())
+                    .append(", msgWriter=").append(writer != null ? writer.toString() : "null")
+                    .append(", msgReader=").append(reader != null ? reader.toString() : "null");
+
+                int cnt = 0;
+
+                for (GridNioFuture<?> fut : ses.writeQueue()) {
+                    if (cnt == 0)
+                        sb.append(",\n opQueue=[").append(fut);
+                    else
+                        sb.append(',').append(fut);
+
+                    if (++cnt == 5) {
+                        sb.append(']');
+
+                        break;
+                    }
+                }
+
+
+                sb.append("]").append(U.nl());
+            }
+
+            U.warn(log, sb.toString());
         }
 
         /**
