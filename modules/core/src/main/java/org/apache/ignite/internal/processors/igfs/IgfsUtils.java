@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.igfs;
 
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteFileSystem;
 import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.binary.BinaryRawReader;
 import org.apache.ignite.binary.BinaryRawWriter;
@@ -972,5 +973,14 @@ public class IgfsUtils {
      */
     private static boolean hasFlag(byte flags, byte flag) {
         return (flags & flag) == flag;
+    }
+
+    /**
+     * @param igfsName Filesystem name.
+     * @param path IGFS path
+     * @return String representation pof the IGFS URI.
+     */
+    public static String uri(String igfsName, IgfsPath path) {
+        return IgniteFileSystem.IGFS_SCHEME + ";//" + igfsName + '@' + path;
     }
 }
