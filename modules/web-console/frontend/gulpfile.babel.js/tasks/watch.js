@@ -25,8 +25,8 @@ gulp.task('watch:ignite-modules', (cb) => sequence('clean:ignite-modules-temp', 
 // Build + watch task.
 gulp.task('watch', ['build'], () => {
     gulp.watch(jadeViewsPaths, ['jade:views']);
-    gulp.watch(jadeAppModulePaths, ['jade:app']);
-    gulp.watch(jadeModulePaths, ['jade:ignite_modules']);
+    gulp.watch(jadeAppModulePaths.concat('./app/helpers/**/*.jade'), ['jade:app']);
+    gulp.watch(jadeModulePaths.concat('./app/helpers/**/*.jade'), ['jade:ignite_modules']);
     gulp.watch(resourcePaths, ['copy:resource:app']);
     gulp.watch(resourceModulePaths, ['copy:resource:ignite_modules']);
     gulp.watch(appModulePaths, ['watch:ignite-modules']);
