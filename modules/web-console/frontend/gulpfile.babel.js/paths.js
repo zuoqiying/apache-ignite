@@ -25,24 +25,22 @@ const igniteModulesDir = process.env.IGNITE_MODULES ? path.join(path.normalize(p
 const igniteModulesTemp = path.resolve('ignite_modules_temp');
 
 const jadeViewsPaths = [
-    './app/helpers/**/*.jade',
-    './views/*.jade',
-    './views/**/*.jade'
+    './views/**/*.jade',
+    '!./views/configuration/*.jade'
 ];
 
 const jadeAppModulePaths = [
-    './app/helpers/**/*.jade',
     './app/modules/states/configuration/**/*.jade',
-    './app/modules/sql/*.jade'
-];
-
-const resourcePaths = [
-    './public/**/*.png',
-    './public/*.ico'
+    './app/modules/sql/*.jade',
+    './views/**/*.jade',
+    '!./views/*.jade',
+    '!./views/includes/*.jade',
+    '!./views/settings/*.jade',
+    '!./views/sql/*.jade',
+    '!./views/templates/*.jade'
 ];
 
 const jadeModulePaths = [
-    './app/helpers/**/*.jade',
     igniteModulesDir + '/**/view/**/*.jade'
 ];
 
@@ -56,6 +54,11 @@ const appModulePaths = [
     igniteModulesDir + '/**/app/**/*.css',
     igniteModulesDir + '/**/app/**/*.scss',
     igniteModulesDir + '/**/app/data/*.json'
+];
+
+const resourcePaths = [
+    './public/**/*.png',
+    './public/*.ico'
 ];
 
 const resourceModulePaths = [
