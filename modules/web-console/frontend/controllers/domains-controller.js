@@ -751,25 +751,12 @@ export default ['domainsController', [
                 importDomainModal.hide();
         }
 
-        function _saveDomainModel() {
+        function _saveDomainModel(optionsForm) {
             const generatePojo = $scope.ui.generatePojo;
             const packageName = $scope.ui.packageName;
 
-            if (generatePojo) {
-                if (LegacyUtils.isEmptyString(packageName)) {
-                    ErrorPopover.show('domainPackageNameInput', 'Package could not be empty');
-
-                    Focus.move('domainPackageNameInput');
-
-                    return false;
-                }
-
-                if (!LegacyUtils.isValidJavaClass('Package', packageName, false, 'domainPackageNameInput', true)) {
-                    Focus.move('domainPackageNameInput');
-
-                    return false;
-                }
-            }
+            if (generatePojo && !LegacyUtils.checkFieldValidators({inputForm: optionsForm}))
+                return false;
 
             const batch = [];
             const checkedCaches = [];
@@ -991,7 +978,7 @@ export default ['domainsController', [
             }
         }
 
-        $scope.importDomainNext = function() {
+        $scope.importDomainNext = function(form) {
             if (!$scope.importDomainNextAvailable())
                 return;
 
@@ -1006,7 +993,7 @@ export default ['domainsController', [
             else if (act === 'tables')
                 _selectOptions();
             else if (act === 'options')
-                _saveDomainModel();
+                _saveDomainModel(form);
         };
 
         $scope.nextTooltipText = function() {
