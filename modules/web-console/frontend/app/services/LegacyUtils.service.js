@@ -195,30 +195,6 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
         return true;
     }
 
-    function getModel(obj, field) {
-        let path = field.path;
-
-        if (!isDefined(path) || !isDefined(obj))
-            return obj;
-
-        path = path.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
-        path = path.replace(/^\./, '');           // strip a leading dot
-
-        const segs = path.split('.');
-        let root = obj;
-
-        while (segs.length > 0) {
-            const pathStep = segs.shift();
-
-            if (typeof root[pathStep] === 'undefined')
-                root[pathStep] = {};
-
-            root = root[pathStep];
-        }
-
-        return root;
-    }
-
     /**
      * Extract datasource from cache or cluster.
      *
@@ -303,7 +279,6 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
     }
 
     return {
-        getModel,
         mkOptions(options) {
             return _.map(options, (option) => {
                 return {value: option, label: isDefined(option) ? option : 'Not set'};
