@@ -76,6 +76,7 @@ import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteFuture;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.lifecycle.LifecycleAware;
+import org.apache.ignite.plugin.security.SecurityPermission;
 import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.thread.IgniteThreadPoolExecutor;
 import org.jetbrains.annotations.Nullable;
@@ -491,6 +492,8 @@ public final class IgfsImpl implements IgfsEx {
     @Override public boolean exists(final IgfsPath path) {
         A.notNull(path, "path");
 
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
+
         if (meta.isClient())
             return meta.runClientTask(new IgfsClientExistsCallable(cfg.getName(), path));
 
@@ -541,6 +544,8 @@ public final class IgfsImpl implements IgfsEx {
     @Override @Nullable public IgfsFile info(final IgfsPath path) {
         A.notNull(path, "path");
 
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
+
         if (meta.isClient())
             return meta.runClientTask(new IgfsClientInfoCallable(cfg.getName(), path));
 
@@ -560,12 +565,16 @@ public final class IgfsImpl implements IgfsEx {
     @Override public IgfsMode mode(IgfsPath path) {
         A.notNull(path, "path");
 
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
+
         return modeRslvr.resolveMode(path);
     }
 
     /** {@inheritDoc} */
     @Override public IgfsPathSummary summary(final IgfsPath path) {
         A.notNull(path, "path");
+
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
 
         if (meta.isClient())
             return meta.runClientTask(new IgfsClientSummaryCallable(cfg.getName(), path));
@@ -585,6 +594,8 @@ public final class IgfsImpl implements IgfsEx {
         A.notNull(path, "path");
         A.notNull(props, "props");
         A.ensure(!props.isEmpty(), "!props.isEmpty()");
+
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_WRITE);
 
         if (meta.isClient())
             return meta.runClientTask(new IgfsClientUpdateCallable(cfg.getName(), path, props));
@@ -649,6 +660,9 @@ public final class IgfsImpl implements IgfsEx {
         A.notNull(src, "src");
         A.notNull(dest, "dest");
 
+        igfsCtx.checkSecurity(src, SecurityPermission.IGFS_DELETE);
+        igfsCtx.checkSecurity(dest, SecurityPermission.IGFS_WRITE);
+
         if (meta.isClient()) {
             meta.runClientTask(new IgfsClientRenameCallable(cfg.getName(), src, dest));
 
@@ -709,6 +723,8 @@ public final class IgfsImpl implements IgfsEx {
     @Override public boolean delete(final IgfsPath path, final boolean recursive) {
         A.notNull(path, "path");
 
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_DELETE);
+
         if (meta.isClient())
             return meta.runClientTask(new IgfsClientDeleteCallable(cfg.getName(), path, recursive));
 
@@ -750,6 +766,8 @@ public final class IgfsImpl implements IgfsEx {
     /** {@inheritDoc} */
     @Override public void mkdirs(final IgfsPath path, @Nullable final Map<String, String> props)  {
         A.notNull(path, "path");
+
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_WRITE);
 
         if (meta.isClient()) {
             meta.runClientTask(new IgfsClientMkdirsCallable(cfg.getName(), path, props));
@@ -793,6 +811,8 @@ public final class IgfsImpl implements IgfsEx {
     @SuppressWarnings("unchecked")
     @Override public Collection<IgfsPath> listPaths(final IgfsPath path) {
         A.notNull(path, "path");
+
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
 
         if (meta.isClient())
             meta.runClientTask(new IgfsClientListPathsCallable(cfg.getName(), path));
@@ -842,6 +862,8 @@ public final class IgfsImpl implements IgfsEx {
     /** {@inheritDoc} */
     @Override public Collection<IgfsFile> listFiles(final IgfsPath path) {
         A.notNull(path, "path");
+
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
 
         if (meta.isClient())
             meta.runClientTask(new IgfsClientListFilesCallable(cfg.getName(), path));
@@ -938,6 +960,8 @@ public final class IgfsImpl implements IgfsEx {
         A.notNull(path, "path");
         A.ensure(bufSize >= 0, "bufSize >= 0");
         A.ensure(seqReadsBeforePrefetch >= 0, "seqReadsBeforePrefetch >= 0");
+
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
 
         return safeOp(new Callable<IgfsInputStream>() {
             @Override public IgfsInputStream call() throws Exception {
@@ -1066,6 +1090,8 @@ public final class IgfsImpl implements IgfsEx {
         A.notNull(path, "path");
         A.ensure(bufSize >= 0, "bufSize >= 0");
 
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_WRITE);
+
         return safeOp(new Callable<IgfsOutputStream>() {
             @Override public IgfsOutputStream call() throws Exception {
                 if (log.isDebugEnabled())
@@ -1143,6 +1169,8 @@ public final class IgfsImpl implements IgfsEx {
         A.notNull(path, "path");
         A.ensure(bufSize >= 0, "bufSize >= 0");
 
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_WRITE);
+
         return safeOp(new Callable<IgfsOutputStream>() {
             @Override public IgfsOutputStream call() throws Exception {
                 if (log.isDebugEnabled())
@@ -1217,6 +1245,8 @@ public final class IgfsImpl implements IgfsEx {
     @Override public void setTimes(final IgfsPath path, final long accessTime, final long modificationTime) {
         A.notNull(path, "path");
 
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_WRITE);
+
         if (accessTime == -1 && modificationTime == -1)
             return;
 
@@ -1262,6 +1292,8 @@ public final class IgfsImpl implements IgfsEx {
         A.ensure(start >= 0, "start >= 0");
         A.ensure(len >= 0, "len >= 0");
 
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
+
         if (meta.isClient())
             return meta.runClientTask(new IgfsClientAffinityCallable(cfg.getName(), path, start, len, maxLen));
 
@@ -1297,6 +1329,8 @@ public final class IgfsImpl implements IgfsEx {
 
     /** {@inheritDoc} */
     @Override public IgfsMetrics metrics() {
+        igfsCtx.checkSecurity(IgfsPath.ROOT, SecurityPermission.IGFS_READ);
+
         return safeOp(new Callable<IgfsMetrics>() {
             @Override public IgfsMetrics call() throws Exception {
                 IgfsPathSummary sum = summary0(IgfsPath.ROOT);
@@ -1338,12 +1372,16 @@ public final class IgfsImpl implements IgfsEx {
 
     /** {@inheritDoc} */
     @Override public void resetMetrics() {
+        igfsCtx.checkSecurity(IgfsPath.ROOT, SecurityPermission.IGFS_WRITE);
+
         igfsCtx.metrics().reset();
     }
 
     /** {@inheritDoc} */
     @Override public long size(final IgfsPath path) {
         A.notNull(path, "path");
+
+        igfsCtx.checkSecurity(path, SecurityPermission.IGFS_READ);
 
         if (meta.isClient())
             return meta.runClientTask(new IgfsClientSizeCallable(cfg.getName(), path));
@@ -1401,6 +1439,8 @@ public final class IgfsImpl implements IgfsEx {
 
     /** {@inheritDoc} */
     @Override public void format() {
+        igfsCtx.checkSecurity(IgfsPath.ROOT, SecurityPermission.IGFS_WRITE);
+
         try {
             IgniteUuid id = meta.format();
 

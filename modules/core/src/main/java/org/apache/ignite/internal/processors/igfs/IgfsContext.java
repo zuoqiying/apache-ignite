@@ -26,7 +26,11 @@ import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.FileSystemConfiguration;
+import org.apache.ignite.igfs.IgfsPath;
 import org.apache.ignite.internal.GridKernalContext;
+import org.apache.ignite.internal.util.typedef.internal.CU;
+import org.apache.ignite.plugin.security.SecurityException;
+import org.apache.ignite.plugin.security.SecurityPermission;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -239,6 +243,16 @@ public class IgfsContext {
             }
         }
     }
+
+    /**
+     * @param path Path to check.
+     * @param op Operation to check.
+     * @throws SecurityException If security check failed.
+     */
+    public void checkSecurity(IgfsPath path, SecurityPermission op) throws SecurityException {
+        ctx.security().authorize(cfg.getName(), path, op, null);
+    }
+
 
     /**
      * Adds manager to managers list.
