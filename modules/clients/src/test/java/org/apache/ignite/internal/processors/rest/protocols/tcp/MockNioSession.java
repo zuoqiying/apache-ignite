@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.rest.protocols.tcp;
 
 import java.net.InetSocketAddress;
+import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.internal.util.lang.GridMetadataAwareAdapter;
 import org.apache.ignite.internal.util.nio.GridNioFinishedFuture;
 import org.apache.ignite.internal.util.nio.GridNioFuture;
@@ -108,6 +109,11 @@ public class MockNioSession extends GridMetadataAwareAdapter implements GridNioS
     /** {@inheritDoc} */
     @Override public GridNioFuture<?> send(Object msg) {
         return new GridNioFinishedFuture<>(true);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void sendNoFuture(Object msg) throws IgniteCheckedException {
+        // No-op.
     }
 
     /** {@inheritDoc} */
