@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.igfs.IgfsPath;
 import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.processors.GridProcessorAdapter;
 import org.apache.ignite.internal.processors.security.GridSecurityProcessor;
@@ -73,6 +74,12 @@ public class GridOsSecurityProcessor extends GridProcessorAdapter implements Gri
     /** {@inheritDoc} */
     @Override public void authorize(String name, SecurityPermission perm, @Nullable SecurityContext securityCtx)
         throws SecurityException {
+        // No-op.
+    }
+
+    /** {@inheritDoc} */
+    @Override public void authorize(String igfsName, IgfsPath path, SecurityPermission perm,
+        @Nullable SecurityContext securityCtx) throws SecurityException {
         // No-op.
     }
 

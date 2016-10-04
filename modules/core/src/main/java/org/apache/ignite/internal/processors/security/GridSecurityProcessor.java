@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.igfs.IgfsPath;
 import org.apache.ignite.internal.processors.GridProcessor;
 import org.apache.ignite.plugin.security.AuthenticationContext;
 import org.apache.ignite.plugin.security.SecurityCredentials;
@@ -85,6 +86,18 @@ public interface GridSecurityProcessor extends GridProcessor {
      * @throws SecurityException If security check failed.
      */
     public void authorize(String name, SecurityPermission perm, @Nullable SecurityContext securityCtx)
+        throws SecurityException;
+
+    /**
+     * Authorizes IGFS operation.
+     *
+     * @param igfsName Ignite filesystem name.
+     * @param path IGFS path.
+     * @param perm Permission to authorize.
+     * @param securityCtx Optional security context.
+     * @throws SecurityException If security check failed.
+     */
+    public void authorize(String igfsName, IgfsPath path, SecurityPermission perm, @Nullable SecurityContext securityCtx)
         throws SecurityException;
 
     /**

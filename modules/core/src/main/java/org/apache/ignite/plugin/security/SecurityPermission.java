@@ -55,7 +55,16 @@ public enum SecurityPermission {
     ADMIN_CACHE,
 
     /** Visor admin operations permissions. */
-    ADMIN_OPS;
+    ADMIN_OPS,
+
+    /** Ignite filesystem {@code read} permission. */
+    IGFS_READ,
+
+    /** Ignite filesystem {@code write} permission. */
+    IGFS_WRITE,
+
+    /** Ignite filesystem {@code delete} permission. */
+    IGFS_DELETE;
 
     /** Enumerated values. */
     private static final SecurityPermission[] VALS = values();

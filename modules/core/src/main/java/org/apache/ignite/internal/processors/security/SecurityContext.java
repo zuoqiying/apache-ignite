@@ -17,6 +17,7 @@
 
 package org.apache.ignite.internal.processors.security;
 
+import org.apache.ignite.igfs.IgfsPath;
 import org.apache.ignite.plugin.security.SecurityPermission;
 import org.apache.ignite.plugin.security.SecuritySubject;
 
@@ -54,4 +55,14 @@ public interface SecurityContext {
      * @return {@code True} if system operation is allowed.
      */
     public boolean systemOperationAllowed(SecurityPermission perm);
+
+    /**
+     * Checks whether IGFS operation is allowed.
+     *
+     * @param igfsName Ignite filesystem name.
+     * @param path IGFS path.
+     * @param perm Permission to check.
+     * @return {@code True} if cache operation is allowed.
+     */
+    public boolean igfsOperationAllowed(String igfsName, IgfsPath path, SecurityPermission perm);
 }
