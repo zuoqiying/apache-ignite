@@ -432,7 +432,7 @@ export default ['IgniteFormUtils', ['$window', 'IgniteFocus', ($window, Focus) =
             };
         },
         markPristineInvalidAsDirty(ngModelCtrl) {
-            if (ngModelCtrl.$invalid && ngModelCtrl.$pristine)
+            if (ngModelCtrl && ngModelCtrl.$invalid && ngModelCtrl.$pristine)
                 ngModelCtrl.$setDirty();
         }
     };
