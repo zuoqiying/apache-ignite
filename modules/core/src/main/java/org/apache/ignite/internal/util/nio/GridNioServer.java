@@ -52,6 +52,8 @@ import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
+import org.apache.ignite.internal.managers.communication.GridIoMessage;
+import org.apache.ignite.internal.managers.communication.IgniteIoTestMessage;
 import org.apache.ignite.internal.util.GridConcurrentHashSet;
 import org.apache.ignite.internal.util.nio.ssl.GridNioSslFilter;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
@@ -470,6 +472,12 @@ public class GridNioServer<T> {
     private void send0(GridSelectorNioSessionImpl ses, SessionWriteRequest fut, boolean sys) {
         assert ses != null;
         assert fut != null;
+
+        if (fut.message() instanceof GridIoMessage && ((GridIoMessage) fut.message()).message() instanceof IgniteIoTestMessage) {
+            IgniteIoTestMessage msg = (IgniteIoTestMessage)((GridIoMessage)fut.message()).message();
+
+            msg.sendTime();
+        }
 
         int msgCnt = sys ? ses.offerSystemFuture(fut) : ses.offerFuture(fut);
 
@@ -1305,6 +1313,9 @@ public class GridNioServer<T> {
                 if (writer != null)
                     writer.setCurrentWriteClass(msg.getClass());
 
+                if (msg instanceof GridIoMessage && ((GridIoMessage) msg).message() instanceof IgniteIoTestMessage)
+                    ((IgniteIoTestMessage)((GridIoMessage) msg).message()).writeTime();
+
                 finished = msg.writeTo(buf, writer);
 
                 if (finished && writer != null)
@@ -1329,6 +1340,9 @@ public class GridNioServer<T> {
 
                 if (writer != null)
                     writer.setCurrentWriteClass(msg.getClass());
+
+                if (msg instanceof GridIoMessage && ((GridIoMessage) msg).message() instanceof IgniteIoTestMessage)
+                    ((IgniteIoTestMessage)((GridIoMessage) msg).message()).writeTime();
 
                 finished = msg.writeTo(buf, writer);
 

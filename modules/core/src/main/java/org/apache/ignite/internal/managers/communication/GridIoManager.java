@@ -372,9 +372,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                 IgniteIoTestMessage msg0 = (IgniteIoTestMessage)msg;
 
                 if (msg0.request()) {
-                    IgniteIoTestMessage res = new IgniteIoTestMessage(msg0.id(), false, null);
-
-                    res.flags(msg0.flags());
+                    IgniteIoTestMessage res = IgniteIoTestMessage.createResponse(msg0);
 
                     try {
                         send(node, GridTopic.TOPIC_IO_TEST, res, GridIoPolicy.SYSTEM_POOL);
@@ -384,12 +382,14 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                     }
                 }
                 else {
+                    msg0.responseTime();
+
                     IoTestFuture fut = ioTestMap().get(msg0.id());
 
                     if (fut == null)
                         U.warn(log, "Failed to find IO test future [msg=" + msg0 + ']');
                     else
-                        fut.onResponse();
+                        fut.onResponse(msg0);
                 }
             }
         });
@@ -2787,7 +2787,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         /**
          *
          */
-        void onResponse() {
+        void onResponse(Object res) {
             boolean complete;
 
             synchronized (this) {
@@ -2795,7 +2795,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             }
 
             if (complete)
-                onDone();
+                onDone(res);
         }
 
         /** {@inheritDoc} */

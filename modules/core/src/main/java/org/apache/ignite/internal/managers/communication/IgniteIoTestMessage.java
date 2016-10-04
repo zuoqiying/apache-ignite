@@ -19,6 +19,7 @@ package org.apache.ignite.internal.managers.communication;
 
 import java.nio.ByteBuffer;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
 import org.apache.ignite.plugin.extensions.communication.MessageWriter;
@@ -45,11 +46,52 @@ public class IgniteIoTestMessage implements Message {
     /** */
     private byte payload[];
 
+    public long reqSndTime;
+
+    public long reqWriteTime;
+
+    public long reqReadTime;
+
+    public long resSndTime;
+
+    public long resWriteTime;
+
+    public long resReadTime;
+
+    public long resTime;
+
     /**
      *
      */
     public IgniteIoTestMessage() {
         // No-op.
+    }
+
+    public void sendTime() {
+        if (req)
+            reqSndTime = U.currentTimeMillis();
+        else
+            resSndTime = U.currentTimeMillis();
+    }
+
+    public void writeTime() {
+        if (req)
+            reqWriteTime = U.currentTimeMillis();
+        else
+            resWriteTime = U.currentTimeMillis();
+    }
+
+    public void readTime() {
+        if (req)
+            reqReadTime = U.currentTimeMillis();
+        else
+            resReadTime = U.currentTimeMillis();
+    }
+
+    public void responseTime() {
+        assert !req;
+
+        resTime = U.currentTimeMillis();
     }
 
     /**
@@ -61,6 +103,19 @@ public class IgniteIoTestMessage implements Message {
         this.id = id;
         this.req = req;
         this.payload = payload;
+    }
+
+    public static IgniteIoTestMessage createResponse(IgniteIoTestMessage req) {
+        IgniteIoTestMessage msg = new IgniteIoTestMessage(req.id(), false, null);
+
+        msg.flags = req.flags;
+        msg.reqSndTime = req.reqSndTime;
+        msg.reqWriteTime = req.reqWriteTime;
+        msg.reqReadTime = req.reqReadTime;
+        msg.resSndTime = req.resSndTime;
+        msg.resWriteTime = req.resWriteTime;
+
+        return msg;
     }
 
     /**
@@ -161,6 +216,48 @@ public class IgniteIoTestMessage implements Message {
 
                 writer.incrementState();
 
+            case 4:
+                if (!writer.writeLong("reqReadTime", reqReadTime))
+                    return false;
+
+                writer.incrementState();
+
+            case 5:
+                if (!writer.writeLong("reqSndTime", reqSndTime))
+                    return false;
+
+                writer.incrementState();
+
+            case 6:
+                if (!writer.writeLong("reqWriteTime", reqWriteTime))
+                    return false;
+
+                writer.incrementState();
+
+            case 7:
+                if (!writer.writeLong("resReadTime", resReadTime))
+                    return false;
+
+                writer.incrementState();
+
+            case 8:
+                if (!writer.writeLong("resSndTime", resSndTime))
+                    return false;
+
+                writer.incrementState();
+
+            case 9:
+                if (!writer.writeLong("resTime", resTime))
+                    return false;
+
+                writer.incrementState();
+
+            case 10:
+                if (!writer.writeLong("resWriteTime", resWriteTime))
+                    return false;
+
+                writer.incrementState();
+
         }
 
         return true;
@@ -206,6 +303,62 @@ public class IgniteIoTestMessage implements Message {
 
                 reader.incrementState();
 
+            case 4:
+                reqReadTime = reader.readLong("reqReadTime");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 5:
+                reqSndTime = reader.readLong("reqSndTime");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 6:
+                reqWriteTime = reader.readLong("reqWriteTime");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 7:
+                resReadTime = reader.readLong("resReadTime");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 8:
+                resSndTime = reader.readLong("resSndTime");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 9:
+                resTime = reader.readLong("resTime");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 10:
+                resWriteTime = reader.readLong("resWriteTime");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
         }
 
         return reader.afterMessageRead(IgniteIoTestMessage.class);
@@ -218,7 +371,7 @@ public class IgniteIoTestMessage implements Message {
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 4;
+        return 11;
     }
 
     /** {@inheritDoc} */
