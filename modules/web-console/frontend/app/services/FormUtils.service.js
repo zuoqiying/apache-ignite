@@ -430,6 +430,10 @@ export default ['IgniteFormUtils', ['$window', 'IgniteFocus', ($window, Focus) =
                     return _.includes(this.loadedPanels, pnl);
                 }
             };
+        },
+        markPristineInvalidAsDirty(ngModelCtrl) {
+            if (ngModelCtrl.$invalid && ngModelCtrl.$pristine)
+                ngModelCtrl.$setDirty();
         }
     };
 }]];
