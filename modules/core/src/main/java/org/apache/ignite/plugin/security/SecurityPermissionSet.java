@@ -59,8 +59,8 @@ public interface SecurityPermissionSet extends Serializable, LessNamingBean {
     public Map<String, Collection<SecurityPermission>> cachePermissions();
 
     /**
-     * Map of IGFS names to Map of IGFS path to IGFS permissions. Wildcards are allowed at the
-     * end of IGFS name and path.
+     * Map of IGFS names to Map of IGFS path to IGFS permissions. Wildcards '/*' (direcory level)
+     * and  '/-' (recursive) are allowed at the end of path.
      *
      * @return Map of IGFS names to Map of IGFS path to IGFS permissions.
      */
