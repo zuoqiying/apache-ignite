@@ -109,7 +109,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         static _setProperties(sb, bean) {
             _.forEach(bean.properties, (prop, idx) => {
                 switch (JavaTypes.shortClassName(prop.clsName).toUpperCase()) {
-                    case 'DATASOURCE':
+                    case 'DATA_SOURCE':
                         sb.append(`<property name="${prop.name}" ref="${prop.id}"/>`);
 
                         break;
@@ -144,7 +144,6 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                         break;
                     case 'ARRAY':
-                    case 'VARARG':
                         this._setCollection(sb, prop, 'array');
 
                         break;
@@ -152,8 +151,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         this._setCollection(sb, prop, 'list');
 
                         break;
-                    case 'HASHMAP':
-                    case 'LINKEDHASHMAP':
+                    case 'MAP':
                         sb.startBlock(`<property name="${prop.name}">`);
                         sb.startBlock('<map>');
 

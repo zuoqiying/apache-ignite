@@ -748,7 +748,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         // Java code generator for cluster's SSL configuration.
         static clusterSsl(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             if (cluster.sslEnabled && _.nonNil(cluster.sslContextFactory)) {
-                const bean = new Bean('org.apache.ignite.ssl.SslContextFactory', 'sslContextFactory',
+                const bean = new Bean('org.apache.ignite.ssl.SslContextFactory', 'sslCtxFactory',
                     cluster.sslContextFactory);
 
                 bean.intProperty('keyAlgorithm')
@@ -840,7 +840,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
         // Generate user attributes group.
         static clusterUserAttributes(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            cfg.mapProperty('attributes', 'attributes', 'userAttributes');
+            cfg.mapProperty('attrs', 'attributes', 'userAttributes');
 
             return cfg;
         }
@@ -870,14 +870,14 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                 const fields = _.map(cfg.valueOf('fields'),
                     (e) => ({name: e.name, className: JavaTypes.fullClassName(e.className)}));
 
-                cfg.mapProperty('fields', fields, 'fields')
+                cfg.mapProperty('fields', fields, 'fields', true)
                     .mapProperty('aliases', 'aliases');
 
                 const indexes = _.map(domain.indexes, (index) =>
                     new Bean('org.apache.ignite.cache.QueryIndex', 'index', index, cacheDflts.indexes)
                         .stringProperty('name')
                         .enumProperty('indexType')
-                        .mapProperty('indFlds', 'fields')
+                        .mapProperty('indFlds', 'fields', 'fields', true)
                 );
 
                 cfg.collectionProperty('indexes', 'indexes', indexes, 'java.util.Collection', 'org.apache.ignite.cache.QueryIndex');

@@ -100,7 +100,7 @@ const DFLT_CLUSTER = {
             maximumStealingAttempts: 5,
             stealingEnabled: true,
             stealingAttributes: {
-                keyClsName: 'java.util.String',
+                keyClsName: 'java.lang.String',
                 valClsName: 'java.io.Serializable',
                 items: []
             }
@@ -198,8 +198,8 @@ const DFLT_CLUSTER = {
         pessimisticTxLogLinger: 10000
     },
     attributes: {
-        keyClsName: 'java.util.String',
-        valClsName: 'java.util.String',
+        keyClsName: 'java.lang.String',
+        valClsName: 'java.lang.String',
         items: []
     },
     odbcConfiguration: {

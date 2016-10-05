@@ -37,7 +37,7 @@ export class EmptyBean {
     }
 
     isComplex() {
-        return _.nonEmpty(this.properties) || !!_.find(this.arguments, (arg) => arg.clsName === 'Bean');
+        return _.nonEmpty(this.properties) || !!_.find(this.arguments, (arg) => arg.clsName === 'BEAN');
     }
 
     nonComplex() {
@@ -93,7 +93,7 @@ export class Bean extends EmptyBean {
     }
 
     stringConstructorArgument(model) {
-        return this._property(this.arguments, 'String', model, null, _.nonEmpty);
+        return this._property(this.arguments, 'java.lang.String', model, null, _.nonEmpty);
     }
 
     intConstructorArgument(model) {
@@ -105,7 +105,7 @@ export class Bean extends EmptyBean {
     }
 
     pathConstructorArgument(model) {
-        return this._property(this.arguments, 'Path', model, null, _.nonEmpty);
+        return this._property(this.arguments, 'PATH', model, null, _.nonEmpty);
     }
 
     constantConstructorArgument(model) {
@@ -127,7 +127,7 @@ export class Bean extends EmptyBean {
      * @returns {Bean}
      */
     beanConstructorArgument(id, value) {
-        this.arguments.push({clsName: 'Bean', id, value});
+        this.arguments.push({clsName: 'BEAN', id, value});
 
         return this;
     }
@@ -170,11 +170,11 @@ export class Bean extends EmptyBean {
     }
 
     stringProperty(model, name = model) {
-        return this._property(this.properties, 'String', model, name, _.nonEmpty);
+        return this._property(this.properties, 'java.lang.String', model, name, _.nonEmpty);
     }
 
     pathProperty(model, name = model) {
-        return this._property(this.properties, 'Path', model, name, _.nonEmpty);
+        return this._property(this.properties, 'PATH', model, name, _.nonEmpty);
     }
 
     classProperty(model, name = model) {
@@ -202,7 +202,7 @@ export class Bean extends EmptyBean {
         const dflt = _.get(this.dflts, model);
 
         if (_.nonEmpty(cls) && cls !== dflt)
-            this.properties.push({clsName: 'Bean', name, value: new EmptyBean(cls)});
+            this.properties.push({clsName: 'BEAN', name, value: new EmptyBean(cls)});
 
         return this;
     }
@@ -213,7 +213,7 @@ export class Bean extends EmptyBean {
      * @returns {Bean}
      */
     beanProperty(name, value) {
-        this.properties.push({clsName: 'Bean', name, value});
+        this.properties.push({clsName: 'BEAN', name, value});
 
         return this;
     }
@@ -225,9 +225,9 @@ export class Bean extends EmptyBean {
      * @param {String} typeClsName
      * @returns {Bean}
      */
-    arrayProperty(id, name, items, typeClsName = 'String') {
+    arrayProperty(id, name, items, typeClsName = 'java.lang.String') {
         if (items.length)
-            this.properties.push({clsName: 'Array', id, name, items, typeClsName});
+            this.properties.push({clsName: 'ARRAY', id, name, items, typeClsName});
 
         return this;
     }
@@ -239,9 +239,9 @@ export class Bean extends EmptyBean {
      * @param {String} typeClsName
      * @returns {Bean}
      */
-    varArgProperty(id, name, items, typeClsName = 'String') {
+    varArgProperty(id, name, items, typeClsName = 'java.lang.String') {
         if (items.length)
-            this.properties.push({clsName: 'VarArg', id, name, items, typeClsName});
+            this.properties.push({clsName: 'ARRAY', id, name, items, typeClsName, varArg: true});
 
         return this;
     }
@@ -255,7 +255,7 @@ export class Bean extends EmptyBean {
      * @param {String} implClsName
      * @returns {Bean}
      */
-    collectionProperty(id, name, items, clsName = 'java.util.Collection', typeClsName = 'String', implClsName = 'java.util.ArrayList') {
+    collectionProperty(id, name, items, clsName = 'java.util.Collection', typeClsName = 'java.lang.String', implClsName = 'java.util.ArrayList') {
         if (items.length)
             this.properties.push({id, name, items, clsName, typeClsName, implClsName});
 
@@ -266,9 +266,10 @@ export class Bean extends EmptyBean {
      * @param {String} id
      * @param {String} model
      * @param {String} [name]
+     * @param {Boolean} [ordered]
      * @returns {Bean}
      */
-    mapProperty(id, model, name = model) {
+    mapProperty(id, model, name = model, ordered = false) {
         if (!this.src)
             return this;
 
@@ -277,9 +278,10 @@ export class Bean extends EmptyBean {
 
         if (_.nonEmpty(entries) && _.nonNil(dflt) && entries !== dflt.entries) {
             this.properties.push({
-                clsName: dflt.clsName || 'java.util.HashMap',
+                clsName: 'MAP',
                 id,
                 name,
+                ordered,
                 keyClsName: dflt.keyClsName,
                 keyField: dflt.keyField || 'name',
                 valClsName: dflt.valClsName,
@@ -310,7 +312,7 @@ export class Bean extends EmptyBean {
      */
     dataSource(id, name, value) {
         if (value)
-            this.properties.push({clsName: 'DataSource', id, name, value});
+            this.properties.push({clsName: 'DATA_SOURCE', id, name, value});
 
         return this;
     }

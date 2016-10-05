@@ -88,7 +88,6 @@ const DFLT_CACHE = {
     },
     queryMetadata: 'Configuration',
     fields: {
-        clsName: 'java.util.LinkedHashMap',
         keyClsName: 'java.lang.String',
         valClsName: 'java.lang.String',
         valField: 'className',
@@ -106,7 +105,6 @@ const DFLT_CACHE = {
             clsName: 'org.apache.ignite.cache.QueryIndexType'
         },
         fields: {
-            clsName: 'java.util.LinkedHashMap',
             keyClsName: 'java.lang.String',
             valClsName: 'java.lang.Boolean',
             valField: 'direction',

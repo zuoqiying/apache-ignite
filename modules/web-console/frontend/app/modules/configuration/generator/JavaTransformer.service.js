@@ -73,11 +73,11 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         /**
          * @param {StringBuilder} sb
          * @param {Bean} bean
-         * @param {Array.<String>} vars
-         * @param {Boolean} limitLines
+         * @param {Array.<String>} [vars]
+         * @param {Boolean} [limitLines]
          * @private
          */
-        static constructBean(sb, bean, vars, limitLines = false) {
+        static constructBean(sb, bean, vars = [], limitLines = false) {
             _.forEach(bean.arguments, (arg) => {
                 if (arg.clsName === 'Bean' && arg.value.nonEmpty()) {
                     this.constructBean(sb, arg.value, vars, limitLines);
@@ -163,7 +163,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                             return `"${item}"${idx !== items.length - 1 ? ' +' : ''}`;
 
                         return `"${item}"`;
-                    case 'Path':
+                    case 'PATH':
                         return `"${item.replace(/\\/g, '\\\\')}"`;
                     case 'Class':
                         return `${JavaTypes.shortClassName(item)}.class`;
@@ -187,11 +187,22 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             });
         }
 
-        static _setArray(sb, bean, prop, vars, limitLines, arrWrapper) {
+        static _setArray(sb, bean, prop, vars, limitLines, varArg) {
             const arrType = JavaTypes.shortClassName(prop.typeClsName);
 
             if (this._isBean(arrType)) {
-                if (arrWrapper) {
+                // TODO-2053 varArg for bean with properties.
+                if (varArg) {
+                    sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(`);
+
+                    const lastIdx = prop.items.length - 1;
+
+                    _.forEach(prop.items, (item, idx) => {
+                        sb.append(this._newBean(item) + (lastIdx !== idx ? ',' : ''));
+                    });
+
+                    sb.endBlock(');');
+                } else {
                     sb.append(`${arrType}[] ${prop.id} = new ${arrType}[${prop.items.length}];`);
 
                     sb.emptyLine();
@@ -208,29 +219,19 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                     });
 
                     this._setProperty(sb, bean.id, prop.name, prop.id);
-                } else {
-                    sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(`);
-
-                    const lastIdx = prop.items.length - 1;
-
-                    _.forEach(prop.items, (item, idx) => {
-                        sb.append(this._newBean(item) + (lastIdx !== idx ? ',' : ''));
-                    });
-
-                    sb.endBlock(');');
                 }
             }
             else {
                 const arrItems = this._toObject(arrType, prop.items);
 
                 if (arrItems.length > 1) {
-                    sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(${arrWrapper ? `new ${arrType}[] {` : ''}`);
+                    sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(${varArg ? '' : `new ${arrType}[] {`}`);
 
                     const lastIdx = arrItems.length - 1;
 
                     _.forEach(arrItems, (item, idx) => sb.append(item + (lastIdx !== idx ? ',' : '')));
 
-                    sb.endBlock(arrWrapper ? '});' : ');');
+                    sb.endBlock(varArg ? ');' : '});');
                 }
                 else
                     this._setProperty(sb, bean.id, prop.name, `new ${arrType}[] {${_.head(arrItems)}}`);
@@ -250,7 +251,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 const clsName = JavaTypes.shortClassName(prop.clsName);
 
                 switch (clsName.toUpperCase()) {
-                    case 'DATASOURCE':
+                    case 'DATA_SOURCE':
                         this._setProperty(sb, bean.id, prop.name, `DataSources.INSTANCE_${prop.id}`);
 
                         break;
@@ -295,12 +296,8 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         }
 
                         break;
-                    case 'VARARG':
-                        this._setArray(sb, bean, prop, vars, limitLines, false);
-
-                        break;
                     case 'ARRAY':
-                        this._setArray(sb, bean, prop, vars, limitLines, true);
+                        this._setArray(sb, bean, prop, vars, limitLines, prop.varArg);
 
                         break;
                     case 'COLLECTION':
@@ -350,17 +347,18 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         }
 
                         break;
-                    case 'HASHMAP':
-                    case 'LINKEDHASHMAP':
+                    case 'MAP':
                         const keyClsName = JavaTypes.shortClassName(prop.keyClsName);
                         const valClsName = JavaTypes.shortClassName(prop.valClsName);
 
+                        const mapClsName = prop.ordered ? 'LinkedHashMap' : 'HashMap';
+
                         if (_.includes(vars, prop.id))
-                            sb.append(`${prop.id} = new ${clsName}<>();`);
+                            sb.append(`${prop.id} = new ${mapClsName}<>();`);
                         else {
                             vars.push(prop.id);
 
-                            sb.append(`${clsName}<${keyClsName}, ${valClsName}> ${prop.id} = new ${clsName}<>();`);
+                            sb.append(`${mapClsName}<${keyClsName}, ${valClsName}> ${prop.id} = new ${mapClsName}<>();`);
                         }
 
                         sb.emptyLine();
@@ -454,8 +452,36 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         classes.push(...this.collectClasses(prop.value));
 
                         break;
+                    case 'ARRAY':
+                        classes.push(prop.typeClsName);
+
+                        if (this._isBean(prop.typeClsName)) {
+                            _.forEach(prop.items, (item) => {
+                                classes.push(item.clsName);
+                            });
+                        }
+
+                        break;
+                    case 'java.util.Collection':
+                    case 'java.util.ArrayList':
+                        if (this._isBean(prop.typeClsName) || prop.implClsName !== 'java.util.ArrayList')
+                            classes.push(prop.clsName, prop.typeClsName, prop.implClsName);
+                        else
+                            classes.push('java.util.Arrays', prop.typeClsName);
+
+                        break;
                     case 'MAP':
-                        classes.push('java.util.Map', 'java.util.HashMap', prop.keyClsName, prop.valClsName);
+                        classes.push(prop.ordered ? 'java.util.LinkedHashMap' : 'java.util.HashMap');
+
+                        if (prop.keyClsName.toUpperCase() === 'BEAN')
+                            classes.push(_.head(prop.entries)[prop.keyField].clsName);
+                        else
+                            classes.push(prop.keyClsName);
+
+                        if (prop.valClsName.toUpperCase() === 'BEAN')
+                            classes.push(_.head(prop.entries)[prop.valField].clsName);
+                        else
+                            classes.push(prop.valClsName);
 
                         break;
                     default:
@@ -463,7 +489,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 }
             });
 
-            return _.uniq(classes);
+            return classes;
         }
 
         /**
@@ -482,11 +508,61 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             sb.append(`package ${pkg};`);
             sb.emptyLine();
 
-            _.forEach(_.sortBy(_.filter(this.collectClasses(cfg), JavaTypes.nonBuiltInClass)), (cls) => sb.append(`import ${cls};`));
+            const imports = this.collectClasses(cfg);
+
+            const hasProps = this.hasProperties(cfg);
+
+            if (hasProps)
+                imports.push('java.io.InputStream', 'java.util.Properties');
+
+            if (client)
+                imports.push('org.apache.ignite.configuration.NearCacheConfiguration');
+
+            _.forEach(_.sortedUniq(_.sortBy(_.filter(imports, (cls) => !cls.startsWith('java.lang.')))), (cls) => sb.append(`import ${cls};`));
             sb.emptyLine();
 
             this.mainComment(sb);
             sb.startBlock('public class ' + clsName + ' {');
+
+            // 2. Add external property file
+            if (hasProps) {
+                this.commentBlock(sb, 'Secret properties loading.');
+                sb.append('private static final Properties props = new Properties();');
+                sb.emptyLine();
+                sb.startBlock('static {');
+                sb.startBlock('try (InputStream in = IgniteConfiguration.class.getClassLoader().getResourceAsStream("secret.properties")) {');
+                sb.append('props.load(in);');
+                sb.endBlock('}');
+                sb.startBlock('catch (Exception ignored) {');
+                sb.append('// No-op.');
+                sb.endBlock('}');
+                sb.endBlock('}');
+                sb.emptyLine();
+            }
+
+            if (client) {
+                const nearCaches = _.filter(cluster.caches, (cache) => _.get(cache, 'clientNearConfiguration.enabled'));
+
+                _.forEach(nearCaches, (cache) => {
+                    this.commentBlock(sb, `Configuration of near cache for cache: ${cache.name}.`,
+                        '',
+                        '@return Near cache configuration.',
+                        '@throws Exception If failed to construct near cache configuration instance.'
+                    );
+
+                    const nearCacheBean = generator.cacheNearClient(cache);
+
+                    sb.startBlock(`public static NearCacheConfiguration ${nearCacheBean.id}() throws Exception {`);
+
+                    this.constructBean(sb, nearCacheBean);
+                    sb.emptyLine();
+
+                    sb.append(`return ${nearCacheBean.id};`);
+                    sb.endBlock('}');
+
+                    sb.emptyLine();
+                });
+            }
 
             this.commentBlock(sb, 'Configure grid.',
                 '',
