@@ -260,6 +260,12 @@ export default ['domainsController', [
                 user: 'root'
             },
             {
+                db: 'MySQL',
+                jdbcDriverClass: 'org.mariadb.jdbc.Driver',
+                jdbcUrl: 'jdbc:mariadb://[host]:[port]/[database]',
+                user: 'root'
+            },
+            {
                 db: 'H2',
                 jdbcDriverClass: 'org.h2.Driver',
                 jdbcUrl: 'jdbc:h2:tcp://[host]/[database]',
@@ -268,7 +274,7 @@ export default ['domainsController', [
         ];
 
         $scope.selectedPreset = {
-            db: 'General',
+            db: 'Generic',
             jdbcDriverJar: '',
             jdbcDriverClass: '',
             jdbcUrl: 'jdbc:[database]',
@@ -328,7 +334,7 @@ export default ['domainsController', [
             });
 
             if (!result)
-                result = {db: 'General', jdbcUrl: 'jdbc:[database]', user: 'admin'};
+                result = {db: 'Generic', jdbcUrl: 'jdbc:[database]', user: 'admin'};
 
             result.jdbcDriverJar = selectedJdbcJar.jdbcDriverJar;
             result.jdbcDriverClass = selectedJdbcJar.jdbcDriverClass;
