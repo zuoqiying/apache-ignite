@@ -416,7 +416,7 @@ public class GridNioServer<T> {
      * @param msg Message.
      * @return Future for operation.
      */
-    GridNioFuture<?> send(GridNioSession ses, ByteBuffer msg, boolean createFut) {
+    GridNioFuture<?> send(GridNioSession ses, ByteBuffer msg, boolean createFut) throws IgniteCheckedException {
         assert ses instanceof GridSelectorNioSessionImpl : ses;
 
         GridSelectorNioSessionImpl impl = (GridSelectorNioSessionImpl)ses;
@@ -442,7 +442,7 @@ public class GridNioServer<T> {
      * @param msg Message.
      * @return Future for operation.
      */
-    GridNioFuture<?> send(GridNioSession ses, Message msg, boolean createFut) {
+    GridNioFuture<?> send(GridNioSession ses, Message msg, boolean createFut) throws IgniteCheckedException {
         assert ses instanceof GridSelectorNioSessionImpl;
 
         GridSelectorNioSessionImpl impl = (GridSelectorNioSessionImpl)ses;
@@ -469,7 +469,7 @@ public class GridNioServer<T> {
      * @param fut Future.
      * @param sys System message flag.
      */
-    private void send0(GridSelectorNioSessionImpl ses, SessionWriteRequest fut, boolean sys) {
+    private void send0(GridSelectorNioSessionImpl ses, SessionWriteRequest fut, boolean sys) throws IgniteCheckedException {
         assert ses != null;
         assert fut != null;
 
@@ -487,8 +487,14 @@ public class GridNioServer<T> {
             fut.ackClosure(ackC);
 
         if (ses.closed()) {
-            if (ses.removeFuture(fut))
+            if (ses.removeFuture(fut)) {
+                IOException err = new IOException("Failed to send message (connection was closed): " + ses);
+
                 fut.connectionClosed();
+
+                if (!(fut instanceof GridNioFuture))
+                    throw new IgniteCheckedException(err);
+            }
         }
         else if (!ses.procWrite.get() && ses.procWrite.compareAndSet(false, true))
             clientWorkers.get(ses.selectorIndex()).offer((SessionChangeRequest)fut);
@@ -503,7 +509,7 @@ public class GridNioServer<T> {
      * @param ses Session.
      * @param msg Message.
      */
-    public void sendSystem(GridNioSession ses, Message msg) {
+    public void sendSystem(GridNioSession ses, Message msg) throws IgniteCheckedException {
         sendSystem(ses, msg, null);
     }
 
@@ -516,7 +522,7 @@ public class GridNioServer<T> {
      */
     public void sendSystem(GridNioSession ses,
         Message msg,
-        @Nullable IgniteInClosure<? super IgniteInternalFuture<?>> lsnr) {
+        @Nullable IgniteInClosure<? super IgniteInternalFuture<?>> lsnr) throws IgniteCheckedException {
         assert ses instanceof GridSelectorNioSessionImpl;
 
         GridSelectorNioSessionImpl impl = (GridSelectorNioSessionImpl)ses;
@@ -559,13 +565,13 @@ public class GridNioServer<T> {
             for (SessionWriteRequest fut : futs) {
                 fut.messageThread(true);
 
-                ((NioOperationFuture)fut).resetSession(ses0);
+                fut.resetSession(ses0);
             }
 
             ses0.resend(futs);
 
             // Wake up worker.
-            clientWorkers.get(ses0.selectorIndex()).offer(((NioOperationFuture)fut0));
+            clientWorkers.get(ses0.selectorIndex()).offer(((SessionChangeRequest)fut0));
         }
     }
 
@@ -2652,7 +2658,7 @@ public class GridNioServer<T> {
         }
 
         /** {@inheritDoc} */
-        @Override public GridNioFuture<?> onSessionWrite(GridNioSession ses, Object msg, boolean fut) {
+        @Override public GridNioFuture<?> onSessionWrite(GridNioSession ses, Object msg, boolean fut) throws IgniteCheckedException {
             if (directMode) {
                 boolean sslSys = sslFilter != null && msg instanceof ByteBuffer;
 
