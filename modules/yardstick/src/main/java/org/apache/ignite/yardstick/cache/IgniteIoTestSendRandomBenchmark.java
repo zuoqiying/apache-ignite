@@ -36,22 +36,26 @@ public class IgniteIoTestSendRandomBenchmark extends IgniteIoTestAbstractBenchma
     private final AtomicLong resWriteRead = new AtomicLong();
     private final AtomicLong resReadProc = new AtomicLong();
 
-    @Override public void setUp(final BenchmarkConfiguration cfg) throws Exception {
+    @Override
+    public void setUp(final BenchmarkConfiguration cfg) throws Exception {
         super.setUp(cfg);
 
         Thread t = new Thread(new Runnable() {
-            @Override public void run() {
-                double cnt0 = 1;
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(30_000);
 
-                double sndWriteSum0 = 0;
-                double reqWriteReadSum0 = 0;
-                double reqReadResSndSum0 = 0;
-                double resSndWriteSum0 = 0;
-                double resWriteReadSum0 = 0;
-                double resReadProcSum0 = 0;
+                    double cnt0 = 1;
 
-                while (true) {
-                    try {
+                    double sndWriteSum0 = 0;
+                    double reqWriteReadSum0 = 0;
+                    double reqReadResSndSum0 = 0;
+                    double resSndWriteSum0 = 0;
+                    double resWriteReadSum0 = 0;
+                    double resReadProcSum0 = 0;
+
+                    while (true) {
                         Thread.sleep(15000);
 
                         double cntr0 = cntr.getAndSet(0);
@@ -71,19 +75,27 @@ public class IgniteIoTestSendRandomBenchmark extends IgniteIoTestAbstractBenchma
                         resReadProcSum0 += resReadProcSum;
 
                         BenchmarkUtils.println(cfg,
-                            String.format("Time [sndWrite=%f (avg=%f), reqWriteRead=%f (avg=%f), reqReadResSnd=%f (avg=%f), resSndWrite=%f (avg=%f), resWriteRead=%f (avg=%f), resReadProc=%f (avg=%f)]",
-                                sndWriteSum, sndWriteSum0 / cnt0,
-                                reqWriteReadSum, reqWriteReadSum0 / cnt0,
-                                reqReadResSndSum, reqReadResSndSum0 / cnt0,
-                                resSndWriteSum, resSndWriteSum0 / cnt0,
-                                resWriteReadSum, resWriteReadSum0 / cnt0,
-                                resReadProcSum, resReadProcSum0 / cnt0));
+                            String.format("Time     [sndWrite=%f, reqWriteRead=%f, reqReadResSnd=%f, resSndWrite=%f, resWriteRead=%f, resReadProc=%f]",
+                                sndWriteSum,
+                                reqWriteReadSum,
+                                reqReadResSndSum,
+                                resSndWriteSum,
+                                resWriteReadSum,
+                                resReadProcSum));
+
+                        BenchmarkUtils.println(cfg,
+                            String.format("Avg time [sndWrite=%f, reqWriteRead=%f, reqReadResSnd=%f, resSndWrite=%f, resWriteRead=%f, resReadProc=%f]",
+                                sndWriteSum0 / cnt0,
+                                reqWriteReadSum0 / cnt0,
+                                reqReadResSndSum0 / cnt0,
+                                resSndWriteSum0 / cnt0,
+                                resWriteReadSum0 / cnt0,
+                                resReadProcSum0 / cnt0));
 
                         cnt0 += 1;
                     }
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -91,11 +103,14 @@ public class IgniteIoTestSendRandomBenchmark extends IgniteIoTestAbstractBenchma
         t.start();
     }
 
-    /** {@inheritDoc} */
-    @Override public boolean test(Map<Object, Object> ctx) throws Exception {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean test(Map<Object, Object> ctx) throws Exception {
         ClusterNode node = targetNodes.get(nextRandom(targetNodes.size()));
 
-        IgniteIoTestMessage msg0 = (IgniteIoTestMessage)ignite.sendIoTest(node, null, false).get();
+        IgniteIoTestMessage msg0 = (IgniteIoTestMessage) ignite.sendIoTest(node, null, false).get();
 
         long sndWrite = msg0.reqWriteTime - msg0.reqSndTime;
         long reqWriteRead = msg0.reqReadTime - msg0.reqWriteTime;
