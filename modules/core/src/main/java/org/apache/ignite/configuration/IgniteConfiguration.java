@@ -416,7 +416,7 @@ public class IgniteConfiguration {
     private HadoopConfiguration hadoopCfg;
 
     /** Client access configuration. */
-    private ConnectorConfiguration connectorCfg = new ConnectorConfiguration();
+    private ConnectorConfiguration connectorCfg = null;//new ConnectorConfiguration();
 
     /** ODBC configuration. */
     private OdbcConfiguration odbcCfg;

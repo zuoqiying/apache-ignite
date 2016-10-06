@@ -17,7 +17,7 @@
 
         <property name="communicationSpi">
             <bean class="org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi">
-                <property name="selectorsCount" value="16"/>
+                <property name="selectorsCount" value="6"/>
             </bean>
         </property>
 

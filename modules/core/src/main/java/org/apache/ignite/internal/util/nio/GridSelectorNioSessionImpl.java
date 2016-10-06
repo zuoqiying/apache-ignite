@@ -47,6 +47,8 @@ public class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     /** Worker index for server */
     public final int selectorIdx;
 
+    public GridNioServer.AbstractNioClientWorker worker;
+
     /** Semaphore. */
     @GridToStringExclude
     private final Semaphore sem;
@@ -73,6 +75,8 @@ public class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     private Object sysMsg;
 
     public final LongAdder8 wakeupCnt = new LongAdder8();
+
+    public int writeSpin;
 
     /**
      * Creates session instance.

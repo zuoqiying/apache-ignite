@@ -496,8 +496,8 @@ public class GridNioServer<T> {
                     throw new IgniteCheckedException(err);
             }
         }
-        else if (!ses.procWrite.get() && ses.procWrite.compareAndSet(false, true)) {
-            clientWorkers.get(ses.selectorIndex()).offer((SessionChangeRequest) fut);
+        else if (ses.worker.wakeup && !ses.procWrite.get() && ses.procWrite.compareAndSet(false, true)) {
+            ses.worker.offer((SessionChangeRequest) fut);
 
             ses.wakeupCnt.increment();
         }
@@ -1295,7 +1295,7 @@ public class GridNioServer<T> {
                     req = ses.pollFuture();
 
                     if (req == null && buf.position() == 0) {
-                        if (ses.procWrite.get()) {
+                        if (wakeup && ses.procWrite.get()) {
                             boolean set = ses.procWrite.compareAndSet(true, false);
 
                             assert set;
@@ -1397,7 +1397,7 @@ public class GridNioServer<T> {
     /**
      * Thread performing only read operations from the channel.
      */
-    private abstract class AbstractNioClientWorker extends GridWorker {
+    public abstract class AbstractNioClientWorker extends GridWorker {
         /** Queue of change requests on this selector. */
         private final ConcurrentLinkedQueue<SessionChangeRequest> changeReqs = new ConcurrentLinkedQueue<>();
 
@@ -1409,6 +1409,8 @@ public class GridNioServer<T> {
 
         /** Worker index. */
         private final int idx;
+
+        public boolean wakeup;
 
         /**
          * @param idx Index of this worker in server's array.
@@ -1424,6 +1426,8 @@ public class GridNioServer<T> {
             createSelector();
 
             this.idx = idx;
+
+            wakeup = idx % 2 == 0;
         }
 
         /** {@inheritDoc} */
@@ -1911,6 +1915,8 @@ public class GridNioServer<T> {
                     writeBuf,
                     readBuf);
 
+                ses.worker = this;
+
                 Map<Integer, ?> meta = req.meta();
 
                 if (meta != null) {
@@ -1918,7 +1924,7 @@ public class GridNioServer<T> {
                         ses.addMeta(e.getKey(), e.getValue());
                 }
 
-                SelectionKey key = sockCh.register(selector, SelectionKey.OP_READ, ses);
+                SelectionKey key = sockCh.register(selector, wakeup ? SelectionKey.OP_READ : SelectionKey.OP_READ | SelectionKey.OP_WRITE, ses);
 
                 ses.key(key);
 
