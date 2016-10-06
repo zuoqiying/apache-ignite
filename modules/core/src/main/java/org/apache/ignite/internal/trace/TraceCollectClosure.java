@@ -73,7 +73,7 @@ public class TraceCollectClosure implements IgniteCallable<Map<String, TraceThre
     @Override public Map<String, TraceThreadGroupResult> call() throws Exception {
         UUID nodeId = ignite.cluster().localNode().id();
 
-        TraceProcessor proc = TraceProcessor.get();
+        TraceProcessor proc = TraceProcessor.shared();
 
         Map<String, TraceThreadGroupResult> res = new HashMap<>();
 

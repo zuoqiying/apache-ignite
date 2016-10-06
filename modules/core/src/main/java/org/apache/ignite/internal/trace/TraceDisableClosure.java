@@ -29,7 +29,7 @@ public class TraceDisableClosure implements IgniteCallable<Void> {
 
     /** {@inheritDoc} */
     @Override public Void call() throws Exception {
-        TraceProcessor.get().disable();
+        TraceProcessor.shared().disable();
 
         return null;
     }
