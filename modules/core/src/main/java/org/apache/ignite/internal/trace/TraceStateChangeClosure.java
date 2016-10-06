@@ -17,25 +17,63 @@
 
 package org.apache.ignite.internal.trace;
 
+import org.apache.ignite.binary.BinaryObjectException;
+import org.apache.ignite.binary.BinaryReader;
+import org.apache.ignite.binary.BinaryWriter;
+import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.lang.IgniteCallable;
 
 /**
- * Trace enable closure.
+ * Trace state change closure.
  */
-public class TraceEnableClosure implements IgniteCallable<Void> {
+public class TraceStateChangeClosure implements IgniteCallable<Void>, Binarylizable {
     /** */
     private static final long serialVersionUID = 0L;
 
+    /** Enable flag. */
+    private boolean enable;
+
+    /**
+     * Default constructor.
+     */
+    public TraceStateChangeClosure() {
+        // No-op.
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param enable Enable flag.
+     */
+    public TraceStateChangeClosure(boolean enable) {
+        this.enable = enable;
+    }
+
     /** {@inheritDoc} */
     @Override public Void call() throws Exception {
-        TraceProcessor.shared().enable();
+        TraceProcessor proc = TraceProcessor.shared();
+
+        if (enable)
+            proc.enable();
+        else
+            proc.disable();
 
         return null;
     }
 
     /** {@inheritDoc} */
+    @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
+        writer.rawWriter().writeBoolean(enable);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
+        enable = reader.rawReader().readBoolean();
+    }
+
+    /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(TraceEnableClosure.class, this);
+        return S.toString(TraceStateChangeClosure.class, this);
     }
 }

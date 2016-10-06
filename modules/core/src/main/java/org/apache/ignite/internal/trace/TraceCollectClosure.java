@@ -38,7 +38,7 @@ import java.util.UUID;
 /**
  * Trace collect closure.
  */
-public class TraceCollectClosure implements IgniteCallable<Map<String, TraceThreadGroupResult>>, Binarylizable {
+public class TraceCollectClosure implements IgniteCallable<TraceNodeResult>, Binarylizable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -70,12 +70,12 @@ public class TraceCollectClosure implements IgniteCallable<Map<String, TraceThre
     }
 
     /** {@inheritDoc} */
-    @Override public Map<String, TraceThreadGroupResult> call() throws Exception {
+    @Override public TraceNodeResult call() throws Exception {
         UUID nodeId = ignite.cluster().localNode().id();
 
         TraceProcessor proc = TraceProcessor.shared();
 
-        Map<String, TraceThreadGroupResult> res = new HashMap<>();
+        Map<String, TraceThreadGroupResult> grps = new HashMap<>();
 
         for (String grpName : grpNames) {
             TraceThreadGroup grp = proc.threadGroup(grpName);
@@ -94,11 +94,11 @@ public class TraceCollectClosure implements IgniteCallable<Map<String, TraceThre
 
                 TraceThreadGroupResult grpRes = new TraceThreadGroupResult(nodeId, grpName, threadRess);
 
-                res.put(grpName, grpRes);
+                grps.put(grpName, grpRes);
             }
         }
 
-        return res;
+        return new TraceNodeResult(nodeId, grps);
     }
 
     /** {@inheritDoc} */
