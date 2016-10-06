@@ -1882,6 +1882,10 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
         return super.getSpiContext();
     }
 
+    public GridNioServer server() {
+        return nioSrvr;
+    }
+
     /**
      * Recreates tpcSrvr socket instance.
      *

@@ -496,8 +496,11 @@ public class GridNioServer<T> {
                     throw new IgniteCheckedException(err);
             }
         }
-        else if (!ses.procWrite.get() && ses.procWrite.compareAndSet(false, true))
-            clientWorkers.get(ses.selectorIndex()).offer((SessionChangeRequest)fut);
+        else if (!ses.procWrite.get() && ses.procWrite.compareAndSet(false, true)) {
+            clientWorkers.get(ses.selectorIndex()).offer((SessionChangeRequest) fut);
+
+            ses.wakeupCnt.increment();
+        }
 
         if (msgQueueLsnr != null)
             msgQueueLsnr.apply(ses, msgCnt);

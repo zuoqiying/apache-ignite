@@ -21,6 +21,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.managers.communication.IgniteIoTestMessage;
+import org.apache.ignite.internal.util.nio.GridNioServer;
+import org.apache.ignite.internal.util.nio.GridNioSession;
+import org.apache.ignite.internal.util.nio.GridSelectorNioSessionImpl;
+import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.yardstickframework.BenchmarkConfiguration;
 import org.yardstickframework.BenchmarkUtils;
 
@@ -44,6 +48,10 @@ public class IgniteIoTestSendRandomBenchmark extends IgniteIoTestAbstractBenchma
             @Override
             public void run() {
                 try {
+                    TcpCommunicationSpi spi = (TcpCommunicationSpi)ignite.configuration().getCommunicationSpi();
+
+                    GridNioServer srv = spi.server();
+
                     Thread.sleep(30_000);
 
                     double cnt0 = 1;
@@ -91,6 +99,19 @@ public class IgniteIoTestSendRandomBenchmark extends IgniteIoTestAbstractBenchma
                                 resSndWriteSum0 / cnt0,
                                 resWriteReadSum0 / cnt0,
                                 resReadProcSum0 / cnt0));
+
+                        for (Object ses : srv.sessions()) {
+                            if (ses instanceof GridSelectorNioSessionImpl) {
+                                GridSelectorNioSessionImpl ses0 = (GridSelectorNioSessionImpl)ses;
+
+                                long wakeups = ses0.wakeupCnt.sumThenReset();
+
+                                BenchmarkUtils.println(cfg, "ses in=" + ses0.accepted() +
+                                    ", idx=" + ses0.selectorIdx +
+                                    ", addr=" + ses0.remoteAddress() +
+                                    ", wakeups=" + wakeups + ']');
+                            }
+                        }
 
                         cnt0 += 1;
                     }

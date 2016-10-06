@@ -29,13 +29,14 @@ import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentLinkedDeque8;
+import org.jsr166.LongAdder8;
 
 /**
  * Session implementation bound to selector API and socket API.
  * Note that this implementation requires non-null values for local and remote
  * socket addresses.
  */
-class GridSelectorNioSessionImpl extends GridNioSessionImpl {
+public class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     /** Pending write requests. */
     private final ConcurrentLinkedDeque8<SessionWriteRequest> queue = new ConcurrentLinkedDeque8<>();
 
@@ -44,7 +45,7 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     private SelectionKey key;
 
     /** Worker index for server */
-    private final int selectorIdx;
+    public final int selectorIdx;
 
     /** Semaphore. */
     @GridToStringExclude
@@ -70,6 +71,8 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
 
     /** */
     private Object sysMsg;
+
+    public final LongAdder8 wakeupCnt = new LongAdder8();
 
     /**
      * Creates session instance.
