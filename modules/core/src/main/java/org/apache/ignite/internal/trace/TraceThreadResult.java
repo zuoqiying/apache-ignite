@@ -24,6 +24,7 @@ import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
+import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 import java.util.ArrayList;
@@ -110,8 +111,29 @@ public class TraceThreadResult implements Binarylizable {
     /**
      * @return Data.
      */
-    public List<Object> data() {
-        return data;
+    @SuppressWarnings("unchecked")
+    public <T> List<T> data() {
+        return (List<T>)data;
+    }
+
+    /**
+     * Check if passed thread result came form the same node.
+     *
+     * @param other Other thread result.
+     * @return {@code True} if this result is from the same node.
+     */
+    public boolean sameNode(TraceThreadResult other) {
+        return F.eq(other.nodeId, nodeId);
+    }
+
+    /**
+     * Check if passed thread result came form the same thread.
+     *
+     * @param other Other thread result.
+     * @return {@code True} if this result is the same thread.
+     */
+    public boolean sameThread(TraceThreadResult other) {
+        return F.eq(other.threadId, threadId) && sameNode(other) && F.eq(other.threadName, threadName);
     }
 
     /** {@inheritDoc} */

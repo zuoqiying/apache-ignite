@@ -53,13 +53,17 @@ public class AtomicTraceRunner {
             IgniteCache cache = cliNode.cache(CACHE_NAME);
 
             cache.put(1, 1);
+            cache.put(2, 2);
+            cache.put(3, 3);
+            cache.put(4, 4);
 
-            Collection<TraceNodeResult> cliRes = cliTrace.collect(
+            Collection<AtomicTraceResult> ress = AtomicTraceResult.parse(cliTrace.collect(
                 AtomicTrace.GRP_CLIENT_REQ_SND,
                 AtomicTrace.GRP_CLIENT_REQ_SND_IO
-            );
+            ));
 
-            System.out.println(cliRes);
+            for (AtomicTraceResult res : ress)
+                System.out.println(res);
         }
         finally {
             Ignition.stopAll(true);

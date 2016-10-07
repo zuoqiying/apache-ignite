@@ -23,8 +23,10 @@ import org.apache.ignite.cluster.ClusterGroup;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.A;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -79,7 +81,7 @@ public class TraceCluster {
      * @param grpNames Group names.
      * @return Result.
      */
-    public Collection<TraceNodeResult> collect(String... grpNames) {
+    public TraceData collect(String... grpNames) {
         A.notNull(grpNames, "grpNames");
 
         return collect(F.asList(grpNames));
@@ -91,7 +93,7 @@ public class TraceCluster {
      * @param grpNames Group names.
      * @return Result.
      */
-    public Collection<TraceNodeResult> collect(Collection<String> grpNames) {
+    public TraceData collect(Collection<String> grpNames) {
         return collect0(grpNames, false);
     }
 
@@ -101,7 +103,7 @@ public class TraceCluster {
      * @param grpNames Group names.
      * @return Result.
      */
-    public Collection<TraceNodeResult> collectAndReset(String... grpNames) {
+    public TraceData collectAndReset(String... grpNames) {
         A.notNull(grpNames, "grpNames");
 
         return collectAndReset(F.asList(grpNames));
@@ -113,7 +115,7 @@ public class TraceCluster {
      * @param grpNames Group names.
      * @return Result.
      */
-    public Collection<TraceNodeResult> collectAndReset(Collection<String> grpNames) {
+    public TraceData collectAndReset(Collection<String> grpNames) {
         return collect0(grpNames, true);
     }
 
@@ -124,8 +126,31 @@ public class TraceCluster {
      * @param reset Reset flag.
      * @return Result.
      */
-    private Collection<TraceNodeResult> collect0(Collection<String> grpNames, boolean reset) {
-        return compute.broadcast(new TraceCollectClosure(grpNames, reset));
+    @SuppressWarnings("unchecked")
+    private TraceData collect0(Collection<String> grpNames, boolean reset) {
+        Collection<TraceNodeResult> ress = compute.broadcast(new TraceCollectClosure(grpNames, reset));
+
+        Map<String, List<TraceThreadResult>> grps = new HashMap<>();
+
+        for (TraceNodeResult res : ress) {
+            for (String grpName : grpNames) {
+                TraceThreadGroupResult grpRes = res.groups().get(grpName);
+
+                if (grpRes != null) {
+                    List<TraceThreadResult> grpData = grps.get(grpName);
+
+                    if (grpData == null) {
+                        grpData = new ArrayList();
+
+                        grps.put(grpName, grpData);
+                    }
+
+                    grpData.addAll(grpRes.threads());
+                }
+            }
+        }
+
+        return new TraceData(grps);
     }
 
     /**
