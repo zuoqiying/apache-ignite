@@ -51,6 +51,7 @@ import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
+import org.apache.ignite.internal.trace.atomic.AtomicTrace;
 import org.apache.ignite.internal.util.GridConcurrentHashSet;
 import org.apache.ignite.internal.util.nio.ssl.GridNioSslFilter;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
@@ -1191,6 +1192,8 @@ public class GridNioServer<T> {
             while (finished) {
                 req.onDone();
 
+                AtomicTrace._05_onClientSendIoMarshalled(req);
+
                 req = (NioOperationFuture<?>)ses.pollFuture();
 
                 if (req == null)
@@ -1214,7 +1217,11 @@ public class GridNioServer<T> {
             assert buf.hasRemaining();
 
             if (!skipWrite) {
+                int pos = buf.position();
+
                 int cnt = sockCh.write(buf);
+
+                AtomicTrace._06_onClientSendIoWritten(pos);
 
                 if (log.isTraceEnabled())
                     log.trace("Bytes sent [sockCh=" + sockCh + ", cnt=" + cnt + ']');
@@ -2071,7 +2078,7 @@ public class GridNioServer<T> {
     /**
      * Class for requesting write and session close operations.
      */
-    private static class NioOperationFuture<R> extends GridNioFutureImpl<R> {
+    public static class NioOperationFuture<R> extends GridNioFutureImpl<R> {
         /** */
         private static final long serialVersionUID = 0L;
 
@@ -2203,7 +2210,7 @@ public class GridNioServer<T> {
         /**
          * @return Direct message.
          */
-        private Message directMessage() {
+        public Message directMessage() {
             return commMsg;
         }
 

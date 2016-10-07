@@ -89,7 +89,7 @@ public class TraceCollectClosure implements IgniteCallable<TraceNodeResult>, Bin
                     threadRess.add(new TraceThreadResult(nodeId, grpName, t.getName(), t.getId(), data.data()));
 
                     if (reset)
-                        data.reset();
+                        data.clearData();
                 }
 
                 TraceThreadGroupResult grpRes = new TraceThreadGroupResult(nodeId, grpName, threadRess);

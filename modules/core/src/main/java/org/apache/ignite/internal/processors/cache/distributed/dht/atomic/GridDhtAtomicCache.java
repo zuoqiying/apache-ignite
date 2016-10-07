@@ -80,8 +80,7 @@ import org.apache.ignite.internal.processors.cache.transactions.IgniteTxLocalEx;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionConflictContext;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionEx;
-import org.apache.ignite.internal.trace.TraceProcessor;
-import org.apache.ignite.internal.trace.TraceThreadData;
+import org.apache.ignite.internal.trace.atomic.AtomicTrace;
 import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.future.GridEmbeddedFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
@@ -1147,12 +1146,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         final GridNearAtomicAbstractUpdateFuture updateFut =
             createSingleUpdateFuture(key, val, proc, invokeArgs, retval, filter, waitTopFut);
 
-        if (TraceProcessor.shared().isEnabled()) {
-            TraceThreadData trace = TraceProcessor.shared().threadData("CLIENT_THREAD");
-
-            trace.intValue(0, System.identityHashCode(updateFut));
-            trace.longValue(0, System.nanoTime());
-        }
+        AtomicTrace._01_onClientSendStart(updateFut);
 
         return asyncOp(new CO<IgniteInternalFuture<Object>>() {
             @Override public IgniteInternalFuture<Object> apply() {

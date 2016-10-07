@@ -32,8 +32,11 @@ public class TraceThreadData {
     /** Thread. */
     private final Thread thread;
 
-    /** Whether trace is started. */
+    /** Start flag. */
     private boolean started;
+
+    /** Trace state. */
+    private int state;
 
     /** Int value 0. */
     private int int0;
@@ -100,16 +103,16 @@ public class TraceThreadData {
     }
 
     /**
-     * Start operation.
+     * Begin recording.
      */
-    public void start() {
+    public void begin() {
         started = true;
     }
 
     /**
-     * Stop operation.
+     * End recording.
      */
-    public void stop() {
+    public void end() {
         int0 = int1 = int2 = 0;
         long0 = long1 = long2 = 0;
         obj0 = obj1 = obj2 = null;
@@ -118,14 +121,41 @@ public class TraceThreadData {
         longs = null;
         objs = null;
 
+        state = 0;
+
         started = false;
     }
 
     /**
      * @return Whether operation is started.
      */
-    public boolean isStarted() {
+    public boolean started() {
         return started;
+    }
+
+    /**
+     * Set state.
+     *
+     * @param state State.
+     */
+    public void state(int state) {
+        this.state = state;
+    }
+
+    /**
+     * Increment state by 1.
+     */
+    public void incrementState() {
+        state++;
+    }
+
+    /**
+     * Get state.
+     *
+     * @return State.
+     */
+    public int state() {
+        return state;
     }
 
     /**
@@ -266,22 +296,23 @@ public class TraceThreadData {
      * @param idx Index.
      * @return Value.
      */
-    public Object objectValue(int idx) {
+    @SuppressWarnings("unchecked")
+    public <T> T objectValue(int idx) {
         if (!started)
             return null;
 
         switch (idx) {
             case 0:
-                return obj0;
+                return (T)obj0;
 
             case 1:
-                return obj1;
+                return (T)obj1;
 
             case 2:
-                return obj2;
+                return (T)obj2;
 
             default:
-                return objs == null || idx >= objs.length ? 0 : objs[idx];
+                return (T)(objs == null || idx >= objs.length ? 0 : objs[idx]);
         }
     }
 
@@ -291,7 +322,7 @@ public class TraceThreadData {
      * @param idx Index.
      * @param val Value.
      */
-    public void objectValue(int idx, Object val) {
+    public <T> void objectValue(int idx, T val) {
         if (!started)
             return;
 
@@ -352,7 +383,7 @@ public class TraceThreadData {
     /**
      * Reset data.
      */
-    void reset() {
+    void clearData() {
         synchronized (mux) {
             data = null;
         }

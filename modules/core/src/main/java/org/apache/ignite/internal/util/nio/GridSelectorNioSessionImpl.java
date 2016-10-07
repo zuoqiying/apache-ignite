@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.trace.atomic.AtomicTrace;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -191,6 +192,8 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
 
         writeFut.messageThread(msgThread);
 
+        AtomicTrace._03_onClientSendOffer(writeFut);
+
         boolean res = queue.offer(writeFut);
 
         assert res : "Future was not added to queue";
@@ -218,6 +221,8 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
      */
     @Nullable GridNioFuture<?> pollFuture() {
         GridNioFuture<?> last = queue.poll();
+
+        AtomicTrace._04_onClientSendIoPolled(last);
 
         if (last != null) {
             queueSize.decrementAndGet();
