@@ -32,6 +32,9 @@ public class TraceThreadData {
     /** Thread. */
     private final Thread thread;
 
+    /** Whether trace is started. */
+    private boolean started;
+
     /** Int value 0. */
     private int int0;
 
@@ -97,12 +100,44 @@ public class TraceThreadData {
     }
 
     /**
+     * Start operation.
+     */
+    public void start() {
+        started = true;
+    }
+
+    /**
+     * Stop operation.
+     */
+    public void stop() {
+        int0 = int1 = int2 = 0;
+        long0 = long1 = long2 = 0;
+        obj0 = obj1 = obj2 = null;
+
+        ints = null;
+        longs = null;
+        objs = null;
+
+        started = false;
+    }
+
+    /**
+     * @return Whether operation is started.
+     */
+    public boolean isStarted() {
+        return started;
+    }
+
+    /**
      * Get int value.
      *
      * @param idx Index.
      * @return Value.
      */
     public int intValue(int idx) {
+        if (!started)
+            return 0;
+
         switch (idx) {
             case 0:
                 return int0;
@@ -125,6 +160,9 @@ public class TraceThreadData {
      * @param val Value.
      */
     public void intValue(int idx, int val) {
+        if (!started)
+            return;
+
         switch (idx) {
             case 0:
                 int0 = val;
@@ -163,6 +201,9 @@ public class TraceThreadData {
      * @return Value.
      */
     public long longValue(int idx) {
+        if (!started)
+            return 0;
+
         switch (idx) {
             case 0:
                 return long0;
@@ -185,6 +226,9 @@ public class TraceThreadData {
      * @param val Value.
      */
     public void longValue(int idx, long val) {
+        if (!started)
+            return;
+
         switch (idx) {
             case 0:
                 long0 = val;
@@ -223,6 +267,9 @@ public class TraceThreadData {
      * @return Value.
      */
     public Object objectValue(int idx) {
+        if (!started)
+            return null;
+
         switch (idx) {
             case 0:
                 return obj0;
@@ -245,6 +292,9 @@ public class TraceThreadData {
      * @param val Value.
      */
     public void objectValue(int idx, Object val) {
+        if (!started)
+            return;
+
         switch (idx) {
             case 0:
                 obj0 = val;
@@ -277,26 +327,12 @@ public class TraceThreadData {
     }
 
     /**
-     * Clear current state.
-     */
-    void clearState() {
-        int0 = int1 = int2 = 0;
-        long0 = long1 = long2 = 0;
-        obj0 = obj1 = obj2 = null;
-
-        ints = null;
-        longs = null;
-        objs = null;
-    }
-
-    /**
      * Push data entry.
      *
      * @param entry Entry.
      */
     public void pushData(Object entry) {
         synchronized (mux) {
-
             if (data == null)
                 data = new ArrayList<>();
 
