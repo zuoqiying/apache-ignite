@@ -86,7 +86,13 @@ public class H2TreeIndex extends GridH2IndexBase {
             tbl.rowFactory(), page.pageId().pageId(), page.isAllocated()) {
             @Override protected int compare(BPlusIO<SearchRow> io, ByteBuffer buf, int idx, SearchRow row)
                 throws IgniteCheckedException {
-                return compareRows(getRow(io, buf, idx), row);
+                GridH2Row treeRow = getRow(io, buf, idx);
+
+                int result = compareRows(treeRow, row);
+
+                assert result == -compareRows(row, treeRow);
+
+                return result;
             }
         };
 
