@@ -142,13 +142,15 @@ public class AtomicTraceResult {
     /** {@inheritDoc} */
     @Override public String toString() {
         return String.format(AtomicTraceResult.class.getSimpleName() +
-            "[start=%d, map=%8d, offer=%8d, poll=%8d, marsh=%8d, send=%8d]",
+            "[start=%d, map=%8d, offer=%8d, poll=%8d, marsh=%8d, send=%8d, bufLen=%5d, msgCnt=%3d]",
             clientStart(),
             clientMapDuration(),
             clientOfferDuration(),
             clientIoPollDuration(),
             clientIoMarshalDuration(),
-            clientIoSendDuration()
+            clientIoSendDuration(),
+            cliSendIo.bufLen,
+            cliSendIo.msgCnt
         );
     }
 }

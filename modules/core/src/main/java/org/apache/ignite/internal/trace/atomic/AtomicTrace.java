@@ -121,7 +121,7 @@ public class AtomicTrace {
                     trace.objectValue(0, map);
                 }
 
-                map.put(System.identityHashCode(req), new AtomicTraceClientSendIo(System.nanoTime(), 0, 0));
+                map.put(System.identityHashCode(req), new AtomicTraceClientSendIo(System.nanoTime(), 0, 0, 0, 0));
             }
         }
     }
@@ -145,7 +145,7 @@ public class AtomicTrace {
         }
     }
 
-    public static void _06_onClientSendIoWritten(int len) {
+    public static void _06_onClientSendIoWritten(int bufLen) {
         if (PROC.isEnabled()) {
             TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND_IO);
 
@@ -165,12 +165,18 @@ public class AtomicTrace {
 
                     if (msg.marshalled != 0) {
                         msg.sent = sndTime;
+                        msg.bufLen = bufLen;
 
                         res.put(entry.getKey(), msg);
 
                         iter.remove();
                     }
                 }
+
+                int msgCnt = res.size();
+
+                for (AtomicTraceClientSendIo msg : res.values())
+                    msg.msgCnt = msgCnt;
 
                 if (!res.isEmpty())
                     trace.pushData(res);

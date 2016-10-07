@@ -43,6 +43,12 @@ public class AtomicTraceClientSendIo implements Serializable, Binarylizable {
     /** */
     public long sent;
 
+    /** */
+    public int bufLen;
+
+    /** */
+    public int msgCnt;
+
     /**
      * Default constructor.
      */
@@ -56,11 +62,15 @@ public class AtomicTraceClientSendIo implements Serializable, Binarylizable {
      * @param started Start time.
      * @param marshalled Marshal time.
      * @param sent Send time
+     * @param bufLen Buffer length.
+     * @param msgCnt Message count.
      */
-    public AtomicTraceClientSendIo(long started, long marshalled, long sent) {
+    public AtomicTraceClientSendIo(long started, long marshalled, long sent, int bufLen, int msgCnt) {
         this.started = started;
         this.marshalled = marshalled;
         this.sent = sent;
+        this.bufLen = bufLen;
+        this.msgCnt = msgCnt;
     }
 
     /** {@inheritDoc} */
@@ -70,6 +80,8 @@ public class AtomicTraceClientSendIo implements Serializable, Binarylizable {
         rawWriter.writeLong(started);
         rawWriter.writeLong(marshalled);
         rawWriter.writeLong(sent);
+        rawWriter.writeInt(bufLen);
+        rawWriter.writeInt(msgCnt);
     }
 
     /** {@inheritDoc} */
@@ -79,6 +91,8 @@ public class AtomicTraceClientSendIo implements Serializable, Binarylizable {
         started = rawReader.readLong();
         marshalled = rawReader.readLong();
         sent = rawReader.readLong();
+        bufLen = rawReader.readInt();
+        msgCnt = rawReader.readInt();
     }
 
     /** {@inheritDoc} */

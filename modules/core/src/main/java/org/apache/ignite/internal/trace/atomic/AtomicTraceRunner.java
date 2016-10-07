@@ -48,7 +48,7 @@ public class AtomicTraceRunner {
     private static final long SLEEP_DUR = 5000L;
 
     /** Cache load threads count. */
-    private static final int CACHE_LOAD_THREAD_CNT = 128;
+    private static final int CACHE_LOAD_THREAD_CNT = 16;
 
     /** Cache size. */
     private static final int CACHE_SIZE = 1000;
