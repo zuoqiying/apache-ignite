@@ -102,7 +102,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                         To avoid that, you can specify the initial cache map capacity, comparable to the expected size of your dataset.\
                         This will save a lot of CPU resources during the load time, because the map would not have to resize.\
                         For example, if you expect to load 10 million entries into cache, you can set this property to 10 000 000.\
-                        The will save you from cache internal map resizes.')
+                        This will save you from cache internal map resizes.')
                 .settings-row
                     +checkbox('Swap enabled', model + '.swapEnabled', '"swapEnabled"', 'Flag indicating whether swap storage is enabled or not for this cache')
             .col-sm-6
