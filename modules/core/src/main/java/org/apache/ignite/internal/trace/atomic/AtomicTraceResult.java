@@ -84,8 +84,8 @@ public class AtomicTraceResult {
      * @return Final result.
      */
     @SuppressWarnings("unchecked")
-    public static Collection<AtomicTraceResult> parse(TraceData data) {
-        Collection<AtomicTraceResult> res = new ArrayList<>();
+    public static List<AtomicTraceResult> parse(TraceData data) {
+        List<AtomicTraceResult> res = new ArrayList<>();
 
         List<TraceThreadResult> threadSndIos = data.groupData(AtomicTrace.GRP_CLIENT_REQ_SND_IO);
 

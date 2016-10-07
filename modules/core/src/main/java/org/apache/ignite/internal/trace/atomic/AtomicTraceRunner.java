@@ -23,47 +23,84 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.trace.TraceCluster;
-import org.apache.ignite.internal.trace.TraceNodeResult;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Atomic trace runner.
  */
 public class AtomicTraceRunner {
+    /** Overall test duration. */
+    private static final long DUR = 60000L;
+
     /** Cache name. */
     private static final String CACHE_NAME = "cache";
+
+    /** Trace duration. */
+    private static final long TRACE_DUR = 5000L;
+
+    /** Sleep duration. */
+    private static final long SLEEP_DUR = 5000L;
+
+    /** Sample print count. */
+    private static final int SAMPLE_PRINT_CNT = 10;
+
+    /** Cache load threads count. */
+    private static final int CACHE_LOAD_THREAD_CNT = 16;
+
+    /** Cache size. */
+    private static final int CACHE_SIZE = 1000;
 
     /**
      * Entry point.
      */
     @SuppressWarnings("unchecked")
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         try {
+            // Start topology.
             Ignition.start(config("srv", false));
 
-            Ignite cliNode = Ignition.start(config("cli", true));
+            Ignite node = Ignition.start(config("cli", true));
 
-            TraceCluster srvTrace = new TraceCluster(cliNode.cluster().forServers());
-            TraceCluster cliTrace = new TraceCluster(cliNode.cluster().forClients());
+            // Prepare cache loaders.
+            List<Thread> threads = new LinkedList<>();
 
-            srvTrace.enable();
-            cliTrace.enable();
+            List<CacheLoader> ldrs = new LinkedList<>();
 
-            IgniteCache cache = cliNode.cache(CACHE_NAME);
+            for (int i = 0; i < CACHE_LOAD_THREAD_CNT; i++) {
+                CacheLoader ldr = new CacheLoader(node);
 
-            cache.put(1, 1);
-            cache.put(2, 2);
-            cache.put(3, 3);
-            cache.put(4, 4);
+                ldrs.add(ldr);
 
-            Collection<AtomicTraceResult> ress = AtomicTraceResult.parse(cliTrace.collect(
-                AtomicTrace.GRP_CLIENT_REQ_SND,
-                AtomicTrace.GRP_CLIENT_REQ_SND_IO
-            ));
+                threads.add(new Thread(ldr));
+            }
 
-            for (AtomicTraceResult res : ress)
-                System.out.println(res);
+            // Prepare tracer.
+            TracePrinter printer = new TracePrinter(node);
+
+            Thread printThread = new Thread(printer);
+
+            threads.add(printThread);
+
+            // Start threads.
+            for (Thread thread : threads)
+                thread.start();
+
+            // Sleep.
+            Thread.sleep(DUR);
+
+            // Stop threads.
+            for (CacheLoader ldr : ldrs)
+                ldr.stop();
+
+            printer.stop();
+
+            for (Thread thread : threads)
+                thread.join();
         }
         finally {
             Ignition.stopAll(true);
@@ -91,5 +128,127 @@ public class AtomicTraceRunner {
         cfg.setCacheConfiguration(ccfg);
 
         return cfg;
+    }
+
+    /**
+     * Cache load generator.
+     */
+    private static class CacheLoader implements Runnable {
+        /** Index generator. */
+        private static final AtomicInteger IDX_GEN = new AtomicInteger();
+
+        /** Node. */
+        private final Ignite node;
+
+        /** Index. */
+        private final int idx;
+
+        /** Stop flag. */
+        private volatile boolean stopped;
+
+        /**
+         * Constructor.
+         *
+         * @param node Node.
+         */
+        public CacheLoader(Ignite node) {
+            this.node = node;
+
+            idx = IDX_GEN.incrementAndGet();
+        }
+
+        /** {@inheritDoc} */
+        @Override public void run() {
+            System.out.println(">>> Cache loader " + idx + " started.");
+
+            try {
+                IgniteCache<Integer, Integer> cache = node.cache(CACHE_NAME);
+
+                ThreadLocalRandom rand = ThreadLocalRandom.current();
+
+                while (!stopped) {
+                    int key = rand.nextInt(CACHE_SIZE);
+
+                    cache.put(key, key);
+                }
+            }
+            finally {
+                System.out.println(">>> Cache loader " + idx + " stopped.");
+            }
+        }
+
+        /**
+         * Stop thread.
+         */
+        public void stop() {
+            stopped = true;
+        }
+    }
+
+    /**
+     * Trace printer.
+     */
+    private static class TracePrinter implements Runnable {
+        /** Node. */
+        private final Ignite node;
+
+        /** Stop flag. */
+        private volatile boolean stopped;
+
+        /**
+         * Constructor.
+         *
+         * @param node Node.
+         */
+        public TracePrinter(Ignite node) {
+            this.node = node;
+        }
+
+        /** {@inheritDoc} */
+        @Override public void run() {
+            System.out.println(">>> Trace printer started.");
+
+            try {
+                TraceCluster cliTrace = new TraceCluster(node.cluster().forClients());
+                TraceCluster srvTrace = new TraceCluster(node.cluster().forServers());
+
+                while (!stopped) {
+                    Thread.sleep(SLEEP_DUR);
+
+                    cliTrace.enable();
+                    srvTrace.enable();
+
+                    Thread.sleep(TRACE_DUR);
+
+                    cliTrace.disable();
+                    srvTrace.disable();
+
+                    List<AtomicTraceResult> ress = AtomicTraceResult.parse(cliTrace.collectAndReset(
+                        AtomicTrace.GRP_CLIENT_REQ_SND,
+                        AtomicTrace.GRP_CLIENT_REQ_SND_IO
+                    ));
+
+                    Collections.shuffle(ress);
+
+                    for (int i = 0; i < SAMPLE_PRINT_CNT; i++)
+                        System.out.println(ress.get(i));
+
+                    System.out.println();
+                }
+            }
+            catch (Exception e) {
+                System.out.println(">>> Trace printer stopped due to exception: " + e);
+            }
+            finally {
+                System.out.println(">>> Trace printer stopped.");
+            }
+        }
+
+        /**
+         * Stop thread.
+         */
+        public void stop() {
+            stopped = true;
+        }
     }
 }
