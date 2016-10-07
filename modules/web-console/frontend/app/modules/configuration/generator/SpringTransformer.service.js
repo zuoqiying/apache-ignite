@@ -70,8 +70,8 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         static _toObject(clsName, items) {
             return _.map(_.isArray(items) ? items : [items], (item) => {
                 switch (clsName) {
-                    case 'Property':
-                    case 'PropertyChar':
+                    case 'PROPERTY':
+                    case 'PROPERTY_CHAR':
                         return `\${${item}}`;
                     case 'java.lang.Class':
                         return JavaTypes.fullClassName(item);
@@ -108,7 +108,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
          */
         static _setProperties(sb, bean) {
             _.forEach(bean.properties, (prop, idx) => {
-                switch (JavaTypes.shortClassName(prop.clsName).toUpperCase()) {
+                switch (prop.clsName) {
                     case 'DATA_SOURCE':
                         sb.append(`<property name="${prop.name}" ref="${prop.id}"/>`);
 

@@ -30,7 +30,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         }
 
         static cacheConfigurationBean(cache) {
-            return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'cache', cache, cacheDflts);
+            return new Bean('org.apache.ignite.configuration.CacheConfiguration', 'ccfg', cache, cacheDflts);
         }
 
         static domainConfigurationBean(domain) {
@@ -45,10 +45,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
          * Function to generate ignite configuration.
          *
          * @param {Object} cluster Cluster to process.
-         * @param {Boolean} server
+         * @param {Boolean} client
          * @return {Bean} Generated ignite configuration.
          */
-        static igniteConfiguration(cluster, server) {
+        static igniteConfiguration(cluster, client) {
             const cfg = this.igniteConfigurationBean(cluster);
 
             this.clusterGeneral(cluster, cfg);
@@ -69,14 +69,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             this.clusterTime(cluster, cfg);
             this.clusterPools(cluster, cfg);
             this.clusterTransactions(cluster.transactionConfiguration, cfg);
-            this.clusterCaches(cluster, cluster.caches, cluster.igfss, server, cfg);
             this.clusterSsl(cluster, cfg);
-
-            // TODO IGNITE-2052
-            // if (server)
-            //     $generatorSpring.igfss(cluster.igfss, res);
-
             this.clusterUserAttributes(cluster, cfg);
+
+            this.clusterCaches(cluster, cluster.caches, cluster.igfss, client, cfg);
 
             return cfg;
         }
@@ -91,48 +87,48 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             switch (dialect) {
                 case 'Generic':
                     dsBean = new Bean('com.mchange.v2.c3p0.ComboPooledDataSource', id, {})
-                        .property('Property', 'jdbcUrl', `${id}.jdbc.url`);
+                        .property('PROPERTY', 'jdbcUrl', `${id}.jdbc.url`);
 
                     break;
                 case 'Oracle':
                     dsBean = new Bean('oracle.jdbc.pool.OracleDataSource', id, {})
-                        .property('Property', 'URL', `${id}.jdbc.url`);
+                        .property('PROPERTY', 'URL', `${id}.jdbc.url`);
 
                     break;
                 case 'DB2':
                     dsBean = new Bean('com.ibm.db2.jcc.DB2DataSource', id, {})
-                        .property('Property', 'serverName', `${id}.jdbc.server_name`)
-                        .property('Property', 'portNumber', `${id}.jdbc.port_number`)
-                        .property('Property', 'databaseName', `${id}.jdbc.database_name`)
-                        .property('Property', 'driverType', `${id}.jdbc.driver_type`);
+                        .property('PROPERTY', 'serverName', `${id}.jdbc.server_name`)
+                        .property('PROPERTY', 'portNumber', `${id}.jdbc.port_number`)
+                        .property('PROPERTY', 'databaseName', `${id}.jdbc.database_name`)
+                        .property('PROPERTY', 'driverType', `${id}.jdbc.driver_type`);
 
                     break;
                 case 'SQLServer':
                     dsBean = new Bean('com.microsoft.sqlserver.jdbc.SQLServerDataSource', id, {})
-                        .property('Property', 'URL', `${id}.jdbc.url`);
+                        .property('PROPERTY', 'URL', `${id}.jdbc.url`);
 
                     break;
                 case 'MySQL':
                     dsBean = new Bean('com.mysql.jdbc.jdbc2.optional.MysqlDataSource', id, {})
-                        .property('Property', 'URL', `${id}.jdbc.url`);
+                        .property('PROPERTY', 'URL', `${id}.jdbc.url`);
 
                     break;
                 case 'PostgreSQL':
                     dsBean = new Bean('org.postgresql.ds.PGPoolingDataSource', id, {})
-                        .property('Property', 'url', `${id}.jdbc.url`);
+                        .property('PROPERTY', 'url', `${id}.jdbc.url`);
 
                     break;
                 case 'H2':
                     dsBean = new Bean('org.h2.jdbcx.JdbcDataSource', id, {})
-                        .property('Property', 'URL', `${id}.jdbc.url`);
+                        .property('PROPERTY', 'URL', `${id}.jdbc.url`);
 
                     break;
                 default:
             }
 
             if (dsBean) {
-                dsBean.property('Property', 'user', `${id}.jdbc.username`)
-                    .property('Property', 'password', `${id}.jdbc.password`);
+                dsBean.property('PROPERTY', 'user', `${id}.jdbc.username`)
+                    .property('PROPERTY', 'password', `${id}.jdbc.password`);
             }
 
             return dsBean;
@@ -307,7 +303,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             return cfg;
         }
 
-        static clusterCaches(cluster, caches, igfss, serve, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterCaches(cluster, caches, igfss, client, cfg = this.igniteConfigurationBean(cluster)) {
             const ccfgs = _.map(caches, (cache) => this.cacheConfiguration(cache));
 
             cfg.varArgProperty('ccfgs', 'cacheConfiguration', ccfgs, 'org.apache.ignite.configuration.CacheConfiguration');
@@ -346,7 +342,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             const typeCfgs = [];
 
             _.forEach(binary.typeConfigurations, (type) => {
-                const typeCfg = new MethodBean('org.apache.ignite.binary.BinaryTypeConfiguration',
+                const typeCfg = new Bean('org.apache.ignite.binary.BinaryTypeConfiguration',
                     JavaTypes.toJavaName('binaryType', type.typeName), type, clusterDflts.binary.typeConfigurations);
 
                 typeCfg.stringProperty('typeName')
@@ -359,10 +355,8 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                     typeCfgs.push(typeCfg);
             });
 
-            binaryCfg.collectionProperty('types', 'typeConfigurations', typeCfgs, 'java.util.Collection',
-                'org.apache.ignite.binary.BinaryTypeConfiguration');
-
-            binaryCfg.boolProperty('compactFooter');
+            binaryCfg.collectionProperty('types', 'typeConfigurations', typeCfgs, 'org.apache.ignite.binary.BinaryTypeConfiguration')
+                .boolProperty('compactFooter');
 
             if (binaryCfg.isEmpty())
                 return cfg;
@@ -572,7 +566,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         // Generate events group.
         static clusterEvents(cluster, cfg = this.igniteConfigurationBean(cluster)) {
             if (_.nonEmpty(cluster.includeEventTypes))
-                cfg.eventTypes('events', 'includeEventTypes', cluster.includeEventTypes);
+                cfg.eventTypes('evts', 'includeEventTypes', cluster.includeEventTypes);
 
             return cfg;
         }
@@ -880,12 +874,11 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         .mapProperty('indFlds', 'fields', 'fields', true)
                 );
 
-                cfg.collectionProperty('indexes', 'indexes', indexes, 'java.util.Collection', 'org.apache.ignite.cache.QueryIndex');
+                cfg.collectionProperty('indexes', 'indexes', indexes, 'org.apache.ignite.cache.QueryIndex');
             }
 
             return cfg;
         }
-
 
         // Generate domain model db fields.
         static _domainModelDatabaseFields(cfg, propName, domain) {
@@ -1042,7 +1035,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                             if (_.isNil(domain.databaseTable))
                                 return acc;
 
-                            const typeBean = new MethodBean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
+                            const typeBean = new Bean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
                                 _.merge({}, domain, {cacheName: cache.name}))
                                 .stringProperty('cacheName');
 
