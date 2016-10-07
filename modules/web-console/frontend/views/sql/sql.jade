@@ -83,6 +83,8 @@ mixin paragraph-rename
             input.form-control(id='paragraph-name-{{paragraph.id}}' ng-model='paragraph.editName' required ng-click='$event.stopPropagation();' ignite-on-enter='renameParagraph(paragraph, paragraph.editName)' ignite-on-escape='paragraph.edit = false')
 
 mixin query-settings
+    label.tipLabel First page only:
+    a.btn.btn-default.fa.fa-file-o.tipLabel(ng-class='{"btn-info": paragraph.fetchFirstPage}' ng-click='paragraph.fetchFirstPage = !paragraph.fetchFirstPage' bs-tooltip data-title='Fetch first page only on execute query')
     label.tipLabel System columns:
     a.btn.btn-default.fa.fa-bars.tipLabel(ng-class='{"btn-info": paragraph.systemColumns}' ng-click='toggleSystemColumns(paragraph)' ng-disabled='paragraph.disabledSystemColumns' bs-tooltip data-title='Show "_KEY", "_VAL" columns')
     label.tipLabel Refresh rate:

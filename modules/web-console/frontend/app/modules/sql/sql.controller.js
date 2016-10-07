@@ -1267,6 +1267,11 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             }
         };
 
+        const addLimit = (query, limitSize) =>
+            `SELECT * FROM (
+            ${query} 
+            ) LIMIT ${limitSize}`;
+
         $scope.executeLocal = (paragraph) => {
             return Nodes.selectNode(cacheNodes(paragraph.cacheName), paragraph.cacheName)
                 .then((selectedNids) => $scope.execute(paragraph, _.head(selectedNids)));
@@ -1295,7 +1300,9 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                         type: 'QUERY'
                     };
 
-                    return agentMonitor.query(nid, args.cacheName, args.query, local, args.pageSize);
+                    const qry = paragraph.fetchFirstPage ? addLimit(args.query, args.pageSize) : paragraph.query;
+
+                    return agentMonitor.query(nid, args.cacheName, qry, local, args.pageSize);
                 })
                 .then((res) => {
                     _processQueryResult(paragraph, res);
