@@ -154,8 +154,8 @@ class Paragraph {
 }
 
 // Controller for SQL notebook screen.
-export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteScanFilterInput', 'IgniteNodes', 'uiGridExporterConstants',
-    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, ScanFilterInput, Nodes, uiGridExporterConstants) {
+export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteScanFilterInput', 'IgniteNodes', 'uiGridExporterConstants', 'IgniteVersion',
+    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, ScanFilterInput, Nodes, uiGridExporterConstants, Version) {
         let stopTopology = null;
 
         const _tryStopRefresh = function(paragraph) {
@@ -1248,7 +1248,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             agentMonitor.awaitAgent()
                 .then(() => _closeOldQuery(paragraph))
-                .then(() => agentMonitor.query(cacheNode(args.cacheName), args.cacheName, args.query, false, args.pageSize))
+                .then(() => agentMonitor.query(cacheNode(args.cacheName), args.cacheName, args.query, false, false, args.pageSize))
                 .then(_processQueryResult.bind(this, paragraph))
                 .catch((err) => paragraph.errMsg = err.message);
         };
@@ -1272,12 +1272,29 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             ${query} 
             ) LIMIT ${limitSize}`;
 
-        $scope.executeLocal = (paragraph) => {
-            return Nodes.selectNode(cacheNodes(paragraph.cacheName), paragraph.cacheName)
-                .then((selectedNids) => $scope.execute(paragraph, _.head(selectedNids)));
+        $scope.distributedJoinAvailable = (paragraph) => {
+            const MIN_SUPPORTED_VERSION = '1.7.0';
+            const cache = _.find($scope.caches, {name: paragraph.cacheName});
+
+            if (cache)
+                return !!_.find(cache.nodes, (node) => Version.since(node.version, MIN_SUPPORTED_VERSION));
+
+            return false;
         };
 
-        $scope.execute = (paragraph, localNid) => {
+        $scope.executeDistribution = (paragraph) => {
+            if (!$scope.distributedJoinAvailable(paragraph))
+                return;
+
+            return $scope.execute(paragraph, true);
+        };
+
+        $scope.executeLocal = (paragraph) => {
+            return Nodes.selectNode(cacheNodes(paragraph.cacheName), paragraph.cacheName)
+                .then((selectedNids) => $scope.execute(paragraph, false, _.head(selectedNids)));
+        };
+
+        $scope.execute = (paragraph, distributedJoins = false, localNid) => {
             if (!$scope.actionAvailable(paragraph, true))
                 return;
 
@@ -1302,7 +1319,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     const qry = paragraph.fetchFirstPage ? addLimit(args.query, args.pageSize) : paragraph.query;
 
-                    return agentMonitor.query(nid, args.cacheName, qry, local, args.pageSize);
+                    return agentMonitor.query(nid, args.cacheName, qry, distributedJoins, local, args.pageSize);
                 })
                 .then((res) => {
                     _processQueryResult(paragraph, res);
@@ -1351,7 +1368,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                         type: 'EXPLAIN'
                     };
 
-                    return agentMonitor.query(cacheNode(paragraph.cacheName), args.cacheName, args.query, false, args.pageSize);
+                    return agentMonitor.query(cacheNode(paragraph.cacheName), args.cacheName, args.query, false, false, args.pageSize);
                 })
                 .then(_processQueryResult.bind(this, paragraph))
                 .catch((err) => {
@@ -1382,7 +1399,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                         type: 'SCAN'
                     };
 
-                    return agentMonitor.query(cacheNode(paragraph.cacheName), args.cacheName, query, false, args.pageSize);
+                    return agentMonitor.query(cacheNode(paragraph.cacheName), args.cacheName, query, false, false, args.pageSize);
                 })
                 .then(_processQueryResult.bind(this, paragraph))
                 .catch((err) => {
