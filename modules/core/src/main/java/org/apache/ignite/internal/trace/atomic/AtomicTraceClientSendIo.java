@@ -18,18 +18,25 @@
 package org.apache.ignite.internal.trace.atomic;
 
 import org.apache.ignite.binary.BinaryObjectException;
+import org.apache.ignite.binary.BinaryRawReader;
+import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
-
-import java.util.Map;
+import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
- * Client send IO data.
+ * Client send message processing result.
  */
 public class AtomicTraceClientSendIo implements Binarylizable {
-    /** Messages. */
-    public Map<Integer, AtomicTraceClientSendIoMessage> msgs;
+    /** */
+    public long started;
+
+    /** */
+    public long marshalled;
+
+    /** */
+    public long sent;
 
     /**
      * Default constructor.
@@ -41,19 +48,36 @@ public class AtomicTraceClientSendIo implements Binarylizable {
     /**
      * Constructor.
      *
-     * @param msgs Messages.
+     * @param started Start time.
+     * @param marshalled Marshal time.
+     * @param sent Send time
      */
-    public AtomicTraceClientSendIo(Map<Integer, AtomicTraceClientSendIoMessage> msgs) {
-        this.msgs = msgs;
+    public AtomicTraceClientSendIo(long started, long marshalled, long sent) {
+        this.started = started;
+        this.marshalled = marshalled;
+        this.sent = sent;
     }
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
-        writer.rawWriter().writeMap(msgs);
+        BinaryRawWriter rawWriter = writer.rawWriter();
+
+        rawWriter.writeLong(started);
+        rawWriter.writeLong(marshalled);
+        rawWriter.writeLong(sent);
     }
 
     /** {@inheritDoc} */
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
-        msgs = reader.rawReader().readMap();
+        BinaryRawReader rawReader = reader.rawReader();
+
+        started = rawReader.readLong();
+        marshalled = rawReader.readLong();
+        sent = rawReader.readLong();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(AtomicTraceClientSendIo.class, this);
     }
 }

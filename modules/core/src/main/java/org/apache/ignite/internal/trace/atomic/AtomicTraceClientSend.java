@@ -23,6 +23,7 @@ import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
+import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Part of client processing.
@@ -35,13 +36,13 @@ public class AtomicTraceClientSend implements Binarylizable {
     public int reqHash;
 
     /** Start time. */
-    public long start;
+    public long started;
 
     /** Duration between future creation and passing request to IO. */
-    public long futDur;
+    public long mapped;
 
     /** Send duration. */
-    public long sendDur;
+    public long offered;
 
     /**
      * Default constructor.
@@ -55,16 +56,16 @@ public class AtomicTraceClientSend implements Binarylizable {
      *
      * @param futHash Future hash.
      * @param reqHash Request hash.
-     * @param start Start time.
-     * @param futDur Duration between future creation and passing request to IO.
-     * @param sendDur Send duration.
+     * @param started Start time.
+     * @param mapped Mapped time.
+     * @param offered Sent time.
      */
-    public AtomicTraceClientSend(int futHash, int reqHash, long start, long futDur, long sendDur) {
+    public AtomicTraceClientSend(int futHash, int reqHash, long started, long mapped, long offered) {
         this.futHash = futHash;
         this.reqHash = reqHash;
-        this.start = start;
-        this.futDur = futDur;
-        this.sendDur = sendDur;
+        this.started = started;
+        this.mapped = mapped;
+        this.offered = offered;
     }
 
     /** {@inheritDoc} */
@@ -73,9 +74,9 @@ public class AtomicTraceClientSend implements Binarylizable {
 
         rawWriter.writeInt(futHash);
         rawWriter.writeInt(reqHash);
-        rawWriter.writeLong(start);
-        rawWriter.writeLong(futDur);
-        rawWriter.writeLong(sendDur);
+        rawWriter.writeLong(started);
+        rawWriter.writeLong(mapped);
+        rawWriter.writeLong(offered);
     }
 
     /** {@inheritDoc} */
@@ -84,8 +85,13 @@ public class AtomicTraceClientSend implements Binarylizable {
 
         futHash = rawReader.readInt();
         reqHash = rawReader.readInt();
-        start = rawReader.readLong();
-        futDur = rawReader.readLong();
-        sendDur = rawReader.readLong();
+        started = rawReader.readLong();
+        mapped = rawReader.readLong();
+        offered = rawReader.readLong();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(AtomicTraceClientSend.class, this);
     }
 }

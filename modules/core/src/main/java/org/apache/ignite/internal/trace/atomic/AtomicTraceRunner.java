@@ -23,6 +23,9 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.trace.TraceCluster;
+import org.apache.ignite.internal.trace.TraceNodeResult;
+
+import java.util.Collection;
 
 /**
  * Atomic trace runner.
@@ -41,12 +44,22 @@ public class AtomicTraceRunner {
 
             Ignite cliNode = Ignition.start(config("cli", true));
 
-            new TraceCluster(cliNode.cluster().forServers()).enable();
-            new TraceCluster(cliNode.cluster().forClients()).enable();
+            TraceCluster srvTrace = new TraceCluster(cliNode.cluster().forServers());
+            TraceCluster cliTrace = new TraceCluster(cliNode.cluster().forClients());
+
+            srvTrace.enable();
+            cliTrace.enable();
 
             IgniteCache cache = cliNode.cache(CACHE_NAME);
 
             cache.put(1, 1);
+
+            Collection<TraceNodeResult> cliRes = cliTrace.collect(
+                AtomicTrace.GRP_CLIENT_REQ_SND,
+                AtomicTrace.GRP_CLIENT_REQ_SND_IO
+            );
+
+            System.out.println(cliRes);
         }
         finally {
             Ignition.stopAll(true);

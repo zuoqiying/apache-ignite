@@ -23,6 +23,7 @@ import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
+import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class TraceThreadGroupResult implements Binarylizable {
     private String grpName;
 
     /** Threads data. */
+    @GridToStringInclude
     private List<TraceThreadResult> threads;
 
     /**

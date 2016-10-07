@@ -376,7 +376,10 @@ public class TraceThreadData {
      */
     ArrayList<Object> data() {
         synchronized (mux) {
-            return new ArrayList<>(data);
+            if (data == null)
+                return null;
+            else
+                return new ArrayList<>(data);
         }
     }
 
