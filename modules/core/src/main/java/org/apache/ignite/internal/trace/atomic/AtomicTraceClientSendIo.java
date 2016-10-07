@@ -25,10 +25,15 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.io.Serializable;
+
 /**
  * Client send message processing result.
  */
-public class AtomicTraceClientSendIo implements Binarylizable {
+public class AtomicTraceClientSendIo implements Serializable, Binarylizable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** */
     public long started;
 

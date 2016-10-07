@@ -23,8 +23,9 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.trace.TraceCluster;
+import org.apache.ignite.internal.trace.TraceData;
 
-import java.util.Collections;
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,22 +36,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class AtomicTraceRunner {
     /** Overall test duration. */
-    private static final long DUR = 60000L;
+    private static final long DUR = 120000L;
 
     /** Cache name. */
     private static final String CACHE_NAME = "cache";
 
     /** Trace duration. */
-    private static final long TRACE_DUR = 5000L;
+    private static final long TRACE_DUR = 2000L;
 
     /** Sleep duration. */
     private static final long SLEEP_DUR = 5000L;
 
-    /** Sample print count. */
-    private static final int SAMPLE_PRINT_CNT = 10;
-
     /** Cache load threads count. */
-    private static final int CACHE_LOAD_THREAD_CNT = 16;
+    private static final int CACHE_LOAD_THREAD_CNT = 128;
 
     /** Cache size. */
     private static final int CACHE_SIZE = 1000;
@@ -60,6 +58,8 @@ public class AtomicTraceRunner {
      */
     @SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
+        AtomicTraceUtils.prepareTraceDir();
+
         try {
             // Start topology.
             Ignition.start(config("srv", false));
@@ -208,6 +208,8 @@ public class AtomicTraceRunner {
         @Override public void run() {
             System.out.println(">>> Trace printer started.");
 
+            int idx = 0;
+
             try {
                 TraceCluster cliTrace = new TraceCluster(node.cluster().forClients());
                 TraceCluster srvTrace = new TraceCluster(node.cluster().forServers());
@@ -218,21 +220,27 @@ public class AtomicTraceRunner {
                     cliTrace.enable();
                     srvTrace.enable();
 
+                    System.out.println(">>> Enabled trace");
+
                     Thread.sleep(TRACE_DUR);
 
                     cliTrace.disable();
                     srvTrace.disable();
 
-                    List<AtomicTraceResult> ress = AtomicTraceResult.parse(cliTrace.collectAndReset(
+                    System.out.println(">>> Disabled trace");
+
+                    TraceData data = cliTrace.collectAndReset(
                         AtomicTrace.GRP_CLIENT_REQ_SND,
                         AtomicTrace.GRP_CLIENT_REQ_SND_IO
-                    ));
+                    );
 
-                    Collections.shuffle(ress);
+                    System.out.println(">>> Collected trace");
 
-                    for (int i = 0; i < SAMPLE_PRINT_CNT; i++)
-                        System.out.println(ress.get(i));
+                    File traceFile = AtomicTraceUtils.traceFile(idx++);
 
+                    data.save(traceFile);
+
+                    System.out.println(">>> Saved trace");
                     System.out.println();
                 }
             }

@@ -27,6 +27,7 @@ import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,7 +35,7 @@ import java.util.UUID;
 /**
  * Trace thread result.
  */
-public class TraceThreadResult implements Binarylizable {
+public class TraceThreadResult implements Serializable, Binarylizable {
     /** */
     private static final long serialVersionUID = 0L;
 

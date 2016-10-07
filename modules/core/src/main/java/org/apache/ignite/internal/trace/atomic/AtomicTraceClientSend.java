@@ -25,10 +25,15 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.io.Serializable;
+
 /**
  * Part of client processing.
  */
-public class AtomicTraceClientSend implements Binarylizable {
+public class AtomicTraceClientSend implements Serializable, Binarylizable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** Future hash. */
     public int futHash;
 
