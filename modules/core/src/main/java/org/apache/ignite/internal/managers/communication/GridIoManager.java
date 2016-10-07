@@ -975,7 +975,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         if (msg.topicOrdinal() == TOPIC_IO_TEST.ordinal()) {
             IgniteIoTestMessage msg0 = (IgniteIoTestMessage)msg.message();
 
-            if (msg0.processFromNioThread()) {
+            if (!msg0.request()) {
                 c.run();
 
                 return;

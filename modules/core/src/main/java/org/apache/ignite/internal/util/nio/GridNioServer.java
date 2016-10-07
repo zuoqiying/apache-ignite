@@ -496,7 +496,7 @@ public class GridNioServer<T> {
                     throw new IgniteCheckedException(err);
             }
         }
-        else if (ses.worker.wakeup && !ses.procWrite.get() && ses.procWrite.compareAndSet(false, true)) {
+        else if (!ses.procWrite.get() && ses.procWrite.compareAndSet(false, true)) {
             ses.worker.offer((SessionChangeRequest) fut);
 
             ses.wakeupCnt.increment();
@@ -1295,7 +1295,7 @@ public class GridNioServer<T> {
                     req = ses.pollFuture();
 
                     if (req == null && buf.position() == 0) {
-                        if (wakeup && ses.procWrite.get()) {
+                        if (ses.procWrite.get()) {
                             boolean set = ses.procWrite.compareAndSet(true, false);
 
                             assert set;
@@ -1410,7 +1410,7 @@ public class GridNioServer<T> {
         /** Worker index. */
         private final int idx;
 
-        public boolean wakeup;
+        public final boolean wakeup;
 
         /**
          * @param idx Index of this worker in server's array.
@@ -1924,7 +1924,7 @@ public class GridNioServer<T> {
                         ses.addMeta(e.getKey(), e.getValue());
                 }
 
-                SelectionKey key = sockCh.register(selector, wakeup ? SelectionKey.OP_READ : SelectionKey.OP_READ | SelectionKey.OP_WRITE, ses);
+                SelectionKey key = sockCh.register(selector, SelectionKey.OP_READ, ses);
 
                 ses.key(key);
 
