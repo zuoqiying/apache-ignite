@@ -50,7 +50,14 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             if (_.isEmpty(bean.arguments))
                 return `new ${shortClsName}()`;
 
-            const args = _.map(bean.arguments, (arg) => this._toObject(arg.clsName, arg.value));
+            const args = _.map(bean.arguments, (arg) => {
+                switch (arg.clsName) {
+                    case 'MAP':
+                        return arg.id;
+                    default:
+                        return this._toObject(arg.clsName, arg.value);
+                }
+            });
 
             return `new ${shortClsName}(${args.join(', ')})`;
         }
@@ -75,10 +82,19 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
          */
         static constructBean(sb, bean, vars = [], limitLines = false) {
             _.forEach(bean.arguments, (arg) => {
-                if (arg.clsName === 'Bean' && arg.value.nonEmpty()) {
-                    this.constructBean(sb, arg.value, vars, limitLines);
+                switch (arg.clsName) {
+                    case 'MAP':
+                        this._constructMap(sb, arg, vars);
 
-                    sb.emptyLine();
+                        sb.emptyLine();
+
+                        break;
+                    default:
+                        if (this._isBean(arg.clsName) && arg.value.isComplex()) {
+                            this.constructBean(sb, arg.value, vars, limitLines);
+
+                            sb.emptyLine();
+                        }
                 }
             });
 
@@ -138,7 +154,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         }
 
         static _isBean(clsName) {
-            return JavaTypes.nonBuiltInClass(clsName) && JavaTypes.nonEnum(clsName) && !JavaTypes.isJavaPrimitive(clsName);
+            return JavaTypes.nonBuiltInClass(clsName) && JavaTypes.nonEnum(clsName) && _.includes(clsName, '.');
         }
 
         static _toObject(clsName, val) {
@@ -167,12 +183,14 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         return `props.getProperty("${item}").toCharArray()`;
                     case 'PROPERTY':
                         return `props.getProperty("${item}")`;
-                    case 'BEAN':
-                        if (item.isComplex())
-                            return item.id;
-
-                        return this._newBean(item);
                     default:
+                        if (this._isBean(clsName)) {
+                            if (item.isComplex())
+                                return item.id;
+
+                            return this._newBean(item);
+                        }
+
                         if (JavaTypes.nonEnum(clsName))
                             return item;
 
@@ -255,6 +273,38 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 else
                     this._setProperty(sb, bean.id, prop.name, `new ${arrType}[] {${_.head(arrItems)}}`);
             }
+        }
+
+        static _constructMap(sb, map, vars = []) {
+            const keyClsName = JavaTypes.shortClassName(map.keyClsName);
+            const valClsName = JavaTypes.shortClassName(map.valClsName);
+
+            const mapClsName = map.ordered ? 'LinkedHashMap' : 'HashMap';
+
+            if (_.includes(vars, map.id))
+                sb.append(`${map.id} = new ${mapClsName}<>();`);
+            else {
+                vars.push(map.id);
+
+                sb.append(`${mapClsName}<${keyClsName}, ${valClsName}> ${map.id} = new ${mapClsName}<>();`);
+            }
+
+            sb.emptyLine();
+
+            _.forEach(map.entries, (entry) => {
+                const key = this._toObject(map.keyClsName, entry[map.keyField]);
+                const val = entry[map.valField];
+
+                if (_.isArray(val)) {
+                    sb.startBlock(`${map.id}.put(${key},`);
+
+                    sb.append(this._toObject(map.valClsName, val));
+
+                    sb.endBlock(');');
+                }
+                else
+                    sb.append(`${map.id}.put(${key}, ${this._toObject(map.valClsName, val)});`);
+            });
         }
 
         /**
@@ -353,35 +403,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                         break;
                     case 'MAP':
-                        const keyClsName = JavaTypes.shortClassName(prop.keyClsName);
-                        const valClsName = JavaTypes.shortClassName(prop.valClsName);
-
-                        const mapClsName = prop.ordered ? 'LinkedHashMap' : 'HashMap';
-
-                        if (_.includes(vars, prop.id))
-                            sb.append(`${prop.id} = new ${mapClsName}<>();`);
-                        else {
-                            vars.push(prop.id);
-
-                            sb.append(`${mapClsName}<${keyClsName}, ${valClsName}> ${prop.id} = new ${mapClsName}<>();`);
-                        }
-
-                        sb.emptyLine();
-
-                        _.forEach(prop.entries, (entry) => {
-                            const key = this._toObject(prop.keyClsName, entry[prop.keyField]);
-                            const val = entry[prop.valField];
-
-                            if (_.isArray(val)) {
-                                sb.startBlock(`${prop.id}.put(${key},`);
-
-                                sb.append(this._toObject(prop.valClsName, val));
-
-                                sb.endBlock(');');
-                            }
-                            else
-                                sb.append(`${prop.id}.put(${key}, ${this._toObject(prop.valClsName, val)});`);
-                        });
+                        this._constructMap(sb, prop, vars);
 
                         if (_.nonEmpty(prop.entries))
                             sb.emptyLine();
@@ -413,7 +435,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                             this._setProperty(sb, bean.id, prop.name, embedded.id);
                         }
-                        else if (_.nonEmpty(embedded.properties) || embedded.isComplex()) {
+                        else if (embedded.isComplex()) {
                             this.constructBean(sb, embedded, vars, limitLines);
 
                             sb.emptyLine();
@@ -580,7 +602,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             return beans;
         }
 
-        static cacheConfiguration(sb, ccfg, client) {
+        static cacheConfiguration(sb, ccfg) {
             const cacheName = ccfg.findProperty('name').value;
             const dataSources = this.collectDataSources(ccfg);
 

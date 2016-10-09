@@ -17,7 +17,7 @@
 
 import DFLT_DIALECTS from 'app/data/dialects.json';
 
-import { EmptyBean, Bean, MethodBean } from './Beans';
+import { EmptyBean, Bean } from './Beans';
 
 export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'igniteIgfsDefaults', (JavaTypes, clusterDflts, cacheDflts, igfsDflts) => {
     class ConfigurationGenerator {
@@ -1061,7 +1061,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         else {
                             ccfg.stringProperty('connectionUrl')
                                 .stringProperty('user')
-                                .property('Property', 'password', `ds.${storeFactory.user}.password`);
+                                .property('PROPERTY', 'password', `ds.${storeFactory.user}.password`);
                         }
 
                         bean.boolProperty('initSchema')

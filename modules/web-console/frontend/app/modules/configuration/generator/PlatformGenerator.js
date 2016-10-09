@@ -16,7 +16,7 @@
  */
 
 // import _ from 'lodash';
-import { Bean } from './Beans';
+import { EmptyBean, Bean, MethodBean } from './Beans';
 
 export default ['JavaTypes', 'igniteClusterPlatformDefaults', 'igniteCachePlatformDefaults', (JavaTypes, clusterDflts, cacheDflts) => {
     class PlatformGenerator {

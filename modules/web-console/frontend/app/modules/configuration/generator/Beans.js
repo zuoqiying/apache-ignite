@@ -37,7 +37,7 @@ export class EmptyBean {
     }
 
     isComplex() {
-        return _.nonEmpty(this.properties) || !!_.find(this.arguments, (arg) => arg.clsName === 'BEAN');
+        return _.nonEmpty(this.properties) || !!_.find(this.arguments, (arg) => arg.clsName === 'MAP');
     }
 
     nonComplex() {
@@ -128,6 +128,33 @@ export class Bean extends EmptyBean {
      */
     beanConstructorArgument(id, value) {
         this.arguments.push({clsName: 'BEAN', id, value});
+
+        return this;
+    }
+
+    /**
+     * @param {String} id
+     * @param {String} model
+     * @param {Array.<Object>} entries
+     * @returns {Bean}
+     */
+    mapConstructorArgument(id, model, entries) {
+        if (!this.src)
+            return this;
+
+        const dflt = _.get(this.dflts, model);
+
+        if (_.nonEmpty(entries) && _.nonNil(dflt) && entries !== dflt.entries) {
+            this.arguments.push({
+                clsName: 'MAP',
+                id,
+                keyClsName: dflt.keyClsName,
+                keyField: dflt.keyField || 'name',
+                valClsName: dflt.valClsName,
+                valField: dflt.valField || 'value',
+                entries
+            });
+        }
 
         return this;
     }
