@@ -74,6 +74,9 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
             this.clusterCaches(cluster, cluster.caches, cluster.igfss, client, cfg);
 
+            if (!client)
+                this.igfss(cluster.igfss, cfg);
+
             return cfg;
         }
 
@@ -1222,7 +1225,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             this.cacheRebalance(cache, ccfg);
             this.cacheNearServer(cache, ccfg);
             this.cacheStatistics(cache, ccfg);
-            // this.cacheDomains(cache.domains, cfg);
+            // this.cacheDomains(cache.domains, ccfg);
 
             return ccfg;
         }
@@ -1322,6 +1325,23 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                 .mapProperty('pathModes', 'pathModes');
 
             return cfg;
+        }
+
+        // Generate IGFSs configs.
+        static igfss(igfss, cfg) {
+            const igfsCfgs = _.map(igfss, (igfs) => {
+                const igfsCfg = this.igfsGeneral(igfs);
+
+                this.igfsIPC(igfs, igfsCfg);
+                this.igfsFragmentizer(igfs, igfsCfg);
+                this.igfsDualMode(igfs, igfsCfg);
+                this.igfsSecondFS(igfs, igfsCfg);
+                this.igfsMisc(igfs, igfsCfg);
+
+                return igfsCfg;
+            });
+
+            cfg.varArgProperty('igfsCfgs', 'fileSystemConfiguration', igfsCfgs, 'org.apache.ignite.configuration.FileSystemConfiguration');
         }
     }
 
