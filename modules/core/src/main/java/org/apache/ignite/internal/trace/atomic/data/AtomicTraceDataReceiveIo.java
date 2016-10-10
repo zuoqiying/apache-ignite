@@ -25,10 +25,15 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.io.Serializable;
+
 /**
  * Trace for received message.
  */
-public class AtomicTraceDataReceiveIo implements Binarylizable {
+public class AtomicTraceDataReceiveIo implements Serializable, Binarylizable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** Data length. */
     public int dataLen;
 

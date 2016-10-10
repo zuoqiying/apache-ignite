@@ -25,10 +25,15 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.io.Serializable;
+
 /**
  * Atomic trace data user part.
  */
-public class AtomicTraceDataUserPart implements Binarylizable {
+public class AtomicTraceDataUserPart implements Serializable, Binarylizable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** Key. */
     public AtomicTraceDataMessageKey key;
 

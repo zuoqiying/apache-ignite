@@ -26,12 +26,16 @@ import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
  * Trace message key.
  */
-public class AtomicTraceDataMessageKey implements Binarylizable {
+public class AtomicTraceDataMessageKey implements Serializable, Binarylizable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** Source node ID. */
     public UUID fromNodeId;
 

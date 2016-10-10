@@ -25,6 +25,7 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
@@ -32,7 +33,10 @@ import java.util.UUID;
 /**
  * Trace for user processing.
  */
-public class AtomicTraceDataUser implements Binarylizable {
+public class AtomicTraceDataUser implements Serializable, Binarylizable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** Future ID. */
     public UUID futId;
 

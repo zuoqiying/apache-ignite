@@ -25,12 +25,16 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
  * Atomic trace server data.
  */
-public class AtomicTraceDataServer implements Binarylizable {
+public class AtomicTraceDataServer implements Serializable, Binarylizable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** Start time. */
     public long started;
 

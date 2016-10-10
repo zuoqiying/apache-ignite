@@ -347,7 +347,7 @@ public class AtomicTrace {
         if (PROC.isEnabled()) {
             TraceThreadData trace = PROC.threadData(GRP_IO_RCV);
 
-            IdentityHashMap<AtomicTraceDataMessageKey, AtomicTraceDataReceiveIo> resMap = trace.objectValue(1);
+            Map<AtomicTraceDataMessageKey, AtomicTraceDataReceiveIo> resMap = trace.objectValue(1);
 
             if (resMap != null)
                 trace.pushData(resMap);

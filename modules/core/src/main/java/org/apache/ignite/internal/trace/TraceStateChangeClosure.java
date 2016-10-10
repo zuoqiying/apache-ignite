@@ -17,12 +17,14 @@
 
 package org.apache.ignite.internal.trace;
 
+import org.apache.ignite.Ignite;
 import org.apache.ignite.binary.BinaryObjectException;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.lang.IgniteCallable;
+import org.apache.ignite.resources.IgniteInstanceResource;
 
 /**
  * Trace state change closure.
@@ -30,6 +32,10 @@ import org.apache.ignite.lang.IgniteCallable;
 public class TraceStateChangeClosure implements IgniteCallable<Void>, Binarylizable {
     /** */
     private static final long serialVersionUID = 0L;
+
+    /** Ignite instance */
+    @IgniteInstanceResource
+    private Ignite ignite;
 
     /** Enable flag. */
     private boolean enable;
@@ -52,6 +58,8 @@ public class TraceStateChangeClosure implements IgniteCallable<Void>, Binaryliza
 
     /** {@inheritDoc} */
     @Override public Void call() throws Exception {
+        System.out.println(">>> State change: " + ignite.cluster().localNode().id());
+
         TraceProcessor proc = TraceProcessor.shared();
 
         if (enable)
