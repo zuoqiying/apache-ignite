@@ -25,68 +25,49 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * Trace for client processing.
+ * Trace for user processing.
  */
-public class AtomicTraceDataClient implements Binarylizable {
+public class AtomicTraceDataUser implements Binarylizable {
     /** Future ID. */
     public UUID futId;
-
-    /** Request ID. */
-    public long reqId;
-
-    /** Response ID. */
-    public long respId;
 
     /** Start time. */
     public long started;
 
-    /** Time when mini future was completed. */
-    public long completed;
-
-    /** Finish time. */
-    public long finished;
+    /** Map from request to offer time. */
+    Map<AtomicTraceDataMessageKey, Long> reqs = new HashMap<>(2, 1.0f);
 
     /**
      * Default constructor.
      */
-    public AtomicTraceDataClient() {
+    public AtomicTraceDataUser() {
         // No-op.
     }
 
     /**
      * Constructor.
      *
-     * @param respId Request ID.
-     * @param started Start time.
-     */
-    public AtomicTraceDataClient(long respId, long started) {
-        this.respId = respId;
-        this.started = started;
-    }
-
-    /**
-     * Invoked when mini-future is completed.
-     *
      * @param futId Future ID.
-     * @param reqId Request ID.
-     * @param completed Complete time.
      */
-    public void onMiniFutureCompleted(UUID futId, long reqId, long completed) {
+    public AtomicTraceDataUser(UUID futId) {
         this.futId = futId;
-        this.reqId = reqId;
-        this.completed = completed;
+
+        started = System.nanoTime();
     }
 
     /**
-     * Invoked when processing is finished.
+     * Add request trace.
      *
-     * @param finished Finish time.
+     * @param fromNodeId From node ID.
+     * @param toNodeId To node ID.
      */
-    public void onFinished(long finished) {
-        this.finished = finished;
+    public void addRequestTrace(UUID fromNodeId, UUID toNodeId, long msgId) {
+        reqs.put(new AtomicTraceDataMessageKey(fromNodeId, toNodeId, msgId), System.nanoTime());
     }
 
     /** {@inheritDoc} */
@@ -94,11 +75,8 @@ public class AtomicTraceDataClient implements Binarylizable {
         BinaryRawWriter rawWriter = writer.rawWriter();
 
         rawWriter.writeUuid(futId);
-        rawWriter.writeLong(reqId);
-        rawWriter.writeLong(respId);
         rawWriter.writeLong(started);
-        rawWriter.writeLong(completed);
-        rawWriter.writeLong(finished);
+        rawWriter.writeMap(reqs);
     }
 
     /** {@inheritDoc} */
@@ -106,15 +84,12 @@ public class AtomicTraceDataClient implements Binarylizable {
         BinaryRawReader rawReader = reader.rawReader();
 
         futId = rawReader.readUuid();
-        reqId = rawReader.readLong();
-        respId = rawReader.readLong();
         started = rawReader.readLong();
-        completed = rawReader.readLong();
-        finished = rawReader.readLong();
+        reqs = rawReader.readMap();
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(AtomicTraceDataClient.class, this);
+        return S.toString(AtomicTraceDataUser.class, this);
     }
 }

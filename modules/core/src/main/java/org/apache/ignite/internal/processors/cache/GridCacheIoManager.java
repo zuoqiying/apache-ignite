@@ -820,7 +820,7 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
         if (log.isDebugEnabled())
             log.debug("Sending cache message [msg=" + msg + ", node=" + U.toShortString(node) + ']');
 
-        AtomicTrace.onClientBeforeOffer(msg, cctx.localNodeId(), node.id());
+        AtomicTrace.onUserBeforeOffer(msg, cctx.localNodeId(), node.id());
 
         int cnt = 0;
 

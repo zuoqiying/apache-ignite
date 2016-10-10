@@ -1146,7 +1146,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         final GridNearAtomicAbstractUpdateFuture updateFut =
             createSingleUpdateFuture(key, val, proc, invokeArgs, retval, filter, waitTopFut);
 
-        AtomicTrace.onClientStarted(updateFut);
+        AtomicTrace.onUserStarted(updateFut.id());
 
         try {
             return asyncOp(new CO<IgniteInternalFuture<Object>>() {
@@ -1158,7 +1158,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             });
         }
         finally {
-            AtomicTrace.onClientFinished();
+            AtomicTrace.onUserFinished();
         }
     }
 
@@ -3106,23 +3106,30 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      */
     @SuppressWarnings("unchecked")
     private void processNearAtomicUpdateResponse(UUID nodeId, GridNearAtomicUpdateResponse res) {
-        if (msgLog.isDebugEnabled())
-            msgLog.debug("Received near atomic update response [futId" + res.futureVersion() + ", node=" + nodeId + ']');
+        AtomicTrace.onClientStarted(res.messageId());
 
-        res.nodeId(ctx.localNodeId());
+        try {
+            if (msgLog.isDebugEnabled())
+                msgLog.debug("Received near atomic update response [futId" + res.futureVersion() + ", node=" + nodeId + ']');
 
-        GridNearAtomicAbstractUpdateFuture fut =
-            (GridNearAtomicAbstractUpdateFuture)ctx.mvcc().atomicFuture(res.futureVersion());
+            res.nodeId(ctx.localNodeId());
 
-        if (fut != null) {
-            if (fut instanceof GridNearAtomicSingleUpdateFuture)
-                ((GridNearAtomicSingleUpdateFuture)fut).onResult(nodeId, res, false);
+            GridNearAtomicAbstractUpdateFuture fut =
+                (GridNearAtomicAbstractUpdateFuture) ctx.mvcc().atomicFuture(res.futureVersion());
+
+            if (fut != null) {
+                if (fut instanceof GridNearAtomicSingleUpdateFuture)
+                    ((GridNearAtomicSingleUpdateFuture) fut).onResult(nodeId, res, false);
+                else
+                    ((GridNearAtomicUpdateFuture) fut).onResult(nodeId, res, false);
+            }
             else
-                ((GridNearAtomicUpdateFuture)fut).onResult(nodeId, res, false);
+                U.warn(msgLog, "Failed to find near update future for update response (will ignore) " +
+                    "[futId" + res.futureVersion() + ", node=" + nodeId + ", res=" + res + ']');
         }
-        else
-            U.warn(msgLog, "Failed to find near update future for update response (will ignore) " +
-                "[futId" + res.futureVersion() + ", node=" + nodeId + ", res=" + res + ']');
+        finally {
+            AtomicTrace.onClientFinished();
+        }
     }
 
     /**

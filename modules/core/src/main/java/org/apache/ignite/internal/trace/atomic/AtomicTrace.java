@@ -19,12 +19,12 @@ package org.apache.ignite.internal.trace.atomic;
 
 import org.apache.ignite.internal.managers.communication.GridIoMessage;
 import org.apache.ignite.internal.processors.cache.GridCacheMessage;
-import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicAbstractUpdateFuture;
 import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicUpdateRequest;
 import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicUpdateResponse;
 import org.apache.ignite.internal.trace.TraceProcessor;
 import org.apache.ignite.internal.trace.TraceThreadData;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataClient;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataUser;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataSendIo;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataReceiveIo;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataMessageKey;
@@ -46,7 +46,7 @@ import java.util.UUID;
 @SuppressWarnings("UnusedParameters")
 public class AtomicTrace {
     /** */
-    public static final String GRP_CLI = "CLIENT";
+    public static final String GRP_USR = "USR";
 
     /** */
     public static final String GRP_IO_SND = "IO_SND";
@@ -55,25 +55,28 @@ public class AtomicTrace {
     public static final String GRP_IO_RCV = "IO_RCV";
 
     /** */
-    public static final String GRP_SYS = "SYS";
+    public static final String GRP_SRV = "SRV";
+
+    /** */
+    public static final String GRP_CLI = "CLI";
 
     /** Trace processor. */
     private static final TraceProcessor PROC = TraceProcessor.shared();
 
-    /* --- BEGIN SIDE --- */
+    /* --- User processing. --- */
 
     /**
      * Invoked on operation start.
      *
-     * @param fut Future.
+     * @param futId Future ID.
      */
-    public static void onClientStarted(GridNearAtomicAbstractUpdateFuture fut) {
+    public static void onUserStarted(UUID futId) {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_CLI);
+            TraceThreadData trace = PROC.threadData(GRP_USR);
 
             trace.begin();
 
-            trace.objectValue(0, new AtomicTraceDataClient(fut.id()));
+            trace.objectValue(0, new AtomicTraceDataUser(futId));
         }
     }
 
@@ -83,10 +86,10 @@ public class AtomicTrace {
      * @param fromNode From node.
      * @param toNode To node.
      */
-    public static void onClientBeforeOffer(GridCacheMessage msg, UUID fromNode, UUID toNode) {
+    public static void onUserBeforeOffer(GridCacheMessage msg, UUID fromNode, UUID toNode) {
         if (PROC.isEnabled()) {
             if (msg instanceof GridNearAtomicUpdateRequest) {
-                TraceThreadData trace = PROC.threadData(GRP_CLI);
+                TraceThreadData trace = PROC.threadData(GRP_USR);
 
                 trace.objectValue(1, fromNode);
                 trace.objectValue(2, toNode);
@@ -99,14 +102,14 @@ public class AtomicTrace {
      *
      * @param fut Future.
      */
-    public static void onClientOffered(GridNioFuture fut) {
+    public static void onUserOffered(GridNioFuture fut) {
         if (PROC.isEnabled()) {
             GridNearAtomicUpdateRequest req = requestFromFuture(fut);
 
             if (req != null) {
-                TraceThreadData trace = PROC.threadData(GRP_CLI);
+                TraceThreadData trace = PROC.threadData(GRP_USR);
 
-                AtomicTraceDataClient data = trace.objectValue(0);
+                AtomicTraceDataUser data = trace.objectValue(0);
                 UUID fromNode = trace.objectValue(1);
                 UUID toNode = trace.objectValue(2);
 
@@ -119,11 +122,11 @@ public class AtomicTrace {
     /**
      * Invoked when client part is finished.
      */
-    public static void onClientFinished() {
+    public static void onUserFinished() {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_CLI);
+            TraceThreadData trace = PROC.threadData(GRP_USR);
 
-            AtomicTraceDataClient data = trace.objectValue(0);
+            AtomicTraceDataUser data = trace.objectValue(0);
 
             if (data != null)
                 trace.pushData(data);
@@ -364,7 +367,7 @@ public class AtomicTrace {
      */
     public static void onServerStarted(UUID fromNode, UUID toNode, long msgId) {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_SYS);
+            TraceThreadData trace = PROC.threadData(GRP_SRV);
 
             trace.begin();
 
@@ -382,7 +385,7 @@ public class AtomicTrace {
             GridNearAtomicUpdateResponse resp = responseFromFuture(fut);
 
             if (resp != null) {
-                TraceThreadData trace = PROC.threadData(GRP_SYS);
+                TraceThreadData trace = PROC.threadData(GRP_SRV);
 
                 AtomicTraceDataServer data = trace.objectValue(0);
 
@@ -397,12 +400,65 @@ public class AtomicTrace {
      */
     public static void onServerFinished() {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_SYS);
+            TraceThreadData trace = PROC.threadData(GRP_SRV);
 
             AtomicTraceDataServer data = trace.objectValue(0);
 
             if (data != null)
                 trace.pushData(data);
+
+            trace.end();
+        }
+    }
+
+    /* --- Client processing. --- */
+
+    /**
+     * Invoked when client processing started.
+     *
+     * @param respId Response message ID.
+     */
+    public static void onClientStarted(long respId) {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_CLI);
+
+            trace.begin();
+
+            trace.objectValue(0, new AtomicTraceDataClient(respId, System.nanoTime()));
+        }
+    }
+
+    /**
+     * Invoked when client mini-future completed.
+     *
+     * @param futId Parent future ID.
+     * @param reqId Request ID.
+     */
+    public static void onClientFutureCompleted(UUID futId, long reqId) {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_CLI);
+
+            AtomicTraceDataClient data = trace.objectValue(0);
+
+            if (data != null)
+                data.onMiniFutureCompleted(futId, reqId, System.nanoTime());
+        }
+    }
+
+    /**
+     * Invoked when client processing is finished.
+     */
+    public static void onClientFinished() {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_CLI);
+
+            AtomicTraceDataClient data = trace.objectValue(0);
+
+            if (data != null) {
+                data.onFinished(System.nanoTime());
+
+                trace.pushData(data);
+            }
 
             trace.end();
         }

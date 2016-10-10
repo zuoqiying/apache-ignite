@@ -19,7 +19,7 @@ package org.apache.ignite.internal.trace.atomic;
 
 import org.apache.ignite.internal.trace.TraceData;
 import org.apache.ignite.internal.trace.TraceThreadResult;
-import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataClient;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataUser;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataSendIo;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class AtomicTraceResult {
     /** Client send. */
-    public AtomicTraceDataClient cliSend;
+    public AtomicTraceDataUser cliSend;
 
     /** Client send IO. */
     public AtomicTraceDataSendIo cliSendIo;
@@ -93,10 +93,10 @@ public class AtomicTraceResult {
 
         List<TraceThreadResult> threadSndIos = data.groupData(AtomicTrace.GRP_IO_SND);
 
-        for (TraceThreadResult threadSnd : data.groupData(AtomicTrace.GRP_CLI)) {
-            List<AtomicTraceDataClient> snds = threadSnd.data();
+        for (TraceThreadResult threadSnd : data.groupData(AtomicTrace.GRP_USR)) {
+            List<AtomicTraceDataUser> snds = threadSnd.data();
 
-            for (AtomicTraceDataClient snd : snds) {
+            for (AtomicTraceDataUser snd : snds) {
                 AtomicTraceDataSendIo sndIo = findSendIo(threadSndIos, threadSnd, snd);
 
                 if (sndIo != null)
@@ -116,7 +116,7 @@ public class AtomicTraceResult {
      * @return Send IO.
      */
     private static AtomicTraceDataSendIo findSendIo(List<TraceThreadResult> threadSndIos, TraceThreadResult threadSnd,
-        AtomicTraceDataClient snd) {
+        AtomicTraceDataUser snd) {
         for (TraceThreadResult threadSndIo : threadSndIos) {
             if (threadSnd.sameNode(threadSndIo)) {
                 List<Map<Long, AtomicTraceDataSendIo>> datas = threadSndIo.data();
@@ -140,7 +140,7 @@ public class AtomicTraceResult {
      * @param cliSendIo Client send IO.
      * @param threadId Thread ID.
      */
-    public AtomicTraceResult(AtomicTraceDataClient cliSend, AtomicTraceDataSendIo cliSendIo, long threadId) {
+    public AtomicTraceResult(AtomicTraceDataUser cliSend, AtomicTraceDataSendIo cliSendIo, long threadId) {
         this.cliSend = cliSend;
         this.cliSendIo = cliSendIo;
         this.threadId = threadId;
