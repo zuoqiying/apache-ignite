@@ -1217,7 +1217,7 @@ public class GridNioServer<T> {
             assert buf.hasRemaining();
 
             if (!skipWrite) {
-                int pos = buf.position();
+                int pos = buf.limit();
 
                 int cnt = sockCh.write(buf);
 

@@ -34,6 +34,9 @@ public class AtomicTraceResult {
     /** Client send IO. */
     public AtomicTraceClientSendIo cliSendIo;
 
+    /** Thread ID. */
+    public long threadId;
+
     /**
      * @return Client start duration.
      */
@@ -95,7 +98,7 @@ public class AtomicTraceResult {
                 AtomicTraceClientSendIo sndIo = findSendIo(threadSndIos, threadSnd, snd);
 
                 if (sndIo != null)
-                    res.add(new AtomicTraceResult(snd, sndIo));
+                    res.add(new AtomicTraceResult(snd, sndIo, threadSnd.threadId()));
             }
         }
 
@@ -133,16 +136,19 @@ public class AtomicTraceResult {
      *
      * @param cliSend Client send.
      * @param cliSendIo Client send IO.
+     * @param threadId Thread ID.
      */
-    public AtomicTraceResult(AtomicTraceClientSend cliSend, AtomicTraceClientSendIo cliSendIo) {
+    public AtomicTraceResult(AtomicTraceClientSend cliSend, AtomicTraceClientSendIo cliSendIo, long threadId) {
         this.cliSend = cliSend;
         this.cliSendIo = cliSendIo;
+        this.threadId = threadId;
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
         return String.format(AtomicTraceResult.class.getSimpleName() +
-            "[start=%d, map=%8d, offer=%8d, poll=%8d, marsh=%8d, send=%8d, bufLen=%5d, msgCnt=%3d]",
+            "[start=%d, map=%8d, offer=%8d, poll=%8d, marsh=%8d, send=%8d, bufLen=%5d, msgCnt=%3d, nio=" +
+                threadId + "]",
             clientStart(),
             clientMapDuration(),
             clientOfferDuration(),

@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class AtomicTraceParseRunner {
     /** Sample print count. */
-    private static final int SAMPLE_PRINT_CNT = 10;
+    private static final int SAMPLE_PRINT_CNT = 20;
 
     /**
      * Entry point.

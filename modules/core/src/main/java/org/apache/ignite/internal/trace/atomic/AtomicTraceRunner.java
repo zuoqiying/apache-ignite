@@ -48,7 +48,7 @@ public class AtomicTraceRunner {
     private static final long SLEEP_DUR = 5000L;
 
     /** Cache load threads count. */
-    private static final int CACHE_LOAD_THREAD_CNT = 16;
+    private static final int CACHE_LOAD_THREAD_CNT = 1;
 
     /** Cache size. */
     private static final int CACHE_SIZE = 1000;
@@ -166,6 +166,15 @@ public class AtomicTraceRunner {
 
                 ThreadLocalRandom rand = ThreadLocalRandom.current();
 
+                // Ensure threads are more or less distributed in time.
+                try {
+                    Thread.sleep(rand.nextInt(100, 2000));
+                }
+                catch (InterruptedException e) {
+                    // No-op.
+                }
+
+                // Payload.
                 while (!stopped) {
                     int key = rand.nextInt(CACHE_SIZE);
 
