@@ -239,8 +239,8 @@ public class AtomicTraceRunner {
                     System.out.println(">>> Disabled trace");
 
                     TraceData data = cliTrace.collectAndReset(
-                        AtomicTrace.GRP_CLIENT_REQ_SND,
-                        AtomicTrace.GRP_CLIENT_REQ_SND_IO
+                        AtomicTrace.GRP_BEGIN,
+                        AtomicTrace.GRP_SND_IO_REQ
                     );
 
                     System.out.println(">>> Collected trace");

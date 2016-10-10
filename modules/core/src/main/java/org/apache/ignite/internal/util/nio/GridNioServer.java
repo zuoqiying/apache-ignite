@@ -1197,7 +1197,7 @@ public class GridNioServer<T> {
             while (finished) {
                 req.onDone();
 
-                AtomicTrace._05_onClientSendIoMarshalled(req);
+                AtomicTrace.onIoWriteMarshalled(req);
 
                 req = (NioOperationFuture<?>)ses.pollFuture();
 
@@ -1226,7 +1226,7 @@ public class GridNioServer<T> {
 
                 int cnt = sockCh.write(buf);
 
-                AtomicTrace._06_onClientSendIoWritten(pos);
+                AtomicTrace.onIoWriteFinished(pos);
 
                 if (log.isTraceEnabled())
                     log.trace("Bytes sent [sockCh=" + sockCh + ", cnt=" + cnt + ']');

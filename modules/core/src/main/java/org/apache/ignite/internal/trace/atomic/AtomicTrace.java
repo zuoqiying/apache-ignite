@@ -21,6 +21,7 @@ import org.apache.ignite.internal.managers.communication.GridIoMessage;
 import org.apache.ignite.internal.processors.cache.GridCacheMessage;
 import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicAbstractUpdateFuture;
 import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicUpdateRequest;
+import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicUpdateResponse;
 import org.apache.ignite.internal.trace.TraceProcessor;
 import org.apache.ignite.internal.trace.TraceThreadData;
 import org.apache.ignite.internal.util.nio.GridNioFuture;
@@ -41,23 +42,39 @@ import java.util.UUID;
 @SuppressWarnings("UnusedParameters")
 public class AtomicTrace {
     /** */
-    public static final String GRP_CLIENT_REQ_SND = "CLI_REQ_SND";
+    public static final String GRP_BEGIN = "BEGIN";
 
     /** */
-    public static final String GRP_CLIENT_REQ_SND_IO = "CLI_REQ_SND_IO";
+    public static final String GRP_SND_IO_REQ = "SND_IO_REQ";
 
     /** */
-    public static final String GRP_RCV_IO = "RCV_IO";
+    public static final String GRP_RCV_IO_REQ = "RCV_IO_REQ";
 
     /** */
-    public static final String GRP_SRV_REQ_RCV = "SRV_REQ_RCV";
+    public static final String GRP_PROCESS = "PROCESS";
+
+    /** */
+    public static final String GRP_SND_IO_RESP = "SND_IO_RESP";
+
+    /** */
+    public static final String GRP_RCV_IO_RESP = "RCV_IO_RESP";
+
+    /** */
+    public static final String GRP_END = "END";
 
     /** Trace processor. */
     private static final TraceProcessor PROC = TraceProcessor.shared();
 
-    public static void _01_onClientSendStart(GridNearAtomicAbstractUpdateFuture fut) {
+    /* --- BEGIN SIDE --- */
+
+    /**
+     * Invoked on operation start.
+     *
+     * @param fut Future.
+     */
+    public static void onBeginStarted(GridNearAtomicAbstractUpdateFuture fut) {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND);
+            TraceThreadData trace = PROC.threadData(GRP_BEGIN);
 
             trace.begin();
 
@@ -68,10 +85,15 @@ public class AtomicTrace {
         }
     }
 
-    public static void _02_onClientSendBeforeIo(GridCacheMessage msg) {
+    /**
+     * Invoked after map stage.
+     *
+     * @param msg Message.
+     */
+    public static void onBeginMapped(GridCacheMessage msg) {
         if (PROC.isEnabled()) {
             if (msg instanceof GridNearAtomicUpdateRequest) {
-                TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND);
+                TraceThreadData trace = PROC.threadData(GRP_BEGIN);
 
                 trace.incrementState();
 
@@ -81,12 +103,17 @@ public class AtomicTrace {
         }
     }
 
-    public static void _03_onClientSendOffer(GridNioFuture fut) {
+    /**
+     * Invoked on message offer.
+     *
+     * @param fut Future.
+     */
+    public static void onBeginOffered(GridNioFuture fut) {
         if (PROC.isEnabled()) {
             GridNearAtomicUpdateRequest req = requestFromFuture(fut);
 
             if (req != null) {
-                TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND);
+                TraceThreadData trace = PROC.threadData(GRP_BEGIN);
 
                 trace.incrementState();
 
@@ -107,12 +134,29 @@ public class AtomicTrace {
         }
     }
 
-    public static void _04_onClientSendIoPolled(GridNioFuture fut) {
+    /* --- IO write. --- */
+
+    /**
+     * Invoked on write start.
+     */
+    public static void onIoWriteStarted() {
+        if (PROC.isEnabled()) {
+            PROC.threadData(GRP_SND_IO_REQ).begin();
+            PROC.threadData(GRP_SND_IO_RESP).begin();
+        }
+    }
+
+    /**
+     * Invoked when data is polled from the queue.
+     *
+     * @param fut Future.
+     */
+    public static void onIoWritePolled(GridNioFuture fut) {
         if (PROC.isEnabled()) {
             GridNearAtomicUpdateRequest req = requestFromFuture(fut);
 
             if (req != null) {
-                TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND_IO);
+                TraceThreadData trace = PROC.threadData(GRP_SND_IO_REQ);
 
                 HashMap<Long, AtomicTraceClientSendIo> map = trace.objectValue(0);
 
@@ -125,16 +169,26 @@ public class AtomicTrace {
                 }
 
                 map.put(req.messageId(), new AtomicTraceClientSendIo(System.nanoTime(), 0, 0, 0, 0));
+
+                return;
+            }
+
+            GridNearAtomicUpdateResponse resp = responseFromFuture(fut);
+
+            if (resp != null) {
+                TraceThreadData trace = PROC.threadData(GRP_SND_IO_RESP);
+
+                // TODO
             }
         }
     }
 
-    public static void _05_onClientSendIoMarshalled(GridNioFuture fut) {
+    public static void onIoWriteMarshalled(GridNioFuture fut) {
         if (PROC.isEnabled()) {
             GridNearAtomicUpdateRequest req = requestFromFuture(fut);
 
             if (req != null) {
-                TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND_IO);
+                TraceThreadData trace = PROC.threadData(GRP_SND_IO_REQ);
 
                 HashMap<Long, AtomicTraceClientSendIo> map = trace.objectValue(0);
 
@@ -144,13 +198,24 @@ public class AtomicTrace {
                     if (msg != null)
                         msg.marshalled = System.nanoTime();
                 }
+
+                return;
+            }
+
+            GridNearAtomicUpdateResponse resp = responseFromFuture(fut);
+
+            if (resp != null) {
+                TraceThreadData trace = PROC.threadData(GRP_SND_IO_RESP);
+
+                // TODO
             }
         }
     }
 
-    public static void _06_onClientSendIoWritten(int bufLen) {
+    public static void onIoWriteFinished(int dataLen) {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND_IO);
+            // Process requests.
+            TraceThreadData trace = PROC.threadData(GRP_SND_IO_REQ);
 
             HashMap<Long, AtomicTraceClientSendIo> map = trace.objectValue(0);
 
@@ -168,7 +233,7 @@ public class AtomicTrace {
 
                     if (msg.marshalled != 0) {
                         msg.sent = sndTime;
-                        msg.bufLen = bufLen;
+                        msg.bufLen = dataLen;
 
                         res.put(entry.getKey(), msg);
 
@@ -183,10 +248,14 @@ public class AtomicTrace {
 
                 if (!res.isEmpty())
                     trace.pushData(res);
-
-                if (map.isEmpty())
-                    trace.end();
             }
+
+            trace.end();
+
+            // Process responses.
+            trace = PROC.threadData(GRP_SND_IO_RESP);
+
+            // TODO
         }
     }
 
@@ -197,7 +266,7 @@ public class AtomicTrace {
      */
     public static void onIoReadStarted(int len) {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_RCV_IO);
+            TraceThreadData trace = PROC.threadData(GRP_RCV_IO_REQ);
 
             trace.begin();
 
@@ -213,7 +282,7 @@ public class AtomicTrace {
      */
     public static void onIoReadUnmarshalled(Object msg) {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_RCV_IO);
+            TraceThreadData trace = PROC.threadData(GRP_RCV_IO_REQ);
 
             GridNearAtomicUpdateRequest req = requestFromMessage(msg);
 
@@ -247,7 +316,7 @@ public class AtomicTrace {
      */
     public static void onIoReadOffered(UUID nodeId, GridIoMessage msg) {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_RCV_IO);
+            TraceThreadData trace = PROC.threadData(GRP_RCV_IO_REQ);
 
             GridNearAtomicUpdateRequest req = requestFromMessage(msg);
 
@@ -267,7 +336,7 @@ public class AtomicTrace {
      */
     public static void onIoReadFinished() {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_RCV_IO);
+            TraceThreadData trace = PROC.threadData(GRP_RCV_IO_REQ);
 
             IdentityHashMap<GridNearAtomicUpdateRequest, AtomicTraceReceiveIo> reqMap = trace.objectValue(0);
 
@@ -297,6 +366,12 @@ public class AtomicTrace {
         }
     }
 
+    /**
+     * Get request from message.
+     *
+     * @param msg Message.
+     * @return Request.
+     */
     @Nullable private static GridNearAtomicUpdateRequest requestFromMessage(Object msg) {
         if (msg instanceof GridIoMessage) {
             Message msg0 = ((GridIoMessage)msg).message();
@@ -308,12 +383,52 @@ public class AtomicTrace {
         return null;
     }
 
+    /**
+     * Get request from NIO future.
+     *
+     * @param fut Future.
+     * @return Request.
+     */
     @Nullable private static GridNearAtomicUpdateRequest requestFromFuture(GridNioFuture fut) {
         if (fut instanceof GridNioServer.NioOperationFuture) {
             GridNioServer.NioOperationFuture fut0 = (GridNioServer.NioOperationFuture)fut;
 
             if (fut0.directMessage() instanceof GridIoMessage)
-                return requestFromMessage((GridIoMessage)fut0.directMessage());
+                return requestFromMessage(fut0.directMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Get response from message.
+     *
+     * @param msg Message.
+     * @return Response.
+     */
+    @Nullable private static GridNearAtomicUpdateResponse responseFromMessage(Object msg) {
+        if (msg instanceof GridIoMessage) {
+            Message msg0 = ((GridIoMessage)msg).message();
+
+            if (msg0 instanceof GridNearAtomicUpdateResponse)
+                return (GridNearAtomicUpdateResponse)msg0;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get response from NIO future.
+     *
+     * @param fut Future.
+     * @return Response.
+     */
+    @Nullable private static GridNearAtomicUpdateResponse responseFromFuture(GridNioFuture fut) {
+        if (fut instanceof GridNioServer.NioOperationFuture) {
+            GridNioServer.NioOperationFuture fut0 = (GridNioServer.NioOperationFuture)fut;
+
+            if (fut0.directMessage() instanceof GridIoMessage)
+                return responseFromMessage(fut0.directMessage());
         }
 
         return null;

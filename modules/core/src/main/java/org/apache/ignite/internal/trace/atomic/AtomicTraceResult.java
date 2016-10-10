@@ -89,9 +89,9 @@ public class AtomicTraceResult {
     public static List<AtomicTraceResult> parse(TraceData data) {
         List<AtomicTraceResult> res = new ArrayList<>();
 
-        List<TraceThreadResult> threadSndIos = data.groupData(AtomicTrace.GRP_CLIENT_REQ_SND_IO);
+        List<TraceThreadResult> threadSndIos = data.groupData(AtomicTrace.GRP_SND_IO_REQ);
 
-        for (TraceThreadResult threadSnd : data.groupData(AtomicTrace.GRP_CLIENT_REQ_SND)) {
+        for (TraceThreadResult threadSnd : data.groupData(AtomicTrace.GRP_BEGIN)) {
             List<AtomicTraceClientSend> snds = threadSnd.data();
 
             for (AtomicTraceClientSend snd : snds) {

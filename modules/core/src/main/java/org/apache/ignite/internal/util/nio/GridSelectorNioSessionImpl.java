@@ -192,7 +192,7 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
 
         writeFut.messageThread(msgThread);
 
-        AtomicTrace._03_onClientSendOffer(writeFut);
+        AtomicTrace.onBeginOffered(writeFut);
 
         boolean res = queue.offer(writeFut);
 
@@ -222,7 +222,7 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
     @Nullable GridNioFuture<?> pollFuture() {
         GridNioFuture<?> last = queue.poll();
 
-        AtomicTrace._04_onClientSendIoPolled(last);
+        AtomicTrace.onIoWritePolled(last);
 
         if (last != null) {
             queueSize.decrementAndGet();
