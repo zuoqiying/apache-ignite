@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.trace.atomic.AtomicTrace;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -103,8 +104,11 @@ public class GridNioCodecFilter extends GridNioFilterAdapter {
             while (input.hasRemaining()) {
                 Object res = parser.decode(ses, input);
 
-                if (res != null)
+                if (res != null) {
+                    AtomicTrace.onIoReadUnmarshalled(res);
+
                     proceedMessageReceived(ses, res);
+                }
                 else {
                     if (input.hasRemaining()) {
                         if (directMode)

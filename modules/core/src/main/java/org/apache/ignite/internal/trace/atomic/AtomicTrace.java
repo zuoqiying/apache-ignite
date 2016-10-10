@@ -25,10 +25,12 @@ import org.apache.ignite.internal.trace.TraceProcessor;
 import org.apache.ignite.internal.trace.TraceThreadData;
 import org.apache.ignite.internal.util.nio.GridNioFuture;
 import org.apache.ignite.internal.util.nio.GridNioServer;
+import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -45,7 +47,7 @@ public class AtomicTrace {
     public static final String GRP_CLIENT_REQ_SND_IO = "CLI_REQ_SND_IO";
 
     /** */
-    public static final String GRP_SRV_REQ_RCV_IO = "SRV_REQ_RCV_IO";
+    public static final String GRP_RCV_IO = "RCV_IO";
 
     /** */
     public static final String GRP_SRV_REQ_RCV = "SRV_REQ_RCV";
@@ -188,16 +190,130 @@ public class AtomicTrace {
         }
     }
 
+    /**
+     * Invoked when IO read started.
+     *
+     * @param len Data length.
+     */
+    public static void onIoReadStarted(int len) {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_RCV_IO);
+
+            trace.begin();
+
+            trace.intValue(0, len);
+            trace.longValue(0, System.nanoTime());
+        }
+    }
+
+    /**
+     * Invoked when IO message is unmarshalled.
+     *
+     * @param msg Message.
+     */
+    public static void onIoReadUnmarshalled(Object msg) {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_RCV_IO);
+
+            GridNearAtomicUpdateRequest req = requestFromMessage(msg);
+
+            if (req != null) {
+                IdentityHashMap<GridNearAtomicUpdateRequest, AtomicTraceReceiveIo> reqMap = trace.objectValue(0);
+
+                if (reqMap == null) {
+                    reqMap = new IdentityHashMap<>();
+
+                    trace.objectValue(0, reqMap);
+                }
+
+                AtomicTraceReceiveIo io = new AtomicTraceReceiveIo(
+                    trace.intValue(0),
+                    null,
+                    req.messageId(),
+                    trace.longValue(0),
+                    System.nanoTime(),
+                    0
+                );
+
+                reqMap.put(req, io);
+            }
+        }
+    }
+
+    /**
+     * Invoked when IO message is offered to the thread pool.
+     *
+     * @param msg Message.
+     */
+    public static void onIoReadOffered(UUID nodeId, GridIoMessage msg) {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_RCV_IO);
+
+            GridNearAtomicUpdateRequest req = requestFromMessage(msg);
+
+            if (req != null) {
+                IdentityHashMap<GridNearAtomicUpdateRequest, AtomicTraceReceiveIo> reqMap = trace.objectValue(0);
+
+                AtomicTraceReceiveIo io = reqMap.get(req);
+
+                io.nodeId = nodeId;
+                io.offered = System.nanoTime();
+            }
+        }
+    }
+
+    /**
+     * Invoked when IO read finished.
+     */
+    public static void onIoReadFinished() {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_RCV_IO);
+
+            IdentityHashMap<GridNearAtomicUpdateRequest, AtomicTraceReceiveIo> reqMap = trace.objectValue(0);
+
+            if (reqMap != null) {
+                Map<AtomicTraceReceiveMessageKey, AtomicTraceReceiveIo> res = new HashMap<>(reqMap.size());
+
+                Iterator<Map.Entry<GridNearAtomicUpdateRequest, AtomicTraceReceiveIo>> iter =
+                    reqMap.entrySet().iterator();
+
+                while (iter.hasNext()) {
+                    Map.Entry<GridNearAtomicUpdateRequest, AtomicTraceReceiveIo> entry = iter.next();
+
+                    AtomicTraceReceiveIo io = entry.getValue();
+
+                    if (io.offered != 0L) {
+                        res.put(new AtomicTraceReceiveMessageKey(io.nodeId, io.msgId), io);
+
+                        iter.remove();
+                    }
+                }
+
+                trace.pushData(res);
+            }
+
+            if (F.isEmpty(reqMap))
+                trace.end();
+        }
+    }
+
+    @Nullable private static GridNearAtomicUpdateRequest requestFromMessage(Object msg) {
+        if (msg instanceof GridIoMessage) {
+            Message msg0 = ((GridIoMessage)msg).message();
+
+            if (msg0 instanceof GridNearAtomicUpdateRequest)
+                return (GridNearAtomicUpdateRequest)msg0;
+        }
+
+        return null;
+    }
+
     @Nullable private static GridNearAtomicUpdateRequest requestFromFuture(GridNioFuture fut) {
         if (fut instanceof GridNioServer.NioOperationFuture) {
             GridNioServer.NioOperationFuture fut0 = (GridNioServer.NioOperationFuture)fut;
 
-            if (fut0.directMessage() instanceof GridIoMessage) {
-                Message msg = ((GridIoMessage)fut0.directMessage()).message();
-
-                if (msg instanceof GridNearAtomicUpdateRequest)
-                    return (GridNearAtomicUpdateRequest)msg;
-            }
+            if (fut0.directMessage() instanceof GridIoMessage)
+                return requestFromMessage((GridIoMessage)fut0.directMessage());
         }
 
         return null;

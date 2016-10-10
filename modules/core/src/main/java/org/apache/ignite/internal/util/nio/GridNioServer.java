@@ -906,6 +906,8 @@ public class GridNioServer<T> {
             if (cnt == 0)
                 return;
 
+            AtomicTrace.onIoReadStarted(cnt);
+
             if (metricsLsnr != null)
                 metricsLsnr.onBytesReceived(cnt);
 
@@ -925,6 +927,9 @@ public class GridNioServer<T> {
             }
             catch (IgniteCheckedException e) {
                 close(ses, e);
+            }
+            finally {
+                AtomicTrace.onIoReadFinished();
             }
         }
 
