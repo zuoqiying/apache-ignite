@@ -25,72 +25,52 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.UUID;
-
 /**
- * Trace for user processing.
+ * Atomic trace data user part.
  */
-public class AtomicTraceDataUser implements Binarylizable {
-    /** Future ID. */
-    public UUID futId;
+public class AtomicTraceDataUserPart implements Binarylizable {
+    /** Key. */
+    public AtomicTraceDataMessageKey key;
 
-    /** Start time. */
-    public long started;
-
-    /** Map from request to offer time. */
-    public Collection<AtomicTraceDataUserPart> reqs = new ArrayList<>(1);
+    /** Offer time. */
+    public long offered;
 
     /**
      * Default constructor.
      */
-    public AtomicTraceDataUser() {
+    public AtomicTraceDataUserPart() {
         // No-op.
     }
 
     /**
      * Constructor.
      *
-     * @param futId Future ID.
+     * @param key Key.
+     * @param offered Offer time.
      */
-    public AtomicTraceDataUser(UUID futId) {
-        this.futId = futId;
-
-        started = System.nanoTime();
-    }
-
-    /**
-     * Add request trace.
-     *
-     * @param fromNodeId From node ID.
-     * @param toNodeId To node ID.
-     */
-    public void addRequest(UUID fromNodeId, UUID toNodeId, long msgId) {
-        reqs.add(new AtomicTraceDataUserPart(new AtomicTraceDataMessageKey(fromNodeId, toNodeId, msgId),
-            System.nanoTime()));
+    public AtomicTraceDataUserPart(AtomicTraceDataMessageKey key, long offered) {
+        this.key = key;
+        this.offered = offered;
     }
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
         BinaryRawWriter rawWriter = writer.rawWriter();
 
-        rawWriter.writeUuid(futId);
-        rawWriter.writeLong(started);
-        rawWriter.writeCollection(reqs);
+        rawWriter.writeObject(key);
+        rawWriter.writeLong(offered);
     }
 
     /** {@inheritDoc} */
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
         BinaryRawReader rawReader = reader.rawReader();
 
-        futId = rawReader.readUuid();
-        started = rawReader.readLong();
-        reqs = rawReader.readCollection();
+        key = rawReader.readObject();
+        offered = rawReader.readLong();
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(AtomicTraceDataUser.class, this);
+        return S.toString(AtomicTraceDataUserPart.class, this);
     }
 }

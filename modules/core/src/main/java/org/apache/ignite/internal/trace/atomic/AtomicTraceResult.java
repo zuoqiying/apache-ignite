@@ -20,15 +20,19 @@ package org.apache.ignite.internal.trace.atomic;
 import org.apache.ignite.internal.trace.TraceData;
 import org.apache.ignite.internal.trace.TraceThreadResult;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataClient;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataMessageKey;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataReceiveIo;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataServer;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataUser;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataSendIo;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataUserPart;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Final trace result.
@@ -48,48 +52,127 @@ public class AtomicTraceResult {
      */
     @SuppressWarnings("unchecked")
     public static List<AtomicTraceResult> parse(TraceData data) {
-        List<AtomicTraceResult> res = new ArrayList<>();
+        // Prepare IO send map.
+        List<TraceThreadResult> threadRess = data.groupData(AtomicTrace.GRP_IO_SND);
 
-        List<TraceThreadResult> threadSndIos = data.groupData(AtomicTrace.GRP_IO_SND);
+        Map<UUID, Map<Long, AtomicTraceDataSendIo>> sndIoMap = new HashMap<>();
 
-        for (TraceThreadResult threadSnd : data.groupData(AtomicTrace.GRP_USR)) {
-            List<AtomicTraceDataUser> snds = threadSnd.data();
+        for (TraceThreadResult threadRes : threadRess) {
+            Map<Long, AtomicTraceDataSendIo> nodeMap = sndIoMap.get(threadRes.nodeId());
 
-            for (AtomicTraceDataUser snd : snds) {
-                AtomicTraceDataSendIo sndIo = findSendIo(threadSndIos, threadSnd, snd);
+            if (nodeMap == null) {
+                nodeMap = new HashMap<>();
 
-                if (sndIo != null)
-                    res.add(new AtomicTraceResult(snd, sndIo, threadSnd.threadId()));
+                sndIoMap.put(threadRes.nodeId(), nodeMap);
+            }
+
+            List<Map<Long, AtomicTraceDataSendIo>> sndIoDatas = threadRes.data();
+
+            for (Map<Long, AtomicTraceDataSendIo> sndIoData : sndIoDatas)
+                nodeMap.putAll(sndIoData);
+        }
+
+        // Prepare receive IO map.
+        threadRess = data.groupData(AtomicTrace.GRP_IO_RCV);
+
+        Map<AtomicTraceDataMessageKey, AtomicTraceDataReceiveIo> rcvIoMap = new HashMap<>();
+
+        for (TraceThreadResult threadRes : threadRess) {
+            List<Map<AtomicTraceDataMessageKey, AtomicTraceDataReceiveIo>> rcvIoDatas = threadRes.data();
+
+            for (Map<AtomicTraceDataMessageKey, AtomicTraceDataReceiveIo> rcvIoData : rcvIoDatas)
+            rcvIoMap.putAll(rcvIoData);
+        }
+
+        // Prepare server data.
+        threadRess = data.groupData(AtomicTrace.GRP_SRV);
+
+        Map<AtomicTraceDataMessageKey, AtomicTraceDataServer> srvMap = new HashMap<>();
+
+        for (TraceThreadResult threadRes : threadRess) {
+            List<AtomicTraceDataServer> srvDatas = threadRes.data();
+
+            for (AtomicTraceDataServer srvData : srvDatas) {
+                AtomicTraceDataMessageKey key =
+                    new AtomicTraceDataMessageKey(srvData.fromNode, srvData.toNode, srvData.reqId);
+
+                srvMap.put(key, srvData);
             }
         }
 
-        return res;
-    }
+        // Prepare client data.
+        threadRess = data.groupData(AtomicTrace.GRP_CLI);
 
-    /**
-     * Find send IO.
-     *
-     * @param threadSndIos All thread send IOs.
-     * @param threadSnd Thread send.
-     * @param snd Send.
-     * @return Send IO.
-     */
-    private static AtomicTraceDataSendIo findSendIo(List<TraceThreadResult> threadSndIos, TraceThreadResult threadSnd,
-        AtomicTraceDataUser snd) {
-        for (TraceThreadResult threadSndIo : threadSndIos) {
-            if (threadSnd.sameNode(threadSndIo)) {
-                List<Map<Long, AtomicTraceDataSendIo>> datas = threadSndIo.data();
+        Map<UUID, Map<Long, AtomicTraceDataClient>> cliMap = new HashMap<>();
 
-                for (Map<Long, AtomicTraceDataSendIo> data : datas) {
-                    AtomicTraceDataSendIo res = data.get(snd.reqId);
+        for (TraceThreadResult threadRes : threadRess) {
+            List<AtomicTraceDataClient> cliDatas = threadRes.data();
 
-                    if (res != null && res.started >= snd.offered)
-                        return res;
+            for (AtomicTraceDataClient cliData : cliDatas) {
+                Long reqId = cliData.reqId;
+
+                Map<Long, AtomicTraceDataClient> cliNodeMap = cliMap.get(threadRes.nodeId());
+
+                if (cliNodeMap == null) {
+                    cliNodeMap = new HashMap<>();
+
+                    cliMap.put(threadRes.nodeId(), cliNodeMap);
                 }
+
+                cliNodeMap.put(reqId, cliData);
             }
         }
 
-        return null;
+        // Perform assembly.
+        List<AtomicTraceResult> ress = new ArrayList<>();
+
+        threadRess = data.groupData(AtomicTrace.GRP_USR);
+
+        for (TraceThreadResult threadRes : threadRess) {
+            List<AtomicTraceDataUser> usrs = threadRes.data();
+
+            for (AtomicTraceDataUser usr : usrs) {
+                AtomicTraceResult res = new AtomicTraceResult(usr);
+
+                for (AtomicTraceDataUserPart usrPart : usr.reqs) {
+                    long reqId = usrPart.key.msgId;
+
+                    if (sndIoMap.containsKey(threadRes.nodeId())) {
+                        AtomicTraceDataSendIo cliSnd = sndIoMap.get(threadRes.nodeId()).get(reqId);
+
+                        if (cliSnd != null) {
+                            AtomicTraceDataReceiveIo srvRcv = rcvIoMap.get(usrPart.key);
+                            AtomicTraceDataServer srv = srvMap.get(usrPart.key);
+
+                            if (srvRcv != null && srv != null) {
+                                if (sndIoMap.containsKey(srv.toNode)) {
+                                    AtomicTraceDataSendIo srvSnd = sndIoMap.get(srv.toNode).get(srv.respId);
+
+                                    if (srvSnd != null) {
+                                        AtomicTraceDataMessageKey reverseKey =
+                                            new AtomicTraceDataMessageKey(srv.toNode, srv.fromNode, srv.respId);
+
+                                        AtomicTraceDataReceiveIo cliRcv = rcvIoMap.get(reverseKey);
+
+                                        if (cliRcv != null && cliMap.containsKey(threadRes.nodeId())) {
+                                            AtomicTraceDataClient cli = cliMap.get(threadRes.nodeId()).get(reqId);
+
+                                            if (cli != null)
+                                                res.addPart(usrPart, cliSnd, srvRcv, srv, srvSnd, cliRcv, cli);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (res.parts.size() != 0)
+                    ress.add(res);
+            }
+        }
+
+        return ress;
     }
 
     /**
@@ -104,6 +187,7 @@ public class AtomicTraceResult {
     /**
      * Add part.
      *
+     * @param usrPart User part.
      * @param cliSnd Client send.
      * @param srvRcv Server receive.
      * @param srv Server.
@@ -111,9 +195,10 @@ public class AtomicTraceResult {
      * @param cliRcv Client receive.
      * @param cli Client finish.
      */
-    private void addPart(AtomicTraceDataSendIo cliSnd, AtomicTraceDataReceiveIo srvRcv, AtomicTraceDataServer srv,
-        AtomicTraceDataSendIo srvSnd, AtomicTraceDataReceiveIo cliRcv, AtomicTraceDataClient cli) {
-        parts.add(new Part(cliSnd, srvRcv, srv, srvSnd, cliRcv, cli));
+    private void addPart(AtomicTraceDataUserPart usrPart, AtomicTraceDataSendIo cliSnd, AtomicTraceDataReceiveIo srvRcv,
+        AtomicTraceDataServer srv, AtomicTraceDataSendIo srvSnd, AtomicTraceDataReceiveIo cliRcv,
+        AtomicTraceDataClient cli) {
+        parts.add(new Part(usrPart, cliSnd, srvRcv, srv, srvSnd, cliRcv, cli));
     }
 
     /** {@inheritDoc} */
@@ -137,6 +222,9 @@ public class AtomicTraceResult {
      * Trace part.
      */
     public static class Part {
+        /** User part. */
+        public AtomicTraceDataUserPart usrPart;
+
         /** Client send. */
         public AtomicTraceDataSendIo cliSnd;
 
@@ -158,6 +246,7 @@ public class AtomicTraceResult {
         /**
          * Constructor.
          *
+         * @param usrPart User part.
          * @param cliSnd Client send.
          * @param srvRcv Server receive.
          * @param srv Server.
@@ -165,8 +254,10 @@ public class AtomicTraceResult {
          * @param cliRcv Client receive.
          * @param cli Client finish.
          */
-        public Part(AtomicTraceDataSendIo cliSnd, AtomicTraceDataReceiveIo srvRcv, AtomicTraceDataServer srv,
-            AtomicTraceDataSendIo srvSnd, AtomicTraceDataReceiveIo cliRcv, AtomicTraceDataClient cli) {
+        public Part(AtomicTraceDataUserPart usrPart, AtomicTraceDataSendIo cliSnd, AtomicTraceDataReceiveIo srvRcv,
+            AtomicTraceDataServer srv, AtomicTraceDataSendIo srvSnd, AtomicTraceDataReceiveIo cliRcv,
+            AtomicTraceDataClient cli) {
+            this.usrPart = usrPart;
             this.cliSnd = cliSnd;
             this.srvRcv = srvRcv;
             this.srv = srv;

@@ -114,7 +114,7 @@ public class AtomicTrace {
                 UUID toNode = trace.objectValue(2);
 
                 if (data != null && fromNode != null && toNode != null)
-                    data.addRequestTrace(fromNode, toNode, req.messageId());
+                    data.addRequest(fromNode, toNode, req.messageId());
             }
         }
     }
