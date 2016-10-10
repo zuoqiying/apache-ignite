@@ -1226,9 +1226,9 @@ public class GridNioServer<T> {
             if (!skipWrite) {
                 int pos = buf.limit();
 
-                int cnt = sockCh.write(buf);
-
                 AtomicTrace.onIoWriteFinished(pos);
+
+                int cnt = sockCh.write(buf);
 
                 if (log.isTraceEnabled())
                     log.trace("Bytes sent [sockCh=" + sockCh + ", cnt=" + cnt + ']');

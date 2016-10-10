@@ -63,6 +63,14 @@ public class AtomicTraceClientRunner {
             // Start topology.
             Ignite node = Ignition.start(AtomicTraceUtils.config("cli", true));
 
+            // Prepare cache.
+            IgniteCache<Integer, Integer> cache = node.cache(CACHE_NAME);
+
+            for (int i = 0; i < CACHE_SIZE; i++)
+                cache.put(i, i);
+
+            System.out.println(">>> Cache prepared.");
+
             // Prepare cache loaders.
             List<Thread> threads = new LinkedList<>();
 
