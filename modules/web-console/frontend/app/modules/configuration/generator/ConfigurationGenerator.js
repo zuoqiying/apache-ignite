@@ -34,7 +34,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         }
 
         static domainConfigurationBean(domain) {
-            return new Bean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type', domain, cacheDflts);
+            return new Bean('org.apache.ignite.cache.QueryEntity', 'qryEntity', domain, cacheDflts);
         }
 
         static discoveryConfigurationBean(discovery) {
@@ -909,10 +909,6 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             return cfg;
         }
 
-        // static cacheDomains(domains, ccfg) {
-        //     return ccfg;
-        // }
-
         /**
          * Generate eviction policy object.
          * @param {Object} ccfg Parent configuration.
@@ -1213,6 +1209,23 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             return ccfg;
         }
 
+        // Generate domain models configs.
+        static cacheDomains(domains, ccfg) {
+            const qryEntities = _.reduce(domains, (acc, domain) => {
+                if (_.isNil(domain.queryMetadata) || domain.queryMetadata === 'Configuration') {
+                    const qryEntity = this.domainModelGeneral(domain);
+
+                    this.domainModelQuery(domain, qryEntity);
+
+                    acc.push(qryEntity);
+                }
+
+                return acc;
+            }, []);
+
+            ccfg.collectionProperty('qryEntities', 'queryEntities', qryEntities, 'org.apache.ignite.cache.QueryEntity');
+        }
+
         static cacheConfiguration(cache, ccfg = this.cacheConfigurationBean(cache)) {
             this.cacheGeneral(cache, ccfg);
             this.cacheMemory(cache, ccfg);
@@ -1225,7 +1238,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             this.cacheRebalance(cache, ccfg);
             this.cacheNearServer(cache, ccfg);
             this.cacheStatistics(cache, ccfg);
-            // this.cacheDomains(cache.domains, ccfg);
+            this.cacheDomains(cache.domains, ccfg);
 
             return ccfg;
         }
