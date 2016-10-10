@@ -203,7 +203,7 @@ public class AtomicTraceResult {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        StringBuilder res = new StringBuilder("usrStart=" + usr.started);
+        StringBuilder res = new StringBuilder("usrStart=" + usr.started + "\n");
 
         boolean first = true;
 
@@ -213,14 +213,14 @@ public class AtomicTraceResult {
             else
                 res.append("\n");
 
-            String ps = String.format("\t" +
-                "usrOffer=%8d, " +
-                "cliSndPoll=%8d, cliSndMarsh=%8d, cliSndSend=%8d, " +
-                "srvRcvRead=%8d, srvRcvUnmarsh=%8d, srvRcvOffer=%8d, " +
-                "srvStart=%8d, srvOffer=%8d, " +
-                "srvSndPoll=%8d, srvSndMarsh=%8d, srvSndSend=%8d, " +
-                "cliRcvRead=%8d, cliRcvUnmarsh=%8d, cliRcvOffer=%8d, " +
-                "cliStart=%8d, cliComplete=%8d, cliFinish=%8d",
+            String ps = String.format(
+                "\tuser=  [%8d]\n " +
+                "\tcliSnd=[%8d %8d %8d]\n" +
+                "\tsrvRcv=[%8d %8d %8d]\n" +
+                "\tserver=[%8d %8d]\n" +
+                "\tsrvSnd=[%8d %8d %8d]\n" +
+                "\tcliRcv=[%8d %8d %8d]\n " +
+                "\tclient=[%8d %8d %8d]",
 
                 p.usrPart.offered - usr.started,
 
