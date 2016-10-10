@@ -203,19 +203,55 @@ public class AtomicTraceResult {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-//        return String.format(AtomicTraceResult.class.getSimpleName() +
-//            "[start=%d, map=%8d, offer=%8d, poll=%8d, marsh=%8d, send=%8d, bufLen=%5d, msgCnt=%3d, nio=" +
-//                threadId + "]",
-//            clientStart(),
-//            clientMapDuration(),
-//            clientOfferDuration(),
-//            clientIoPollDuration(),
-//            clientIoMarshalDuration(),
-//            clientIoSendDuration(),
-//            cliSendIo.bufLen,
-//            cliSendIo.msgCnt
-//        );
-        return "";
+        StringBuilder res = new StringBuilder("usrStart=" + usr.started);
+
+        boolean first = true;
+
+        for (AtomicTraceResult.Part p : parts) {
+            if (first)
+                first = false;
+            else
+                res.append("\n");
+
+            String ps = String.format("\t" +
+                "usrOffer=%8d, " +
+                "cliSndPoll=%8d, cliSndMarsh=%8d, cliSndSend=%8d, " +
+                "srvRcvRead=%8d, srvRcvUnmarsh=%8d, srvRcvOffer=%8d, " +
+                "srvStart=%8d, srvOffer=%8d, " +
+                "srvSndPoll=%8d, srvSndMarsh=%8d, srvSndSend=%8d, " +
+                "cliRcvRead=%8d, cliRcvUnmarsh=%8d, cliRcvOffer=%8d, " +
+                "cliStart=%8d, cliComplete=%8d, cliFinish=%8d",
+
+                p.usrPart.offered - usr.started,
+
+                p.cliSnd.polled - p.usrPart.offered,
+                p.cliSnd.marshalled - p.cliSnd.polled,
+                p.cliSnd.sent - p.cliSnd.marshalled,
+
+                p.srvRcv.read - p.cliSnd.sent,
+                p.srvRcv.unmarshalled - p.srvRcv.read,
+                p.srvRcv.offered - p.srvRcv.unmarshalled,
+
+                p.srv.started - p.srvRcv.offered,
+                p.srv.offered - p.srv.started,
+
+                p.srvSnd.polled - p.srv.offered,
+                p.srvSnd.marshalled - p.srvSnd.polled,
+                p.srvSnd.sent - p.srvSnd.marshalled,
+
+                p.cliRcv.read - p.srvSnd.sent,
+                p.cliRcv.unmarshalled - p.cliRcv.read,
+                p.cliRcv.offered - p.cliRcv.unmarshalled,
+
+                p.cli.started - p.cliRcv.offered,
+                p.cli.completed - p.cli.started,
+                p.cli.finished - p.cli.completed
+            );
+
+            res.append(ps);
+        }
+
+        return res.toString();
     }
 
     /**

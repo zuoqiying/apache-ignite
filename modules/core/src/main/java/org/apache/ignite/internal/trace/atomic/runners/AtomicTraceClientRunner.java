@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.trace.atomic;
+package org.apache.ignite.internal.trace.atomic.runners;
 
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
-import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.trace.TraceCluster;
 import org.apache.ignite.internal.trace.TraceData;
+import org.apache.ignite.internal.trace.atomic.AtomicTrace;
+import org.apache.ignite.internal.trace.atomic.AtomicTraceUtils;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -31,15 +31,14 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.apache.ignite.internal.trace.atomic.AtomicTraceUtils.CACHE_NAME;
+
 /**
- * Atomic trace runner.
+ * Atomic trace client runner.
  */
-public class AtomicTraceRunner {
+public class AtomicTraceClientRunner {
     /** Overall test duration. */
     private static final long DUR = 120000L;
-
-    /** Cache name. */
-    private static final String CACHE_NAME = "cache";
 
     /** Trace duration. */
     private static final long TRACE_DUR = 2000L;
@@ -48,7 +47,7 @@ public class AtomicTraceRunner {
     private static final long SLEEP_DUR = 5000L;
 
     /** Cache load threads count. */
-    private static final int CACHE_LOAD_THREAD_CNT = 1;
+    private static final int CACHE_LOAD_THREAD_CNT = 16;
 
     /** Cache size. */
     private static final int CACHE_SIZE = 1000;
@@ -62,9 +61,7 @@ public class AtomicTraceRunner {
 
         try {
             // Start topology.
-            Ignition.start(config("srv", false));
-
-            Ignite node = Ignition.start(config("cli", true));
+            Ignite node = Ignition.start(AtomicTraceUtils.config("cli", true));
 
             // Prepare cache loaders.
             List<Thread> threads = new LinkedList<>();
@@ -105,29 +102,6 @@ public class AtomicTraceRunner {
         finally {
             Ignition.stopAll(true);
         }
-    }
-
-    /**
-     * Create configuration.
-     *
-     * @param name Name.
-     * @param client Client flag.
-     * @return Configuration.
-     */
-    private static IgniteConfiguration config(String name, boolean client) {
-        IgniteConfiguration cfg = new IgniteConfiguration();
-
-        cfg.setGridName(name);
-        cfg.setClientMode(client);
-        cfg.setLocalHost("127.0.0.1");
-
-        CacheConfiguration ccfg = new CacheConfiguration();
-
-        ccfg.setName(CACHE_NAME);
-
-        cfg.setCacheConfiguration(ccfg);
-
-        return cfg;
     }
 
     /**
@@ -229,7 +203,7 @@ public class AtomicTraceRunner {
 
                     System.out.println(">>> Enabled trace");
 
-                    Thread.sleep(TRACE_DUR);
+                    node.cache(CACHE_NAME).put(1, 1);
 
                     trace.disable();
 

@@ -15,37 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.trace.atomic;
+package org.apache.ignite.internal.trace.atomic.runners;
 
-import org.apache.ignite.internal.trace.TraceData;
-
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
+import org.apache.ignite.Ignition;
+import org.apache.ignite.internal.trace.atomic.AtomicTraceUtils;
 
 /**
- * Trace parser.
+ * Atomic trace server runner.
  */
-public class AtomicTraceParseRunner {
-    /** Sample print count. */
-    private static final int SAMPLE_PRINT_CNT = 20;
-
+public class AtomicTraceServerRunner {
     /**
      * Entry point.
      */
-    @SuppressWarnings("ConstantConditions")
     public static void main(String[] args) {
-        for (File traceFile : AtomicTraceUtils.traceDir().listFiles()) {
-            TraceData data = TraceData.load(traceFile);
-
-            List<AtomicTraceResult> ress = AtomicTraceResult.parse(data);
-
-            Collections.shuffle(ress);
-
-            for (int i = 0; i < SAMPLE_PRINT_CNT && i < ress.size(); i++)
-                System.out.println(ress.get(i));
-
-            System.out.println();
-        }
+        Ignition.start(AtomicTraceUtils.config("srv", false));
     }
 }
