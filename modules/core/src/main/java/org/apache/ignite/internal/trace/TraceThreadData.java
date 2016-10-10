@@ -35,9 +35,6 @@ public class TraceThreadData {
     /** Start flag. */
     private boolean started;
 
-    /** Trace state. */
-    private int state;
-
     /** Int value 0. */
     private int int0;
 
@@ -124,8 +121,6 @@ public class TraceThreadData {
         longs = null;
         objs = null;
 
-        state = 0;
-
         started = false;
     }
 
@@ -134,31 +129,6 @@ public class TraceThreadData {
      */
     public boolean started() {
         return started;
-    }
-
-    /**
-     * Set state.
-     *
-     * @param state State.
-     */
-    public void state(int state) {
-        this.state = state;
-    }
-
-    /**
-     * Increment state by 1.
-     */
-    public void incrementState() {
-        state++;
-    }
-
-    /**
-     * Get state.
-     *
-     * @return State.
-     */
-    public int state() {
-        return state;
     }
 
     /**

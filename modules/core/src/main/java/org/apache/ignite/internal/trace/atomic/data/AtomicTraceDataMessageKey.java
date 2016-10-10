@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.trace.atomic;
+package org.apache.ignite.internal.trace.atomic.data;
 
 import org.apache.ignite.binary.BinaryObjectException;
 import org.apache.ignite.binary.BinaryRawReader;
@@ -23,81 +23,78 @@ import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
+import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 /**
- * Part of client processing.
+ * Trace message key.
  */
-public class AtomicTraceClientSend implements Serializable, Binarylizable {
-    /** */
-    private static final long serialVersionUID = 0L;
+public class AtomicTraceDataMessageKey implements Binarylizable {
+    /** Source node ID. */
+    public UUID fromNodeId;
 
-    /** Future ID. */
-    public UUID futId;
+    /** Destination node DI. */
+    public UUID toNodeId;
 
-    /** Request ID. */
-    public long reqId;
-
-    /** Start time. */
-    public long started;
-
-    /** Duration between future creation and passing request to IO. */
-    public long mapped;
-
-    /** Send duration. */
-    public long offered;
+    /** Message ID. */
+    public long msgId;
 
     /**
      * Default constructor.
      */
-    public AtomicTraceClientSend() {
+    public AtomicTraceDataMessageKey() {
         // No-op.
     }
 
     /**
      * Constructor.
      *
-     * @param futId Future ID.
-     * @param reqId Request ID.
-     * @param started Start time.
-     * @param mapped Mapped time.
-     * @param offered Sent time.
+     * @param fromNodeId Source node ID.
+     * @param toNodeId Destination node ID.
+     * @param msgId Message ID.
      */
-    public AtomicTraceClientSend(UUID futId, long reqId, long started, long mapped, long offered) {
-        this.futId = futId;
-        this.reqId = reqId;
-        this.started = started;
-        this.mapped = mapped;
-        this.offered = offered;
+    public AtomicTraceDataMessageKey(UUID fromNodeId, UUID toNodeId, long msgId) {
+        this.fromNodeId = fromNodeId;
+        this.toNodeId = toNodeId;
+        this.msgId = msgId;
+    }
+
+    /** {@inheritDoc} */
+    @Override public int hashCode() {
+        return 31 * (31 * fromNodeId.hashCode() + toNodeId.hashCode()) + (int)msgId;
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean equals(Object obj) {
+        return obj != null &&
+            obj instanceof AtomicTraceDataMessageKey &&
+            F.eq(((AtomicTraceDataMessageKey)obj).fromNodeId, fromNodeId) &&
+            F.eq(((AtomicTraceDataMessageKey)obj).toNodeId, toNodeId) &&
+            F.eq(((AtomicTraceDataMessageKey)obj).msgId, msgId);
     }
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
         BinaryRawWriter rawWriter = writer.rawWriter();
 
-        rawWriter.writeUuid(futId);
-        rawWriter.writeLong(reqId);
-        rawWriter.writeLong(started);
-        rawWriter.writeLong(mapped);
-        rawWriter.writeLong(offered);
+        rawWriter.writeUuid(fromNodeId);
+        rawWriter.writeUuid(toNodeId);
+        rawWriter.writeLong(msgId);
     }
 
     /** {@inheritDoc} */
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
         BinaryRawReader rawReader = reader.rawReader();
 
-        futId = rawReader.readUuid();
-        reqId = rawReader.readLong();
-        started = rawReader.readLong();
-        mapped = rawReader.readLong();
-        offered = rawReader.readLong();
+        fromNodeId = rawReader.readUuid();
+        toNodeId = rawReader.readUuid();
+        msgId = rawReader.readLong();
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(AtomicTraceClientSend.class, this);
+        return S.toString(AtomicTraceDataMessageKey.class, this);
     }
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.trace.atomic;
+package org.apache.ignite.internal.trace.atomic.data;
 
 import org.apache.ignite.binary.BinaryObjectException;
 import org.apache.ignite.binary.BinaryRawReader;
@@ -25,8 +25,6 @@ import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
-import java.util.UUID;
-
 /**
  * Trace for received message.
  */
@@ -34,14 +32,8 @@ public class AtomicTraceReceiveIo implements Binarylizable {
     /** Data length. */
     public int dataLen;
 
-    /** Node ID. */
-    public UUID nodeId;
-
-    /** Message ID. */
-    public long msgId;
-
-    /** Read start time. */
-    public long started;
+    /** Read time. */
+    public long read;
 
     /** Unmarshal time. */
     public long unmarshalled;
@@ -60,20 +52,20 @@ public class AtomicTraceReceiveIo implements Binarylizable {
      * Constructor.
      *
      * @param dataLen Data length.
-     * @param nodeId Node ID.
-     * @param msgId Message ID.
-     * @param started Started.
-     * @param unmarshalled Unmarshalled.
-     * @param offered Offered.
+     * @param read Read time.
      */
-    public AtomicTraceReceiveIo(int dataLen, UUID nodeId, long msgId, long started, long unmarshalled,
-        long offered) {
+    public AtomicTraceReceiveIo(int dataLen, long read) {
         this.dataLen = dataLen;
-        this.nodeId = nodeId;
-        this.msgId = msgId;
-        this.started = started;
-        this.unmarshalled = unmarshalled;
-        this.offered = offered;
+        this.read = read;
+
+        unmarshalled = System.nanoTime();
+    }
+
+    /**
+     * Invoked when message is offered to the thread pool.
+     */
+    public void onOffer() {
+        offered = System.nanoTime();
     }
 
     /** {@inheritDoc} */
@@ -81,9 +73,7 @@ public class AtomicTraceReceiveIo implements Binarylizable {
         BinaryRawWriter rawWriter = writer.rawWriter();
 
         rawWriter.writeInt(dataLen);
-        rawWriter.writeUuid(nodeId);
-        rawWriter.writeLong(msgId);
-        rawWriter.writeLong(started);
+        rawWriter.writeLong(read);
         rawWriter.writeLong(unmarshalled);
         rawWriter.writeLong(offered);
     }
@@ -93,9 +83,7 @@ public class AtomicTraceReceiveIo implements Binarylizable {
         BinaryRawReader rawReader = reader.rawReader();
 
         dataLen = rawReader.readInt();
-        nodeId = rawReader.readUuid();
-        msgId = rawReader.readLong();
-        started = rawReader.readLong();
+        read = rawReader.readLong();
         unmarshalled = rawReader.readLong();
         offered = rawReader.readLong();
     }

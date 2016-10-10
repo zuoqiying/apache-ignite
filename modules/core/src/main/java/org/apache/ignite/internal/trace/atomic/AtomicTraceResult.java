@@ -19,6 +19,8 @@ package org.apache.ignite.internal.trace.atomic;
 
 import org.apache.ignite.internal.trace.TraceData;
 import org.apache.ignite.internal.trace.TraceThreadResult;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataClient;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataSendIo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,10 +31,10 @@ import java.util.Map;
  */
 public class AtomicTraceResult {
     /** Client send. */
-    public AtomicTraceClientSend cliSend;
+    public AtomicTraceDataClient cliSend;
 
     /** Client send IO. */
-    public AtomicTraceClientSendIo cliSendIo;
+    public AtomicTraceDataSendIo cliSendIo;
 
     /** Thread ID. */
     public long threadId;
@@ -91,11 +93,11 @@ public class AtomicTraceResult {
 
         List<TraceThreadResult> threadSndIos = data.groupData(AtomicTrace.GRP_SND_IO_REQ);
 
-        for (TraceThreadResult threadSnd : data.groupData(AtomicTrace.GRP_BEGIN)) {
-            List<AtomicTraceClientSend> snds = threadSnd.data();
+        for (TraceThreadResult threadSnd : data.groupData(AtomicTrace.GRP_CLI)) {
+            List<AtomicTraceDataClient> snds = threadSnd.data();
 
-            for (AtomicTraceClientSend snd : snds) {
-                AtomicTraceClientSendIo sndIo = findSendIo(threadSndIos, threadSnd, snd);
+            for (AtomicTraceDataClient snd : snds) {
+                AtomicTraceDataSendIo sndIo = findSendIo(threadSndIos, threadSnd, snd);
 
                 if (sndIo != null)
                     res.add(new AtomicTraceResult(snd, sndIo, threadSnd.threadId()));
@@ -113,14 +115,14 @@ public class AtomicTraceResult {
      * @param snd Send.
      * @return Send IO.
      */
-    private static AtomicTraceClientSendIo findSendIo(List<TraceThreadResult> threadSndIos, TraceThreadResult threadSnd,
-        AtomicTraceClientSend snd) {
+    private static AtomicTraceDataSendIo findSendIo(List<TraceThreadResult> threadSndIos, TraceThreadResult threadSnd,
+        AtomicTraceDataClient snd) {
         for (TraceThreadResult threadSndIo : threadSndIos) {
             if (threadSnd.sameNode(threadSndIo)) {
-                List<Map<Long, AtomicTraceClientSendIo>> datas = threadSndIo.data();
+                List<Map<Long, AtomicTraceDataSendIo>> datas = threadSndIo.data();
 
-                for (Map<Long, AtomicTraceClientSendIo> data : datas) {
-                    AtomicTraceClientSendIo res = data.get(snd.reqId);
+                for (Map<Long, AtomicTraceDataSendIo> data : datas) {
+                    AtomicTraceDataSendIo res = data.get(snd.reqId);
 
                     if (res != null && res.started >= snd.offered)
                         return res;
@@ -138,7 +140,7 @@ public class AtomicTraceResult {
      * @param cliSendIo Client send IO.
      * @param threadId Thread ID.
      */
-    public AtomicTraceResult(AtomicTraceClientSend cliSend, AtomicTraceClientSendIo cliSendIo, long threadId) {
+    public AtomicTraceResult(AtomicTraceDataClient cliSend, AtomicTraceDataSendIo cliSendIo, long threadId) {
         this.cliSend = cliSend;
         this.cliSendIo = cliSendIo;
         this.threadId = threadId;

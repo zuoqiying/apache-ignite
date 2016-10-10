@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.trace.atomic;
+package org.apache.ignite.internal.trace.atomic.data;
 
 import org.apache.ignite.binary.BinaryObjectException;
 import org.apache.ignite.binary.BinaryRawReader;
@@ -23,70 +23,80 @@ import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
-import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
-import java.util.UUID;
+import java.io.Serializable;
 
 /**
- * Trace message key.
+ * Client send message processing result.
  */
-public class AtomicTraceReceiveMessageKey implements Binarylizable {
-    /** Node. */
-    public UUID nodeId;
+public class AtomicTraceDataSendIo implements Serializable, Binarylizable {
+    /** */
+    private static final long serialVersionUID = 0L;
 
-    /** Message ID. */
-    public long msgId;
+    /** */
+    public long polled;
+
+    /** */
+    public long marshalled;
+
+    /** */
+    public long sent;
+
+    /** */
+    public int bufLen;
+
+    /** */
+    public int msgCnt;
 
     /**
      * Default constructor.
      */
-    public AtomicTraceReceiveMessageKey() {
+    public AtomicTraceDataSendIo() {
         // No-op.
     }
 
     /**
      * Constructor.
      *
-     * @param nodeId Node ID.
-     * @param msgId Message ID.
+     * @param polled Poll time.
+     * @param marshalled Marshal time.
+     * @param sent Send time
+     * @param bufLen Buffer length.
+     * @param msgCnt Message count.
      */
-    public AtomicTraceReceiveMessageKey(UUID nodeId, long msgId) {
-        this.nodeId = nodeId;
-        this.msgId = msgId;
-    }
-
-    /** {@inheritDoc} */
-    @Override public int hashCode() {
-        return 31 * nodeId.hashCode() + (int)msgId;
-    }
-
-    /** {@inheritDoc} */
-    @Override public boolean equals(Object obj) {
-        return obj != null &&
-            obj instanceof AtomicTraceReceiveMessageKey &&
-            F.eq(((AtomicTraceReceiveMessageKey)obj).nodeId, nodeId) &&
-            F.eq(((AtomicTraceReceiveMessageKey)obj).msgId, msgId);
+    public AtomicTraceDataSendIo(long polled, long marshalled, long sent, int bufLen, int msgCnt) {
+        this.polled = polled;
+        this.marshalled = marshalled;
+        this.sent = sent;
+        this.bufLen = bufLen;
+        this.msgCnt = msgCnt;
     }
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
         BinaryRawWriter rawWriter = writer.rawWriter();
 
-        rawWriter.writeUuid(nodeId);
-        rawWriter.writeLong(msgId);
+        rawWriter.writeLong(polled);
+        rawWriter.writeLong(marshalled);
+        rawWriter.writeLong(sent);
+        rawWriter.writeInt(bufLen);
+        rawWriter.writeInt(msgCnt);
     }
 
     /** {@inheritDoc} */
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
         BinaryRawReader rawReader = reader.rawReader();
 
-        nodeId = rawReader.readUuid();
-        msgId = rawReader.readLong();
+        polled = rawReader.readLong();
+        marshalled = rawReader.readLong();
+        sent = rawReader.readLong();
+        bufLen = rawReader.readInt();
+        msgCnt = rawReader.readInt();
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(AtomicTraceReceiveMessageKey.class, this);
+        return S.toString(AtomicTraceDataSendIo.class, this);
     }
 }

@@ -1146,15 +1146,20 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         final GridNearAtomicAbstractUpdateFuture updateFut =
             createSingleUpdateFuture(key, val, proc, invokeArgs, retval, filter, waitTopFut);
 
-        AtomicTrace.onBeginStarted(updateFut);
+        AtomicTrace.onClientStarted(updateFut);
 
-        return asyncOp(new CO<IgniteInternalFuture<Object>>() {
-            @Override public IgniteInternalFuture<Object> apply() {
-                updateFut.map();
+        try {
+            return asyncOp(new CO<IgniteInternalFuture<Object>>() {
+                @Override public IgniteInternalFuture<Object> apply() {
+                    updateFut.map();
 
-                return updateFut;
-            }
-        });
+                    return updateFut;
+                }
+            });
+        }
+        finally {
+            AtomicTrace.onClientFinished();
+        }
     }
 
     /**

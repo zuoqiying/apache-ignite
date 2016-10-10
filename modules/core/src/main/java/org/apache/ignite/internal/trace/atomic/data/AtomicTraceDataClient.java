@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.trace.atomic;
+package org.apache.ignite.internal.trace.atomic.data;
 
 import org.apache.ignite.binary.BinaryObjectException;
 import org.apache.ignite.binary.BinaryRawReader;
@@ -26,77 +26,74 @@ import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * Client send message processing result.
+ * Begin part of client processing.
  */
-public class AtomicTraceClientSendIo implements Serializable, Binarylizable {
+public class AtomicTraceDataClient implements Serializable, Binarylizable {
     /** */
     private static final long serialVersionUID = 0L;
 
-    /** */
+    /** Future ID. */
+    public UUID futId;
+
+    /** Start time. */
     public long started;
 
-    /** */
-    public long marshalled;
-
-    /** */
-    public long sent;
-
-    /** */
-    public int bufLen;
-
-    /** */
-    public int msgCnt;
+    /** Map from request to offer time. */
+    Map<AtomicTraceDataMessageKey, Long> reqs = new HashMap<>(2, 1.0f);
 
     /**
      * Default constructor.
      */
-    public AtomicTraceClientSendIo() {
+    public AtomicTraceDataClient() {
         // No-op.
     }
 
     /**
      * Constructor.
      *
-     * @param started Start time.
-     * @param marshalled Marshal time.
-     * @param sent Send time
-     * @param bufLen Buffer length.
-     * @param msgCnt Message count.
+     * @param futId Future ID.
      */
-    public AtomicTraceClientSendIo(long started, long marshalled, long sent, int bufLen, int msgCnt) {
-        this.started = started;
-        this.marshalled = marshalled;
-        this.sent = sent;
-        this.bufLen = bufLen;
-        this.msgCnt = msgCnt;
+    public AtomicTraceDataClient(UUID futId) {
+        this.futId = futId;
+
+        started = System.nanoTime();
+    }
+
+    /**
+     * Add request trace.
+     *
+     * @param fromNodeId From node ID.
+     * @param toNodeId To node ID.
+     */
+    public void addRequestTrace(UUID fromNodeId, UUID toNodeId, long msgId) {
+        reqs.put(new AtomicTraceDataMessageKey(fromNodeId, toNodeId, msgId), System.nanoTime());
     }
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
         BinaryRawWriter rawWriter = writer.rawWriter();
 
+        rawWriter.writeUuid(futId);
         rawWriter.writeLong(started);
-        rawWriter.writeLong(marshalled);
-        rawWriter.writeLong(sent);
-        rawWriter.writeInt(bufLen);
-        rawWriter.writeInt(msgCnt);
+        rawWriter.writeMap(reqs);
     }
 
     /** {@inheritDoc} */
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
         BinaryRawReader rawReader = reader.rawReader();
 
+        futId = rawReader.readUuid();
         started = rawReader.readLong();
-        marshalled = rawReader.readLong();
-        sent = rawReader.readLong();
-        bufLen = rawReader.readInt();
-        msgCnt = rawReader.readInt();
+        reqs = rawReader.readMap();
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(AtomicTraceClientSendIo.class, this);
+        return S.toString(AtomicTraceDataClient.class, this);
     }
 }
