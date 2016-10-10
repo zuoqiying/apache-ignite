@@ -818,7 +818,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             }
         };
 
-        AtomicTrace.onIoReadOffered(nodeId, msg);
+        AtomicTrace.onIoReadOffered(nodeId, ctx.localNodeId(), msg);
 
         try {
             pool(plc).execute(c);

@@ -240,7 +240,7 @@ public class AtomicTraceRunner {
 
                     TraceData data = cliTrace.collectAndReset(
                         AtomicTrace.GRP_CLI,
-                        AtomicTrace.GRP_SND_IO_REQ
+                        AtomicTrace.GRP_IO_SND
                     );
 
                     System.out.println(">>> Collected trace");

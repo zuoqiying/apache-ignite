@@ -60,15 +60,29 @@ public class AtomicTraceDataSendIo implements Serializable, Binarylizable {
      * Constructor.
      *
      * @param polled Poll time.
+     */
+    public AtomicTraceDataSendIo(long polled) {
+        this.polled = polled;
+    }
+
+    /**
+     * Marshal callback.
+     *
      * @param marshalled Marshal time.
-     * @param sent Send time
+     */
+    public void onMarshalled(long marshalled) {
+        this.marshalled = marshalled;
+    }
+
+    /**
+     * Send callback.
+     *
+     * @param sent Send time.
      * @param bufLen Buffer length.
      * @param msgCnt Message count.
      */
-    public AtomicTraceDataSendIo(long polled, long marshalled, long sent, int bufLen, int msgCnt) {
-        this.polled = polled;
-        this.marshalled = marshalled;
-        this.sent = sent;
+    public void onSend(long sent, int bufLen, int msgCnt) {
+        this.sent =sent;
         this.bufLen = bufLen;
         this.msgCnt = msgCnt;
     }

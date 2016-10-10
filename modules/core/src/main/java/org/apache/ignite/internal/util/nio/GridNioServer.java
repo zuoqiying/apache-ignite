@@ -1166,6 +1166,8 @@ public class GridNioServer<T> {
                 }
             }
 
+            AtomicTrace.onIoWriteStarted();
+
             if (req == null) {
                 req = (NioOperationFuture<?>)ses.pollFuture();
 

@@ -28,7 +28,7 @@ import org.apache.ignite.internal.util.typedef.internal.S;
 /**
  * Trace for received message.
  */
-public class AtomicTraceReceiveIo implements Binarylizable {
+public class AtomicTraceDataReceiveIo implements Binarylizable {
     /** Data length. */
     public int dataLen;
 
@@ -44,7 +44,7 @@ public class AtomicTraceReceiveIo implements Binarylizable {
     /**
      * Default constructor.
      */
-    public AtomicTraceReceiveIo() {
+    public AtomicTraceDataReceiveIo() {
         // No-op.
     }
 
@@ -53,19 +53,21 @@ public class AtomicTraceReceiveIo implements Binarylizable {
      *
      * @param dataLen Data length.
      * @param read Read time.
+     * @param unmarshalled Unmarshal time.
      */
-    public AtomicTraceReceiveIo(int dataLen, long read) {
+    public AtomicTraceDataReceiveIo(int dataLen, long read, long unmarshalled) {
         this.dataLen = dataLen;
         this.read = read;
-
-        unmarshalled = System.nanoTime();
+        this.unmarshalled = unmarshalled;
     }
 
     /**
      * Invoked when message is offered to the thread pool.
+     *
+     * @param offered Offer time.
      */
-    public void onOffer() {
-        offered = System.nanoTime();
+    public void onOffer(long offered) {
+        this.offered = offered;
     }
 
     /** {@inheritDoc} */
@@ -90,6 +92,6 @@ public class AtomicTraceReceiveIo implements Binarylizable {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(AtomicTraceReceiveIo.class, this);
+        return S.toString(AtomicTraceDataReceiveIo.class, this);
     }
 }
