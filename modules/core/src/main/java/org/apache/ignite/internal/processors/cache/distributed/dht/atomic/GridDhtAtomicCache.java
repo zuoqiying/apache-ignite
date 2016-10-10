@@ -3082,15 +3082,22 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      * @param req Near atomic update request.
      */
     private void processNearAtomicUpdateRequest(UUID nodeId, GridNearAtomicUpdateRequest req) {
-        if (msgLog.isDebugEnabled()) {
-            msgLog.debug("Received near atomic update request [futId=" + req.futureVersion() +
-                ", writeVer=" + req.updateVersion() +
-                ", node=" + nodeId + ']');
+        AtomicTrace.onServerStarted(nodeId, ctx.localNodeId(), req.messageId());
+
+        try {
+            if (msgLog.isDebugEnabled()) {
+                msgLog.debug("Received near atomic update request [futId=" + req.futureVersion() +
+                    ", writeVer=" + req.updateVersion() +
+                    ", node=" + nodeId + ']');
+            }
+
+            req.nodeId(ctx.localNodeId());
+
+            updateAllAsyncInternal(nodeId, req, updateReplyClos);
         }
-
-        req.nodeId(ctx.localNodeId());
-
-        updateAllAsyncInternal(nodeId, req, updateReplyClos);
+        finally {
+            AtomicTrace.onServerFinished();
+        }
     }
 
     /**

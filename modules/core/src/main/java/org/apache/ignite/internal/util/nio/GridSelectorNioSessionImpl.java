@@ -193,6 +193,7 @@ class GridSelectorNioSessionImpl extends GridNioSessionImpl {
         writeFut.messageThread(msgThread);
 
         AtomicTrace.onClientOffered(writeFut);
+        AtomicTrace.onServerOffered(writeFut);
 
         boolean res = queue.offer(writeFut);
 

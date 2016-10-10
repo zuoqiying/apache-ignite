@@ -28,9 +28,9 @@ import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataClient;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataSendIo;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataReceiveIo;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataMessageKey;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataServer;
 import org.apache.ignite.internal.util.nio.GridNioFuture;
 import org.apache.ignite.internal.util.nio.GridNioServer;
-import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,10 +55,7 @@ public class AtomicTrace {
     public static final String GRP_IO_RCV = "IO_RCV";
 
     /** */
-    public static final String GRP_SYS_REQ = "SYS_REQ";
-
-    /** */
-    public static final String GRP_SYS_RESP = "SYS_RESP";
+    public static final String GRP_SYS = "SYS";
 
     /** Trace processor. */
     private static final TraceProcessor PROC = TraceProcessor.shared();
@@ -351,6 +348,61 @@ public class AtomicTrace {
 
             if (resMap != null)
                 trace.pushData(resMap);
+
+            trace.end();
+        }
+    }
+
+    /* --- System pool. --- */
+
+    /**
+     * Onvoked when server processing started.
+     *
+     * @param fromNode From node.
+     * @param toNode To node.
+     * @param msgId Message ID.
+     */
+    public static void onServerStarted(UUID fromNode, UUID toNode, long msgId) {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_SYS);
+
+            trace.begin();
+
+            trace.objectValue(0, new AtomicTraceDataServer(fromNode, toNode, msgId, System.nanoTime()));
+        }
+    }
+
+    /**
+     * Invoked on message offer.
+     *
+     * @param fut Future.
+     */
+    public static void onServerOffered(GridNioFuture fut) {
+        if (PROC.isEnabled()) {
+            GridNearAtomicUpdateResponse resp = responseFromFuture(fut);
+
+            if (resp != null) {
+                TraceThreadData trace = PROC.threadData(GRP_SYS);
+
+                AtomicTraceDataServer data = trace.objectValue(0);
+
+                if (data != null)
+                    data.onOffer(resp.messageId(), System.nanoTime());
+            }
+        }
+    }
+
+    /**
+     * Invoked when server processing is finished.
+     */
+    public static void onServerFinished() {
+        if (PROC.isEnabled()) {
+            TraceThreadData trace = PROC.threadData(GRP_SYS);
+
+            AtomicTraceDataServer data = trace.objectValue(0);
+
+            if (data != null)
+                trace.pushData(data);
 
             trace.end();
         }
