@@ -497,9 +497,8 @@ public class GridNioServer<T> {
             }
         }
         else if (!ses.procWrite.get() && ses.procWrite.compareAndSet(false, true)) {
-            ses.worker.offer((SessionChangeRequest) fut);
-
-            ses.wakeupCnt.increment();
+            if (ses.worker.offer((SessionChangeRequest)fut))
+                ses.wakeupCnt.increment();
         }
 
         if (msgQueueLsnr != null)
@@ -1410,7 +1409,9 @@ public class GridNioServer<T> {
         /** Worker index. */
         private final int idx;
 
-        public final boolean wakeup;
+        private final boolean writer;
+
+        private boolean selNow;
 
         /**
          * @param idx Index of this worker in server's array.
@@ -1427,7 +1428,7 @@ public class GridNioServer<T> {
 
             this.idx = idx;
 
-            wakeup = idx % 2 == 0;
+            writer = idx % 2 == 1;
         }
 
         /** {@inheritDoc} */
@@ -1511,11 +1512,19 @@ public class GridNioServer<T> {
          *
          * @param req Change request.
          */
-        private void offer(SessionChangeRequest req) {
+        private boolean offer(SessionChangeRequest req) {
             changeReqs.offer(req);
 
-            selector.wakeup();
+            if (select) {
+                selector.wakeup();
+
+                return true;
+            }
+
+            return false;
         }
+
+        private volatile boolean select;
 
         /**
          * Processes read and write events and registration requests.
@@ -1611,8 +1620,34 @@ public class GridNioServer<T> {
                         }
                     }
 
-                    // Wake up every 2 seconds to check if closed.
-                    if (selector.select(2000) > 0) {
+                    int cnt = 0;
+
+                    if (writer && selNow) {
+                        long end = U.currentTimeMillis() + 100;
+
+                        do  {
+                            cnt = selector.selectNow();
+                        }
+                        while (cnt == 0 && U.currentTimeMillis() < end && changeReqs.isEmpty());
+                    }
+
+                    if (cnt == 0) {
+                        selNow = false;
+
+                        select = true;
+
+                        try {
+                            if (changeReqs.isEmpty()) {
+                                // Wake up every 2 seconds to check if closed.
+                                cnt = selector.select(2000);
+                            }
+                        }
+                        finally {
+                            select = false;
+                        }
+                    }
+
+                    if (cnt > 0) {
                         // Walk through the ready keys collection and process network events.
                         if (selectedKeys == null)
                             processSelectedKeys(selector.selectedKeys());
@@ -1773,8 +1808,11 @@ public class GridNioServer<T> {
                     if (key.isReadable())
                         processRead(key);
 
-                    if (key.isValid() && key.isWritable())
+                    if (key.isValid() && key.isWritable()) {
                         processWrite(key);
+
+                        selNow = true;
+                    }
                 }
                 catch (ClosedByInterruptException e) {
                     // This exception will be handled in bodyInternal() method.
@@ -1818,8 +1856,11 @@ public class GridNioServer<T> {
                     if (key.isReadable())
                         processRead(key);
 
-                    if (key.isValid() && key.isWritable())
+                    if (key.isValid() && key.isWritable()) {
                         processWrite(key);
+
+                        selNow = true;
+                    }
                 }
                 catch (ClosedByInterruptException e) {
                     // This exception will be handled in bodyInternal() method.
