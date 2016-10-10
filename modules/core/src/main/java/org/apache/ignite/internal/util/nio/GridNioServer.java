@@ -1680,14 +1680,10 @@ public class GridNioServer<T> {
                         park = true;
 
                         try {
-                            long end = System.currentTimeMillis() + 2000;
+                            long end = U.currentTimeMillis() + 2000;
 
-                            if (changeReqs.isEmpty()) {
+                            if (changeReqs.isEmpty())
                                 LockSupport.parkUntil(end);
-
-                                if (Thread.interrupted())
-                                    return;
-                            }
                         }
                         finally {
                             park = false;
