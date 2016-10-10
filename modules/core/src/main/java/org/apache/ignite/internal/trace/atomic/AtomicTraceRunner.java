@@ -220,27 +220,27 @@ public class AtomicTraceRunner {
             int idx = 0;
 
             try {
-                TraceCluster cliTrace = new TraceCluster(node.cluster().forClients());
-                TraceCluster srvTrace = new TraceCluster(node.cluster().forServers());
+                TraceCluster trace = new TraceCluster(node.cluster().forNodes(node.cluster().nodes()));
 
                 while (!stopped) {
                     Thread.sleep(SLEEP_DUR);
 
-                    cliTrace.enable();
-                    srvTrace.enable();
+                    trace.enable();
 
                     System.out.println(">>> Enabled trace");
 
                     Thread.sleep(TRACE_DUR);
 
-                    cliTrace.disable();
-                    srvTrace.disable();
+                    trace.disable();
 
                     System.out.println(">>> Disabled trace");
 
-                    TraceData data = cliTrace.collectAndReset(
+                    TraceData data = trace.collectAndReset(
                         AtomicTrace.GRP_USR,
-                        AtomicTrace.GRP_IO_SND
+                        AtomicTrace.GRP_IO_SND,
+                        AtomicTrace.GRP_IO_RCV,
+                        AtomicTrace.GRP_SRV,
+                        AtomicTrace.GRP_CLI
                     );
 
                     System.out.println(">>> Collected trace");

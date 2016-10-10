@@ -19,10 +19,14 @@ package org.apache.ignite.internal.trace.atomic;
 
 import org.apache.ignite.internal.trace.TraceData;
 import org.apache.ignite.internal.trace.TraceThreadResult;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataClient;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataReceiveIo;
+import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataServer;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataUser;
 import org.apache.ignite.internal.trace.atomic.data.AtomicTraceDataSendIo;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -31,55 +35,10 @@ import java.util.Map;
  */
 public class AtomicTraceResult {
     /** Client send. */
-    public AtomicTraceDataUser cliSend;
+    public AtomicTraceDataUser usr;
 
-    /** Client send IO. */
-    public AtomicTraceDataSendIo cliSendIo;
-
-    /** Thread ID. */
-    public long threadId;
-
-    /**
-     * @return Client start duration.
-     */
-    public long clientStart() {
-        return cliSend.started;
-    }
-
-    /**
-     * @return Client map duration.
-     */
-    public long clientMapDuration() {
-        return cliSend.mapped - cliSend.started;
-    }
-
-    /**
-     * @return Client offer duration.
-     */
-    public long clientOfferDuration() {
-        return cliSend.offered - cliSend.mapped;
-    }
-
-    /**
-     * @return Client IO poll duration.
-     */
-    public long clientIoPollDuration() {
-        return cliSendIo.started - cliSend.offered;
-    }
-
-    /**
-     * @return Client IO marshal duration.
-     */
-    public long clientIoMarshalDuration() {
-        return cliSendIo.marshalled - cliSendIo.started;
-    }
-
-    /**
-     * @return Client IO send duration.
-     */
-    public long clientIoSendDuration() {
-        return cliSendIo.sent - cliSendIo.marshalled;
-    }
+    /** Client. */
+    public Collection<Part> parts = new ArrayList<>(1);
 
     /**
      * Parse trace node results and produce final results.
@@ -136,29 +95,84 @@ public class AtomicTraceResult {
     /**
      * Constructor.
      *
-     * @param cliSend Client send.
-     * @param cliSendIo Client send IO.
-     * @param threadId Thread ID.
+     * @param usr User part.
      */
-    public AtomicTraceResult(AtomicTraceDataUser cliSend, AtomicTraceDataSendIo cliSendIo, long threadId) {
-        this.cliSend = cliSend;
-        this.cliSendIo = cliSendIo;
-        this.threadId = threadId;
+    public AtomicTraceResult(AtomicTraceDataUser usr) {
+        this.usr = usr;
+    }
+
+    /**
+     * Add part.
+     *
+     * @param cliSnd Client send.
+     * @param srvRcv Server receive.
+     * @param srv Server.
+     * @param srvSnd Server send.
+     * @param cliRcv Client receive.
+     * @param cli Client finish.
+     */
+    private void addPart(AtomicTraceDataSendIo cliSnd, AtomicTraceDataReceiveIo srvRcv, AtomicTraceDataServer srv,
+        AtomicTraceDataSendIo srvSnd, AtomicTraceDataReceiveIo cliRcv, AtomicTraceDataClient cli) {
+        parts.add(new Part(cliSnd, srvRcv, srv, srvSnd, cliRcv, cli));
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return String.format(AtomicTraceResult.class.getSimpleName() +
-            "[start=%d, map=%8d, offer=%8d, poll=%8d, marsh=%8d, send=%8d, bufLen=%5d, msgCnt=%3d, nio=" +
-                threadId + "]",
-            clientStart(),
-            clientMapDuration(),
-            clientOfferDuration(),
-            clientIoPollDuration(),
-            clientIoMarshalDuration(),
-            clientIoSendDuration(),
-            cliSendIo.bufLen,
-            cliSendIo.msgCnt
-        );
+//        return String.format(AtomicTraceResult.class.getSimpleName() +
+//            "[start=%d, map=%8d, offer=%8d, poll=%8d, marsh=%8d, send=%8d, bufLen=%5d, msgCnt=%3d, nio=" +
+//                threadId + "]",
+//            clientStart(),
+//            clientMapDuration(),
+//            clientOfferDuration(),
+//            clientIoPollDuration(),
+//            clientIoMarshalDuration(),
+//            clientIoSendDuration(),
+//            cliSendIo.bufLen,
+//            cliSendIo.msgCnt
+//        );
+        return "";
+    }
+
+    /**
+     * Trace part.
+     */
+    public static class Part {
+        /** Client send. */
+        public AtomicTraceDataSendIo cliSnd;
+
+        /** Server receive. */
+        public AtomicTraceDataReceiveIo srvRcv;
+
+        /** Server. */
+        public AtomicTraceDataServer srv;
+
+        /** Server send. */
+        public AtomicTraceDataSendIo srvSnd;
+
+        /** Client receive. */
+        public AtomicTraceDataReceiveIo cliRcv;
+
+        /** Client finish. */
+        public AtomicTraceDataClient cli;
+
+        /**
+         * Constructor.
+         *
+         * @param cliSnd Client send.
+         * @param srvRcv Server receive.
+         * @param srv Server.
+         * @param srvSnd Server send.
+         * @param cliRcv Client receive.
+         * @param cli Client finish.
+         */
+        public Part(AtomicTraceDataSendIo cliSnd, AtomicTraceDataReceiveIo srvRcv, AtomicTraceDataServer srv,
+            AtomicTraceDataSendIo srvSnd, AtomicTraceDataReceiveIo cliRcv, AtomicTraceDataClient cli) {
+            this.cliSnd = cliSnd;
+            this.srvRcv = srvRcv;
+            this.srv = srv;
+            this.srvSnd = srvSnd;
+            this.cliRcv = cliRcv;
+            this.cli = cli;
+        }
     }
 }
