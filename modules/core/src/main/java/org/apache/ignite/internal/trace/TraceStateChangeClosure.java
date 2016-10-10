@@ -58,8 +58,6 @@ public class TraceStateChangeClosure implements IgniteCallable<Void>, Binaryliza
 
     /** {@inheritDoc} */
     @Override public Void call() throws Exception {
-        System.out.println(">>> State change: " + ignite.cluster().localNode().id());
-
         TraceProcessor proc = TraceProcessor.shared();
 
         if (enable)
