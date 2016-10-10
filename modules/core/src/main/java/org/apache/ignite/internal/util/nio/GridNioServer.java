@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -1019,6 +1020,15 @@ public class GridNioServer<T> {
             catch (IgniteCheckedException e) {
                 close(ses, e);
             }
+
+            if (writer) {
+                GridNioRecoveryDescriptor desc = ses.outRecoveryDescriptor();
+
+                if (desc != null) {
+                    if (desc.messagesFutures().size() < 16)
+                        readSes.remove(ses);
+                }
+            }
         }
 
         /**
@@ -1398,6 +1408,17 @@ public class GridNioServer<T> {
             }
             else
                 buf.clear();
+
+            if (this.writer) {
+                GridNioRecoveryDescriptor desc = ses.outRecoveryDescriptor();
+
+                if (desc != null) {
+                    if (desc.messagesFutures().size() > 16)
+                        readSes.add(ses);
+                    else
+                        readSes.remove(ses);
+                }
+            }
         }
     }
 
@@ -1418,7 +1439,7 @@ public class GridNioServer<T> {
         private final int idx;
 
         /** */
-        private final boolean writer;
+        final boolean writer;
 
         /** */
         volatile boolean select;
@@ -1428,6 +1449,8 @@ public class GridNioServer<T> {
 
         /** */
         volatile boolean park;
+
+        Set<GridNioSession> readSes = new HashSet<>();
 
         /**
          * @param idx Index of this worker in server's array.
@@ -1636,7 +1659,7 @@ public class GridNioServer<T> {
                         }
                     }
 
-                    if (!writer || writeSesCnt > 0) {
+                    if (!writer || (writeSesCnt > 0 || !readSes.isEmpty())) {
                         select = true;
 
                         try {
@@ -1659,11 +1682,12 @@ public class GridNioServer<T> {
                         try {
                             long end = System.currentTimeMillis() + 2000;
 
-                            if (changeReqs.isEmpty())
+                            if (changeReqs.isEmpty()) {
                                 LockSupport.parkUntil(end);
 
-                            if (!selector.isOpen() || Thread.interrupted())
-                                return;
+                                if (Thread.interrupted())
+                                    return;
+                            }
                         }
                         finally {
                             park = false;
