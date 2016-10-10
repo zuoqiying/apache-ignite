@@ -26,6 +26,7 @@ import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * Part of client processing.
@@ -34,11 +35,11 @@ public class AtomicTraceClientSend implements Serializable, Binarylizable {
     /** */
     private static final long serialVersionUID = 0L;
 
-    /** Future hash. */
-    public int futHash;
+    /** Future ID. */
+    public UUID futId;
 
-    /** Request hash. */
-    public int reqHash;
+    /** Request ID. */
+    public long reqId;
 
     /** Start time. */
     public long started;
@@ -59,15 +60,15 @@ public class AtomicTraceClientSend implements Serializable, Binarylizable {
     /**
      * Constructor.
      *
-     * @param futHash Future hash.
-     * @param reqHash Request hash.
+     * @param futId Future ID.
+     * @param reqId Request ID.
      * @param started Start time.
      * @param mapped Mapped time.
      * @param offered Sent time.
      */
-    public AtomicTraceClientSend(int futHash, int reqHash, long started, long mapped, long offered) {
-        this.futHash = futHash;
-        this.reqHash = reqHash;
+    public AtomicTraceClientSend(UUID futId, long reqId, long started, long mapped, long offered) {
+        this.futId = futId;
+        this.reqId = reqId;
         this.started = started;
         this.mapped = mapped;
         this.offered = offered;
@@ -77,8 +78,8 @@ public class AtomicTraceClientSend implements Serializable, Binarylizable {
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
         BinaryRawWriter rawWriter = writer.rawWriter();
 
-        rawWriter.writeInt(futHash);
-        rawWriter.writeInt(reqHash);
+        rawWriter.writeUuid(futId);
+        rawWriter.writeLong(reqId);
         rawWriter.writeLong(started);
         rawWriter.writeLong(mapped);
         rawWriter.writeLong(offered);
@@ -88,8 +89,8 @@ public class AtomicTraceClientSend implements Serializable, Binarylizable {
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
         BinaryRawReader rawReader = reader.rawReader();
 
-        futHash = rawReader.readInt();
-        reqHash = rawReader.readInt();
+        futId = rawReader.readUuid();
+        reqId = rawReader.readLong();
         started = rawReader.readLong();
         mapped = rawReader.readLong();
         offered = rawReader.readLong();

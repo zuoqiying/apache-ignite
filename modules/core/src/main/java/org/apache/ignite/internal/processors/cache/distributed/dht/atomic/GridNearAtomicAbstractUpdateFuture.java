@@ -106,6 +106,9 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
     /** Mutex to synchronize state updates. */
     protected final Object mux = new Object();
 
+    /** Constant future ID. */
+    protected final UUID id = UUID.randomUUID();
+
     /** Topology locked flag. Set if atomic update is performed inside a TX or explicit lock. */
     protected boolean topLocked;
 
@@ -228,6 +231,13 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
      */
     protected abstract void mapOnTopology();
 
+    /**
+     * @return Future ID.
+     */
+    public UUID id() {
+        return id;
+    }
+
     /** {@inheritDoc} */
     @Override public IgniteUuid futureId() {
         throw new UnsupportedOperationException();
@@ -267,8 +277,6 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
         }
         else {
             try {
-                AtomicTrace._02_onClientSendBeforeIo(this, req);
-
                 cctx.io().send(req.nodeId(), req, cctx.ioPolicy());
 
                 if (msgLog.isDebugEnabled()) {

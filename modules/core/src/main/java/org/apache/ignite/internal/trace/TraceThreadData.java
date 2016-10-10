@@ -47,6 +47,9 @@ public class TraceThreadData {
     /** Int value 2. */
     private int int2;
 
+    /** Int value 3. */
+    private int int3;
+
     /** Integers. */
     private int[] ints;
 
@@ -59,6 +62,9 @@ public class TraceThreadData {
     /** Long value 2. */
     private long long2;
 
+    /** Long value 3. */
+    private long long3;
+
     /** Longs. */
     private long[] longs;
 
@@ -67,9 +73,6 @@ public class TraceThreadData {
 
     /** Object value 1. */
     private Object obj1;
-
-    /** Object value 2. */
-    private Object obj2;
 
     /** Objects. */
     private Object[] objs;
@@ -113,9 +116,9 @@ public class TraceThreadData {
      * End recording.
      */
     public void end() {
-        int0 = int1 = int2 = 0;
-        long0 = long1 = long2 = 0;
-        obj0 = obj1 = obj2 = null;
+        int0 = int1 = int2 = int3 = 0;
+        long0 = long1 = long2 = long3 = 0;
+        obj0 = obj1 = null;
 
         ints = null;
         longs = null;
@@ -178,6 +181,9 @@ public class TraceThreadData {
             case 2:
                 return int2;
 
+            case 3:
+                return int3;
+
             default:
                 return ints == null || idx >= ints.length ? 0 : ints[idx];
         }
@@ -206,6 +212,11 @@ public class TraceThreadData {
 
             case 2:
                 int2 = val;
+
+                break;
+
+            case 3:
+                int3 = val;
 
                 break;
 
@@ -244,6 +255,9 @@ public class TraceThreadData {
             case 2:
                 return long2;
 
+            case 3:
+                return long3;
+
             default:
                 return longs == null || idx >= longs.length ? 0 : longs[idx];
         }
@@ -272,6 +286,11 @@ public class TraceThreadData {
 
             case 2:
                 long2 = val;
+
+                break;
+
+            case 3:
+                long3 = val;
 
                 break;
 
@@ -308,9 +327,6 @@ public class TraceThreadData {
             case 1:
                 return (T)obj1;
 
-            case 2:
-                return (T)obj2;
-
             default:
                 return (T)(objs == null || idx >= objs.length ? 0 : objs[idx]);
         }
@@ -334,11 +350,6 @@ public class TraceThreadData {
 
             case 1:
                 obj1 = val;
-
-                break;
-
-            case 2:
-                obj2 = val;
 
                 break;
 

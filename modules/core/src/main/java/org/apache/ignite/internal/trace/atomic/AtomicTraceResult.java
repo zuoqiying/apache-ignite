@@ -117,10 +117,10 @@ public class AtomicTraceResult {
         AtomicTraceClientSend snd) {
         for (TraceThreadResult threadSndIo : threadSndIos) {
             if (threadSnd.sameNode(threadSndIo)) {
-                List<Map<Integer, AtomicTraceClientSendIo>> datas = threadSndIo.data();
+                List<Map<Long, AtomicTraceClientSendIo>> datas = threadSndIo.data();
 
-                for (Map<Integer, AtomicTraceClientSendIo> data : datas) {
-                    AtomicTraceClientSendIo res = data.get(snd.reqHash);
+                for (Map<Long, AtomicTraceClientSendIo> data : datas) {
+                    AtomicTraceClientSendIo res = data.get(snd.reqId);
 
                     if (res != null && res.started >= snd.offered)
                         return res;

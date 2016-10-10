@@ -18,9 +18,9 @@
 package org.apache.ignite.internal.trace.atomic;
 
 import org.apache.ignite.internal.managers.communication.GridIoMessage;
+import org.apache.ignite.internal.processors.cache.GridCacheMessage;
 import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicAbstractUpdateFuture;
 import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicUpdateRequest;
-import org.apache.ignite.internal.trace.TraceNodeResult;
 import org.apache.ignite.internal.trace.TraceProcessor;
 import org.apache.ignite.internal.trace.TraceThreadData;
 import org.apache.ignite.internal.util.nio.GridNioFuture;
@@ -28,10 +28,10 @@ import org.apache.ignite.internal.util.nio.GridNioServer;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Atomic cache trace utils.
@@ -61,20 +61,21 @@ public class AtomicTrace {
 
             trace.incrementState();
 
-            trace.intValue(0, System.identityHashCode(fut));
-            trace.longValue(0, System.nanoTime());
+            trace.objectValue(0, fut.id());
+            trace.longValue(1, System.nanoTime());
         }
     }
 
-    public static void _02_onClientSendBeforeIo(GridNearAtomicAbstractUpdateFuture fut,
-        GridNearAtomicUpdateRequest req) {
+    public static void _02_onClientSendBeforeIo(GridCacheMessage msg) {
         if (PROC.isEnabled()) {
-            TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND);
+            if (msg instanceof GridNearAtomicUpdateRequest) {
+                TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND);
 
-            trace.incrementState();
+                trace.incrementState();
 
-            trace.intValue(1, System.identityHashCode(req));
-            trace.longValue(1, System.nanoTime());
+                trace.longValue(0, msg.messageId());
+                trace.longValue(2, System.nanoTime());
+            }
         }
     }
 
@@ -87,15 +88,15 @@ public class AtomicTrace {
 
                 trace.incrementState();
 
-                trace.longValue(2, System.nanoTime());
+                trace.longValue(3, System.nanoTime());
 
                 if (trace.state() == 3) {
                     trace.pushData(new AtomicTraceClientSend(
-                        trace.intValue(0),
-                        trace.intValue(1),
+                        (UUID)trace.objectValue(0),
                         trace.longValue(0),
                         trace.longValue(1),
-                        trace.longValue(2)
+                        trace.longValue(2),
+                        trace.longValue(3)
                     ));
                 }
 
@@ -111,7 +112,7 @@ public class AtomicTrace {
             if (req != null) {
                 TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND_IO);
 
-                HashMap<Integer, AtomicTraceClientSendIo> map = trace.objectValue(0);
+                HashMap<Long, AtomicTraceClientSendIo> map = trace.objectValue(0);
 
                 if (map == null) {
                     trace.begin();
@@ -121,7 +122,7 @@ public class AtomicTrace {
                     trace.objectValue(0, map);
                 }
 
-                map.put(System.identityHashCode(req), new AtomicTraceClientSendIo(System.nanoTime(), 0, 0, 0, 0));
+                map.put(req.messageId(), new AtomicTraceClientSendIo(System.nanoTime(), 0, 0, 0, 0));
             }
         }
     }
@@ -133,10 +134,10 @@ public class AtomicTrace {
             if (req != null) {
                 TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND_IO);
 
-                HashMap<Integer, AtomicTraceClientSendIo> map = trace.objectValue(0);
+                HashMap<Long, AtomicTraceClientSendIo> map = trace.objectValue(0);
 
                 if (map != null) {
-                    AtomicTraceClientSendIo msg = map.get(System.identityHashCode(req));
+                    AtomicTraceClientSendIo msg = map.get(req.messageId());
 
                     if (msg != null)
                         msg.marshalled = System.nanoTime();
@@ -149,17 +150,17 @@ public class AtomicTrace {
         if (PROC.isEnabled()) {
             TraceThreadData trace = PROC.threadData(GRP_CLIENT_REQ_SND_IO);
 
-            HashMap<Integer, AtomicTraceClientSendIo> map = trace.objectValue(0);
+            HashMap<Long, AtomicTraceClientSendIo> map = trace.objectValue(0);
 
             if (map != null) {
                 long sndTime = System.nanoTime();
 
-                HashMap<Integer, AtomicTraceClientSendIo> res = new HashMap<>();
+                HashMap<Long, AtomicTraceClientSendIo> res = new HashMap<>();
 
-                Iterator<Map.Entry<Integer, AtomicTraceClientSendIo>> iter = map.entrySet().iterator();
+                Iterator<Map.Entry<Long, AtomicTraceClientSendIo>> iter = map.entrySet().iterator();
 
                 while (iter.hasNext()) {
-                    Map.Entry<Integer, AtomicTraceClientSendIo> entry = iter.next();
+                    Map.Entry<Long, AtomicTraceClientSendIo> entry = iter.next();
 
                     AtomicTraceClientSendIo msg = entry.getValue();
 
@@ -185,17 +186,6 @@ public class AtomicTrace {
                     trace.end();
             }
         }
-    }
-
-    /**
-     * Process results and assemble the whole picture.
-     *
-     * @param nodeRess Node results.
-     * @return Final picture.
-     */
-    public Collection<AtomicTraceResult> processResult(Collection<TraceNodeResult> nodeRess) {
-        // TODO;
-        return null;
     }
 
     @Nullable private static GridNearAtomicUpdateRequest requestFromFuture(GridNioFuture fut) {
