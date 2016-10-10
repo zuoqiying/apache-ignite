@@ -203,7 +203,7 @@ public class AtomicTraceResult {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        StringBuilder res = new StringBuilder("usrStart=" + usr.started + "\n");
+        StringBuilder res = new StringBuilder();
 
         boolean first = true;
 
@@ -214,13 +214,13 @@ public class AtomicTraceResult {
                 res.append("\n");
 
             String ps = String.format(
-                "\tuser=  [%8d]\n " +
-                "\tcliSnd=[%8d %8d %8d]\n" +
-                "\tsrvRcv=[%8d %8d %8d]\n" +
-                "\tserver=[%8d %8d]\n" +
-                "\tsrvSnd=[%8d %8d %8d]\n" +
-                "\tcliRcv=[%8d %8d %8d]\n " +
-                "\tclient=[%8d %8d %8d]",
+                "user=[%8d], " +
+                "cliSnd=[%8d %8d %8d], " +
+                "srvRcv=[%8d %8d %8d], " +
+                "server=[%8d %8d], " +
+                "srvSnd=[%8d %8d %8d], " +
+                "cliRcv=[%8d %8d %8d], " +
+                "client=[%8d %8d %8d]",
 
                 p.usrPart.offered - usr.started,
 

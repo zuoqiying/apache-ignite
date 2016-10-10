@@ -47,7 +47,7 @@ public class AtomicTraceClientRunner {
     private static final long SLEEP_DUR = 5000L;
 
     /** Cache load threads count. */
-    private static final int CACHE_LOAD_THREAD_CNT = 16;
+    private static final int CACHE_LOAD_THREAD_CNT = 1;
 
     /** Cache size. */
     private static final int CACHE_SIZE = 1000;
@@ -203,7 +203,7 @@ public class AtomicTraceClientRunner {
 
                     System.out.println(">>> Enabled trace");
 
-                    node.cache(CACHE_NAME).put(1, 1);
+                    Thread.sleep(TRACE_DUR);
 
                     trace.disable();
 

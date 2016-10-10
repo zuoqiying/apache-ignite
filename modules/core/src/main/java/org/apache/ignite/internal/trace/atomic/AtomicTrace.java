@@ -146,6 +146,8 @@ public class AtomicTrace {
 
             trace.begin();
 
+//            System.out.println(">>> onIoWriteStarted");
+
             trace.objectValue(0, new HashMap<>());
         }
     }
@@ -167,8 +169,11 @@ public class AtomicTrace {
 
                 HashMap<Long, AtomicTraceDataSendIo> map = trace.objectValue(0);
 
-                if (map != null)
+                if (map != null) {
+//                    System.out.println(">>> onIoWritePolled");
+
                     map.put(msg.messageId(), new AtomicTraceDataSendIo(System.nanoTime()));
+                }
             }
         }
     }
@@ -193,8 +198,11 @@ public class AtomicTrace {
                 if (map != null) {
                     AtomicTraceDataSendIo io = map.get(msg.messageId());
 
-                    if (io != null)
+                    if (io != null) {
+//                        System.out.println(">>> onIoWriteMarshalled");
+
                         io.onMarshalled(System.nanoTime());
+                    }
                 }
             }
         }
@@ -213,6 +221,8 @@ public class AtomicTrace {
             HashMap<Long, AtomicTraceDataSendIo> map = trace.objectValue(0);
 
             if (map != null) {
+//                System.out.println(">>> onIoWriteFinished");
+
                 long sndTime = System.nanoTime();
 
                 HashMap<Long, AtomicTraceDataSendIo> res = new HashMap<>();
@@ -258,6 +268,8 @@ public class AtomicTrace {
         if (PROC.isEnabled()) {
             TraceThreadData trace = PROC.threadData(GRP_IO_RCV);
 
+//            System.out.println(">>> onIoReadStarted");
+
             trace.begin();
 
             trace.intValue(0, len);
@@ -281,21 +293,21 @@ public class AtomicTrace {
                 msg = responseFromMessage(obj);
 
             if (msg != null) {
+
+
                 IdentityHashMap<GridCacheMessage, AtomicTraceDataReceiveIo> reqMap = trace.objectValue(0);
 
-                if (reqMap == null) {
-                    reqMap = new IdentityHashMap<>();
+                if (reqMap != null) {
+//                    System.out.println(">>> onIoReadUnmarshalled");
 
-                    trace.objectValue(0, reqMap);
+                    AtomicTraceDataReceiveIo io = new AtomicTraceDataReceiveIo(
+                        trace.intValue(0),
+                        trace.longValue(0),
+                        System.nanoTime()
+                    );
+
+                    reqMap.put(msg, io);
                 }
-
-                AtomicTraceDataReceiveIo io = new AtomicTraceDataReceiveIo(
-                    trace.intValue(0),
-                    trace.longValue(0),
-                    System.nanoTime()
-                );
-
-                reqMap.put(msg, io);
             }
         }
     }
@@ -323,6 +335,8 @@ public class AtomicTrace {
                     AtomicTraceDataReceiveIo io = reqMap.get(msg);
 
                     if (io != null) {
+//                        System.out.println(">>> onIoReadOffered");
+
                         io.onOffer(System.nanoTime());
 
                         Map<AtomicTraceDataMessageKey, AtomicTraceDataReceiveIo> resMap = trace.objectValue(1);
@@ -349,8 +363,11 @@ public class AtomicTrace {
 
             Map<AtomicTraceDataMessageKey, AtomicTraceDataReceiveIo> resMap = trace.objectValue(1);
 
-            if (resMap != null)
+            if (resMap != null) {
+//                System.out.println(">>> onIoReadFinished");
+
                 trace.pushData(resMap);
+            }
 
             trace.end();
         }
@@ -368,6 +385,8 @@ public class AtomicTrace {
     public static void onServerStarted(UUID fromNode, UUID toNode, long msgId) {
         if (PROC.isEnabled()) {
             TraceThreadData trace = PROC.threadData(GRP_SRV);
+
+//            System.out.println(">>> onServerStarted");
 
             trace.begin();
 
@@ -389,8 +408,11 @@ public class AtomicTrace {
 
                 AtomicTraceDataServer data = trace.objectValue(0);
 
-                if (data != null)
+                if (data != null) {
+//                    System.out.println(">>> onServerOffered");
+
                     data.onOffer(resp.messageId(), System.nanoTime());
+                }
             }
         }
     }
@@ -404,8 +426,11 @@ public class AtomicTrace {
 
             AtomicTraceDataServer data = trace.objectValue(0);
 
-            if (data != null)
+            if (data != null) {
+//                System.out.println(">>> onServerFinished");
+
                 trace.pushData(data);
+            }
 
             trace.end();
         }
@@ -421,6 +446,8 @@ public class AtomicTrace {
     public static void onClientStarted(long respId) {
         if (PROC.isEnabled()) {
             TraceThreadData trace = PROC.threadData(GRP_CLI);
+
+//            System.out.println(">>> onClientStarted");
 
             trace.begin();
 
@@ -440,8 +467,11 @@ public class AtomicTrace {
 
             AtomicTraceDataClient data = trace.objectValue(0);
 
-            if (data != null)
+            if (data != null) {
+//                System.out.println(">>> onClientFutureCompleted");
+
                 data.onMiniFutureCompleted(futId, reqId, System.nanoTime());
+            }
         }
     }
 
@@ -455,6 +485,8 @@ public class AtomicTrace {
             AtomicTraceDataClient data = trace.objectValue(0);
 
             if (data != null) {
+//                System.out.println(">>> onClientFinished");
+
                 data.onFinished(System.nanoTime());
 
                 trace.pushData(data);

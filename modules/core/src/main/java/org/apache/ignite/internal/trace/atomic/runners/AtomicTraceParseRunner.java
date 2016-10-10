@@ -42,8 +42,6 @@ public class AtomicTraceParseRunner {
 
             List<AtomicTraceResult> ress = AtomicTraceResult.parse(data);
 
-            System.out.println("TOTAL: " + ress.size());
-
             Collections.shuffle(ress);
 
             for (int i = 0; i < SAMPLE_PRINT_CNT && i < ress.size(); i++)
