@@ -123,7 +123,7 @@ public abstract class ComputeJobAdapter implements ComputeJob, Callable<Object> 
      *
      * @return Array of job arguments.
      */
-    @Nullable public Object[] arguments() {
+    @Nullable Object[] arguments() {
         return args;
     }
 
