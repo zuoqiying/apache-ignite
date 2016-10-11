@@ -22,6 +22,7 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteCompute;
 import org.apache.ignite.cache.CachePeekMode;
+import org.apache.ignite.cluster.ClusterGroup;
 import org.apache.ignite.internal.binary.BinaryRawReaderEx;
 import org.apache.ignite.internal.processors.platform.cache.PlatformCache;
 import org.apache.ignite.internal.processors.platform.cache.PlatformCacheExtension;
@@ -106,8 +107,6 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     private void startBackgroundCleanup(Ignite grid, final Cache<CleanupNodeId, UUID> metaCache,
         final String dataCacheName, final Map<String, EntryProcessorResult<Long>> currentVersions) {
         // Initiate old entries cleanup.
-        IgniteCompute asyncCompute = grid.compute().withAsync();
-
         // Set a flag about running cleanup.
         final UUID localNodeId = grid.cluster().localNode().id();
 
@@ -133,6 +132,10 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
             // Node id value has changed by another thread. Repeat the process.
         }
+
+        final ClusterGroup dataNodes = grid.cluster().forDataNodes(dataCacheName);
+
+        IgniteCompute asyncCompute = grid.compute(dataNodes).withAsync();
 
         asyncCompute.broadcast(new IgniteRunnable() {
             /** Inject Ignite. */
