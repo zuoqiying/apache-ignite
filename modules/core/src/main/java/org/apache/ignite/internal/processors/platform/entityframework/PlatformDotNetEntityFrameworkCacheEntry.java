@@ -43,7 +43,7 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
-        throw new IgniteException("PlatformDotNetEntityFrameworkCacheEntry can not be written from Java.");
+        throw new IgniteException(getClass().getSimpleName() + " can not be written from Java.");
     }
 
     /** {@inheritDoc} */
