@@ -239,12 +239,11 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         /**
          * Build final XML.
          *
-         * @param {Object} cluster
-         * @param {Boolean} client
+         * @param {Bean} cfg Ignite configuration.
+         * @param {Boolean} clientNearCaches
          * @returns {StringBuilder}
          */
-        static igniteConfiguration(cluster, client) {
-            const cfg = generator.igniteConfiguration(cluster, client);
+        static igniteConfiguration(cfg, clientNearCaches) {
             const sb = new StringBuilder();
 
             // 0. Add header.
@@ -288,17 +287,13 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 });
             }
 
-            if (client) {
-                const nearCaches = _.filter(cluster.caches, (cache) => _.get(cache, 'clientNearConfiguration.enabled'));
+            _.forEach(clientNearCaches, (cache) => {
+                this.commentBlock(sb, 'Configuration of near cache for cache "' + cache.name + '"');
 
-                _.forEach(nearCaches, (cache) => {
-                    this.commentBlock(sb, 'Configuration of near cache for cache "' + cache.name + '"');
+                this.appendBean(sb, generator.cacheNearClient(cache), true);
 
-                    this.appendBean(sb, generator.cacheNearClient(cache), true);
-
-                    sb.emptyLine();
-                });
-            }
+                sb.emptyLine();
+            });
 
             // 3. Add main content.
             this.appendBean(sb, cfg);
@@ -307,6 +302,14 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             sb.endBlock('</beans>');
 
             return sb;
+        }
+
+        static cluster(cluster, client) {
+            const cfg = generator.igniteConfiguration(cluster, client);
+
+            const clientNearCaches = client ? _.filter(cluster.caches, (cache) => _.get(cache, 'clientNearConfiguration.enabled')) : [];
+
+            return this.igniteConfiguration(cfg, clientNearCaches);
         }
     };
 }];

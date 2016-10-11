@@ -540,7 +540,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         }
 
         static _prepareImports(imports) {
-            return _.sortedUniq(_.sortBy(_.filter(imports, (cls) => !cls.startsWith('java.lang.') && !JavaTypes.isJavaPrimitive(cls))));
+            return _.sortedUniq(_.sortBy(_.filter(imports, (cls) => !cls.startsWith('java.lang.') && _.includes(cls, '.'))));
         }
 
         /**
@@ -631,14 +631,13 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         /**
          * Build Java startup class with configuration.
          *
-         * @param {Bean} cluster
+         * @param {Bean} cfg
          * @param pkg Package name.
          * @param {String} clsName Class name for generate factory class otherwise generate code snippet.
-         * @param {Boolean} client Is client node.
+         * @param {Boolean} clientNearCaches Is client node.
          * @returns {StringBuilder}
          */
-        static igniteConfiguration(cluster, pkg, clsName, client) {
-            const cfg = generator.igniteConfiguration(cluster, client);
+        static igniteConfiguration(cfg, pkg, clsName, clientNearCaches) {
             const sb = new StringBuilder();
 
             sb.append(`package ${pkg};`);
@@ -646,7 +645,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
             const imports = this.collectBeanImports(cfg);
 
-            if (client)
+            if (_.nonEmpty(clientNearCaches))
                 imports.push('org.apache.ignite.configuration.NearCacheConfiguration');
 
             if (_.includes(imports, 'oracle.jdbc.pool.OracleDataSource'))
@@ -723,29 +722,25 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 sb.emptyLine();
             }
 
-            if (client) {
-                const nearCaches = _.filter(cluster.caches, (cache) => _.get(cache, 'clientNearConfiguration.enabled'));
+            _.forEach(clientNearCaches, (cache) => {
+                this.commentBlock(sb, `Configuration of near cache for cache: ${cache.name}.`,
+                    '',
+                    '@return Near cache configuration.',
+                    '@throws Exception If failed to construct near cache configuration instance.'
+                );
 
-                _.forEach(nearCaches, (cache) => {
-                    this.commentBlock(sb, `Configuration of near cache for cache: ${cache.name}.`,
-                        '',
-                        '@return Near cache configuration.',
-                        '@throws Exception If failed to construct near cache configuration instance.'
-                    );
+                const nearCacheBean = generator.cacheNearClient(cache);
 
-                    const nearCacheBean = generator.cacheNearClient(cache);
+                sb.startBlock(`public static NearCacheConfiguration ${nearCacheBean.id}() throws Exception {`);
 
-                    sb.startBlock(`public static NearCacheConfiguration ${nearCacheBean.id}() throws Exception {`);
+                this.constructBean(sb, nearCacheBean);
+                sb.emptyLine();
 
-                    this.constructBean(sb, nearCacheBean);
-                    sb.emptyLine();
+                sb.append(`return ${nearCacheBean.id};`);
+                sb.endBlock('}');
 
-                    sb.append(`return ${nearCacheBean.id};`);
-                    sb.endBlock('}');
-
-                    sb.emptyLine();
-                });
-            }
+                sb.emptyLine();
+            });
 
             this.commentBlock(sb, 'Configure grid.',
                 '',
@@ -768,7 +763,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 _.forEach(complexBeans, (bean, idx) => {
                     switch (bean.clsName) {
                         case 'org.apache.ignite.configuration.CacheConfiguration':
-                            this.cacheConfiguration(sb, bean, client);
+                            this.cacheConfiguration(sb, bean);
 
                             break;
                         default:
@@ -783,6 +778,14 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             sb.endBlock('}');
 
             return sb;
+        }
+
+        static cluster(cluster, pkg, clsName, client) {
+            const cfg = this.generator.igniteConfiguration(cluster, client);
+
+            const clientNearCaches = client ? _.filter(cluster.caches, (cache) => _.get(cache, 'clientNearConfiguration.enabled')) : [];
+
+            return this.igniteConfiguration(cfg, pkg, clsName, clientNearCaches);
         }
 
         /**
