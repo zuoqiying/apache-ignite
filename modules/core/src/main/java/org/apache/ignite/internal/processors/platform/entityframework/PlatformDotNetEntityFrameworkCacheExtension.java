@@ -35,7 +35,9 @@ import org.apache.ignite.resources.IgniteInstanceResource;
 
 import javax.cache.Cache;
 import javax.cache.processor.EntryProcessorResult;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -154,6 +156,8 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
         IgniteCache<String, PlatformDotNetEntityFrameworkCacheEntry> cache = ignite.cache(dataCacheName);
 
+        Set<String> keysToRemove = new HashSet<>();
+
         for (Cache.Entry<String, PlatformDotNetEntityFrameworkCacheEntry> cacheEntry :
             cache.localEntries(CachePeekMode.ALL)) {
             PlatformDotNetEntityFrameworkCacheEntry entry = cacheEntry.getValue();
@@ -162,9 +166,11 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
                 EntryProcessorResult<Long> curVer = currentVersions.get(entitySet.getKey());
 
                 if (curVer != null && entitySet.getValue() < curVer.get())
-                    cache.remove(cacheEntry.getKey());
+                    keysToRemove.add(cacheEntry.getKey());
             }
         }
+
+        cache.removeAll(keysToRemove);
     }
 
     /** {@inheritDoc} */
