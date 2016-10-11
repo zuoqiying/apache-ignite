@@ -27,9 +27,9 @@ import org.apache.ignite.internal.binary.BinaryRawReaderEx;
 import org.apache.ignite.internal.processors.platform.cache.PlatformCache;
 import org.apache.ignite.internal.processors.platform.cache.PlatformCacheExtension;
 import org.apache.ignite.internal.processors.platform.memory.PlatformMemory;
-import org.apache.ignite.internal.util.typedef.CI1;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.lang.IgniteFuture;
+import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.lang.IgniteRunnable;
 import org.apache.ignite.resources.IgniteInstanceResource;
 
@@ -137,22 +137,9 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
         IgniteCompute asyncCompute = grid.compute(dataNodes).withAsync();
 
-        asyncCompute.broadcast(new IgniteRunnable() {
-            /** Inject Ignite. */
-            @IgniteInstanceResource
-            private Ignite ignite;
+        asyncCompute.broadcast(new RemoveOldEntriesRunnable(dataCacheName, currentVersions));
 
-            @Override public void run() {
-                removeOldEntries(ignite, dataCacheName, currentVersions);
-            }
-        });
-
-        asyncCompute.future().listen(new CI1<IgniteFuture<Object>>() {
-            @Override public void apply(IgniteFuture<Object> future) {
-                // Reset cleanup flag.
-                metaCache.remove(CLEANUP_NODE_ID);
-            }
-        });
+        asyncCompute.future().listen(new CleanupCompletionListener(metaCache));
     }
 
     /**
@@ -190,5 +177,60 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
      */
     private static class CleanupNodeId {
         // No-op.
+    }
+
+    /**
+     * Old entries remover.
+     */
+    private static class RemoveOldEntriesRunnable implements IgniteRunnable {
+        /** */
+        private final String dataCacheName;
+
+        /** */
+        private final Map<String, EntryProcessorResult<Long>> currentVersions;
+
+        /** Inject Ignite. */
+        @IgniteInstanceResource
+        private Ignite ignite;
+
+        /**
+         * Ctor.
+         *
+         * @param dataCacheName Name of the cache to clean up.
+         * @param currentVersions Map of current entity set versions.
+         */
+        private RemoveOldEntriesRunnable(String dataCacheName,
+            Map<String, EntryProcessorResult<Long>> currentVersions) {
+            this.dataCacheName = dataCacheName;
+            this.currentVersions = currentVersions;
+        }
+
+        /** {@inheritDoc} */
+        @Override public void run() {
+            removeOldEntries(ignite, dataCacheName, currentVersions);
+        }
+    }
+
+    /**
+     * Cleanup completion listener.
+     */
+    private static class CleanupCompletionListener implements IgniteInClosure<IgniteFuture<Object>> {
+        /** */
+        private final Cache<CleanupNodeId, UUID> metaCache;
+
+        /**
+         * Ctor.
+         *
+         * @param metaCache Metadata cache.
+         */
+        private CleanupCompletionListener(Cache<CleanupNodeId, UUID> metaCache) {
+            this.metaCache = metaCache;
+        }
+
+        /** {@inheritDoc} */
+        @Override public void apply(IgniteFuture<Object> future) {
+            // Reset cleanup flag.
+            metaCache.remove(CLEANUP_NODE_ID);
+        }
     }
 }
