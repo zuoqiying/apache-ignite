@@ -98,11 +98,6 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
         throw new IgniteCheckedException("Unsupported operation type: " + type);
     }
 
-    /** {@inheritDoc} */
-    @Override public String toString() {
-        return S.toString(PlatformDotNetEntityFrameworkCacheExtension.class, this);
-    }
-
     /**
      * Starts the background cleanup of old cache entries.
      *
@@ -183,5 +178,10 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
                     cache.remove(cacheEntry.getKey());
             }
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(PlatformDotNetEntityFrameworkCacheExtension.class, this);
     }
 }

@@ -30,7 +30,7 @@ public class PlatformDotNetEntityFrameworkIncreaseVersionProcessor implements Ca
     private static final long serialVersionUID = 0L;
 
     /** {@inheritDoc} */
-    @Override public Long process(MutableEntry<String, Long> entry, Object... objects) throws EntryProcessorException {
+    @Override public Long process(MutableEntry<String, Long> entry, Object... args) throws EntryProcessorException {
         Long val = entry.getValue();
 
         if (val == null)
