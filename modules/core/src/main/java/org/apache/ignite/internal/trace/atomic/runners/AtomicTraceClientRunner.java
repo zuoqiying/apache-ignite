@@ -21,6 +21,7 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.internal.trace.atomic.AtomicTraceUtils;
+import org.jsr166.LongAdder8;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,6 +37,9 @@ public class AtomicTraceClientRunner {
 
     /** Cache size. */
     private static final int CACHE_SIZE = 1000;
+
+    /** Adder. */
+    private static final LongAdder8 ADDER = new LongAdder8();
 
     /**
      * Entry point.
@@ -59,6 +63,11 @@ public class AtomicTraceClientRunner {
 
             thread.start();
         }
+
+        // Start throughput printer.
+        Thread thread = new Thread(new ThroughputPrinter());
+
+        thread.start();
     }
 
     /**
@@ -110,6 +119,8 @@ public class AtomicTraceClientRunner {
                     int key = rand.nextInt(CACHE_SIZE);
 
                     cache.put(key, key);
+
+                    ADDER.add(1);
                 }
             }
             finally {
@@ -122,6 +133,43 @@ public class AtomicTraceClientRunner {
          */
         public void stop() {
             stopped = true;
+        }
+    }
+
+    /**
+     * Throughput printer.
+     */
+    private static class ThroughputPrinter implements Runnable {
+        /** {@inheritDoc} */
+        @Override public void run() {
+            System.out.println(">>> Throughput printer started.");
+
+            ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+            try {
+                while (true) {
+                    long beforeVal = ADDER.longValue();
+                    long before = System.currentTimeMillis();
+
+                    Thread.sleep(rnd.nextLong(3000, 5000));
+
+                    long afterVal = ADDER.longValue();
+                    long after = System.currentTimeMillis();
+
+                    long deltaVal = afterVal - beforeVal;
+                    long delta = after - before;
+
+                    double t = 1000 * (double)deltaVal/(double)delta;
+
+                    System.out.println(">>> " + t + " ops/sec");
+                }
+            }
+            catch (Exception e) {
+                System.out.println(">>> Throughput printer exception: " + e);
+            }
+            finally {
+                System.out.println(">>> Throughput printer stopped.");
+            }
         }
     }
 }
