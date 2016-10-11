@@ -788,21 +788,28 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         /**
          * Generate java class code.
          *
-         * @param pkg Package name.
-         * @param clsName If 'true' then key class should be generated.
-         * @param fields If 'true' then include key fields into value POJO.
+         * @param fullClsName Full class name.
+         * @param fields Fields.
          * @param addConstructor If 'true' then empty and full constructors should be generated.
          * @returns {StringBuilder}
          */
-        static domainClass(type, fields, addConstructor) {
-            const dotIdx = type.lastIndexOf('.');
+        static domainClass(fullClsName, fields, addConstructor) {
+            const dotIdx = fullClsName.lastIndexOf('.');
 
-            const pkg = type.substring(0, dotIdx);
-            const clsName = type.substring(dotIdx + 1);
+            const pkg = fullClsName.substring(0, dotIdx);
+            const clsName = fullClsName.substring(dotIdx + 1);
 
             const sb = new StringBuilder();
 
             sb.append(`package ${pkg};`);
+            sb.emptyLine();
+
+            const imports = ['java.io.Serializable'];
+
+            _.forEach(fields, (field) => imports.push(JavaTypes.fullClassName(field.javaFieldType)));
+
+            _.forEach(this._prepareImports(imports), (cls) => sb.append(`import ${cls};`));
+
             sb.emptyLine();
 
             this.mainComment(sb,
@@ -835,12 +842,17 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 sb.emptyLine();
 
                 this.commentBlock(sb, 'Full constructor.');
-                sb.startBlock(`public ${clsName}() {`);
 
-                _.forEach(fields, (field, idx) => {
+                const arg = (field) => {
                     const fldType = JavaTypes.shortClassName(field.javaFieldType);
 
-                    sb.append(`${fldType} ${field.javaFieldName}${idx < fields.length - 1 ? ',' : ') {'}`);
+                    return `${fldType} ${field.javaFieldName}`;
+                };
+
+                sb.startBlock(`public ${clsName}(${arg(_.head(fields))}${fields.length === 1 ? ') {' : ','}`);
+
+                _.forEach(_.tail(fields), (field, idx) => {
+                    sb.append(`${arg(field)}${idx !== fields.length - 1 ? ',' : ') {'}`);
                 });
 
                 _.forEach(fields, (field) => sb.append(`this.${field.javaFieldName} = ${field.javaFieldName};`));
@@ -882,16 +894,14 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             this.commentBlock(sb, '{@inheritDoc}');
             sb.startBlock('@Override public boolean equals(Object o) {');
             sb.startBlock('if (this == o)');
-            sb.line('return true;');
-            sb.endBlock();
+            sb.append('return true;');
 
-            sb.emptyLine();
+            sb.endBlock('');
 
             sb.startBlock(`if (!(o instanceof ${clsName}))`);
             sb.append('return false;');
-            sb.endBlock();
 
-            sb.emptyLine();
+            sb.endBlock('');
 
             sb.append(`${clsName} that = (${clsName})o;`);
 
@@ -919,13 +929,13 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                 sb.append('return false;');
 
-                sb.endBlock();
+                sb.endBlock('');
             });
-
-            sb.emptyLine();
 
             sb.append('return true;');
             sb.endBlock('}');
+
+            sb.emptyLine();
 
             // Generate hashCode() method.
             this.commentBlock(sb, '{@inheritDoc}');
@@ -984,21 +994,22 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             sb.append('return res;');
             sb.endBlock('}');
 
+            sb.emptyLine();
+
             this.commentBlock(sb, '{@inheritDoc}');
             sb.startBlock('@Override public String toString() {');
             sb.startBlock(`return "${clsName} [" + `);
 
             _.forEach(fields, (field, idx) => {
-                sb.line(`"${field.javaFieldName} + ="${field.javaFieldName}${idx < fields.length - 1 ? ' + ", " + ' : ' +'}`);
+                sb.append(`"${field.javaFieldName}=" + ${field.javaFieldName}${idx < fields.length - 1 ? ' + ", " + ' : ' +'}`);
             });
 
             sb.endBlock('"]";');
             sb.endBlock('}');
 
-            sb.emptyLine();
             sb.endBlock('}');
 
-            return sb;
+            return sb.asString();
         }
 
         /**

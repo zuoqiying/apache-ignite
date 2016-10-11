@@ -24,7 +24,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
     return class SpringTransformer extends AbstractTransformer {
         static generator = generator;
 
-        static comment(sb, ...lines) {
+        static commentBlock(sb, ...lines) {
             if (lines.length > 1) {
                 sb.append('<!--');
 
@@ -266,7 +266,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
             // 2. Add external property file
             if (this.hasProperties(cfg)) {
-                this.comment(sb, 'Load external properties file.');
+                this.commentBlock(sb, 'Load external properties file.');
 
                 sb.startBlock('<bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">');
                 sb.append('<property name="location" value="classpath:secret.properties"/>');
@@ -279,7 +279,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             const dataSources = this.collectDataSources(cfg);
 
             if (dataSources.length) {
-                this.comment(sb, 'Data source beans will be initialized from external properties file.');
+                this.commentBlock(sb, 'Data source beans will be initialized from external properties file.');
 
                 _.forEach(dataSources, (ds) => {
                     this.appendBean(sb, ds, true);
@@ -292,7 +292,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 const nearCaches = _.filter(cluster.caches, (cache) => _.get(cache, 'clientNearConfiguration.enabled'));
 
                 _.forEach(nearCaches, (cache) => {
-                    this.comment(sb, 'Configuration of near cache for cache "' + cache.name + '"');
+                    this.commentBlock(sb, 'Configuration of near cache for cache "' + cache.name + '"');
 
                     this.appendBean(sb, generator.cacheNearClient(cache), true);
 
