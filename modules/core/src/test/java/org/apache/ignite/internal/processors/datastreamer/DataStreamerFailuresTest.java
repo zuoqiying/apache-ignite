@@ -151,13 +151,14 @@ public class DataStreamerFailuresTest extends GridCommonAbstractTest {
                     ldr.addData(i, i);
                 }
             }
-            catch (Throwable e) {
+            catch (CacheException e) {
                 thrown = true;
             }
             finally {
                 try {
                     ldr.close();
-                } catch (Throwable e) {
+                }
+                catch (CacheException e) {
                     thrown = true;
                 }
             }
@@ -165,11 +166,7 @@ public class DataStreamerFailuresTest extends GridCommonAbstractTest {
             assertTrue(thrown);
         }
         finally {
-            try {
-                stopAllGrids();
-            } catch (Throwable e){
-                //This should not hang.
-            }
+            stopAllGrids();
         }
     }
 
@@ -199,7 +196,8 @@ public class DataStreamerFailuresTest extends GridCommonAbstractTest {
                     if (i == 1) {
                         try {
                             ldr.flush();
-                        } catch (Exception e) {
+                        }
+                        catch (CacheException e) {
                             thrown = true;
                         }
                     }
@@ -294,5 +292,4 @@ public class DataStreamerFailuresTest extends GridCommonAbstractTest {
                 throw new IgniteException("First fail.");
         }
     }
-
 }
