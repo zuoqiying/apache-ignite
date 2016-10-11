@@ -76,20 +76,17 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
                 for (int i = 0; i < cnt; i++)
                     entitySetNames.add(reader.readString());
 
-                final Map<String, EntryProcessorResult<Long>> currentVersions =
-                    metaCache.invokeAll(entitySetNames,
-                    new PlatformDotNetEntityFrameworkIncreaseVersionProcessor());
+                final Map<String, EntryProcessorResult<Long>> curVers =
+                    metaCache.invokeAll(entitySetNames, new PlatformDotNetEntityFrameworkIncreaseVersionProcessor());
 
-                if (currentVersions.size() != cnt)
-                {
-                    throw new IgniteCheckedException("Failed to update entity set versions, expected: "
-                        + cnt + ", actual: " + currentVersions.size());
-                }
+                if (curVers.size() != cnt)
+                    throw new IgniteCheckedException("Failed to update entity set versions [expected=" + cnt +
+                        ", actual=" + curVers.size() + ']');
 
                 Ignite grid = target.platformContext().kernalContext().grid();
 
                 startBackgroundCleanup(grid, (IgniteCache<String, UUID>)(IgniteCache)metaCache,
-                    dataCacheName, currentVersions);
+                    dataCacheName, curVers);
 
                 return target.writeResult(mem, null);
             }
