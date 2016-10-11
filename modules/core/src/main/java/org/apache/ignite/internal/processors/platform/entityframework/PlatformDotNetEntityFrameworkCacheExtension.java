@@ -51,7 +51,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     private static final int OP_INVALIDATE_SETS = 1;
 
     /** Cache key for cleanup node ID. Contains characters not allowed in SQL table name. */
-    private static final String CLEANUP_NODE_ID = " ^CLEANUP_NODE_ID^ ";
+    private static final CleanupNodeId CLEANUP_NODE_ID = new CleanupNodeId();
 
     /** {@inheritDoc} */
     @Override public int id() {
@@ -85,7 +85,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
                 Ignite grid = target.platformContext().kernalContext().grid();
 
-                startBackgroundCleanup(grid, (IgniteCache<String, UUID>)(IgniteCache)metaCache,
+                startBackgroundCleanup(grid, (IgniteCache<CleanupNodeId, UUID>)(IgniteCache)metaCache,
                     dataCacheName, curVers);
 
                 return target.writeResult(mem, null);
@@ -103,7 +103,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
      * @param dataCacheName Data cache name.
      * @param currentVersions Current versions.
      */
-    private void startBackgroundCleanup(Ignite grid, final Cache<String, UUID> metaCache,
+    private void startBackgroundCleanup(Ignite grid, final Cache<CleanupNodeId, UUID> metaCache,
         final String dataCacheName, final Map<String, EntryProcessorResult<Long>> currentVersions) {
         // Initiate old entries cleanup.
         IgniteCompute asyncCompute = grid.compute().withAsync();
@@ -180,5 +180,12 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(PlatformDotNetEntityFrameworkCacheExtension.class, this);
+    }
+
+    /**
+     * Cache key for cleanup node id.
+     */
+    private static class CleanupNodeId {
+        // No-op.
     }
 }
