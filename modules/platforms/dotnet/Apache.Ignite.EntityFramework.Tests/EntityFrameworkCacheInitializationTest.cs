@@ -32,6 +32,15 @@ namespace Apache.Ignite.EntityFramework.Tests
     public class EntityFrameworkCacheInitializationTest
     {
         /// <summary>
+        /// Fixture tear down.
+        /// </summary>
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            Ignition.StopAll(true);
+        }
+
+        /// <summary>
         /// Tests the IgniteDbConfiguration.
         /// </summary>
         [Test]
