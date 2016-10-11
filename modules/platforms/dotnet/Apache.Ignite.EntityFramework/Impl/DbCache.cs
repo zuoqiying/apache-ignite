@@ -22,7 +22,9 @@ namespace Apache.Ignite.EntityFramework.Impl
     using System.Data.Entity.Core.Metadata.Edm;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
+    using System.IO;
     using System.Linq;
+    using System.Runtime.Serialization.Formatters.Binary;
     using Apache.Ignite.Core;
     using Apache.Ignite.Core.Cache;
     using Apache.Ignite.Core.Cache.Configuration;
@@ -30,7 +32,6 @@ namespace Apache.Ignite.EntityFramework.Impl
     using Apache.Ignite.Core.Common;
     using Apache.Ignite.Core.Impl.Cache;
     using Apache.Ignite.Core.Impl.Common;
-    using Apache.Ignite.Core.Impl.EntityFramework;
     using Apache.Ignite.Core.Log;
 
     /// <summary>
@@ -44,18 +45,24 @@ namespace Apache.Ignite.EntityFramework.Impl
         /** Invalidate sets extension operation. */
         private const int OpInvalidateSets = 1;
 
+        /** Put data extension operation. */
+        private const int OpPutItem = 2;
+
+        /** Get data extension operation. */
+        private const int OpGetItem = 3;
+
         /** Max number of cached expiry caches. */
         private const int MaxExpiryCaches = 1000;
 
         /** Main cache: stores SQL -> QueryResult mappings. */
-        private readonly ICache<string, EntityFrameworkCacheEntry> _cache;
+        private readonly ICache<string, object> _cache;
 
         /** Entity set version cache. */
         private readonly ICache<string, long> _metaCache;
 
         /** Cached caches per (expiry_seconds * 10). */
-        private volatile Dictionary<long, ICache<string, EntityFrameworkCacheEntry>> _expiryCaches =
-            new Dictionary<long, ICache<string, EntityFrameworkCacheEntry>>();
+        private volatile Dictionary<long, ICache<string, object>> _expiryCaches =
+            new Dictionary<long, ICache<string, object>>();
 
         /** Sync object. */
         private readonly object _syncRoot = new object();
@@ -79,7 +86,7 @@ namespace Apache.Ignite.EntityFramework.Impl
                 "dataCacheConfiguration", "Meta and Data cache can't have the same name.");
 
             _metaCache = ignite.GetOrCreateCache<string, long>(metaCacheConfiguration);
-            _cache = ignite.GetOrCreateCache<string, EntityFrameworkCacheEntry>(dataCacheConfiguration);
+            _cache = ignite.GetOrCreateCache<string, object>(dataCacheConfiguration);
 
             var metaCfg = _metaCache.GetConfiguration();
 
@@ -114,13 +121,22 @@ namespace Apache.Ignite.EntityFramework.Impl
         /// </summary>
         public bool GetItem(DbCacheKey key, out object value)
         {
-            EntityFrameworkCacheEntry res;
+            var valueBytes = ((ICacheInternal) _cache).DoOutInOpExtension(ExtensionId, OpGetItem,
+                w => w.WriteString(key.GetStringKey()), r => r.ReadByteArray());
 
-            var success = _cache.TryGet(key.GetStringKey(), out res);
+            if (valueBytes == null)
+            {
+                value = null;
 
-            value = success ? res.Data : null;
+                return false;
+            }
 
-            return success;
+            using (var ms = new MemoryStream(valueBytes))
+            {
+                value = new BinaryFormatter().Deserialize(ms);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -128,10 +144,35 @@ namespace Apache.Ignite.EntityFramework.Impl
         /// </summary>
         public void PutItemAsync(DbCacheKey key, object value, TimeSpan absoluteExpiration)
         {
-            var cache = GetCacheWithExpiry(absoluteExpiration);
-
             // Put asynchronously to avoid unnecessary delay in the requesting thread.
-            cache.PutAsync(key.GetStringKey(), new EntityFrameworkCacheEntry(value, key.EntitySetVersions));
+            using (var stream = new MemoryStream())
+            {
+                new BinaryFormatter().Serialize(stream, value);
+
+                var valueBytes = stream.ToArray();
+
+                var versions = key.EntitySetVersions;
+
+                var cache = GetCacheWithExpiry(absoluteExpiration);
+
+                ((ICacheInternal)cache).DoOutInOpExtension<object>(ExtensionId, OpPutItem, w =>
+                {
+                    if (key.EntitySetVersions != null)
+                    {
+                        w.WriteInt(versions.Count);
+
+                        foreach (var version in versions)
+                        {
+                            w.WriteString(version.Key);
+                            w.WriteLong(version.Value);
+                        }
+                    }
+                    else
+                        w.WriteInt(0);
+
+                    w.WriteByteArray(valueBytes);
+                }, null);
+            }
         }
 
         /// <summary>
@@ -158,7 +199,7 @@ namespace Apache.Ignite.EntityFramework.Impl
         /// </summary>
         /// <returns>Cache with expiry policy.</returns>
         // ReSharper disable once UnusedParameter.Local
-        private ICache<string, EntityFrameworkCacheEntry> GetCacheWithExpiry(TimeSpan absoluteExpiration)
+        private ICache<string, object> GetCacheWithExpiry(TimeSpan absoluteExpiration)
         {
             if (absoluteExpiration == TimeSpan.MaxValue)
                 return _cache;
@@ -166,7 +207,7 @@ namespace Apache.Ignite.EntityFramework.Impl
             // Round up to 0.1 of a second so that we share expiry caches
             var expirySeconds = GetSeconds(absoluteExpiration);
 
-            ICache<string, EntityFrameworkCacheEntry> expiryCache;
+            ICache<string, object> expiryCache;
 
             if (_expiryCaches.TryGetValue(expirySeconds, out expiryCache))
                 return expiryCache;
@@ -178,8 +219,8 @@ namespace Apache.Ignite.EntityFramework.Impl
 
                 // Copy on write with size limit
                 _expiryCaches = _expiryCaches.Count > MaxExpiryCaches
-                    ? new Dictionary<long, ICache<string, EntityFrameworkCacheEntry>>()
-                    : new Dictionary<long, ICache<string, EntityFrameworkCacheEntry>>(_expiryCaches);
+                    ? new Dictionary<long, ICache<string, object>>()
+                    : new Dictionary<long, ICache<string, object>>(_expiryCaches);
 
                 expiryCache =
                     _cache.WithExpiryPolicy(GetExpiryPolicy(expirySeconds));

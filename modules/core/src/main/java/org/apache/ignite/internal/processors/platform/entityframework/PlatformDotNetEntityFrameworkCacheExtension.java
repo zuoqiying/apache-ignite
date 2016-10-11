@@ -53,6 +53,12 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     /** Operation: increment entity set versions. */
     private static final int OP_INVALIDATE_SETS = 1;
 
+    /** Operation: put item. */
+    private static final int OP_PUT_ITEM = 2;
+
+    /** Operation: get item. */
+    private static final int OP_GET_ITEM = 3;
+
     /** Cache key for cleanup node ID. Contains characters not allowed in SQL table name. */
     private static final CleanupNodeId CLEANUP_NODE_ID = new CleanupNodeId();
 
@@ -92,6 +98,15 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
                     dataCacheName, curVers);
 
                 return target.writeResult(mem, null);
+            }
+
+            case OP_PUT_ITEM: {
+                // TODO
+                return 0;
+            }
+
+            case OP_GET_ITEM: {
+                return 0;
             }
         }
 

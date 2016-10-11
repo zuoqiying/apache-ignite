@@ -31,7 +31,6 @@ namespace Apache.Ignite.Core.Impl.Binary
     using Apache.Ignite.Core.Impl.Compute;
     using Apache.Ignite.Core.Impl.Compute.Closure;
     using Apache.Ignite.Core.Impl.Datastream;
-    using Apache.Ignite.Core.Impl.EntityFramework;
     using Apache.Ignite.Core.Impl.Messaging;
 
     /// <summary>
@@ -556,7 +555,7 @@ namespace Apache.Ignite.Core.Impl.Binary
         /// Adds a predefined system type.
         /// </summary>
         private void AddSystemType<T>(int typeId, Func<BinaryReader, T> ctor, string affKeyFldName = null, 
-            IBinarySerializerInternal serializer = null, string typeNameOverride = null)
+            IBinarySerializerInternal serializer = null)
             where T : IBinaryWriteAware
         {
             var type = typeof(T);
@@ -564,7 +563,7 @@ namespace Apache.Ignite.Core.Impl.Binary
             serializer = serializer ?? new BinarySystemTypeSerializer<T>(ctor);
 
             if (typeId == 0)
-                typeId = BinaryUtils.TypeId(typeNameOverride ?? type.Name, null, null);
+                typeId = BinaryUtils.TypeId(type.Name, null, null);
 
             AddType(type, typeId, BinaryUtils.GetTypeName(type), false, false, null, null, serializer, affKeyFldName,
                 false);
@@ -588,15 +587,13 @@ namespace Apache.Ignite.Core.Impl.Binary
                 serializer: new SerializableSerializer());
             AddSystemType(BinaryUtils.TypeDateTimeHolder, w => new DateTimeHolder(w),
                 serializer: new DateTimeSerializer());
-            AddSystemType(BinaryUtils.TypeCacheEntryProcessorHolder, r => new CacheEntryProcessorHolder(r));
-            AddSystemType(BinaryUtils.TypeCacheEntryPredicateHolder, r => new CacheEntryFilterHolder(r));
-            AddSystemType(BinaryUtils.TypeMessageListenerHolder, r => new MessageListenerHolder(r));
-            AddSystemType(BinaryUtils.TypeStreamReceiverHolder, r => new StreamReceiverHolder(r));
-            AddSystemType(0, r => new AffinityKey(r), "affKey");
-            AddSystemType(BinaryUtils.TypePlatformJavaObjectFactoryProxy, r => new PlatformJavaObjectFactoryProxy());
-            AddSystemType(0, r => new ObjectInfoHolder(r));
-            AddSystemType(0, r => new EntityFrameworkCacheEntry(r),
-                typeNameOverride: "PlatformDotNetEntityFrameworkCacheEntry");
+            AddSystemType(BinaryUtils.TypeCacheEntryProcessorHolder, w => new CacheEntryProcessorHolder(w));
+            AddSystemType(BinaryUtils.TypeCacheEntryPredicateHolder, w => new CacheEntryFilterHolder(w));
+            AddSystemType(BinaryUtils.TypeMessageListenerHolder, w => new MessageListenerHolder(w));
+            AddSystemType(BinaryUtils.TypeStreamReceiverHolder, w => new StreamReceiverHolder(w));
+            AddSystemType(0, w => new AffinityKey(w), "affKey");
+            AddSystemType(BinaryUtils.TypePlatformJavaObjectFactoryProxy, w => new PlatformJavaObjectFactoryProxy());
+            AddSystemType(0, w => new ObjectInfoHolder(w));
         }
     }
 }

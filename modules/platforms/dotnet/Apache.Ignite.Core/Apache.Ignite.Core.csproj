@@ -297,7 +297,6 @@
     <Compile Include="Impl\Common\CopyOnWriteConcurrentDictionary.cs" />
     <Compile Include="Impl\Common\DelegateConverter.cs" />
     <Compile Include="Impl\Common\DelegateTypeDescriptor.cs" />
-    <Compile Include="Impl\EntityFramework\EntityFrameworkCacheEntry.cs" />
     <Compile Include="Impl\Events\EventTypeConverter.cs" />
     <Compile Include="Impl\Common\Fnv1Hash.cs" />
     <Compile Include="Impl\Common\Future.cs" />
@@ -530,6 +529,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Impl\Common\JavaObjects\" />
+    <Folder Include="Impl\EntityFramework\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\cpp\jni\project\vs\jni.vcxproj">
