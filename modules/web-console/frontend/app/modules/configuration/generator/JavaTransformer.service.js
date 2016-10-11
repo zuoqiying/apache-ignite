@@ -784,6 +784,266 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
             return sb;
         }
+
+        /**
+         * Generate java class code.
+         *
+         * @param pkg Package name.
+         * @param clsName If 'true' then key class should be generated.
+         * @param fields If 'true' then include key fields into value POJO.
+         * @param addConstructor If 'true' then empty and full constructors should be generated.
+         * @returns {StringBuilder}
+         */
+        static domainClass(type, fields, addConstructor) {
+            const dotIdx = type.lastIndexOf('.');
+
+            const pkg = type.substring(0, dotIdx);
+            const clsName = type.substring(dotIdx + 1);
+
+            const sb = new StringBuilder();
+
+            sb.append(`package ${pkg};`);
+            sb.emptyLine();
+
+            this.mainComment(sb,
+                `${clsName} definition.`,
+                ''
+            );
+            sb.startBlock(`public class ${clsName} implements Serializable {`);
+            sb.append('/** */');
+            sb.append('private static final long serialVersionUID = 0L;');
+            sb.emptyLine();
+
+            // Generate fields declaration.
+            _.forEach(fields, (field) => {
+                const fldName = field.javaFieldName;
+                const fldType = JavaTypes.shortClassName(field.javaFieldType);
+
+                sb.append(`/** Value for ${fldName}. */`);
+                sb.append(`private ${fldType} ${fldName};`);
+
+                sb.emptyLine();
+            });
+
+            // Generate constructors.
+            if (addConstructor) {
+                this.commentBlock(sb, 'Empty constructor.');
+                sb.startBlock(`public ${clsName}() {`);
+                this.comment(sb, 'No-op.');
+                sb.endBlock('}');
+
+                sb.emptyLine();
+
+                this.commentBlock(sb, 'Full constructor.');
+                sb.startBlock(`public ${clsName}() {`);
+
+                _.forEach(fields, (field, idx) => {
+                    const fldType = JavaTypes.shortClassName(field.javaFieldType);
+
+                    sb.append(`${fldType} ${field.javaFieldName}${idx < fields.length - 1 ? ',' : ') {'}`);
+                });
+
+                _.forEach(fields, (field) => sb.append(`this.${field.javaFieldName} = ${field.javaFieldName};`));
+
+                sb.endBlock('}');
+
+                sb.emptyLine();
+            }
+
+            // Generate getters and setters methods.
+            _.forEach(fields, (field) => {
+                const fldType = JavaTypes.shortClassName(field.javaFieldType);
+                const fldName = field.javaFieldName;
+
+                this.commentBlock(sb,
+                    `Gets ${fldName}`,
+                    '',
+                    `@return Value for ${fldName}.`
+                );
+                sb.startBlock(`public ${fldType} ${JavaTypes.toJavaName('get', fldName)}() {`);
+                sb.append('return ' + fldName + ';');
+                sb.endBlock('}');
+
+                sb.emptyLine();
+
+                this.commentBlock(sb,
+                    `Sets ${fldName}`,
+                    '',
+                    `@param ${fldName} New value for ${fldName}.`
+                );
+                sb.startBlock(`public void ${JavaTypes.toJavaName('set', fldName)}(${fldType} ${fldName}) {`);
+                sb.append(`this.${fldName} = ${fldName};`);
+                sb.endBlock('}');
+
+                sb.emptyLine();
+            });
+
+            // Generate equals() method.
+            this.commentBlock(sb, '{@inheritDoc}');
+            sb.startBlock('@Override public boolean equals(Object o) {');
+            sb.startBlock('if (this == o)');
+            sb.line('return true;');
+            sb.endBlock();
+
+            sb.emptyLine();
+
+            sb.startBlock(`if (!(o instanceof ${clsName}))`);
+            sb.append('return false;');
+            sb.endBlock();
+
+            sb.emptyLine();
+
+            sb.append(`${clsName} that = (${clsName})o;`);
+
+            _.forEach(fields, (field) => {
+                sb.emptyLine();
+
+                const javaName = field.javaFieldName;
+                const javaType = field.javaFieldType;
+
+                switch (javaType) {
+                    case 'float':
+                        sb.startBlock(`if (Float.compare(${javaName}, that.${javaName}) != 0)`);
+
+                        break;
+                    case 'double':
+                        sb.startBlock(`if (Double.compare(${javaName}, that.${javaName}) != 0)`);
+
+                        break;
+                    default:
+                        if (JavaTypes.isJavaPrimitive(javaType))
+                            sb.startBlock('if (' + javaName + ' != that.' + javaName + ')');
+                        else
+                            sb.startBlock('if (' + javaName + ' != null ? !' + javaName + '.equals(that.' + javaName + ') : that.' + javaName + ' != null)');
+                }
+
+                sb.append('return false;');
+
+                sb.endBlock();
+            });
+
+            sb.emptyLine();
+
+            sb.append('return true;');
+            sb.endBlock('}');
+
+            // Generate hashCode() method.
+            this.commentBlock(sb, '{@inheritDoc}');
+            sb.startBlock('@Override public int hashCode() {');
+
+            let first = true;
+            let tempVar = false;
+
+            _.forEach(fields, (field) => {
+                const javaName = field.javaFieldName;
+                const javaType = field.javaFieldType;
+
+                let fldHashCode;
+
+                switch (javaType) {
+                    case 'boolean':
+                        fldHashCode = `${javaName} ? 1 : 0`;
+
+                        break;
+                    case 'byte':
+                    case 'short':
+                        fldHashCode = `(int)${javaName}`;
+
+                        break;
+                    case 'int':
+                        fldHashCode = `${javaName}`;
+
+                        break;
+                    case 'long':
+                        fldHashCode = `(int)(${javaName} ^ (${javaName} >>> 32))`;
+
+                        break;
+                    case 'float':
+                        fldHashCode = `${javaName} != +0.0f ? Float.floatToIntBits(${javaName}) : 0`;
+
+                        break;
+                    case 'double':
+                        sb.append(`${tempVar ? 'ig_hash_temp' : 'long ig_hash_temp'} = Double.doubleToLongBits(${javaName});`);
+
+                        tempVar = true;
+
+                        fldHashCode = `${javaName} != +0.0f ? Float.floatToIntBits(${javaName}) : 0`;
+
+                        break;
+                    default:
+                        fldHashCode = `${javaName} != null ? ${javaName}.hashCode() : 0`;
+                }
+
+                sb.append(first ? `int res = ${fldHashCode};` : `res = 31 * res + ${fldHashCode.startsWith('(') ? fldHashCode : `(${fldHashCode})`};`);
+
+                first = false;
+
+                sb.emptyLine();
+            });
+
+            sb.append('return res;');
+            sb.endBlock('}');
+
+            this.commentBlock(sb, '{@inheritDoc}');
+            sb.startBlock('@Override public String toString() {');
+            sb.startBlock(`return "${clsName} [" + `);
+
+            _.forEach(fields, (field, idx) => {
+                sb.line(`"${field.javaFieldName} + ="${field.javaFieldName}${idx < fields.length - 1 ? ' + ", " + ' : ' +'}`);
+            });
+
+            sb.endBlock('"]";');
+            sb.endBlock('}');
+
+            sb.emptyLine();
+            sb.endBlock('}');
+
+            return sb;
+        }
+
+        /**
+         * Generate source code for type by its domain models.
+         *
+         * @param caches List of caches to generate POJOs for.
+         * @param addConstructor If 'true' then generate constructors.
+         * @param includeKeyFields If 'true' then include key fields into value POJO.
+         */
+        static pojos(caches, addConstructor, includeKeyFields) {
+            const pojos = [];
+
+            _.forEach(caches, (cache) => {
+                _.forEach(cache.domains, (domain) => {
+                    // Process only  domains with 'generatePojo' flag and skip already generated classes.
+                    if (domain.generatePojo && !_.find(pojos, {valueType: domain.valueType}) &&
+                        // Skip domain models without value fields.
+                        _.nonEmpty(domain.valueFields)) {
+                        const pojo = {};
+
+                        // Key class generation only if key is not build in java class.
+                        if (_.nonNil(domain.keyFields) && domain.keyFields.length > 0) {
+                            pojo.keyType = domain.keyType;
+                            pojo.keyClass = this.domainClass(domain.keyType, domain.keyFields, addConstructor);
+                        }
+
+                        const valueFields = _.clone(domain.valueFields);
+
+                        if (includeKeyFields) {
+                            _.forEach(domain.keyFields, ({fld}) => {
+                                if (!_.find(valueFields, {name: fld.name}))
+                                    valueFields.push(fld);
+                            });
+                        }
+
+                        pojo.valueType = domain.valueType;
+                        pojo.valueClass = this.domainClass(domain.valueType, valueFields, addConstructor);
+
+                        pojos.push(pojo);
+                    }
+                });
+            });
+
+            return pojos;
+        }
     }
 
     return JavaTransformer;
