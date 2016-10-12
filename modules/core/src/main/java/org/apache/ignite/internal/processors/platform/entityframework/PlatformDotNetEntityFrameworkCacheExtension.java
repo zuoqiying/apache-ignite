@@ -174,12 +174,9 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
         // Get the node performing cleanup.
         UUID nodeId = metaCache.get(CLEANUP_NODE_ID);
 
-        if (nodeId == null) {
-            if (metaCache.putIfAbsent(CLEANUP_NODE_ID, localNodeId))
-                return true;   // No cleanup is in progress, start new.
-            else
-                return false;  // putIfAbsent failed: someone else started cleanup.
-        }
+        if (nodeId == null)
+            // Failed putIfAbsent means someone else has started cleanup.
+            return metaCache.putIfAbsent(CLEANUP_NODE_ID, localNodeId);
 
         if (nodeId.equals(localNodeId))
             return false;  // Current node already performs cleanup.
