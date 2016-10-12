@@ -167,8 +167,6 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
      * @return True if successfully set the flag indicating that current node performs the cleanup; otherwise false.
      */
     private boolean trySetGlobalCleanupFlag(Ignite grid, final Cache<CleanupNodeId, UUID> metaCache) {
-        // Initiate old entries cleanup.
-        // Set a flag about running cleanup.
         final UUID localNodeId = grid.cluster().localNode().id();
 
         // Get the node performing cleanup.
