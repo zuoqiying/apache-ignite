@@ -23,6 +23,7 @@ import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteCompute;
 import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.cluster.ClusterGroup;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.binary.BinaryRawReaderEx;
 import org.apache.ignite.internal.processors.platform.cache.PlatformCache;
 import org.apache.ignite.internal.processors.platform.cache.PlatformCacheExtension;
@@ -189,14 +190,20 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
         Set<String> keysToRemove = new HashSet<>();
 
+        ClusterNode localNode = ignite.cluster().localNode();
+
         for (Cache.Entry<String, PlatformDotNetEntityFrameworkCacheEntry> cacheEntry :
             cache.localEntries(CachePeekMode.ALL)) {
+            // Check if we are on a primary node for the key, since we use CachePeekMode.ALL
+            // and we don't want to process backup entries.
+            if (!ignite.affinity(dataCacheName).isPrimary(localNode, cacheEntry.getKey()))
+                continue;
+
             PlatformDotNetEntityFrameworkCacheEntry entry = cacheEntry.getValue();
 
             for (Map.Entry<String, Long> entitySet : entry.entitySets().entrySet()) {
                 EntryProcessorResult<Long> curVer = currentVersions.get(entitySet.getKey());
 
-                // TODO: Check if we are primary node for the key
                 if (curVer != null && entitySet.getValue() < curVer.get())
                     keysToRemove.add(cacheEntry.getKey());
             }

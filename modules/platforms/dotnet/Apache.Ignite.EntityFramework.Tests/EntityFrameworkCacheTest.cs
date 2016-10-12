@@ -84,7 +84,7 @@ namespace Apache.Ignite.EntityFramework.Tests
                 .WithKeepBinary<object, object>();
 
             _metaCache = ignite.GetCache<object, object>("entityFrameworkQueryCache_metadata")
-                .WithKeepBinary<object, object>(); ;
+                .WithKeepBinary<object, object>();
         }
 
         /// <summary>
