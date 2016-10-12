@@ -44,11 +44,16 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
         return entitySets;
     }
 
+    /**
+     * @return Cached data bytes.
+     */
+    public byte[] data() {
+        return data;
+    }
+
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
-        BinaryRawWriter raw = writer.rawWriter();
-
-        writeBinary(raw);
+        writeBinary(writer.rawWriter());
     }
 
     /** {@inheritDoc} */

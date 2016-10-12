@@ -108,11 +108,19 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
                 dataCache.put(key, efEntry);
 
-                return 0;
+                return target.writeResult(mem, null);
             }
 
             case OP_GET_ITEM: {
-                return 0;
+                String key = reader.readString();
+
+                IgniteCache<String, PlatformDotNetEntityFrameworkCacheEntry> dataCache = target.rawCache();
+
+                PlatformDotNetEntityFrameworkCacheEntry entry = dataCache.get(key);
+
+                byte[] data = entry == null ? null : entry.data();
+
+                return target.writeResult(mem, data);
             }
         }
 
