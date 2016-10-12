@@ -61,6 +61,9 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     /** Cache key for cleanup node ID. Contains characters not allowed in SQL table name. */
     private static final CleanupNodeId CLEANUP_NODE_ID = new CleanupNodeId();
 
+    /** Indicates whether local cleanup is in progress. */
+    private static volatile boolean cleanupFlag;
+
     /** {@inheritDoc} */
     @Override public int id() {
         return EXT_ID;
@@ -138,34 +141,13 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
      */
     private void startBackgroundCleanup(Ignite grid, final Cache<CleanupNodeId, UUID> metaCache,
         final String dataCacheName, final Map<String, EntryProcessorResult<Long>> currentVersions) {
-        // Initiate old entries cleanup.
-        // Set a flag about running cleanup.
-        final UUID localNodeId = grid.cluster().localNode().id();
+        if (cleanupFlag)
+            return;  // Current node already performs cleanup.
 
-        while (true) {
-            // TODO: First check a local flag, then cache.get, then putIfAbsent
+        if (!trySetGlobalCleanupFlag(grid, metaCache))
+            return;
 
-            if (metaCache.putIfAbsent(CLEANUP_NODE_ID, localNodeId))
-                break;   // No cleanup is in progress, start new.
-
-            // Some node is performing cleanup - check if it is alive.
-            UUID nodeId = metaCache.get(CLEANUP_NODE_ID);
-
-            if (nodeId == null)
-                continue;  // Cleanup has stopped.
-
-            if (nodeId.equals(localNodeId))
-                return;  // Current node already performs cleanup.
-
-            if (grid.cluster().node(nodeId) != null)
-                return;  // Another node already performs cleanup and is alive.
-
-            // Node that performs cleanup has disconnected.
-            if (metaCache.replace(CLEANUP_NODE_ID, nodeId, localNodeId))
-                break;  // Successfully replaced disconnected node id with our id.
-
-            // Node id value has changed by another thread. Repeat the process.
-        }
+        cleanupFlag = true;
 
         final ClusterGroup dataNodes = grid.cluster().forDataNodes(dataCacheName);
 
@@ -174,6 +156,43 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
         asyncCompute.broadcast(new RemoveOldEntriesRunnable(dataCacheName, currentVersions));
 
         asyncCompute.future().listen(new CleanupCompletionListener(metaCache));
+    }
+
+    /**
+     * Tries to set the global cleanup node id to current node.
+     *
+     * @param grid Grid.
+     * @param metaCache Meta cache.
+     *
+     * @return True if successfully set the flag indicating that current node performs the cleanup; otherwise false.
+     */
+    private boolean trySetGlobalCleanupFlag(Ignite grid, final Cache<CleanupNodeId, UUID> metaCache) {
+        // Initiate old entries cleanup.
+        // Set a flag about running cleanup.
+        final UUID localNodeId = grid.cluster().localNode().id();
+
+        // Get the node performing cleanup.
+        UUID nodeId = metaCache.get(CLEANUP_NODE_ID);
+
+        if (nodeId == null) {
+            if (metaCache.putIfAbsent(CLEANUP_NODE_ID, localNodeId))
+                return true;   // No cleanup is in progress, start new.
+            else
+                return false;  // putIfAbsent failed: someone else started cleanup.
+        }
+
+        if (nodeId.equals(localNodeId))
+            return false;  // Current node already performs cleanup.
+
+        if (grid.cluster().node(nodeId) != null)
+            return false;  // Another node already performs cleanup and is alive.
+
+        // Node that performs cleanup has disconnected.
+        if (metaCache.replace(CLEANUP_NODE_ID, nodeId, localNodeId))
+            return true;  // Successfully replaced disconnected node id with our id.
+
+        // Replace failed: someone else started cleanup.
+        return false;
     }
 
     /**
@@ -274,8 +293,11 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
         /** {@inheritDoc} */
         @Override public void apply(IgniteFuture<Object> future) {
-            // Reset cleanup flag.
+            // Reset distributed cleanup flag.
             metaCache.remove(CLEANUP_NODE_ID);
+
+            // Reset local cleanup flag.
+            cleanupFlag = false;
         }
     }
 }
