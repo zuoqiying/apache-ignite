@@ -122,7 +122,7 @@ namespace Apache.Ignite.EntityFramework.Impl
         public bool GetItem(DbCacheKey key, out object value)
         {
             var valueBytes = ((ICacheInternal) _cache).DoOutInOpExtension(ExtensionId, OpGetItem,
-                w => w.WriteString(key.GetStringKey()), r => r.ReadByteArray());
+                w => w.WriteString(key.GetStringKey()), r => r.ReadObject<byte[]>());
 
             if (valueBytes == null)
             {

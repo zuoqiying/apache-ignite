@@ -80,8 +80,11 @@ namespace Apache.Ignite.EntityFramework.Tests
             }
 
             // Get the caches.
-            _cache = ignite.GetCache<object, object>("entityFrameworkQueryCache_data");
-            _metaCache = ignite.GetCache<object, object>("entityFrameworkQueryCache_metadata");
+            _cache = ignite.GetCache<object, object>("entityFrameworkQueryCache_data")
+                .WithKeepBinary<object, object>();
+
+            _metaCache = ignite.GetCache<object, object>("entityFrameworkQueryCache_metadata")
+                .WithKeepBinary<object, object>(); ;
         }
 
         /// <summary>
@@ -730,7 +733,7 @@ namespace Apache.Ignite.EntityFramework.Tests
             var blog = new Blog {Name = "my blog"};
             var threadId = Thread.CurrentThread.ManagedThreadId;
 
-            Func<object> getMeta = () => _metaCache.WithKeepBinary<object, object>().Where(x => x.Key.Equals("Blog"))
+            Func<object> getMeta = () => _metaCache.Where(x => x.Key.Equals("Blog"))
                 .Select(x => x.Value).SingleOrDefault() ?? "null";
 
             var meta1 = getMeta();
