@@ -981,6 +981,6 @@ public class IgfsUtils {
      * @return String representation pof the IGFS URI.
      */
     public static String uri(String igfsName, IgfsPath path) {
-        return IgniteFileSystem.IGFS_SCHEME + ";//" + igfsName + '@' + path;
+        return IgniteFileSystem.IGFS_SCHEME + "://" + igfsName + '@' + path;
     }
 }
