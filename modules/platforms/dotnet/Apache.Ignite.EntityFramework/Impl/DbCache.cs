@@ -142,9 +142,8 @@ namespace Apache.Ignite.EntityFramework.Impl
         /// <summary>
         /// Puts the item to cache.
         /// </summary>
-        public void PutItemAsync(DbCacheKey key, object value, TimeSpan absoluteExpiration)
+        public void PutItem(DbCacheKey key, object value, TimeSpan absoluteExpiration)
         {
-            // Put asynchronously to avoid unnecessary delay in the requesting thread.
             using (var stream = new MemoryStream())
             {
                 new BinaryFormatter().Serialize(stream, value);
@@ -157,6 +156,8 @@ namespace Apache.Ignite.EntityFramework.Impl
 
                 ((ICacheInternal)cache).DoOutInOpExtension<object>(ExtensionId, OpPutItem, w =>
                 {
+                    w.WriteString(key.GetStringKey());
+
                     if (key.EntitySetVersions != null)
                     {
                         w.WriteInt(versions.Count);

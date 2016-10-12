@@ -17,9 +17,9 @@
 
 package org.apache.ignite.internal.processors.platform.entityframework;
 
-import org.apache.ignite.IgniteException;
 import org.apache.ignite.binary.BinaryObjectException;
 import org.apache.ignite.binary.BinaryRawReader;
+import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
@@ -34,6 +34,9 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
     /** Map from entity set name to version. */
     private Map<String, Long> entitySets;
 
+    /** Cached data bytes. */
+    private byte[] data;
+
     /**
      * @return Dependent entity sets with versions.
      */
@@ -43,20 +46,49 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
-        throw new IgniteException(getClass().getSimpleName() + " can not be written from Java.");
+        BinaryRawWriter raw = writer.rawWriter();
+
+        writeBinary(raw);
     }
 
     /** {@inheritDoc} */
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
-        BinaryRawReader raw = reader.rawReader();
+        readBinary(reader.rawReader());
+    }
 
-        int cnt = raw.readInt();
+    /**
+     * Reads from a binary reader.
+     *
+     * @param reader Raw reader.
+     */
+    public void readBinary(BinaryRawReader reader) {
+        int cnt = reader.readInt();
 
         entitySets = new HashMap<>(cnt);
 
         for (int i = 0; i < cnt; i++)
-            entitySets.put(raw.readString(), raw.readLong());
+            entitySets.put(reader.readString(), reader.readLong());
 
-        // Ignore the data.
+        data = reader.readByteArray();
+    }
+
+    /**
+     * Writes to a binary writer.
+     *
+     * @param writer Raw writer.
+     */
+    private void writeBinary(BinaryRawWriter writer) {
+        if (entitySets != null) {
+            writer.writeInt(entitySets.size());
+
+            for (Map.Entry<String, Long> e : entitySets.entrySet()) {
+                writer.writeString(e.getKey());
+                writer.writeLong(e.getValue());
+            }
+        }
+        else
+            writer.writeInt(0);
+
+        writer.writeByteArray(data);
     }
 }

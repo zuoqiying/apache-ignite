@@ -35,9 +35,7 @@ import org.apache.ignite.resources.IgniteInstanceResource;
 
 import javax.cache.Cache;
 import javax.cache.processor.EntryProcessorResult;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -53,7 +51,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     /** Operation: increment entity set versions. */
     private static final int OP_INVALIDATE_SETS = 1;
 
-    /** Operation: put item. */
+    /** Operation: put item async. */
     private static final int OP_PUT_ITEM = 2;
 
     /** Operation: get item. */
@@ -73,7 +71,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
         PlatformMemory mem) throws IgniteCheckedException {
         switch (type) {
             case OP_INVALIDATE_SETS: {
-                final IgniteCache<String, Long> metaCache = (IgniteCache<String, Long>)target.rawCache();
+                final IgniteCache<String, Long> metaCache = target.rawCache();
                 final String dataCacheName = reader.readString();
 
                 int cnt = reader.readInt();
@@ -101,7 +99,15 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
             }
 
             case OP_PUT_ITEM: {
-                // TODO
+                String key = reader.readString();
+
+                PlatformDotNetEntityFrameworkCacheEntry efEntry = new PlatformDotNetEntityFrameworkCacheEntry();
+                efEntry.readBinary(reader);
+
+                IgniteCache<String, PlatformDotNetEntityFrameworkCacheEntry> dataCache = target.rawCache();
+
+                dataCache.put(key, efEntry);
+
                 return 0;
             }
 

@@ -230,7 +230,7 @@ namespace Apache.Ignite.EntityFramework.Impl
                 ? _commandInfo.Policy.GetExpirationTimeout(queryInfo)
                 : TimeSpan.MaxValue;
 
-            _commandInfo.Cache.PutItemAsync(key, result, expiration);
+            _commandInfo.Cache.PutItem(key, result, expiration);
         }
 
         /// <summary>
