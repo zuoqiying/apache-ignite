@@ -529,7 +529,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Impl\Common\JavaObjects\" />
-    <Folder Include="Impl\EntityFramework\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\cpp\jni\project\vs\jni.vcxproj">
