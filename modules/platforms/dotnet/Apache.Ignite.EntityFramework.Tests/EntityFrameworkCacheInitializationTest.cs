@@ -46,7 +46,7 @@ namespace Apache.Ignite.EntityFramework.Tests
         [Test]
         public void TestConfigurationAndStartup()
         {
-            Environment.SetEnvironmentVariable(Classpath.EnvIgniteNativeTestClasspath, "true");
+            Environment.SetEnvironmentVariable("IGNITE_NATIVE_TEST_CLASSPATH", "true");
 
             Assert.IsNull(Ignition.TryGetIgnite());
 
