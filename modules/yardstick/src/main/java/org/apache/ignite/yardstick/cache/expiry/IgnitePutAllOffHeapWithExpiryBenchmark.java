@@ -19,7 +19,6 @@ package org.apache.ignite.yardstick.cache.expiry;
 
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CacheMemoryMode;
-import org.apache.ignite.yardstick.cache.IgnitePutBenchmark;
 import org.yardstickframework.BenchmarkConfiguration;
 
 /**
@@ -27,7 +26,6 @@ import org.yardstickframework.BenchmarkConfiguration;
  * memory mode and with expiration policy set.
  */
 public class IgnitePutAllOffHeapWithExpiryBenchmark extends IgnitePutAllWithExpiryBenchmark {
-
     /** {@inheritDoc} */
     @Override public void setUp(BenchmarkConfiguration cfg) throws Exception {
         super.setUp(cfg);
