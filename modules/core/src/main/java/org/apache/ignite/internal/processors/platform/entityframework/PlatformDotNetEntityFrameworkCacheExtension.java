@@ -128,6 +128,8 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
         final UUID localNodeId = grid.cluster().localNode().id();
 
         while (true) {
+            // TODO: First check a local flag, then cache.get, then putIfAbsent
+
             if (metaCache.putIfAbsent(CLEANUP_NODE_ID, localNodeId))
                 break;   // No cleanup is in progress, start new.
 
@@ -180,6 +182,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
             for (Map.Entry<String, Long> entitySet : entry.entitySets().entrySet()) {
                 EntryProcessorResult<Long> curVer = currentVersions.get(entitySet.getKey());
 
+                // TODO: Check if we are primary node for the key
                 if (curVer != null && entitySet.getValue() < curVer.get())
                     keysToRemove.add(cacheEntry.getKey());
             }
