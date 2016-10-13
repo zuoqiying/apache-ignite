@@ -1357,7 +1357,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             _showLoading(paragraph, true);
 
             _closeOldQuery(paragraph)
-                .then(() => {
+                .then(() => _chooseNode(paragraph.cacheName, false))
+                .then((nid) => {
                     const args = paragraph.queryArgs = {
                         cacheName: paragraph.cacheName,
                         pageSize: paragraph.pageSize,
@@ -1365,7 +1366,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                         type: 'EXPLAIN'
                     };
 
-                    return agentMonitor.query(_chooseNode(paragraph.cacheName, false), args.cacheName, args.query, false, false, args.pageSize);
+                    return agentMonitor.query(nid, args.cacheName, args.query, false, false, args.pageSize);
                 })
                 .then(_processQueryResult.bind(this, paragraph))
                 .catch((err) => {
