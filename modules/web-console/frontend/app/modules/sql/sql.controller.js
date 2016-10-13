@@ -135,7 +135,7 @@ class Paragraph {
     }
 
     queryExecuted() {
-        return !_.isEmpty(this.meta);
+        return !_.isEmpty(this.meta) || !_.isEmpty(this.errMsg);
     }
 
     scanExplain() {
