@@ -90,7 +90,7 @@ mixin query-settings
     label.margin-left-dflt(title='Fetch first page of results only')
         input(type='checkbox' ng-model='paragraph.firstPageOnly')
         span Fetch first page only
-    label.margin-left-dflt(title='Execute query locally on selected node')
+    label.margin-left-dflt(title='Execute query locally on selected node.\nNode selection dialog will be shown before query execution.')
         input(type='checkbox' ng-model='paragraph.localQry')
         span Local query
 
@@ -139,7 +139,7 @@ mixin table-result
             .pull-right
                 label(style='margin-right: 10px;')
                     input(type='checkbox' ng-model='paragraph.systemColumns' ng-change='toggleSystemColumns(paragraph)' ng-disabled='paragraph.disabledSystemColumns')
-                    span Show "_KEY", "_VAL" columns
+                    span Show _KEY, _VAL columns
                 .btn-group(ng-disabled='paragraph.loading')
                     button.btn.btn-primary(ng-click='exportCsv(paragraph)' bs-tooltip data-title='{{actionTooltip(paragraph, "export", false)}}') Export
                     button.btn.btn-primary.dropdown-toggle(id='export-item-dropdown' data-toggle='dropdown' data-container='body' bs-dropdown='exportDropdown' data-placement='bottom-right')
