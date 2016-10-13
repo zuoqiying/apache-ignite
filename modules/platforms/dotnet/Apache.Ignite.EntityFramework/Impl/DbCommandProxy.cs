@@ -162,7 +162,7 @@ namespace Apache.Ignite.EntityFramework.Impl
             }
 
             var queryInfo = GetQueryInfo();
-            var strategy = _commandInfo.Policy.GetCachingStrategy(queryInfo);
+            var strategy = _commandInfo.Policy.GetCachingMode(queryInfo);
             var cacheKey = _commandInfo.Cache.GetCacheKey(GetKey(), _commandInfo.AffectedEntitySets, strategy);
 
             object cachedRes;

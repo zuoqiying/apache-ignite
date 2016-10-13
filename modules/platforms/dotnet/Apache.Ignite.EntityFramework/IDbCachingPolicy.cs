@@ -53,6 +53,6 @@ namespace Apache.Ignite.EntityFramework
         /// </summary>
         /// <param name="queryInfo">The query information.</param>
         /// <returns>Caching strategy for the query.</returns>
-        DbCachingStrategy GetCachingStrategy(DbQueryInfo queryInfo);
+        DbCachingMode GetCachingMode(DbQueryInfo queryInfo);
     }
 }

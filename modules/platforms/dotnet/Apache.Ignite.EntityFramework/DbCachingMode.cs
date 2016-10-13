@@ -22,10 +22,10 @@ namespace Apache.Ignite.EntityFramework
     /// <summary>
     /// Represents a second-level caching strategy.
     /// </summary>
-    public enum DbCachingStrategy
+    public enum DbCachingMode
     {
         /// <summary>
-        /// Read-only cache, never invalidates.
+        /// Read-only mode, never invalidates.
         /// <para />
         /// Database updates are ignored in this mode. Once query results have been cached, they are kept in cache 
         /// until expired (forever when no expiration is specified).
@@ -36,10 +36,9 @@ namespace Apache.Ignite.EntityFramework
         ReadOnly,
 
         /// <summary>
-        /// Read-write cache. 
+        /// Read-write mode. Cached data is invalidated when underlying entity set changes.
         /// <para />
-        /// This is "normal" cache mode which always provides correct query results. Cached data is invalidated 
-        /// when underlying entity set changes.
+        /// This is "normal" cache mode which always provides correct query results.
         /// <para />
         /// Keep in mind that this mode works correctly only when all database changes are performed 
         /// via <see cref="DbContext"/> with Ignite caching configured. Other database updates are not tracked.

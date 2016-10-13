@@ -20,7 +20,7 @@ namespace Apache.Ignite.EntityFramework
     using System;
 
     /// <summary>
-    /// Default caching policy implementation: everything is cached with <see cref="DbCachingStrategy.ReadWrite"/>, 
+    /// Default caching policy implementation: everything is cached with <see cref="DbCachingMode.ReadWrite"/>, 
     /// no expiration.
     /// </summary>
     public class DbCachingPolicy : IDbCachingPolicy
@@ -63,9 +63,9 @@ namespace Apache.Ignite.EntityFramework
         /// </summary>
         /// <param name="queryInfo">The query information.</param>
         /// <returns>Caching strategy for the query.</returns>
-        public virtual DbCachingStrategy GetCachingStrategy(DbQueryInfo queryInfo)
+        public virtual DbCachingMode GetCachingMode(DbQueryInfo queryInfo)
         {
-            return DbCachingStrategy.ReadWrite;
+            return DbCachingMode.ReadWrite;
         }
     }
 }

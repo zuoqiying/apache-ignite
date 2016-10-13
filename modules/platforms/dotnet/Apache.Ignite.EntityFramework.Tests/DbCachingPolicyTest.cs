@@ -37,7 +37,7 @@ namespace Apache.Ignite.EntityFramework.Tests
             Assert.IsTrue(plc.CanBeCached(null));
             Assert.IsTrue(plc.CanBeCached(null, 0));
             Assert.AreEqual(TimeSpan.MaxValue, plc.GetExpirationTimeout(null));
-            Assert.AreEqual(DbCachingStrategy.ReadWrite, plc.GetCachingStrategy(null));
+            Assert.AreEqual(DbCachingMode.ReadWrite, plc.GetCachingMode(null));
         }
     }
 }

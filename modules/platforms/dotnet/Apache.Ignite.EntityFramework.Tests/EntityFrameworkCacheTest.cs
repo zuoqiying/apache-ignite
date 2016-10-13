@@ -230,8 +230,8 @@ namespace Apache.Ignite.EntityFramework.Tests
             // Set up a policy to cache Blogs as read-only and Posts as read-write.
             Policy.GetCachingStrategyFunc = q =>
                 q.AffectedEntitySets.Count == 1 && q.AffectedEntitySets.Single().Name == "Blog"
-                    ? DbCachingStrategy.ReadOnly
-                    : DbCachingStrategy.ReadWrite;
+                    ? DbCachingMode.ReadOnly
+                    : DbCachingMode.ReadWrite;
 
             using (var ctx = GetDbContext())
             {
@@ -472,7 +472,7 @@ namespace Apache.Ignite.EntityFramework.Tests
             {
                 funcs.Add("GetCachingStrategy");
                 checkQry(qry);
-                return DbCachingStrategy.ReadWrite;
+                return DbCachingMode.ReadWrite;
             };
 
             Policy.GetExpirationTimeoutFunc = qry =>
@@ -916,7 +916,7 @@ namespace Apache.Ignite.EntityFramework.Tests
 
             public Func<DbQueryInfo, TimeSpan> GetExpirationTimeoutFunc { get; set; }
 
-            public Func<DbQueryInfo, DbCachingStrategy> GetCachingStrategyFunc { get; set; }
+            public Func<DbQueryInfo, DbCachingMode> GetCachingStrategyFunc { get; set; }
 
             public bool CanBeCached(DbQueryInfo queryInfo)
             {
@@ -933,9 +933,9 @@ namespace Apache.Ignite.EntityFramework.Tests
                 return GetExpirationTimeoutFunc == null ? TimeSpan.MaxValue : GetExpirationTimeoutFunc(queryInfo);
             }
 
-            public DbCachingStrategy GetCachingStrategy(DbQueryInfo queryInfo)
+            public DbCachingMode GetCachingMode(DbQueryInfo queryInfo)
             {
-                return GetCachingStrategyFunc == null ? DbCachingStrategy.ReadWrite : GetCachingStrategyFunc(queryInfo);
+                return GetCachingStrategyFunc == null ? DbCachingMode.ReadWrite : GetCachingStrategyFunc(queryInfo);
             }
         }
     }

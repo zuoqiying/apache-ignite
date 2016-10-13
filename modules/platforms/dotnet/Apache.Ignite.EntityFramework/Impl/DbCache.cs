@@ -101,19 +101,19 @@ namespace Apache.Ignite.EntityFramework.Impl
         /// <summary>
         /// Gets the cache key to be used with GetItem and PutItem.
         /// </summary>
-        public DbCacheKey GetCacheKey(string key, ICollection<EntitySetBase> dependentEntitySets, DbCachingStrategy strategy)
+        public DbCacheKey GetCacheKey(string key, ICollection<EntitySetBase> dependentEntitySets, DbCachingMode mode)
         {
-            if (strategy == DbCachingStrategy.ReadWrite)
+            if (mode == DbCachingMode.ReadWrite)
             {
                 var versions = GetEntitySetVersions(dependentEntitySets);
 
                 return new DbCacheKey(key, dependentEntitySets, versions);
             }
 
-            if (strategy == DbCachingStrategy.ReadOnly)
+            if (mode == DbCachingMode.ReadOnly)
                 return new DbCacheKey(key, null, null);
 
-            throw new ArgumentOutOfRangeException("strategy");
+            throw new ArgumentOutOfRangeException("mode");
         }
 
         /// <summary>
