@@ -250,6 +250,9 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
      */
     private static class RemoveOldEntriesRunnable implements IgniteRunnable {
         /** */
+        private static final long serialVersionUID = 0L;
+
+        /** */
         private final String dataCacheName;
 
         /** */
@@ -281,6 +284,9 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
      * Cleanup completion listener.
      */
     private class CleanupCompletionListener implements IgniteInClosure<IgniteFuture<Object>> {
+        /** */
+        private static final long serialVersionUID = 0L;
+
         /** */
         private final Cache<CleanupNodeId, UUID> metaCache;
 
