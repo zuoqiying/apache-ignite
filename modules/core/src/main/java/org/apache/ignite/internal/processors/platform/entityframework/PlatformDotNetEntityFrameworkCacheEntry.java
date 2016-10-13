@@ -69,10 +69,14 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
     public void readBinary(BinaryRawReader reader) {
         int cnt = reader.readInt();
 
-        entitySets = new HashMap<>(cnt);
+        if (cnt >= 0) {
+            entitySets = new HashMap<>(cnt);
 
-        for (int i = 0; i < cnt; i++)
-            entitySets.put(reader.readString(), reader.readLong());
+            for (int i = 0; i < cnt; i++)
+                entitySets.put(reader.readString(), reader.readLong());
+        }
+        else
+            entitySets = null;
 
         data = reader.readByteArray();
     }
@@ -92,7 +96,7 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
             }
         }
         else
-            writer.writeInt(0);
+            writer.writeInt(-1);
 
         writer.writeByteArray(data);
     }
