@@ -96,6 +96,8 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
     public void addTrackedEntry(GridCacheMapEntry entry) {
         assert Thread.holdsLock(entry);
 
+        assert pendingEntries != null;
+
         PendingEntry e = new PendingEntry(entry);
 
         pendingEntries.add(e);
@@ -106,6 +108,8 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
      */
     public void removeTrackedEntry(GridCacheMapEntry entry) {
         assert Thread.holdsLock(entry);
+
+        assert pendingEntries != null;
 
         PendingEntry e = new PendingEntry(entry);
 
@@ -155,7 +159,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
             PendingEntry pendingEntry = pendingEntries.pollExpiredFor(now);
 
             if (pendingEntry == null)
-                break;
+                return false;
 
             // entryRemoved is true
             if (obsoleteVer == null)
@@ -233,7 +237,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
             throw new IgniteException(ex);
         }
 
-        return touch ? cctx.cache().entryEx(key) : cctx.cache().peekEx(key);
+        return touch ? cache.entryEx(key) : cache.peekEx(key);
     }
 
     /**
@@ -610,7 +614,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
     /** */
     private static class OnHeapPendingEntriesQueue implements PendingEntriesQueue {
         /** */
-        private final ConcurrentNavigableMap<PendingEntry, Object> m;
+        private final ConcurrentNavigableMap<PendingEntry, Boolean> m;
 
         /** Size. */
         private final LongAdder8 size = new LongAdder8();
@@ -633,7 +637,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
 
         /** {@inheritDoc} */
         @Override public void add(PendingEntry e) {
-            boolean res = m.put(e, e) == null;
+            boolean res = m.put(e, Boolean.TRUE) == null;
 
             if (res)
                 size.increment();
@@ -649,14 +653,14 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
 
         /** {@inheritDoc} */
         @Override public boolean hasExpiredFor(long now) {
-            Map.Entry<PendingEntry, Object> entry = m.firstEntry();
+            Map.Entry<PendingEntry, Boolean> entry = m.firstEntry();
 
-            return entry != null && entry.getKey().expireTime > now;
+            return entry != null && now >= entry.getKey().expireTime;
         }
 
         /** {@inheritDoc} */
         @Override public PendingEntry pollExpiredFor(long now) {
-            Map.Entry<PendingEntry, Object> firstEntry;
+            Map.Entry<PendingEntry, Boolean> firstEntry;
 
             while ((firstEntry = m.firstEntry()) != null) {
                 if (firstEntry.getValue() == null)
@@ -669,6 +673,8 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
 
                 if (m.remove(pendingEntry) == null)
                     continue; // Entry was polled by another thread
+
+                size.decrement();
 
                 return pendingEntry;
             }
@@ -696,7 +702,9 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
          */
         OffHeapPendingEntriesSet(GridUnsafeMemory mem, GridUnsafeGuard guard) {
             this.pointerFactory = new PendingEntrySmartPointerFactory(mem);
+
             this.guard = guard;
+
             m = new GridOffHeapSnapTreeMap<>(this.pointerFactory, new ValueSmartPointerFactory(), mem, this.guard);
         }
 
@@ -710,7 +718,10 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
             guard.begin();
 
             try {
-                m.clear();
+                /* GridOffHeapSnapTreeMap does not support clear operation */
+
+                for (PendingEntrySmartPointer ptr : m.keySet())
+                    m.remove(ptr);
             }
             finally {
                 guard.end();
@@ -745,7 +756,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
         @Override public boolean hasExpiredFor(long now) {
             Map.Entry<PendingEntrySmartPointer, DummySmartPointer> e = m.firstEntry();
 
-            return e != null && e.getValue() != DUMMY_SMART_POINTER && e.getKey().expireTime() > now;
+            return e != null && now >= e.getKey().expireTime();
         }
 
         /** {@inheritDoc} */
