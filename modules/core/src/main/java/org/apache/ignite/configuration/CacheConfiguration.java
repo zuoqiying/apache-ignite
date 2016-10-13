@@ -392,6 +392,9 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
     /** Partition loss policy. */
     private PartitionLossPolicy partitionLossPolicy = DFLT_PARTITION_LOSS_POLICY;
 
+    /** */
+    private boolean mvccEnabled;
+
     /** Empty constructor (all values are initialized to their defaults). */
     public CacheConfiguration() {
         /* No-op. */
@@ -2109,6 +2112,14 @@ public class CacheConfiguration<K, V> extends MutableConfiguration<K, V> {
         synchronized (this) {
             return super.removeCacheEntryListenerConfiguration(cacheEntryLsnrCfg);
         }
+    }
+
+    public boolean isMvccEnabled() {
+        return mvccEnabled;
+    }
+
+    public void setMvccEnabled(boolean mvccEnabled) {
+        this.mvccEnabled = mvccEnabled;
     }
 
     /**

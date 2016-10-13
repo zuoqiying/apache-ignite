@@ -92,6 +92,7 @@ import org.apache.ignite.internal.processors.cache.dr.GridCacheDrManager;
 import org.apache.ignite.internal.processors.cache.jta.CacheJtaManagerAdapter;
 import org.apache.ignite.internal.processors.cache.local.GridLocalCache;
 import org.apache.ignite.internal.processors.cache.local.atomic.GridLocalAtomicCache;
+import org.apache.ignite.internal.processors.cache.mvcc.CacheCoordinatorsSharedManager;
 import org.apache.ignite.internal.processors.cache.query.GridCacheDistributedQueryManager;
 import org.apache.ignite.internal.processors.cache.query.GridCacheLocalQueryManager;
 import org.apache.ignite.internal.processors.cache.query.GridCacheQueryManager;
@@ -450,9 +451,12 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         ctx.igfsHelper().validateCacheConfiguration(cc);
 
-        if (cc.getAtomicityMode() == ATOMIC)
+        if (cc.getAtomicityMode() == ATOMIC) {
             assertParameter(cc.getTransactionManagerLookupClassName() == null,
-                "transaction manager can not be used with ATOMIC cache");
+                    "transaction manager can not be used with ATOMIC cache");
+
+            assertParameter(!cc.isMvccEnabled(), "MVCC can not used with ATOMIC cache");
+        }
     }
 
     /**
@@ -1910,6 +1914,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     @SuppressWarnings("unchecked")
     private GridCacheSharedContext createSharedContext(GridKernalContext kernalCtx,
         Collection<CacheStoreSessionListener> storeSesLsnrs) throws IgniteCheckedException {
+        CacheCoordinatorsSharedManager coords = new CacheCoordinatorsSharedManager();
         IgniteTxManager tm = new IgniteTxManager();
         GridCacheMvccManager mvccMgr = new GridCacheMvccManager();
         GridCacheVersionManager verMgr = new GridCacheVersionManager();
@@ -1934,6 +1939,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         return new GridCacheSharedContext(
             kernalCtx,
+            coords,
             tm,
             verMgr,
             mvccMgr,
@@ -2922,6 +2928,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             CU.checkAttributeMismatch(log, rmtAttr.cacheName(), rmt, "cachePreloadMode",
                 "Cache preload mode", locAttr.cacheRebalanceMode(), rmtAttr.cacheRebalanceMode(), true);
+
+            CU.checkAttributeMismatch(log, rmtAttr.cacheName(), rmt, "mvccEnabled",
+                "MVCC mode", locAttr.mvccEnabled(), rmtAttr.mvccEnabled(), true);
 
             boolean checkStore = isLocAff && isRmtAff;
 

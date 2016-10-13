@@ -43,6 +43,7 @@ import org.apache.ignite.internal.pagemem.wal.IgniteWriteAheadLogManager;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.database.IgniteCacheDatabaseSharedManager;
 import org.apache.ignite.internal.processors.cache.jta.CacheJtaManagerAdapter;
+import org.apache.ignite.internal.processors.cache.mvcc.CacheCoordinatorsSharedManager;
 import org.apache.ignite.internal.processors.cache.store.CacheStoreManager;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxManager;
@@ -105,6 +106,9 @@ public class GridCacheSharedContext<K, V> {
     /** Affinity manager. */
     private CacheAffinitySharedManager affMgr;
 
+    /** */
+    private CacheCoordinatorsSharedManager coords;
+
     /** Cache contexts map. */
     private ConcurrentMap<Integer, GridCacheContext<K, V>> ctxMap;
 
@@ -140,6 +144,7 @@ public class GridCacheSharedContext<K, V> {
 
     /**
      * @param kernalCtx  Context.
+     * @param coords Coordinators manager.
      * @param txMgr Transaction manager.
      * @param verMgr Version manager.
      * @param mvccMgr MVCC manager.
@@ -152,6 +157,7 @@ public class GridCacheSharedContext<K, V> {
      */
     public GridCacheSharedContext(
         GridKernalContext kernalCtx,
+        CacheCoordinatorsSharedManager coords,
         IgniteTxManager txMgr,
         GridCacheVersionManager verMgr,
         GridCacheMvccManager mvccMgr,
@@ -167,7 +173,7 @@ public class GridCacheSharedContext<K, V> {
     ) {
         this.kernalCtx = kernalCtx;
 
-        setManagers(mgrs, txMgr, jtaMgr, verMgr, mvccMgr, pageStoreMgr, walMgr, dbMgr, depMgr, exchMgr, affMgr, ioMgr);
+        setManagers(mgrs, coords, txMgr, jtaMgr, verMgr, mvccMgr, pageStoreMgr, walMgr, dbMgr, depMgr, exchMgr, affMgr, ioMgr);
 
         this.storeSesLsnrs = storeSesLsnrs;
 
@@ -256,7 +262,9 @@ public class GridCacheSharedContext<K, V> {
     void onReconnected() throws IgniteCheckedException {
         List<GridCacheSharedManager<K, V>> mgrs = new LinkedList<>();
 
-        setManagers(mgrs, txMgr,
+        setManagers(mgrs,
+            coords,
+            txMgr,
             jtaMgr,
             verMgr,
             mvccMgr,
@@ -289,6 +297,7 @@ public class GridCacheSharedContext<K, V> {
 
     /**
      * @param mgrs Managers list.
+     * @param coords Coordinators manager.
      * @param txMgr Transaction manager.
      * @param verMgr Version manager.
      * @param mvccMgr MVCC manager.
@@ -299,6 +308,7 @@ public class GridCacheSharedContext<K, V> {
      * @param jtaMgr JTA manager.
      */
     private void setManagers(List<GridCacheSharedManager<K, V>> mgrs,
+        CacheCoordinatorsSharedManager coords,
         IgniteTxManager txMgr,
         CacheJtaManagerAdapter jtaMgr,
         GridCacheVersionManager verMgr,
@@ -310,6 +320,7 @@ public class GridCacheSharedContext<K, V> {
         GridCachePartitionExchangeManager<K, V> exchMgr,
         CacheAffinitySharedManager affMgr,
         GridCacheIoManager ioMgr) {
+        this.coords = add(mgrs, coords);
         this.mvccMgr = add(mgrs, mvccMgr);
         this.verMgr = add(mgrs, verMgr);
         this.txMgr = add(mgrs, txMgr);
@@ -330,6 +341,13 @@ public class GridCacheSharedContext<K, V> {
      */
     public Collection<GridCacheContext> cacheContexts() {
         return (Collection)ctxMap.values();
+    }
+
+    /**
+     * @return Coordinators manager.
+     */
+    public CacheCoordinatorsSharedManager coordinators() {
+        return coords;
     }
 
     /**
