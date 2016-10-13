@@ -1216,7 +1216,7 @@ $generatorSpring.cacheStore = function(cache, domains, res) {
                 res.endBlock('</property>');
 
                 if (storeFactory.sqlEscapeAll)
-                    $generatorXml.property(res, storeFactory, 'sqlEscapeAll');
+                    $generatorSpring.property(res, storeFactory, 'sqlEscapeAll');
 
                 const domainConfigs = _.filter(domains, function(domain) {
                     return $generatorCommon.isDefinedAndNotEmpty(domain.databaseTable);
