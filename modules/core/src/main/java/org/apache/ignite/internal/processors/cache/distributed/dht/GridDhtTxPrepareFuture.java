@@ -79,6 +79,7 @@ import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteFutureCancelledException;
+import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.lang.IgniteReducer;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +97,7 @@ import static org.apache.ignite.transactions.TransactionState.PREPARED;
  *
  */
 @SuppressWarnings("unchecked")
-public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInternalTx, GridNearTxPrepareResponse>
+public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, GridNearTxPrepareResponse>
     implements GridCacheMvccFuture<GridNearTxPrepareResponse> {
     /** */
     private static final long serialVersionUID = 0L;
@@ -109,9 +110,9 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
         AtomicReferenceFieldUpdater.newUpdater(GridDhtTxPrepareFuture.class, Throwable.class, "err");
 
     /** */
-    private static final IgniteReducer<IgniteInternalTx, GridNearTxPrepareResponse> REDUCER =
-        new IgniteReducer<IgniteInternalTx, GridNearTxPrepareResponse>() {
-            @Override public boolean collect(IgniteInternalTx e) {
+    private static final IgniteReducer<Object, GridNearTxPrepareResponse> REDUCER =
+        new IgniteReducer<Object, GridNearTxPrepareResponse>() {
+            @Override public boolean collect(Object e) {
                 return true;
             }
 
@@ -208,6 +209,9 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
 
     /** Timeout object. */
     private final PrepareTimeoutObject timeoutObj;
+
+    /** */
+    private Long mvccCoordCntr;
 
     /**
      * @param cctx Context.
@@ -535,7 +539,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
         synchronized (sync) {
             // Avoid iterator creation.
             for (int i = 0; i < futuresCount(); i++) {
-                IgniteInternalFuture<IgniteInternalTx> fut = future(i);
+                IgniteInternalFuture<Object> fut = future(i);
 
                 if (!isMini(fut))
                     continue;
@@ -831,6 +835,11 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
             prepErr,
             null,
             tx.activeCachesDeploymentEnabled());
+
+        assert mvccCoordCntr != null || !tx.txState().mvccEnabled(cctx);
+
+        if (mvccCoordCntr != null)
+            res.mvccCoordinatorCounter(mvccCoordCntr);
 
         if (prepErr == null) {
             if (tx.needReturnValue() || tx.nearOnOriginatingNode() || tx.hasInterceptor())
@@ -1152,6 +1161,23 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
 
             // We are holding transaction-level locks for entries here, so we can get next write version.
             tx.writeVersion(cctx.versions().next(tx.topologyVersion()));
+
+            if (tx.txState().mvccEnabled(cctx)) {
+                IgniteInternalFuture<Long> coordCntrFut = cctx.coordinators().requestTxCounter(tx.topologyVersion());
+
+                coordCntrFut.listen(new IgniteInClosure<IgniteInternalFuture<Long>>() {
+                    @Override public void apply(IgniteInternalFuture<Long> fut) {
+                        try {
+                            mvccCoordCntr = fut.get();
+                        }
+                        catch (IgniteCheckedException e) {
+                            U.error(log, "Failed to get coordinator counter: " + e, e);
+                        }
+                    }
+                });
+
+                add((IgniteInternalFuture)coordCntrFut);
+            }
 
             {
                 // Assign keys to primary nodes.
@@ -1532,7 +1558,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<IgniteInter
      * Mini-future for get operations. Mini-futures are only waiting on a single
      * node as opposed to multiple nodes.
      */
-    private class MiniFuture extends GridFutureAdapter<IgniteInternalTx> {
+    private class MiniFuture extends GridFutureAdapter<Object> {
         /** */
         private static final long serialVersionUID = 0L;
 

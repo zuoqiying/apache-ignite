@@ -119,6 +119,12 @@ public interface IgniteTxState {
 
     /**
      * @param cctx Context.
+     * @return {@code True} if MVCC mode is enabled for transaction.
+     */
+    public boolean mvccEnabled(GridCacheSharedContext cctx);
+
+    /**
+     * @param cctx Context.
      * @return Configured stores for active caches.
      */
     public Collection<CacheStoreManager> stores(GridCacheSharedContext cctx);

@@ -346,6 +346,15 @@ public class IgniteTxStateImpl extends IgniteTxLocalStateAdapter {
     }
 
     /** {@inheritDoc} */
+    @Override public boolean mvccEnabled(GridCacheSharedContext cctx) {
+        assert !activeCacheIds.isEmpty();
+
+        int cacheId = (int)activeCacheIds.get(0);
+
+        return cctx.cacheContext(cacheId).mvccEnabled();
+    }
+
+    /** {@inheritDoc} */
     @Override public Collection<CacheStoreManager> stores(GridCacheSharedContext cctx) {
         GridLongList cacheIds = activeCacheIds;
 

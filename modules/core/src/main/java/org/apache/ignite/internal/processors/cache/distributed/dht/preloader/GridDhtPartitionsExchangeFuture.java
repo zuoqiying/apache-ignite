@@ -447,6 +447,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         assert !dummy && !forcePreload : this;
 
         try {
+            cctx.coordinators().assignCoordinators(topologyVersion(), discoEvt);
+
             srvNodes = new ArrayList<>(cctx.discovery().serverNodes(topologyVersion()));
 
             remaining.addAll(F.nodeIds(F.view(srvNodes, F.remoteNodes(cctx.localNodeId()))));
