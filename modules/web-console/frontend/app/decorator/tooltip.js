@@ -29,7 +29,7 @@ angular.module('mgcrea.ngStrap.tooltip')
 
             config.onShow = ($tooltip) => {
                 // Workaround for tooltip detection.
-                if ($tooltip.$options.trigger === 'click hover') {
+                if ($tooltip.$element && $tooltip.$options.trigger === 'click hover') {
                     $tooltip.$element.on('mouseenter', () => tipElementEntered = true);
                     $tooltip.$element.on('mouseleave', () => {
                         tipElementEntered = false;
