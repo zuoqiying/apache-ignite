@@ -207,8 +207,10 @@ namespace Apache.Ignite.EntityFramework
         {
             return new CacheConfiguration((namePrefix ?? DefaultCacheNamePrefix) + MetaCacheSuffix)
             {
+                CacheMode = CacheMode.Partitioned,
                 Backups = 1,
-                AtomicityMode = CacheAtomicityMode.Transactional  // Required due to IGNITE-3955
+                AtomicityMode = CacheAtomicityMode.Transactional,  // Required due to IGNITE-3955
+                WriteSynchronizationMode = CacheWriteSynchronizationMode.PrimarySync
             };
         }
 
@@ -217,7 +219,13 @@ namespace Apache.Ignite.EntityFramework
         /// </summary>
         private static CacheConfiguration GetDefaultDataCacheConfiguration(string namePrefix = null)
         {
-            return new CacheConfiguration((namePrefix ?? DefaultCacheNamePrefix) + DataCacheSuffix);
+            return new CacheConfiguration((namePrefix ?? DefaultCacheNamePrefix) + DataCacheSuffix)
+            {
+                CacheMode = CacheMode.Partitioned,
+                Backups = 0,
+                AtomicityMode = CacheAtomicityMode.Atomic,
+                WriteSynchronizationMode = CacheWriteSynchronizationMode.PrimarySync
+            };
         }
     }
 }
