@@ -169,25 +169,31 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     private boolean trySetGlobalCleanupFlag(Ignite grid, final Cache<CleanupNodeId, UUID> metaCache) {
         final UUID localNodeId = grid.cluster().localNode().id();
 
-        // Get the node performing cleanup.
-        UUID nodeId = metaCache.get(CLEANUP_NODE_ID);
+        while (true) {
+            // Get the node performing cleanup.
+            UUID nodeId = metaCache.get(CLEANUP_NODE_ID);
 
-        if (nodeId == null)
-            // Failed putIfAbsent means someone else has started cleanup.
-            return metaCache.putIfAbsent(CLEANUP_NODE_ID, localNodeId);
+            if (nodeId == null) {
+                if (metaCache.putIfAbsent(CLEANUP_NODE_ID, localNodeId))
+                    return true;  // Successfully reserved cleanup to local node.
 
-        if (nodeId.equals(localNodeId))
-            return false;  // Current node already performs cleanup.
+                // Failed putIfAbsent: someone else may have started cleanup. Retry the check.
+                continue;
+            }
 
-        if (grid.cluster().node(nodeId) != null)
-            return false;  // Another node already performs cleanup and is alive.
+            if (nodeId.equals(localNodeId))
+                return false;  // Current node already performs cleanup.
 
-        // Node that performs cleanup has disconnected.
-        if (metaCache.replace(CLEANUP_NODE_ID, nodeId, localNodeId))
-            return true;  // Successfully replaced disconnected node id with our id.
+            if (grid.cluster().node(nodeId) != null)
+                return false;  // Another node already performs cleanup and is alive.
 
-        // Replace failed: someone else started cleanup.
-        return false;
+            // Node that performs cleanup has disconnected.
+            if (metaCache.replace(CLEANUP_NODE_ID, nodeId, localNodeId))
+                return true;  // Successfully replaced disconnected node id with our id.
+
+            // Replace failed: someone else started cleanup.
+            return false;
+        }
     }
 
     /**
