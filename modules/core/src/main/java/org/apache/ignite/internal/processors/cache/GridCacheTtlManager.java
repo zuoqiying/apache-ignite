@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.cache;
 
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import org.apache.ignite.IgniteCheckedException;
@@ -52,7 +53,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
 
-        if (cctx.isOffHeapEnabled()) {
+        if (cctx.isSwapOrOffheapEnabled()) {
             unsafeMemory = new GridUnsafeMemory(0);
 
             pendingEntries = new OffHeapPendingEntriesSet(unsafeMemory, new GridUnsafeGuard());
@@ -161,19 +162,18 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
             if (pendingEntry == null)
                 return false;
 
-            // entryRemoved is true
             if (obsoleteVer == null)
                 obsoleteVer = cctx.versions().next();
 
-            boolean touch = cctx.isSwapOrOffheapEnabled();
-
-            // pendingEntry is deserialized here already
-            GridCacheEntryEx entry = unwrapEntry(pendingEntry, touch);
-
-            if (log.isTraceEnabled())
-                log.trace("Trying to remove expired entry from cache: " + entry);
+            // Offheap pendingEntry is deserialized already
+            GridCacheEntryEx entry = unwrapEntry(pendingEntry);
 
             if (entry != null) {
+                if (log.isTraceEnabled())
+                    log.trace("Trying to remove expired entry from cache: " + entry);
+
+                boolean touch = entry.context().isSwapOrOffheapEnabled();
+
                 while (true) {
                     try {
                         if (entry.onTtlExpired(obsoleteVer))
@@ -220,7 +220,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
     /**
      * @return GridCacheEntry
      */
-    private GridCacheEntryEx unwrapEntry(PendingEntry e, boolean touch) {
+    private GridCacheEntryEx unwrapEntry(PendingEntry e) {
         GridCacheAdapter cache = cctx.cache();
 
         //Here we need to assign appropriate context to entry
@@ -237,8 +237,9 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
             throw new IgniteException(ex);
         }
 
-        return touch ? cache.entryEx(key) : cache.peekEx(key);
+        return cache.ctx.isSwapOrOffheapEnabled() ? cache.entryEx(key) : cache.peekEx(key);
     }
+
 
     /**
      * Pending entry.
@@ -276,7 +277,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
 
             GridCacheContext ctx = entry.context();
 
-            isNear = ctx.isNear();
+            isNear = entry.isNear();
 
             CacheObject key = entry.key();
 
@@ -614,7 +615,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
     /** */
     private static class OnHeapPendingEntriesQueue implements PendingEntriesQueue {
         /** */
-        private final ConcurrentNavigableMap<PendingEntry, Boolean> m;
+        private final NavigableMap<PendingEntry, Boolean> m;
 
         /** Size. */
         private final LongAdder8 size = new LongAdder8();
