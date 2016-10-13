@@ -215,10 +215,10 @@ mixin chart-result
                                     +table-result
                                 .chart(ng-switch-when='chart')
                                     +chart-result
-                                .footer.clearfix(ng-show='paragraph.nonRefresh()')
+                                .footer.clearfix
                                     a.pull-left(ng-click='showResultQuery(paragraph)') Show query
 
-                                    -var nextVisibleCondition = 'paragraph.queryId && (paragraph.table() || paragraph.chart() && (paragraph.timeLineSupported() || !paragraph.chartTimeLineEnabled()))'
+                                    -var nextVisibleCondition = 'paragraph.queryId && paragraph.nonRefresh() && (paragraph.table() || paragraph.chart() && (paragraph.timeLineSupported() || !paragraph.chartTimeLineEnabled()))'
 
                                     .pull-right(ng-show=nextVisibleCondition ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)')
                                         i.fa.fa-chevron-circle-right
