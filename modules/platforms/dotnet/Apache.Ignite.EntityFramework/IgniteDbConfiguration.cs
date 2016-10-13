@@ -208,7 +208,7 @@ namespace Apache.Ignite.EntityFramework
             return new CacheConfiguration((namePrefix ?? DefaultCacheNamePrefix) + MetaCacheSuffix)
             {
                 Backups = 1,
-                AtomicityMode = CacheAtomicityMode.Transactional
+                AtomicityMode = CacheAtomicityMode.Transactional  // Required due to IGNITE-3955
             };
         }
 
