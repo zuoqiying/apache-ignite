@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * EntityFramework cache extension.
@@ -61,8 +62,8 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     /** Cache key for cleanup node ID. Contains characters not allowed in SQL table name. */
     private static final CleanupNodeId CLEANUP_NODE_ID = new CleanupNodeId();
 
-    /** Indicates whether local cleanup is in progress. */
-    private static volatile boolean cleanupFlag;
+    /** Indicates whether local cleanup is in progress, per cache name. */
+    private final Map<String, Boolean> cleanupFlags = new ConcurrentHashMap<>();
 
     /** {@inheritDoc} */
     @Override public int id() {
@@ -141,13 +142,13 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
      */
     private void startBackgroundCleanup(Ignite grid, final Cache<CleanupNodeId, UUID> metaCache,
         final String dataCacheName, final Map<String, EntryProcessorResult<Long>> currentVersions) {
-        if (cleanupFlag)
+        if (cleanupFlags.containsKey(dataCacheName))
             return;  // Current node already performs cleanup.
 
         if (!trySetGlobalCleanupFlag(grid, metaCache))
             return;
 
-        cleanupFlag = true;
+        cleanupFlags.put(dataCacheName, true);
 
         final ClusterGroup dataNodes = grid.cluster().forDataNodes(dataCacheName);
 
@@ -155,7 +156,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
         asyncCompute.broadcast(new RemoveOldEntriesRunnable(dataCacheName, currentVersions));
 
-        asyncCompute.future().listen(new CleanupCompletionListener(metaCache));
+        asyncCompute.future().listen(new CleanupCompletionListener(metaCache, dataCacheName));
     }
 
     /**
@@ -279,17 +280,22 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     /**
      * Cleanup completion listener.
      */
-    private static class CleanupCompletionListener implements IgniteInClosure<IgniteFuture<Object>> {
+    private class CleanupCompletionListener implements IgniteInClosure<IgniteFuture<Object>> {
         /** */
         private final Cache<CleanupNodeId, UUID> metaCache;
+
+        /** */
+        private final String dataCacheName;
 
         /**
          * Ctor.
          *
          * @param metaCache Metadata cache.
+         * @param dataCacheName Data cache name.
          */
-        private CleanupCompletionListener(Cache<CleanupNodeId, UUID> metaCache) {
+        private CleanupCompletionListener(Cache<CleanupNodeId, UUID> metaCache, String dataCacheName) {
             this.metaCache = metaCache;
+            this.dataCacheName = dataCacheName;
         }
 
         /** {@inheritDoc} */
@@ -298,7 +304,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
             metaCache.remove(CLEANUP_NODE_ID);
 
             // Reset local cleanup flag.
-            cleanupFlag = false;
+            cleanupFlags.remove(dataCacheName);
         }
     }
 }
