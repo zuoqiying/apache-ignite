@@ -424,6 +424,7 @@ export default ['domainsController', [
         function prepareNewItem(cacheId) {
             return {
                 space: $scope.spaces[0]._id,
+                generatePojo: true,
                 caches: cacheId && _.find($scope.caches, {value: cacheId}) ? [cacheId] : // eslint-disable-line no-nested-ternary
                     (_.isEmpty($scope.caches) ? [] : [$scope.caches[0].value]),
                 queryMetadata: 'Configuration'
