@@ -240,7 +240,6 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
         return cache.ctx.isSwapOrOffheapEnabled() ? cache.entryEx(key) : cache.peekEx(key);
     }
 
-
     /**
      * Pending entry.
      */
@@ -254,13 +253,13 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
         /** Cached hash code */
         private final int hashCode;
 
-        /** */
+        /** Is near cache entry flag */
         private final boolean isNear;
 
         /**
          * Constructor
          */
-        private PendingEntry(long expireTime, int hashCode, boolean isNear, byte[] keyBytes) {
+        PendingEntry(long expireTime, int hashCode, boolean isNear, byte[] keyBytes) {
             this.expireTime = expireTime;
             this.keyBytes = keyBytes;
             this.hashCode = hashCode;
@@ -270,7 +269,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
         /**
          * @param entry Cache entry to create wrapper for.
          */
-        private PendingEntry(GridCacheEntryEx entry) {
+        PendingEntry(GridCacheEntryEx entry) {
             expireTime = entry.expireTimeUnlocked();
 
             assert expireTime != 0;
@@ -388,6 +387,9 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
         /** */
         private long ptr;
 
+        /** Hot field, actively accessed by comparator in tree operations */
+        private long expiretime = 0L;
+
         /** */
         private PendingEntry entry;
 
@@ -408,8 +410,13 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
             if (entry != null)
                 return entry.expireTime;
 
-            if (ptr > 0)
-                return mem.readLong(ptr + OFFSET_EXPIRE_TIME);
+            if (expiretime != 0L)
+                return expiretime;
+
+            if (ptr > 0) {
+                expiretime = mem.readLong(ptr + OFFSET_EXPIRE_TIME);
+                return expiretime;
+            }
 
             throw new IllegalStateException();
         }
@@ -615,7 +622,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
     /** */
     private static class OnHeapPendingEntriesQueue implements PendingEntriesQueue {
         /** */
-        private final NavigableMap<PendingEntry, Boolean> m;
+        private final ConcurrentSkipListMap<PendingEntry, Boolean> m;
 
         /** Size. */
         private final LongAdder8 size = new LongAdder8();
@@ -690,7 +697,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
         private static final DummySmartPointer DUMMY_SMART_POINTER = new DummySmartPointer(Long.MAX_VALUE);
 
         /** */
-        private final ConcurrentNavigableMap<PendingEntrySmartPointer, DummySmartPointer> m;
+        private final GridOffHeapSnapTreeMap<PendingEntrySmartPointer, DummySmartPointer> m;
 
         /** */
         private PendingEntrySmartPointerFactory pointerFactory;
@@ -720,7 +727,6 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
 
             try {
                 /* GridOffHeapSnapTreeMap does not support clear operation */
-
                 for (PendingEntrySmartPointer ptr : m.keySet())
                     m.remove(ptr);
             }
@@ -763,6 +769,7 @@ public class GridCacheTtlManager extends GridCacheManagerAdapter {
         /** {@inheritDoc} */
         @Override public PendingEntry pollExpiredFor(long now) {
             guard.begin();
+
             try {
                 Map.Entry<PendingEntrySmartPointer, DummySmartPointer> entry;
 
