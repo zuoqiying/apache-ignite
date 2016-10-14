@@ -193,15 +193,15 @@ mixin chart-result
                                 .col-xs-4.col-sm-3
                                     div(ng-show='caches.length > 0' style='padding: 5px 10px' st-table='displayedCaches' st-safe-src='caches')
                                         lable.labelField.labelFormField Caches:
-                                        i.fa.fa-database.tipField(title='Click to show cache types metadata dialog' bs-popover data-template-url='/sql/cache-metadata.html' data-placement='bottom' data-trigger='click' data-container='#{{ paragraph.id}}')
+                                        i.fa.fa-database.tipField(title='Click to show cache types metadata dialog' bs-popover data-template-url='/sql/cache-metadata.html' data-placement='bottom' data-trigger='click' data-container='#{{ paragraph.id }}')
                                         .input-tip
                                             input.form-control(type='text' st-search='label' placeholder='Filter caches...')
                                         table.links
                                             tbody.scrollable-y(style='max-height: 15em; display: block;')
                                                 tr(ng-repeat='cache in displayedCaches track by cache.name')
                                                     td(style='width: 100%')
-                                                        input.labelField(id='cache{{$index}}' type='radio' value='{{cache.name}}' ng-model='paragraph.cacheName')
-                                                        label(for='cache{{$index}}' ng-bind='cache.label')
+                                                        input.labelField(id='cache_{{ [paragraph.id, $index].join("_") }}' type='radio' value='{{cache.name}}' ng-model='paragraph.cacheName')
+                                                        label(for='cache_{{ [paragraph.id, $index].join("_") }} ' ng-bind='cache.label')
                                     .empty-caches(ng-show='displayedCaches.length == 0 && caches.length != 0')
                                         label Wrong caches filter
                                     .empty-caches(ng-show='caches.length == 0')
