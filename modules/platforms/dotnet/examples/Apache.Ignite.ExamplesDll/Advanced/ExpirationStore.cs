@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Apache.Ignite.Core.Cache.Store;
-using Apache.Ignite.ExamplesDll.Binary;
 
 namespace Apache.Ignite.ExamplesDll.Advanced
 {

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Apache.Ignite.Core;
 using Apache.Ignite.Core.Binary;
 using Apache.Ignite.Core.Cache;
@@ -13,32 +10,32 @@ namespace Apache.Ignite.ExamplesDll.Advanced
     [Serializable]
     public class CarUpdateClosure : IComputeFunc<String>
     {
-        public static readonly string CacheName = "dotnet_binary_objects_cache";
+        public const string CacheName = "dotnet_binary_objects_cache";
 
-        private int key;
+        private readonly int _key;
 
-        [InstanceResource] private IIgnite ignite;
+        [InstanceResource] private IIgnite _ignite;
 
         public CarUpdateClosure(int key)
         {
-            this.key = key;
+            _key = key;
         }
 
         public String Invoke()
         {
-            ICache<int, IBinaryObject> cache = ignite.GetCache<int, int>(CacheName).
+            ICache<int, IBinaryObject> cache = _ignite.GetCache<int, int>(CacheName).
                 WithKeepBinary<int, IBinaryObject>();
 
-            IBinaryObject obj = cache.Get(key);
+            IBinaryObject obj = cache.Get(_key);
 
             Console.WriteLine();
-            Console.WriteLine(">>> Binary object {0} for key {1}", obj, key);
+            Console.WriteLine(">>> Binary object {0} for key {1}", obj, _key);
 
             // Updating object's year.
             IBinaryObjectBuilder builder = obj.ToBuilder().SetIntField("year", 
                 obj.GetField<int>("year") - 20);
 
-            cache.Put(key, builder.Build());
+            cache.Put(_key, builder.Build());
 
             return obj.GetField<string>("model");
         }
