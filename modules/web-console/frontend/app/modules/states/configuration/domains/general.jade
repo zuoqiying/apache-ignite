@@ -45,12 +45,12 @@ include ../../../../../app/helpers/jade/mixins.jade
                  -var generatePojo = model + '.generatePojo'
                  div(ng-show=generatePojo)
                     .settings-row
-                        +java-class-typeahead('Key type:', model + '.keyType', '"keyTypeClass"', 'javaBuiltInClasses', 'true', generatePojo, 'Full class name for Key', 'Key class used to store key in cache', generatePojo)
+                        +java-class-typeahead('Key type:', model + '.keyTypeWithPojo', '"keyTypeWithPojo"', 'javaBuiltInClasses', 'true', generatePojo, 'Full class name for Key', 'Key class used to store key in cache', generatePojo)
                     .settings-row
                         +java-class('Value type:', model + '.valueType', '"valueTypeClass"', 'true', generatePojo, 'Value class used to store value in cache', generatePojo)
                  div(ng-hide=generatePojo)
                      .settings-row
-                         +text('Key type:', model + '.keyType', '"keyType"', 'true', 'Key type name', 'Key class used to store key in cache')
+                         +text('Key type:', model + '.keyTypeWithoutPojo', '"keyTypeWithoutPojo"', 'true', 'Key type name', 'Key class used to store key in cache')
                      .settings-row
                          +text('Value type:', model + '.valueType', '"valueType"', 'true', 'Value type name', 'Value class used to store value in cache')
 
