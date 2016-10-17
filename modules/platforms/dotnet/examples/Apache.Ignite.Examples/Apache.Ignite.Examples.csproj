@@ -57,6 +57,7 @@
     <Compile Include="Advanced\MultiTieredCacheExample.cs" />
     <Compile Include="Advanced\NearCacheExample.cs" />
     <Compile Include="Advanced\NonCollocatedSQLExample.cs" />
+    <Compile Include="Advanced\OptimisticTransactionExample.cs" />
     <Compile Include="Advanced\StreamTransformerExample.cs" />
     <Compile Include="Compute\ClosureExample.cs" />
     <Compile Include="Compute\TaskExample.cs" />
