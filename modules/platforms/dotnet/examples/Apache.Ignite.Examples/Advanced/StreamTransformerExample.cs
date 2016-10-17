@@ -17,13 +17,14 @@
 
 using System;
 using Apache.Ignite.Core;
-using Apache.Ignite.Core.Cache;
 using Apache.Ignite.Core.Cache.Configuration;
 using Apache.Ignite.Core.Cache.Query;
 using Apache.Ignite.Core.Datastream;
+using Apache.Ignite.ExamplesDll.Advanced;
 
 namespace Apache.Ignite.Examples.Advanced
 {
+
     public class StreamTransformerExample
     {
         /** Cache name. */
@@ -33,7 +34,7 @@ namespace Apache.Ignite.Examples.Advanced
         private const int Range = 1000;
 
         /** Number of entries to stream. */
-        private const int EntryCount = 10000000;
+        private const int EntryCount = 1000000;
 
         [STAThread]
         public static void Main()
@@ -58,7 +59,7 @@ namespace Apache.Ignite.Examples.Advanced
                     {
                         streamer.AddData(random.Next(Range), 1);
 
-                        if (i % 500000 == 0)
+                        if (i % 50000 == 0)
                             Console.WriteLine("Number of tuples streamed into Ignite: " + i);
                     }
                 }
@@ -71,27 +72,14 @@ namespace Apache.Ignite.Examples.Advanced
                     "select _key, _val from Long order by _val desc limit 10"));
 
                 foreach (var fields in top10)
-                    Console.WriteLine(fields[0]);
+                    Console.WriteLine("{0} ({1} times)", fields[0], fields[1]);
+
+                Console.WriteLine();
             }
 
             Console.WriteLine();
             Console.WriteLine(">>> Example finished, press any key to exit ...");
             Console.ReadKey();
-        }
-
-        // TODO: Move to DLL
-        [Serializable]
-        private class AddOneProcessor : ICacheEntryProcessor<int, long, object, object>
-        {
-            public object Process(IMutableCacheEntry<int, long> entry, object arg)
-            {
-                if (entry.Exists)
-                    entry.Value++;
-                else
-                    entry.Value = 1;
-
-                return null;
-            }
         }
     }
 }

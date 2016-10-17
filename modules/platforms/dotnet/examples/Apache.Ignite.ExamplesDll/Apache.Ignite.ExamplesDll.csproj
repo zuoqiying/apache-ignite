@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Advanced\Account.cs" />
+    <Compile Include="Advanced\AddOneProcessor.cs" />
     <Compile Include="Advanced\AffinityClosure.cs" />
     <Compile Include="Advanced\CarEntryProcessor.cs" />
     <Compile Include="Advanced\CarUpdateClosure.cs" />
