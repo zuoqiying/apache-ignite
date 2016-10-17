@@ -23,15 +23,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import org.apache.ignite.IgniteException;
-import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlQuery;
 import org.apache.ignite.internal.processors.cache.query.GridCacheTwoStepQuery;
-import org.apache.ignite.internal.processors.query.h2.opt.GridH2Table;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.h2.command.Prepared;
 import org.h2.jdbc.JdbcPreparedStatement;
-import org.h2.table.Column;
-import org.h2.table.IndexColumn;
 import org.h2.util.IntArray;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,12 +57,32 @@ public class GridSqlQuerySplitter {
     /** */
     private static final String HAVING_COLUMN = "__H";
 
+    /** */
+    private int nextTblIdx;
+
+    /** */
+    private GridCacheSqlQuery mapSqlQry;
+
+    /** */
+    private GridCacheSqlQuery rdcSqlQry;
+
+    /** */
+    private boolean rdcQrySimple;
+
     /**
      * @param idx Index of table.
      * @return Table.
      */
-    public static GridSqlTable table(int idx) {
+    private static GridSqlTable table(int idx) {
         return new GridSqlTable(TABLE_SCHEMA, TABLE_PREFIX + idx);
+    }
+
+    /**
+     * @param idx Table index.
+     * @return Table name.
+     */
+    public static String tableIdentifier(int idx) {
+        return table(idx).getSQL();
     }
 
     /**
@@ -165,143 +181,67 @@ public class GridSqlQuerySplitter {
 
         GridSqlQuery qry = new GridSqlQueryParser().parse(prepared);
 
-        qry = collectAllTables(qry, schemas, tbls);
+        final boolean explain = qry.explain();
 
-        // Build resulting two step query.
-        GridCacheTwoStepQuery res = new GridCacheTwoStepQuery(schemas, tbls);
+        qry.explain(false);
+
+        collectAllTables(qry, schemas, tbls);
+
+        GridSqlQuerySplitter splitter = new GridSqlQuerySplitter();
 
         // Map query will be direct reference to the original query AST.
         // Thus all the modifications will be performed on the original AST, so we should be careful when
         // nullifying or updating things, have to make sure that we will not need them in the original form later.
-        final GridSqlSelect mapQry = wrapUnion(qry);
+        splitter.splitSelect(wrapUnion(qry), params, collocatedGrpBy);
 
-        GridCacheSqlQuery rdc = split(res, 0, mapQry, params, collocatedGrpBy);
+        // Build resulting two step query.
+        GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(schemas, tbls);
 
-        res.reduceQuery(rdc);
+        twoStepQry.addMapQuery(splitter.mapSqlQry);
+        twoStepQry.reduceQuery(splitter.rdcSqlQry);
+        twoStepQry.skipMergeTable(splitter.rdcQrySimple);
+        twoStepQry.explain(explain);
 
         // We do not have to look at each map query separately here, because if
         // the whole initial query is collocated, then all the map sub-queries
         // will be collocated as well.
-        res.distributedJoins(distributedJoins && !isCollocated(query(prepared)));
+        twoStepQry.distributedJoins(distributedJoins && !isCollocated(query(prepared)));
 
-        return res;
+        return twoStepQry;
     }
 
     /**
-     * @param el Either {@link GridSqlSelect#from()} or {@link GridSqlSelect#where()} elements.
-     */
-    private static void findAffinityColumnConditions(GridSqlElement el) {
-        if (el == null)
-            return;
-
-        el = GridSqlAlias.unwrap(el);
-
-        if (el instanceof GridSqlJoin) {
-            GridSqlJoin join = (GridSqlJoin)el;
-
-            findAffinityColumnConditions(join.leftTable());
-            findAffinityColumnConditions(join.rightTable());
-            findAffinityColumnConditions(join.on());
-        }
-        else if (el instanceof GridSqlOperation) {
-            GridSqlOperationType type = ((GridSqlOperation)el).operationType();
-
-            switch(type) {
-                case AND:
-                    findAffinityColumnConditions(el.child(0));
-                    findAffinityColumnConditions(el.child(1));
-
-                    break;
-
-                case EQUAL:
-                    findAffinityColumn(el.child(0));
-                    findAffinityColumn(el.child(1));
-            }
-        }
-    }
-
-    /**
-     * @param exp Possible affinity column expression.
-     */
-    private static void findAffinityColumn(GridSqlElement exp) {
-        if (exp instanceof GridSqlColumn) {
-            GridSqlColumn col = (GridSqlColumn)exp;
-
-            GridSqlElement from = col.expressionInFrom();
-
-            if (from instanceof GridSqlTable) {
-                GridSqlTable fromTbl = (GridSqlTable)from;
-
-                GridH2Table tbl = fromTbl.dataTable();
-
-                if (tbl != null) {
-                    IndexColumn affKeyCol = tbl.getAffinityKeyColumn();
-                    Column expCol = col.column();
-
-                    if (affKeyCol != null && expCol != null &&
-                        affKeyCol.column.getColumnId() == expCol.getColumnId()) {
-                        // Mark that table lookup will use affinity key.
-                        fromTbl.affinityKeyCondition(true);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * @param qry Select.
-     * @return {@code true} If there is at least one partitioned table in FROM clause.
-     */
-    private static boolean hasPartitionedTableInFrom(GridSqlSelect qry) {
-        return findTablesInFrom(qry.from(), new IgnitePredicate<GridSqlElement>() {
-            @Override public boolean apply(GridSqlElement el) {
-                if (el instanceof GridSqlTable) {
-                    GridH2Table tbl = ((GridSqlTable)el).dataTable();
-
-                    assert tbl != null : el;
-
-                    GridCacheContext<?,?> cctx = tbl.rowDescriptor().context();
-
-                    return !cctx.isLocal() && !cctx.isReplicated();
-                }
-
-                return false;
-            }
-        });
-    }
-
-    /**
-     * @param res Resulting two step query.
-     * @param splitIdx Split index.
-     * @param mapQry Map query to be split.
+     * !!! Notice that here we will modify the original query AST.
+     *
+     * @param mapQry The original query AST to be split. It will be used as a base for map query.
      * @param params Query parameters.
-     * @param collocatedGroupBy Whether the query has collocated GROUP BY keys.
-     * @return Reduce query for the given map query.
+     * @param collocatedGrpBy Whether the query has collocated GROUP BY keys.
      */
-    private static GridCacheSqlQuery split(GridCacheTwoStepQuery res, int splitIdx, final GridSqlSelect mapQry,
-        Object[] params, boolean collocatedGroupBy) {
-        final boolean explain = mapQry.explain();
+    private void splitSelect(
+        final GridSqlSelect mapQry,
+        Object[] params,
+        boolean collocatedGrpBy
+    ) {
+        final int visibleCols = mapQry.visibleColumns();
 
-        mapQry.explain(false);
-
-        GridSqlSelect rdcQry = new GridSqlSelect().from(table(splitIdx));
-
-        // Split all select expressions into map-reduce parts.
+        List<GridSqlElement> rdcExps = new ArrayList<>(visibleCols);
         List<GridSqlElement> mapExps = new ArrayList<>(mapQry.allColumns());
 
         mapExps.addAll(mapQry.columns(false));
 
-        final int visibleCols = mapQry.visibleColumns();
-        final int havingCol = mapQry.havingColumn();
-
-        List<GridSqlElement> rdcExps = new ArrayList<>(visibleCols);
-
         Set<String> colNames = new HashSet<>();
+        final int havingCol = mapQry.havingColumn();
 
         boolean aggregateFound = false;
 
+        // Split all select expressions into map-reduce parts.
         for (int i = 0, len = mapExps.size(); i < len; i++) // Remember len because mapExps list can grow.
-            aggregateFound |= splitSelectExpression(mapExps, rdcExps, colNames, i, collocatedGroupBy, i == havingCol);
+            aggregateFound |= splitSelectExpression(mapExps, rdcExps, colNames, i, collocatedGrpBy, i == havingCol);
+
+        assert !(collocatedGrpBy && aggregateFound); // We do not split aggregates when collocatedGrpBy is true.
+
+        // Create reduce query AST.
+        GridSqlSelect rdcQry = new GridSqlSelect().from(table(nextTblIdx++));
 
         // -- SELECT
         mapQry.clearColumns();
@@ -318,18 +258,18 @@ public class GridSqlQuerySplitter {
         for (int i = rdcExps.size(); i < mapExps.size(); i++)  // Add all extra map columns as invisible reduce columns.
             rdcQry.addColumn(column(((GridSqlAlias)mapExps.get(i)).alias()), false);
 
-        // -- FROM
-        findAffinityColumnConditions(mapQry.from());
+        // -- FROM TODO
+        mapQry.from();
 
-        // -- WHERE
-        findAffinityColumnConditions(mapQry.where());
+        // -- WHERE TODO
+        mapQry.where();
 
         // -- GROUP BY
-        if (mapQry.groupColumns() != null && !collocatedGroupBy)
+        if (mapQry.groupColumns() != null && !collocatedGrpBy)
             rdcQry.groupColumns(mapQry.groupColumns());
 
         // -- HAVING
-        if (havingCol >= 0 && !collocatedGroupBy) {
+        if (havingCol >= 0 && !collocatedGrpBy) {
             // TODO IGNITE-1140 - Find aggregate functions in HAVING clause or rewrite query to put all aggregates to SELECT clause.
             // We need to find HAVING column in reduce query.
             for (int i = visibleCols; i < rdcQry.allColumns(); i++) {
@@ -350,6 +290,7 @@ public class GridSqlQuerySplitter {
             for (GridSqlSortColumn sortCol : mapQry.sort())
                 rdcQry.addSort(sortCol);
 
+            // If collocatedGrpBy is true, then aggregateFound is always false.
             if (aggregateFound) // Ordering over aggregates does not make sense.
                 mapQry.clearSort(); // Otherwise map sort will be used by offset-limit.
             // TODO IGNITE-1141 - Check if sorting is done over aggregated expression, otherwise we can sort and use offset-limit.
@@ -359,6 +300,8 @@ public class GridSqlQuerySplitter {
         if (mapQry.limit() != null) {
             rdcQry.limit(mapQry.limit());
 
+            // Will keep limits on map side when collocatedGrpBy is true,
+            // because in this case aggregateFound is always false.
             if (aggregateFound)
                 mapQry.limit(null);
         }
@@ -387,19 +330,17 @@ public class GridSqlQuerySplitter {
         map.columns(collectColumns(mapExps));
         map.parameterIndexes(toArray(paramIdxs));
 
-        res.addMapQuery(map);
-
-        res.explain(explain);
-
         paramIdxs = new IntArray(params.length);
 
         GridCacheSqlQuery rdc = new GridCacheSqlQuery(rdcQry.getSQL(),
             findParams(rdcQry, params, new ArrayList<>(), paramIdxs).toArray());
 
         rdc.parameterIndexes(toArray(paramIdxs));
-        res.skipMergeTable(rdcQry.simpleQuery());
 
-        return rdc;
+        // Setup result fields.
+        mapSqlQry = map;
+        rdcSqlQry = rdc;
+        rdcQrySimple = rdcQry.simpleQuery();
     }
 
     /**
@@ -437,9 +378,8 @@ public class GridSqlQuerySplitter {
      * @param qry Query.
      * @param schemas Schema names.
      * @param tbls Tables.
-     * @return Query.
      */
-    private static GridSqlQuery collectAllTables(GridSqlQuery qry, Set<String> schemas, Set<String> tbls) {
+    private static void collectAllTables(GridSqlQuery qry, Set<String> schemas, Set<String> tbls) {
         if (qry instanceof GridSqlUnion) {
             GridSqlUnion union = (GridSqlUnion)qry;
 
@@ -456,8 +396,6 @@ public class GridSqlQuerySplitter {
 
             collectAllTablesInSubqueries(select.where(), schemas, tbls);
         }
-
-        return qry;
     }
 
     /**
@@ -482,7 +420,7 @@ public class GridSqlQuerySplitter {
                         schemas.add(schema);
                 }
                 else if (el instanceof GridSqlSubquery)
-                    collectAllTables(((GridSqlSubquery)el).select(), schemas, tbls);
+                    collectAllTables(((GridSqlSubquery)el).subquery(), schemas, tbls);
 
                 return false;
             }
@@ -540,7 +478,7 @@ public class GridSqlQuerySplitter {
                 collectAllTablesInSubqueries(child, schemas, tbls);
         }
         else if (el instanceof GridSqlSubquery)
-            collectAllTables(((GridSqlSubquery)el).select(), schemas, tbls);
+            collectAllTables(((GridSqlSubquery)el).subquery(), schemas, tbls);
     }
 
     /**
@@ -625,7 +563,7 @@ public class GridSqlQuerySplitter {
             paramIdxs.add(idx);
         }
         else if (el instanceof GridSqlSubquery)
-            findParams(((GridSqlSubquery)el).select(), params, target, paramIdxs);
+            findParams(((GridSqlSubquery)el).subquery(), params, target, paramIdxs);
         else
             for (GridSqlElement child : el)
                 findParams(child, params, target, paramIdxs);
@@ -636,14 +574,19 @@ public class GridSqlQuerySplitter {
      * @param rdcSelect Selects for reduce query.
      * @param colNames Set of unique top level column names.
      * @param idx Index.
-     * @param collocated If it is a collocated query.
+     * @param collocatedGrpBy If it is a collocated GROUP BY query.
      * @param isHaving If it is a HAVING expression.
      * @return {@code true} If aggregate was found.
      */
-    private static boolean splitSelectExpression(List<GridSqlElement> mapSelect, List<GridSqlElement> rdcSelect,
-        Set<String> colNames, final int idx, boolean collocated, boolean isHaving) {
+    private static boolean splitSelectExpression(
+        List<GridSqlElement> mapSelect,
+        List<GridSqlElement> rdcSelect,
+        Set<String> colNames,
+        final int idx,
+        boolean collocatedGrpBy,
+        boolean isHaving
+    ) {
         GridSqlElement el = mapSelect.get(idx);
-
         GridSqlAlias alias = null;
 
         boolean aggregateFound = false;
@@ -653,7 +596,7 @@ public class GridSqlQuerySplitter {
             el = alias.child();
         }
 
-        if (!collocated && hasAggregates(el)) {
+        if (!collocatedGrpBy && hasAggregates(el)) {
             aggregateFound = true;
 
             if (alias == null)
