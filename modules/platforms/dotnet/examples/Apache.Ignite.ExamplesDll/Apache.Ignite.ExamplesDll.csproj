@@ -41,6 +41,13 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Advanced\Account.cs" />
+    <Compile Include="Advanced\AffinityClosure.cs" />
+    <Compile Include="Advanced\CarEntryProcessor.cs" />
+    <Compile Include="Advanced\CarUpdateClosure.cs" />
+    <Compile Include="Advanced\ExpirationStore.cs" />
+    <Compile Include="Advanced\ExpirationStoreFactory.cs" />
+    <Compile Include="Advanced\Payment.cs" />
     <Compile Include="Compute\AverageSalaryJob.cs" />
     <Compile Include="Compute\AverageSalaryTask.cs" />
     <Compile Include="Compute\CharacterCountClosure.cs" />

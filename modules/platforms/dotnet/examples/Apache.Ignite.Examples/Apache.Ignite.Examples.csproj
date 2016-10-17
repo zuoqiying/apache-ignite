@@ -48,6 +48,15 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Advanced\CacheAffinityExample.cs" />
+    <Compile Include="Advanced\ClassFreeServersExample.cs" />
+    <Compile Include="Advanced\ClientReconnectExample.cs" />
+    <Compile Include="Advanced\ComputeAffinityExample.cs" />
+    <Compile Include="Advanced\ExampleNodeStartup.cs" />
+    <Compile Include="Advanced\ExpirationExample.cs" />
+    <Compile Include="Advanced\MultiTieredCacheExample.cs" />
+    <Compile Include="Advanced\NearCacheExample.cs" />
+    <Compile Include="Advanced\NonCollocatedSQLExample.cs" />
     <Compile Include="Compute\ClosureExample.cs" />
     <Compile Include="Compute\TaskExample.cs" />
     <Compile Include="Datagrid\ContinuousQueryExample.cs" />
