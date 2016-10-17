@@ -62,10 +62,12 @@ namespace Apache.Ignite.Examples.Advanced
 
                             Console.WriteLine(">>> Waiting while client gets reconnected to the cluster");
 
-                            task.Wait();
+                            while (!task.isCompleted) // workaround.
+                                task.Wait();
 
                             Console.WriteLine(">>> Client has reconnected successfully");
 
+                            //Workaround.
                             System.Threading.Thread.Sleep(3000);
 
                             // Updating the reference to the cache. The cliet reconnected to the new cluster.

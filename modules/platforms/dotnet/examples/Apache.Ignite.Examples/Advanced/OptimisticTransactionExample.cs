@@ -55,6 +55,10 @@ namespace Apache.Ignite.Examples.Advanced
 
                 Console.WriteLine();
                 Console.WriteLine(">>> Resulting value in cache: " + cache[1]);
+
+                Console.WriteLine();
+                Console.WriteLine(">>> Example finished, press any key to exit ...");
+                Console.ReadKey();
             }
         }
 
@@ -76,7 +80,7 @@ namespace Apache.Ignite.Examples.Advanced
                     cache[1]++;
 
                     // Introduce a delay to ensure lock conflict.
-                    Thread.Sleep(TimeSpan.FromSeconds(0.5));
+                    Thread.Sleep(TimeSpan.FromSeconds(2.5));
 
                     tx.Commit();
                 }
