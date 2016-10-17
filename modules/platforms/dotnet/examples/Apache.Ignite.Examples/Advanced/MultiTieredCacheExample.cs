@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using Apache.Ignite.Core;
 using Apache.Ignite.Core.Cache;
@@ -37,11 +34,11 @@ namespace Apache.Ignite.Examples.Advanced
             using (var ignite = Ignition.StartFromApplicationConfiguration())
             {
                 // Creating the cache.
-                CacheConfiguration cfg = new CacheConfiguration()
+                CacheConfiguration cfg = new CacheConfiguration
                 {
                     Name = CacheName,
                     Backups = 1,
-                    EvictionPolicy = new LruEvictionPolicy()
+                    EvictionPolicy = new LruEvictionPolicy
                     {
                         // Maximum number of entries that will be stored in Java heap. 
                         MaxSize = 10

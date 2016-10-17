@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Apache.Ignite.Core;
 using Apache.Ignite.Core.Cache;
 using Apache.Ignite.Core.Cluster;
@@ -27,8 +24,6 @@ namespace Apache.Ignite.Examples.Advanced
     /// </summary>
     public class ComputeAffinityExample
     {
-        private const string CacheName = "dotnet_compute_affinity_example";
-
         [STAThread]
         public static void Main()
         {
@@ -62,8 +57,7 @@ namespace Apache.Ignite.Examples.Advanced
                     if (!nodesToKeys.TryGetValue(node, out keys))
                         throw new Exception("Unexpected exception: unable to find node to keys mapping");
 
-                    compute.AffinityCall<int>(AffinityClosure.CacheName, keys[0], 
-                        new AffinityClosure(keys[0]));
+                    compute.AffinityCall(AffinityClosure.CacheName, keys[0], new AffinityClosure(keys[0]));
                 }
 
                 Console.WriteLine(">>> Check console output on all the server nodes. Key owners had to print " +

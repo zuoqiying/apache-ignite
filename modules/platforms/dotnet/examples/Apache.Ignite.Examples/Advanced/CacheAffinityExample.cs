@@ -44,7 +44,7 @@ namespace Apache.Ignite.Examples.Advanced
 
                 // Creating the cache.
 
-                CacheConfiguration cfg = new CacheConfiguration()
+                CacheConfiguration cfg = new CacheConfiguration
                 {
                     Name = CacheName,
                     Backups = 1

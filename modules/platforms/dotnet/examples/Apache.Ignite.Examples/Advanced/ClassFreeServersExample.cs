@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Apache.Ignite.Core;
 using Apache.Ignite.Core.Binary;
 using Apache.Ignite.Core.Cache;
@@ -34,11 +31,11 @@ namespace Apache.Ignite.Examples.Advanced
             // A server node should be started using App.config that intentially doesn't have Car type 
             // specified in its configuration. The server will not work with Car objects in the deserialized form
             // and this is the reason why Car class is not added into Apache.Ignite.ExamplesDll.dll assembly.
-            IgniteConfiguration cfg = new IgniteConfiguration()
+            IgniteConfiguration cfg = new IgniteConfiguration
             {
                 ClientMode = true,
 
-                BinaryConfiguration = new BinaryConfiguration()
+                BinaryConfiguration = new BinaryConfiguration
                 {
                     Types = new[]
                     {
@@ -46,9 +43,9 @@ namespace Apache.Ignite.Examples.Advanced
                     }
                 },
 
-                DiscoverySpi = new TcpDiscoverySpi()
+                DiscoverySpi = new TcpDiscoverySpi
                 {
-                    IpFinder = new TcpDiscoveryMulticastIpFinder()
+                    IpFinder = new TcpDiscoveryMulticastIpFinder
                     {
                         Endpoints = new[] {"127.0.0.1:47500..47502"}
                     }
@@ -120,7 +117,7 @@ namespace Apache.Ignite.Examples.Advanced
     // The class will be available to the client node only, started as a part of the example.
     // A server node that is supposed to be started with Apache.Ignite.ExamplesDll.dll assembly 
     // won't have access to the class definition.
-    class Car
+    internal class Car
     {
         public Car(string model, int year, int price)
         {

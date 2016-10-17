@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Apache.Ignite.Core;
 using Apache.Ignite.Core.Common;
-using Apache.Ignite.Core.Discovery.Tcp;
-using Apache.Ignite.Core.Discovery.Tcp.Multicast;
 using Apache.Ignite.Core.Cache;
-
 
 namespace Apache.Ignite.Examples.Advanced
 {

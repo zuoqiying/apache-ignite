@@ -39,9 +39,9 @@ namespace Apache.Ignite.Examples.Advanced
         public static void Main()
         {
             // Ignite node configuration.
-            IgniteConfiguration cfg = new IgniteConfiguration()
+            IgniteConfiguration cfg = new IgniteConfiguration
             {
-                BinaryConfiguration = new BinaryConfiguration()
+                BinaryConfiguration = new BinaryConfiguration
                 {
                     Types = new []
                     {
@@ -122,7 +122,7 @@ namespace Apache.Ignite.Examples.Advanced
                 Account account = accountCache.Get(accountId);
                 
                 foreach (IList fields in cursor) {
-                    if (account.TotalPayments == (Int64) fields[0])
+                    if (account.TotalPayments == (long) fields[0])
                         Console.WriteLine(">>> Valid number of rows returned {0}", account.TotalPayments);
                     else
                     {

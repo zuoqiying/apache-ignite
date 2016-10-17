@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using Apache.Ignite.Core;
 using Apache.Ignite.Core.Cache;
 using Apache.Ignite.Core.Cache.Configuration;
 using Apache.Ignite.Core.Cache.Eviction;
-using Apache.Ignite.Core.Events;
 
 namespace Apache.Ignite.Examples.Advanced
 {
@@ -40,10 +35,10 @@ namespace Apache.Ignite.Examples.Advanced
                 Console.WriteLine(">>> Client node connected to the cluster");
 
                 // Creating a distributed and near cache.
-                NearCacheConfiguration nearCacheCfg = new NearCacheConfiguration()
+                NearCacheConfiguration nearCacheCfg = new NearCacheConfiguration
                 {
                     NearStartSize = 100,
-                    EvictionPolicy = new LruEvictionPolicy()
+                    EvictionPolicy = new LruEvictionPolicy
                     {
                         MaxSize = 10
                     }

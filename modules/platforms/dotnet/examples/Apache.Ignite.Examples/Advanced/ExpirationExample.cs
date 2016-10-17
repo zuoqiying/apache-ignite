@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using Apache.Ignite.Core;
 using Apache.Ignite.Core.Cache;
 using Apache.Ignite.Core.Cache.Configuration;
 using Apache.Ignite.Core.Cache.Expiry;
-using Apache.Ignite.Core.Events;
 using Apache.Ignite.ExamplesDll.Advanced;
 
 namespace Apache.Ignite.Examples.Advanced
@@ -38,7 +34,7 @@ namespace Apache.Ignite.Examples.Advanced
             using (var ignite = Ignition.StartFromApplicationConfiguration())
             {
                 // Creating the cache.
-                CacheConfiguration cfg = new CacheConfiguration()
+                CacheConfiguration cfg = new CacheConfiguration
                 {
                     Name = CacheName,
                     Backups = 1,
@@ -75,6 +71,4 @@ namespace Apache.Ignite.Examples.Advanced
             }
         }
     }
-
-
 }
