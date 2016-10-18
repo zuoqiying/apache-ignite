@@ -850,8 +850,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
             if (pendingEntries != null && expireTime != 0) {
                 pendingEntries.put(new PendingRow(expireTime, dataRow.link()));
-
-                cctx.ttl().onPendingEntryAdded(expireTime);
             }
         }
 
