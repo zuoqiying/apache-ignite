@@ -34,7 +34,7 @@ namespace Apache.Ignite.Examples.Advanced
             {
                 Console.WriteLine(">>> Client node connected to the cluster");
 
-                var cache = ignite.GetOrCreateCache<int, String>(CacheName);
+                var cache = ignite.GetOrCreateCache<int, string>(CacheName);
 
                 Random rand = new Random();
 
@@ -62,7 +62,7 @@ namespace Apache.Ignite.Examples.Advanced
 
                             Console.WriteLine(">>> Waiting while client gets reconnected to the cluster");
 
-                            while (!task.isCompleted) // workaround.
+                            while (!task.IsCompleted) // workaround.
                                 task.Wait();
 
                             Console.WriteLine(">>> Client has reconnected successfully");
@@ -70,8 +70,8 @@ namespace Apache.Ignite.Examples.Advanced
                             //Workaround.
                             System.Threading.Thread.Sleep(3000);
 
-                            // Updating the reference to the cache. The cliet reconnected to the new cluster.
-                            cache = ignite.GetOrCreateCache<int, String>(CacheName);
+                            // Updating the reference to the cache. The client reconnected to the new cluster.
+                            cache = ignite.GetOrCreateCache<int, string>(CacheName);
                         }
                         else {
                             Console.WriteLine(e);
