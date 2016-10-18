@@ -387,6 +387,8 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
                             ", err=" + e + ']');
                 }
             }
+            else
+                logTrace("skip loopback interface: " + addr);
         }
 
         if (!clientMode) {
@@ -460,9 +462,9 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
 
     /** {@inheritDoc} */
     @Override public synchronized Collection<InetSocketAddress> getRegisteredAddresses() {
-        logTrace("try to get registered addresses [mcastAddr" + mcastAddr + ", reqItfs=" + reqItfs + ']');
-
         if (mcastAddr != null && reqItfs != null) {
+            logTrace("try to get registered addresses [mcastAddr=" + mcastAddr + ", reqItfs=" + reqItfs + ']');
+
             Collection<InetSocketAddress> ret;
 
             if (reqItfs.size() > 1)
