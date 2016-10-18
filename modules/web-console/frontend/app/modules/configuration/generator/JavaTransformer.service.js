@@ -21,6 +21,143 @@ import StringBuilder from './StringBuilder';
 
 const STORE_FACTORY = ['org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory'];
 
+// Descriptors for generation of demo data.
+const PREDEFINED_QUERIES = [
+    {
+        schema: 'CARS',
+        type: 'PARKING',
+        create: [
+            'CREATE TABLE IF NOT EXISTS CARS.PARKING (',
+            'ID       INTEGER     NOT NULL PRIMARY KEY,',
+            'NAME     VARCHAR(50) NOT NULL,',
+            'CAPACITY INTEGER NOT NULL)'
+        ],
+        clearQuery: ['DELETE FROM CARS.PARKING'],
+        insertCntConsts: [{name: 'DEMO_MAX_PARKING_CNT', val: 5, comment: 'How many parkings to generate.'}],
+        insertPattern: ['INSERT INTO CARS.PARKING(ID, NAME, CAPACITY) VALUES(?, ?, ?)'],
+        fillInsertParameters(sb) {
+            sb.append('stmt.setInt(1, id);');
+            sb.append('stmt.setString(2, "Parking #" + (id + 1));');
+            sb.append('stmt.setInt(3, 10 + rnd.nextInt(20));');
+        },
+        selectQuery: ['SELECT * FROM PARKING WHERE CAPACITY >= 20']
+    },
+    {
+        schema: 'CARS',
+        type: 'CAR',
+        create: [
+            'CREATE TABLE IF NOT EXISTS CARS.CAR (',
+            'ID         INTEGER NOT NULL PRIMARY KEY,',
+            'PARKING_ID INTEGER NOT NULL,',
+            'NAME       VARCHAR(50) NOT NULL);'
+        ],
+        clearQuery: ['DELETE FROM CARS.CAR'],
+        rndRequired: true,
+        insertCntConsts: [
+            {name: 'DEMO_MAX_CAR_CNT', val: 10, comment: 'How many cars to generate.'},
+            {name: 'DEMO_MAX_PARKING_CNT', val: 5, comment: 'How many parkings to generate.'}
+        ],
+        insertPattern: ['INSERT INTO CARS.CAR(ID, PARKING_ID, NAME) VALUES(?, ?, ?)'],
+        fillInsertParameters(sb) {
+            sb.append('stmt.setInt(1, id);');
+            sb.append('stmt.setInt(2, rnd.nextInt(DEMO_MAX_PARKING_CNT));');
+            sb.append('stmt.setString(3, "Car #" + (id + 1));');
+        },
+        selectQuery: ['SELECT * FROM CAR WHERE PARKINGID = 2']
+    },
+    {
+        type: 'COUNTRY',
+        create: [
+            'CREATE TABLE IF NOT EXISTS COUNTRY (',
+            'ID         INTEGER NOT NULL PRIMARY KEY,',
+            'NAME       VARCHAR(50),',
+            'POPULATION INTEGER NOT NULL);'
+        ],
+        clearQuery: ['DELETE FROM COUNTRY'],
+        insertCntConsts: [{name: 'DEMO_MAX_COUNTRY_CNT', val: 5, comment: 'How many countries to generate.'}],
+        insertPattern: ['INSERT INTO COUNTRY(ID, NAME, POPULATION) VALUES(?, ?, ?)'],
+        fillInsertParameters(sb) {
+            sb.append('stmt.setInt(1, id);');
+            sb.append('stmt.setString(2, "Country #" + (id + 1));');
+            sb.append('stmt.setInt(3, 10000000 + rnd.nextInt(100000000));');
+        },
+        selectQuery: ['SELECT * FROM COUNTRY WHERE POPULATION BETWEEN 15000000 AND 25000000']
+    },
+    {
+        type: 'DEPARTMENT',
+        create: [
+            'CREATE TABLE IF NOT EXISTS DEPARTMENT (',
+            'ID         INTEGER NOT NULL PRIMARY KEY,',
+            'COUNTRY_ID INTEGER NOT NULL,',
+            'NAME       VARCHAR(50) NOT NULL);'
+        ],
+        clearQuery: ['DELETE FROM DEPARTMENT'],
+        rndRequired: true,
+        insertCntConsts: [
+            {name: 'DEMO_MAX_DEPARTMENT_CNT', val: 5, comment: 'How many departments to generate.'},
+            {name: 'DEMO_MAX_COUNTRY_CNT', val: 5, comment: 'How many countries to generate.'}
+        ],
+        insertPattern: ['INSERT INTO DEPARTMENT(ID, COUNTRY_ID, NAME) VALUES(?, ?, ?)'],
+        fillInsertParameters(sb) {
+            sb.append('stmt.setInt(1, id);');
+            sb.append('stmt.setInt(2, rnd.nextInt(DEMO_MAX_COUNTRY_CNT));');
+            sb.append('stmt.setString(3, "Department #" + (id + 1));');
+        },
+        selectQuery: ['SELECT * FROM DEPARTMENT']
+    },
+    {
+        type: 'EMPLOYEE',
+        create: [
+            'CREATE TABLE IF NOT EXISTS EMPLOYEE (',
+            'ID            INTEGER NOT NULL PRIMARY KEY,',
+            'DEPARTMENT_ID INTEGER NOT NULL,',
+            'MANAGER_ID    INTEGER,',
+            'FIRST_NAME    VARCHAR(50) NOT NULL,',
+            'LAST_NAME     VARCHAR(50) NOT NULL,',
+            'EMAIL         VARCHAR(50) NOT NULL,',
+            'PHONE_NUMBER  VARCHAR(50),',
+            'HIRE_DATE     DATE        NOT NULL,',
+            'JOB           VARCHAR(50) NOT NULL,',
+            'SALARY        DOUBLE);'
+        ],
+        clearQuery: ['DELETE FROM EMPLOYEE'],
+        rndRequired: true,
+        insertCntConsts: [
+            {name: 'DEMO_MAX_EMPLOYEE_CNT', val: 10, comment: 'How many employees to generate.'},
+            {name: 'DEMO_MAX_DEPARTMENT_CNT', val: 5, comment: 'How many departments to generate.'}
+        ],
+        customGeneration(sb, conVar, stmtVar) {
+            sb.append(`${stmtVar} = ${conVar}.prepareStatement("INSERT INTO EMPLOYEE(ID, DEPARTMENT_ID, MANAGER_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB, SALARY) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")`);
+
+            sb.emptyLine();
+
+            sb.startBlock('for (int id = 0; id < DEMO_MAX_EMPLOYEE_CNT; id ++) {');
+
+            sb.append('int depId = rnd.nextInt(DEMO_MAX_DEPARTMENT_CNT);');
+
+            sb.emptyLine();
+
+            sb.append('stmt.setInt(1, DEMO_MAX_DEPARTMENT_CNT + id);');
+            sb.append('stmt.setInt(2, depId);');
+            sb.append('stmt.setInt(3, depId);');
+            sb.append('stmt.setString(4, "First name manager #" + (id + 1));');
+            sb.append('stmt.setString(5, "Last name manager#" + (id + 1));');
+            sb.append('stmt.setString(6, "Email manager#" + (id + 1));');
+            sb.append('stmt.setString(7, "Phone number manager#" + (id + 1));');
+            sb.append('stmt.setString(8, "2014-01-01");');
+            sb.append('stmt.setString(9, "Job manager #" + (id + 1));');
+            sb.append('stmt.setDouble(10, 600.0 + rnd.nextInt(300));');
+
+            sb.emptyLine();
+
+            sb.append('stmt.executeUpdate();');
+
+            sb.endBlock('}');
+        },
+        selectQuery: ['SELECT * FROM EMPLOYEE WHERE SALARY > 700']
+    }
+];
+
 export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
@@ -634,7 +771,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
          * @param {Bean} cfg
          * @param pkg Package name.
          * @param {String} clsName Class name for generate factory class otherwise generate code snippet.
-         * @param {Boolean} clientNearCaches Is client node.
+         * @param {Array.<Object>} clientNearCaches Is client node.
          * @returns {StringBuilder}
          */
         static igniteConfiguration(cfg, pkg, clsName, clientNearCaches) {
@@ -789,14 +926,14 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         }
 
         /**
-         * Generate java class code.
+         * Generate source code for type by its domain model.
          *
          * @param fullClsName Full class name.
          * @param fields Fields.
          * @param addConstructor If 'true' then empty and full constructors should be generated.
          * @returns {StringBuilder}
          */
-        static domainClass(fullClsName, fields, addConstructor) {
+        static pojo(fullClsName, fields, addConstructor) {
             const dotIdx = fullClsName.lastIndexOf('.');
 
             const pkg = fullClsName.substring(0, dotIdx);
@@ -1036,7 +1173,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         // Key class generation only if key is not build in java class.
                         if (_.nonNil(domain.keyFields) && domain.keyFields.length > 0) {
                             pojo.keyType = domain.keyType;
-                            pojo.keyClass = this.domainClass(domain.keyType, domain.keyFields, addConstructor);
+                            pojo.keyClass = this.pojo(domain.keyType, domain.keyFields, addConstructor);
                         }
 
                         const valueFields = _.clone(domain.valueFields);
@@ -1049,7 +1186,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         }
 
                         pojo.valueType = domain.valueType;
-                        pojo.valueClass = this.domainClass(domain.valueType, valueFields, addConstructor);
+                        pojo.valueClass = this.pojo(domain.valueType, valueFields, addConstructor);
 
                         pojos.push(pojo);
                     }
@@ -1057,6 +1194,443 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             });
 
             return pojos;
+        }
+
+        // Generate creation and execution of cache query.
+        static _multilineQuery(sb, query, prefix, postfix) {
+            if (_.isEmpty(query))
+                return;
+
+            _.forEach(query, (line, ix) => {
+                if (ix === 0) {
+                    if (query.length === 1)
+                        sb.append(`${prefix}"${line}"${postfix}`);
+                    else
+                        sb.startBlock(`${prefix}"${line}" +`);
+                }
+                else
+                    sb.append(`"${line}"${ix === query.length - 1 ? postfix : ' +'}`);
+            });
+
+            if (query.length > 1)
+                sb.endBlock('');
+            else
+                sb.emptyLine();
+        }
+
+        // Generate creation and execution of prepared statement.
+        static _prepareStatement(sb, conVar, query) {
+            this._multilineQuery(sb, query, `${conVar}.prepareStatement(`, ').executeUpdate();');
+        }
+
+        static demoStartup(sb, cluster, shortFactoryCls) {
+            const cachesWithDataSource = _.filter(cluster.caches, (cache) => {
+                const kind = _.get(cache, 'cacheStoreFactory.kind');
+
+                if (kind) {
+                    const store = cache.cacheStoreFactory[kind];
+
+                    return (store.connectVia === 'DataSource' || _.isNil(store.connectVia)) && store.dialect;
+                }
+
+                return false;
+            });
+
+            const uniqDomains = [];
+
+            // Prepare array of cache and his demo domain model list. Every domain is contained only in first cache.
+            const demoTypes = _.reduce(cachesWithDataSource, (acc, cache) => {
+                const domains = _.filter(cache.domains, (domain) => _.nonEmpty(domain.valueFields) &&
+                    !_.includes(uniqDomains, domain));
+
+                if (_.nonEmpty(domains)) {
+                    uniqDomains.push(...domains);
+
+                    acc.push({
+                        cache,
+                        domains
+                    });
+                }
+
+                return acc;
+            }, []);
+
+            if (_.nonEmpty(demoTypes)) {
+                // Group domain modes by data source
+                const typeByDs = _.groupBy(demoTypes, ({cache}) => cache.cacheStoreFactory[cache.cacheStoreFactory.kind].dataSourceBean);
+
+                let rndNonDefined = true;
+
+                const generatedConsts = [];
+
+                _.forEach(typeByDs, (types) => {
+                    _.forEach(types, (type) => {
+                        _.forEach(type.domains, (domain) => {
+                            const valType = domain.valueType.toUpperCase();
+
+                            const desc = _.find(PREDEFINED_QUERIES, (qry) => valType.endsWith(qry.type));
+
+                            if (desc) {
+                                if (rndNonDefined && desc.rndRequired) {
+                                    this.commentBlock(sb, 'Random generator for demo data.');
+                                    sb.append('private static final Random rnd = new Random();');
+
+                                    sb.emptyLine();
+
+                                    rndNonDefined = false;
+                                }
+
+                                _.forEach(desc.insertCntConsts, (cnt) => {
+                                    if (!_.includes(generatedConsts, cnt.name)) {
+                                        this.commentBlock(sb, cnt.comment);
+                                        sb.append(`private static final int ${cnt.name} = ${cnt.val};`);
+
+                                        sb.emptyLine();
+
+                                        generatedConsts.push(cnt.name);
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+
+                // Generation of fill database method
+                this.commentBlock(sb, 'Fill data for Demo.');
+                sb.startBlock('private static void prepareDemoData() throws SQLException {');
+
+                let firstDs = true;
+
+                _.forEach(typeByDs, (types, ds) => {
+                    const conVar = ds + 'Con';
+
+                    if (firstDs)
+                        firstDs = false;
+                    else
+                        sb.emptyLine();
+
+                    sb.startBlock(`try (Connection ${conVar} = ${shortFactoryCls}.DataSources.INSTANCE_${ds}.getConnection()) {`);
+
+                    let first = true;
+                    let stmtFirst = true;
+
+                    _.forEach(types, (type) => {
+                        _.forEach(type.domains, (domain) => {
+                            const valType = domain.valueType.toUpperCase();
+
+                            const desc = _.find(PREDEFINED_QUERIES, (qry) => valType.endsWith(qry.type));
+
+                            if (desc) {
+                                if (first)
+                                    first = false;
+                                else
+                                    sb.emptyLine();
+
+                                this.comment(sb, `Generate ${desc.type}.`);
+
+                                if (desc.schema)
+                                    this._prepareStatement(sb, conVar, [`CREATE SCHEMA IF NOT EXISTS ${desc.schema}`]);
+
+                                this._prepareStatement(sb, conVar, desc.create);
+
+                                this._prepareStatement(sb, conVar, desc.clearQuery);
+
+                                let stmtVar = 'stmt';
+
+                                if (stmtFirst) {
+                                    stmtFirst = false;
+
+                                    stmtVar = 'PreparedStatement stmt';
+                                }
+
+                                if (_.isFunction(desc.customGeneration))
+                                    desc.customGeneration(sb, conVar, stmtVar);
+                                else {
+                                    sb.append(`${stmtVar} = ${conVar}.prepareStatement("${desc.insertPattern}");`);
+
+                                    sb.emptyLine();
+
+                                    sb.startBlock(`for (int id = 0; id < ${desc.insertCntConsts[0].name}; id ++) {`);
+
+                                    desc.fillInsertParameters(sb);
+
+                                    sb.emptyLine();
+
+                                    sb.append('stmt.executeUpdate();');
+
+                                    sb.endBlock('}');
+                                }
+
+                                sb.emptyLine();
+
+                                sb.append(`${conVar}.commit();`);
+                            }
+                        });
+                    });
+
+                    sb.endBlock('}');
+                });
+
+                sb.endBlock('}');
+
+                sb.emptyLine();
+
+                this.commentBlock(sb, 'Print result table to console.');
+                sb.startBlock('private static void printResult(List<Cache.Entry<Object, Object>> rows) {');
+                sb.append('for (Cache.Entry<Object, Object> row: rows)');
+                sb.append('    System.out.println(row);');
+                sb.endBlock('}');
+
+                sb.emptyLine();
+
+                // Generation of execute queries method.
+                this.commentBlock(sb, 'Run demo.');
+                sb.startBlock('private static void runDemo(Ignite ignite) throws SQLException {');
+
+                const getType = (fullType) => fullType.substr(fullType.lastIndexOf('.') + 1);
+
+                const cacheLoaded = [];
+                let rowVariableDeclared = false;
+                firstDs = true;
+
+                _.forEach(typeByDs, (types, ds) => {
+                    const conVar = ds + 'Con';
+
+                    if (firstDs)
+                        firstDs = false;
+                    else
+                        sb.emptyLine();
+
+                    sb.startBlock(`try (Connection ${conVar} = ${shortFactoryCls}.DataSources.INSTANCE_${ds}.getConnection()) {`);
+
+                    let first = true;
+
+                    _.forEach(types, (type) => {
+                        _.forEach(type.domains, (domain) => {
+                            const valType = domain.valueType.toUpperCase();
+
+                            const desc = _.find(PREDEFINED_QUERIES, (qry) => valType.endsWith(qry.type));
+
+                            if (desc) {
+                                if (_.isEmpty(desc.selectQuery))
+                                    return;
+
+                                if (first)
+                                    first = false;
+                                else
+                                    sb.emptyLine();
+
+                                const cacheName = type.cache.name;
+
+                                if (!_.includes(cacheLoaded, cacheName)) {
+                                    sb.append(`ignite.cache("${cacheName}").loadCache(null);`);
+
+                                    sb.emptyLine();
+
+                                    cacheLoaded.push(cacheName);
+                                }
+
+                                const varRows = rowVariableDeclared ? 'rows' : 'List<Cache.Entry<Object, Object>> rows';
+
+                                this._multilineQuery(sb, desc.selectQuery, `${varRows} = ignite.cache("${cacheName}").query(new SqlQuery<>("${getType(domain.valueType)}", `, ')).getAll();');
+
+                                sb.append('printResult(rows);');
+
+                                rowVariableDeclared = true;
+                            }
+                        });
+                    });
+
+                    sb.endBlock('}');
+                });
+
+                sb.endBlock('}');
+            }
+        }
+
+        /**
+         * Function to generate java class for node startup with cluster configuration.
+         *
+         * @param {Object} cluster Cluster to process.
+         * @param {String} fullClsName Full class name.
+         * @param {String} cfgRef Config.
+         * @param {String} [factoryCls] fully qualified class name of configuration factory.
+         * @param {Array.<Object>} [clientNearCaches] Is client node.
+         */
+        static nodeStartup(cluster, fullClsName, cfgRef, factoryCls, clientNearCaches) {
+            const dotIdx = fullClsName.lastIndexOf('.');
+
+            const pkg = fullClsName.substring(0, dotIdx);
+            const clsName = fullClsName.substring(dotIdx + 1);
+
+            const demo = clsName === 'DemoStartup';
+
+            const sb = new StringBuilder();
+
+            const imports = ['org.apache.ignite.Ignition', 'org.apache.ignite.Ignite'];
+
+            if (demo) {
+                imports.push('org.h2.tools.Server', 'java.sql.Connection', 'java.sql.PreparedStatement',
+                    'java.sql.SQLException', 'java.util.Random', 'java.util.List', 'javax.cache.Cache',
+                    'org.apache.ignite.cache.query.SqlQuery');
+            }
+
+            let shortFactoryCls;
+
+            if (factoryCls) {
+                imports.push(factoryCls);
+
+                shortFactoryCls = JavaTypes.shortClassName(factoryCls);
+            }
+
+            sb.append(`package ${pkg};`)
+                .emptyLine();
+
+            _.forEach(this._prepareImports(imports), (cls) => sb.append(`import ${cls};`));
+            sb.emptyLine();
+
+            if (demo) {
+                this.mainComment(sb,
+                    'To start demo configure data sources in secret.properties file.',
+                    'For H2 database it should be like following:',
+                    'dsH2.jdbc.url=jdbc:h2:tcp://localhost/mem:DemoDB;DB_CLOSE_DELAY=-1',
+                    'dsH2.jdbc.username=sa',
+                    'dsH2.jdbc.password=',
+                    ''
+                );
+            }
+            else
+                this.mainComment(sb);
+
+            sb.startBlock(`public class ${clsName} {`);
+
+            if (demo && shortFactoryCls)
+                this.demoStartup(sb, cluster, shortFactoryCls);
+
+            this.commentBlock(sb,
+                'Start up node with specified configuration.',
+                '',
+                '@param args Command line arguments, none required.',
+                '@throws Exception If failed.'
+            );
+            sb.startBlock('public static void main(String[] args) throws Exception {');
+
+            if (demo) {
+                sb.startBlock('try {');
+                sb.append('// Start H2 database server.');
+                sb.append('Server.createTcpServer("-tcpDaemon").start();');
+                sb.endBlock('}');
+                sb.startBlock('catch (SQLException ignore) {');
+                sb.append('// No-op.');
+                sb.endBlock('}');
+
+                sb.emptyLine();
+            }
+
+            if ((_.nonEmpty(clientNearCaches) || demo) && shortFactoryCls) {
+                sb.append(`Ignite ignite = Ignition.start(${cfgRef});`);
+
+                _.forEach(clientNearCaches, (cache, idx) => {
+                    sb.emptyLine();
+
+                    if (idx === 0)
+                        sb.append('// Demo of near cache creation on client node.');
+
+                    const nearCacheMtd = JavaTypes.toJavaName('nearConfiguration', cache.name);
+
+                    sb.append(`ignite.getOrCreateCache(${shortFactoryCls}.${cache.name}(), ${shortFactoryCls}.${nearCacheMtd}());`);
+                });
+            }
+            else
+                sb.append(`Ignition.start(${cfgRef});`);
+
+            if (demo) {
+                sb.emptyLine();
+
+                sb.append('prepareDemoData();');
+
+                sb.emptyLine();
+
+                sb.append('runDemo(ignite);');
+            }
+
+            sb.endBlock('}');
+
+            sb.endBlock('}');
+
+            return sb.asString();
+        }
+
+        /**
+         * Function to generate java class for load caches.
+         *
+         * @param caches Caches to load.
+         * @param pkg Class package name.
+         * @param clsName Class name.
+         * @param {String} cfgRef Config.
+         */
+        static loadCaches(caches, pkg, clsName, cfgRef) {
+            const sb = new StringBuilder();
+
+            sb.append(`package ${pkg};`)
+                .emptyLine();
+
+            const imports = ['org.apache.ignite.Ignition', 'org.apache.ignite.Ignite'];
+
+            _.forEach(this._prepareImports(imports), (cls) => sb.append(`import ${cls};`));
+            sb.emptyLine();
+
+            this.mainComment(sb);
+            sb.startBlock(`public class ${clsName} {`);
+
+            this.commentBlock(sb,
+                '<p>',
+                'Utility to load caches from database.',
+                '<p>',
+                'How to use:',
+                '<ul>',
+                '    <li>Start cluster.</li>',
+                '    <li>Start this utility and wait while load complete.</li>',
+                '</ul>',
+                '',
+                '@param args Command line arguments, none required.',
+                '@throws Exception If failed.'
+            );
+            sb.startBlock('public static void main(String[] args) throws Exception {');
+
+            sb.startBlock(`try (Ignite ignite = Ignition.start(${cfgRef})) {`);
+
+            sb.append('System.out.println(">>> Loading caches...");');
+
+            sb.emptyLine();
+
+            _.forEach(caches, (cache) => {
+                sb.append('System.out.println(">>> Loading cache: ' + cache.name + '");');
+                sb.append('ignite.cache("' + cache.name + '").loadCache(null);');
+
+                sb.emptyLine();
+            });
+
+            sb.append('System.out.println(">>> All caches loaded!");');
+
+            sb.endBlock('}');
+
+            sb.endBlock('}');
+
+            sb.endBlock('}');
+
+            return sb.asString();
+        }
+
+        /**
+         * Checks if cluster has demo types.
+         *
+         * @param cluster Cluster to check.
+         * @param demo Is demo enabled.
+         * @returns {boolean} True if cluster has caches with demo types.
+         */
+        static isDemoConfigured(cluster, demo) {
+            return demo && _.find(cluster.caches, (cache) => _.find(cache.domains, (domain) => _.find(PREDEFINED_QUERIES, (desc) => domain.valueType.toUpperCase().endsWith(desc.type))));
         }
     }
 

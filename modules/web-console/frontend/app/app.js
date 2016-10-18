@@ -99,19 +99,13 @@ import duration from './filters/duration.filter';
 import hasPojo from './filters/hasPojo.filter';
 
 // Generators
-import $generatorCommon from './modules/configuration/generator/generator-common';
-import $generatorJava from './modules/configuration/generator/generator-java';
 import $generatorOptional from './modules/configuration/generator/generator-optional';
 import $generatorProperties from './modules/configuration/generator/generator-properties';
 import $generatorReadme from './modules/configuration/generator/generator-readme';
-import $generatorSpring from './modules/configuration/generator/generator-spring';
 
-window.$generatorCommon = $generatorCommon;
-window.$generatorJava = $generatorJava;
 window.$generatorOptional = $generatorOptional;
 window.$generatorProperties = $generatorProperties;
 window.$generatorReadme = $generatorReadme;
-window.$generatorSpring = $generatorSpring;
 
 // Controllers
 import admin from 'controllers/admin-controller';

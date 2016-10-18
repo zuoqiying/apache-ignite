@@ -3353,7 +3353,7 @@ $generatorJava.generateDemo = function(cluster, res, factoryCls) {
 
                         res.needEmptyLine = true;
 
-                        if (!desc.specialGeneration) {
+                        if (!desc.customGeneration) {
                             $generatorJava.declareVariableCustom(res, 'stmt', 'java.sql.PreparedStatement', conVar + '.prepareStatement("' + desc.insertPattern + '")');
 
                             res.startBlock('for (int id = 0; id < ' + desc.insertCntConsts[0].name + '; id ++) {');
@@ -3369,7 +3369,7 @@ $generatorJava.generateDemo = function(cluster, res, factoryCls) {
                             res.needEmptyLine = true;
                         }
                         else
-                            desc.specialGeneration(res, conVar);
+                            desc.customGeneration(res, conVar);
 
                         res.line(conVar + '.commit();');
 

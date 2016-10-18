@@ -20,8 +20,8 @@ import JSZip from 'jszip';
 import saver from 'file-saver';
 
 export default [
-    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteLoading', '$filter', 'IgniteConfigurationResource', 'JavaTypes', 'IgniteVersion', 'IgniteConfigurationGenerator', 'SpringTransformer', 'JavaTransformer', 'GeneratorDocker', 'GeneratorPom', 'IgnitePropertiesGenerator', 'IgniteFormUtils',
-    function($root, $scope, $http, LegacyUtils, Messages, Loading, $filter, Resource, JavaTypes, Version, generator, spring, java, docker, pom, propsGenerator, FormUtils) {
+    '$rootScope', '$scope', '$http', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteLoading', '$filter', 'IgniteConfigurationResource', 'JavaTypes', 'IgniteVersion', 'IgniteConfigurationGenerator', 'SpringTransformer', 'JavaTransformer', 'GeneratorDocker', 'GeneratorPom', 'IgnitePropertiesGenerator', 'IgniteReadmeGenerator', 'IgniteFormUtils',
+    function($root, $scope, $http, LegacyUtils, Messages, Loading, $filter, Resource, JavaTypes, Version, generator, spring, java, docker, pom, propsGenerator, readme, FormUtils) {
         const ctrl = this;
 
         $scope.ui = { ready: false };
@@ -215,6 +215,16 @@ export default [
                 folder.children.push(leaf);
         }
 
+        function cacheHasDatasource(cache) {
+            if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind) {
+                const storeFactory = cache.cacheStoreFactory[cache.cacheStoreFactory.kind];
+
+                return !!(storeFactory && (storeFactory.connectVia ? (storeFactory.connectVia === 'DataSource' ? storeFactory.dialect : false) : storeFactory.dialect)); // eslint-disable-line no-nested-ternary
+            }
+
+            return false;
+        }
+
         $scope.selectItem = (cluster) => {
             delete ctrl.cluster;
 
@@ -238,10 +248,10 @@ export default [
             else
                 javaFolder.children = [javaConfigFolder, javaStartupFolder];
 
-            if ($generatorCommon.secretPropertiesNeeded(cluster))
+            if (_.nonNil(_.find(cluster.caches, cacheHasDatasource)) || cluster.sslEnabled)
                 mainFolder.children.push(resourcesFolder);
 
-            if ($generatorJava.isDemoConfigured(cluster, $root.IgniteDemoMode))
+            if (java.isDemoConfigured(cluster, $root.IgniteDemoMode))
                 javaFolder.children.push(demoFolder);
 
             if (cluster.discovery.kind === 'Jdbc' && cluster.discovery.Jdbc.dialect)
@@ -286,7 +296,6 @@ export default [
         // TODO IGNITE-2114: implemented as independent logic for download.
         $scope.downloadConfiguration = function() {
             const cluster = $scope.cluster;
-            const clientNearCfg = cluster.clientNearCfg;
 
             const zip = new JSZip();
 
@@ -319,31 +328,31 @@ export default [
             zip.file(srcPath + 'config/ServerConfigurationFactory.java', java.igniteConfiguration(cfg, 'config', 'ServerConfigurationFactory').asString());
             zip.file(srcPath + 'config/ClientConfigurationFactory.java', java.igniteConfiguration(cfg, 'config', 'ClientConfigurationFactory', clientNearCaches).asString());
 
-            if ($generatorJava.isDemoConfigured(cluster, $root.IgniteDemoMode)) {
-                zip.file(srcPath + 'demo/DemoStartup.java', $generatorJava.nodeStartup(cluster, 'demo', 'DemoStartup',
+            if (java.isDemoConfigured(cluster, $root.IgniteDemoMode)) {
+                zip.file(srcPath + 'demo/DemoStartup.java', java.nodeStartup(cluster, 'demo.DemoStartup',
                     'ServerConfigurationFactory.createConfiguration()', 'config.ServerConfigurationFactory'));
             }
 
             // Generate loader for caches with configured store.
-            const cachesToLoad = _.filter(cluster.caches, (cache) => !_.isNil(cache.cacheStoreFactory));
+            const cachesToLoad = _.filter(cluster.caches, (cache) => _.nonNil(cache.cacheStoreFactory));
 
-            if (!_.isEmpty(cachesToLoad))
-                zip.file(srcPath + 'load/LoadCaches.java', $generatorJava.loadCaches(cachesToLoad, 'load', 'LoadCaches', '"' + clientXml + '"'));
+            if (_.nonEmpty(cachesToLoad))
+                zip.file(srcPath + 'load/LoadCaches.java', java.loadCaches(cachesToLoad, 'load', 'LoadCaches', `"${clientXml}"`));
 
-            zip.file(srcPath + 'startup/ServerNodeSpringStartup.java', $generatorJava.nodeStartup(cluster, 'startup', 'ServerNodeSpringStartup', '"' + serverXml + '"'));
-            zip.file(srcPath + 'startup/ClientNodeSpringStartup.java', $generatorJava.nodeStartup(cluster, 'startup', 'ClientNodeSpringStartup', '"' + clientXml + '"'));
+            zip.file(srcPath + 'startup/ServerNodeSpringStartup.java', java.nodeStartup(cluster, 'startup.ServerNodeSpringStartup', `"${serverXml}"`));
+            zip.file(srcPath + 'startup/ClientNodeSpringStartup.java', java.nodeStartup(cluster, 'startup.ClientNodeSpringStartup', `"${clientXml}"`));
 
-            zip.file(srcPath + 'startup/ServerNodeCodeStartup.java', $generatorJava.nodeStartup(cluster, 'startup', 'ServerNodeCodeStartup',
+            zip.file(srcPath + 'startup/ServerNodeCodeStartup.java', java.nodeStartup(cluster, 'startup.ServerNodeCodeStartup',
                 'ServerConfigurationFactory.createConfiguration()', 'config.ServerConfigurationFactory'));
-            zip.file(srcPath + 'startup/ClientNodeCodeStartup.java', $generatorJava.nodeStartup(cluster, 'startup', 'ClientNodeCodeStartup',
-                'ClientConfigurationFactory.createConfiguration()', 'config.ClientConfigurationFactory', clientNearCfg));
+            zip.file(srcPath + 'startup/ClientNodeCodeStartup.java', java.nodeStartup(cluster, 'startup.ClientNodeCodeStartup',
+                'ClientConfigurationFactory.createConfiguration()', 'config.ClientConfigurationFactory', clientNearCaches));
 
             zip.file('pom.xml', pom.generate(cluster, Version.productVersion().ignite).asString());
 
-            zip.file('README.txt', $generatorReadme.readme().asString());
-            zip.file('jdbc-drivers/README.txt', $generatorReadme.readmeJdbc().asString());
+            zip.file('README.txt', readme.generate());
+            zip.file('jdbc-drivers/README.txt', readme.generateJDBC());
 
-            if (!ctrl.data.pojos)
+            if (_.isEmpty(ctrl.data.pojos))
                 ctrl.data.pojos = java.pojos(cluster.caches);
 
             for (const pojo of ctrl.data.pojos) {

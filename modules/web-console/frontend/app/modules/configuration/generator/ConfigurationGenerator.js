@@ -607,6 +607,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                         break;
                     default:
+                        // No-op.
                 }
 
                 if (failoverSpi)
