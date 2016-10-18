@@ -24,8 +24,13 @@ import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
@@ -411,6 +416,7 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
                             mcastAddr + ", " + mcastAddr + ", " + Objects.toString(addrs));
 
                         reqItfs.add(mcastAddr);
+                        logTrace("addr has been added to reqItfs: " + mcastAddr);
                     }
                     catch (IOException e) {
                         if (log.isDebugEnabled())
@@ -454,7 +460,7 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
 
     /** {@inheritDoc} */
     @Override public synchronized Collection<InetSocketAddress> getRegisteredAddresses() {
-        logTrace("try to get registered addresses");
+        logTrace("try to get registered addresses [mcastAddr" + mcastAddr + ", reqItfs=" + reqItfs + ']');
 
         if (mcastAddr != null && reqItfs != null) {
             Collection<InetSocketAddress> ret;
@@ -500,13 +506,23 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
     private void startDebugThread() {
         Thread debugThread = new Thread(new Runnable() {
             @Override public void run() {
-                while (!Thread.currentThread().isInterrupted()) {
-                    logTrace("Try to get addresses...");
-                    Collection<InetSocketAddress> addresses = requestAddresses(reqItfs);
-                    logTrace("Requested addresses: " + Objects.toString(addresses));
+                try {
+                    while (!Thread.currentThread().isInterrupted()) {
+                        Thread.sleep(5000);
+
+                        logTrace("Try to get addresses...");
+
+                        Collection<InetSocketAddress> addrs = getRegisteredAddresses();
+
+                        logTrace("Requested addresses: " + Objects.toString(addrs));
+                    }
+                }
+                catch (InterruptedException e) {
+                    logTrace("Debug thread interrupted");
                 }
             }
         });
+        debugThread.setName("multicast-debug-thread");
         debugThread.setDaemon(true);
         debugThread.start();
     }
@@ -576,7 +592,7 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
     private T2<Collection<InetSocketAddress>, Boolean> requestAddresses(InetAddress mcastAddr,
         @Nullable InetAddress sockItf)
     {
-        logTrace("request addresses...");
+        logTrace("request addresses [mcastAddr=" + mcastAddr + ", sockItf=" + sockItf + ']');
 
         Collection<InetSocketAddress> rmtAddrs = new HashSet<>();
 
@@ -598,7 +614,7 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
                 MulticastSocket sock = null;
 
                 try {
-                    logTrace("create new socket");
+                    logTrace("create new socket [sockItf=" + sockItf + ", resWaitTime=" + resWaitTime + ']');
 
                     sock = new MulticastSocket(0);
 
@@ -615,12 +631,14 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
 
                     reqPckt.setData(MSG_ADDR_REQ_DATA);
 
-                    logTrace("socket has been created");
+                    logTrace("socket has been created: " + sock);
 
                     try {
                         logTrace("try to send request");
+
                         sock.send(reqPckt);
-                        logTrace("request has been sended");
+
+                        logTrace("request has been sent");
                     }
                     catch (IOException e) {
                         sndErr = true;
@@ -678,6 +696,7 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
                             }
 
                             logTrace("addresses from response: " + Objects.toString(addrRes.addresses()));
+
                             rmtAddrs.addAll(addrRes.addresses());
                         }
                     }
@@ -833,7 +852,9 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
         /** {@inheritDoc} */
         @Override protected void body() throws InterruptedException {
             logTrace("try to request addresses...");
+
             addrs = requestAddresses(mcastAddr, sockAddr).get1();
+
             logTrace("addresses have been requested: " + Objects.toString(addrs));
         }
 
@@ -886,6 +907,11 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
          * @return Multicast socket.
          */
         private MulticastSocket createSocket() throws IOException {
+            logTrace("address sender creates socket [mcastGrp=" + mcastGrp +
+                ", mcastPort=" + mcastPort +
+                ", sockItf=" + sockItf +
+                ", ttl=" + ttl + ']');
+
             MulticastSocket sock = new MulticastSocket(mcastPort);
 
             sock.setLoopbackMode(false); // Use 'false' to enable support for more than one node on the same machine.
@@ -902,12 +928,16 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
             if (ttl != -1)
                 sock.setTimeToLive(ttl);
 
+            logTrace("address sender, socket created: " + sock);
+
             return sock;
         }
 
         /** {@inheritDoc} */
         @Override protected void body() throws InterruptedException {
-            logTrace("address sender body started...");
+            logTrace("address sender body started [mcastGrp=" + mcastGrp +
+                ", sockItf=" + sockItf +
+                ", addrs=" + addrs + ']');
 
             AddressResponse res;
 
@@ -951,9 +981,11 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
                     logTrace("packet is an Ignite request");
 
                     try {
-                        logTrace("sending response: " + res.data());
+                        logTrace("sending response: " + res.addresses());
+
                         sock.send(new DatagramPacket(res.data(), res.data().length, pckt.getAddress(), pckt.getPort()));
-                        logTrace("response has been sended");
+
+                        logTrace("response has been sent");
                     }
                     catch (IOException e) {
                         if (e.getMessage().contains("Operation not permitted")) {
