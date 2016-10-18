@@ -317,7 +317,7 @@ export default ['domainsController', [
                 const oldPreset = _.find(_dbPresets, {jdbcDriverClass: preset.jdbcDriverClass});
 
                 if (oldPreset)
-                    angular.extend(oldPreset, preset);
+                    _.assign(oldPreset, preset);
                 else
                     _dbPresets.push(preset);
 
@@ -1266,7 +1266,7 @@ export default ['domainsController', [
                 else
                     $scope.backupItem = emptyDomain;
 
-                $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
+                $scope.backupItem = _.merge({}, blank, $scope.backupItem);
 
                 if ($scope.ui.inputForm) {
                     $scope.ui.inputForm.$error = {};
@@ -1391,7 +1391,7 @@ export default ['domainsController', [
                     });
 
                     if (idx >= 0)
-                        angular.extend($scope.domains[idx], savedMeta);
+                        _.assign($scope.domains[idx], savedMeta);
                     else
                         $scope.domains.push(savedMeta);
 

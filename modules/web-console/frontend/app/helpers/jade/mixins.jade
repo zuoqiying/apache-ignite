@@ -528,7 +528,7 @@ mixin table-pair-edit(tbl, prefix, keyPlaceholder, valPlaceholder, keyJavaBuiltI
 
 //- Mixin for DB dialect.
 mixin dialect(lbl, model, name, required, tipTitle, genericDialectName, placeholder)
-    +dropdown(lbl, model, name, required, placeholder, '[\
+    +dropdown-required(lbl, model, name, 'true', required, placeholder, '[\
                 {value: "Generic", label: "' + genericDialectName + '"},\
                 {value: "Oracle", label: "Oracle"},\
                 {value: "DB2", label: "IBM DB2"},\

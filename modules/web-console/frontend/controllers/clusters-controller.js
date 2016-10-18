@@ -300,7 +300,7 @@ export default ['clustersController', [
                 else
                     $scope.backupItem = emptyCluster;
 
-                $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
+                $scope.backupItem = _.merge({}, blank, $scope.backupItem);
 
                 if ($scope.ui.inputForm) {
                     $scope.ui.inputForm.$error = {};
@@ -319,7 +319,7 @@ export default ['clustersController', [
         $scope.linkId = () => $scope.backupItem._id ? $scope.backupItem._id : 'create';
 
         function prepareNewItem(linkId) {
-            return angular.merge({}, blank, {
+            return _.merge({}, blank, {
                 space: $scope.spaces[0]._id,
                 discovery: {
                     kind: 'Multicast',
@@ -564,7 +564,7 @@ export default ['clustersController', [
                     const idx = _.findIndex($scope.clusters, (cluster) => cluster._id === _id);
 
                     if (idx >= 0)
-                        angular.merge($scope.clusters[idx], item);
+                        _.assign($scope.clusters[idx], item);
                     else {
                         item._id = _id;
                         $scope.clusters.push(item);
@@ -595,10 +595,10 @@ export default ['clustersController', [
         $scope.saveItem = function() {
             const item = $scope.backupItem;
 
-            const swapSpi = LegacyUtils.autoClusterSwapSpiConfiguration(item, clusterCaches(item));
+            const swapConfigured = item.swapSpaceSpi && item.swapSpaceSpi.kind;
 
-            if (swapSpi)
-                angular.extend(item, swapSpi);
+            if (!swapConfigured && _.find(clusterCaches(item), (cache) => cache.swapEnabled))
+                _.merge(item, {swapSpaceSpi: {kind: 'FileSwapSpaceSpi'}});
 
             if (validate(item))
                 save(item);

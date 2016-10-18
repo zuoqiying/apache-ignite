@@ -444,14 +444,8 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
                     writeThrough: dflt || cache.writeThrough
                 };
             }
-        },
-        autoClusterSwapSpiConfiguration(cluster, caches) {
-            const swapConfigured = cluster.swapSpaceSpi && cluster.swapSpaceSpi.kind;
 
-            if (!swapConfigured && _.find(caches, (cache) => cache.swapEnabled))
-                return {swapSpaceSpi: {kind: 'FileSwapSpaceSpi'}};
-
-            return null;
+            return {};
         },
         randomString(len) {
             const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

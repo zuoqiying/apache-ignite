@@ -271,7 +271,7 @@ export default ['cachesController', [
                 else
                     $scope.backupItem = emptyCache;
 
-                $scope.backupItem = angular.merge({}, blank, $scope.backupItem);
+                $scope.backupItem = _.merge({}, blank, $scope.backupItem);
 
                 if ($scope.ui.inputForm) {
                     $scope.ui.inputForm.$error = {};
@@ -476,7 +476,7 @@ export default ['cachesController', [
                     });
 
                     if (idx >= 0)
-                        angular.merge($scope.caches[idx], item);
+                        _.assign($scope.caches[idx], item);
                     else {
                         item._id = _id;
                         $scope.caches.push(item);
@@ -507,7 +507,7 @@ export default ['cachesController', [
         $scope.saveItem = function() {
             const item = $scope.backupItem;
 
-            angular.extend(item, LegacyUtils.autoCacheStoreConfiguration(item, cacheDomains(item)));
+            _.merge(item, LegacyUtils.autoCacheStoreConfiguration(item, cacheDomains(item)));
 
             if (validate(item))
                 save(item);
