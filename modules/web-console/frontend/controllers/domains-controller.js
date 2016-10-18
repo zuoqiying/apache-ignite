@@ -54,8 +54,6 @@ export default ['domainsController', [
             $scope.ui.packageNameUserInput = _toJavaPackage(user.email.replace('@', '.').split('.').reverse().join('.') + '.model');
         };
 
-        const updateKeyType = (value) => !_.isUndefined(value) && ($scope.backupItem.keyType = $scope.backupItem.keyTypeWithPojo = $scope.backupItem.keyTypeWithoutPojo = value);
-
         _packageNameUpdate(null, $root.user);
 
         $scope.$on('$destroy', $root.$on('user', _packageNameUpdate));
@@ -1199,9 +1197,6 @@ export default ['domainsController', [
                         $scope.ui.inputForm.$dirty = false;
                 });
 
-                $scope.$watch('backupItem.keyTypeWithoutPojo', updateKeyType);
-                $scope.$watch('backupItem.keyTypeWithPojo', updateKeyType);
-
                 $scope.$watch('backupItem', function(val) {
                     if (!$scope.ui.inputForm)
                         return;
@@ -1217,8 +1212,6 @@ export default ['domainsController', [
 
                         FormUtils.markPristineInvalidAsDirty(general.keyType);
                         FormUtils.markPristineInvalidAsDirty(general.valueType);
-                        FormUtils.markPristineInvalidAsDirty(general.keyTypeClass);
-                        FormUtils.markPristineInvalidAsDirty(general.valueTypeClass);
                     }
                 }, true);
 
