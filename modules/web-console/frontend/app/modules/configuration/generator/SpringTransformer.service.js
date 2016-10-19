@@ -202,7 +202,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         sb.endBlock('</property>');
 
                         break;
-                    case 'PROPERTIES':
+                    case 'java.util.Properties':
                         sb.startBlock(`<property name="${prop.name}">`);
                         sb.startBlock('<props>');
 

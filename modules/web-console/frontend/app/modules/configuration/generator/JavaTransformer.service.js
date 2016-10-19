@@ -555,7 +555,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         this._setProperty(sb, bean.id, prop.name, prop.id);
 
                         break;
-                    case 'PROPERTIES':
+                    case 'java.util.Properties':
                         sb.append(`Properties ${prop.id} = new Properties();`);
 
                         sb.emptyLine();
