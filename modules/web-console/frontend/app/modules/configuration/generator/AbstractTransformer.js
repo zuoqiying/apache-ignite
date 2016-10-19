@@ -33,6 +33,19 @@ export default class AbstractTransformer {
         return this.commentBlock(sb, ...lines);
     }
 
+    static _emptyLineIfNeeded(sb, props, curIdx) {
+        if (curIdx === props.length - 1)
+            return;
+
+        // empty line before
+        if (_.includes(['BEAN', 'MAP', 'COLLECTION', 'ARRAY'], props[curIdx].clsName))
+            return sb.emptyLine();
+
+        // empty line after
+        if (_.includes(['BEAN', 'MAP', 'COLLECTION', 'ARRAY'], props[curIdx + 1].clsName))
+            return sb.emptyLine();
+    }
+
     // Generate general section.
     static clusterGeneral(cluster, sb = new StringBuilder()) {
         const cfg = this.generator.clusterGeneral(cluster);

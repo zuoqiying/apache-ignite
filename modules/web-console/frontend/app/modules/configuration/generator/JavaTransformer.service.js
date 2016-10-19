@@ -263,16 +263,16 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             const shortClsName = JavaTypes.shortClassName(bean.clsName);
 
             if (_.includes(vars, bean.id))
-                sb.startBlock(`${bean.id} = ${this._newBean(bean)};`);
+                sb.append(`${bean.id} = ${this._newBean(bean)};`);
             else {
                 vars.push(bean.id);
 
-                sb.startBlock(`${shortClsName} ${bean.id} = ${this._newBean(bean)};`);
+                sb.append(`${shortClsName} ${bean.id} = ${this._newBean(bean)};`);
             }
 
             sb.emptyLine();
 
-            sb.append(`${bean.id}.setDataSourceFactory(new Factory<DataSource>() {`);
+            sb.startBlock(`${bean.id}.setDataSourceFactory(new Factory<DataSource>() {`);
             this.commentBlock(sb, '{@inheritDoc}');
             sb.startBlock('@Override public DataSource create() {');
 
@@ -460,7 +460,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
          * @returns {StringBuilder}
          */
         static _setProperties(sb = new StringBuilder(), bean, vars = [], limitLines = false) {
-            _.forEach(bean.properties, (prop) => {
+            _.forEach(bean.properties, (prop, idx) => {
                 switch (prop.clsName) {
                     case 'DATA_SOURCE':
                         this._setProperty(sb, bean.id, prop.name, `DataSources.INSTANCE_${prop.id}`);
@@ -482,12 +482,12 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                             sb.append('int k = 0;');
 
-                            _.forEach(prop.eventTypes, (evtGrp, idx) => {
+                            _.forEach(prop.eventTypes, (evtGrp, evtIdx) => {
                                 sb.emptyLine();
 
                                 sb.append(`System.arraycopy(${evtGrp}, 0, ${prop.id}, k, ${evtGrp}.length);`);
 
-                                if (idx < prop.eventTypes.length - 1)
+                                if (evtIdx < prop.eventTypes.length - 1)
                                     sb.append(`k += ${evtGrp}.length;`);
                             });
 
@@ -593,6 +593,8 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                     default:
                         this._setProperty(sb, bean.id, prop.name, this._toObject(prop.clsName, prop.value));
                 }
+
+                this._emptyLineIfNeeded(sb, bean.properties, idx);
             });
 
             return sb;

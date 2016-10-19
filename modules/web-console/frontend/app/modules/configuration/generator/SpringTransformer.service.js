@@ -142,7 +142,6 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             sb.endBlock('</map>');
         }
 
-
         /**
          *
          * @param {StringBuilder} sb
@@ -215,22 +214,18 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                         break;
                     case 'BEAN':
-                        if (idx !== 0)
-                            sb.emptyLine();
-
                         sb.startBlock(`<property name="${prop.name}">`);
 
                         this.appendBean(sb, prop.value);
 
                         sb.endBlock('</property>');
 
-                        if (idx !== bean.properties.length - 1 && JavaTypes.shortClassName(bean.properties[idx + 1].clsName).toUpperCase() !== 'BEAN')
-                            sb.emptyLine();
-
                         break;
                     default:
                         sb.append(`<property name="${prop.name}" value="${this._toObject(prop.clsName, prop.value)}"/>`);
                 }
+
+                this._emptyLineIfNeeded(sb, bean.properties, idx);
             });
 
             return sb;
