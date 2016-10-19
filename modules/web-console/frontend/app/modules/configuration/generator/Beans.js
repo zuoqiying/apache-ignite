@@ -254,7 +254,7 @@ export class Bean extends EmptyBean {
      * @returns {Bean}
      */
     arrayProperty(id, name, items, typeClsName = 'java.lang.String') {
-        if (items.length)
+        if (items && items.length)
             this.properties.push({clsName: 'ARRAY', id, name, items, typeClsName});
 
         return this;
@@ -268,7 +268,7 @@ export class Bean extends EmptyBean {
      * @returns {Bean}
      */
     varArgProperty(id, name, items, typeClsName = 'java.lang.String') {
-        if (items.length)
+        if (items && items.length)
             this.properties.push({clsName: 'ARRAY', id, name, items, typeClsName, varArg: true});
 
         return this;
@@ -283,7 +283,7 @@ export class Bean extends EmptyBean {
      * @returns {Bean}
      */
     collectionProperty(id, name, items, typeClsName = 'java.lang.String', implClsName = 'java.util.ArrayList') {
-        if (items.length)
+        if (items && items.length)
             this.properties.push({id, name, items, clsName: 'COLLECTION', typeClsName, implClsName});
 
         return this;

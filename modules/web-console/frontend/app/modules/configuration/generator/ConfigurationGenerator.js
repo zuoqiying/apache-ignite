@@ -306,8 +306,35 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             return cfg;
         }
 
+        static igfsDataCache(igfs) {
+            return this.cacheConfiguration({
+                name: igfs.name + '-data',
+                cacheMode: 'PARTITIONED',
+                atomicityMode: 'TRANSACTIONAL',
+                writeSynchronizationMode: 'FULL_SYNC',
+                backups: 0,
+                igfsAffinnityGroupSize: igfs.affinnityGroupSize || 512
+            });
+        }
+
+        static igfsMetaCache(igfs) {
+            return this.cacheConfiguration({
+                name: igfs.name + '-meta',
+                cacheMode: 'REPLICATED',
+                atomicityMode: 'TRANSACTIONAL',
+                writeSynchronizationMode: 'FULL_SYNC'
+            });
+        }
+
         static clusterCaches(cluster, caches, igfss, client, cfg = this.igniteConfigurationBean(cluster)) {
             const ccfgs = _.map(caches, (cache) => this.cacheConfiguration(cache));
+
+            if (!client) {
+                _.forEach(igfss, (igfs) => {
+                    ccfgs.push(this.igfsDataCache(igfs));
+                    ccfgs.push(this.igfsMetaCache(igfs));
+                });
+            }
 
             cfg.varArgProperty('ccfgs', 'cacheConfiguration', ccfgs, 'org.apache.ignite.configuration.CacheConfiguration');
 
