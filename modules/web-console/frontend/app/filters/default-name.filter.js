@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
-
 // Filter that will check name and return `<default>` if needed.
 export default [() => {
     return (name, html) => _.isEmpty(name) ? (html ? '&lt;default&gt;' : '<default>') : name;
