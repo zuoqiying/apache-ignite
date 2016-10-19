@@ -1252,8 +1252,8 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                 return cfg;
 
             cfg.stringProperty('name')
-                .stringProperty('dataCacheName', igfs.name + '-data')
-                .stringProperty('metaCacheName', igfs.name + '-meta')
+                .stringProperty('name', 'dataCacheName', (name) => name + '-data')
+                .stringProperty('name', 'metaCacheName', (name) => name + '-meta')
                 .enumProperty('defaultMode');
 
             return cfg;
