@@ -419,6 +419,12 @@ export default class AbstractTransformer {
                         return true;
 
                     break;
+                case 'ARRAY':
+                case 'COLLECTION':
+                    if (_.find(prop.items, (item) => this.hasProperties(item)))
+                        return true;
+
+                    break;
                 case 'DATA_SOURCE':
                 case 'PROPERTY':
                 case 'PROPERTY_CHAR':

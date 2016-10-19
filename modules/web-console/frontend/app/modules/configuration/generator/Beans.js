@@ -71,14 +71,15 @@ export class Bean extends EmptyBean {
      * @param model
      * @param name
      * @param {Function} nonEmpty Non empty function.
+     * @param {Function} mapper Mapper function.
      * @returns {Bean}
      * @private
      */
-    _property(acc, clsName, model, name, nonEmpty = () => true) {
+    _property(acc, clsName, model, name, nonEmpty = () => true, mapper = (val) => val) {
         if (!this.src)
             return this;
 
-        const value = _.get(this.src, model);
+        const value = mapper(_.get(this.src, model));
 
         if (nonEmpty(value) && value !== _.get(this.dflts, model))
             acc.push({clsName, name, value});
@@ -196,8 +197,8 @@ export class Bean extends EmptyBean {
         return this;
     }
 
-    stringProperty(model, name = model) {
-        return this._property(this.properties, 'java.lang.String', model, name, _.nonEmpty);
+    stringProperty(model, name = model, mapper) {
+        return this._property(this.properties, 'java.lang.String', model, name, _.nonEmpty, mapper);
     }
 
     pathProperty(model, name = model) {

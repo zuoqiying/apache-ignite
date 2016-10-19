@@ -852,8 +852,8 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     break;
                 case 'Configuration':
-                    cfg.classProperty('keyType')
-                        .classProperty('valueType');
+                    cfg.stringProperty('keyType', 'keyType', (val) => JavaTypes.fullClassName(val))
+                        .stringProperty('valueType', 'valueType', (val) => JavaTypes.fullClassName(val));
 
                     break;
                 default:

@@ -664,10 +664,17 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                         break;
                     case 'COLLECTION':
-                        if (this._isBean(prop.typeClsName) || prop.implClsName !== 'java.util.ArrayList')
-                            imports.push(prop.typeClsName, prop.implClsName);
+                        imports.push(prop.typeClsName);
+
+                        if (this._isBean(prop.typeClsName)) {
+                            _.forEach(prop.items, (item) => imports.push(...this.collectBeanImports(item)));
+
+                            imports.push(prop.implClsName);
+                        }
+                        else if (prop.implClsName === 'java.util.ArrayList')
+                            imports.push('java.util.Arrays');
                         else
-                            imports.push('java.util.Arrays', prop.typeClsName);
+                            imports.push(prop.implClsName);
 
                         break;
                     case 'MAP':
@@ -797,6 +804,11 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             if (_.includes(imports, 'oracle.jdbc.pool.OracleDataSource'))
                 imports.push('java.sql.SQLException');
 
+            const hasProps = this.hasProperties(cfg);
+
+            if (hasProps)
+                imports.push('java.util.Properties', 'java.io.InputStream');
+
             _.forEach(this._prepareImports(imports), (cls) => sb.append(`import ${cls};`));
 
             sb.emptyLine();
@@ -813,7 +825,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             sb.startBlock(`public class ${clsName} {`);
 
             // 2. Add external property file
-            if (this.hasProperties(cfg)) {
+            if (hasProps) {
                 this.commentBlock(sb, 'Secret properties loading.');
                 sb.append('private static final Properties props = new Properties();');
                 sb.emptyLine();
@@ -835,8 +847,11 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 this.commentBlock(sb, 'Helper class for datasource creation.');
                 sb.startBlock('public static class DataSources {');
 
-                _.forEach(dataSources, (ds) => {
+                _.forEach(dataSources, (ds, idx) => {
                     const dsClsName = JavaTypes.shortClassName(ds.clsName);
+
+                    if (idx !== 0)
+                        sb.emptyLine();
 
                     sb.append(`public static final ${dsClsName} INSTANCE_${ds.id} = create${ds.id}();`);
                     sb.emptyLine();
@@ -859,8 +874,6 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                     sb.append(`return ${ds.id};`);
 
                     sb.endBlock('}');
-
-                    sb.emptyLine();
                 });
 
                 sb.endBlock('}');
