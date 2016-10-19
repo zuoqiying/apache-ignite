@@ -29,6 +29,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheMvccManager;
 import org.apache.ignite.internal.processors.cache.GridCacheOperation;
 import org.apache.ignite.internal.processors.cache.GridCacheReturn;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.processors.pool.UserWaitable;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.typedef.CI2;
 import org.apache.ignite.internal.util.typedef.internal.CU;
@@ -314,5 +315,22 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
 
             onResult(req.nodeId(), res, true);
         }
+    }
+
+    /** Waitable. */
+    private volatile UserWaitable waitable;
+
+    /**
+     * @return Waitable.
+     */
+    public UserWaitable waitable() {
+        return waitable;
+    }
+
+    /**
+     * @param waitable Waitable.
+     */
+    public void waitable(UserWaitable waitable) {
+        this.waitable = waitable;
     }
 }

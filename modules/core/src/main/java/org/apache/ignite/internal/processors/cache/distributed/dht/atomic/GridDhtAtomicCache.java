@@ -80,6 +80,7 @@ import org.apache.ignite.internal.processors.cache.transactions.IgniteTxLocalEx;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionConflictContext;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionEx;
+import org.apache.ignite.internal.processors.pool.UserWaitable;
 import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.future.GridEmbeddedFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
@@ -603,9 +604,13 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         final GridNearAtomicAbstractUpdateFuture updateFut =
             createSingleUpdateFuture(key, val, null, null, false, filter, true);
 
+        UserWaitable waitable = new UserWaitable(updateFut);
+
+        updateFut.waitable(waitable);
+
         updateFut.map();
 
-        return (boolean)updateFut.get();
+        return waitable.get();
     }
 
     /** {@inheritDoc} */
