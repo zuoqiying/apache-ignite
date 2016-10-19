@@ -1212,8 +1212,6 @@ export default ['domainsController', [
 
                         FormUtils.markPristineInvalidAsDirty(general.keyType);
                         FormUtils.markPristineInvalidAsDirty(general.valueType);
-                        FormUtils.markPristineInvalidAsDirty(general.keyTypeClass);
-                        FormUtils.markPristineInvalidAsDirty(general.valueTypeClass);
                     }
                 }, true);
 
