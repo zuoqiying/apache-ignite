@@ -383,9 +383,16 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                     _.forEach(prop.items, (nested, idx) => {
                         nested = _.cloneDeep(nested);
-                        nested.id = `${prop.id}[${idx}]`;
 
-                        sb.append(`${nested.id} = ${this._newBean(nested)};`);
+                        if (prop.typeClsName !== nested.clsName) {
+                            const clsName = JavaTypes.shortClassName(nested.clsName);
+
+                            nested.id = `(${clsName})${prop.id}[${idx}]`;
+                        }
+                        else
+                            nested.id = `${prop.id}[${idx}]`;
+
+                        sb.append(`${prop.id}[${idx}] = ${this._newBean(nested)};`);
 
                         this._setProperties(sb, nested, vars, limitLines);
 
