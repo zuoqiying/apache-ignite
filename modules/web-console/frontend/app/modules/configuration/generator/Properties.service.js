@@ -53,7 +53,9 @@ export default class PropertiesGenerator {
                 case 'ARRAY':
                 case 'COLLECTION':
                     _.forEach(prop.items, (item) => {
-                        if (_.get(item, 'value.properties') || _.get(item, 'value.arguments'))
+                        const itemLines = this._collectProperties(item);
+
+                        if (_.intersection(lines, itemLines).length !== itemLines.length)
                             lines.push(...this._collectProperties(item));
                     });
 
