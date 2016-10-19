@@ -17,51 +17,140 @@
 
 package org.apache.ignite.internal.processors.pool;
 
-import org.apache.ignite.internal.IgniteInternalFuture;
-import org.apache.ignite.lang.IgniteOutClosure;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicAbstractUpdateFuture;
+import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicUpdateResponse;
+
+import java.util.UUID;
 
 /**
  * User waitable primitive.
  */
-public class UserWaitable<T> {
+public class UserWaitable {
     /** Mutex. */
     private final Object mux = new Object();
 
-    private IgniteInternalFuture<T> fut;
+    /** Target future. */
+    private final GridNearAtomicAbstractUpdateFuture fut;
 
     /** Current state. */
     private State state = State.INITIALIZED;
 
     /** Closure set by completion thread. */
-    private IgniteOutClosure<T> clo;
+    private UUID nodeId;
+
+    /** Response. */
+    private GridNearAtomicUpdateResponse res;
+
+    /**
+     * Future.
+     *
+     * @param fut Future.
+     */
+    public UserWaitable(GridNearAtomicAbstractUpdateFuture fut) {
+        this.fut = fut;
+    }
 
     /**
      * Await for result.
      *
      * @return Result.
+     * @throws IgniteCheckedException If failed.
      */
-    public T get() {
+    public boolean get() throws IgniteCheckedException {
+        UUID nodeId0 = null;
+        GridNearAtomicUpdateResponse res0 = null;
+
+        boolean interrupt = false;
+
         synchronized (mux) {
-            // TODO
+            switch (state) {
+                case INITIALIZED:
+                    state = State.WAITING;
+
+                    try {
+                        while (nodeId == null)
+                            mux.wait();
+                    }
+                    catch (InterruptedException e) {
+                        interrupt = true;
+
+                        state = State.ABANDONED;
+                    }
+
+                    nodeId0 = nodeId;
+                    res0 = res;
+
+                    break;
+
+                case WAITING:
+                    throw new IllegalStateException("Cannot wait twice!");
+
+                case ABANDONED:
+                    throw new IllegalStateException("Already abandoned!");
+
+                case ASYNC:
+                    // We lost the race, just wait for the future.
+                    break;
+
+                default:
+                    throw new IllegalStateException("Unknown state: " + state);
+            }
         }
 
-        return null;
+        // Complete the future if possible.
+        if (nodeId0 != null) {
+            assert res0 != null;
+
+            fut.onResult(nodeId, res, false);
+        }
+
+        // Restore interrupt state if needed.
+        if (interrupt)
+            Thread.currentThread().interrupt();
+
+        // Return the result.
+        return (boolean)fut.get();
     }
 
     /**
-     * Set completion closure.
+     * Try setting response.
      *
-     * @param clo Closure.
-     * @return If closure will be processed by the user thread.
+     * @param nodeId Node ID.
+     * @param res Response.
+     * @return If result will be processed by user thread.
      */
-    public boolean onDone(IgniteOutClosure<T> clo) {
+    public boolean onDone(UUID nodeId, GridNearAtomicUpdateResponse res) {
         synchronized (mux) {
-            // TODO
-        }
+            switch (state) {
+                case INITIALIZED:
+                    state = State.ASYNC;
 
-        return false;
+                    return false;
+
+                case WAITING:
+                    this.nodeId = nodeId;
+                    this.res = res;
+
+                    mux.notifyAll();
+
+                    return true;
+
+                case ABANDONED:
+                    return false;
+
+                case ASYNC:
+                    throw new IllegalStateException("Cannot be in async state!");
+
+                default:
+                    throw new IllegalStateException("Unknown state: " + state);
+            }
+        }
     }
 
+    /**
+     * Current state.
+     */
     private enum State {
         /** Initialized. */
         INITIALIZED,
