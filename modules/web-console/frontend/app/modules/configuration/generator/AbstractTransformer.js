@@ -37,12 +37,16 @@ export default class AbstractTransformer {
         if (curIdx === props.length - 1)
             return;
 
-        // empty line before
-        if (_.includes(['BEAN', 'MAP', 'COLLECTION', 'ARRAY'], props[curIdx].clsName))
-            return sb.emptyLine();
+        const cur = props[curIdx];
 
         // empty line after
-        if (_.includes(['BEAN', 'MAP', 'COLLECTION', 'ARRAY'], props[curIdx + 1].clsName))
+        if (_.includes(['MAP', 'COLLECTION', 'ARRAY'], cur.clsName) || (cur.clsName === 'BEAN' && cur.value.isComplex()))
+            return sb.emptyLine();
+
+        const next = props[curIdx + 1];
+
+        // empty line before
+        if (_.includes(['MAP', 'COLLECTION', 'ARRAY'], next.clsName) || (next.clsName === 'BEAN' && next.value.isComplex()))
             return sb.emptyLine();
     }
 
@@ -412,7 +416,7 @@ export default class AbstractTransformer {
      * @returns {Boolean}
      */
     static hasProperties(bean) {
-        return !!_.find(bean.properties, (prop) => {
+        const searchProps = (prop) => {
             switch (prop.clsName) {
                 case 'BEAN':
                     if (this.hasProperties(prop.value))
@@ -433,7 +437,9 @@ export default class AbstractTransformer {
             }
 
             return false;
-        });
+        };
+
+        return !!_.find(bean.arguments, searchProps) || !!_.find(bean.properties, searchProps);
     }
 
     /**

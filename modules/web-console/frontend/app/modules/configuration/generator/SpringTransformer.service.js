@@ -94,9 +94,13 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             sb.startBlock(`<property name="${prop.name}">`);
             sb.startBlock(`<${tag}>`);
 
-            _.forEach(prop.items, (item) => {
-                if (this._isBean(prop.typeClsName))
+            _.forEach(prop.items, (item, idx) => {
+                if (this._isBean(prop.typeClsName)) {
+                    if (idx !== 0)
+                        sb.emptyLine();
+
                     this.appendBean(sb, item);
+                }
                 else
                     sb.append(`<value>${item}</value>`);
             });

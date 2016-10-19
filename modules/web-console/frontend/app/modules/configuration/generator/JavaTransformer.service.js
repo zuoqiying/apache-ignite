@@ -281,13 +281,15 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             sb.endBlock('};');
             sb.endBlock('});');
 
-            sb.emptyLine();
-
             const storeFactory = _.cloneDeep(bean);
 
             _.remove(storeFactory.properties, (p) => _.includes(['dataSourceBean', 'dialect'], p.name));
 
-            this._setProperties(sb, storeFactory, vars, limitLines);
+            if (storeFactory.properties.length) {
+                sb.emptyLine();
+
+                this._setProperties(sb, storeFactory, vars, limitLines);
+            }
         }
 
         static _isBean(clsName) {
@@ -561,7 +563,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         sb.emptyLine();
 
                         _.forEach(prop.entries, (entry) => {
-                            sb.append(`${prop.id}.setProperty(${this._toObject('String', entry.name)}, ${this._toObject('String', entry.value)});`);
+                            sb.append(`${prop.id}.setProperty(${this._toObject('java.lang.String', entry.name)}, ${this._toObject('java.lang.String', entry.value)});`);
                         });
 
                         sb.emptyLine();
