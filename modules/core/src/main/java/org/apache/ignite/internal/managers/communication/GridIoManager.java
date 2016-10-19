@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -50,8 +51,15 @@ import org.apache.ignite.internal.managers.GridManagerAdapter;
 import org.apache.ignite.internal.managers.deployment.GridDeployment;
 import org.apache.ignite.internal.managers.eventstorage.GridEventStorageManager;
 import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
+import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
+import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
+import org.apache.ignite.internal.processors.cache.IgniteInternalCache;
+import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicAbstractUpdateFuture;
+import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicUpdateResponse;
 import org.apache.ignite.internal.processors.platform.message.PlatformMessageFilter;
 import org.apache.ignite.internal.processors.pool.PoolProcessor;
+import org.apache.ignite.internal.processors.pool.UserWaitable;
 import org.apache.ignite.internal.processors.timeout.GridTimeoutObject;
 import org.apache.ignite.internal.util.GridBoundedConcurrentLinkedHashSet;
 import org.apache.ignite.internal.util.GridSpinReadWriteLock;
@@ -650,6 +658,24 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         }
     }
 
+    private ConcurrentHashMap<Integer, IgniteInternalCache> caches = new ConcurrentHashMap<>();
+
+    private IgniteInternalCache cacheById(int id) {
+        IgniteInternalCache res = caches.get(id);
+
+        if (res == null) {
+            GridCacheProcessor cacheProc = ctx.cache();
+
+            DynamicCacheDescriptor cacheDesc = cacheProc.cacheDescriptor(id);
+
+            res = cacheProc.cache(cacheDesc.cacheConfiguration().getName());
+
+            caches.putIfAbsent(id, res);
+        }
+
+        return res;
+    }
+
     /**
      * @param nodeId Node ID.
      * @param msg Message.
@@ -663,6 +689,23 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         final byte plc,
         final IgniteRunnable msgC
     ) throws IgniteCheckedException {
+        if (msg.message() instanceof GridNearAtomicUpdateResponse) {
+            GridNearAtomicUpdateResponse res = (GridNearAtomicUpdateResponse)msg.message();
+
+            IgniteInternalCache cache = cacheById(res.cacheId());
+
+            GridNearAtomicAbstractUpdateFuture fut =
+                (GridNearAtomicAbstractUpdateFuture)cache.context().mvcc().atomicFuture(res.futureVersion());
+
+            if (fut != null) {
+                UserWaitable waitable = fut.waitable();
+
+                if (waitable != null) {
+                    waitable.onDone(nodeId, res);
+                }
+            }
+        }
+
         Runnable c = new Runnable() {
             @Override public void run() {
                 try {
