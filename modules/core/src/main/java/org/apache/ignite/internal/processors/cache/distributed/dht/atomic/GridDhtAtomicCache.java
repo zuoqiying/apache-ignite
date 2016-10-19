@@ -592,7 +592,20 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
     /** {@inheritDoc} */
     @Override public boolean put(K key, V val, CacheEntryPredicate filter) throws IgniteCheckedException {
-        return putAsync(key, val, filter).get();
+        A.notNull(key, "key", val, "val");
+
+        assert ctx.updatesAllowed();
+
+        validateCacheKey(key);
+
+        ctx.checkSecurity(SecurityPermission.CACHE_PUT);
+
+        final GridNearAtomicAbstractUpdateFuture updateFut =
+            createSingleUpdateFuture(key, val, null, null, false, filter, true);
+
+        updateFut.map();
+
+        return (boolean)updateFut.get();
     }
 
     /** {@inheritDoc} */
