@@ -508,9 +508,9 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         const nonBean = !this._isBean(prop.typeClsName);
 
                         if (nonBean && implClsName === 'ArrayList') {
-                            const items = this._toObject(prop.typeClsName, prop.items);
+                            const items = _.map(prop.items, (item) => this._toObject(prop.typeClsName, item)).join(', ');
 
-                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(Arrays.asList(${items.join(', ')}));`);
+                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(Arrays.asList(${items}));`);
                         }
                         else {
                             if (_.includes(vars, prop.id))
