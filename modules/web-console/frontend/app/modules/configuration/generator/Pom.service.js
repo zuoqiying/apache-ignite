@@ -10,7 +10,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expsbs or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -49,8 +49,8 @@ class GeneratorPom {
             deps.push({groupId, artifactId, version, jar});
     }
 
-    addsbource(sb, dir, exclude) {
-        sb.startBlock('<sbource>');
+    addResource(sb, dir, exclude) {
+        sb.startBlock('<resource>');
         if (dir)
             this.addProperty(sb, 'directory', dir);
 
@@ -60,7 +60,7 @@ class GeneratorPom {
             sb.endBlock('</excludes>');
         }
 
-        sb.endBlock('</sbource>');
+        sb.endBlock('</resource>');
     }
 
     artifact(sb, cluster, version) {
@@ -96,10 +96,10 @@ class GeneratorPom {
 
     build(sb = new StringBuilder(), cluster, excludeGroupIds) {
         sb.startBlock('<build>');
-        sb.startBlock('<sbources>');
-        this.addsbource(sb, 'src/main/java', '**/*.java');
-        this.addsbource(sb, 'src/main/sbources');
-        sb.endBlock('</sbources>');
+        sb.startBlock('<resources>');
+        this.addResource(sb, 'src/main/java', '**/*.java');
+        this.addResource(sb, 'src/main/resources');
+        sb.endBlock('</resources>');
 
         sb.startBlock('<plugins>');
         sb.startBlock('<plugin>');
@@ -152,7 +152,7 @@ class GeneratorPom {
      *
      * @param cluster Cluster  to take info about dependencies.
      * @param version Ignite version for Ignite dependencies.
-     * @param sb sbulting output with generated pom.
+     * @param sb Resulting output with generated pom.
      * @returns {string} Generated content.
      */
     generate(cluster, version, sb = new StringBuilder()) {
@@ -191,7 +191,7 @@ class GeneratorPom {
 
         this.addDependency(deps, 'org.apache.ignite', 'ignite-spring', version);
         this.addDependency(deps, 'org.apache.ignite', 'ignite-indexing', version);
-        this.addDependency(deps, 'org.apache.ignite', 'ignite-sbt-http', version);
+        this.addDependency(deps, 'org.apache.ignite', 'ignite-rest-http', version);
 
         let dep = POM_DEPENDENCIES[cluster.discovery.kind];
 
