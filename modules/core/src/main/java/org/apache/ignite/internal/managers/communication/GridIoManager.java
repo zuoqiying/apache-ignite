@@ -701,7 +701,10 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                 UserWaitable waitable = fut.waitable();
 
                 if (waitable != null) {
-                    waitable.onDone(nodeId, res);
+                    res.nodeId(ctx.localNodeId());
+
+                    if (waitable.onDone(nodeId, res))
+                        return;
                 }
             }
         }
