@@ -17,7 +17,12 @@
 
 package org.apache.ignite.spi.discovery.tcp.ipfinder.multicast;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -31,6 +36,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
@@ -447,8 +453,105 @@ public class TcpDiscoveryMulticastIpFinder extends TcpDiscoveryVmIpFinder {
             logTrace("client mode");
         }
 
+        startDebugSocket();
+
         // just for debug
         startDebugThread();
+    }
+
+    private void startDebugSocket() {
+        try {
+            final MulticastSocket multicastSocket = new MulticastSocket(null);
+            multicastSocket.bind(new InetSocketAddress(mcastPort + 1));
+            multicastSocket.setReuseAddress(true);
+            multicastSocket.setTimeToLive(255);
+            multicastSocket.setReceiveBufferSize(65536);
+            multicastSocket.setSendBufferSize(65536);
+            multicastSocket.setSoTimeout(3000);
+            multicastSocket.joinGroup(InetAddress.getByName(mcastGrp));
+
+            Thread threadSnd = new Thread(
+                new Runnable() {
+                    @Override public void run() {
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        ObjectOutput out;
+
+                        try {
+                            out = new ObjectOutputStream(bos);
+
+                            long l = ThreadLocalRandom.current().nextLong(500);
+
+                            logTrace("Will be writing to debug multicast socket: " + l);
+
+                            out.writeLong(l);
+
+                            out.flush();
+
+                            byte[] yourBytes = bos.toByteArray();
+
+                            logTrace("Bytes: " + Arrays.toString(yourBytes));
+
+                            DatagramPacket datagramPacket = new DatagramPacket(yourBytes, yourBytes.length,
+                                InetAddress.getByName(mcastGrp), mcastPort + 1);
+
+                            while (true) {
+                                Thread.sleep(1000);
+
+                                try {
+                                    multicastSocket.send(datagramPacket);
+                                }
+                                catch (Exception e) {
+                                    U.error(log, "Error in debug thread (safe to ignore).", e);
+                                }
+                            }
+                        }
+                        catch (Exception e) {
+                            U.error(log, "Error in debug thread (safe to ignore).", e);
+                        }
+                    }
+                }
+            );
+
+            threadSnd.setDaemon(true);
+
+            threadSnd.start();
+
+            Thread threadRcv = new Thread(
+                new Runnable() {
+                    @Override public void run() {
+                        ObjectInputStream in;
+                        ByteArrayInputStream bis;
+
+                        DatagramPacket datagramPacketReceive = new DatagramPacket(new byte[65536], 65536);
+
+                        while (true) {
+                            try {
+                                multicastSocket.receive(datagramPacketReceive);
+
+                                byte[] data = datagramPacketReceive.getData();
+
+                                bis = new ByteArrayInputStream(data);
+                                in = new ObjectInputStream(bis);
+
+                                long l = in.readLong();
+
+                                logTrace("Received L=" + l);
+                            }
+                            catch (Exception e) {
+                                U.error(log, "Error in debug thread (safe to ignore).", e);
+                            }
+                        }
+                    }
+                }
+            );
+
+            threadRcv.setDaemon(true);
+
+            threadRcv.start();
+        }
+        catch (Exception e) {
+            U.error(log, "Failed to start debug socket (safe to ignore).", e );
+        }
     }
 
     /** {@inheritDoc} */
