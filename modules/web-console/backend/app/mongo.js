@@ -647,6 +647,38 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         cacheKeyConfiguration: [{
             typeName: String,
             affinityKeyFieldName: String
+        }],
+        loadBalancingSpi: [{
+            kind: {type: String, enum: ['RoundRobin', 'Adaptive', 'WeightedRandom', 'Custom']},
+            RoundRobin: {
+                perTask: Boolean
+            },
+            Adaptive: {
+                loadProbe: {
+                    kind: {type: String, enum: ['Job', 'CPU', 'ProcessingTime', 'Custom']},
+                    Job: {
+                        useAverage: Boolean
+                    },
+                    CPU: {
+                        useAverage: Boolean,
+                        useProcessors: Boolean,
+                        processorCoefficient: Number
+                    },
+                    ProcessingTime: {
+                        useAverage: Boolean
+                    },
+                    Custom: {
+                        className: String
+                    }
+                }
+            },
+            WeightedRandom: {
+                nodeWeight: Number,
+                useWeights: Boolean
+            },
+            Custom: {
+                className: String
+            }
         }]
     });
 

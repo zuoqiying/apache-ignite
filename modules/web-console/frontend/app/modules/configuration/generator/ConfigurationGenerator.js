@@ -61,6 +61,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             this.clusterDeployment(cluster, cfg);
             this.clusterEvents(cluster, cfg);
             this.clusterFailover(cluster, cfg);
+            this.clusterLoadBalancing(cluster, cfg);
             this.clusterLogger(cluster.logger, cfg);
             this.clusterODBC(cluster.odbc, cfg);
             this.clusterMarshaller(cluster, cfg);
@@ -643,6 +644,91 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
             if (spis.length)
                 cfg.arrayProperty('failoverSpi', 'failoverSpi', spis, 'org.apache.ignite.spi.failover.FailoverSpi');
+
+            return cfg;
+        }
+
+        // Generate load balancing configuration group.
+        static clusterLoadBalancing(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            const spis = [];
+
+            _.forEach(cluster.loadBalancingSpi, (spi) => {
+                let loadBalancingSpi;
+
+                switch (spi.kind) {
+                    case 'RoundRobin':
+                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.roundrobin.RoundRobinLoadBalancingSpi', 'loadBalancingSpi', spi.RoundRobin, clusterDflts.loadBalancingSpi.RoundRobin);
+
+                        loadBalancingSpi.boolProperty('perTask');
+
+                        break;
+
+                    case 'Adaptive':
+                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveLoadBalancingSpi', 'loadBalancingSpi', spi.Adaptive);
+
+                        let probeBean;
+
+                        switch (spi.Adaptive.loadProbe.kind) {
+                            case 'Job':
+                                probeBean = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveJobCountLoadProbe', 'probe', spi.Adaptive.loadProbe.Job, clusterDflts.loadBalancingSpi.Adaptive.loadProbe.Job);
+
+                                probeBean.boolProperty('useAverage');
+
+                                break;
+
+                            case 'CPU':
+                                probeBean = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveJobCountLoadProbe', 'probe', spi.Adaptive.loadProbe.CPU, clusterDflts.loadBalancingSpi.Adaptive.loadProbe.CPU);
+
+                                probeBean.boolProperty('useAverage')
+                                    .boolProperty('useProcessors')
+                                    .intProperty('processorCoefficient');
+
+                                break;
+
+                            case 'ProcessingTime':
+                                probeBean = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveJobCountLoadProbe', 'probe', spi.Adaptive.loadProbe.ProcessingTime, clusterDflts.loadBalancingSpi.Adaptive.loadProbe.ProcessingTime);
+
+                                probeBean.boolProperty('useAverage');
+
+                                break;
+
+                            case 'Custom':
+                                probeBean = new Bean(spi.Adaptive.loadProbe.Custom.className, 'probe', spi.Adaptive.loadProbe.Job.Custom);
+
+                                break;
+
+                            default:
+                                // No-op.
+                        }
+
+                        if (probeBean)
+                            loadBalancingSpi.beanProperty('loadProbe', probeBean);
+
+                        break;
+
+                    case 'WeightedRandom':
+                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.weightedrandom.WeightedRandomLoadBalancingSpi', 'loadBalancingSpi', spi.WeightedRandom, clusterDflts.loadBalancingSpi.WeightedRandom);
+
+                        loadBalancingSpi.intProperty('nodeWeight')
+                            .boolProperty('useWeights');
+
+                        break;
+
+                    case 'Custom':
+                        loadBalancingSpi = new Bean(spi.Custom.className, 'loadBalancingSpi', spi.Custom);
+
+                        break;
+
+                    default:
+                        // No-op.
+                }
+
+                if (loadBalancingSpi)
+                    spis.push(loadBalancingSpi);
+            });
+
+            if (spis.length)
+                cfg.arrayProperty('loadBalancingSpi', 'loadBalancingSpi', spis, 'org.apache.ignite.spi.loadbalancing.LoadBalancingSpi');
 
             return cfg;
         }

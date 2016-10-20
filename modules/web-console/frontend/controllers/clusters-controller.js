@@ -103,6 +103,12 @@ export default ['clustersController', [
                     else
                         $scope.backupItem.failoverSpi = {};
                 }
+                else if (field.type === 'loadBalancingSpi') {
+                    if (LegacyUtils.isDefined($scope.backupItem.loadBalancingSpi))
+                        $scope.backupItem.loadBalancingSpi.push({});
+                    else
+                        $scope.backupItem.loadBalancingSpi = [{}];
+                }
                 else
                     LegacyTable.tableNewItem(field);
             }

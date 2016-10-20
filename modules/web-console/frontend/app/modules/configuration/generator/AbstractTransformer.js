@@ -141,6 +141,15 @@ export default class AbstractTransformer {
         return sb;
     }
 
+    // Generate load balancing configuration group.
+    static clusterLoadBalancing(cluster, sb = new StringBuilder()) {
+        const cfg = this.generator.clusterLoadBalancing(cluster);
+
+        this._setProperties(sb, cfg);
+
+        return sb;
+    }
+
     // Generate logger group.
     static clusterLogger(cluster, sb = new StringBuilder()) {
         const cfg = this.generator.clusterLogger(cluster);
