@@ -28,8 +28,10 @@ mixin td-ellipses-lbl(w, lbl)
         .modal-content(ignite-loading='importDomainFromDb' ignite-loading-text='{{importDomain.loadingOptions.text}}')
             #errors-container.modal-header.header
                 button.close(ng-click='$hide()' aria-hidden='true') &times;
-                h4.modal-title(ng-if='!importDomain.demo') Import domain models from database
-                h4.modal-title(ng-if='importDomain.demo') Import domain models from demo database
+                h4.modal-title() 
+                    i.fa.fa-database
+                    span(ng-if='!importDomain.demo') Import domain models from database
+                    span(ng-if='importDomain.demo') Import domain models from demo database
             .modal-body
                 .import-domain-model-wizard-page(ng-if='importDomain.action == "drivers" && !importDomain.jdbcDriversNotFound')
                 .import-domain-model-wizard-page(ng-if='importDomain.action == "drivers" && importDomain.jdbcDriversNotFound')
