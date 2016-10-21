@@ -100,12 +100,8 @@ import hasPojo from './filters/hasPojo.filter';
 
 // Generators
 import $generatorOptional from './modules/configuration/generator/generator-optional';
-import $generatorProperties from './modules/configuration/generator/generator-properties';
-import $generatorReadme from './modules/configuration/generator/generator-readme';
 
 window.$generatorOptional = $generatorOptional;
-window.$generatorProperties = $generatorProperties;
-window.$generatorReadme = $generatorReadme;
 
 // Controllers
 import admin from 'controllers/admin-controller';
