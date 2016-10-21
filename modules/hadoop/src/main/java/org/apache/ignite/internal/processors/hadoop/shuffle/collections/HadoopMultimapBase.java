@@ -49,6 +49,10 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
     /** */
     private final Collection<Page> allPages = new ConcurrentLinkedQueue<>();
 
+    /** */
+    protected final long limit = 100 << 20; // TODO: make configurable: max bytes to hold in memory
+                                          // TODO: per mapper / reducer (or node?).
+
     /**
      * @param jobInfo Job info.
      * @param mem Memory.
@@ -220,7 +224,7 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
          * @return Next write pointer.
          */
         private long allocateNextPage(long requestedSize) {
-            int writtenSize = writtenSize();
+            final int writtenSize = writtenSize();
 
             long newPageSize = nextPageSize(writtenSize + requestedSize);
             long newPagePtr = mem.allocate(newPageSize);
@@ -296,6 +300,23 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
 
             return ptr;
         }
+
+        @Override public final boolean write(Object key, Object val) throws IgniteCheckedException {
+            if (!checkCanWrite(key, val))
+                return false;
+
+            writeImpl(key, val);
+
+            return true;
+        }
+
+        private final boolean checkCanWrite(Object key, Object val) {
+            // TODO: how we treat the limit, what exactly does it mean?
+            // TODO: currently 'mem' is 1-to-1 with HadoopShuffle component.
+            return mem.allocatedSize() < limit;
+        }
+
+        protected abstract void writeImpl(Object key, Object val) throws IgniteCheckedException ;
 
         /**
          * @param off Offset.

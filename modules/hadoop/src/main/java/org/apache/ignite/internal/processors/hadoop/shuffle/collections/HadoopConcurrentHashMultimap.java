@@ -127,11 +127,11 @@ public class HadoopConcurrentHashMultimap extends HadoopHashMultimapBase {
      * @param v Visitor.
      * @return {@code false} If visiting was impossible due to rehashing.
      */
-    @Override public boolean visit(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException {
+    @Override public boolean accept(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException {
         if (!state.compareAndSet(State.READING_WRITING, State.VISITING)) {
             assert state.get() != State.CLOSING;
 
-            return false; // Can not visit while rehashing happens.
+            return false; // Can not accept while rehashing happens.
         }
 
         AtomicLongArray tbl0 = oldTbl;
@@ -145,12 +145,12 @@ public class HadoopConcurrentHashMultimap extends HadoopHashMultimapBase {
                 long lastVisited = ignoreLastVisited ? 0 : lastVisitedValue(meta);
 
                 if (valPtr != lastVisited) {
-                    v.onKey(key(meta), keySize(meta));
+                    v.visitKey(key(meta), keySize(meta));
 
                     lastVisitedValue(meta, valPtr); // Set it to the first value in chain.
 
                     do {
-                        v.onValue(valPtr + 12, valueSize(valPtr));
+                        v.visitValue(valPtr + 12, valueSize(valPtr));
 
                         valPtr = nextValue(valPtr);
                     }

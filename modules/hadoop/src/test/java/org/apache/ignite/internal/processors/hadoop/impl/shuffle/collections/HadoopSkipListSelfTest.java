@@ -105,7 +105,7 @@ public class HadoopSkipListSelfTest extends HadoopAbstractMapTest {
 
         HadoopMultimap m = new HadoopSkipList(job, mem);
 
-        HadoopMultimap.Adder a = m.startAdding(taskCtx);
+        HadoopMultimap.Adder a = (HadoopMultimap.Adder)m.startAdding(taskCtx);
 
         Multimap<Integer, Integer> mm = ArrayListMultimap.create();
         Multimap<Integer, Integer> vis = ArrayListMultimap.create();
@@ -123,7 +123,7 @@ public class HadoopSkipListSelfTest extends HadoopAbstractMapTest {
 
             check(m, mm, vis, taskCtx);
 
-            a = m.startAdding(taskCtx);
+            a = (HadoopMultimap.Adder)m.startAdding(taskCtx);
         }
 
 //        a.add(new IntWritable(10), new IntWritable(2));
@@ -182,18 +182,18 @@ public class HadoopSkipListSelfTest extends HadoopAbstractMapTest {
 
         final GridDataInput dataInput = new GridUnsafeDataInput();
 
-        m.visit(false, new HadoopMultimap.Visitor() {
+        m.accept(false, new HadoopMultimap.Visitor() {
             /** */
             IntWritable key = new IntWritable();
 
             /** */
             IntWritable val = new IntWritable();
 
-            @Override public void onKey(long keyPtr, int keySize) {
+            @Override public void visitKey(long keyPtr, int keySize) {
                 read(keyPtr, keySize, key);
             }
 
-            @Override public void onValue(long valPtr, int valSize) {
+            @Override public void visitValue(long valPtr, int valSize) {
                 read(valPtr, valSize, val);
 
                 vis.put(key.get(), val.get());
@@ -252,7 +252,7 @@ public class HadoopSkipListSelfTest extends HadoopAbstractMapTest {
                     IntWritable key = new IntWritable();
                     IntWritable val = new IntWritable();
 
-                    HadoopMultimap.Adder a = m.startAdding(taskCtx);
+                    HadoopMultimap.Adder a = (HadoopMultimap.Adder)m.startAdding(taskCtx);
 
                     for (int i = 0; i < 50000; i++) {
                         int k = rnd.nextInt(32000);

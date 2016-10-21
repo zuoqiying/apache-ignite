@@ -49,7 +49,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
     private final long heads;
 
     /** */
-    private final AtomicBoolean visitGuard = new AtomicBoolean();
+    private final AtomicBoolean acceptGuard = new AtomicBoolean();
 
     /**
      * @param jobInfo Job info.
@@ -69,8 +69,8 @@ public class HadoopSkipList extends HadoopMultimapBase {
     }
 
     /** {@inheritDoc} */
-    @Override public boolean visit(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException {
-        if (!visitGuard.compareAndSet(false, true))
+    @Override public boolean accept(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException {
+        if (!acceptGuard.compareAndSet(false, true))
             return false;
 
         for (long meta = nextMeta(heads, 0); meta != 0L; meta = nextMeta(meta, 0)) {
@@ -81,12 +81,12 @@ public class HadoopSkipList extends HadoopMultimapBase {
             if (valPtr != lastVisited) {
                 long k = key(meta);
 
-                v.onKey(k + 4, keySize(k));
+                v.visitKey(k + 4, keySize(k));
 
                 lastVisitedValue(meta, valPtr); // Set it to the first value in chain.
 
                 do {
-                    v.onValue(valPtr + 12, valueSize(valPtr));
+                    v.visitValue(valPtr + 12, valueSize(valPtr));
 
                     valPtr = nextValue(valPtr);
                 }
@@ -94,7 +94,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
             }
         }
 
-        visitGuard.lazySet(false);
+        acceptGuard.lazySet(false);
 
         return true;
     }
@@ -301,7 +301,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
         }
 
         /** {@inheritDoc} */
-        @Override public void write(Object key, Object val) throws IgniteCheckedException {
+        @Override public void writeImpl(Object key, Object val) throws IgniteCheckedException {
             A.notNull(val, "val");
 
             add(key, val);

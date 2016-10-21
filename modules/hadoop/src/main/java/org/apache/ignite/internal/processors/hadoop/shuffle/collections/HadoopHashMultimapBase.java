@@ -39,8 +39,8 @@ public abstract class HadoopHashMultimapBase extends HadoopMultimapBase {
     }
 
     /** {@inheritDoc} */
-    @Override public boolean visit(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException {
-        throw new UnsupportedOperationException("visit");
+    @Override public boolean accept(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException {
+        throw new UnsupportedOperationException("accept");
     }
 
     /** {@inheritDoc} */

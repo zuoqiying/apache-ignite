@@ -142,18 +142,18 @@ public class HadoopConcurrentHashMultimapSelftest extends HadoopAbstractMapTest 
 
         final GridDataInput dataInput = new GridUnsafeDataInput();
 
-        m.visit(false, new HadoopConcurrentHashMultimap.Visitor() {
+        m.accept(false, new HadoopConcurrentHashMultimap.Visitor() {
             /** */
             IntWritable key = new IntWritable();
 
             /** */
             IntWritable val = new IntWritable();
 
-            @Override public void onKey(long keyPtr, int keySize) {
+            @Override public void visitKey(long keyPtr, int keySize) {
                 read(keyPtr, keySize, key);
             }
 
-            @Override public void onValue(long valPtr, int valSize) {
+            @Override public void visitValue(long valPtr, int valSize) {
                 read(valPtr, valSize, val);
 
                 vis.put(key.get(), val.get());

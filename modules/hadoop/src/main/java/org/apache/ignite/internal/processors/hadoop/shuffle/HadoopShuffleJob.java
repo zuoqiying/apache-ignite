@@ -232,21 +232,21 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
         HadoopMultimap map = getOrCreateMap(maps, msg.reducer());
 
         // Add data from message to the map.
-        try (HadoopMultimap.Adder adder = map.startAdding(taskCtx)) {
+        try (HadoopMultimap.Adder adder = (HadoopMultimap.Adder)map.startAdding(taskCtx)) {
             final GridUnsafeDataInput dataInput = new GridUnsafeDataInput();
             final UnsafeValue val = new UnsafeValue(msg.buffer());
 
-            msg.visit(new HadoopShuffleMessage.Visitor() {
+            msg.accept(new HadoopShuffleMessage.Visitor() {
                 /** */
                 private HadoopMultimap.Key key;
 
-                @Override public void onKey(byte[] buf, int off, int len) throws IgniteCheckedException {
+                @Override public void visitKey(byte[] buf, int off, int len) throws IgniteCheckedException {
                     dataInput.bytes(buf, off, off + len);
 
                     key = adder.addKey(dataInput, key);
                 }
 
-                @Override public void onValue(byte[] buf, int off, int len) {
+                @Override public void visitValue(byte[] buf, int off, int len) {
                     val.off = off;
                     val.size = len;
 
@@ -317,7 +317,7 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
 
             final int idx = i;
 
-            map.visit(false, new HadoopMultimap.Visitor() {
+            map.accept(false, new HadoopMultimap.Visitor() {
                 /** */
                 private long keyPtr;
 
@@ -328,7 +328,7 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
                 private boolean keyAdded;
 
                 /** {@inheritDoc} */
-                @Override public void onKey(long keyPtr, int keySize) {
+                @Override public void visitKey(long keyPtr, int keySize) {
                     this.keyPtr = keyPtr;
                     this.keySize = keySize;
 
@@ -361,7 +361,7 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
                 }
 
                 /** {@inheritDoc} */
-                @Override public void onValue(long valPtr, int valSize) {
+                @Override public void visitValue(long valPtr, int valSize) {
                     if (tryAdd(valPtr, valSize))
                         return;
 
@@ -583,7 +583,7 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
         }
 
         /** {@inheritDoc} */
-        @Override public void write(Object key, Object val) throws IgniteCheckedException {
+        @Override public boolean write(Object key, Object val) throws IgniteCheckedException {
             int part = 0;
 
             if (partitioner != null) {
@@ -598,7 +598,7 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             if (out == null)
                 adders[part] = out = getOrCreateMap(maps, part).startAdding(taskCtx);
 
-            out.write(key, val);
+            return out.write(key, val);
         }
 
         /** {@inheritDoc} */

@@ -40,10 +40,10 @@ public class HadoopShuffleMessage implements HadoopMessage {
     private static final AtomicLong ids = new AtomicLong();
 
     /** */
-    private static final byte MARKER_KEY = (byte)17;
+    static final byte MARKER_KEY = (byte)17;
 
     /** */
-    private static final byte MARKER_VALUE = (byte)31;
+    static final byte MARKER_VALUE = (byte)31;
 
     /** */
     @GridToStringInclude
@@ -177,7 +177,7 @@ public class HadoopShuffleMessage implements HadoopMessage {
     /**
      * @param v Visitor.
      */
-    public void visit(Visitor v) throws IgniteCheckedException {
+    public void accept(Visitor v) throws IgniteCheckedException {
         for (int i = 0; i < off;) {
             byte marker = buf[i++];
 
@@ -186,9 +186,9 @@ public class HadoopShuffleMessage implements HadoopMessage {
             i += 4;
 
             if (marker == MARKER_VALUE)
-                v.onValue(buf, i, size);
+                v.visitValue(buf, i, size);
             else if (marker == MARKER_KEY)
-                v.onKey(buf, i, size);
+                v.visitKey(buf, i, size);
             else
                 throw new IllegalStateException();
 
@@ -224,19 +224,19 @@ public class HadoopShuffleMessage implements HadoopMessage {
     /**
      * Visitor.
      */
-    public static interface Visitor {
+    static interface Visitor {
         /**
          * @param buf Buffer.
          * @param off Offset.
          * @param len Length.
          */
-        public void onKey(byte[] buf, int off, int len) throws IgniteCheckedException;
+        public void visitKey(byte[] buf, int off, int len) throws IgniteCheckedException;
 
         /**
          * @param buf Buffer.
          * @param off Offset.
          * @param len Length.
          */
-        public void onValue(byte[] buf, int off, int len) throws IgniteCheckedException;
+        public void visitValue(byte[] buf, int off, int len) throws IgniteCheckedException;
     }
 }

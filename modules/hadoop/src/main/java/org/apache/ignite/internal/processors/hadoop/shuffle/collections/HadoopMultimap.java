@@ -36,14 +36,14 @@ public interface HadoopMultimap extends AutoCloseable {
      * @param v Visitor.
      * @return {@code false} If visiting was impossible.
      */
-    public boolean visit(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException;
+    public boolean accept(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException;
 
     /**
      * @param ctx Task context.
      * @return Adder.
      * @throws IgniteCheckedException If failed.
      */
-    public Adder startAdding(HadoopTaskContext ctx) throws IgniteCheckedException;
+    public HadoopTaskOutput startAdding(HadoopTaskContext ctx) throws IgniteCheckedException;
 
     /**
      * @param taskCtx Task context.
@@ -58,8 +58,9 @@ public interface HadoopMultimap extends AutoCloseable {
 
     /**
      * Adder.
+     * This is specific interface that is used solely in reading of serialized messages send to Reducers.
      */
-    public interface Adder extends HadoopTaskOutput {
+    interface Adder extends HadoopTaskOutput {
         /**
          * @param in Data input.
          * @param reuse Reusable key.
@@ -72,7 +73,7 @@ public interface HadoopMultimap extends AutoCloseable {
     /**
      * Key add values to.
      */
-    public interface Key {
+    interface Key {
         /**
          * @param val Value.
          */
@@ -82,7 +83,7 @@ public interface HadoopMultimap extends AutoCloseable {
     /**
      * Value.
      */
-    public interface Value {
+    interface Value {
         /**
          * @return Size in bytes.
          */
@@ -102,12 +103,12 @@ public interface HadoopMultimap extends AutoCloseable {
          * @param keyPtr Key pointer.
          * @param keySize Key size.
          */
-        public void onKey(long keyPtr, int keySize) throws IgniteCheckedException;
+        public void visitKey(long keyPtr, int keySize) throws IgniteCheckedException;
 
         /**
          * @param valPtr Value pointer.
          * @param valSize Value size.
          */
-        public void onValue(long valPtr, int valSize) throws IgniteCheckedException;
+        public void visitValue(long valPtr, int valSize) throws IgniteCheckedException;
     }
 }
