@@ -162,6 +162,67 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
 
+        static METHOD_MAPPING = {
+            'org.apache.ignite.configuration.CacheConfiguration': {
+                id: (ccfg) => JavaTypes.toJavaName('cache', ccfg.findProperty('name').value),
+                args: '',
+                generator: (sb, id, ccfg) => {
+                    const cacheName = ccfg.findProperty('name').value;
+                    const dataSources = JavaTransformer.collectDataSources(ccfg);
+
+                    const javadoc = [
+                        `Create configuration for cache "${cacheName}".`,
+                        '',
+                        '@return Configured cache.'
+                    ];
+
+                    if (dataSources.length)
+                        javadoc.push('@throws Exception if failed to create cache configuration.');
+
+                    JavaTransformer.commentBlock(sb, ...javadoc);
+                    sb.startBlock(`public static CacheConfiguration ${id}()${dataSources.length ? ' throws Exception' : ''} {`);
+
+                    JavaTransformer.constructBean(sb, ccfg, [], true);
+
+                    sb.emptyLine();
+                    sb.append(`return ${ccfg.id};`);
+
+                    sb.endBlock('}');
+
+                    return sb;
+                }
+            },
+            'org.apache.ignite.cache.store.jdbc.JdbcType': {
+                id: (type) => JavaTypes.toJavaName('jdbcType', JavaTypes.shortClassName(type.findProperty('valueType').value)),
+                args: 'ccfg.getName()',
+                generator: (sb, name, jdbcType) => {
+                    const javadoc = [
+                        `Create JDBC type for "${name}".`,
+                        '',
+                        '@param cacheName Cache name.',
+                        '@return Configured JDBC type.'
+                    ];
+
+                    JavaTransformer.commentBlock(sb, ...javadoc);
+                    sb.startBlock(`private static JdbcType ${name}(String cacheName) {`);
+
+                    const cacheName = jdbcType.findProperty('cacheName');
+
+                    cacheName.clsName = 'var';
+                    cacheName.value = 'cacheName';
+
+                    JavaTransformer.constructBean(sb, jdbcType);
+
+                    sb.emptyLine();
+                    sb.append(`return ${jdbcType.id};`);
+
+                    sb.endBlock('}');
+
+                    return sb;
+                }
+            }
+        };
+
         static comment(sb, ...lines) {
             _.forEach(lines, (line) => sb.append(`// ${line}`));
         }
@@ -201,23 +262,25 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
         /**
          * @param {StringBuilder} sb
-         * @param {String} id
-         * @param {Bean} propertyName
-         * @param {String|Bean} value
+         * @param {String} parentId
+         * @param {String} propertyName
+         * @param {String} value
          * @private
          */
-        static _setProperty(sb, id, propertyName, value) {
-            sb.append(`${id}.set${_.upperFirst(propertyName)}(${value});`);
+        static _setProperty(sb, parentId, propertyName, value) {
+            sb.append(`${parentId}.set${_.upperFirst(propertyName)}(${value});`);
         }
 
         /**
          * @param {StringBuilder} sb
+         * @param {Array.<String>} vars
+         * @param {Boolean} limitLines
          * @param {Bean} bean
-         * @param {Array.<String>} [vars]
-         * @param {Boolean} [limitLines]
+         * @param {String} id
+
          * @private
          */
-        static constructBean(sb, bean, vars = [], limitLines = false) {
+        static constructBean(sb, bean, vars = [], limitLines = false, id = bean.id) {
             _.forEach(bean.arguments, (arg) => {
                 switch (arg.clsName) {
                     case 'MAP':
@@ -235,20 +298,14 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 }
             });
 
-            if (_.includes(vars, bean.id))
-                sb.append(`${bean.id} = ${this._newBean(bean)};`);
-            else {
-                vars.push(bean.id);
+            const clsName = JavaTypes.shortClassName(bean.clsName);
 
-                const shortClsName = JavaTypes.shortClassName(bean.clsName);
-
-                sb.append(`${shortClsName} ${bean.id} = ${this._newBean(bean)};`);
-            }
+            sb.append(`${this.varInit(clsName, id, vars)} = ${this._newBean(bean)};`);
 
             if (_.nonEmpty(bean.properties)) {
                 sb.emptyLine();
 
-                this._setProperties(sb, bean, vars, limitLines);
+                this._setProperties(sb, bean, vars, limitLines, id);
             }
         }
 
@@ -304,6 +361,8 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                     return 'null';
 
                 switch (clsName) {
+                    case 'var':
+                        return item;
                     case 'byte':
                         return `(byte) ${item}`;
                     case 'java.io.Serializable':
@@ -338,86 +397,97 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             });
         }
 
-        static _methodName(bean) {
-            switch (bean.clsName) {
-                case 'org.apache.ignite.configuration.CacheConfiguration':
-                    return JavaTypes.toJavaName('cache', bean.findProperty('name').value);
-                default:
-            }
-        }
+        static _constructBeans(sb, type, items, vars, limitLines) {
+            // Construct objects inline for preview or simple objects.
+            const mapper = this.METHOD_MAPPING[type];
 
-        static _setArray(sb, bean, prop, vars, limitLines, varArg) {
-            const arrType = JavaTypes.shortClassName(prop.typeClsName);
+            if (!limitLines || !mapper) {
+                _.forEach(items, (item) => {
+                    if (!item.isComplex())
+                        return;
 
-            if (this._isBean(prop.typeClsName)) {
-                if (varArg) {
-                    if (prop.items.length === 1) {
-                        const head = _.head(prop.items);
+                    const id = mapper ? mapper.id(item) : item.id;
 
-                        if (head.isComplex()) {
-                            this.constructBean(sb, head, vars, limitLines);
-
-                            sb.emptyLine();
-
-                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${head.id});`);
-                        }
-                        else
-                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(${this._newBean(head)});`);
-                    }
-                    else {
-                        sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(`);
-
-                        const lastIdx = prop.items.length - 1;
-
-                        _.forEach(prop.items, (item, idx) => {
-                            if (item.isComplex())
-                                sb.append(this._methodName(item) + '()' + (lastIdx !== idx ? ',' : ''));
-                            else
-                                sb.append(this._newBean(item) + (lastIdx !== idx ? ',' : ''));
-                        });
-
-                        sb.endBlock(');');
-                    }
-                } else {
-                    sb.append(`${arrType}[] ${prop.id} = new ${arrType}[${prop.items.length}];`);
+                    this.constructBean(sb, item, vars, limitLines, id);
 
                     sb.emptyLine();
 
-                    _.forEach(prop.items, (nested, idx) => {
-                        nested = _.cloneDeep(nested);
+                    this._setProperties(sb, item, vars, limitLines, id);
 
-                        if (prop.typeClsName !== nested.clsName) {
-                            const clsName = JavaTypes.shortClassName(nested.clsName);
-
-                            nested.id = `((${clsName})${prop.id}[${idx}])`;
-                        }
-                        else
-                            nested.id = `${prop.id}[${idx}]`;
-
-                        sb.append(`${prop.id}[${idx}] = ${this._newBean(nested)};`);
-
-                        this._setProperties(sb, nested, vars, limitLines);
-
-                        sb.emptyLine();
-                    });
-
-                    this._setProperty(sb, bean.id, prop.name, prop.id);
-                }
+                    sb.emptyLine();
+                });
             }
+
+            const nonBean = !this._isBean(type);
+
+            // Prepare objects refs.
+            return _.map(items, (item) => {
+                if (nonBean)
+                    return this._toObject(type, item);
+
+                if (mapper)
+                    return mapper.id(item) + (limitLines ? `(${mapper.args})` : '');
+
+                if (item.isComplex())
+                    return item.id;
+
+                return this._newBean(item);
+            });
+        }
+
+        /**
+         *
+         * @param sb
+         * @param parentId
+         * @param arrProp
+         * @param vars
+         * @param limitLines
+         * @private
+         */
+        static _setVarArg(sb, parentId, arrProp, vars, limitLines) {
+            const refs = this._constructBeans(sb, arrProp.typeClsName, arrProp.items, vars, limitLines);
+
+            // Set refs to property.
+            if (refs.length === 1)
+                this._setProperty(sb, parentId, arrProp.name, _.head(refs));
             else {
-                const arrItems = this._toObject(prop.typeClsName, prop.items);
+                sb.startBlock(`${parentId}.set${_.upperFirst(arrProp.name)}(`);
 
-                if (arrItems.length > 1) {
-                    sb.startBlock(`${bean.id}.set${_.upperFirst(prop.name)}(${varArg ? '' : `new ${arrType}[] {`}`);
+                const lastIdx = refs.length - 1;
 
-                    const lastIdx = arrItems.length - 1;
+                _.forEach(refs, (ref, idx) => {
+                    sb.append(ref + (lastIdx !== idx ? ',' : ''));
+                });
 
-                    _.forEach(arrItems, (item, idx) => sb.append(item + (lastIdx !== idx ? ',' : '')));
+                sb.endBlock(');');
+            }
+        }
 
-                    sb.endBlock(varArg ? ');' : '});');
-                }
-                else
-                    this._setProperty(sb, bean.id, prop.name, `new ${arrType}[] {${_.head(arrItems)}}`);
+        /**
+         *
+         * @param sb
+         * @param parentId
+         * @param arrProp
+         * @param vars
+         * @param limitLines
+         * @private
+         */
+        static _setArray(sb, parentId, arrProp, vars, limitLines) {
+            const refs = this._constructBeans(sb, arrProp.typeClsName, arrProp.items, vars, limitLines);
+
+            const arrType = JavaTypes.shortClassName(arrProp.typeClsName);
+
+            // Set refs to property.
+            if (refs.length === 1)
+                this._setProperty(sb, parentId, arrProp.name, `new ${arrType}[] {${_.head(refs)}}`);
+            else {
+                sb.startBlock(`${parentId}.set${_.upperFirst(arrProp.name)}(new ${arrType}[] {`);
+
+                const lastIdx = refs.length - 1;
+
+                _.forEach(refs, (ref, idx) => sb.append(ref + (lastIdx !== idx ? ',' : '')));
+
+                sb.endBlock('});');
             }
         }
 
@@ -427,13 +497,9 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
             const mapClsName = map.ordered ? 'LinkedHashMap' : 'HashMap';
 
-            if (_.includes(vars, map.id))
-                sb.append(`${map.id} = new ${mapClsName}<>();`);
-            else {
-                vars.push(map.id);
+            const type = `${mapClsName}<${keyClsName}, ${valClsName}>`;
 
-                sb.append(`${mapClsName}<${keyClsName}, ${valClsName}> ${map.id} = new ${mapClsName}<>();`);
-            }
+            sb.append(`${this.varInit(type, map.id, vars)} = new ${mapClsName}<>();`);
 
             sb.emptyLine();
 
@@ -453,24 +519,34 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             });
         }
 
+        static varInit(type, id, vars) {
+            if (_.includes(vars, id))
+                return id;
+
+            vars.push(id);
+
+            return `${type} ${id}`;
+        }
+
         /**
          *
          * @param {StringBuilder} sb
          * @param {Bean} bean
+         * @param {String} id
          * @param {Array.<String>} vars
          * @param {Boolean} limitLines
          * @returns {StringBuilder}
          */
-        static _setProperties(sb = new StringBuilder(), bean, vars = [], limitLines = false) {
+        static _setProperties(sb = new StringBuilder(), bean, vars = [], limitLines = false, id = bean.id) {
             _.forEach(bean.properties, (prop, idx) => {
                 switch (prop.clsName) {
                     case 'DATA_SOURCE':
-                        this._setProperty(sb, bean.id, prop.name, `DataSources.INSTANCE_${prop.id}`);
+                        this._setProperty(sb, id, prop.name, `DataSources.INSTANCE_${prop.id}`);
 
                         break;
                     case 'EVENT_TYPES':
                         if (prop.eventTypes.length === 1)
-                            this._setProperty(sb, bean.id, prop.name, _.head(prop.eventTypes));
+                            this._setProperty(sb, id, prop.name, _.head(prop.eventTypes));
                         else {
                             sb.append(`int[] ${prop.id} = new int[${_.head(prop.eventTypes)}.length`);
 
@@ -500,35 +576,30 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                         break;
                     case 'ARRAY':
-                        this._setArray(sb, bean, prop, vars, limitLines, prop.varArg);
+                        if (prop.varArg)
+                            this._setVarArg(sb, id, prop, vars, limitLines);
+                        else
+                            this._setArray(sb, id, prop, vars, limitLines);
 
                         break;
                     case 'COLLECTION':
-                        const implClsName = JavaTypes.shortClassName(prop.implClsName);
-                        const colTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
-
                         const nonBean = !this._isBean(prop.typeClsName);
 
-                        if (nonBean && implClsName === 'ArrayList') {
+                        if (nonBean && prop.implClsName === 'java.util.ArrayList') {
                             const items = _.map(prop.items, (item) => this._toObject(prop.typeClsName, item)).join(', ');
 
-                            sb.append(`${bean.id}.set${_.upperFirst(prop.name)}(Arrays.asList(${items}));`);
+                            this._setProperty(sb, id, prop.name, `Arrays.asList(${items})`);
                         }
                         else {
-                            if (_.includes(vars, prop.id))
-                                sb.append(`${prop.id} = new ${implClsName}<>();`);
-                            else {
-                                vars.push(prop.id);
+                            const colTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
+                            const implClsName = JavaTypes.shortClassName(prop.implClsName);
 
-                                sb.append(`${implClsName}<${colTypeClsName}> ${prop.id} = new ${implClsName}<>();`);
-                            }
+                            sb.append(`${this.varInit(`${implClsName}<${colTypeClsName}>`, prop.id, vars)} = new ${implClsName}<>();`);
 
                             sb.emptyLine();
 
                             if (nonBean) {
-                                const items = this._toObject(colTypeClsName, prop.items);
-
-                                _.forEach(items, (item) => {
+                                _.forEach(this._toObject(colTypeClsName, prop.items), (item) => {
                                     sb.append(`${prop.id}.add("${item}");`);
 
                                     sb.emptyLine();
@@ -542,9 +613,9 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                                     sb.emptyLine();
                                 });
-
-                                this._setProperty(sb, bean.id, prop.name, prop.id);
                             }
+
+                            this._setProperty(sb, id, prop.name, prop.id);
                         }
 
                         break;
@@ -554,21 +625,25 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         if (_.nonEmpty(prop.entries))
                             sb.emptyLine();
 
-                        this._setProperty(sb, bean.id, prop.name, prop.id);
+                        this._setProperty(sb, id, prop.name, prop.id);
 
                         break;
                     case 'java.util.Properties':
-                        sb.append(`Properties ${prop.id} = new Properties();`);
+                        sb.append(`${this.varInit('Properties', prop.id, vars)} = new Properties();`);
 
-                        sb.emptyLine();
+                        if (_.nonEmpty(prop.entries))
+                            sb.emptyLine();
 
                         _.forEach(prop.entries, (entry) => {
-                            sb.append(`${prop.id}.setProperty(${this._toObject('java.lang.String', entry.name)}, ${this._toObject('java.lang.String', entry.value)});`);
+                            const key = this._toObject('java.lang.String', entry.name);
+                            const val = this._toObject('java.lang.String', entry.value);
+
+                            sb.append(`${prop.id}.setProperty(${key}, ${val});`);
                         });
 
                         sb.emptyLine();
 
-                        this._setProperty(sb, bean.id, prop.name, prop.id);
+                        this._setProperty(sb, id, prop.name, prop.id);
 
                         break;
                     case 'BEAN':
@@ -579,35 +654,27 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                             sb.emptyLine();
 
-                            this._setProperty(sb, bean.id, prop.name, embedded.id);
+                            this._setProperty(sb, id, prop.name, embedded.id);
                         }
                         else if (embedded.isComplex()) {
                             this.constructBean(sb, embedded, vars, limitLines);
 
                             sb.emptyLine();
 
-                            this._setProperty(sb, bean.id, prop.name, embedded.id);
+                            this._setProperty(sb, id, prop.name, embedded.id);
                         }
                         else
-                            this._setProperty(sb, bean.id, prop.name, this._newBean(embedded));
+                            this._setProperty(sb, id, prop.name, this._newBean(embedded));
 
                         break;
                     default:
-                        this._setProperty(sb, bean.id, prop.name, this._toObject(prop.clsName, prop.value));
+                        this._setProperty(sb, id, prop.name, this._toObject(prop.clsName, prop.value));
                 }
 
                 this._emptyLineIfNeeded(sb, bean.properties, idx);
             });
 
             return sb;
-        }
-
-        static generateSection(bean) {
-            const sb = new StringBuilder();
-
-            this._setProperties(sb, bean);
-
-            return sb.asString();
         }
 
         static collectBeanImports(bean) {
@@ -725,62 +792,38 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
         /**
          * @param {Bean} bean
-         * @returns {Array.<String>}
+         * @returns {Object}
          */
-        static collectComplexBeans(bean) {
-            const beans = [];
+        static collectBeansWithMapping(bean) {
+            const beans = {};
 
             _.forEach(bean.properties, (prop) => {
                 switch (prop.clsName) {
                     case 'BEAN':
-                        beans.push(...this.collectComplexBeans(prop.value));
+                        _.merge(beans, this.collectBeansWithMapping(prop.value));
 
                         break;
                     case 'ARRAY':
                         if (this._isBean(prop.typeClsName)) {
-                            const collectedBeans = _.reduce(prop.items, (acc, nestedBean) => {
-                                if (nestedBean.isComplex())
-                                    acc.push(nestedBean);
+                            const mapping = this.METHOD_MAPPING[prop.typeClsName];
 
+                            _.reduce(prop.items, (acc, item) => {
+                                if (mapping) {
+                                    acc[mapping.id(item)] = item;
+
+                                    _.merge(acc, this.collectBeansWithMapping(item));
+                                }
                                 return acc;
-                            }, []);
-
-                            beans.push(...collectedBeans);
+                            }, beans);
                         }
 
                         break;
                     default:
-                    // No-op.
+                        // No-op.
                 }
             });
 
             return beans;
-        }
-
-        static cacheConfiguration(sb, ccfg) {
-            const cacheName = ccfg.findProperty('name').value;
-            const dataSources = this.collectDataSources(ccfg);
-
-            const javadoc = [
-                `Create configuration for cache "${cacheName}".`,
-                '',
-                '@return Configured cache.'
-            ];
-
-            if (dataSources.length)
-                javadoc.push('@throws Exception if failed to create cache configuration.');
-
-            this.commentBlock(sb, ...javadoc);
-            sb.startBlock(`public static CacheConfiguration ${this._methodName(ccfg)}()${dataSources.length ? ' throws Exception' : ''} {`);
-
-            this.constructBean(sb, ccfg);
-
-            sb.emptyLine();
-            sb.append(`return ${ccfg.id};`);
-
-            sb.endBlock('}');
-
-            return sb;
         }
 
         /**
@@ -865,15 +908,15 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                     this.constructBean(sb, ds);
 
+                    sb.emptyLine();
+                    sb.append(`return ${ds.id};`);
+
                     if (dsClsName === 'OracleDataSource') {
                         sb.endBlock('}');
                         sb.startBlock('catch (SQLException ex) {');
                         sb.append('throw new Error(ex);');
                         sb.endBlock('}');
                     }
-
-                    sb.emptyLine();
-                    sb.append(`return ${ds.id};`);
 
                     sb.endBlock('}');
                 });
@@ -918,23 +961,13 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
             sb.endBlock('}');
 
-            const complexBeans = this.collectComplexBeans(cfg);
+            const beans = this.collectBeansWithMapping(cfg);
 
-            if (complexBeans.length) {
-                _.forEach(complexBeans, (bean, idx) => {
-                    switch (bean.clsName) {
-                        case 'org.apache.ignite.configuration.CacheConfiguration':
-                            this.cacheConfiguration(sb, bean);
+            _.forEach(beans, (bean, id) => {
+                sb.emptyLine();
 
-                            break;
-                        default:
-                            return;
-                    }
-
-                    if (idx !== complexBeans.length - 1)
-                        sb.emptyLine();
-                });
-            }
+                this.METHOD_MAPPING[bean.clsName].generator(sb, id, bean);
+            });
 
             sb.endBlock('}');
 

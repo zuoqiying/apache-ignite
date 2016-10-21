@@ -204,11 +204,18 @@ export default ['clustersController', [
 
         // When landing on the page, get clusters and show them.
         Resource.read()
-            .then(({spaces, clusters, caches, igfss}) => {
+            .then(({spaces, clusters, caches, domains, igfss}) => {
                 $scope.spaces = spaces;
                 $scope.clusters = clusters;
 
-                $scope.caches = _.map(caches, (cache) => ({value: cache._id, label: cache.name, cache}));
+                $scope.caches = _.map(caches, (cache) => {
+                    cache.domains = _.filter(domains, ({_id}) => _.includes(cache.domains, _id));
+
+                    if (_.get(cache, 'nodeFilter.kind') === 'IGFS')
+                        cache.nodeFilter.IGFS.instance = _.find(igfss, {_id: cache.nodeFilter.IGFS.igfs});
+
+                    return {value: cache._id, label: cache.name, cache};
+                });
                 $scope.igfss = _.map(igfss, (igfs) => ({value: igfs._id, label: igfs.name, igfs}));
 
                 _.forEach($scope.clusters, (cluster) => {
