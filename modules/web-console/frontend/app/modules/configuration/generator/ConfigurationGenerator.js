@@ -1164,7 +1164,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                             return acc;
                         }, []);
 
-                        bean.arrayProperty('types', 'types', types, 'org.apache.ignite.cache.store.jdbc.JdbcType');
+                        bean.varArgProperty('types', 'types', types, 'org.apache.ignite.cache.store.jdbc.JdbcType');
 
                         break;
                     case 'CacheJdbcBlobStoreFactory':

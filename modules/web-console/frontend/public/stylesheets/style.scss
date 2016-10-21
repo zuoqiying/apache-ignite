@@ -359,6 +359,12 @@ h1, h2, h3, h4, h5, h6 {
     margin-right: -2px;
 }
 
+// Modal icon
+.modal-header h4 > i.fa {
+    float: left;
+    line-height: $modal-title-line-height;
+}
+
 .modal .modal-dialog {
     width: 650px;
 }
