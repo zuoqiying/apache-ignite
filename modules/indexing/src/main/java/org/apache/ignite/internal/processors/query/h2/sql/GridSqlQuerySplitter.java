@@ -49,7 +49,7 @@ public class GridSqlQuerySplitter {
     private static final String TABLE_SCHEMA = "PUBLIC";
 
     /** */
-    private static final String TABLE_PREFIX = "__T";
+    private static final String MERGE_TABLE_PREFIX = "__T";
 
     /** */
     private static final String COLUMN_PREFIX = "__C";
@@ -58,7 +58,7 @@ public class GridSqlQuerySplitter {
     private static final String HAVING_COLUMN = "__H";
 
     /** */
-    private int nextTblIdx;
+    private int nextMergeTblIdx;
 
     /** */
     private GridCacheSqlQuery mapSqlQry;
@@ -71,18 +71,18 @@ public class GridSqlQuerySplitter {
 
     /**
      * @param idx Index of table.
-     * @return Table.
+     * @return Merge table.
      */
-    private static GridSqlTable table(int idx) {
-        return new GridSqlTable(TABLE_SCHEMA, TABLE_PREFIX + idx);
+    private static GridSqlTable mergeTable(int idx) {
+        return new GridSqlTable(TABLE_SCHEMA, MERGE_TABLE_PREFIX + idx);
     }
 
     /**
      * @param idx Table index.
-     * @return Table name.
+     * @return Merge table name.
      */
-    public static String tableIdentifier(int idx) {
-        return table(idx).getSQL();
+    public static String mergeTableIdentifier(int idx) {
+        return mergeTable(idx).getSQL();
     }
 
     /**
@@ -241,7 +241,7 @@ public class GridSqlQuerySplitter {
         assert !(collocatedGrpBy && aggregateFound); // We do not split aggregates when collocatedGrpBy is true.
 
         // Create reduce query AST.
-        GridSqlSelect rdcQry = new GridSqlSelect().from(table(nextTblIdx++));
+        GridSqlSelect rdcQry = new GridSqlSelect().from(mergeTable(nextMergeTblIdx++));
 
         // -- SELECT
         mapQry.clearColumns();
