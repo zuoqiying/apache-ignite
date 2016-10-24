@@ -594,7 +594,7 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
                         ']');
                 }
 
-                removeValue();
+                removeValue(null);
 
                 // Give to GC.
                 update(null, 0L, 0L, ver, true);

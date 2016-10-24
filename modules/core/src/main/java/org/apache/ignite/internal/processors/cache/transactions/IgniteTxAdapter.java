@@ -54,6 +54,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheOperation;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearCacheEntry;
+import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.processors.cache.store.CacheStoreManager;
 import org.apache.ignite.internal.processors.cache.version.GridCacheLazyPlainVersionedEntry;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
@@ -250,6 +251,9 @@ public abstract class IgniteTxAdapter extends GridMetadataAwareAdapter implement
     /** */
     @GridToStringExclude
     private TransactionProxyImpl proxy;
+
+    /** */
+    private long mvccCrdCntr = TxMvccVersion.COUNTER_NA;
 
     /**
      * Empty constructor required for {@link Externalizable}.
@@ -1195,6 +1199,29 @@ public abstract class IgniteTxAdapter extends GridMetadataAwareAdapter implement
 
     /** {@inheritDoc} */
     @Nullable @Override public GridCacheVersion nearXidVersion() {
+        return null;
+    }
+
+    /**
+     * @param mvccCrdCntr Counter.
+     */
+    public void mvccCoordinatorCounter(long mvccCrdCntr) {
+        this.mvccCrdCntr = mvccCrdCntr;
+    }
+
+    /**
+     * @param cctx Context.
+     * @return Mvcc version.
+     */
+    protected final TxMvccVersion createMvccVersion(GridCacheSharedContext cctx) {
+        assert !txState().mvccEnabled(cctx) || mvccCrdCntr != TxMvccVersion.COUNTER_NA;
+
+        if (mvccCrdCntr != TxMvccVersion.COUNTER_NA) {
+            return new TxMvccVersion(topologyVersion().topologyVersion(),
+                mvccCrdCntr,
+                nearXidVersion());
+        }
+
         return null;
     }
 

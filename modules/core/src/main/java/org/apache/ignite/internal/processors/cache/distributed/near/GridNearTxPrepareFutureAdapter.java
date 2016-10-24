@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import javax.cache.expiry.ExpiryPolicy;
 import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryRemovedException;
 import org.apache.ignite.internal.processors.cache.GridCacheMvccFuture;
@@ -31,6 +32,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTxMapping;
 import org.apache.ignite.internal.processors.cache.distributed.dht.colocated.GridDhtDetachedCacheEntry;
+import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxKey;
@@ -192,6 +194,21 @@ public abstract class GridNearTxPrepareFutureAdapter extends
         assert F.isEmpty(res.invalidPartitions()) : res;
 
         UUID nodeId = m.node().id();
+
+        if (res.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA) {
+            assert tx.txState().mvccEnabled(cctx) : res;
+
+            m.mvccCoordinatorCounter(res.mvccCoordinatorCounter());
+
+            if (!tx.mappings().single()) {
+                ClusterNode crd = cctx.coordinators().nodeCoordinator(tx.topologyVersion(), m.node().id());
+
+                for (GridDistributedTxMapping m0 : tx.mappings().mappings()) {
+                    if (m0 != m && crd.equals(cctx.coordinators().nodeCoordinator(tx.topologyVersion(), m.node().id())))
+                        m0.mvccCoordinatorCounter(res.mvccCoordinatorCounter());
+                }
+            }
+        }
 
         for (Map.Entry<IgniteTxKey, CacheVersionedValue> entry : res.ownedValues().entrySet()) {
             IgniteTxEntry txEntry = tx.entry(entry.getKey());

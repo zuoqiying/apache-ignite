@@ -24,6 +24,7 @@ import java.util.UUID;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxFinishRequest;
+import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.tostring.GridToStringBuilder;
 import org.apache.ignite.lang.IgniteUuid;
@@ -59,6 +60,9 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
 
     /** Write synchronization mode. */
     private CacheWriteSynchronizationMode syncMode;
+
+    /** */
+    private long mvccCrdCntr = TxMvccVersion.COUNTER_NA;
 
     /**
      * Empty constructor required for {@link Externalizable}.
@@ -130,6 +134,20 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
         this.topVer = topVer;
         this.subjId = subjId;
         this.taskNameHash = taskNameHash;
+    }
+
+    /**
+     * @param mvccCrdCntr Counter.
+     */
+    public void mvccCoordinatorCounter(long mvccCrdCntr) {
+        this.mvccCrdCntr = mvccCrdCntr;
+    }
+
+    /**
+     * @return Counter.
+     */
+    public long mvccCoordinatorCounter() {
+        return mvccCrdCntr;
     }
 
     /**
@@ -216,30 +234,36 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
                 writer.incrementState();
 
             case 20:
-                if (!writer.writeBoolean("storeEnabled", storeEnabled))
+                if (!writer.writeLong("mvccCrdCntr", mvccCrdCntr))
                     return false;
 
                 writer.incrementState();
 
             case 21:
-                if (!writer.writeUuid("subjId", subjId))
+                if (!writer.writeBoolean("storeEnabled", storeEnabled))
                     return false;
 
                 writer.incrementState();
 
             case 22:
-                if (!writer.writeByte("syncMode", syncMode != null ? (byte)syncMode.ordinal() : -1))
+                if (!writer.writeUuid("subjId", subjId))
                     return false;
 
                 writer.incrementState();
 
             case 23:
-                if (!writer.writeInt("taskNameHash", taskNameHash))
+                if (!writer.writeByte("syncMode", syncMode != null ? (byte)syncMode.ordinal() : -1))
                     return false;
 
                 writer.incrementState();
 
             case 24:
+                if (!writer.writeInt("taskNameHash", taskNameHash))
+                    return false;
+
+                writer.incrementState();
+
+            case 25:
                 if (!writer.writeMessage("topVer", topVer))
                     return false;
 
@@ -278,7 +302,7 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
                 reader.incrementState();
 
             case 20:
-                storeEnabled = reader.readBoolean("storeEnabled");
+                mvccCrdCntr = reader.readLong("mvccCrdCntr");
 
                 if (!reader.isLastRead())
                     return false;
@@ -286,7 +310,7 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
                 reader.incrementState();
 
             case 21:
-                subjId = reader.readUuid("subjId");
+                storeEnabled = reader.readBoolean("storeEnabled");
 
                 if (!reader.isLastRead())
                     return false;
@@ -294,6 +318,14 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
                 reader.incrementState();
 
             case 22:
+                subjId = reader.readUuid("subjId");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 23:
                 byte syncModeOrd;
 
                 syncModeOrd = reader.readByte("syncMode");
@@ -305,7 +337,7 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
 
                 reader.incrementState();
 
-            case 23:
+            case 24:
                 taskNameHash = reader.readInt("taskNameHash");
 
                 if (!reader.isLastRead())
@@ -313,7 +345,7 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
 
                 reader.incrementState();
 
-            case 24:
+            case 25:
                 topVer = reader.readMessage("topVer");
 
                 if (!reader.isLastRead())
@@ -333,7 +365,7 @@ public class GridNearTxFinishRequest extends GridDistributedTxFinishRequest {
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 25;
+        return 26;
     }
 
     /** {@inheritDoc} */

@@ -66,6 +66,9 @@ public class GridDistributedTxMapping implements Externalizable {
     /** {@code True} if this is first mapping for optimistic tx on client node. */
     private boolean clientFirst;
 
+    /** */
+    private long mvccCrdCntr;
+
     /**
      * Empty constructor required for {@link Externalizable}.
      */
@@ -232,6 +235,20 @@ public class GridDistributedTxMapping implements Externalizable {
      */
     public boolean empty() {
         return entries.isEmpty();
+    }
+
+    /**
+     * @param mvccCrdCntr Counter.
+     */
+    public void mvccCoordinatorCounter(long mvccCrdCntr) {
+        this.mvccCrdCntr = mvccCrdCntr;
+    }
+
+    /**
+     * @return Counter.
+     */
+    public long mvccCoordinatorCounter() {
+        return mvccCrdCntr;
     }
 
     /** {@inheritDoc} */

@@ -35,8 +35,10 @@ import org.apache.ignite.internal.managers.communication.GridMessageListener;
 import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiTuple;
 
@@ -63,6 +65,9 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
     /** */
     private final AtomicLong cntrFutId = new AtomicLong();
+
+    /** */
+    private ConcurrentHashMap<GridCacheVersion, Long> activeTxs = new ConcurrentHashMap<>();
 
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
@@ -108,20 +113,21 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
     /**
      * @param topVer Topology version.
+     * @param txId Transaction ID.
      * @return Counter request future.
      */
-    public IgniteInternalFuture<Long> requestTxCounter(AffinityTopologyVersion topVer) {
+    public IgniteInternalFuture<Long> requestTxCounter(AffinityTopologyVersion topVer, GridCacheVersion txId) {
         ClusterNode crd = assignCache.localNodeCoordinator(topVer);
 
         if (crd.equals(cctx.localNode()))
-            return new GridFinishedFuture<>(cntr.incrementAndGet());
+            return new GridFinishedFuture<>(assignTxCounter(txId));
 
         TxCounterFuture fut = new TxCounterFuture(cntrFutId.incrementAndGet(), crd);
 
         cntrFuts.put(fut.id, fut);
 
         try {
-            cctx.gridIO().send(crd, TOPIC_COORDINATOR, new CoordinatorCounterRequest(fut.id), SYSTEM_POOL);
+            cctx.gridIO().send(crd, TOPIC_COORDINATOR, new CoordinatorCounterRequest(fut.id, txId), SYSTEM_POOL);
         }
         catch (IgniteCheckedException e) {
             if (cntrFuts.remove(fut.id) != null)
@@ -129,6 +135,17 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
         }
 
         return fut;
+    }
+
+    /**
+     * @param topVer Topology version.
+     * @param nodeId Node ID.
+     * @return Node coordinator.
+     */
+    public ClusterNode nodeCoordinator(AffinityTopologyVersion topVer, UUID nodeId) {
+        CoordinatorsAssignment assign = assignCache.assignment(topVer);
+
+        return assign.nodeCoordinator(nodeId);
     }
 
     /**
@@ -143,16 +160,21 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
         ClusterNode coord = null;
 
-        Map<ClusterNode, ClusterNode> assignment = U.newHashMap(nodes.size());
+        Map<UUID, ClusterNode> assignment = U.newHashMap(nodes.size());
+
+        int coordsCnt = 0;
 
         for (int i = 0; i < nodes.size(); i++) {
-            if (i % 3 == 0)
+            if (i % 3 == 0) {
                 coord = nodes.get(i);
 
-            assignment.put(nodes.get(i), coord);
+                coordsCnt++;
+            }
+
+            assignment.put(nodes.get(i).id(), coord);
         }
 
-        assignCache.newAssignment(topVer, cctx.localNode(), assignment);
+        assignCache.newAssignment(topVer, cctx.localNode(), new CoordinatorsAssignment(assignment, coordsCnt));
     }
 
     /**
@@ -169,10 +191,12 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
             return;
         }
 
+        long nextCtr = assignTxCounter(msg.txId());
+
         try {
             cctx.gridIO().send(node,
                 TOPIC_COORDINATOR,
-                new CoordinatorCounterResponse(cntr.incrementAndGet(), msg.futureId()),
+                new CoordinatorCounterResponse(nextCtr, msg.futureId()),
                 SYSTEM_POOL);
         }
         catch (ClusterTopologyCheckedException e) {
@@ -182,6 +206,28 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
         catch (IgniteCheckedException e) {
             U.error(log, "Failed to send coordinator counter response [msg=" + msg + ", node=" + nodeId + ']', e);
         }
+    }
+
+    /**
+     * @param txId Transaction ID.
+     * @return Counter.
+     */
+    private long assignTxCounter(GridCacheVersion txId) {
+        long nextCtr = cntr.incrementAndGet();
+
+        Long old = activeTxs.put(txId, nextCtr);
+
+        assert old == null : txId;
+
+        return nextCtr;
+    }
+
+    /**
+     * @param msg Message.
+     */
+    private void processCoordinatorAckRequest(CoordinatorAckRequest msg) {
+        for (GridCacheVersion txId : msg.txIds())
+            activeTxs.remove(txId);
     }
 
     /**
@@ -205,7 +251,9 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
             if (msg instanceof CoordinatorCounterRequest)
                 processCoordinatorCounterRequest(nodeId, (CoordinatorCounterRequest)msg);
             else if (msg instanceof CoordinatorCounterResponse)
-                processCoordinatorCounterResponse((CoordinatorCounterResponse) msg);
+                processCoordinatorCounterResponse((CoordinatorCounterResponse)msg);
+            else if (msg instanceof CoordinatorAckRequest)
+                processCoordinatorAckRequest((CoordinatorAckRequest)msg);
         }
     }
 
@@ -241,7 +289,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
      */
     private static class CoordinatorsAssignmentCache {
         /** */
-        private volatile NavigableMap<AffinityTopologyVersion, Map<ClusterNode, ClusterNode>> assignHist;
+        private volatile NavigableMap<AffinityTopologyVersion, CoordinatorsAssignment> assignHist;
 
         /** */
         private volatile NavigableMap<AffinityTopologyVersion, ClusterNode> locCoordHist;
@@ -269,11 +317,9 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
          * @param locNode Local node.
          * @param assign Assignment,
          */
-        void newAssignment(AffinityTopologyVersion topVer, ClusterNode locNode, Map<ClusterNode, ClusterNode> assign) {
+        void newAssignment(AffinityTopologyVersion topVer, ClusterNode locNode, CoordinatorsAssignment assign) {
             if (!client) {
-                ClusterNode locCoord = assign.get(locNode);
-
-                assert locCoord != null : assign;
+                ClusterNode locCoord = assign.nodeCoordinator(locNode.id());
 
                 curLoc = new IgniteBiTuple<>(topVer, locCoord);
 
@@ -286,11 +332,23 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
                 this.locCoordHist = hist;
             }
 
-            NavigableMap<AffinityTopologyVersion, Map<ClusterNode, ClusterNode>> hist = new TreeMap<>(assignHist);
+            NavigableMap<AffinityTopologyVersion, CoordinatorsAssignment> hist = new TreeMap<>(assignHist);
 
             hist.put(topVer, assign);
 
             assignHist = hist;
+        }
+
+        /**
+         * @param topVer Topology version.
+         * @return Coordinators assignment.
+         */
+        CoordinatorsAssignment assignment(AffinityTopologyVersion topVer) {
+            CoordinatorsAssignment assignment = assignHist.get(topVer);
+
+            assert assignment != null;
+
+            return assignment;
         }
 
         /**
@@ -321,6 +379,45 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
         private void onHistoryAdded(NavigableMap<?, ?> hist, int maxSize) {
             while (hist.size() > maxSize)
                 hist.remove(hist.firstKey());
+        }
+    }
+
+    /**
+     *
+     */
+    private static class CoordinatorsAssignment {
+        /** */
+        final Map<UUID, ClusterNode> assignment;
+
+        /** */
+        final int coordsCnt;
+
+        /**
+         * @param assignment Assignment.
+         * @param coordsCnt Number of coordinators.
+         */
+        CoordinatorsAssignment(Map<UUID, ClusterNode> assignment, int coordsCnt) {
+            assert coordsCnt > 0;
+
+            this.assignment = assignment;
+            this.coordsCnt = coordsCnt;
+        }
+
+        /**
+         * @param nodeId Node ID.
+         * @return Node coordinator.
+         */
+        ClusterNode nodeCoordinator(UUID nodeId) {
+            ClusterNode crd = assignment.get(nodeId);
+
+            assert crd != null;
+
+            return crd;
+        }
+
+        /** {@inheritDoc} */
+        @Override public String toString() {
+            return S.toString(CoordinatorsAssignment.class, this);
         }
     }
 }

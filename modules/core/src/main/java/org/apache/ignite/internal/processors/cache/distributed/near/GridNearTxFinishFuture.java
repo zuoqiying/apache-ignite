@@ -38,6 +38,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTxFinishRequest;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTxFinishResponse;
+import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
@@ -648,7 +649,7 @@ public final class GridNearTxFinishFuture<K, V> extends GridCompoundIdentityFutu
             m.explicitLock(),
             tx.storeEnabled(),
             tx.topologyVersion(),
-            completedVer, // Reuse 'baseVersion'  to do not add new fields in message.
+            completedVer, // Reuse 'baseVersion' to do not add new fields in message.
             null,
             null,
             tx.size(),
@@ -657,9 +658,15 @@ public final class GridNearTxFinishFuture<K, V> extends GridCompoundIdentityFutu
             tx.activeCachesDeploymentEnabled()
         );
 
+        assert !tx.txState().mvccEnabled(cctx) || m.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA;
+
+        req.mvccCoordinatorCounter(m.mvccCoordinatorCounter());
+
         // If this is the primary node for the keys.
         if (n.isLocal()) {
             req.miniId(IgniteUuid.randomUuid());
+
+            tx.mvccCoordinatorCounter(req.mvccCoordinatorCounter());
 
             IgniteInternalFuture<IgniteInternalTx> fut = cctx.tm().txHandler().finish(n.id(), tx, req);
 

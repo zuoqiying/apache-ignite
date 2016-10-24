@@ -964,19 +964,11 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
     /**
      * Prepares next batch of entries in dht transaction.
      *
-     * @param reads Read entries.
-     * @param writes Write entries.
-     * @param txNodes Transaction nodes mapping.
-     * @param last {@code True} if this is last prepare request.
+     * @param req Prepare request.
      * @return Future that will be completed when locks are acquired.
      */
     @SuppressWarnings("TypeMayBeWeakened")
-    public IgniteInternalFuture<GridNearTxPrepareResponse> prepareAsyncLocal(
-        @Nullable Collection<IgniteTxEntry> reads,
-        @Nullable Collection<IgniteTxEntry> writes,
-        Map<UUID, Collection<UUID>> txNodes,
-        boolean last
-    ) {
+    public IgniteInternalFuture<GridNearTxPrepareResponse> prepareAsyncLocal(GridNearTxPrepareRequest req) {
         long timeout = remainingTime();
 
         if (state() != PREPARING) {
@@ -1001,13 +993,13 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
             timeout,
             IgniteUuid.randomUuid(),
             Collections.<IgniteTxKey, GridCacheVersion>emptyMap(),
-            last,
+            req.last(),
             needReturnValue() && implicit());
 
         try {
             // At this point all the entries passed in must be enlisted in transaction because this is an
             // optimistic transaction.
-            optimisticLockEntries = (serializable() && optimistic()) ? F.concat(false, writes, reads) : writes;
+            optimisticLockEntries = (serializable() && optimistic()) ? F.concat(false, req.writes(), req.reads()) : req.writes();
 
             userPrepare();
 
@@ -1017,7 +1009,7 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
             if (isSystemInvalidate())
                 fut.complete();
             else
-                fut.prepare(reads, writes, txNodes);
+                fut.prepare(req);
         }
         catch (IgniteTxTimeoutCheckedException | IgniteTxOptimisticCheckedException e) {
             fut.onError(e);

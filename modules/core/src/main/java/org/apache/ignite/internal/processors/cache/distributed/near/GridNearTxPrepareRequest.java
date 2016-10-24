@@ -83,6 +83,9 @@ public class GridNearTxPrepareRequest extends GridDistributedTxPrepareRequest {
     /** {@code True} if first optimistic tx prepare request sent from client node. */
     private boolean firstClientReq;
 
+    /** */
+    private byte flags;
+
     /**
      * Empty constructor required for {@link Externalizable}.
      */
@@ -143,6 +146,10 @@ public class GridNearTxPrepareRequest extends GridDistributedTxPrepareRequest {
         this.subjId = subjId;
         this.taskNameHash = taskNameHash;
         this.firstClientReq = firstClientReq;
+    }
+
+    public boolean requestMvccCounter() {
+        return false;
     }
 
     /**

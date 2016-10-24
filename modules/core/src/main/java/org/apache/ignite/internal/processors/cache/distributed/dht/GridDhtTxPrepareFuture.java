@@ -53,7 +53,9 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedCacheEntry;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
+import org.apache.ignite.internal.processors.cache.distributed.near.GridNearTxPrepareRequest;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearTxPrepareResponse;
+import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxKey;
@@ -164,14 +166,8 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
     @SuppressWarnings("UnusedDeclaration")
     private volatile int mapped;
 
-    /** Prepare reads. */
-    private Iterable<IgniteTxEntry> reads;
-
-    /** Prepare writes. */
-    private Iterable<IgniteTxEntry> writes;
-
-    /** Tx nodes. */
-    private Map<UUID, Collection<UUID>> txNodes;
+    /** */
+    private GridNearTxPrepareRequest req;
 
     /** Trackable flag. */
     private boolean trackable = true;
@@ -211,7 +207,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
     private final PrepareTimeoutObject timeoutObj;
 
     /** */
-    private Long mvccCoordCntr;
+    private long mvccCoordCntr = TxMvccVersion.COUNTER_NA;
 
     /**
      * @param cctx Context.
@@ -340,7 +336,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
     private void onEntriesLocked() {
         ret = new GridCacheReturn(null, tx.localResult(), true, null, true);
 
-        for (IgniteTxEntry writeEntry : writes) {
+        for (IgniteTxEntry writeEntry : req.writes()) {
             IgniteTxEntry txEntry = tx.entry(writeEntry.txKey());
 
             assert txEntry != null : writeEntry;
@@ -566,10 +562,10 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
         if (log.isDebugEnabled())
             log.debug("Marking all local candidates as ready: " + this);
 
-        readyLocks(writes);
+        readyLocks(req.writes());
 
         if (tx.serializable() && tx.optimistic())
-            readyLocks(reads);
+            readyLocks(req.reads());
 
         locksReady = true;
     }
@@ -836,10 +832,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
             null,
             tx.activeCachesDeploymentEnabled());
 
-        assert mvccCoordCntr != null || !tx.txState().mvccEnabled(cctx);
-
-        if (mvccCoordCntr != null)
-            res.mvccCoordinatorCounter(mvccCoordCntr);
+        res.mvccCoordinatorCounter(mvccCoordCntr);
 
         if (prepErr == null) {
             if (tx.needReturnValue() || tx.nearOnOriginatingNode() || tx.hasInterceptor())
@@ -868,8 +861,8 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
      */
     private void addDhtValues(GridNearTxPrepareResponse res) {
         // Interceptor on near node needs old values to execute callbacks.
-        if (!F.isEmpty(writes)) {
-            for (IgniteTxEntry e : writes) {
+        if (!F.isEmpty(req.writes())) {
+            for (IgniteTxEntry e : req.writes()) {
                 IgniteTxEntry txEntry = tx.entry(e.txKey());
 
                 assert txEntry != null : "Missing tx entry for key [tx=" + tx + ", key=" + e.txKey() + ']';
@@ -972,33 +965,28 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
     /**
      * Initializes future.
      *
-     * @param reads Read entries.
-     * @param writes Write entries.
-     * @param txNodes Transaction nodes mapping.
+     * @param req Prepare request.
      */
     @SuppressWarnings("TypeMayBeWeakened")
-    public void prepare(Collection<IgniteTxEntry> reads, Collection<IgniteTxEntry> writes,
-        Map<UUID, Collection<UUID>> txNodes) {
+    public void prepare(GridNearTxPrepareRequest req) {
         if (tx.empty()) {
             tx.setRollbackOnly();
 
             onDone((GridNearTxPrepareResponse)null);
         }
 
-        this.reads = reads;
-        this.writes = writes;
-        this.txNodes = txNodes;
+        this.req = req;
 
         boolean ser = tx.serializable() && tx.optimistic();
 
-        if (!F.isEmpty(writes) || (ser && !F.isEmpty(reads))) {
+        if (!F.isEmpty(req.writes()) || (ser && !F.isEmpty(req.reads()))) {
             Map<Integer, Collection<KeyCacheObject>> forceKeys = null;
 
-            for (IgniteTxEntry entry : writes)
+            for (IgniteTxEntry entry : req.writes())
                 forceKeys = checkNeedRebalanceKeys(entry, forceKeys);
 
             if (ser) {
-                for (IgniteTxEntry entry : reads)
+                for (IgniteTxEntry entry : req.reads())
                     forceKeys = checkNeedRebalanceKeys(entry, forceKeys);
             }
 
@@ -1132,10 +1120,10 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
                 IgniteCheckedException err0;
 
                 try {
-                    err0 = checkReadConflict(writes);
+                    err0 = checkReadConflict(req.writes());
 
                     if (err0 == null)
-                        err0 = checkReadConflict(reads);
+                        err0 = checkReadConflict(req.reads());
                 }
                 catch (IgniteCheckedException e) {
                     U.error(log, "Failed to check entry version: " + e, e);
@@ -1162,8 +1150,11 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
             // We are holding transaction-level locks for entries here, so we can get next write version.
             tx.writeVersion(cctx.versions().next(tx.topologyVersion()));
 
-            if (tx.txState().mvccEnabled(cctx)) {
-                IgniteInternalFuture<Long> coordCntrFut = cctx.coordinators().requestTxCounter(tx.topologyVersion());
+            if (req.requestMvccCounter()) {
+                assert tx.txState().mvccEnabled(cctx);
+
+                IgniteInternalFuture<Long> coordCntrFut = cctx.coordinators().requestTxCounter(
+                    tx.topologyVersion(), tx.nearXidVersion());
 
                 coordCntrFut.listen(new IgniteInClosure<IgniteInternalFuture<Long>>() {
                     @Override public void apply(IgniteInternalFuture<Long> fut) {
@@ -1181,13 +1172,13 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
 
             {
                 // Assign keys to primary nodes.
-                if (!F.isEmpty(writes)) {
-                    for (IgniteTxEntry write : writes)
+                if (!F.isEmpty(req.writes())) {
+                    for (IgniteTxEntry write : req.writes())
                         map(tx.entry(write.txKey()));
                 }
 
-                if (!F.isEmpty(reads)) {
-                    for (IgniteTxEntry read : reads)
+                if (!F.isEmpty(req.reads())) {
+                    for (IgniteTxEntry read : req.reads())
                         map(tx.entry(read.txKey()));
                 }
             }
@@ -1224,7 +1215,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
 
                     add(fut); // Append new future.
 
-                    assert txNodes != null;
+                    assert req.transactionNodes() != null;
 
                     GridDhtTxPrepareRequest req = new GridDhtTxPrepareRequest(
                         futId,
@@ -1234,7 +1225,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
                         timeout,
                         dhtWrites,
                         nearWrites,
-                        txNodes,
+                        this.req.transactionNodes(),
                         tx.nearXidVersion(),
                         true,
                         tx.onePhaseCommit(),

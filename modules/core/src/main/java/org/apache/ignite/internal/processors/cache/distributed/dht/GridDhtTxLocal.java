@@ -34,6 +34,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.GridCacheMappedVersion;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearTxFinishResponse;
+import org.apache.ignite.internal.processors.cache.distributed.near.GridNearTxPrepareRequest;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearTxPrepareResponse;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
@@ -306,12 +307,7 @@ public class GridDhtTxLocal extends GridDhtTxLocalAdapter implements GridCacheMa
 
             return prepareAsync(
                 null,
-                null,
-                Collections.<IgniteTxKey, GridCacheVersion>emptyMap(),
-                0,
-                nearMiniId,
-                null,
-                true);
+                nearMiniId);
         }
 
         long timeout = remainingTime();
@@ -381,23 +377,13 @@ public class GridDhtTxLocal extends GridDhtTxLocalAdapter implements GridCacheMa
     /**
      * Prepares next batch of entries in dht transaction.
      *
-     * @param reads Read entries.
-     * @param writes Write entries.
-     * @param verMap Version map.
-     * @param msgId Message ID.
+     * @param req Prepare request.
      * @param nearMiniId Near mini future ID.
-     * @param txNodes Transaction nodes mapping.
-     * @param last {@code True} if this is last prepare request.
      * @return Future that will be completed when locks are acquired.
      */
     public IgniteInternalFuture<GridNearTxPrepareResponse> prepareAsync(
-        @Nullable Collection<IgniteTxEntry> reads,
-        @Nullable Collection<IgniteTxEntry> writes,
-        Map<IgniteTxKey, GridCacheVersion> verMap,
-        long msgId,
-        IgniteUuid nearMiniId,
-        Map<UUID, Collection<UUID>> txNodes,
-        boolean last
+        @Nullable GridNearTxPrepareRequest req,
+        IgniteUuid nearMiniId
     ) {
         // In optimistic mode prepare still can be called explicitly from salvageTx.
         GridDhtTxPrepareFuture fut = prepFut;
@@ -413,8 +399,8 @@ public class GridDhtTxLocal extends GridDhtTxLocalAdapter implements GridCacheMa
                 this,
                 timeout,
                 nearMiniId,
-                verMap,
-                last,
+                req != null ? req.dhtVersions() : Collections.<IgniteTxKey, GridCacheVersion>emptyMap(),
+                req == null || req.last(),
                 needReturnValue()))) {
                 GridDhtTxPrepareFuture f = prepFut;
 
@@ -457,14 +443,16 @@ public class GridDhtTxLocal extends GridDhtTxLocalAdapter implements GridCacheMa
         }
 
         try {
-            if (reads != null) {
-                for (IgniteTxEntry e : reads)
-                    addEntry(msgId, e);
-            }
+            if (req != null) {
+                if (req.reads() != null) {
+                    for (IgniteTxEntry e : req.reads())
+                        addEntry(req.messageId(), e);
+                }
 
-            if (writes != null) {
-                for (IgniteTxEntry e : writes)
-                    addEntry(msgId, e);
+                if (req.writes() != null) {
+                    for (IgniteTxEntry e : req.writes())
+                        addEntry(req.messageId(), e);
+                }
             }
 
             userPrepare();
@@ -474,8 +462,11 @@ public class GridDhtTxLocal extends GridDhtTxLocalAdapter implements GridCacheMa
 
             if (isSystemInvalidate())
                 fut.complete();
-            else
-                fut.prepare(reads, writes, txNodes);
+            else {
+                assert req != null;
+
+                fut.prepare(req);
+            }
         }
         catch (IgniteTxTimeoutCheckedException | IgniteTxOptimisticCheckedException e) {
             fut.onError(e);

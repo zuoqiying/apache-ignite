@@ -243,11 +243,7 @@ public class IgniteTxHandler {
     ) {
         req.txState(locTx.txState());
 
-        IgniteInternalFuture<GridNearTxPrepareResponse> fut = locTx.prepareAsyncLocal(
-            req.reads(),
-            req.writes(),
-            req.transactionNodes(),
-            req.last());
+        IgniteInternalFuture<GridNearTxPrepareResponse> fut = locTx.prepareAsyncLocal(req);
 
         if (locTx.isRollbackOnly())
             locTx.rollbackAsync();
@@ -456,13 +452,8 @@ public class IgniteTxHandler {
                 tx.needReturnValue(true);
 
             IgniteInternalFuture<GridNearTxPrepareResponse> fut = tx.prepareAsync(
-                req.reads(),
-                req.writes(),
-                req.dhtVersions(),
-                req.messageId(),
-                req.miniId(),
-                req.transactionNodes(),
-                req.last());
+                req,
+                req.miniId());
 
             if (tx.isRollbackOnly() && !tx.commitOnPrepare()) {
                 try {
@@ -756,8 +747,11 @@ public class IgniteTxHandler {
         else
             tx = ctx.tm().tx(dhtVer);
 
-        if (tx != null)
+        if (tx != null) {
+            tx.mvccCoordinatorCounter(req.mvccCoordinatorCounter());
+
             req.txState(tx.txState());
+        }
 
         if (tx == null && locTx != null && !req.commit()) {
             U.warn(log, "DHT local tx not found for near local tx rollback " +
@@ -865,7 +859,7 @@ public class IgniteTxHandler {
 
             U.error(log, "Failed completing transaction [commit=" + req.commit() + ", tx=" + tx + ']', e);
 
-            IgniteInternalFuture<IgniteInternalTx> res = null;
+            IgniteInternalFuture<IgniteInternalTx> res;
 
             IgniteInternalFuture<IgniteInternalTx> rollbackFut = tx.rollbackAsync();
 

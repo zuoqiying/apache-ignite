@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.cache.mvcc;
 
 import java.nio.ByteBuffer;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
@@ -33,6 +34,9 @@ public class CoordinatorCounterRequest implements Message {
     /** */
     private long futId;
 
+    /** */
+    private GridCacheVersion txId;
+
     /**
      *
      */
@@ -42,9 +46,13 @@ public class CoordinatorCounterRequest implements Message {
 
     /**
      * @param futId Future ID.
+     * @param txId Transaction ID.
      */
-    public CoordinatorCounterRequest(long futId) {
+    public CoordinatorCounterRequest(long futId, GridCacheVersion txId) {
+        assert txId != null;
+
         this.futId = futId;
+        this.txId = txId;
     }
 
     /**
@@ -52,6 +60,13 @@ public class CoordinatorCounterRequest implements Message {
      */
     public long futureId() {
         return futId;
+    }
+
+    /**
+     * @return Transaction ID.
+     */
+    public GridCacheVersion txId() {
+        return txId;
     }
 
     /** {@inheritDoc} */
@@ -68,6 +83,12 @@ public class CoordinatorCounterRequest implements Message {
         switch (writer.state()) {
             case 0:
                 if (!writer.writeLong("futId", futId))
+                    return false;
+
+                writer.incrementState();
+
+            case 1:
+                if (!writer.writeMessage("txId", txId))
                     return false;
 
                 writer.incrementState();
@@ -93,6 +114,14 @@ public class CoordinatorCounterRequest implements Message {
 
                 reader.incrementState();
 
+            case 1:
+                txId = reader.readMessage("txId");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
         }
 
         return reader.afterMessageRead(CoordinatorCounterRequest.class);
@@ -105,7 +134,7 @@ public class CoordinatorCounterRequest implements Message {
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 1;
+        return 2;
     }
 
     /** {@inheritDoc} */
