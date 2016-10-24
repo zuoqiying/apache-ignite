@@ -158,6 +158,23 @@ const PREDEFINED_QUERIES = [
     }
 ];
 
+// Var name generator function.
+const beenNameSeed = () => {
+    let idx = '';
+    const names = [];
+
+    return (bean) => {
+        let name;
+
+        while (_.includes(names, name = `${bean.id}${idx ? '_' + idx : idx}`))
+            idx++;
+
+        names.push(name);
+
+        return name;
+    };
+};
+
 export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
@@ -402,26 +419,22 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 // Construct objects inline for preview or simple objects.
                 const mapper = this.METHOD_MAPPING[type];
 
-                if (!limitLines || _.isNil(mapper)) {
-                    _.forEach(items, (item, idx) => {
-                        if (!item.isComplex())
-                            return;
+                const nextId = mapper ? mapper.id : beenNameSeed();
 
-                        const id = mapper ? mapper.id(item) : item.id + idx;
+                // Prepare objects refs.
+                return _.map(items, (item) => {
+                    if (limitLines && mapper)
+                        return mapper.id(item) + (limitLines ? `(${mapper.args})` : '');
+
+                    if (item.isComplex()) {
+                        const id = nextId(item);
 
                         this.constructBean(sb, item, vars, limitLines, id);
 
                         sb.emptyLine();
-                    });
-                }
 
-                // Prepare objects refs.
-                return _.map(items, (item, idx) => {
-                    if (mapper)
-                        return mapper.id(item) + (limitLines ? `(${mapper.args})` : '');
-
-                    if (item.isComplex())
-                        return item.id + idx;
+                        return id;
+                    }
 
                     return this._newBean(item);
                 });

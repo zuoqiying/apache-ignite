@@ -108,11 +108,19 @@ export default [
             ]
         };
 
+        const clnCfg = { type: 'file', name: 'client.xml' };
+        const srvCfg = { type: 'file', name: 'server.xml' };
+
         const resourcesFolder = {
             type: 'folder',
             name: 'resources',
             children: [
-                { type: 'file', name: 'secret.properties' }
+                { type: 'file', name: 'secret.properties' },
+                {
+                    type: 'folder',
+                    name: 'META-INF',
+                    children: [clnCfg, srvCfg]
+                }
             ]
         };
 
@@ -131,10 +139,6 @@ export default [
             ]
         };
 
-        const clnCfg = { type: 'file', name: 'client.xml' };
-
-        const srvCfg = { type: 'file', name: 'server.xml' };
-
         const mainFolder = {
             type: 'folder',
             name: 'main',
@@ -145,11 +149,6 @@ export default [
             type: 'folder',
             name: 'project.zip',
             children: [
-                {
-                    type: 'folder',
-                    name: 'config',
-                    children: [clnCfg, srvCfg]
-                },
                 {
                     type: 'folder',
                     name: 'jdbc-drivers',
