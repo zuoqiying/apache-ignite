@@ -439,7 +439,7 @@ export default class AbstractTransformer {
             return false;
         };
 
-        return !!_.find(bean.arguments, searchProps) || !!_.find(bean.properties, searchProps);
+        return _.isObject(bean) && (!!_.find(bean.arguments, searchProps) || !!_.find(bean.properties, searchProps));
     }
 
     /**

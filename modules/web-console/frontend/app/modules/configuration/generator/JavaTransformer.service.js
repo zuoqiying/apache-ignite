@@ -398,41 +398,36 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         }
 
         static _constructBeans(sb, type, items, vars, limitLines) {
-            // Construct objects inline for preview or simple objects.
-            const mapper = this.METHOD_MAPPING[type];
+            if (this._isBean(type)) {
+                // Construct objects inline for preview or simple objects.
+                const mapper = this.METHOD_MAPPING[type];
 
-            if (!limitLines || !mapper) {
-                _.forEach(items, (item) => {
-                    if (!item.isComplex())
-                        return;
+                if (!limitLines || _.isNil(mapper)) {
+                    _.forEach(items, (item, idx) => {
+                        if (!item.isComplex())
+                            return;
 
-                    const id = mapper ? mapper.id(item) : item.id;
+                        const id = mapper ? mapper.id(item) : item.id + idx;
 
-                    this.constructBean(sb, item, vars, limitLines, id);
+                        this.constructBean(sb, item, vars, limitLines, id);
 
-                    sb.emptyLine();
+                        sb.emptyLine();
+                    });
+                }
 
-                    this._setProperties(sb, item, vars, limitLines, id);
+                // Prepare objects refs.
+                return _.map(items, (item, idx) => {
+                    if (mapper)
+                        return mapper.id(item) + (limitLines ? `(${mapper.args})` : '');
 
-                    sb.emptyLine();
+                    if (item.isComplex())
+                        return item.id + idx;
+
+                    return this._newBean(item);
                 });
             }
 
-            const nonBean = !this._isBean(type);
-
-            // Prepare objects refs.
-            return _.map(items, (item) => {
-                if (nonBean)
-                    return this._toObject(type, item);
-
-                if (mapper)
-                    return mapper.id(item) + (limitLines ? `(${mapper.args})` : '');
-
-                if (item.isComplex())
-                    return item.id;
-
-                return this._newBean(item);
-            });
+            return this._toObject(type, items);
         }
 
         /**
