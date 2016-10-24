@@ -156,7 +156,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             _.forEach(bean.properties, (prop, idx) => {
                 switch (prop.clsName) {
                     case 'DATA_SOURCE':
-                        sb.append(`<property name="${prop.name}" ref="${prop.id}"/>`);
+                        sb.append(`<property name="${prop.name}" value="${prop.id}"/>`);
 
                         break;
                     case 'EVENT_TYPES':

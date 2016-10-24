@@ -51,7 +51,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         static igniteConfiguration(cluster, client) {
             const cfg = this.igniteConfigurationBean(cluster);
 
-            this.clusterGeneral(cluster, cfg);
+            this.clusterGeneral(cluster, cfg, client);
             this.clusterAtomics(cluster.atomicConfiguration, cfg);
             this.clusterBinary(cluster.binaryConfiguration, cfg);
             this.clusterCacheKeyConfiguration(cluster.cacheKeyConfiguration, cfg);
@@ -138,7 +138,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         }
 
         // Generate general section.
-        static clusterGeneral(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+        static clusterGeneral(cluster, cfg = this.igniteConfigurationBean(cluster), client = false) {
+            if (client)
+                cfg.prop('boolean', 'clientMode', true);
+
             cfg.stringProperty('name', 'gridName')
                 .stringProperty('localHost');
 

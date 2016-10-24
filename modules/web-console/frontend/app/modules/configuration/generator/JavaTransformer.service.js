@@ -127,7 +127,7 @@ const PREDEFINED_QUERIES = [
             {name: 'DEMO_MAX_DEPARTMENT_CNT', val: 5, comment: 'How many departments to generate.'}
         ],
         customGeneration(sb, conVar, stmtVar) {
-            sb.append(`${stmtVar} = ${conVar}.prepareStatement("INSERT INTO EMPLOYEE(ID, DEPARTMENT_ID, MANAGER_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB, SALARY) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")`);
+            sb.append(`${stmtVar} = ${conVar}.prepareStatement("INSERT INTO EMPLOYEE(ID, DEPARTMENT_ID, MANAGER_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB, SALARY) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");`);
 
             sb.emptyLine();
 
@@ -340,7 +340,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
             const storeFactory = _.cloneDeep(bean);
 
-            _.remove(storeFactory.properties, (p) => _.includes(['dataSourceBean', 'dialect'], p.name));
+            _.remove(storeFactory.properties, (p) => _.includes(['dataSourceBean'], p.name));
 
             if (storeFactory.properties.length) {
                 sb.emptyLine();

@@ -173,6 +173,10 @@ export class Bean extends EmptyBean {
         });
     }
 
+    prop(clsName, name, value) {
+        this.properties.push({clsName, name, value});
+    }
+
     boolProperty(model, name = model) {
         return this._property(this.properties, 'boolean', model, name, _.nonNil);
     }
