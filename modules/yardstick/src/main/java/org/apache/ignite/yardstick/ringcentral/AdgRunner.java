@@ -56,7 +56,7 @@ public class AdgRunner {
         "max(concat(firstName,' ',lastName)), " +
         "min(phoneNumber), " +
         "max(extensionNumber) " +
-        "from \"AdgEntry\".ADGENTITY " +
+        "from ADGENTITY " +
         "where accountId = ? " +
         "and extensionType in (?,?) " +
         "and extensionStatus in (?,?) " +
@@ -64,15 +64,15 @@ public class AdgRunner {
         "and ((lcase(concat(firstName,' ',lastName)) like '%john%') " +
         "OR (lcase(phoneNumber) like '%john%') " +
         "OR (lcase(extensionNumber) like '%john%')) " +
-        "group by extensionId  order by 2 asc, 3 desc, 4 asc, 5 desc limit 100 offset 0";
+        "group by extensionId order by 2 asc, 3 desc, 4 asc, 5 desc limit 100 offset 0";
 
     /** */
-    private static String QRY_SECOND = "select _val FROM \"AdgEntry\".ADGENTITY " +
+    private static String QRY_SECOND = "select _val FROM ADGENTITY " +
         "join table(temp_extensionId VARCHAR = ?) i " +
         "on (extensionId = i.temp_extensionId and deleteTime > ?)";
 
     /** */
-    private static String QRY_THIRD = "select count(distinct extensionId) from \"AdgEntry\".ADGENTITY " +
+    private static String QRY_THIRD = "select count(distinct extensionId) from ADGENTITY " +
         "where accountId = ? " +
         "and extensionType in (?,?) " +
         "and extensionStatus in (?,?) " +
@@ -92,6 +92,8 @@ public class AdgRunner {
 
             loadData(ignite, cache);
 
+            System.out.println("Loaded data.");
+
             for (int i = 0; i < REPEAT_CNT; i++) {
                 long start = System.nanoTime();
 
@@ -104,14 +106,20 @@ public class AdgRunner {
                 for (List<?> next : cache.query(qry))
                     extIds.add((String)next.get(0));
 
+                System.out.println("Finished first: " + extIds.size());
+
                 if (!extIds.isEmpty()) {
                     qry = new SqlFieldsQuery(QRY_SECOND).setArgs(extIds.toArray(), System.currentTimeMillis());
 
                     consumeResult(cache.query(qry));
 
+                    System.out.println("Finished second.");
+
                     qry = new SqlFieldsQuery(QRY_THIRD).setArgs((Object[])argumentForQuery());
 
                     consumeResult(cache.query(qry));
+
+                    System.out.println("Finished third.");
                 }
 
                 long dur = (System.nanoTime() - start) / 1_000_000;
@@ -164,63 +172,67 @@ public class AdgRunner {
             int key = 0;
 
             // Load big account.
-            for (AdgEntity e : loadFromFileBigAccount())
-                str.addData(e.getKey(++key), e);
+            AdgEntity[] entities = loadFromFileBigAccount();
 
-            // Load small accounts.
-            int accId = 0;
+            for (AdgEntity entity : entities)
+                str.addData(entity.getKey(++key), entity);
 
-            while (accId < SMALL_ACC_CNT && !Thread.currentThread().isInterrupted()) {
-                int extCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
-                int phoneCnt = ThreadLocalRandom.current().nextInt(1, 3); // [1, 2]
-                int devCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
+            System.out.println("Loaded big account.");
 
-                String accountId = AdgEntity.ACC_ID + accId;
-
-                for (int ext = 0; ext < extCnt; ext++) {
-                    String name = "John" + accId + "_" + ext;
-                    String lastName = "Doe" + accId + "_" + ext;
-                    String extId = key + "_" + accountId;
-                    String extType = generateExtType();
-                    String extStatus = generateExtStatus();
-
-                    for (int phone = 0; phone < phoneCnt; phone++) {
-                        String phoneNumberId = extId + "_" + phone;
-                        String phoneNumber = "+91" + extId + "_" + phone;
-
-                        for (int dev = 0; dev < devCnt; dev++) {
-                            AdgEntity e = new AdgEntity();
-
-                            e.setAccountId(accountId);
-                            e.setExtensionId(extId);
-                            e.setExtensionType(extType);
-                            e.setExtensionStatus(extStatus);
-                            e.setFirstName(name);
-                            e.setLastName(lastName);
-
-                            e.setPhoneNumber(phoneNumber);
-                            e.setPhoneNumber(phoneNumberId);
-
-                            if (ThreadLocalRandom.current().nextBoolean()) {
-                                e.setDeviceId(extId + "_" + dev);
-                                e.setDeviceType("OtherPhone");
-                                e.setDeviceName("Assigned Other Phone");
-                            }
-                            else if (!ThreadLocalRandom.current().nextBoolean()) {
-                                e.setDeviceId(extId + "_" + dev);
-                                e.setDeviceType("HardPhone");
-                                e.setDeviceName("IP Phone");
-                            }
-
-                            str.addData(e.getKey(key), e);
-
-                            ++key;
-                        }
-                    }
-                }
-
-                ++accId;
-            }
+//            // Load small accounts.
+//            int accId = 0;
+//
+//            while (accId < SMALL_ACC_CNT && !Thread.currentThread().isInterrupted()) {
+//                int extCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
+//                int phoneCnt = ThreadLocalRandom.current().nextInt(1, 3); // [1, 2]
+//                int devCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
+//
+//                String accountId = AdgEntity.ACC_ID + accId;
+//
+//                for (int ext = 0; ext < extCnt; ext++) {
+//                    String name = "John" + accId + "_" + ext;
+//                    String lastName = "Doe" + accId + "_" + ext;
+//                    String extId = key + "_" + accountId;
+//                    String extType = generateExtType();
+//                    String extStatus = generateExtStatus();
+//
+//                    for (int phone = 0; phone < phoneCnt; phone++) {
+//                        String phoneNumberId = extId + "_" + phone;
+//                        String phoneNumber = "+91" + extId + "_" + phone;
+//
+//                        for (int dev = 0; dev < devCnt; dev++) {
+//                            AdgEntity e = new AdgEntity();
+//
+//                            e.setAccountId(accountId);
+//                            e.setExtensionId(extId);
+//                            e.setExtensionType(extType);
+//                            e.setExtensionStatus(extStatus);
+//                            e.setFirstName(name);
+//                            e.setLastName(lastName);
+//
+//                            e.setPhoneNumber(phoneNumber);
+//                            e.setPhoneNumber(phoneNumberId);
+//
+//                            if (ThreadLocalRandom.current().nextBoolean()) {
+//                                e.setDeviceId(extId + "_" + dev);
+//                                e.setDeviceType("OtherPhone");
+//                                e.setDeviceName("Assigned Other Phone");
+//                            }
+//                            else if (!ThreadLocalRandom.current().nextBoolean()) {
+//                                e.setDeviceId(extId + "_" + dev);
+//                                e.setDeviceType("HardPhone");
+//                                e.setDeviceName("IP Phone");
+//                            }
+//
+//                            str.addData(e.getKey(key), e);
+//
+//                            ++key;
+//                        }
+//                    }
+//                }
+//
+//                ++accId;
+//            }
         }
     }
 
@@ -262,12 +274,17 @@ public class AdgRunner {
      */
     @SuppressWarnings("ConstantConditions")
     private static AdgEntity[] loadFromFileBigAccount() throws Exception {
-        Gson gson = new Gson();
+        try {
+            Gson gson = new Gson();
 
-        FileReader rd = new FileReader(Thread.currentThread().getContextClassLoader()
-            .getResource("extension_lookup_entry.txt").getFile());
+            FileReader rd = new FileReader(Thread.currentThread().getContextClassLoader()
+                .getResource("extension_lookup_entry.txt").getFile());
 
-        return gson.fromJson(rd, AdgEntity[].class);
+            return gson.fromJson(rd, AdgEntity[].class);
+        }
+        finally {
+            System.out.println("Parsed big account.");
+        }
     }
 
     /**
@@ -301,7 +318,7 @@ public class AdgRunner {
         CacheConfiguration ccfg = new CacheConfiguration();
 
         ccfg.setName(CACHE_NAME);
-        ccfg.setIndexedTypes(AdgAffinityKey.class, AdgAffinityKeyMapper.class);
+        ccfg.setIndexedTypes(AdgAffinityKey.class, AdgEntity.class);
         ccfg.setAffinityMapper(new AdgAffinityKeyMapper());
 
         cfg.setCacheConfiguration(ccfg);
