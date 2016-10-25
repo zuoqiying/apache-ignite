@@ -122,6 +122,12 @@ export class Bean extends EmptyBean {
         return this;
     }
 
+    propertyConstructorArgument(value, hint) {
+        this.arguments.push({clsName: 'PROPERTY', value, hint});
+
+        return this;
+    }
+
     /**
      * @param {String} id
      * @param {EmptyBean|Bean|MethodBean} value
