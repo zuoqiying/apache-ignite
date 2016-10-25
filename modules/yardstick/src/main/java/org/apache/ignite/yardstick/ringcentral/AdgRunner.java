@@ -60,7 +60,7 @@ public class AdgRunner {
         "where accountId = ? " +
         "and extensionType in (?,?) " +
         "and extensionStatus in (?,?) " +
-        "and deleteTime > ? " +
+        "and deleteTime > ?" +
         "and ((lcase(concat(firstName,' ',lastName)) like '%john%') " +
         "OR (lcase(phoneNumber) like '%john%') " +
         "OR (lcase(extensionNumber) like '%john%')) " +
@@ -104,7 +104,7 @@ public class AdgRunner {
                 Set<String> extIds = new HashSet<>();
 
                 for (List<?> next : cache.query(qry))
-                    extIds.add((String)next.get(0));
+                    extIds.add((String) next.get(0));
 
                 System.out.println("Finished first: " + extIds.size());
 
@@ -124,7 +124,7 @@ public class AdgRunner {
 
                 long dur = (System.nanoTime() - start) / 1_000_000;
 
-                System.out.println("Run=" + i + ", dur=" + dur + ']');
+                System.out.println("[Run=" + i + ", dur=" + dur + ']');
             }
         }
         finally {
@@ -179,60 +179,65 @@ public class AdgRunner {
 
             System.out.println("Loaded big account.");
 
-//            // Load small accounts.
-//            int accId = 0;
-//
-//            while (accId < SMALL_ACC_CNT && !Thread.currentThread().isInterrupted()) {
-//                int extCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
-//                int phoneCnt = ThreadLocalRandom.current().nextInt(1, 3); // [1, 2]
-//                int devCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
-//
-//                String accountId = AdgEntity.ACC_ID + accId;
-//
-//                for (int ext = 0; ext < extCnt; ext++) {
-//                    String name = "John" + accId + "_" + ext;
-//                    String lastName = "Doe" + accId + "_" + ext;
-//                    String extId = key + "_" + accountId;
-//                    String extType = generateExtType();
-//                    String extStatus = generateExtStatus();
-//
-//                    for (int phone = 0; phone < phoneCnt; phone++) {
-//                        String phoneNumberId = extId + "_" + phone;
-//                        String phoneNumber = "+91" + extId + "_" + phone;
-//
-//                        for (int dev = 0; dev < devCnt; dev++) {
-//                            AdgEntity e = new AdgEntity();
-//
-//                            e.setAccountId(accountId);
-//                            e.setExtensionId(extId);
-//                            e.setExtensionType(extType);
-//                            e.setExtensionStatus(extStatus);
-//                            e.setFirstName(name);
-//                            e.setLastName(lastName);
-//
-//                            e.setPhoneNumber(phoneNumber);
-//                            e.setPhoneNumber(phoneNumberId);
-//
-//                            if (ThreadLocalRandom.current().nextBoolean()) {
-//                                e.setDeviceId(extId + "_" + dev);
-//                                e.setDeviceType("OtherPhone");
-//                                e.setDeviceName("Assigned Other Phone");
-//                            }
-//                            else if (!ThreadLocalRandom.current().nextBoolean()) {
-//                                e.setDeviceId(extId + "_" + dev);
-//                                e.setDeviceType("HardPhone");
-//                                e.setDeviceName("IP Phone");
-//                            }
-//
-//                            str.addData(e.getKey(key), e);
-//
-//                            ++key;
-//                        }
-//                    }
-//                }
-//
-//                ++accId;
-//            }
+            // Load small accounts.
+            int accId = 0;
+
+            while (accId < SMALL_ACC_CNT && !Thread.currentThread().isInterrupted()) {
+                int extCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
+                int phoneCnt = ThreadLocalRandom.current().nextInt(1, 3); // [1, 2]
+                int devCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
+
+                String accountId = AdgEntity.ACC_ID + accId;
+
+                for (int ext = 0; ext < extCnt; ext++) {
+                    String name = "John" + accId + "_" + ext;
+                    String lastName = "Doe" + accId + "_" + ext;
+                    String extId = key + "_" + accountId;
+                    String extType = generateExtType();
+                    String extStatus = generateExtStatus();
+
+                    for (int phone = 0; phone < phoneCnt; phone++) {
+                        String phoneNumberId = extId + "_" + phone;
+                        String phoneNumber = "+91" + extId + "_" + phone;
+
+                        for (int dev = 0; dev < devCnt; dev++) {
+                            AdgEntity e = new AdgEntity();
+
+                            e.setAccountId(accountId);
+                            e.setExtensionId(extId);
+                            e.setExtensionType(extType);
+                            e.setExtensionStatus(extStatus);
+                            e.setFirstName(name);
+                            e.setLastName(lastName);
+
+                            e.setPhoneNumber(phoneNumber);
+                            e.setPhoneNumber(phoneNumberId);
+
+                            if (ThreadLocalRandom.current().nextBoolean()) {
+                                e.setDeviceId(extId + "_" + dev);
+                                e.setDeviceType("OtherPhone");
+                                e.setDeviceName("Assigned Other Phone");
+                            }
+                            else if (!ThreadLocalRandom.current().nextBoolean()) {
+                                e.setDeviceId(extId + "_" + dev);
+                                e.setDeviceType("HardPhone");
+                                e.setDeviceName("IP Phone");
+                            }
+
+                            str.addData(e.getKey(key), e);
+
+                            ++key;
+                        }
+                    }
+                }
+
+                ++accId;
+
+                if (accId % 10_000 == 0)
+                    System.out.println("Loading small accounts: " + accId);
+            }
+
+            System.out.println("Loaded small accounts.");
         }
     }
 
@@ -298,7 +303,7 @@ public class AdgRunner {
         for (; i < NODE_CNT; i++)
             Ignition.start(config(i, false));
 
-        return Ignition.start(config(i + 1, true));
+        return Ignition.start(config(i, true));
     }
 
     /**
