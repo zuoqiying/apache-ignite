@@ -194,6 +194,27 @@
                 </bean>
 
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
+                    <property name="name" value="AdgEntry"/>
+
+                    <property name="cacheMode" value="PARTITIONED"/>
+
+                    <property name="atomicityMode" value="ATOMIC"/>
+
+                    <property name="swapEnabled" value="false"/>
+
+                    <property name="indexedTypes">
+                        <list>
+                            <value>org.apache.ignite.yardstick.ringcentral.AdgAffinityKey</value>
+                            <value>org.apache.ignite.yardstick.ringcentral.AdgEntity</value>
+                        </list>
+                    </property>
+
+                    <property name="affinityMapper">
+                        <bean class="org.apache.ignite.yardstick.ringcentral.AdgAffinityKeyMapper"/>
+                    </property>
+                </bean>
+
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="compute"/>
 
                     <property name="cacheMode" value="PARTITIONED"/>

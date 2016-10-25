@@ -19,7 +19,7 @@ package org.apache.ignite.yardstick.ringcentral;
 
 import com.google.gson.Gson;
 import java.io.FileReader;
-import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.yardstick.cache.IgniteCacheAbstractBenchmark;
@@ -28,43 +28,108 @@ import org.yardstickframework.BenchmarkConfiguration;
 /**
  *
  */
-public class IgniteAdgQueryAbstractBenchmark extends IgniteCacheAbstractBenchmark<String, Object> {
+abstract class IgniteAdgQueryAbstractBenchmark extends IgniteCacheAbstractBenchmark<String, Object> {
     /** {@inheritDoc} */
     @Override public void setUp(BenchmarkConfiguration cfg) throws Exception {
+        super.setUp(cfg);
+
         try (IgniteDataStreamer<Object, Object> str = ignite().dataStreamer(cache.getName())) {
             int key = 0;
-            String accountId = "accId";
 
+            // Loading one big account.
             for (AdgEntity e : loadFromFileBigAccount())
                 str.addData(e.getKey(++key), e);
 
-            while (key < args.range() && !Thread.currentThread().isInterrupted()) {
-                int key0 = key;
+            int accId = 0;
 
-                AdgEntity e = new AdgEntity();
+            // Loading many small accounts.
+            while (accId < args.range() && !Thread.currentThread().isInterrupted()) {
+                int extCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
+                int phoneCnt = ThreadLocalRandom.current().nextInt(1, 3); // [1, 2]
+                int devCnt = ThreadLocalRandom.current().nextInt(1, 4); // [1, 3]
 
-                e.setAccountId(accountId + key0);
-                e.setExtensionId(key + "_" + accountId + key0);
-                e.setFirstName("John" + key0);
-                e.setLastName("Doe" + key0);
+                String accountId = AdgEntity.ACC_ID + accId;
 
-                ++key;
+                for (int ext = 0; ext < extCnt; ext++) {
+                    String name = "John" + accId + "_" + ext;
+                    String lastName = "Doe" + accId + "_" + ext;
+                    String extId = key + "_" + accountId;
+                    String extType = generateExtType();
+                    String extStatus = generateExtStatus();
 
-                str.addData(e.getKey(key0), e);
+                    for (int phone = 0; phone < phoneCnt; phone++) {
+                        String phoneNumberId = extId + "_" + phone;
+                        String phoneNumber = "+91" + extId + "_" + phone;
+
+                        for (int dev = 0; dev < devCnt; dev++) {
+                            AdgEntity e = new AdgEntity();
+
+                            e.setAccountId(accountId);
+                            e.setExtensionId(extId);
+                            e.setExtensionType(extType);
+                            e.setExtensionStatus(extStatus);
+                            e.setFirstName(name);
+                            e.setLastName(lastName);
+
+                            e.setPhoneNumber(phoneNumber);
+                            e.setPhoneNumber(phoneNumberId);
+
+                            if (ThreadLocalRandom.current().nextBoolean()) {
+                                e.setDeviceId(extId + "_" + dev);
+                                e.setDeviceType("OtherPhone");
+                                e.setDeviceName("Assigned Other Phone");
+                            }
+                            else if (!ThreadLocalRandom.current().nextBoolean()) {
+                                e.setDeviceId(extId + "_" + dev);
+                                e.setDeviceType("HardPhone");
+                                e.setDeviceName("IP Phone");
+                            }
+
+                            str.addData(e.getKey(key), e);
+
+                            ++key;
+                        }
+                    }
+                }
+
+                ++accId;
             }
         }
-
-        super.setUp(cfg);
     }
 
-    /** {@inheritDoc} */
-    @Override public boolean test(Map<Object, Object> ctx) throws Exception {
-        return false;
+    /**
+     * @return Ext type.
+     */
+    private String generateExtType() {
+        double rnd = ThreadLocalRandom.current().nextDouble();
+
+        if (rnd < 0.25)
+            return AdgEntity.ExtensionType.User.toString();
+        else if (rnd < 0.5)
+            return AdgEntity.ExtensionType.DigitalUser.toString();
+        else if (rnd < 0.75)
+            return AdgEntity.ExtensionType.VirtualUser.toString();
+        else
+            return AdgEntity.ExtensionType.SharedLinesGroup.toString();
+    }
+
+    /**
+     * @return Ext status.
+     */
+    private String generateExtStatus() {
+        double rnd = ThreadLocalRandom.current().nextDouble();
+
+        if (rnd < 0.5)
+            return AdgEntity.ExtensionState.Enabled.toString();
+        else if (rnd < 0.75)
+            return AdgEntity.ExtensionState.Disabled.toString();
+        else
+            return AdgEntity.ExtensionState.Unassigned.toString();
     }
 
     /** {@inheritDoc} */
     @Override protected IgniteCache<String, Object> cache() {
-        return ignite().cache("adgCache");
+        return ignite().cache("AdgEntry");
     }
 
     private AdgEntity[] loadFromFileBigAccount() throws Exception {
@@ -73,6 +138,8 @@ public class IgniteAdgQueryAbstractBenchmark extends IgniteCacheAbstractBenchmar
         FileReader rd = new FileReader(Thread.currentThread().getContextClassLoader()
             .getResource("extension_lookup_entry.txt").getFile());
 
-        return gson.fromJson(rd, AdgEntity[].class);
+        AdgEntity[] entities = gson.fromJson(rd, AdgEntity[].class);
+
+        return entities;
     }
 }

@@ -17,12 +17,16 @@
 
 package org.apache.ignite.yardstick.ringcentral;
 
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 /**
  *
  */
 public class AdgEntity {
+    /** */
+    public static final String ACC_ID = "accId_";
+
     @QuerySqlField(index = true, orderedGroups = {
         @QuerySqlField.Group(name = "extensionAccount", order = 0)})
     private String extensionId;
@@ -303,6 +307,60 @@ public class AdgEntity {
 
         ExtensionType(int value) {
             this.value = value;
+        }
+
+        public static String randomValue() {
+            int rnd = ThreadLocalRandom.current().nextInt(0, 4);
+
+            switch (rnd) {
+                case 0:
+                    return SharedLinesGroup.toString();
+
+                case 1:
+                    return DigitalUser.toString();
+
+                case 2:
+                    return VirtualUser.toString();
+
+                case 3:
+                    return User.toString();
+
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
+    }
+
+    public enum ExtensionState {
+        Enabled(0),
+        Disabled(1),
+        Frozen(2),
+        NotActivated(3),
+        Unassigned(4),
+        Unknown(Integer.MAX_VALUE);
+
+        private final int value;
+
+        ExtensionState(int value) {
+            this.value = value;
+        }
+
+        public static String randomValue() {
+            int rnd = ThreadLocalRandom.current().nextInt(0, 3);
+
+            switch (rnd) {
+                case 0:
+                    return Enabled.toString();
+
+                case 1:
+                    return Disabled.toString();
+
+                case 2:
+                    return Unassigned.toString();
+
+                default:
+                    throw new IllegalArgumentException();
+            }
         }
     }
 }

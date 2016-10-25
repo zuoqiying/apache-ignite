@@ -50,3 +50,19 @@ public class AdgAffinityKey {
         return extId;
     }
 }
+
+
+//    select extensionId,
+//    min(extensionStatus),
+//    max(concat(firstName,' ',lastName)),
+//    min(phoneNumber),
+//    max(extensionNumber),
+//    from \"AdgEntry\".ADGENTITY
+//    where accountId = ?
+//    and extensionType in (?,?)
+//    and extensionStatus in (?,?)
+//    and deleteTime > ?
+//    and ((lcase(concat(firstName,' ',lastName)) like '%john%')
+//    OR (lcase(phoneNumber) like '%john%')
+//    OR (lcase(extensionNumber) like '%john%'))
+//    group by extensionId  order by 2 asc, 3 desc, 4 asc, 5 desc limit 100 offset 0
