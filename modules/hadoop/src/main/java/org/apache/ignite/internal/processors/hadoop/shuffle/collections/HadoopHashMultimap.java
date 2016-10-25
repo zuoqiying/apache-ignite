@@ -132,7 +132,7 @@ public class HadoopHashMultimap extends HadoopHashMultimapBase {
         }
 
         /** {@inheritDoc} */
-        @Override public void write(Object key, Object val) throws IgniteCheckedException {
+        @Override public void writeImpl(Object key, Object val) throws IgniteCheckedException {
             A.notNull(val, "val");
 
             int keyHash = U.hash(key.hashCode());

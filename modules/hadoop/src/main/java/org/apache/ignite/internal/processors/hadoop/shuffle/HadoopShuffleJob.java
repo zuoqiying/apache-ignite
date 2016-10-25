@@ -271,10 +271,11 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
 
     /**
      * Unsafe value.
+     * TODO: rename it to ByteValue since it is byte-based value, not unsafe.
      */
-    private static class UnsafeValue implements HadoopMultimap.Value {
+    public static class UnsafeValue implements HadoopMultimap.Value {
         /** */
-        private final byte[] buf;
+        private byte[] buf;
 
         /** */
         private int off;
@@ -282,10 +283,13 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
         /** */
         private int size;
 
+        public UnsafeValue() {
+        }
+
         /**
          * @param buf Buffer.
          */
-        private UnsafeValue(byte[] buf) {
+        UnsafeValue(byte[] buf) {
             assert buf != null;
 
             this.buf = buf;
@@ -294,6 +298,19 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
         /** */
         @Override public int size() {
             return size;
+        }
+
+        public void setOff(int off) {
+            this.off = off;
+        }
+
+        public void setSize(int size) {
+            this.size = size;
+        }
+
+        public void setBuf(byte[] buf) {
+            if (this.buf != buf)
+                this.buf = buf;
         }
 
         /** */

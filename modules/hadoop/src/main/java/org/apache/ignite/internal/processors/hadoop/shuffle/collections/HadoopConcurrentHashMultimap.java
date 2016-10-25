@@ -401,7 +401,7 @@ public class HadoopConcurrentHashMultimap extends HadoopHashMultimapBase {
         }
 
         /** {@inheritDoc} */
-        @Override public void write(Object key, Object val) throws IgniteCheckedException {
+        @Override public void writeImpl(Object key, Object val) throws IgniteCheckedException {
             A.notNull(val, "val");
 
             add(key, val);

@@ -28,6 +28,9 @@ public interface HadoopTaskOutput extends AutoCloseable {
      *
      * @param key Key.
      * @param val Value.
+     *
+     * @return {@code true} if it was possible to write the pair, and {@code false} otherwise,
+     * e.g. if the output is overflowed.
      */
     public boolean write(Object key, Object val) throws IgniteCheckedException;
 

@@ -222,9 +222,9 @@ public class HadoopShuffleMessage implements HadoopMessage {
     }
 
     /**
-     * Visitor.
+     * Interface Visitor to read a byte-array-like input to HadoopMultimap.
      */
-    static interface Visitor {
+    public static interface Visitor {
         /**
          * @param buf Buffer.
          * @param off Offset.

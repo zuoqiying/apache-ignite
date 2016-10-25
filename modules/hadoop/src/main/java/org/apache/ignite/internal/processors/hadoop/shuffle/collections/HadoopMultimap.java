@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public interface HadoopMultimap extends AutoCloseable {
     /**
      * Incrementally visits all the keys and values in the map.
+     * TODO: looks like 'ignoreLastVisited' is never true, so can we remove it?
      *
      * @param ignoreLastVisited Flag indicating that visiting must be started from the beginning.
      * @param v Visitor.

@@ -113,6 +113,10 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
             deallocate(page);
     }
 
+    public static abstract class Converter<X, Y> {
+        abstract Y convert(X x);
+    }
+
     /**
      * Reader for key and value.
      */
@@ -160,11 +164,13 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
         }
 
         /**
+         * Used to read both key and value.
+         *
          * @param ptr Pointer.
          * @param size Object size.
          * @return Object.
          */
-        protected Object read(long ptr, long size) throws IgniteCheckedException {
+        protected final Object read(long ptr, long size) throws IgniteCheckedException {
             in.buffer().set(ptr, size);
 
             tmp = ser.read(in, tmp);
