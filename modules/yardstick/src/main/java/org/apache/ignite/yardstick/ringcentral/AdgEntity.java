@@ -24,6 +24,7 @@ import org.apache.ignite.cache.query.annotations.QuerySqlField;
 /**
  *
  */
+@SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class AdgEntity implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;

@@ -44,7 +44,7 @@ public class AdgRunner {
     private static final int NODE_CNT = 1;
 
     /** Number of small accounts. */
-    private static final int SMALL_ACC_CNT = 200_000;
+    private static final int SMALL_ACC_CNT = 10_000;
 
     /** Cache name. */
     private static final String CACHE_NAME = "cache";
