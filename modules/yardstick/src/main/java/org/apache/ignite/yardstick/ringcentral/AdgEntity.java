@@ -38,11 +38,11 @@ public class AdgEntity implements Serializable {
 
     @QuerySqlField(index = true, orderedGroups = {
         @QuerySqlField.Group(name = "accountTypeStatus", order = 1)})
-    private String extensionType;
+    private int extensionType;
 
     @QuerySqlField(index = true, orderedGroups = {
         @QuerySqlField.Group(name = "accountTypeStatus", order = 2)})
-    private String extensionStatus;
+    private int extensionStatus;
 
     @QuerySqlField(index = true, orderedGroups = {
         @QuerySqlField.Group(name = "accountPin", order = 1)})
@@ -133,11 +133,11 @@ public class AdgEntity implements Serializable {
         this.extensionId = extensionId;
     }
 
-    public void setExtensionType(String extensionType) {
+    public void setExtensionType(int extensionType) {
         this.extensionType = extensionType;
     }
 
-    public void setExtensionStatus(String extensionStatus) {
+    public void setExtensionStatus(int extensionStatus) {
         this.extensionStatus = extensionStatus;
     }
 
@@ -314,21 +314,25 @@ public class AdgEntity implements Serializable {
             this.value = value;
         }
 
-        public static String randomValue() {
+        public int value() {
+            return value;
+        }
+
+        public static int randomValue() {
             int rnd = ThreadLocalRandom.current().nextInt(0, 4);
 
             switch (rnd) {
                 case 0:
-                    return SharedLinesGroup.toString();
+                    return SharedLinesGroup.value();
 
                 case 1:
-                    return DigitalUser.toString();
+                    return DigitalUser.value();
 
                 case 2:
-                    return VirtualUser.toString();
+                    return VirtualUser.value();
 
                 case 3:
-                    return User.toString();
+                    return User.value();
 
                 default:
                     throw new IllegalArgumentException();
@@ -350,18 +354,22 @@ public class AdgEntity implements Serializable {
             this.value = value;
         }
 
-        public static String randomValue() {
+        public int value() {
+            return value;
+        }
+
+        public static int randomValue() {
             int rnd = ThreadLocalRandom.current().nextInt(0, 3);
 
             switch (rnd) {
                 case 0:
-                    return Enabled.toString();
+                    return Enabled.value();
 
                 case 1:
-                    return Disabled.toString();
+                    return Disabled.value();
 
                 case 2:
-                    return Unassigned.toString();
+                    return Unassigned.value();
 
                 default:
                     throw new IllegalArgumentException();

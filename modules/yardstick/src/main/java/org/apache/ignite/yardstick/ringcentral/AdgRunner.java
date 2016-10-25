@@ -128,8 +128,8 @@ public class AdgRunner {
     /**
      * @return Argument for first query.
      */
-    private static String[] argumentForQuery() {
-        String[] res = new String[]{
+    private static Object[] argumentForQuery() {
+        Object[] res = new Object[]{
             "10k",
             AdgEntity.ExtensionType.randomValue(),
             AdgEntity.ExtensionType.randomValue(),
@@ -191,8 +191,8 @@ public class AdgRunner {
                     String name = "John" + accId + "_" + ext;
                     String lastName = "Doe" + accId + "_" + ext;
                     String extId = key + "_" + accountId;
-                    String extType = generateExtType();
-                    String extStatus = generateExtStatus();
+                    int extType = generateExtType();
+                    int extStatus = generateExtStatus();
 
                     for (int phone = 0; phone < phoneCnt; phone++) {
                         String phoneNumberId = extId + "_" + phone;
@@ -240,31 +240,31 @@ public class AdgRunner {
     /**
      * @return Ext type.
      */
-    private static String generateExtType() {
+    private static int generateExtType() {
         double rnd = ThreadLocalRandom.current().nextDouble();
 
         if (rnd < 0.25)
-            return AdgEntity.ExtensionType.User.toString();
+            return AdgEntity.ExtensionType.User.value();
         else if (rnd < 0.5)
-            return AdgEntity.ExtensionType.DigitalUser.toString();
+            return AdgEntity.ExtensionType.DigitalUser.value();
         else if (rnd < 0.75)
-            return AdgEntity.ExtensionType.VirtualUser.toString();
+            return AdgEntity.ExtensionType.VirtualUser.value();
         else
-            return AdgEntity.ExtensionType.SharedLinesGroup.toString();
+            return AdgEntity.ExtensionType.SharedLinesGroup.value();
     }
 
     /**
      * @return Ext status.
      */
-    private static String generateExtStatus() {
+    private static int generateExtStatus() {
         double rnd = ThreadLocalRandom.current().nextDouble();
 
         if (rnd < 0.5)
-            return AdgEntity.ExtensionState.Enabled.toString();
+            return AdgEntity.ExtensionState.Enabled.value();
         else if (rnd < 0.75)
-            return AdgEntity.ExtensionState.Disabled.toString();
+            return AdgEntity.ExtensionState.Disabled.value();
         else
-            return AdgEntity.ExtensionState.Unassigned.toString();
+            return AdgEntity.ExtensionState.Unassigned.value();
     }
 
     /**

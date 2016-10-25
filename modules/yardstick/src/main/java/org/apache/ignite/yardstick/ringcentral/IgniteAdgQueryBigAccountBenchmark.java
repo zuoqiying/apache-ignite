@@ -92,8 +92,8 @@ public class IgniteAdgQueryBigAccountBenchmark extends IgniteAdgQueryAbstractBen
     /**
      * @return Argument for first query.
      */
-    protected String[] argumentForQuery() {
-        return new String[]{
+    protected Object[] argumentForQuery() {
+        return new Object[]{
             "10k",
             AdgEntity.ExtensionType.randomValue(),
             AdgEntity.ExtensionType.randomValue(),

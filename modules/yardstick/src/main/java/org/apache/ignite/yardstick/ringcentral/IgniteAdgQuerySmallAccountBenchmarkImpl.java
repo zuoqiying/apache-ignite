@@ -23,8 +23,8 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  */
 public class IgniteAdgQuerySmallAccountBenchmarkImpl extends IgniteAdgQueryBigAccountBenchmark {
-    @Override protected String[] argumentForQuery() {
-        String[] strs = super.argumentForQuery();
+    @Override protected Object[] argumentForQuery() {
+        Object[] strs = super.argumentForQuery();
 
         strs[0] = AdgEntity.ACC_ID + ThreadLocalRandom.current().nextInt(0, args.range());
 
