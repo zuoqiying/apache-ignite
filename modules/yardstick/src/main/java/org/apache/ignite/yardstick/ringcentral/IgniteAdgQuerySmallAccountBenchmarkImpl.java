@@ -22,7 +22,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  *
  */
-public class IgniteAdgQuerySmallAccountBigAccountBenchmarkImpl extends IgniteAdgQueryBigAccountBenchmark {
+public class IgniteAdgQuerySmallAccountBenchmarkImpl extends IgniteAdgQueryBigAccountBenchmark {
     @Override protected String[] argumentForQuery() {
         String[] strs = super.argumentForQuery();
 
