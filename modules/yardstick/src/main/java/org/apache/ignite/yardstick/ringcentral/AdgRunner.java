@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Query runner.
@@ -44,11 +45,20 @@ public class AdgRunner {
     /** Number of small accounts. */
     private static final int SMALL_ACC_CNT = 200_000;
 
-    /** Repeat count. */
-    private static final long REPEAT_CNT = 1;
-
     /** Cache name. */
     private static final String CACHE_NAME = "cache";
+
+    /** Thread count. */
+    private static final int THREAD_CNT = 8;
+
+    /** Whether to use big account or not. */
+    private static final boolean USE_BIG = true;
+
+    /** Execution count. */
+    private static final AtomicLong CNT = new AtomicLong();
+
+    /** Verbose mode. */
+    private static final boolean VERBOSE = false;
 
     /** */
     private static String QRY_FIRST = "select extensionId, " +
@@ -85,58 +95,40 @@ public class AdgRunner {
      * Entry point.
      */
     public static void main(String[] args) throws Exception {
-        try {
-            Ignite ignite = start();
+        Ignite ignite = start();
 
-            IgniteCache<AdgAffinityKey, AdgEntity> cache = ignite.cache(CACHE_NAME);
+        IgniteCache<AdgAffinityKey, AdgEntity> cache = ignite.cache(CACHE_NAME);
 
-            loadData(ignite, cache);
+        loadData(ignite, cache);
 
-            System.out.println("Loaded data.");
+        System.out.println("Loaded data: " + cache.size());
 
-            for (int i = 0; i < REPEAT_CNT; i++) {
-                long start = System.nanoTime();
+        for (int i = 0; i < THREAD_CNT; i++)
+            startDaemon("qry-exec-" + i, new QueryExecutor(cache));
 
-                SqlFieldsQuery qry = new SqlFieldsQuery(QRY_FIRST);
+        startDaemon("printer", new ThroughputPrinter());
+    }
 
-                qry.setArgs((Object[])argumentForQuery());
+    /**
+     * Start daemon thread.
+     *
+     * @param name Name.
+     * @param r Runnable.
+     */
+    private static void startDaemon(String name, Runnable r) {
+        Thread t = new Thread(r);
 
-                Set<String> extIds = new HashSet<>();
+        t.setName(name);
+        t.setDaemon(true);
 
-                for (List<?> next : cache.query(qry))
-                    extIds.add((String) next.get(0));
-
-                System.out.println("Finished first: " + extIds.size());
-
-                if (!extIds.isEmpty()) {
-                    qry = new SqlFieldsQuery(QRY_SECOND).setArgs(extIds.toArray(), System.currentTimeMillis());
-
-                    consumeResult(cache.query(qry));
-
-                    System.out.println("Finished second.");
-
-                    qry = new SqlFieldsQuery(QRY_THIRD).setArgs((Object[])argumentForQuery());
-
-                    consumeResult(cache.query(qry));
-
-                    System.out.println("Finished third.");
-                }
-
-                long dur = (System.nanoTime() - start) / 1_000_000;
-
-                System.out.println("[Run=" + i + ", dur=" + dur + ']');
-            }
-        }
-        finally {
-            Ignition.stopAll(true);
-        }
+        t.start();
     }
 
     /**
      * @return Argument for first query.
      */
     private static String[] argumentForQuery() {
-        return new String[]{
+        String[] res = new String[]{
             "10k",
             AdgEntity.ExtensionType.randomValue(),
             AdgEntity.ExtensionType.randomValue(),
@@ -144,6 +136,11 @@ public class AdgRunner {
             AdgEntity.ExtensionState.randomValue(),
             String.valueOf(System.currentTimeMillis())
         };
+
+        if (!USE_BIG)
+            res[0] = AdgEntity.ACC_ID + ThreadLocalRandom.current().nextInt(0, SMALL_ACC_CNT);
+
+        return res;
     }
 
     /**
@@ -236,8 +233,6 @@ public class AdgRunner {
                 if (accId % 10_000 == 0)
                     System.out.println("Loading small accounts: " + accId);
             }
-
-            System.out.println("Loaded small accounts.");
         }
     }
 
@@ -331,5 +326,88 @@ public class AdgRunner {
         cfg.setLocalHost("127.0.0.1");
 
         return cfg;
+    }
+
+    /**
+     * Query runner.
+     */
+    private static class QueryExecutor implements Runnable {
+        /** Cache. */
+        private final IgniteCache<AdgAffinityKey, AdgEntity> cache;
+
+        /**
+         * Constructor.
+         *
+         * @param cache Cache.
+         */
+        public QueryExecutor(IgniteCache<AdgAffinityKey, AdgEntity> cache) {
+            this.cache = cache;
+        }
+
+        /** {@inheritDoc} */
+        @SuppressWarnings("InfiniteLoopStatement")
+        @Override public void run() {
+            System.out.println("Executor started: "+ Thread.currentThread().getName());
+
+            while (true) {
+                long start = System.nanoTime();
+
+                SqlFieldsQuery qry = new SqlFieldsQuery(QRY_FIRST);
+
+                qry.setArgs((Object[]) argumentForQuery());
+
+                Set<String> extIds = new HashSet<>();
+
+                for (List<?> next : cache.query(qry))
+                    extIds.add((String) next.get(0));
+
+                if (!extIds.isEmpty()) {
+                    qry = new SqlFieldsQuery(QRY_SECOND).setArgs(extIds.toArray(), System.currentTimeMillis());
+
+                    consumeResult(cache.query(qry));
+
+                    qry = new SqlFieldsQuery(QRY_THIRD).setArgs((Object[]) argumentForQuery());
+
+                    consumeResult(cache.query(qry));
+                }
+
+                long dur = (System.nanoTime() - start) / 1_000_000;
+
+                CNT.incrementAndGet();
+
+                if (VERBOSE)
+                    System.out.println("[extIds=" + extIds.size() + ", dur=" + dur + ']');
+            }
+        }
+    }
+
+    /**
+     * Throughput printer.
+     */
+    private static class ThroughputPrinter implements Runnable {
+        /** {@inheritDoc} */
+        @SuppressWarnings("InfiniteLoopStatement")
+        @Override public void run() {
+            while (true) {
+                long before = CNT.get();
+                long beforeTime = System.currentTimeMillis();
+
+                try {
+                    Thread.sleep(2000L);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+
+                    throw new RuntimeException(e);
+                }
+
+                long after = CNT.get();
+                long afterTime = System.currentTimeMillis();
+
+                double res = 1000 * ((double)(after - before)) / (afterTime - beforeTime);
+
+                System.out.println(res + " ops/sec");
+            }
+        }
     }
 }
