@@ -665,7 +665,7 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
             cctx.database().checkpointReadLock();
 
             try {
-                TxMvccVersion mvccVer = createMvccVersion(cctx);
+                TxMvccVersion mvccVer = createMvccVersion();
 
                 cctx.tm().txContext(this);
 

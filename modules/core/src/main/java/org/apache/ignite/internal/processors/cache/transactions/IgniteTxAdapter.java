@@ -1202,19 +1202,30 @@ public abstract class IgniteTxAdapter extends GridMetadataAwareAdapter implement
         return null;
     }
 
-    /**
-     * @param mvccCrdCntr Counter.
-     */
-    public void mvccCoordinatorCounter(long mvccCrdCntr) {
+    /** {@inheritDoc} */
+    public final void mvccCoordinatorCounter(long mvccCrdCntr) {
         this.mvccCrdCntr = mvccCrdCntr;
     }
 
     /**
-     * @param cctx Context.
+     * @return Coordinator counter.
+     */
+    public long mvccCoordinatorCounter() {
+        return mvccCrdCntr;
+    }
+
+    /**
+     * @return {@code True} if
+     */
+    protected boolean mvccCommit() {
+        return txState().mvccEnabled(cctx);
+    }
+
+    /**
      * @return Mvcc version.
      */
-    protected final TxMvccVersion createMvccVersion(GridCacheSharedContext cctx) {
-        assert !txState().mvccEnabled(cctx) || mvccCrdCntr != TxMvccVersion.COUNTER_NA;
+    protected final TxMvccVersion createMvccVersion() {
+        assert !mvccCommit() || mvccCrdCntr != TxMvccVersion.COUNTER_NA : mvccCrdCntr;
 
         if (mvccCrdCntr != TxMvccVersion.COUNTER_NA) {
             return new TxMvccVersion(topologyVersion().topologyVersion(),
@@ -2391,6 +2402,11 @@ public abstract class IgniteTxAdapter extends GridMetadataAwareAdapter implement
         /** {@inheritDoc} */
         @Override public TransactionProxy proxy() {
             return null;
+        }
+
+        /** {@inheritDoc} */
+        @Override public void mvccCoordinatorCounter(long mvccCrdCntr) {
+            // No-op.
         }
 
         /** {@inheritDoc} */

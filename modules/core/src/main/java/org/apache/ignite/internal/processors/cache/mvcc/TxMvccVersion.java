@@ -19,14 +19,14 @@ package org.apache.ignite.internal.processors.cache.mvcc;
 
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.typedef.internal.S;
-import org.apache.ignite.lang.IgniteUuid;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
-public class TxMvccVersion {
+public class TxMvccVersion implements Comparable<TxMvccVersion> {
     /** */
-    public static final long COUNTER_NA = Long.MIN_VALUE;
+    public static final long COUNTER_NA = 0L;
 
     /** */
     private final long topVer;
@@ -50,6 +50,16 @@ public class TxMvccVersion {
         this.topVer = topVer;
         this.cntr = cntr;
         this.txId = txId;
+    }
+
+    /** {@inheritDoc} */
+    @Override public int compareTo(@NotNull TxMvccVersion other) {
+        int cmp = Long.compare(topVer, other.topVer);
+
+        if (cmp != 0)
+            return cmp;
+
+        return Long.compare(cntr, other.cntr);
     }
 
     /**

@@ -1144,6 +1144,7 @@ public class IgniteTxHandler {
         try {
             if (req.commit() || req.isSystemInvalidate()) {
                 tx.commitVersion(req.commitVersion());
+                tx.mvccCoordinatorCounter(req.mvccCoordinatorCounter());
                 tx.invalidate(req.isInvalidate());
                 tx.systemInvalidate(req.isSystemInvalidate());
 
@@ -1193,6 +1194,7 @@ public class IgniteTxHandler {
 
         try {
             tx.commitVersion(req.writeVersion());
+            tx.mvccCoordinatorCounter(req.mvccCoordinatorCounter());
             tx.invalidate(req.isInvalidate());
 
             // Complete remote candidates.
@@ -1306,7 +1308,6 @@ public class IgniteTxHandler {
                     nodeId,
                     req.topologyVersion(),
                     req.version(),
-                    null,
                     req.system(),
                     req.policy(),
                     req.concurrency(),
@@ -1503,7 +1504,6 @@ public class IgniteTxHandler {
                     nodeId,
                     req.nearNodeId(),
                     req.version(),
-                    null,
                     req.system(),
                     req.policy(),
                     req.concurrency(),

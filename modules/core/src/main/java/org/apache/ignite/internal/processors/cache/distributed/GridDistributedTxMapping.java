@@ -69,6 +69,9 @@ public class GridDistributedTxMapping implements Externalizable {
     /** */
     private long mvccCrdCntr;
 
+    /** */
+    private ClusterNode crd;
+
     /**
      * Empty constructor required for {@link Externalizable}.
      */
@@ -83,6 +86,20 @@ public class GridDistributedTxMapping implements Externalizable {
         this.node = node;
 
         entries = new LinkedHashSet<>();
+    }
+
+    /**
+     * @return Coordinator.
+     */
+    public ClusterNode coordinator() {
+        return crd;
+    }
+
+    /**
+     * @param crd Coordinator.
+     */
+    public void coordinator(ClusterNode crd) {
+        this.crd = crd;
     }
 
     /**

@@ -702,4 +702,9 @@ public interface IgniteInternalTx extends AutoCloseable {
      * @param e Commit error.
      */
     public void commitError(Throwable e);
+
+    /**
+     * @param mvccCrdCntr Counter.
+     */
+    public void mvccCoordinatorCounter(long mvccCrdCntr);
 }

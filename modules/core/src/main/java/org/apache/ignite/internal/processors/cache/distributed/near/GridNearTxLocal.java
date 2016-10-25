@@ -203,6 +203,11 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
     }
 
     /** {@inheritDoc} */
+    @Override protected boolean mvccCommit() {
+        return super.mvccCommit() && colocatedLocallyMapped();
+    }
+
+    /** {@inheritDoc} */
     @Override public GridCacheVersion nearXidVersion() {
         return xidVer;
     }

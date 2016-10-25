@@ -33,6 +33,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheMvccCandidate;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTxMapping;
+import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
 import org.apache.ignite.internal.transactions.IgniteTxRollbackCheckedException;
@@ -44,6 +45,7 @@ import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +57,9 @@ import static org.apache.ignite.transactions.TransactionState.PREPARING;
  *
  */
 public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureAdapter {
+    /** */
+    private final Map<ClusterNode, Long> crdCntrs;
+
     /**
      * @param cctx Context.
      * @param tx Transaction.
@@ -63,6 +68,8 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
         super(cctx, tx);
 
         assert tx.pessimistic() : tx;
+
+        crdCntrs = tx.txState().mvccEnabled(cctx) ? new HashMap<ClusterNode, Long>() : null;
     }
 
     /** {@inheritDoc} */
@@ -135,13 +142,17 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
         synchronized (sync) {
             // Avoid iterator creation.
             for (int i = 0; i < futuresCount(); i++) {
-                MiniFuture mini = (MiniFuture) future(i);
+                IgniteInternalFuture fut = future(i);
 
-                if (mini.futureId().equals(miniId)) {
-                    if (!mini.isDone())
-                        return mini;
-                    else
-                        return null;
+                if (fut instanceof  MiniFuture) {
+                    MiniFuture mini = (MiniFuture)fut;
+
+                    if (mini.futureId().equals(miniId)) {
+                        if (!mini.isDone())
+                            return mini;
+                        else
+                            return null;
+                    }
                 }
             }
         }
@@ -197,6 +208,8 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
 
             ClusterNode primary = F.first(nodes);
 
+            assert primary != null;
+
             boolean near = cacheCtx.isNear();
 
             IgniteBiTuple<ClusterNode, Boolean> key = F.t(primary, near);
@@ -216,6 +229,16 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
             nodeMapping.add(txEntry);
 
             txMapping.addMapping(nodes);
+        }
+
+        if (crdCntrs != null) {
+            for (GridDistributedTxMapping m : tx.mappings().mappings()) {
+                ClusterNode crd = cctx.coordinators().nodeCoordinator(topVer, m.node().id());
+
+                m.coordinator(crd);
+
+                crdCntrs.put(crd, TxMvccVersion.COUNTER_NA);
+            }
         }
 
         tx.transactionNodes(txMapping.transactionNodes());
@@ -249,6 +272,12 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
                 false,
                 tx.activeCachesDeploymentEnabled());
 
+            if (crdCntrs != null) {
+                // Request counter on primary for one-phase-commit tx or if node is coordinator.
+                if (tx.onePhaseCommit() || crdCntrs.remove(m.node()) != null)
+                    req.requestMvccCounter(true);
+            }
+
             for (IgniteTxEntry txEntry : m.entries()) {
                 if (txEntry.op() == TRANSFORM)
                     req.addDhtVersion(txEntry.txKey(), null);
@@ -258,7 +287,7 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
 
             req.miniId(fut.futureId());
 
-            add(fut);
+            add((IgniteInternalFuture)fut);
 
             if (node.isLocal()) {
                 IgniteInternalFuture<GridNearTxPrepareResponse> prepFut = cctx.tm().txHandler().prepareTx(node.id(),
@@ -303,7 +332,64 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
             }
         }
 
+        if (crdCntrs != null && !tx.onePhaseCommit()) {
+            synchronized (crdCntrs) {
+                for (final Map.Entry<ClusterNode, Long> e : crdCntrs.entrySet()) {
+                    IgniteInternalFuture<Long> cntrFut =
+                        cctx.coordinators().requestTxCounter(e.getKey(), tx.nearXidVersion());
+
+                    cntrFut.listen(new IgniteInClosure<IgniteInternalFuture<Long>>() {
+                        @Override public void apply(IgniteInternalFuture<Long> fut) {
+                            try {
+                                Long cntr = fut.get();
+
+                                addCoordinatorCounter(e.getKey(), cntr);
+                            }
+                            catch (IgniteCheckedException e) {
+                                U.error(log, "Failed to request coordinator counter", e);
+                            }
+                        }
+                    });
+
+                    add((IgniteInternalFuture)cntrFut);
+                }
+            }
+        }
+
         markInitialized();
+    }
+
+    /**
+     * @param crd Coordinator.
+     * @param cntr Counter.
+     */
+    private void addCoordinatorCounter(ClusterNode crd, Long cntr) {
+        assert tx.txState().mvccEnabled(cctx);
+
+        synchronized (crdCntrs) {
+            Long old = crdCntrs.put(crd, cntr);
+
+            assert old == null || old == TxMvccVersion.COUNTER_NA;
+        }
+
+        if (tx.colocatedLocallyMapped() && crd.equals(cctx.coordinators().localNodeCoordinator(tx.topologyVersion())))
+            tx.mvccCoordinatorCounter(cntr);
+
+        IgniteTxMappings mappings = tx.mappings();
+
+        if (mappings.single()) {
+            GridDistributedTxMapping single = mappings.singleMapping();
+
+            assert single != null;
+
+            single.mvccCoordinatorCounter(cntr);
+        }
+        else {
+            for (GridDistributedTxMapping m : mappings.mappings()) {
+                if (m.coordinator().equals(crd))
+                    m.mvccCoordinatorCounter(cntr);
+            }
+        }
     }
 
     /** {@inheritDoc} */
@@ -386,6 +472,11 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
             if (res.error() != null)
                 onError(res.error());
             else {
+                if (res.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA) {
+                    if (!tx.onePhaseCommit())
+                        addCoordinatorCounter(m.node(), res.mvccCoordinatorCounter());
+                }
+
                 onPrepareResponse(m, res);
 
                 onDone(res);

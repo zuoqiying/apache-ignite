@@ -31,6 +31,7 @@ import org.apache.ignite.internal.cluster.ClusterTopologyCheckedException;
 import org.apache.ignite.internal.processors.cache.GridCacheFuture;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
+import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
 import org.apache.ignite.internal.transactions.IgniteTxHeuristicCheckedException;
@@ -351,7 +352,8 @@ public final class GridDhtTxFinishFuture<K, V> extends GridCompoundIdentityFutur
                 tx.size(),
                 tx.subjectId(),
                 tx.taskNameHash(),
-                tx.activeCachesDeploymentEnabled());
+                tx.activeCachesDeploymentEnabled(),
+                TxMvccVersion.COUNTER_NA);
 
             try {
                 cctx.io().send(n, req, tx.ioPolicy());
@@ -395,6 +397,8 @@ public final class GridDhtTxFinishFuture<K, V> extends GridCompoundIdentityFutur
     private boolean finish(Map<UUID, GridDistributedTxMapping> dhtMap, Map<UUID, GridDistributedTxMapping> nearMap) {
         if (tx.onePhaseCommit())
             return false;
+
+        assert !tx.txState().mvccEnabled(cctx) || tx.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA;
 
         boolean sync = tx.syncMode() == FULL_SYNC;
 
@@ -448,7 +452,8 @@ public final class GridDhtTxFinishFuture<K, V> extends GridCompoundIdentityFutur
                 tx.subjectId(),
                 tx.taskNameHash(),
                 tx.activeCachesDeploymentEnabled(),
-                updCntrs);
+                updCntrs,
+                tx.mvccCoordinatorCounter());
 
             req.writeVersion(tx.writeVersion() != null ? tx.writeVersion() : tx.xidVersion());
 
@@ -516,7 +521,8 @@ public final class GridDhtTxFinishFuture<K, V> extends GridCompoundIdentityFutur
                     tx.size(),
                     tx.subjectId(),
                     tx.taskNameHash(),
-                    tx.activeCachesDeploymentEnabled());
+                    tx.activeCachesDeploymentEnabled(),
+                    tx.mvccCoordinatorCounter());
 
                 req.writeVersion(tx.writeVersion());
 

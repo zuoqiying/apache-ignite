@@ -79,7 +79,6 @@ public class GridDhtTxRemote extends GridDistributedTxRemoteAdapter {
      * @param nodeId Node ID.
      * @param topVer Topology version.
      * @param xidVer XID version.
-     * @param commitVer Commit version.
      * @param sys System flag.
      * @param concurrency Concurrency level (should be pessimistic).
      * @param isolation Transaction isolation.
@@ -97,7 +96,6 @@ public class GridDhtTxRemote extends GridDistributedTxRemoteAdapter {
         UUID nodeId,
         AffinityTopologyVersion topVer,
         GridCacheVersion xidVer,
-        GridCacheVersion commitVer,
         boolean sys,
         byte plc,
         TransactionConcurrency concurrency,
@@ -115,7 +113,6 @@ public class GridDhtTxRemote extends GridDistributedTxRemoteAdapter {
             ctx,
             nodeId,
             xidVer,
-            commitVer,
             sys,
             plc,
             concurrency,
@@ -154,7 +151,6 @@ public class GridDhtTxRemote extends GridDistributedTxRemoteAdapter {
      * @param nearXidVer Near transaction ID.
      * @param topVer Topology version.
      * @param xidVer XID version.
-     * @param commitVer Commit version.
      * @param sys System flag.
      * @param concurrency Concurrency level (should be pessimistic).
      * @param isolation Transaction isolation.
@@ -171,7 +167,6 @@ public class GridDhtTxRemote extends GridDistributedTxRemoteAdapter {
         GridCacheVersion nearXidVer,
         AffinityTopologyVersion topVer,
         GridCacheVersion xidVer,
-        GridCacheVersion commitVer,
         boolean sys,
         byte plc,
         TransactionConcurrency concurrency,
@@ -186,7 +181,6 @@ public class GridDhtTxRemote extends GridDistributedTxRemoteAdapter {
             ctx,
             nodeId,
             xidVer,
-            commitVer,
             sys,
             plc,
             concurrency, 

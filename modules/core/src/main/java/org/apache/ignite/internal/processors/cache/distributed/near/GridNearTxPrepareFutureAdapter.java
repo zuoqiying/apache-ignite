@@ -52,7 +52,7 @@ import static org.apache.ignite.internal.processors.cache.GridCacheOperation.NOO
  * Common code for tx prepare in optimistic and pessimistic modes.
  */
 public abstract class GridNearTxPrepareFutureAdapter extends
-    GridCompoundFuture<GridNearTxPrepareResponse, IgniteInternalTx> implements GridCacheMvccFuture<IgniteInternalTx> {
+    GridCompoundFuture<Object, IgniteInternalTx> implements GridCacheMvccFuture<IgniteInternalTx> {
     /** Logger reference. */
     protected static final AtomicReference<IgniteLogger> logRef = new AtomicReference<>();
 
@@ -61,9 +61,9 @@ public abstract class GridNearTxPrepareFutureAdapter extends
         AtomicReferenceFieldUpdater.newUpdater(GridNearTxPrepareFutureAdapter.class, Throwable.class, "err");
 
     /** */
-    private static final IgniteReducer<GridNearTxPrepareResponse, IgniteInternalTx> REDUCER =
-        new IgniteReducer<GridNearTxPrepareResponse, IgniteInternalTx>() {
-            @Override public boolean collect(GridNearTxPrepareResponse e) {
+    private static final IgniteReducer<Object, IgniteInternalTx> REDUCER =
+        new IgniteReducer<Object, IgniteInternalTx>() {
+            @Override public boolean collect(Object e) {
                 return true;
             }
 
@@ -194,21 +194,6 @@ public abstract class GridNearTxPrepareFutureAdapter extends
         assert F.isEmpty(res.invalidPartitions()) : res;
 
         UUID nodeId = m.node().id();
-
-        if (res.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA) {
-            assert tx.txState().mvccEnabled(cctx) : res;
-
-            m.mvccCoordinatorCounter(res.mvccCoordinatorCounter());
-
-            if (!tx.mappings().single()) {
-                ClusterNode crd = cctx.coordinators().nodeCoordinator(tx.topologyVersion(), m.node().id());
-
-                for (GridDistributedTxMapping m0 : tx.mappings().mappings()) {
-                    if (m0 != m && crd.equals(cctx.coordinators().nodeCoordinator(tx.topologyVersion(), m.node().id())))
-                        m0.mvccCoordinatorCounter(res.mvccCoordinatorCounter());
-                }
-            }
-        }
 
         for (Map.Entry<IgniteTxKey, CacheVersionedValue> entry : res.ownedValues().entrySet()) {
             IgniteTxEntry txEntry = tx.entry(entry.getKey());

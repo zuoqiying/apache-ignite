@@ -236,7 +236,6 @@ public abstract class GridDhtTransactionalCacheAdapter<K, V> extends GridDhtCach
                                     req.nearXidVersion(),
                                     req.topologyVersion(),
                                     req.version(),
-                                    /*commitVer*/null,
                                     ctx.systemTx(),
                                     ctx.ioPolicy(),
                                     PESSIMISTIC,

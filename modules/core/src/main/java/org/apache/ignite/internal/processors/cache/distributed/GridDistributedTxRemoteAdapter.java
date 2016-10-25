@@ -124,7 +124,6 @@ public class GridDistributedTxRemoteAdapter extends IgniteTxAdapter
      * @param ctx Cache registry.
      * @param nodeId Node ID.
      * @param xidVer XID version.
-     * @param commitVer Commit version.
      * @param sys System flag.
      * @param plc IO policy.
      * @param concurrency Concurrency level (should be pessimistic).
@@ -139,7 +138,6 @@ public class GridDistributedTxRemoteAdapter extends IgniteTxAdapter
         GridCacheSharedContext<?, ?> ctx,
         UUID nodeId,
         GridCacheVersion xidVer,
-        GridCacheVersion commitVer,
         boolean sys,
         byte plc,
         TransactionConcurrency concurrency,
@@ -166,8 +164,6 @@ public class GridDistributedTxRemoteAdapter extends IgniteTxAdapter
             taskNameHash);
 
         this.invalidate = invalidate;
-
-        commitVersion(commitVer);
 
         // Must set started flag after concurrency and isolation.
         started = true;
@@ -466,7 +462,7 @@ public class GridDistributedTxRemoteAdapter extends IgniteTxAdapter
                     cctx.database().checkpointReadLock();
 
                     try {
-                        TxMvccVersion mvccVer = createMvccVersion(cctx);
+                        TxMvccVersion mvccVer = createMvccVersion();
 
                         Collection<IgniteTxEntry> entries = near() ? allEntries() : writeEntries();
 

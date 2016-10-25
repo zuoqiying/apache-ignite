@@ -124,11 +124,6 @@ public class IgniteTxRemoteSingleStateImpl extends IgniteTxRemoteStateAdapter {
     }
 
     /** {@inheritDoc} */
-    public String toString() {
-        return S.toString(IgniteTxRemoteSingleStateImpl.class, this);
-    }
-
-    /** {@inheritDoc} */
     @Override public Collection<CacheStoreManager> stores(GridCacheSharedContext cctx) {
         if (entry == null)
             return null;
@@ -141,5 +136,18 @@ public class IgniteTxRemoteSingleStateImpl extends IgniteTxRemoteStateAdapter {
         }
 
         return null;
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean mvccEnabled(GridCacheSharedContext cctx) {
+        if (entry == null)
+            return false;
+
+        return entry.context().mvccEnabled();
+    }
+
+    /** {@inheritDoc} */
+    public String toString() {
+        return S.toString(IgniteTxRemoteSingleStateImpl.class, this);
     }
 }

@@ -18,8 +18,8 @@
 package org.apache.ignite.internal.processors.cache.mvcc;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import org.apache.ignite.internal.GridDirectCollection;
+import java.util.Map;
+import java.util.UUID;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
@@ -33,8 +33,13 @@ public class CoordinatorAckRequest implements Message {
     private static final long serialVersionUID = 0L;
 
     /** */
-    @GridDirectCollection(GridCacheVersion.class)
-    private Collection<GridCacheVersion> txIds;
+    private GridCacheVersion txId;
+
+    /** */
+    private long topVer;
+
+    /** */
+    private Map<UUID, Long> cntrs;
 
     /**
      *
@@ -44,17 +49,33 @@ public class CoordinatorAckRequest implements Message {
     }
 
     /**
-     * @param txIds Transaction IDs.
+     * @param txId Transaction ID.
      */
-    public CoordinatorAckRequest(Collection<GridCacheVersion> txIds) {
-        this.txIds = txIds;
+    public CoordinatorAckRequest(GridCacheVersion txId, long topVer, Map<UUID, Long> cntrs) {
+        this.txId = txId;
+        this.topVer = topVer;
+        this.cntrs = cntrs;
     }
 
     /**
      * @return Transaction ID.s
      */
-    public Collection<GridCacheVersion> txIds() {
-        return txIds;
+    public GridCacheVersion txId() {
+        return txId;
+    }
+
+    /**
+     * @return Topology version.
+     */
+    public long topologyVersion() {
+        return topVer;
+    }
+
+    /**
+     * @return Counters.
+     */
+    public Map<UUID, Long> coordinatorCounters() {
+        return cntrs;
     }
 
     /** {@inheritDoc} */

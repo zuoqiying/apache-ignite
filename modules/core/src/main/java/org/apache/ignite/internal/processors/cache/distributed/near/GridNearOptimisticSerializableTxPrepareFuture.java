@@ -232,7 +232,7 @@ public class GridNearOptimisticSerializableTxPrepareFuture extends GridNearOptim
         synchronized (sync) {
             // Avoid iterator creation.
             for (int i = 0; i < futuresCount(); i++) {
-                IgniteInternalFuture<GridNearTxPrepareResponse> fut = future(i);
+                IgniteInternalFuture fut = future(i);
 
                 if (!isMini(fut))
                     continue;
@@ -368,7 +368,7 @@ public class GridNearOptimisticSerializableTxPrepareFuture extends GridNearOptim
         for (GridDistributedTxMapping m : mappings.values()) {
             assert !m.empty();
 
-            add(new MiniFuture(this, m));
+            add((IgniteInternalFuture)new MiniFuture(this, m));
         }
 
         Collection<IgniteInternalFuture<?>> futs = (Collection)futures();
@@ -560,7 +560,7 @@ public class GridNearOptimisticSerializableTxPrepareFuture extends GridNearOptim
                 if (keyLockFut == null) {
                     keyLockFut = new KeyLockFuture();
 
-                    add(keyLockFut);
+                    add((IgniteInternalFuture)keyLockFut);
                 }
 
                 keyLockFut.addLockKey(entry.txKey());

@@ -24,6 +24,8 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cluster.ClusterNode;
@@ -67,7 +69,10 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
     private final AtomicLong cntrFutId = new AtomicLong();
 
     /** */
-    private ConcurrentHashMap<GridCacheVersion, Long> activeTxs = new ConcurrentHashMap<>();
+    private ConcurrentMap<GridCacheVersion, Long> activeTxs = new ConcurrentHashMap<>();
+
+    /** */
+    private final ConcurrentMap<Long, IntersectTxHistory> intersectTxHist = new ConcurrentHashMap<>();
 
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
@@ -113,12 +118,18 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
     /**
      * @param topVer Topology version.
+     * @return Counter request future.
+     */
+    public ClusterNode localNodeCoordinator(AffinityTopologyVersion topVer) {
+        return assignCache.localNodeCoordinator(topVer);
+    }
+
+    /**
+     * @param crd Coordinator.
      * @param txId Transaction ID.
      * @return Counter request future.
      */
-    public IgniteInternalFuture<Long> requestTxCounter(AffinityTopologyVersion topVer, GridCacheVersion txId) {
-        ClusterNode crd = assignCache.localNodeCoordinator(topVer);
-
+    public IgniteInternalFuture<Long> requestTxCounter(ClusterNode crd, GridCacheVersion txId) {
         if (crd.equals(cctx.localNode()))
             return new GridFinishedFuture<>(assignTxCounter(txId));
 
@@ -226,8 +237,22 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
      * @param msg Message.
      */
     private void processCoordinatorAckRequest(CoordinatorAckRequest msg) {
-        for (GridCacheVersion txId : msg.txIds())
-            activeTxs.remove(txId);
+        activeTxs.remove(msg.txId());
+
+        if (msg.coordinatorCounters() != null) {
+            Long topVer = msg.topologyVersion();
+
+            IntersectTxHistory hist = intersectTxHist.get(topVer);
+
+            if (hist == null) {
+                IntersectTxHistory old = intersectTxHist.putIfAbsent(topVer, hist = new IntersectTxHistory());
+
+                if (old != null)
+                    hist = old;
+            }
+
+            hist.addCounters(msg.coordinatorCounters());
+        }
     }
 
     /**
@@ -254,6 +279,38 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
                 processCoordinatorCounterResponse((CoordinatorCounterResponse)msg);
             else if (msg instanceof CoordinatorAckRequest)
                 processCoordinatorAckRequest((CoordinatorAckRequest)msg);
+        }
+    }
+
+    /**
+     *
+     */
+    private class IntersectTxHistory {
+        /** */
+        private final ConcurrentMap<UUID, ConcurrentNavigableMap<Long, Long>> hist = new ConcurrentHashMap<>();
+
+        /**
+         * @param cntrs Counters.
+         */
+        void addCounters(Map<UUID, Long> cntrs) {
+            Long thisCntr = cntrs.get(cctx.localNodeId());
+
+            assert thisCntr != null : cntrs;
+
+            for (Map.Entry<UUID, Long> e : cntrs.entrySet()) {
+                if (!e.getKey().equals(cctx.localNodeId())) {
+                    ConcurrentNavigableMap<Long, Long> hist0 = hist.get(e.getKey());
+
+                    if (hist0 == null) {
+                        ConcurrentNavigableMap<Long, Long> old = hist.putIfAbsent(e.getKey(), hist0 = new ConcurrentSkipListMap<>());
+
+                        if (old != null)
+                            hist0 = old;
+                    }
+
+                    hist0.put(e.getValue(), thisCntr);
+                }
+            }
         }
     }
 

@@ -658,7 +658,7 @@ public final class GridNearTxFinishFuture<K, V> extends GridCompoundIdentityFutu
             tx.activeCachesDeploymentEnabled()
         );
 
-        assert !tx.txState().mvccEnabled(cctx) || m.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA;
+        assert !commit || !tx.txState().mvccEnabled(cctx) || m.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA;
 
         req.mvccCoordinatorCounter(m.mvccCoordinatorCounter());
 
@@ -798,7 +798,8 @@ public final class GridNearTxFinishFuture<K, V> extends GridCompoundIdentityFutu
             0,
             null,
             0,
-            tx.activeCachesDeploymentEnabled());
+            tx.activeCachesDeploymentEnabled(),
+            TxMvccVersion.COUNTER_NA);
 
         finishReq.checkCommitted(true);
 
