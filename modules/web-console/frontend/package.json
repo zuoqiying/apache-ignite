@@ -7,7 +7,7 @@
     "dev": "cross-env NODE_ENV=development gulp watch",
     "build": "cross-env NODE_ENV=production gulp build --no-ll",
     "test": "cross-env NODE_ENV=test karma start ./test/karma.conf.js",
-    "eslint": "eslint --format node_modules/eslint-friendly-formatter gulpfile.babel.js/ app/ controllers/ generator/ ignite_modules/ ignite_modules_temp/ -- --eff-by-issue"
+    "eslint": "eslint --format node_modules/eslint-friendly-formatter gulpfile.babel.js/ app/ controllers/ ignite_modules/ ignite_modules_temp/ -- --eff-by-issue"
   },
   "author": "",
   "contributors": [
