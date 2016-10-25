@@ -17,13 +17,17 @@
 
 package org.apache.ignite.yardstick.ringcentral;
 
+import java.io.Serializable;
 import java.util.concurrent.ThreadLocalRandom;
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 /**
  *
  */
-public class AdgEntity {
+public class AdgEntity implements Serializable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** */
     public static final String ACC_ID = "accId_";
 

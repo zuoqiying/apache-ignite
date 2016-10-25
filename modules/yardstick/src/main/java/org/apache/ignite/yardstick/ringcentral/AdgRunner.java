@@ -26,6 +26,7 @@ import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.marshaller.optimized.OptimizedMarshaller;
 
 import java.io.FileReader;
 import java.util.HashSet;
@@ -320,6 +321,7 @@ public class AdgRunner {
         ccfg.setName(CACHE_NAME);
         ccfg.setIndexedTypes(AdgAffinityKey.class, AdgEntity.class);
         ccfg.setAffinityMapper(new AdgAffinityKeyMapper());
+        cfg.setMarshaller(new OptimizedMarshaller());
 
         cfg.setCacheConfiguration(ccfg);
 
@@ -362,13 +364,13 @@ public class AdgRunner {
                     extIds.add((String) next.get(0));
 
                 if (!extIds.isEmpty()) {
-                    qry = new SqlFieldsQuery(QRY_SECOND).setArgs(extIds.toArray(), System.currentTimeMillis());
+//                    qry = new SqlFieldsQuery(QRY_SECOND).setArgs(extIds.toArray(), System.currentTimeMillis());
+//
+//                    consumeResult(cache.query(qry));
 
-                    consumeResult(cache.query(qry));
-
-                    qry = new SqlFieldsQuery(QRY_THIRD).setArgs((Object[]) argumentForQuery());
-
-                    consumeResult(cache.query(qry));
+//                    qry = new SqlFieldsQuery(QRY_THIRD).setArgs((Object[]) argumentForQuery());
+//
+//                    consumeResult(cache.query(qry));
                 }
 
                 long dur = (System.nanoTime() - start) / 1_000_000;
@@ -406,7 +408,7 @@ public class AdgRunner {
 
                 double res = 1000 * ((double)(after - before)) / (afterTime - beforeTime);
 
-                System.out.println(res + " ops/sec");
+                System.out.println((long)res + " ops/sec");
             }
         }
     }

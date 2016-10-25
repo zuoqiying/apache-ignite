@@ -17,10 +17,15 @@
 
 package org.apache.ignite.yardstick.ringcentral;
 
+import java.io.Serializable;
+
 /**
  *
  */
-public class AdgAffinityKey {
+public class AdgAffinityKey implements Serializable {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** */
     private String key;
 
