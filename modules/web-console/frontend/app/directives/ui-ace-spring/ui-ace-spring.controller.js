@@ -15,19 +15,15 @@
  * limitations under the License.
  */
 
-export default ['$scope', 'JavaTransformer', function($scope, generator) {
+export default ['$scope', 'SpringTransformer', function($scope, generator) {
     const ctrl = this;
 
     delete ctrl.data;
 
-    const client = ctrl.client === 'true';
-
     // Setup generator.
     switch (ctrl.generator) {
         case 'igniteConfiguration':
-            const clsName = client ? 'ClientConfigurationFactory' : 'ServerConfigurationFactory';
-
-            ctrl.generate = (cluster) => generator.cluster(cluster, 'config', clsName, client);
+            ctrl.generate = (cluster) => generator.cluster(cluster, ctrl.client === 'true');
 
             break;
         case 'clusterCaches':

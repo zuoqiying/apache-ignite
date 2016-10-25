@@ -79,7 +79,7 @@ mixin table-index-item-edit(prefix, index, sortAvailable, idAddition)
                                 table.links-edit(id='fields' st-table=queryFields)
                                     tbody
                                         tr(ng-repeat='item in #{queryFields} track by $index')
-                                            td.col-sm-12(ng-show='!tableEditing(queryFieldsTbl, $index)')
+                                            td.col-sm-12(ng-hide='tableEditing(queryFieldsTbl, $index)')
                                                 a.labelFormField(ng-click='tableStartEdit(backupItem, queryFieldsTbl, $index)') {{item.name}}  / {{item.className}}
                                                 +btn-remove('tableRemove(backupItem, queryFieldsTbl, $index)', '"Remove path"')
                                             td.col-sm-12(ng-show='tableEditing(queryFieldsTbl, $index)')
@@ -103,7 +103,7 @@ mixin table-index-item-edit(prefix, index, sortAvailable, idAddition)
                                 table.links-edit(id='aliases' st-table=queryAliases)
                                     tbody
                                         tr(ng-repeat='item in #{queryAliases} track by $index')
-                                            td.col-sm-12(ng-show='!tableEditing(aliasesTbl, $index)')
+                                            td.col-sm-12(ng-hide='tableEditing(aliasesTbl, $index)')
                                                 a.labelFormField(ng-click='tableStartEdit(backupItem, aliasesTbl, $index)') {{item.field}} &rarr; {{item.alias}}
                                                 +btn-remove('tableRemove(backupItem, aliasesTbl, $index)', '"Remove alias"')
                                             td.col-sm-12(ng-show='tableEditing(aliasesTbl, $index)')
@@ -129,7 +129,7 @@ mixin table-index-item-edit(prefix, index, sortAvailable, idAddition)
                                     tbody
                                         tr(ng-repeat='item in #{queryIndexes} track by $index')
                                             td
-                                                .col-sm-12(ng-show='!tableEditing(indexesTbl, $index)')
+                                                .col-sm-12(ng-hide='tableEditing(indexesTbl, $index)')
                                                     a.labelFormField(id='indexes{{$index}}' ng-click='tableStartEdit(backupItem, indexesTbl, $index)') {{$index + 1}}) {{item.name}} [{{item.indexType}}]
                                                     +btn-remove('tableRemove(backupItem, indexesTbl, $index)', '"Remove index"')
                                                     +btn-add('tableIndexNewItem(indexesTbl, $index)', '"Add new field to index"')
@@ -147,7 +147,7 @@ mixin table-index-item-edit(prefix, index, sortAvailable, idAddition)
                                                         tbody
                                                             tr(ng-repeat='itemItem in item.fields track by $index')
                                                                 td
-                                                                    div(ng-show='!tableIndexItemEditing(indexesTbl, itemIndex, $index)')
+                                                                    div(ng-hide='tableIndexItemEditing(indexesTbl, itemIndex, $index)')
                                                                         a.labelFormField(ng-if='item.indexType == "SORTED"' ng-click='tableIndexItemStartEdit(indexesTbl, itemIndex, $index)') {{$index + 1}}) {{itemItem.name}} / {{itemItem.direction ? "ASC" : "DESC"}}
                                                                         a.labelFormField(ng-if='item.indexType != "SORTED"' ng-click='tableIndexItemStartEdit(indexesTbl, itemIndex, $index)') {{$index + 1}}) {{itemItem.name}}
                                                                         +btn-remove('tableRemoveIndexItem(item, $index)', '"Remove field from index"')
