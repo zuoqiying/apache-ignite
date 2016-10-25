@@ -232,7 +232,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                     ipFinder.emptyBeanProperty('curator')
                         .stringProperty('zkConnectionString');
 
-                    if (src && src.retryPolicy && src.retryPolicy.kind) {
+                    if (_.get(src, 'retryPolicy.kind')) {
                         const policy = src.retryPolicy;
 
                         let retryPolicyBean;
@@ -295,7 +295,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     ipFinder.pathProperty('basePath', '/services')
                         .stringProperty('serviceName')
-                        .stringProperty('allowDuplicateRegistrations');
+                        .boolProperty('allowDuplicateRegistrations');
 
                     break;
                 default:
