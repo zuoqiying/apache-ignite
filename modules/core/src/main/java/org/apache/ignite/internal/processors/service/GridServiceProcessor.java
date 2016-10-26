@@ -1277,13 +1277,9 @@ public class GridServiceProcessor extends GridProcessorAdapter {
             node.version().compareToIgnoreTimestamp(INCOMPATIBLE_TO) <= 0) {
             ClusterNode locNode = ctx.discovery().localNode();
 
-            return new IgniteNodeValidationResult(node.id(),
-                "Local node uses IgniteServices and works with not compatible versions. " +
-                    "Do not use IgniteServices with incompatible Ignite nodes. [locNodeId=" +
-                    locNode.id() + ", rmtNodeId=" + node.id() + ", incompatibleVersions=" + INCOMPATIBLE_VERSIONS + "]",
-                "Remote node uses IgniteServices and works with not compatible versions. " +
-                    "Do not use IgniteServices with incompatible Ignite nodes. [locNodeId=" +
-                    node.id() + ", rmtNodeId=" + locNode.id() + ", incompatibleVersions=" + INCOMPATIBLE_VERSIONS + "]");
+            log.warning("Local IgniteServices are not compatible with remote node. " +
+                "Avoid using incompatible versions. [locNodeId=" +
+                locNode.id() + ", rmtNodeId=" + node.id() + ", incompatibleVersions=" + INCOMPATIBLE_VERSIONS + "]");
         }
 
         boolean rmtNodeIsOld = node.version().compareToIgnoreTimestamp(LAZY_SERVICES_CFG_SINCE) < 0;
