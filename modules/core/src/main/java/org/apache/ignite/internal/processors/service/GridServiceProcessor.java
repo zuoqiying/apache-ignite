@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -111,6 +113,15 @@ public class GridServiceProcessor extends GridProcessorAdapter {
     /** */
     public static final IgniteProductVersion LAZY_SERVICES_CFG_SINCE = IgniteProductVersion.fromString("1.5.22");
 
+    /** Versions that only compatible with each other. */
+    private static final Set<String> INCOMPATIBLE_VERSIONS;
+
+    /** Minimal incompatible version. */
+    private static final IgniteProductVersion INCOMPATIBLE_FROM = IgniteProductVersion.fromString("1.5.30");
+
+    /** Maximal incompatible version. */
+    private static final IgniteProductVersion INCOMPATIBLE_TO = IgniteProductVersion.fromString("1.5.32");
+
     /** */
     private final Boolean srvcCompatibilitySysProp;
 
@@ -149,6 +160,16 @@ public class GridServiceProcessor extends GridProcessorAdapter {
 
     /** Topology listener. */
     private GridLocalEventListener topLsnr = new TopologyListener();
+
+    static {
+        Set<String> versions = new TreeSet<>();
+
+        versions.add("1.5.30");
+        versions.add("1.5.31");
+        versions.add("1.5.32");
+
+        INCOMPATIBLE_VERSIONS = Collections.unmodifiableSet(versions);
+    }
 
     /**
      * @param ctx Kernal context.
@@ -1251,6 +1272,19 @@ public class GridServiceProcessor extends GridProcessorAdapter {
 
         if (res != null)
             return res;
+
+        if (node.version().compareToIgnoreTimestamp(INCOMPATIBLE_FROM) >= 0 &&
+            node.version().compareToIgnoreTimestamp(INCOMPATIBLE_TO) <= 0) {
+            ClusterNode locNode = ctx.discovery().localNode();
+
+            return new IgniteNodeValidationResult(node.id(),
+                "Local node uses IgniteServices and works with not compatible versions. " +
+                    "Do not use IgniteServices with incompatible Ignite nodes. [locNodeId=" +
+                    locNode.id() + ", rmtNodeId=" + node.id() + ", incompatibleVersions=" + INCOMPATIBLE_VERSIONS + "]",
+                "Remote node uses IgniteServices and works with not compatible versions. " +
+                    "Do not use IgniteServices with incompatible Ignite nodes. [locNodeId=" +
+                    node.id() + ", rmtNodeId=" + locNode.id() + ", incompatibleVersions=" + INCOMPATIBLE_VERSIONS + "]");
+        }
 
         boolean rmtNodeIsOld = node.version().compareToIgnoreTimestamp(LAZY_SERVICES_CFG_SINCE) < 0;
 
