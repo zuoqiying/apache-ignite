@@ -17,6 +17,7 @@
 
 package org.apache.ignite.internal.processors.cache.mvcc;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -66,7 +67,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
     private final AtomicLong cntr = new AtomicLong();
 
     /** */
-    private final AtomicLong cntrFutId = new AtomicLong();
+    private final AtomicLong futIdCntr = new AtomicLong();
 
     /** */
     private ConcurrentMap<GridCacheVersion, Long> activeTxs = new ConcurrentHashMap<>();
@@ -133,7 +134,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
         if (crd.equals(cctx.localNode()))
             return new GridFinishedFuture<>(assignTxCounter(txId));
 
-        TxCounterFuture fut = new TxCounterFuture(cntrFutId.incrementAndGet(), crd);
+        TxCounterFuture fut = new TxCounterFuture(futIdCntr.incrementAndGet(), crd);
 
         cntrFuts.put(fut.id, fut);
 
@@ -265,6 +266,58 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
             fut.onResponse(msg);
         else
             U.warn(log, "Failed to find coordinator counter future: " + msg);
+    }
+
+    /**
+     * @param txId Transaction ID.
+     * @param crds Coordinators.
+     */
+    public void ackTransactionRollback(GridCacheVersion txId, Collection<ClusterNode> crds) {
+        CoordinatorAckRequest msg = new CoordinatorAckRequest(txId, 0, null);
+
+        msg.skipResponse(true);
+
+        for (ClusterNode crd : crds) {
+            try {
+                cctx.gridIO().send(crd,
+                    TOPIC_COORDINATOR,
+                    msg,
+                    SYSTEM_POOL);
+            }
+            catch (ClusterTopologyCheckedException e) {
+                if (log.isDebugEnabled())
+                    log.debug("Failed to send tx rollback ack, node left [msg=" + msg + ", node=" + crd.id() + ']');
+            }
+            catch (IgniteCheckedException e) {
+                U.error(log, "Failed to send tx rollback ack [msg=" + msg + ", node=" + crd.id() + ']', e);
+            }
+        }
+    }
+
+    /**
+     * @param txId Transaction ID.
+     * @param cntrs Counters.
+     * @return Acknowledge future.
+     */
+    public IgniteInternalFuture<Void> ackTransactionCommit(GridCacheVersion txId,
+        AffinityTopologyVersion topVer,
+        Map<ClusterNode, Long> cntrs) {
+        Map<UUID, Long> cntrs0 = null;
+
+        // No need to send counters if single coordinator participated in tx.
+        if (cntrs != null && cntrs.size() > 1) {
+            // TODO: optimize counters store.
+            cntrs0 = U.newHashMap(cntrs.size());
+
+            for (Map.Entry<ClusterNode, Long> e : cntrs.entrySet())
+                cntrs0.put(e.getKey().id(), e.getValue());
+        }
+
+        CoordinatorAckRequest msg = new CoordinatorAckRequest(txId, topVer.topologyVersion(), cntrs0);
+
+
+
+        return null;
     }
 
     /**

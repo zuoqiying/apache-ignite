@@ -33,6 +33,9 @@ public class CoordinatorAckRequest implements Message {
     private static final long serialVersionUID = 0L;
 
     /** */
+    private static final int SKIP_RESPONSE_FLAG_MASK = 0x01;
+
+    /** */
     private GridCacheVersion txId;
 
     /** */
@@ -40,6 +43,9 @@ public class CoordinatorAckRequest implements Message {
 
     /** */
     private Map<UUID, Long> cntrs;
+
+    /** */
+    private byte flags;
 
     /**
      *
@@ -55,6 +61,23 @@ public class CoordinatorAckRequest implements Message {
         this.txId = txId;
         this.topVer = topVer;
         this.cntrs = cntrs;
+    }
+
+    /**
+     * @return {@code True} if response message is not needed.
+     */
+    public boolean skipResponse() {
+        return (flags & SKIP_RESPONSE_FLAG_MASK) != 0;
+    }
+
+    /**
+     * @param val {@code True} if response message is not needed.
+     */
+    public void skipResponse(boolean val) {
+        if (val)
+            flags |= SKIP_RESPONSE_FLAG_MASK;
+        else
+            flags &= ~SKIP_RESPONSE_FLAG_MASK;
     }
 
     /**

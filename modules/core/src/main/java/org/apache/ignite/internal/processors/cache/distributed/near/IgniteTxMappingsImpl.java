@@ -18,8 +18,10 @@
 package org.apache.ignite.internal.processors.cache.distributed.near;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -32,6 +34,9 @@ import org.jsr166.ConcurrentHashMap8;
 public class IgniteTxMappingsImpl implements IgniteTxMappings {
     /** */
     private final Map<UUID, GridDistributedTxMapping> mappings = new ConcurrentHashMap8<>();
+
+    /** */
+    private Map<ClusterNode, Long> crdCntrs;
 
     /** {@inheritDoc} */
     @Override public void clear() {
@@ -83,6 +88,33 @@ public class IgniteTxMappingsImpl implements IgniteTxMappings {
     /** {@inheritDoc} */
     @Override public Collection<GridDistributedTxMapping> mappings() {
         return mappings.values();
+    }
+
+    /** {@inheritDoc} */
+    @Override public void addCoordinatorCounter(ClusterNode crd, Long cntr) {
+        synchronized (this) {
+            if (crdCntrs == null)
+                crdCntrs = new HashMap<>();
+
+            Long old = crdCntrs.put(crd, cntr);
+
+            assert old == null;
+        }
+
+        for (GridDistributedTxMapping m : mappings.values()) {
+            if (m.coordinator().equals(crd))
+                m.mvccCoordinatorCounter(cntr);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean coordinatorCountersGenerated() {
+        return crdCntrs != null;
+    }
+
+    /** {@inheritDoc} */
+    @Override public Map<ClusterNode, Long> coordinatorCounters() {
+        return crdCntrs;
     }
 
     /** {@inheritDoc} */

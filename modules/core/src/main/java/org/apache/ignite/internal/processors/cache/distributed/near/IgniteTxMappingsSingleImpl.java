@@ -18,8 +18,11 @@
 package org.apache.ignite.internal.processors.cache.distributed.near;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
+import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +94,23 @@ public class IgniteTxMappingsSingleImpl implements IgniteTxMappings {
     @Override public Collection<GridDistributedTxMapping> mappings() {
         assert false;
 
+        return null;
+    }
+
+    /** {@inheritDoc} */
+    @Override public void addCoordinatorCounter(ClusterNode crd, Long cntr) {
+        assert mapping != null;
+
+        mapping.mvccCoordinatorCounter(cntr);
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean coordinatorCountersGenerated() {
+        return mapping != null && mapping.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA;
+    }
+
+    /** {@inheritDoc} */
+    @Override public Map<ClusterNode, Long> coordinatorCounters() {
         return null;
     }
 

@@ -19,8 +19,10 @@ package org.apache.ignite.internal.processors.cache.distributed.near;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cluster.ClusterNode;
@@ -57,9 +59,6 @@ import static org.apache.ignite.transactions.TransactionState.PREPARING;
  *
  */
 public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureAdapter {
-    /** */
-    private final Map<ClusterNode, Long> crdCntrs;
-
     /**
      * @param cctx Context.
      * @param tx Transaction.
@@ -68,8 +67,6 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
         super(cctx, tx);
 
         assert tx.pessimistic() : tx;
-
-        crdCntrs = tx.txState().mvccEnabled(cctx) ? new HashMap<ClusterNode, Long>() : null;
     }
 
     /** {@inheritDoc} */
@@ -199,6 +196,8 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
 
         txMapping = new GridDhtTxMapping();
 
+        Set<ClusterNode> crds = tx.txState().mvccEnabled(cctx) ? new HashSet<ClusterNode>() : null;
+
         for (IgniteTxEntry txEntry : tx.allEntries()) {
             txEntry.clearEntryReadVersion();
 
@@ -222,6 +221,18 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
                 nodeMapping.near(cacheCtx.isNear());
 
                 mappings.put(key, nodeMapping);
+
+                if (crds != null) {
+                    GridDistributedTxMapping m0 = tx.mappings().get(primary.id());
+
+                    assert m0 != null;
+
+                    ClusterNode crd = cctx.coordinators().nodeCoordinator(topVer, primary.id());
+
+                    m0.coordinator(crd);
+
+                    crds.add(crd);
+                }
             }
 
             txEntry.nodeId(primary.id());
@@ -229,16 +240,6 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
             nodeMapping.add(txEntry);
 
             txMapping.addMapping(nodes);
-        }
-
-        if (crdCntrs != null) {
-            for (GridDistributedTxMapping m : tx.mappings().mappings()) {
-                ClusterNode crd = cctx.coordinators().nodeCoordinator(topVer, m.node().id());
-
-                m.coordinator(crd);
-
-                crdCntrs.put(crd, TxMvccVersion.COUNTER_NA);
-            }
         }
 
         tx.transactionNodes(txMapping.transactionNodes());
@@ -272,10 +273,11 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
                 false,
                 tx.activeCachesDeploymentEnabled());
 
-            if (crdCntrs != null) {
+            if (crds != null) {
                 // Request counter on primary for one-phase-commit tx or if node is coordinator.
-                if (tx.onePhaseCommit() || crdCntrs.remove(m.node()) != null)
-                    req.requestMvccCounter(true);
+                boolean needCntr = tx.onePhaseCommit() || crds.remove(m.node());
+
+                req.requestMvccCounter(needCntr);
             }
 
             for (IgniteTxEntry txEntry : m.entries()) {
@@ -332,27 +334,25 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
             }
         }
 
-        if (crdCntrs != null && !tx.onePhaseCommit()) {
-            synchronized (crdCntrs) {
-                for (final Map.Entry<ClusterNode, Long> e : crdCntrs.entrySet()) {
-                    IgniteInternalFuture<Long> cntrFut =
-                        cctx.coordinators().requestTxCounter(e.getKey(), tx.nearXidVersion());
+        // Request remaining counters.
+        if (crds != null && !tx.onePhaseCommit()) {
+            for (final ClusterNode crd : crds) {
+                IgniteInternalFuture<Long> cntrFut = cctx.coordinators().requestTxCounter(crd, tx.nearXidVersion());
 
-                    cntrFut.listen(new IgniteInClosure<IgniteInternalFuture<Long>>() {
-                        @Override public void apply(IgniteInternalFuture<Long> fut) {
-                            try {
-                                Long cntr = fut.get();
+                cntrFut.listen(new IgniteInClosure<IgniteInternalFuture<Long>>() {
+                    @Override public void apply(IgniteInternalFuture<Long> fut) {
+                        try {
+                            Long cntr = fut.get();
 
-                                addCoordinatorCounter(e.getKey(), cntr);
-                            }
-                            catch (IgniteCheckedException e) {
-                                U.error(log, "Failed to request coordinator counter", e);
-                            }
+                            addCoordinatorCounter(crd, cntr);
                         }
-                    });
+                        catch (IgniteCheckedException e) {
+                            U.error(log, "Failed to request coordinator counter", e);
+                        }
+                    }
+                });
 
-                    add((IgniteInternalFuture)cntrFut);
-                }
+                add((IgniteInternalFuture)cntrFut);
             }
         }
 
@@ -366,30 +366,10 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
     private void addCoordinatorCounter(ClusterNode crd, Long cntr) {
         assert tx.txState().mvccEnabled(cctx);
 
-        synchronized (crdCntrs) {
-            Long old = crdCntrs.put(crd, cntr);
-
-            assert old == null || old == TxMvccVersion.COUNTER_NA;
-        }
+        tx.mappings().addCoordinatorCounter(crd, cntr);
 
         if (tx.colocatedLocallyMapped() && crd.equals(cctx.coordinators().localNodeCoordinator(tx.topologyVersion())))
             tx.mvccCoordinatorCounter(cntr);
-
-        IgniteTxMappings mappings = tx.mappings();
-
-        if (mappings.single()) {
-            GridDistributedTxMapping single = mappings.singleMapping();
-
-            assert single != null;
-
-            single.mvccCoordinatorCounter(cntr);
-        }
-        else {
-            for (GridDistributedTxMapping m : mappings.mappings()) {
-                if (m.coordinator().equals(crd))
-                    m.mvccCoordinatorCounter(cntr);
-            }
-        }
     }
 
     /** {@inheritDoc} */

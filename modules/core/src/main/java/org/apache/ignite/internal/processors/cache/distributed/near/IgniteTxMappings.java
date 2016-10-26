@@ -18,7 +18,9 @@
 package org.apache.ignite.internal.processors.cache.distributed.near;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.processors.cache.distributed.GridDistributedTxMapping;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,4 +74,20 @@ public interface IgniteTxMappings {
      * @return {@code True} if this is single mapping.
      */
     public boolean single();
+
+    /**
+     * @param crd Coordinator.
+     * @param cntr Counter.
+     */
+    public void addCoordinatorCounter(ClusterNode crd, Long cntr);
+
+    /**
+     * @return
+     */
+    public boolean coordinatorCountersGenerated();
+
+    /**
+     * @return
+     */
+    public Map<ClusterNode, Long> coordinatorCounters();
 }
