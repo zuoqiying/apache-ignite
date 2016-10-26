@@ -18,7 +18,7 @@
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
-const STORE_FACTORY = ['org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory'];
+const STORE_FACTORY = ['org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory'];
 
 // Descriptors for generation of demo data.
 const PREDEFINED_QUERIES = [
@@ -554,7 +554,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             _.forEach(bean.properties, (prop, idx) => {
                 switch (prop.clsName) {
                     case 'DATA_SOURCE':
-                        this._setProperty(sb, id, prop.name, `DataSources.INSTANCE_${prop.id}`);
+                        this._setProperty(sb, id, 'dataSource', `DataSources.INSTANCE_${prop.id}`);
 
                         break;
                     case 'EVENT_TYPES':

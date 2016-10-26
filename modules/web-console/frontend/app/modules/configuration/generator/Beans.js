@@ -345,7 +345,7 @@ export class Bean extends EmptyBean {
     /**
      * @param {String} id
      * @param {String} name
-     * @param {Bean} value
+     * @param {EmptyBean|Bean} value
      */
     dataSource(id, name, value) {
         if (value)

@@ -1068,9 +1068,9 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory',
                             storeFactory);
 
-                        const id = bean.valueOf('dataSourceBean');
+                        const jdbcId = bean.valueOf('dataSourceBean');
 
-                        bean.dataSource(id, 'dataSourceBean', this.dataSourceBean(id, storeFactory.dialect))
+                        bean.dataSource(jdbcId, 'dataSourceBean', this.dataSourceBean(jdbcId, storeFactory.dialect))
                             .beanProperty('dialect', new EmptyBean(this.dialectClsName(storeFactory.dialect)));
 
                         bean.boolProperty('sqlEscapeAll');
@@ -1107,8 +1107,11 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory', 'cacheStoreFactory',
                             storeFactory);
 
-                        if (bean.valueOf('connectVia') === 'DataSource')
-                            bean.dataSource(bean.valueOf('dataSourceBean'), 'dataSourceBean', this.dialectClsName(storeFactory.dialect));
+                        if (bean.valueOf('connectVia') === 'DataSource') {
+                            const blobId = bean.valueOf('dataSourceBean');
+
+                            bean.dataSource(blobId, 'dataSourceBean', this.dataSourceBean(blobId, storeFactory.dialect));
+                        }
                         else {
                             ccfg.stringProperty('connectionUrl')
                                 .stringProperty('user')
