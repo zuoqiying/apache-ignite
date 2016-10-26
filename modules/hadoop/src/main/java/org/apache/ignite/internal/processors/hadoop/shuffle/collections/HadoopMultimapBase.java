@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.hadoop.shuffle.collections;
 
 import java.io.DataInput;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -27,14 +28,17 @@ import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
 import org.apache.ignite.internal.processors.hadoop.HadoopSerialization;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
+import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob;
 import org.apache.ignite.internal.processors.hadoop.shuffle.streams.HadoopDataInStream;
 import org.apache.ignite.internal.processors.hadoop.shuffle.streams.HadoopDataOutStream;
 import org.apache.ignite.internal.processors.hadoop.shuffle.streams.HadoopOffheapBuffer;
+import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.processors.hadoop.HadoopJobProperty.SHUFFLE_OFFHEAP_PAGE_SIZE;
 import static org.apache.ignite.internal.processors.hadoop.HadoopJobProperty.get;
+import static org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSpillableMultimap.ensureLength;
 
 /**
  * Base class for all multimaps.
@@ -113,16 +117,12 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
             deallocate(page);
     }
 
-    public static abstract class Converter<X, Y> {
-        abstract Y convert(X x);
-    }
-
     /**
      * Reader for key and value.
      */
     protected class ReaderBase implements AutoCloseable {
         /** */
-        private Object tmp;
+        protected Object tmp;
 
         /** */
         private final HadoopSerialization ser;
@@ -143,7 +143,7 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
          * @param valPtr Value page pointer.
          * @return Value.
          */
-        public Object readValue(long valPtr) {
+        public final Object readValue(long valPtr) {
             assert valPtr > 0 : valPtr;
 
             try {
@@ -170,12 +170,24 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
          * @param size Object size.
          * @return Object.
          */
-        protected final Object read(long ptr, long size) throws IgniteCheckedException {
+        protected Object read(long ptr, long size) throws IgniteCheckedException {
             in.buffer().set(ptr, size);
 
             tmp = ser.read(in, tmp);
 
             return tmp;
+        }
+
+        /**
+         * Reads 'size' bytes starting from 'ptr'
+         * Used to read both key and value.
+         *
+         * @param ptr Pointer.
+         * @param size Object size.
+         * @return Object.
+         */
+        protected final void readInto(long ptr, int size, HadoopShuffleJob.UnsafeValue v) throws IgniteCheckedException {
+            v.readFrom(ptr, size);
         }
 
         /** {@inheritDoc} */

@@ -29,6 +29,7 @@ import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
 import org.apache.ignite.internal.processors.hadoop.HadoopSerialization;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
+import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob;
 import org.apache.ignite.internal.util.GridLongList;
 import org.apache.ignite.internal.util.GridRandom;
 import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
@@ -114,6 +115,10 @@ public class HadoopSkipList extends HadoopMultimapBase {
             return new GroupedInput(grpCmp, in);
 
         return in;
+    }
+
+    public Input rawInput() throws IgniteCheckedException {
+        return new RawInput();
     }
 
     /**
@@ -592,8 +597,18 @@ public class HadoopSkipList extends HadoopMultimapBase {
          * @throws IgniteCheckedException If failed.
          */
         private Input(HadoopTaskContext taskCtx) throws IgniteCheckedException {
-            keyReader = new Reader(taskCtx.keySerialization());
-            valReader = new Reader(taskCtx.valueSerialization());
+            keyReader = createKeyReader(taskCtx);
+            valReader = createValueReader(taskCtx);
+        }
+
+        /** */
+        protected Reader createKeyReader(HadoopTaskContext taskCtx) throws IgniteCheckedException {
+            return new Reader(taskCtx.keySerialization());
+        }
+
+        /** */
+        protected Reader createValueReader(HadoopTaskContext taskCtx) throws IgniteCheckedException {
+            return new Reader(taskCtx.valueSerialization());
         }
 
         /** {@inheritDoc} */
@@ -617,6 +632,63 @@ public class HadoopSkipList extends HadoopMultimapBase {
         @Override public void close() throws IgniteCheckedException {
             keyReader.close();
             valReader.close();
+        }
+    }
+
+    /**
+     * Note that the return type is {@link HadoopShuffleJob.UnsafeValue}.
+     */
+    private class RawReader extends Reader {
+        /** */
+        private RawReader() {
+            super(null); //
+        }
+
+        /** {@inheritDoc} */
+        @Override protected Object read(long ptr, long size) throws IgniteCheckedException {
+            if (tmp == null)
+                tmp = new HadoopShuffleJob.UnsafeValue();
+
+            assert tmp instanceof HadoopShuffleJob.UnsafeValue;
+
+            // Read the data into 'tmp' buffer:
+            ((HadoopShuffleJob.UnsafeValue)tmp).readFrom(ptr, size);
+
+            return tmp; // Return the buffer the value read into
+        }
+
+        /** {@inheritDoc} */
+        @Override public void resetReusedObject(Object tmp) {
+            assert tmp == null || tmp instanceof HadoopShuffleJob.UnsafeValue;
+
+            super.resetReusedObject(tmp);
+        }
+    }
+
+    /**
+     * Input to get byte[] content of the Multimap.
+     * Note that #key() and #values() objects are {@link HadoopShuffleJob.UnsafeValue}s,
+     * that is, byte[] buffers with specified width and length.
+     */
+    private class RawInput extends Input {
+        /** */
+        private RawInput() throws IgniteCheckedException {
+            super(null/*HadoopTaskContext*/);
+        }
+
+        /** {@inheritDoc} */
+        @Override protected Reader createKeyReader(HadoopTaskContext taskCtx) throws IgniteCheckedException {
+            return new RawReader();
+        }
+
+        /** {@inheritDoc} */
+        @Override protected Reader createValueReader(HadoopTaskContext taskCtx) throws IgniteCheckedException {
+            /*
+             * NB: We could reuse key reader there, because the readers only
+             * differ in the serializers, and here serializers are not used (nulls).
+             * But this does not seem to be a good idea, since buffers of the 2 readers may overlap.
+             */
+            return new RawReader();
         }
     }
 

@@ -51,8 +51,15 @@ public interface HadoopMultimap extends AutoCloseable {
      * @return Task input.
      * @throws IgniteCheckedException If failed.
      */
-    public HadoopTaskInput input(HadoopTaskContext taskCtx)
-        throws IgniteCheckedException;
+    public HadoopTaskInput input(HadoopTaskContext taskCtx) throws IgniteCheckedException;
+
+    /**
+     * Similar to {@link #input(HadoopTaskContext)}, but does not require context since no serialization is needed.
+     *
+     * @return The Raw (byte) input of serialized values.
+     * @throws IgniteCheckedException
+     */
+    public HadoopTaskInput rawInput() throws IgniteCheckedException;
 
     /** {@inheritDoc} */
     @Override public void close();

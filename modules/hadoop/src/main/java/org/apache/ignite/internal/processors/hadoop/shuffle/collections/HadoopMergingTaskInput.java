@@ -1,80 +1,266 @@
 package org.apache.ignite.internal.processors.hadoop.shuffle.collections;
 
 import java.io.DataInput;
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 import org.apache.hadoop.io.RawComparator;
-import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
-import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
-import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
+import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
+import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob.*;
+import org.apache.ignite.internal.util.typedef.F;
 
 /**
- * TODO: support limiting the number of semultaneously open files.
+ * TODO: support limiting the number of semultaneously open files (io.merge.factor).
  */
 public class HadoopMergingTaskInput {
-
-    final RawComparator sortingRawCmp;
-
-    int numSegments;
-
-    DataInput[] inputs;
-
-    PriorityQueue<Segment> pq;
-
-    String[] files;
+    /** */
+    private final RawComparator sortingRawCmp;
 
     /** */
-    private final HadoopTaskContext ctx;
-    /** */
-    private final HadoopJobInfo info;
-    /** */
-    private final GridUnsafeMemory mem;
+    private final HadoopPriorityQueue<Segment> pq;
 
-    Comparator <Segment> cmp = new Comparator<Segment> () {
+    /** */
+    final Comparator <Segment> cmp = new Comparator<Segment> () {
         @Override public int compare(Segment s1, Segment s2) {
-            ByteArrayPtr p1 = s1.currentKey();
-            ByteArrayPtr p2 = s2.currentKey();
+            UnsafeValue p1 = (UnsafeValue)s1.key();
+            UnsafeValue p2 = (UnsafeValue)s2.key();
 
-            return sortingRawCmp.compare(p1.bytes, p1.off, p1.size, p2.bytes, p2.off, p2.size);
+            return sortingRawCmp.compare(
+                p1.getBuf(), p1.getOff(), p1.getSize(),
+                p2.getBuf(), p2.getOff(), p2.getSize());
         }
     };
 
-    HadoopMergingTaskInput() {
+    HadoopMergingTaskInput(final HadoopMultimap[] inMemorySegments, final String[] files,
+        RawComparator sortingRawCmp) throws IgniteCheckedException {
+        this.sortingRawCmp = sortingRawCmp;
 
-    }
+        // init inputs from files;
+        // Create the priority queue and fill it up.
+        pq = new HadoopPriorityQueue<Segment>(cmp) {
+            {
+                initialize(inMemorySegments.length + files.length);
+            }
+        };
+        pq.clear();
 
-    void init() {
-        pq = new PriorityQueue<>(10, cmp);
+        if (!F.isEmpty(inMemorySegments)) {
+            for (HadoopMultimap hm: inMemorySegments) {
+                HadoopTaskInput ri = hm.rawInput();
+
+                Segment seg = new Segment(true, ri);
+
+                pq.put(seg);
+            }
+        }
 
         for (String f: files) {
-            String file = getFile();
+            DataInput din = getDataInput(f);
 
-            HadoopSpillableMultimap m = new HadoopSpillableMultimap(ctx, info, mem, file);
+            HadoopTaskInput fri = new FileRawInput(din);
 
-            m.unSpill(); // Read from the file.
+            Segment seg = new Segment(false, fri);
+
+            pq.put(seg);
         }
     }
 
-    static class Segment {
-        DataInput input;
+    private DataInput getDataInput(String file) {
+        // TODO gets input for specified file.
+        return null;
+    }
 
-        boolean isInMemory() {
+    /**
+     * Entry point method. This input will be used
+     * Creates new raw input merged from all the original sources.
+     * @return
+     */
+    public HadoopTaskInput input() {
+        // TODO: the number of inputs should be limited, since each input creates N input streams.
+        return new MergedInput();
+    }
 
+    /**
+     *
+     */
+    public static class FileRawInput implements HadoopTaskInput {
+        private final DataInput din;
+        private final UnsafeValue curKey = new UnsafeValue();
+        private final List<UnsafeValue> curValues = new ArrayList<>(1);
+
+        boolean keyMarkerRead = false;
+
+        FileRawInput(DataInput din) {
+            this.din = din;
         }
 
-        boolean nextKey() {
+        @Override public boolean next() {
+            try {
+                try {
+                    if (!keyMarkerRead) {
+                        byte marker = din.readByte();
 
+                        assert marker == HadoopSpillableMultimap.MARKER_KEY;
+
+                        keyMarkerRead = true;
+                    }
+
+                    int size = din.readInt(); // read or just skip these bytes;
+
+                    curKey.readFrom(din, size);
+
+                    int valIdx = 0;
+
+                    while (true) {
+                        byte marker = din.readByte();
+
+                        if (marker == HadoopSpillableMultimap.MARKER_KEY) {
+                            // Next key in the stream:
+                            keyMarkerRead = true;
+
+                            assert valIdx > 0 ; // Ensure we have at least 1 value, otherwise file is corrupted.
+
+                            // truncate extra buffers
+                            while (curValues.size() > valIdx + 1)
+                                curValues.remove(curValues.size() - 1);
+
+                            return true; // have value
+                        }
+                        else if (marker == HadoopSpillableMultimap.MARKER_VALUE) {
+                            size = din.readInt();
+
+                            if (valIdx == curValues.size())
+                                curValues.add(new UnsafeValue(size));
+
+                            curValues.get(valIdx).readFrom(din, size);
+
+                            valIdx++;
+                        } else
+                            throw new IgniteException("Unknown marker");
+                    }
+                }
+                catch (EOFException eof) {
+                    close();
+
+                    return false; // No more value.
+                }
+            } catch (IOException | IgniteCheckedException e) {
+                throw new IgniteException(e);
+            }
         }
 
-        ByteArrayPtr currentKey() {
+        @Override public Object key() {
+            if (!curKey.hasData())
+                throw new NoSuchElementException();
 
+            return curKey;
+        }
+
+        @Override public Iterator<?> values() {
+            if (!curKey.hasData() || curValues.isEmpty())
+                throw new NoSuchElementException();
+
+            return curValues.iterator();
+        }
+
+        @Override public void close() throws IgniteCheckedException {
+            curKey.close();
+
+            if (curValues != null) {
+                for (UnsafeValue v: curValues)
+                    v.close();
+
+                curValues .clear();
+            }
         }
     }
 
-    static class ByteArrayPtr {
-        byte[] bytes;
-        int off;
-        int size;
+    class MergedInput implements HadoopTaskInput {
+        /** The current (least) segment. */
+        private HadoopTaskInput curSeg;
+
+        MergedInput() {
+            // noop
+        }
+
+        @Override public boolean next() {
+            Segment seg = pq.top(); // ~ peek()
+
+            if (seg.next())
+                pq.adjustTop(); // heapify the top again.
+            else {
+                Segment endedSegment = pq.pop(); // ~ poll()
+                // NB: this operation will re-heapify the queue automatically.
+
+                assert endedSegment == seg;
+            }
+
+            // Update top:
+            curSeg = pq.top();
+
+            return curSeg != null;
+        }
+
+        /**
+         * @return The current segment.
+         */
+        private HadoopTaskInput currentSegment() {
+            if (curSeg == null)
+                throw new NoSuchElementException();
+
+            return curSeg;
+        }
+
+        @Override public Object key() {
+            return currentSegment().key();
+        }
+
+        @Override public Iterator<?> values() {
+            return currentSegment().values();
+        }
+
+        @Override public void close() throws IgniteCheckedException {
+            if (curSeg != null)
+                curSeg.close();
+        }
     }
 
+    /**
+     * The element of a priority queue.
+     */
+    static class Segment implements AutoCloseable, HadoopTaskInput {
+        private final HadoopTaskInput rawInput;
+        private final boolean inMem;
+
+        Segment(boolean inMem, HadoopTaskInput rawInput) {
+            this.inMem = inMem;
+            this.rawInput = rawInput;
+        }
+
+        public final boolean isInMemory() {
+            return inMem;
+        }
+
+        @Override public Object key() {
+            return rawInput.key();
+        }
+
+        @Override public boolean next() {
+            return rawInput.next();
+        }
+
+        @Override public Iterator<?> values() {
+            return rawInput.values();
+        }
+
+        @Override public void close() throws IgniteCheckedException {
+            rawInput.close();
+        }
+    }
 }

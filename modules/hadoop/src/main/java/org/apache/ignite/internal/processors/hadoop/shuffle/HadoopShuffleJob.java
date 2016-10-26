@@ -17,6 +17,8 @@
 
 package org.apache.ignite.internal.processors.hadoop.shuffle;
 
+import java.io.DataInput;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,6 +41,7 @@ import org.apache.ignite.internal.processors.hadoop.counter.HadoopPerformanceCou
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopConcurrentHashMultimap;
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopMultimap;
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSkipList;
+import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSpillableMultimap;
 import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.future.GridCompoundFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
@@ -270,10 +273,10 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
     }
 
     /**
-     * Unsafe value.
+     * Represents byte[] buffer-based value.
      * TODO: rename it to ByteValue since it is byte-based value, not unsafe.
      */
-    public static class UnsafeValue implements HadoopMultimap.Value {
+    public static class UnsafeValue implements HadoopMultimap.Value, AutoCloseable {
         /** */
         private byte[] buf;
 
@@ -295,6 +298,10 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             this.buf = buf;
         }
 
+        public UnsafeValue(int size) {
+            this(new byte[size]);
+        }
+
         /** */
         @Override public int size() {
             return size;
@@ -309,13 +316,61 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
         }
 
         public void setBuf(byte[] buf) {
-            if (this.buf != buf)
-                this.buf = buf;
+            this.buf = buf;
+        }
+
+        public byte[] getBuf() {
+            return buf;
+        }
+
+        public int getOff() {
+            return off;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        public void ensureLength(long size) {
+            buf = HadoopSpillableMultimap.ensureLength(buf, size);
+        }
+
+        public void readFrom(long ptr, long len) {
+            ensureLength(len);
+
+            GridUnsafe.copyMemory(null, ptr, buf, GridUnsafe.BYTE_ARR_OFF + off, len);
+
+            off = 0;
+
+            size = (int)len;
+        }
+
+        public void readFrom(DataInput din, int expectedSize) throws IOException {
+            assert din != null;
+
+            ensureLength(expectedSize);
+
+            din.readFully(buf, 0, expectedSize);
+
+            off = 0;
+
+            size = expectedSize;
         }
 
         /** */
         @Override public void copyTo(long ptr) {
             GridUnsafe.copyMemory(buf, GridUnsafe.BYTE_ARR_OFF + off, null, ptr, size);
+        }
+
+        public boolean hasData() {
+            // TODO: may be not the best implementation:
+            return buf != null;
+        }
+
+        @Override public void close() {
+            buf = null;
+            off = 0;
+            size = 0;
         }
     }
 

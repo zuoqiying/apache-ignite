@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
@@ -71,6 +72,11 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
     }
 
     /** {@inheritDoc} */
+    @Override public HadoopTaskInput rawInput() throws IgniteCheckedException {
+        return delegateMulimap.rawInput();
+    }
+
+    /** {@inheritDoc} */
     @Override public void close() {
         buf = null;
 
@@ -81,6 +87,8 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
     @Override public void spill() throws IgniteCheckedException {
         final DataOutput dout = createOutputFile();
 
+        // TODO: since now we have method HadoopMultimap.rawInput(), we can read
+        // TODO: the multimap content with #rawInput(), without the visitor.
         try {
             HadoopMultimap.Visitor visitor = new HadoopMultimap.Visitor() {
                 /** */
@@ -135,8 +143,12 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 
                 try {
                     acceptToRead(din, new HadoopShuffleMessage.Visitor() {
+                        /** */
                         private final GridUnsafeDataInput keyInput = new GridUnsafeDataInput();
+
+                        /** */
                         private final HadoopShuffleJob.UnsafeValue val = new HadoopShuffleJob.UnsafeValue();
+
                         /** */
                         private HadoopMultimap.Key key;
 
@@ -173,6 +185,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
         try {
             while (true) {
                 byte marker = din.readByte(); // read marker byte (key or value);
+
                 int size = din.readInt(); // read or just skip these bytes;
 
                 buf = ensureLength(buf, size);
@@ -196,9 +209,17 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
         return null; // TODO: file name
     }
 
-    public static byte[] ensureLength(byte[] buf, int requiredSize) {
-        if (requiredSize > buf.length) {
-            int newSize = Math.max(requiredSize, buf.length * 2);
+    public static byte[] ensureLength(byte[] buf, long requiredSize) {
+        // NB: 0 is possible value.
+        assert requiredSize >= 0;
+
+        if (requiredSize > Integer.MAX_VALUE)
+            throw new IgniteException("Required size out of int size: " + requiredSize);
+
+        if (buf == null)
+            buf = new byte[(int)requiredSize];
+        else if (requiredSize > buf.length) {
+            int newSize = Math.max((int)requiredSize, buf.length * 2);
 
             buf = new byte[newSize]; // increase buffer if needed.
         }

@@ -25,7 +25,7 @@ import org.apache.ignite.IgniteCheckedException;
  */
 public interface HadoopTaskInput extends AutoCloseable {
     /**
-     * Moves cursor to the next element.
+     * Moves cursor to the next Key.
      *
      * @return {@code false} If input is exceeded.
      */
@@ -34,14 +34,17 @@ public interface HadoopTaskInput extends AutoCloseable {
     /**
      * Gets current key.
      *
-     * @return Key.
+     * @return Key. Never null. In case of deserializing iterator this is a deserialized object,
+     * in case of byte[] iterator this is a buffer. If previous invocation of #next() returned false,
+     * throws NoSuchElementException .
      */
     Object key();
 
     /**
      * Gets values for current key.
      *
-     * @return Values.
+     * @return Values. Never null. If previous invocation of #next() returned false,
+     * throws NoSuchElementException .
      */
     Iterator<?> values();
 

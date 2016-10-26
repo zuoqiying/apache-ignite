@@ -48,6 +48,11 @@ public abstract class HadoopHashMultimapBase extends HadoopMultimapBase {
         return new Input(taskCtx);
     }
 
+    @Override public HadoopTaskInput rawInput() throws IgniteCheckedException {
+        // TODO: implement similar to that in HadoopSkipList.
+        return null;
+    }
+
     /**
      * @return Hash table capacity.
      */

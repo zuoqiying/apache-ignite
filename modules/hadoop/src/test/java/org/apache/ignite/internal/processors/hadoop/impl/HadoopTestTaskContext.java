@@ -95,12 +95,14 @@ class HadoopTestTaskContext extends HadoopV2TaskContext {
     /** Context output implementation to write data into mockOutput. */
     private HadoopTaskOutput output = new HadoopTaskOutput() {
         /** {@inheritDoc} */
-        @Override public void write(Object key, Object val) {
+        @Override public boolean write(Object key, Object val) {
             //Check of casting and extract/copy values
             String strKey = new String(((Text)key).getBytes());
             int intVal = ((IntWritable)val).get();
 
             mockOutput().add(new Pair<>(strKey, intVal));
+
+            return true; // Unlimited output.
         }
 
         /** {@inheritDoc} */
