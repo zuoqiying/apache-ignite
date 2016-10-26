@@ -205,7 +205,7 @@ export default class AbstractTransformer {
 
     // Generate cache node filter group.
     static cacheNodeFilter(cache, igfss) {
-        return this.toSection(this.generator.cacheRebalance(cache, igfss));
+        return this.toSection(this.generator.cacheNodeFilter(cache, igfss));
     }
 
     // Generate cache rebalance group.
