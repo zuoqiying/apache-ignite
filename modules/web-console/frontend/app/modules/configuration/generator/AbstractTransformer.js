@@ -99,6 +99,11 @@ export default class AbstractTransformer {
     }
 
     // Generate logger group.
+    static clusterIgfss(igfss) {
+        return this.toSection(this.generator.clusterIgfss(igfss));
+    }
+
+    // Generate logger group.
     static clusterLogger(cluster) {
         return this.toSection(this.generator.clusterLogger(cluster));
     }

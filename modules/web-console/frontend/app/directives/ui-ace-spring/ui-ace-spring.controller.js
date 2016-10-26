@@ -78,7 +78,7 @@ export default ['$scope', 'SpringTransformer', function($scope, spring) {
                     return acc;
                 }, []);
 
-                return spring.igfss(clusterIgfss);
+                return spring.clusterIgfss(clusterIgfss);
             };
 
             break;

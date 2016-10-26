@@ -82,7 +82,7 @@ export default ['$scope', 'JavaTransformer', function($scope, java) {
                     return acc;
                 }, []);
 
-                return java.igfss(clusterIgfss);
+                return java.clusterIgfss(clusterIgfss);
             };
 
             break;
