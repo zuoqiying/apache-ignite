@@ -98,7 +98,7 @@ export class Bean extends EmptyBean {
     }
 
     intConstructorArgument(model) {
-        return this._property(this.arguments, 'int', model, null, _.nonEmpty);
+        return this._property(this.arguments, 'int', model, null, _.nonNil);
     }
 
     classConstructorArgument(model) {
