@@ -647,9 +647,11 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         ClusterNode node = cache.affinity().mapKeyToNode(name);
 
         if (node.version().compareTo(ServiceTopologyCallable.SINCE_VER) >= 0) {
+            final boolean v2 = node.version().compareTo(ServiceTopologyCallableV2.SINCE_VER) >= 0;
+
             return ctx.closure().callAsyncNoFailover(
                 GridClosureCallMode.BALANCE,
-                new ServiceTopologyCallable(name),
+                v2 ? new ServiceTopologyCallableV2(name) : new ServiceTopologyCallable(name),
                 Collections.singletonList(node),
                 false
             ).get();
@@ -1804,14 +1806,37 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         private static final IgniteProductVersion SINCE_VER = IgniteProductVersion.fromString("1.5.7");
 
         /** */
-        private final String svcName;
-
-        /** */
-        private boolean waitedCacheInit;
+        final String svcName;
 
         /** */
         @IgniteInstanceResource
-        private IgniteEx ignite;
+        IgniteEx ignite;
+
+        /**
+         * @param svcName Service name.
+         */
+        public ServiceTopologyCallable(String svcName) {
+            this.svcName = svcName;
+        }
+
+        /** {@inheritDoc} */
+        @Override public Map<UUID, Integer> call() throws Exception {
+            return serviceTopology(ignite.context().cache().utilityCache(), svcName);
+        }
+    }
+
+    /**
+     */
+    @GridInternal
+    private static class ServiceTopologyCallableV2 extends ServiceTopologyCallable {
+        /** */
+        private static final long serialVersionUID = 0L;
+
+        /** */
+        private static final IgniteProductVersion SINCE_VER = IgniteProductVersion.fromString("1.5.33");
+
+        /** */
+        private boolean waitedCacheInit;
 
         /** */
         @JobContextResource
@@ -1824,8 +1849,8 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         /**
          * @param svcName Service name.
          */
-        public ServiceTopologyCallable(String svcName) {
-            this.svcName = svcName;
+        public ServiceTopologyCallableV2(String svcName) {
+            super(svcName);
         }
 
         /** {@inheritDoc} */
