@@ -83,6 +83,6 @@ export default ['$scope', 'SpringTransformer', function($scope, spring) {
 
             break;
         default:
-            ctrl.generate = (master) => spring[ctrl.generator](master);
+            ctrl.generate = (master, detail) => spring[ctrl.generator](master, detail);
     }
 }];

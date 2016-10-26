@@ -87,6 +87,6 @@ export default ['$scope', 'JavaTransformer', function($scope, java) {
 
             break;
         default:
-            ctrl.generate = (master) => java[ctrl.generator](master);
+            ctrl.generate = (master, detail) => java[ctrl.generator](master, detail);
     }
 }];
