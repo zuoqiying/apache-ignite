@@ -895,7 +895,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         // Generate domain model for query group.
         static domainModelQuery(domain, cfg = this.domainConfigurationBean(domain)) {
             if (cfg.valueOf('queryMetadata') === 'Configuration') {
-                const fields = _.map(cfg.valueOf('fields'),
+                const fields = _.map(domain.fields,
                     (e) => ({name: e.name, className: JavaTypes.fullClassName(e.className)}));
 
                 cfg.mapProperty('fields', fields, 'fields', true)
