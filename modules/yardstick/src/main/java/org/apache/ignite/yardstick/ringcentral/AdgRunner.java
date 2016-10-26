@@ -62,7 +62,7 @@ public class AdgRunner {
     private static final boolean VERBOSE = false;
 
     /** */
-    private static String QRY_FIRST = "select extensionId, " +
+    private static String QRY_FIRST2 = "select extensionId, " +
         "min(extensionStatus), " +
         "max(concat(firstName,' ',lastName)), " +
         "min(phoneNumber), " +
@@ -76,6 +76,18 @@ public class AdgRunner {
         "OR (lcase(phoneNumber) like '%john%') " +
         "OR (lcase(extensionNumber) like '%john%')) " +
         "group by extensionId order by 2 asc, 3 desc, 4 asc, 5 desc limit 100 offset 0";
+
+    /** */
+    private static String QRY_FIRST = "select extensionId, " +
+        "extensionStatus, " +
+        "concat(firstName,' ',lastName), " +
+        "phoneNumber, " +
+        "extensionNumber " +
+        "from ADGENTITY " +
+        "where accountId = ? " +
+        "and extensionType in (?,?) " +
+        "and extensionStatus in (?,?) " +
+        "and deleteTime > ?";
 
     /** */
     private static String QRY_SECOND = "select _val FROM ADGENTITY " +
@@ -104,10 +116,29 @@ public class AdgRunner {
 
         System.out.println("Loaded data: " + cache.size());
 
+        explain(cache, QRY_FIRST, true);
+
         for (int i = 0; i < THREAD_CNT; i++)
             startDaemon("qry-exec-" + i, new QueryExecutor(cache));
 
         startDaemon("printer", new ThroughputPrinter());
+    }
+
+    /**
+     * Explain execution plan.
+     *
+     * @param cache Cache.
+     * @param sql SQL.
+     * @param args Whether to set arguments.
+     */
+    private static void explain(IgniteCache<AdgAffinityKey, AdgEntity> cache, String sql, boolean args) {
+        SqlFieldsQuery qry = new SqlFieldsQuery("EXPLAIN " + sql);
+
+        if (args)
+            qry.setArgs(argumentForQuery());
+
+        System.out.println(cache.query(qry).getAll());
+        System.out.println();
     }
 
     /**
