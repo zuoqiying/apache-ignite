@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export default ['$scope', 'JavaTransformer', function($scope, generator) {
+export default ['$scope', 'JavaTransformer', function($scope, java) {
     const ctrl = this;
 
     delete ctrl.data;
@@ -27,7 +27,7 @@ export default ['$scope', 'JavaTransformer', function($scope, generator) {
         case 'igniteConfiguration':
             const clsName = client ? 'ClientConfigurationFactory' : 'ServerConfigurationFactory';
 
-            ctrl.generate = (cluster) => generator.cluster(cluster, 'config', clsName, client);
+            ctrl.generate = (cluster) => java.cluster(cluster, 'config', clsName, client);
 
             break;
         case 'clusterCaches':
@@ -39,9 +39,11 @@ export default ['$scope', 'JavaTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                const cfg = generator.clusterGeneral(cluster);
+                const cfg = java.generator.clusterGeneral(cluster);
 
-                return generator.clusterCaches(cluster, clusterCaches, null, false, cfg);
+                java.generator.clusterCaches(cluster, clusterCaches, null, false, cfg);
+
+                return java.toSection(cfg);
             };
 
             break;
@@ -55,7 +57,7 @@ export default ['$scope', 'JavaTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                return generator[ctrl.generator](cache, cacheDomains);
+                return java[ctrl.generator](cache, cacheDomains);
             };
 
             break;
@@ -67,7 +69,7 @@ export default ['$scope', 'JavaTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                return generator.cacheNodeFilter(cache, cacheIgfss);
+                return java.cacheNodeFilter(cache, cacheIgfss);
             };
 
             break;
@@ -80,11 +82,11 @@ export default ['$scope', 'JavaTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                return generator.igfss(clusterIgfss);
+                return java.igfss(clusterIgfss);
             };
 
             break;
         default:
-            ctrl.generate = (master) => generator[ctrl.generator](master);
+            ctrl.generate = (master) => java[ctrl.generator](master);
     }
 }];
