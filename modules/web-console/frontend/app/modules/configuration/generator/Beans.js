@@ -195,6 +195,10 @@ export class Bean extends EmptyBean {
         return this._property(this.properties, 'int', model, name, _.nonNil);
     }
 
+    floatProperty(model, name = model) {
+        return this._property(this.properties, 'float', model, name, _.nonNil);
+    }
+
     property(name, value, hint) {
         this.properties.push({clsName: 'PROPERTY', name, value, hint});
 

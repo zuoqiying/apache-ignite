@@ -835,7 +835,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                 bean.pathProperty('baseDirectory')
                     .intProperty('readStripesNumber')
-                    .intProperty('maximumSparsity')
+                    .floatProperty('maximumSparsity')
                     .intProperty('maxWriteQueueSize')
                     .intProperty('writeBufferSize');
 

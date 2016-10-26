@@ -384,6 +384,10 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         return item;
                     case 'byte':
                         return `(byte) ${item}`;
+                    case 'float':
+                        return `${item}f`;
+                    case 'long':
+                        return `${item}L`;
                     case 'java.io.Serializable':
                     case 'java.lang.String':
                         return `"${item}"`;
