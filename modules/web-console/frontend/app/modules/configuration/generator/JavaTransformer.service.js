@@ -375,7 +375,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         static _toObject(clsName, val) {
             const items = _.isArray(val) ? val : [val];
 
-            return _.map(items, (item, idx) => {
+            return _.map(items, (item) => {
                 if (_.isNil(item))
                     return 'null';
 
@@ -386,9 +386,6 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         return `(byte) ${item}`;
                     case 'java.io.Serializable':
                     case 'java.lang.String':
-                        if (items.length > 1)
-                            return `"${item}"${idx !== items.length - 1 ? ' +' : ''}`;
-
                         return `"${item}"`;
                     case 'PATH':
                         return `"${item.replace(/\\/g, '\\\\')}"`;
@@ -517,12 +514,18 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 const key = this._toObject(map.keyClsName, entry[map.keyField]);
                 const val = entry[map.valField];
 
-                if (_.isArray(val)) {
-                    sb.startBlock(`${map.id}.put(${key},`);
+                if (_.isArray(val) && map.valClsName === 'java.lang.String') {
+                    if (val.length > 1) {
+                        sb.startBlock(`${map.id}.put(${key},`);
 
-                    sb.append(this._toObject(map.valClsName, val));
+                        _.forEach(val, (line, idx) => {
+                            sb.append(`"${line}"${idx !== val.length - 1 ? ' +' : ''}`);
+                        });
 
-                    sb.endBlock(');');
+                        sb.endBlock(');');
+                    }
+                    else
+                        sb.append(`${map.id}.put(${key}, ${this._toObject(map.valClsName, _.head(val))});`);
                 }
                 else
                     sb.append(`${map.id}.put(${key}, ${this._toObject(map.valClsName, val)});`);
@@ -596,9 +599,17 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         const nonBean = !this._isBean(prop.typeClsName);
 
                         if (nonBean && prop.implClsName === 'java.util.ArrayList') {
-                            const items = _.map(prop.items, (item) => this._toObject(prop.typeClsName, item)).join(', ');
+                            const items = _.map(prop.items, (item) => this._toObject(prop.typeClsName, item));
 
-                            this._setProperty(sb, id, prop.name, `Arrays.asList(${items})`);
+                            if (items.length > 1) {
+                                sb.startBlock(`${id}.set${_.upperFirst(prop.name)}(Arrays.asList(`);
+
+                                _.forEach(items, (item, i) => sb.append(item + (i !== items.length - 1 ? ',' : '')));
+
+                                sb.endBlock('));');
+                            }
+                            else
+                                this._setProperty(sb, id, prop.name, `Arrays.asList(${items})`);
                         }
                         else {
                             const colTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
