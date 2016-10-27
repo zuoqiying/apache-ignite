@@ -632,8 +632,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                         break;
                     case 'Custom':
-                        if (spi.Custom.class)
-                            failoverSpi = new EmptyBean(spi.Custom.class);
+                        const className = _.get(spi, 'Custom.class');
+
+                        if (className)
+                            failoverSpi = new EmptyBean(className);
 
                         break;
                     default:
