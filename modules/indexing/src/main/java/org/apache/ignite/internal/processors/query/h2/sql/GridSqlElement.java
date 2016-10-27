@@ -23,9 +23,9 @@ import java.util.List;
 /**
  * Base class for all SQL AST nodes.
  */
-public abstract class GridSqlElement implements Iterable<GridSqlElement> {
+public abstract class GridSqlElement implements Iterable<GridSqlAst>, GridSqlAst {
     /** */
-    protected final List<GridSqlElement> children;
+    private final List<GridSqlAst> children;
 
     /** */
     private GridSqlType resultType;
@@ -33,7 +33,7 @@ public abstract class GridSqlElement implements Iterable<GridSqlElement> {
     /**
      * @param children Initial child list.
      */
-    protected GridSqlElement(List<GridSqlElement> children) {
+    protected GridSqlElement(List<GridSqlAst> children) {
         assert children != null;
 
         this.children = children;
@@ -57,17 +57,10 @@ public abstract class GridSqlElement implements Iterable<GridSqlElement> {
     }
 
     /**
-     * Get the SQL expression.
-     *
-     * @return the SQL expression.
-     */
-    public abstract String getSQL();
-
-    /**
      * @param expr Expr.
      * @return {@code this}.
      */
-    public GridSqlElement addChild(GridSqlElement expr) {
+    public GridSqlElement addChild(GridSqlAst expr) {
         if (expr == null)
             throw new NullPointerException();
 
@@ -77,18 +70,11 @@ public abstract class GridSqlElement implements Iterable<GridSqlElement> {
     }
 
     /**
-     * @return First child.
-     */
-    public <E extends GridSqlElement> E child() {
-        return child(0);
-    }
-
-    /**
      * @param idx Index.
      * @return Child.
      */
     @SuppressWarnings("unchecked")
-    public <E extends GridSqlElement> E child(int idx) {
+    @Override public <E extends GridSqlAst> E child(int idx) {
         return (E)children.get(idx);
     }
 
@@ -96,7 +82,7 @@ public abstract class GridSqlElement implements Iterable<GridSqlElement> {
      * @param idx Index.
      * @param child New child.
      */
-    public void child(int idx, GridSqlElement child) {
+    @Override public <E extends GridSqlAst> void child(int idx, E child) {
         if (child == null)
             throw new NullPointerException();
 
@@ -111,7 +97,7 @@ public abstract class GridSqlElement implements Iterable<GridSqlElement> {
     }
 
     /** {@inheritDoc} */
-    @Override public Iterator<GridSqlElement> iterator() {
+    @Override public Iterator<GridSqlAst> iterator() {
         return children.iterator();
     }
 

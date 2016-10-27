@@ -27,7 +27,13 @@ import org.h2.util.StringUtils;
  */
 public class GridSqlSelect extends GridSqlQuery {
     /** */
-    private List<GridSqlElement> cols = new ArrayList<>();
+    public static final int FROM_CHILD = 0;
+
+    /** */
+    public static final int WHERE_CHILD = 1;
+
+    /** */
+    private List<GridSqlAst> cols = new ArrayList<>();
 
     /** */
     private int visibleCols;
@@ -36,13 +42,51 @@ public class GridSqlSelect extends GridSqlQuery {
     private int[] grpCols;
 
     /** */
-    private GridSqlElement from;
+    private GridSqlAst from;
 
     /** */
-    private GridSqlElement where;
+    private GridSqlAst where;
 
     /** */
     private int havingCol = -1;
+
+    /** {@inheritDoc} */
+    @Override public int size() {
+        return 2 + cols.size(); // + FROM + WHERE
+    }
+
+    /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
+    @Override public <E extends GridSqlAst> E child(int childIdx) {
+        switch (childIdx) {
+            case FROM_CHILD:
+                return (E)(from == null ? GridSqlPlaceholder.EMPTY : from);
+
+            case WHERE_CHILD:
+                return (E)(where == null ? GridSqlPlaceholder.EMPTY : where);
+
+            default:
+                return (E)cols.get(childIdx - 2);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override public <E extends GridSqlAst> void child(int childIdx, E child) {
+        switch (childIdx) {
+            case FROM_CHILD:
+                from = child;
+
+                break;
+
+            case WHERE_CHILD:
+                where = child;
+
+                break;
+
+            default:
+                cols.set(childIdx - 2, child);
+        }
+    }
 
     /** {@inheritDoc} */
     @Override public int visibleColumns() {
@@ -57,7 +101,7 @@ public class GridSqlSelect extends GridSqlQuery {
     }
 
     /** {@inheritDoc} */
-    @Override protected GridSqlElement column(int col) {
+    @Override protected GridSqlAst column(int col) {
         return cols.get(col);
     }
 
@@ -113,8 +157,8 @@ public class GridSqlSelect extends GridSqlQuery {
             grpCols == null &&
             havingCol < 0 &&
             sort.isEmpty() &&
-            limit == null &&
-            offset == null;
+            limit() == null &&
+            offset() == null;
 
         if (simple) {
             for (GridSqlElement expression : columns(true)) {
@@ -133,7 +177,7 @@ public class GridSqlSelect extends GridSqlQuery {
      * @param buff Statement builder.
      * @param exp Alias expression.
      */
-    private static void addAlias(StatementBuilder buff, GridSqlElement exp) {
+    private static void addAlias(StatementBuilder buff, GridSqlAst exp) {
         exp = GridSqlAlias.unwrap(exp);
 
         buff.append(StringUtils.unEnclose(exp.getSQL()));
@@ -143,7 +187,7 @@ public class GridSqlSelect extends GridSqlQuery {
      * @param visibleOnly If only visible expressions needed.
      * @return Select clause expressions.
      */
-    public List<GridSqlElement> columns(boolean visibleOnly) {
+    public List<GridSqlAst> columns(boolean visibleOnly) {
         assert visibleCols <= cols.size();
 
         return visibleOnly && visibleCols != cols.size() ?
@@ -216,7 +260,7 @@ public class GridSqlSelect extends GridSqlQuery {
     /**
      * @return Tables.
      */
-    public GridSqlElement from() {
+    public GridSqlAst from() {
         return from;
     }
 
@@ -233,7 +277,7 @@ public class GridSqlSelect extends GridSqlQuery {
     /**
      * @return Where.
      */
-    public GridSqlElement where() {
+    public GridSqlAst where() {
         return where;
     }
 
@@ -255,7 +299,7 @@ public class GridSqlSelect extends GridSqlQuery {
         if (cond == null)
             throw new NullPointerException();
 
-        GridSqlElement old = where();
+        GridSqlAst old = where();
 
         where(old == null ? cond : new GridSqlOperation(GridSqlOperationType.AND, old, cond));
 

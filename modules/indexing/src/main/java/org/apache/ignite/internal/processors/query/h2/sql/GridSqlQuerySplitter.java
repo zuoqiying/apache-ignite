@@ -25,7 +25,6 @@ import java.util.Set;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlQuery;
 import org.apache.ignite.internal.processors.cache.query.GridCacheTwoStepQuery;
-import org.apache.ignite.lang.IgnitePredicate;
 import org.h2.command.Prepared;
 import org.h2.jdbc.JdbcPreparedStatement;
 import org.h2.util.IntArray;
@@ -58,7 +57,16 @@ public class GridSqlQuerySplitter {
     private static final String HAVING_COLUMN = "__H";
 
     /** */
+    private static final String TABLE_FILTER_ALIAS_SUFFIX = "__Y";
+
+    /** */
     private int nextMergeTblIdx;
+
+    /** */
+    private Set<String> schemas;
+
+    /** */
+    private Set<String> tbls;
 
     /** */
     private GridCacheSqlQuery mapSqlQry;
@@ -174,9 +182,6 @@ public class GridSqlQuerySplitter {
         if (params == null)
             params = GridCacheSqlQuery.EMPTY_PARAMS;
 
-        Set<String> tbls = new HashSet<>();
-        Set<String> schemas = new HashSet<>();
-
         final Prepared prepared = prepared(stmt);
 
         GridSqlQuery qry = new GridSqlQueryParser().parse(prepared);
@@ -185,9 +190,12 @@ public class GridSqlQuerySplitter {
 
         qry.explain(false);
 
-        collectAllTables(qry, schemas, tbls);
-
         GridSqlQuerySplitter splitter = new GridSqlQuerySplitter();
+
+        splitter.tbls = new HashSet<>();
+        splitter.schemas = new HashSet<>();
+
+        splitter.normalizeQuery(qry);
 
         // Map query will be direct reference to the original query AST.
         // Thus all the modifications will be performed on the original AST, so we should be careful when
@@ -195,7 +203,7 @@ public class GridSqlQuerySplitter {
         splitter.splitSelect(wrapUnion(qry), params, collocatedGrpBy);
 
         // Build resulting two step query.
-        GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(schemas, tbls);
+        GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(splitter.schemas, splitter.tbls);
 
         twoStepQry.addMapQuery(splitter.mapSqlQry);
         twoStepQry.reduceQuery(splitter.rdcSqlQry);
@@ -376,109 +384,82 @@ public class GridSqlQuerySplitter {
 
     /**
      * @param qry Query.
-     * @param schemas Schema names.
-     * @param tbls Tables.
      */
-    private static void collectAllTables(GridSqlQuery qry, Set<String> schemas, Set<String> tbls) {
+    private void normalizeQuery(GridSqlQuery qry) {
         if (qry instanceof GridSqlUnion) {
             GridSqlUnion union = (GridSqlUnion)qry;
 
-            collectAllTables(union.left(), schemas, tbls);
-            collectAllTables(union.right(), schemas, tbls);
+            normalizeQuery(union.left());
+            normalizeQuery(union.right());
         }
         else {
             GridSqlSelect select = (GridSqlSelect)qry;
 
-            collectAllTablesInFrom(select.from(), schemas, tbls);
+            // Normalize FROM first to update expression aliases then.
+            normalizeFrom(select.from());
 
             for (GridSqlElement el : select.columns(false))
-                collectAllTablesInSubqueries(el, schemas, tbls);
+                normalizeExpression(el);
 
-            collectAllTablesInSubqueries(select.where(), schemas, tbls);
+            normalizeExpression(select.where());
+            normalizeExpression(select.offset());
+            normalizeExpression(select.limit());
+
+            // ORDER BY and HAVING must be in SELECT expressions.
         }
     }
 
     /**
-     * @param from From element.
-     * @param schemas Schema names.
-     * @param tbls Tables.
+     * @param prnt Parent element.
+     * @param childIdx Child index.
      */
-    private static void collectAllTablesInFrom(GridSqlElement from, final Set<String> schemas, final Set<String> tbls) {
-        findTablesInFrom(from, new IgnitePredicate<GridSqlElement>() {
-            @Override public boolean apply(GridSqlElement el) {
-                if (el instanceof GridSqlTable) {
-                    GridSqlTable tbl = (GridSqlTable)el;
+    private void normalizeFrom(GridSqlElement prnt, int childIdx) {
+        GridSqlElement from = prnt.child(childIdx);
 
-                    String schema = tbl.schema();
+        if (from instanceof GridSqlTable || from instanceof GridSqlSubquery) {
+            if (from instanceof GridSqlTable) {
+                GridSqlTable tbl = (GridSqlTable)from;
 
-                    boolean addSchema = tbls == null;
+                String schema = tbl.schema();
 
-                    if (tbls != null)
-                        addSchema = tbls.add(tbl.dataTable().identifier());
+                boolean addSchema = tbls == null;
 
-                    if (addSchema && schema != null && schemas != null)
-                        schemas.add(schema);
-                }
-                else if (el instanceof GridSqlSubquery)
-                    collectAllTables(((GridSqlSubquery)el).subquery(), schemas, tbls);
+                if (tbls != null)
+                    addSchema = tbls.add(tbl.dataTable().identifier());
 
-                return false;
+                if (addSchema && schema != null && schemas != null)
+                    schemas.add(schema);
             }
-        });
-    }
-
-    /**
-     * Processes all the tables and subqueries using the given closure.
-     *
-     * @param from FROM element.
-     * @param c Closure each found table and subquery will be passed to. If returns {@code true} the we need to stop.
-     * @return {@code true} If we have found.
-     */
-    private static boolean findTablesInFrom(GridSqlElement from, IgnitePredicate<GridSqlElement> c) {
-        if (from == null)
-            return false;
-
-        if (from instanceof GridSqlTable || from instanceof GridSqlSubquery)
-            return c.apply(from);
-
-        if (from instanceof GridSqlJoin) {
+            else
+                normalizeQuery(((GridSqlSubquery)from).subquery());
+        }
+        else if (from instanceof GridSqlJoin) {
             // Left and right.
-            if (findTablesInFrom(from.child(0), c))
-                return true;
+            normalizeFrom(from, 0);
+            normalizeFrom(from, 1);
 
-            if (findTablesInFrom(from.child(1), c))
-                return true;
-
-            // We don't process ON condition because it is not a joining part of from here.
-            return false;
+            // Join condition (after ON keyword).
+            normalizeExpression(from.child(2));
         }
         else if (from instanceof GridSqlAlias)
-            return findTablesInFrom(from.child(), c);
-        else if (from instanceof GridSqlFunction)
-            return false;
-
-        throw new IllegalStateException(from.getClass().getName() + " : " + from.getSQL());
+            normalizeFrom(from, 0);
+        else if (!(from instanceof GridSqlFunction))
+            throw new IllegalStateException(from.getClass().getName() + " : " + from.getSQL());
     }
 
     /**
-     * Searches schema names and tables in subqueries in SELECT and WHERE clauses.
-     *
-     * @param el Element.
-     * @param schemas Schema names.
-     * @param tbls Tables.
+     * @param prnt Parent element.
+     * @param childIdx Child index.
      */
-    private static void collectAllTablesInSubqueries(GridSqlElement el, Set<String> schemas, Set<String> tbls) {
-        if (el == null)
-            return;
+    private void normalizeExpression(GridSqlElement prnt, int childIdx) {
+        GridSqlElement el = prnt.child(childIdx);
 
-        el = GridSqlAlias.unwrap(el);
-
-        if (el instanceof GridSqlOperation || el instanceof GridSqlFunction) {
-            for (GridSqlElement child : el)
-                collectAllTablesInSubqueries(child, schemas, tbls);
+        if (el instanceof GridSqlAlias || el instanceof GridSqlOperation || el instanceof GridSqlFunction) {
+            for (int i = 0; i < el.size(); i++)
+                normalizeExpression(el, i);
         }
         else if (el instanceof GridSqlSubquery)
-            collectAllTables(((GridSqlSubquery)el).subquery(), schemas, tbls);
+            normalizeQuery(((GridSqlSubquery)el).subquery());
     }
 
     /**

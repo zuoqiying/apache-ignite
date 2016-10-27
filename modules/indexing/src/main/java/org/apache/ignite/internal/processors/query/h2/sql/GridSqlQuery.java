@@ -25,7 +25,7 @@ import org.h2.util.StringUtils;
 /**
  * SQL Query AST.
  */
-public abstract class GridSqlQuery {
+public abstract class GridSqlQuery implements GridSqlAst {
     /** */
     protected boolean distinct;
 
@@ -33,10 +33,10 @@ public abstract class GridSqlQuery {
     protected List<GridSqlSortColumn> sort = new ArrayList<>();
 
     /** */
-    protected GridSqlElement offset;
+    private GridSqlElement offset;
 
     /** */
-    protected GridSqlElement limit;
+    private GridSqlElement limit;
 
     /** */
     private boolean explain;
@@ -101,11 +101,6 @@ public abstract class GridSqlQuery {
     }
 
     /**
-     * @return Generate sql.
-     */
-    public abstract String getSQL();
-
-    /**
      * @return Sort.
      */
     public List<GridSqlSortColumn> sort() {
@@ -135,7 +130,7 @@ public abstract class GridSqlQuery {
      * @param col Column index.
      * @return Expression for column index.
      */
-    protected abstract GridSqlElement column(int col);
+    protected abstract GridSqlAst column(int col);
 
     /**
      * @param buff Statement builder.
@@ -158,13 +153,13 @@ public abstract class GridSqlQuery {
                 if (idx < visibleCols)
                     buff.append(idx + 1);
                 else {
-                    GridSqlElement expr = column(idx);
+                    GridSqlAst expr = column(idx);
 
                     if (expr == null) // For plain select should never be null, for union H2 itself can't parse query.
                         throw new IllegalStateException("Failed to build query: " + buff.toString());
 
                     if (expr instanceof GridSqlAlias)
-                        expr = expr.child();
+                        expr = expr.child(0);
 
                     buff.append('=').append(StringUtils.unEnclose(expr.getSQL()));
                 }
