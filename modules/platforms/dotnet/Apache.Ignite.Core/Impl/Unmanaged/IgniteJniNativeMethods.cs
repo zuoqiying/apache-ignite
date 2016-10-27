@@ -131,36 +131,17 @@ namespace Apache.Ignite.Core.Impl.Unmanaged
             long outMemPtr);
 
         [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetInStreamOutObject")]
-        public static extern void* TargetInStreanOutObject(void* ctx, void* target, int opType, long memPtr);
-
-        [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetInObjectStreamOutStream")]
-        public static extern void TargetInObjectStreamOutStream(void* ctx, void* target, int opType,
-            void* arg, long inMemPtr, long outMemPtr);
+        public static extern void* TargetInStreamOutObject(void* ctx, void* target, int opType, long memPtr);
 
         [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetInObjectStreamOutObjectStream")]
         public static extern void* TargetInObjectStreamOutObjectStream(void* ctx, void* target, int opType,
             void* arg, long inMemPtr, long outMemPtr);
-
-        [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetOutLong")]
-        public static extern long TargetOutLong(void* ctx, void* target, int opType);
 
         [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetOutStream")]
         public static extern void TargetOutStream(void* ctx, void* target, int opType, long memPtr);
 
         [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetOutObject")]
         public static extern void* TargetOutObject(void* ctx, void* target, int opType);
-
-        [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetListenFuture")]
-        public static extern void TargetListenFut(void* ctx, void* target, long futId, int typ);
-
-        [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetListenFutureForOperation")]
-        public static extern void TargetListenFutForOp(void* ctx, void* target, long futId, int typ, int opId);
-
-        [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetListenFutureAndGet")]
-        public static extern void* TargetListenFutAndGet(void* ctx, void* target, long futId, int typ);
-
-        [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteTargetListenFutureForOperationAndGet")]
-        public static extern void* TargetListenFutForOpAndGet(void* ctx, void* target, long futId, int typ, int opId);
 
         [DllImport(IgniteUtils.FileIgniteJniDll, EntryPoint = "IgniteAcquire")]
         public static extern void* Acquire(void* ctx, void* target);

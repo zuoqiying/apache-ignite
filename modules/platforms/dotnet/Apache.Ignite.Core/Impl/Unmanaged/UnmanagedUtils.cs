@@ -423,14 +423,9 @@ namespace Apache.Ignite.Core.Impl.Unmanaged
 
         internal static IUnmanagedTarget TargetInStreamOutObject(IUnmanagedTarget target, int opType, long inMemPtr)
         {
-            void* res = JNI.TargetInStreanOutObject(target.Context, target.Target, opType, inMemPtr);
+            void* res = JNI.TargetInStreamOutObject(target.Context, target.Target, opType, inMemPtr);
 
             return target.ChangeTarget(res);
-        }
-
-        internal static void TargetInObjectStreamOutStream(IUnmanagedTarget target, int opType, void* arg, long inMemPtr, long outMemPtr)
-        {
-            JNI.TargetInObjectStreamOutStream(target.Context, target.Target, opType, arg, inMemPtr, outMemPtr);
         }
 
         internal static IUnmanagedTarget TargetInObjectStreamOutObjectStream(IUnmanagedTarget target, int opType, void* arg, long inMemPtr, long outMemPtr)
@@ -443,11 +438,6 @@ namespace Apache.Ignite.Core.Impl.Unmanaged
             return target.ChangeTarget(res);
         }
 
-        internal static long TargetOutLong(IUnmanagedTarget target, int opType)
-        {
-            return JNI.TargetOutLong(target.Context, target.Target, opType);
-        }
-
         internal static void TargetOutStream(IUnmanagedTarget target, int opType, long memPtr)
         {
             JNI.TargetOutStream(target.Context, target.Target, opType, memPtr);
@@ -456,31 +446,6 @@ namespace Apache.Ignite.Core.Impl.Unmanaged
         internal static IUnmanagedTarget TargetOutObject(IUnmanagedTarget target, int opType)
         {
             void* res = JNI.TargetOutObject(target.Context, target.Target, opType);
-
-            return target.ChangeTarget(res);
-        }
-
-        internal static void TargetListenFuture(IUnmanagedTarget target, long futId, int typ)
-        {
-            JNI.TargetListenFut(target.Context, target.Target, futId, typ);
-        }
-
-        internal static void TargetListenFutureForOperation(IUnmanagedTarget target, long futId, int typ, int opId)
-        {
-            JNI.TargetListenFutForOp(target.Context, target.Target, futId, typ, opId);
-        }
-
-        internal static IUnmanagedTarget TargetListenFutureAndGet(IUnmanagedTarget target, long futId, int typ)
-        {
-            var res = JNI.TargetListenFutAndGet(target.Context, target.Target, futId, typ);
-
-            return target.ChangeTarget(res);
-        }
-
-        internal static IUnmanagedTarget TargetListenFutureForOperationAndGet(IUnmanagedTarget target, long futId,
-            int typ, int opId)
-        {
-            var res = JNI.TargetListenFutForOpAndGet(target.Context, target.Target, futId, typ, opId);
 
             return target.ChangeTarget(res);
         }

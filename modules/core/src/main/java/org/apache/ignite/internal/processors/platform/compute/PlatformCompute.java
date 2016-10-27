@@ -78,8 +78,6 @@ public class PlatformCompute extends PlatformAbstractTarget {
     /** Compute instance for platform-only nodes. */
     private final IgniteComputeImpl computeForPlatform;
 
-    /** Future for previous asynchronous operation. */
-    protected ThreadLocal<IgniteInternalFuture> curFut = new ThreadLocal<>();
     /**
      * Constructor.
      *
@@ -121,6 +119,9 @@ public class PlatformCompute extends PlatformAbstractTarget {
                 return executeNative0(task);
             }
 
+            case OP_EXEC_ASYNC:
+                return executeJavaTask(reader, true);
+
             default:
                 return super.processInStreamOutObject(type, reader);
         }
@@ -135,14 +136,7 @@ public class PlatformCompute extends PlatformAbstractTarget {
 
                 return TRUE;
             }
-        }
 
-        return super.processInLongOutLong(type, val);
-    }
-
-    /** {@inheritDoc} */
-    @Override protected long processOutLong(int type) throws IgniteCheckedException {
-        switch (type) {
             case OP_WITH_NO_FAILOVER: {
                 compute.withNoFailover();
                 computeForPlatform.withNoFailover();
@@ -151,7 +145,7 @@ public class PlatformCompute extends PlatformAbstractTarget {
             }
         }
 
-        return super.processOutLong(type);
+        return super.processInLongOutLong(type, val);
     }
 
     /**
@@ -235,24 +229,9 @@ public class PlatformCompute extends PlatformAbstractTarget {
 
                 break;
 
-            case OP_EXEC_ASYNC:
-                writer.writeObjectDetached(executeJavaTask(reader, true));
-
-                break;
-
             default:
                 super.processInStreamOutStream(type, reader, writer);
         }
-    }
-
-    /** <inheritDoc /> */
-    @Override protected IgniteInternalFuture currentFuture() throws IgniteCheckedException {
-        IgniteInternalFuture fut = curFut.get();
-
-        if (fut == null)
-            throw new IllegalStateException("Asynchronous operation not started.");
-
-        return fut;
     }
 
     /**
@@ -287,7 +266,7 @@ public class PlatformCompute extends PlatformAbstractTarget {
      * @param reader Reader.
      * @return Task result.
      */
-    protected Object executeJavaTask(BinaryRawReaderEx reader, boolean async) {
+    protected Object executeJavaTask(BinaryRawReaderEx reader, boolean async) throws IgniteCheckedException {
         String taskName = reader.readString();
         boolean keepBinary = reader.readBoolean();
         Object arg = reader.readObjectDetached();
@@ -304,11 +283,8 @@ public class PlatformCompute extends PlatformAbstractTarget {
 
         Object res = compute0.execute(taskName, arg);
 
-        if (async) {
-            curFut.set(new ComputeConvertingFuture(compute0.future()));
-
-            return null;
-        }
+        if (async)
+            return readAndListenFuture(reader, new ComputeConvertingFuture(compute0.future()));
         else
             return toBinary(res);
     }

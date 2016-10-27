@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.platform;
 
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.binary.BinaryRawReader;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.binary.BinaryRawReaderEx;
 import org.apache.ignite.internal.binary.BinaryRawWriterEx;
@@ -26,6 +27,7 @@ import org.apache.ignite.internal.processors.platform.memory.PlatformMemory;
 import org.apache.ignite.internal.processors.platform.memory.PlatformOutputStream;
 import org.apache.ignite.internal.processors.platform.utils.PlatformFutureUtils;
 import org.apache.ignite.internal.processors.platform.utils.PlatformListenable;
+import org.apache.ignite.lang.IgniteFuture;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,9 +42,6 @@ public abstract class PlatformAbstractTarget implements PlatformTarget {
 
     /** Constant: ERROR. */
     protected static final int ERROR = -1;
-
-    /** */
-    private static final int OP_META = -1;
 
     /** Context. */
     protected final PlatformContext platformCtx;
@@ -76,13 +75,7 @@ public abstract class PlatformAbstractTarget implements PlatformTarget {
         try (PlatformMemory mem = platformCtx.memory().get(memPtr)) {
             BinaryRawReaderEx reader = platformCtx.reader(mem);
 
-            if (type == OP_META) {
-                platformCtx.processMetadata(reader);
-
-                return TRUE;
-            }
-            else
-                return processInStreamOutLong(type, reader, mem);
+            return processInStreamOutLong(type, reader, mem);
         }
         catch (Exception e) {
             throw convertException(e);
@@ -95,16 +88,6 @@ public abstract class PlatformAbstractTarget implements PlatformTarget {
             BinaryRawReaderEx reader = mem != null ? platformCtx.reader(mem) : null;
 
             return processInStreamOutObject(type, reader);
-        }
-        catch (Exception e) {
-            throw convertException(e);
-        }
-    }
-
-    /** {@inheritDoc} */
-    @Override public long outLong(int type) throws Exception {
-        try {
-            return processOutLong(type);
         }
         catch (Exception e) {
             throw convertException(e);
@@ -148,26 +131,6 @@ public abstract class PlatformAbstractTarget implements PlatformTarget {
                 BinaryRawWriterEx writer = platformCtx.writer(out);
 
                 processInStreamOutStream(type, reader, writer);
-
-                out.synchronize();
-            }
-        }
-        catch (Exception e) {
-            throw convertException(e);
-        }
-    }
-
-    /** {@inheritDoc} */
-    @Override public void inObjectStreamOutStream(int type, Object arg, long inMemPtr, long outMemPtr) throws Exception {
-        try (PlatformMemory inMem = platformCtx.memory().get(inMemPtr)) {
-            BinaryRawReaderEx reader = platformCtx.reader(inMem);
-
-            try (PlatformMemory outMem = platformCtx.memory().get(outMemPtr)) {
-                PlatformOutputStream out = outMem.output();
-
-                BinaryRawWriterEx writer = platformCtx.writer(out);
-
-                processInObjectStreamOutStream(type, arg, reader, writer);
 
                 out.synchronize();
             }
@@ -244,23 +207,12 @@ public abstract class PlatformAbstractTarget implements PlatformTarget {
 
     /** {@inheritDoc} */
     @Override public void listenFuture(final long futId, int typ) throws Exception {
-        listenFutureAndGet(futId, typ);
+        PlatformFutureUtils.listen(platformCtx, currentFuture(), futId, typ, null, this);
     }
 
     /** {@inheritDoc} */
     @Override public void listenFutureForOperation(final long futId, int typ, int opId) throws Exception {
-        listenFutureForOperationAndGet(futId, typ, opId);
-    }
-
-    /** {@inheritDoc} */
-    @Override public PlatformListenable listenFutureAndGet(final long futId, int typ) throws Exception {
-        return PlatformFutureUtils.listen(platformCtx, currentFuture(), futId, typ, null, this);
-    }
-
-    /** {@inheritDoc} */
-    @Override public PlatformListenable listenFutureForOperationAndGet(final long futId, int typ, int opId)
-            throws Exception {
-        return PlatformFutureUtils.listen(platformCtx, currentFuture(), futId, typ, futureWriter(opId), this);
+        PlatformFutureUtils.listen(platformCtx, currentFuture(), futId, typ, futureWriter(opId), this);
     }
 
     /**
@@ -353,32 +305,8 @@ public abstract class PlatformAbstractTarget implements PlatformTarget {
      * @param writer Binary writer.
      * @throws IgniteCheckedException In case of exception.
      */
-    protected void processInObjectStreamOutStream(int type, @Nullable Object arg, BinaryRawReaderEx reader,
-        BinaryRawWriterEx writer) throws IgniteCheckedException {
-        throwUnsupported(type);
-    }
-
-    /**
-     * Process IN-OUT operation.
-     *
-     * @param type Type.
-     * @param arg Argument.
-     * @param reader Binary reader.
-     * @param writer Binary writer.
-     * @throws IgniteCheckedException In case of exception.
-     */
     protected Object processInObjectStreamOutObjectStream(int type, @Nullable Object arg, BinaryRawReaderEx reader,
         BinaryRawWriterEx writer) throws IgniteCheckedException {
-        return throwUnsupported(type);
-    }
-
-    /**
-     * Process OUT operation.
-     *
-     * @param type Type.
-     * @throws IgniteCheckedException In case of exception.
-     */
-    protected long processOutLong(int type) throws IgniteCheckedException {
         return throwUnsupported(type);
     }
 
@@ -410,7 +338,77 @@ public abstract class PlatformAbstractTarget implements PlatformTarget {
      * @return Dummy value which is never returned.
      * @throws IgniteCheckedException Exception to be thrown.
      */
-    protected <T> T throwUnsupported(int type) throws IgniteCheckedException {
+    private <T> T throwUnsupported(int type) throws IgniteCheckedException {
         throw new IgniteCheckedException("Unsupported operation type: " + type);
+    }
+
+    /**
+     * Reads future information and listens.
+     *
+     * @param reader Reader.
+     * @param fut Future.
+     * @param writer Writer.
+     * @throws IgniteCheckedException In case of error.
+     */
+    protected PlatformListenable readAndListenFuture(BinaryRawReader reader, IgniteInternalFuture fut,
+                                                     PlatformFutureUtils.Writer writer)
+            throws IgniteCheckedException {
+        long futId = reader.readLong();
+        int futTyp = reader.readInt();
+
+        return PlatformFutureUtils.listen(platformCtx, fut, futId, futTyp, writer, this);
+    }
+
+    /**
+     * Reads future information and listens.
+     *
+     * @param reader Reader.
+     * @param fut Future.
+     * @param writer Writer.
+     * @throws IgniteCheckedException In case of error.
+     */
+    protected PlatformListenable readAndListenFuture(BinaryRawReader reader, IgniteFuture fut,
+                                                     PlatformFutureUtils.Writer writer)
+            throws IgniteCheckedException {
+        long futId = reader.readLong();
+        int futTyp = reader.readInt();
+
+        return PlatformFutureUtils.listen(platformCtx, fut, futId, futTyp, writer, this);
+    }
+
+    /**
+     * Reads future information and listens.
+     *
+     * @param reader Reader.
+     * @param fut Future.
+     * @throws IgniteCheckedException In case of error.
+     */
+    protected PlatformListenable readAndListenFuture(BinaryRawReader reader, IgniteInternalFuture fut)
+        throws IgniteCheckedException {
+        return readAndListenFuture(reader, fut, null);
+    }
+
+    /**
+     * Reads future information and listens.
+     *
+     * @param reader Reader.
+     * @param fut Future.
+     * @throws IgniteCheckedException In case of error.
+     */
+    protected PlatformListenable readAndListenFuture(BinaryRawReader reader, IgniteFuture fut)
+        throws IgniteCheckedException {
+        return readAndListenFuture(reader, fut, null);
+    }
+
+    /**
+     * Reads future information and listens.
+     *
+     * @param reader Reader.
+     * @throws IgniteCheckedException In case of error.
+     */
+    protected long readAndListenFuture(BinaryRawReader reader) throws IgniteCheckedException {
+        readAndListenFuture(reader, currentFuture(), null);
+
+        return TRUE;
     }
 }
