@@ -2925,6 +2925,8 @@ $generatorJava.clusterConfiguration = function(cluster, clientNearCfg, res) {
 // Generate loading of secret properties file.
 $generatorJava.tryLoadSecretProperties = function(cluster, res) {
     if ($generatorCommon.secretPropertiesNeeded(cluster)) {
+        res.importClass('org.apache.ignite.configuration.IgniteConfiguration');
+
         $generatorJava.declareVariableCustom(res, 'props', 'java.util.Properties', 'new Properties()', 'private static final');
 
         res.startBlock('static {');
@@ -3353,7 +3355,7 @@ $generatorJava.generateDemo = function(cluster, res, factoryCls) {
 
                         res.needEmptyLine = true;
 
-                        if (!desc.customGeneration) {
+                        if (!desc.specialGeneration) {
                             $generatorJava.declareVariableCustom(res, 'stmt', 'java.sql.PreparedStatement', conVar + '.prepareStatement("' + desc.insertPattern + '")');
 
                             res.startBlock('for (int id = 0; id < ' + desc.insertCntConsts[0].name + '; id ++) {');
@@ -3369,7 +3371,7 @@ $generatorJava.generateDemo = function(cluster, res, factoryCls) {
                             res.needEmptyLine = true;
                         }
                         else
-                            desc.customGeneration(res, conVar);
+                            desc.specialGeneration(res, conVar);
 
                         res.line(conVar + '.commit();');
 
