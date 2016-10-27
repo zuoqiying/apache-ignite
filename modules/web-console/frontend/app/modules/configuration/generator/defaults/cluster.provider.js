@@ -255,6 +255,30 @@ const DFLT_CLUSTER = {
             expireDateFieldType: 'DATETIME',
             numberOfRetries: 2
         }
+    },
+    loadBalancingSpi: {
+        RoundRobin: {
+            perTask: false
+        },
+        Adaptive: {
+            loadProbe: {
+                Job: {
+                    useAverage: true
+                },
+                CPU: {
+                    useAverage: true,
+                    useProcessors: true,
+                    processorCoefficient: 1
+                },
+                ProcessingTime: {
+                    useAverage: true
+                }
+            }
+        },
+        WeightedRandom: {
+            nodeWeight: 10,
+            useWeights: false
+        }
     }
 };
 

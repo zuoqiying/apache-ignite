@@ -103,6 +103,23 @@ export default ['clustersController', [
                     else
                         $scope.backupItem.failoverSpi = {};
                 }
+                else if (field.type === 'loadBalancingSpi') {
+                    const newLoadBalancing = {Adaptive: {
+                        loadProbe: {
+                            Job: {useAverage: true},
+                            CPU: {
+                                useAverage: true,
+                                useProcessors: true
+                            },
+                            ProcessingTime: {useAverage: true}
+                        }
+                    }};
+
+                    if (LegacyUtils.isDefined($scope.backupItem.loadBalancingSpi))
+                        $scope.backupItem.loadBalancingSpi.push(newLoadBalancing);
+                    else
+                        $scope.backupItem.loadBalancingSpi = [newLoadBalancing];
+                }
                 else if (field.type === 'checkpointSpi') {
                     const newCheckpointCfg = {
                         FS: {

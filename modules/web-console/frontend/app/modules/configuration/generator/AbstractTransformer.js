@@ -98,9 +98,14 @@ export default class AbstractTransformer {
         return this.toSection(this.generator.clusterFailover(cluster));
     }
 
-    // Generate logger group.
+    // Generate cluster IGFSs group.
     static clusterIgfss(igfss) {
         return this.toSection(this.generator.clusterIgfss(igfss));
+    }
+
+    // Generate load balancing SPI group.
+    static clusterLoadBalancing(cluster) {
+        return this.toSection(this.generator.clusterLoadBalancing(cluster));
     }
 
     // Generate logger group.
