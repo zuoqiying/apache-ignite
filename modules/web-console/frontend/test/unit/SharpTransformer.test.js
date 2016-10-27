@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-import generator from '../../../app/modules/configuration/generator/PlatformGenerator';
-import transformer from '../../../app/modules/configuration/generator/SharpTransformer.service';
-
-const PlatformGenerator = generator[1]();
-const SharpTransformer = transformer[1](PlatformGenerator);
+import generator from '../../app/modules/configuration/generator/PlatformGenerator';
+import transformer from '../../app/modules/configuration/generator/SharpTransformer.service';
 
 import { assert } from 'chai';
 
-suite('SharpTransformerTestsSuite', () => {
+suite.skip('SharpTransformerTestsSuite', () => {
     test('AtomicConfiguration', () => {
+        const PlatformGenerator = generator[1]();
+        const SharpTransformer = transformer[1](PlatformGenerator);
+
         const acfg = {
             atomicSequenceReserveSize: 1001,
             backups: 1,
@@ -37,6 +37,9 @@ suite('SharpTransformerTestsSuite', () => {
     });
 
     test('IgniteConfiguration', () => {
+        const PlatformGenerator = generator[1]();
+        const SharpTransformer = transformer[1](PlatformGenerator);
+
         const clusterCfg = {
             atomics: {
                 atomicSequenceReserveSize: 1001,

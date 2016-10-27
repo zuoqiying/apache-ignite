@@ -206,6 +206,7 @@ export default ['clustersController', [
         Resource.read()
             .then(({spaces, clusters, caches, domains, igfss}) => {
                 $scope.spaces = spaces;
+
                 $scope.clusters = clusters;
 
                 $scope.caches = _.map(caches, (cache) => {
@@ -216,6 +217,7 @@ export default ['clustersController', [
 
                     return {value: cache._id, label: cache.name, cache};
                 });
+
                 $scope.igfss = _.map(igfss, (igfs) => ({value: igfs._id, label: igfs.name, igfs}));
 
                 _.forEach($scope.clusters, (cluster) => {
@@ -229,6 +231,9 @@ export default ['clustersController', [
 
                     if (!cluster.logger)
                         cluster.logger = {Log4j: { mode: 'Default'}};
+
+                    if (!cluster.eventStorage)
+                        cluster.eventStorage = { kind: 'Memory' };
                 });
 
                 if ($state.params.linkId)
@@ -338,6 +343,7 @@ export default ['clustersController', [
                 communication: {tcpNoDelay: true},
                 connector: {noDelay: true},
                 collision: {kind: 'Noop', JobStealing: {stealingEnabled: true}, PriorityQueue: {starvationPreventionEnabled: true}},
+                eventStorage: {kind: 'Memory'},
                 failoverSpi: [],
                 logger: {Log4j: { mode: 'Default'}},
                 caches: linkId && _.find($scope.caches, {value: linkId}) ? [linkId] : [],

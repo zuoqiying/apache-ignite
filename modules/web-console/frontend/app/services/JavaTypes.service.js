@@ -47,19 +47,33 @@ export default class JavaTypes {
         this.shortEnumClasses = _.map(this.enumClasses, (cls) => this.shortClassName(cls));
     }
 
-    _enumClassesAcc(obj, res) {
-        return _.reduce(obj, (acc, val, key) => {
+    /**
+     * Collects recursive enum classes.
+     *
+     * @param root Root object.
+     * @param classes Collected classes.
+     * @return {Array.<String>}
+     * @private
+     */
+    _enumClassesAcc(root, classes) {
+        return _.reduce(root, (acc, val, key) => {
             if (key === 'clsName')
                 acc.push(val);
             else if (_.isObject(val))
                 this._enumClassesAcc(val, acc);
 
             return acc;
-        }, res);
+        }, classes);
     }
 
-    nonEnum(shortClsName) {
-        return !_.includes(this.shortEnumClasses, shortClsName) && !_.includes(this.enumClasses, shortClsName);
+    /**
+     * Check if class name is non enum class in Ignite configuration.
+     *
+     * @param clsName
+     * @return {boolean}
+     */
+    nonEnum(clsName) {
+        return !_.includes(this.shortEnumClasses, clsName) && !_.includes(this.enumClasses, clsName);
     }
 
     /**
@@ -72,7 +86,7 @@ export default class JavaTypes {
 
     /**
      * @param clsName Class name to check.
-     * @returns Full class name for java build-in types or source class otherwise.
+     * @returns {String} Full class name for java build-in types or source class otherwise.
      */
     fullClassName(clsName) {
         const type = _.find(JAVA_CLASSES, (clazz) => clsName === clazz.short);
@@ -80,6 +94,12 @@ export default class JavaTypes {
         return type ? type.full : clsName;
     }
 
+    /**
+     * Extract class name from full class name.
+     *
+     * @param clsName full class name.
+     * @return {String} Class name.
+     */
     shortClassName(clsName) {
         if (this.isJavaPrimitive(clsName))
             return clsName;

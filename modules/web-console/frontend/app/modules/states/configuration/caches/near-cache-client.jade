@@ -22,7 +22,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 .panel.panel-default(ng-form=form novalidate ng-show='backupItem.cacheMode === "PARTITIONED"')
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
-        label Near cache client
+        label Near cache on client node
         ignite-form-field-tooltip.tipLabel
             | Near cache settings for client nodes#[br]
             | Near cache is a small local cache that stores most recently or most frequently accessed data#[br]

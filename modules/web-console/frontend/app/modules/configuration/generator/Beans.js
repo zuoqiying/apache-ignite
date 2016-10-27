@@ -29,7 +29,7 @@ export class EmptyBean {
     }
 
     isEmpty() {
-        return _.isEmpty(this.arguments) && _.isEmpty(this.properties);
+        return false;
     }
 
     nonEmpty() {
@@ -87,6 +87,10 @@ export class Bean extends EmptyBean {
         return this;
     }
 
+    isEmpty() {
+        return _.isEmpty(this.arguments) && _.isEmpty(this.properties);
+    }
+
     constructorArgument(clsName, value) {
         this.arguments.push({clsName, value});
 
@@ -98,7 +102,7 @@ export class Bean extends EmptyBean {
     }
 
     intConstructorArgument(model) {
-        return this._property(this.arguments, 'int', model, null, _.nonEmpty);
+        return this._property(this.arguments, 'int', model, null, _.nonNil);
     }
 
     classConstructorArgument(model) {
@@ -193,6 +197,10 @@ export class Bean extends EmptyBean {
 
     intProperty(model, name = model) {
         return this._property(this.properties, 'int', model, name, _.nonNil);
+    }
+
+    floatProperty(model, name = model) {
+        return this._property(this.properties, 'float', model, name, _.nonNil);
     }
 
     property(name, value, hint) {
@@ -345,7 +353,7 @@ export class Bean extends EmptyBean {
     /**
      * @param {String} id
      * @param {String} name
-     * @param {Bean} value
+     * @param {EmptyBean|Bean} value
      */
     dataSource(id, name, value) {
         if (value)

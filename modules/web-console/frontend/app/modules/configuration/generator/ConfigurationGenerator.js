@@ -75,7 +75,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             this.clusterCaches(cluster, cluster.caches, cluster.igfss, client, cfg);
 
             if (!client)
-                this.igfss(cluster.igfss, cfg);
+                this.clusterIgfss(cluster.igfss, cfg);
 
             return cfg;
         }
@@ -232,7 +232,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                     ipFinder.emptyBeanProperty('curator')
                         .stringProperty('zkConnectionString');
 
-                    if (src && src.retryPolicy && src.retryPolicy.kind) {
+                    if (_.get(src, 'retryPolicy.kind')) {
                         const policy = src.retryPolicy;
 
                         let retryPolicyBean;
@@ -295,7 +295,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     ipFinder.pathProperty('basePath', '/services')
                         .stringProperty('serviceName')
-                        .stringProperty('allowDuplicateRegistrations');
+                        .boolProperty('allowDuplicateRegistrations');
 
                     break;
                 default:
@@ -598,6 +598,35 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
         // Generate events group.
         static clusterEvents(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            const eventStorage = cluster.eventStorage;
+
+            let eventStorageBean = null;
+
+            switch (eventStorage.kind) {
+                case 'Memory':
+                    eventStorageBean = new Bean('org.apache.ignite.spi.eventstorage.memory.MemoryEventStorageSpi', 'eventStorage', eventStorage.Memory, clusterDflts.eventStorage.Memory);
+
+                    eventStorageBean.intProperty('expireAgeMs')
+                        .intProperty('expireCount')
+                        .emptyBeanProperty('filter');
+
+                    break;
+
+                case 'Custom':
+                    const className = _.get(eventStorage, 'Custom.className');
+
+                    if (className)
+                        eventStorageBean = new EmptyBean(className);
+
+                    break;
+
+                default:
+                    // No-op.
+            }
+
+            if (eventStorageBean && eventStorageBean.nonEmpty())
+                cfg.beanProperty('eventStorageSpi', eventStorageBean);
+
             if (_.nonEmpty(cluster.includeEventTypes))
                 cfg.eventTypes('evts', 'includeEventTypes', cluster.includeEventTypes);
 
@@ -632,8 +661,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                         break;
                     case 'Custom':
-                        if (spi.Custom.class)
-                            failoverSpi = new EmptyBean(spi.Custom.class);
+                        const className = _.get(spi, 'Custom.class');
+
+                        if (className)
+                            failoverSpi = new EmptyBean(className);
 
                         break;
                     default:
@@ -706,6 +737,25 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
             if (loggerBean)
                 cfg.beanProperty('gridLogger', loggerBean);
+
+            return cfg;
+        }
+
+        // Generate IGFSs configs.
+        static clusterIgfss(igfss, cfg = this.igniteConfigurationBean()) {
+            const igfsCfgs = _.map(igfss, (igfs) => {
+                const igfsCfg = this.igfsGeneral(igfs);
+
+                this.igfsIPC(igfs, igfsCfg);
+                this.igfsFragmentizer(igfs, igfsCfg);
+                this.igfsDualMode(igfs, igfsCfg);
+                this.igfsSecondFS(igfs, igfsCfg);
+                this.igfsMisc(igfs, igfsCfg);
+
+                return igfsCfg;
+            });
+
+            cfg.varArgProperty('igfsCfgs', 'fileSystemConfiguration', igfsCfgs, 'org.apache.ignite.configuration.FileSystemConfiguration');
 
             return cfg;
         }
@@ -816,7 +866,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                 bean.pathProperty('baseDirectory')
                     .intProperty('readStripesNumber')
-                    .intProperty('maximumSparsity')
+                    .floatProperty('maximumSparsity')
                     .intProperty('maxWriteQueueSize')
                     .intProperty('writeBufferSize');
 
@@ -895,7 +945,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         // Generate domain model for query group.
         static domainModelQuery(domain, cfg = this.domainConfigurationBean(domain)) {
             if (cfg.valueOf('queryMetadata') === 'Configuration') {
-                const fields = _.map(cfg.valueOf('fields'),
+                const fields = _.map(domain.fields,
                     (e) => ({name: e.name, className: JavaTypes.fullClassName(e.className)}));
 
                 cfg.mapProperty('fields', fields, 'fields', true)
@@ -1049,9 +1099,9 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory',
                             storeFactory);
 
-                        const id = bean.valueOf('dataSourceBean');
+                        const jdbcId = bean.valueOf('dataSourceBean');
 
-                        bean.dataSource(id, 'dataSourceBean', this.dataSourceBean(id, storeFactory.dialect))
+                        bean.dataSource(jdbcId, 'dataSourceBean', this.dataSourceBean(jdbcId, storeFactory.dialect))
                             .beanProperty('dialect', new EmptyBean(this.dialectClsName(storeFactory.dialect)));
 
                         bean.boolProperty('sqlEscapeAll');
@@ -1088,8 +1138,11 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory', 'cacheStoreFactory',
                             storeFactory);
 
-                        if (bean.valueOf('connectVia') === 'DataSource')
-                            bean.dataSource(bean.valueOf('dataSourceBean'), 'dataSourceBean', this.dialectClsName(storeFactory.dialect));
+                        if (bean.valueOf('connectVia') === 'DataSource') {
+                            const blobId = bean.valueOf('dataSourceBean');
+
+                            bean.dataSource(blobId, 'dataSourceBean', this.dataSourceBean(blobId, storeFactory.dialect));
+                        }
                         else {
                             ccfg.stringProperty('connectionUrl')
                                 .stringProperty('user')
@@ -1371,23 +1424,6 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                 .mapProperty('pathModes', 'pathModes');
 
             return cfg;
-        }
-
-        // Generate IGFSs configs.
-        static igfss(igfss, cfg) {
-            const igfsCfgs = _.map(igfss, (igfs) => {
-                const igfsCfg = this.igfsGeneral(igfs);
-
-                this.igfsIPC(igfs, igfsCfg);
-                this.igfsFragmentizer(igfs, igfsCfg);
-                this.igfsDualMode(igfs, igfsCfg);
-                this.igfsSecondFS(igfs, igfsCfg);
-                this.igfsMisc(igfs, igfsCfg);
-
-                return igfsCfg;
-            });
-
-            cfg.varArgProperty('igfsCfgs', 'fileSystemConfiguration', igfsCfgs, 'org.apache.ignite.configuration.FileSystemConfiguration');
         }
     }
 

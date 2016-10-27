@@ -205,6 +205,11 @@ const DFLT_CLUSTER = {
     odbcConfiguration: {
         endpointAddress: '0.0.0.0:10800..10810',
         maxOpenCursors: 128
+    },
+    eventStorage: {
+        Memory: {
+            expireCount: 10000
+        }
     }
 };
 

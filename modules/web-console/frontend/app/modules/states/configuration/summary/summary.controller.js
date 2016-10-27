@@ -115,7 +115,6 @@ export default [
             type: 'folder',
             name: 'resources',
             children: [
-                { type: 'file', name: 'secret.properties' },
                 {
                     type: 'folder',
                     name: 'META-INF',
@@ -240,7 +239,7 @@ export default [
 
             sessionStorage.summarySelectedId = $scope.clusters.indexOf(cluster);
 
-            mainFolder.children = [javaFolder];
+            mainFolder.children = [javaFolder, resourcesFolder];
 
             if (_.find(cluster.caches, (cache) => !_.isNil(cache.cacheStoreFactory)))
                 javaFolder.children = [javaConfigFolder, loadFolder, javaStartupFolder];
@@ -248,7 +247,7 @@ export default [
                 javaFolder.children = [javaConfigFolder, javaStartupFolder];
 
             if (_.nonNil(_.find(cluster.caches, cacheHasDatasource)) || cluster.sslEnabled)
-                mainFolder.children.push(resourcesFolder);
+                resourcesFolder.children.push({ type: 'file', name: 'secret.properties' });
 
             if (java.isDemoConfigured(cluster, $root.IgniteDemoMode))
                 javaFolder.children.push(demoFolder);

@@ -133,6 +133,8 @@ mixin java-class-autofocus-placholder(lbl, model, name, enabled, required, autof
 //- Mixin for Java class name field with auto focus condition.
 mixin java-class-autofocus(lbl, model, name, enabled, required, autofocus, tip, validationActive)
     +java-class-autofocus-placholder(lbl, model, name, enabled, required, autofocus, 'Enter fully qualified class name', tip, validationActive)
+        if  block
+            block
 
 //- Mixin for Java class name field.
 mixin java-class(lbl, model, name, enabled, required, tip, validationActive)

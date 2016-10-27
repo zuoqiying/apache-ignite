@@ -15,18 +15,18 @@
  * limitations under the License.
  */
 
-import JavaTypes from '../../../app/services/JavaTypes.service.js';
+import JavaTypes from '../../app/services/JavaTypes.service.js';
 
-import generator from '../../../app/modules/configuration/generator/ConfigurationGenerator';
-import transformer from '../../../app/modules/configuration/generator/SpringTransformer.service';
-
-const ConfigurationGenerator = generator[1]();
-const SpringTransformer = transformer[1][2](JavaTypes[1](), ConfigurationGenerator);
+import generator from '../../app/modules/configuration/generator/ConfigurationGenerator';
+import transformer from '../../app/modules/configuration/generator/SpringTransformer.service';
 
 import { assert } from 'chai';
 
-suite('SpringTransformerTestsSuite', () => {
+suite.skip('SpringTransformerTestsSuite', () => {
     test('AtomicConfiguration', () => {
+        const ConfigurationGenerator = generator[1]();
+        const SpringTransformer = transformer[1][2](JavaTypes[1](), ConfigurationGenerator);
+
         const acfg = {
             atomicSequenceReserveSize: 1001,
             backups: 1,
@@ -39,6 +39,9 @@ suite('SpringTransformerTestsSuite', () => {
     });
 
     test('IgniteConfiguration', () => {
+        const ConfigurationGenerator = generator[1]();
+        const SpringTransformer = transformer[1][2](JavaTypes[1](), ConfigurationGenerator);
+
         const cfg = {
             atomics: {
                 atomicSequenceReserveSize: 1001,
