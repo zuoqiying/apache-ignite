@@ -103,6 +103,29 @@ export default ['clustersController', [
                     else
                         $scope.backupItem.failoverSpi = {};
                 }
+                else if (field.type === 'checkpointSpi') {
+                    const newCheckpointCfg = {
+                        FS: {
+                            directoryPaths: []
+                        },
+                        S3: {
+                            awsCredentials: {
+                                kind: 'Basic'
+                            },
+                            clientConfiguration: {
+                                retryPolicy: {
+                                    kind: 'Default'
+                                },
+                                useReaper: true
+                            }
+                        }
+                    };
+
+                    if (LegacyUtils.isDefined($scope.backupItem.checkpointSpi))
+                        $scope.backupItem.checkpointSpi.push(newCheckpointCfg);
+                    else
+                        $scope.backupItem.checkpointSpi = [newCheckpointCfg];
+                }
                 else
                     LegacyTable.tableNewItem(field);
             }
@@ -148,6 +171,8 @@ export default ['clustersController', [
         $scope.removeFailoverConfiguration = function(idx) {
             $scope.backupItem.failoverSpi.splice(idx, 1);
         };
+
+        $scope.supportedJdbcTypes = LegacyUtils.mkOptions(LegacyUtils.SUPPORTED_JDBC_TYPES);
 
         // We need to initialize backupItem with empty object in order to properly used from angular directives.
         $scope.backupItem = emptyCluster;
@@ -271,6 +296,12 @@ export default ['clustersController', [
                         form.$setPristine();
                     else
                         form.$setDirty();
+
+                    $scope.clusterCaches = _.filter($scope.caches,
+                        (cache) => _.find($scope.backupItem.caches,
+                            (selCache) => selCache === cache.value
+                        )
+                    );
                 }, true);
 
                 $scope.$watch('ui.activePanels.length', () => {
@@ -290,6 +321,8 @@ export default ['clustersController', [
 
                 Loading.finish('loadingClustersScreen');
             });
+
+        $scope.clusterCaches = [];
 
         $scope.selectItem = function(item, backup) {
             function selectItem() {
@@ -367,27 +400,45 @@ export default ['clustersController', [
                 (cache) => _.includes(item.caches, cache._id));
         }
 
+        const _objToString = (type, name, prefix = '') => {
+            if (type === 'checkpoint')
+                return prefix + ' checkpoint configuration';
+            if (type === 'cluster')
+                return prefix + ' discovery IP finder';
+
+            return `${prefix} ${type} "${name}"`;
+        };
+
         function checkCacheDatasources(item) {
             const caches = clusterCaches(item);
 
             const checkRes = LegacyUtils.checkDataSources(item, caches);
 
             if (!checkRes.checked) {
-                if (_.get(checkRes.secondObj, 'discovery.kind') === 'Jdbc') {
-                    return ErrorPopover.show('dialectInput',
-                        'Found cache "' + checkRes.firstObj.name + '" with the same data source bean name "' +
-                        item.discovery.Jdbc.dataSourceBean + '" and different database: "' +
-                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in current cluster and "' +
-                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" cache',
-                        $scope.ui, 'general', 10000);
+                let ids;
+
+                if (checkRes.secondType === 'cluster')
+                    ids = { section: 'general', fieldId: 'dialectInput' };
+                else if (checkRes.secondType === 'cache')
+                    ids = { section: 'general', fieldId: 'cachesInput' };
+                else if (checkRes.secondType === 'checkpoint')
+                    ids = { section: 'checkpoint', fieldId: `checkpointJdbcDialect${checkRes.index}Input` };
+                else
+                    return true;
+
+                if (checkRes.firstType === checkRes.secondType && checkRes.firstType === 'cache') {
+                    return ErrorPopover.show(ids.fieldId, 'Found caches "' + checkRes.firstObj.name + '" and "' + checkRes.secondObj.name + '" with the same data source bean name "' +
+                        checkRes.firstDs.dataSourceBean + '" and different database: "' +
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDs.dialect) + '" in ' + _objToString(checkRes.secondType, checkRes.secondObj.name) + ' and "' +
+                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDs.dialect) + '" in ' + _objToString(checkRes.firstType, checkRes.firstObj.name),
+                        $scope.ui, ids.section, 10000);
                 }
 
-                return ErrorPopover.show('cachesInput',
-                    'Found caches "' + checkRes.firstObj.name + '" and "' + checkRes.secondObj.name + '" ' +
-                    'with the same data source bean name "' + checkRes.firstObj.cacheStoreFactory[checkRes.firstObj.cacheStoreFactory.kind].dataSourceBean +
-                    '" and different databases: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in "' + checkRes.firstObj.name + '" and "' +
-                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondObj.name + '" cache',
-                    $scope.ui, 'general', 10000);
+                return ErrorPopover.show(ids.fieldId, 'Found ' + _objToString(checkRes.firstType, checkRes.firstObj.name) + ' with the same data source bean name "' +
+                    checkRes.firstDs.dataSourceBean + '" and different database: "' +
+                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDs.dialect) + '" in ' + _objToString(checkRes.secondType, checkRes.secondObj.name, 'current') + ' and "' +
+                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDs.dialect) + '" in ' + _objToString(checkRes.firstType, checkRes.firstObj.name),
+                    $scope.ui, ids.section, 10000);
             }
 
             return true;
@@ -445,6 +496,38 @@ export default ['clustersController', [
             }
 
             return true;
+        }
+
+        function checkCheckpointSpis(item) {
+            const cfgs = item.checkpointSpi;
+
+            if (_.isEmpty(cfgs))
+                return true;
+
+            return _.isNil(_.find(cfgs, (cfg, ix) => {
+                if (_.isNil(cfg.kind)) {
+                    ErrorPopover.show('checkpointKind' + ix, 'Choose checkpoint implementation variant', $scope.ui, 'checkpoint');
+
+                    return true;
+                }
+
+                switch (cfg.kind) {
+                    case 'Cache':
+                        const cache = _.get(cfg, 'Cache.cache');
+
+                        if (_.isNil(cache) || !_.find($scope.backupItem.caches, (selCache) => cache === selCache)) {
+                            ErrorPopover.show('checkpointCacheCache' + ix, 'Choose cache from configured cluster caches', $scope.ui, 'checkpoint');
+
+                            return true;
+                        }
+
+                        break;
+
+                    default: break;
+                }
+
+                return false;
+            }));
         }
 
         function checkCommunicationConfiguration(item) {
@@ -546,6 +629,9 @@ export default ['clustersController', [
                 return false;
 
             if (!checkCacheKeyConfiguration(item))
+                return false;
+
+            if (!checkCheckpointSpis(item))
                 return false;
 
             if (!checkCommunicationConfiguration(item))

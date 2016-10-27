@@ -238,6 +238,11 @@ export default class AbstractTransformer {
         return this.toSection(this.generator.clusterCaches(cluster, caches, igfss, client));
     }
 
+    // Generate caches configs.
+    static clusterCheckpoint(cluster, caches) {
+        return this.toSection(this.generator.clusterCheckpoint(cluster, caches));
+    }
+
     // Generate domain model for general group.
     static domainModelGeneral(domain) {
         return this.toSection(this.generator.domainModelGeneral(domain));

@@ -271,10 +271,15 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 switch (arg.clsName) {
                     case 'MAP':
                         return arg.id;
+                    case 'BEAN':
+                        return this._newBean(arg.value);
                     default:
                         return this._toObject(arg.clsName, arg.value);
                 }
             });
+
+            if (bean.factoryMtd)
+                return `${shortClsName}.${bean.factoryMtd}(${args.join(', ')})`;
 
             return `new ${shortClsName}(${args.join(', ')})`;
         }

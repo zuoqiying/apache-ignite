@@ -184,6 +184,7 @@ export default ['cachesController', [
                     value: cluster._id,
                     label: cluster.name,
                     discovery: cluster.discovery,
+                    checkpointSpi: cluster.checkpointSpi,
                     caches: cluster.caches
                 }));
 
@@ -325,6 +326,15 @@ export default ['cachesController', [
             return caches;
         }
 
+        const _objToString = (type, name, prefix = '') => {
+            if (type === 'checkpoint')
+                return `${prefix} checkpoint configuration in cluster "${name}"`;
+            if (type === 'cluster')
+                return `${prefix} discovery IP finder in cluster "${name}"`;
+
+            return `${prefix} ${type} "${name}"`;
+        };
+
         function checkDataSources() {
             const clusters = cacheClusters();
 
@@ -339,20 +349,11 @@ export default ['cachesController', [
             });
 
             if (!checkRes.checked) {
-                if (_.get(checkRes.secondObj, 'discovery.kind') === 'Jdbc') {
-                    return ErrorPopover.show(checkRes.firstObj.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialectInput' : 'blobDialectInput',
-                        'Found cluster "' + failCluster.label + '" with the same data source bean name "' +
-                        checkRes.secondObj.discovery.Jdbc.dataSourceBean + '" and different database: "' +
-                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in current cache and "' +
-                        LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in"' + checkRes.secondObj.label + '" cluster',
-                        $scope.ui, 'store', 10000);
-                }
-
                 return ErrorPopover.show(checkRes.firstObj.cacheStoreFactory.kind === 'CacheJdbcPojoStoreFactory' ? 'pojoDialectInput' : 'blobDialectInput',
-                    'Found cache "' + checkRes.secondObj.name + '" in cluster "' + failCluster.label + '" ' +
-                    'with the same data source bean name "' + checkRes.firstObj.cacheStoreFactory[checkRes.firstObj.cacheStoreFactory.kind].dataSourceBean +
-                    '" and different database: "' + LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDB) + '" in current cache and "' +
-                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDB) + '" in "' + checkRes.secondObj.name + '" cache',
+                    'Found ' + _objToString(checkRes.secondType, checkRes.secondObj.name || failCluster.label) + ' with the same data source bean name "' +
+                    checkRes.firstDs.dataSourceBean + '" and different database: "' +
+                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.firstDs.dialect) + '" in ' + _objToString(checkRes.firstType, checkRes.firstObj.name, 'current') + ' and "' +
+                    LegacyUtils.cacheStoreJdbcDialectsLabel(checkRes.secondDs.dialect) + '" in ' + _objToString(checkRes.secondType, checkRes.secondObj.name || failCluster.label),
                     $scope.ui, 'store', 10000);
             }
 

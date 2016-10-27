@@ -65,6 +65,12 @@ export class Bean extends EmptyBean {
         this.dflts = dflts;
     }
 
+    factoryMethod(name) {
+        this.factoryMtd = name;
+
+        return this;
+    }
+
     /**
      * @param acc
      * @param clsName
@@ -126,7 +132,7 @@ export class Bean extends EmptyBean {
         return this;
     }
 
-    propertyConstructorArgument(value, hint) {
+    propertyConstructorArgument(value, hint = '') {
         this.arguments.push({clsName: 'PROPERTY', value, hint});
 
         return this;
@@ -134,7 +140,7 @@ export class Bean extends EmptyBean {
 
     /**
      * @param {String} id
-     * @param {EmptyBean|Bean|MethodBean} value
+     * @param {EmptyBean|Bean} value
      * @returns {Bean}
      */
     beanConstructorArgument(id, value) {
@@ -255,7 +261,7 @@ export class Bean extends EmptyBean {
 
     /**
      * @param {String} name
-     * @param {EmptyBean|Bean|MethodBean} value
+     * @param {EmptyBean|Bean} value
      * @returns {Bean}
      */
     beanProperty(name, value) {
@@ -369,14 +375,5 @@ export class Bean extends EmptyBean {
      */
     eventTypes(id, name, eventTypes) {
         this.properties.push({clsName: 'EVENT_TYPES', id, name, eventTypes});
-    }
-}
-
-export class MethodBean extends Bean {
-    constructor(mtdName, doc, clsName, id, src, dflts) {
-        super(clsName, id, src, dflts);
-
-        this.mtdName = mtdName;
-        this.doc = doc;
     }
 }

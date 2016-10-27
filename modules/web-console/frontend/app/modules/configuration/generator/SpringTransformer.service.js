@@ -37,10 +37,17 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         }
 
         static appendBean(sb, bean, appendId) {
+            const beanTags = [];
+
             if (appendId)
-                sb.startBlock(`<bean id="${bean.id}" class="${bean.clsName}">`);
-            else
-                sb.startBlock(`<bean class="${bean.clsName}">`);
+                beanTags.push(`id="${bean.id}"`);
+
+            beanTags.push(`class="${bean.clsName}"`);
+
+            if (bean.factoryMtd)
+                beanTags.push(`factory-method="${bean.factoryMtd}"`);
+
+            sb.startBlock(`<bean ${beanTags.join(' ')}>`);
 
             _.forEach(bean.arguments, (arg) => {
                 if (arg.clsName === 'MAP') {
@@ -58,7 +65,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                     sb.append(`<util:constant static-field="${arg.clsName}.${arg.value}"/>`);
                     sb.endBlock('</constructor-arg>');
                 }
-                else if (this._isBean(arg.clsName)) {
+                else if (arg.clsName === 'BEAN') {
                     sb.startBlock('<constructor-arg>');
                     this.appendBean(sb, arg.value);
                     sb.endBlock('</constructor-arg>');

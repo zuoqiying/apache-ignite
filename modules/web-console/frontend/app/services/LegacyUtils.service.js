@@ -202,18 +202,26 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
      * @returns {*} Datasource object or null if not set.
      */
     function extractDataSource(object) {
+        let datasource = null;
+
         // Extract from cluster object
         if (_.get(object, 'discovery.kind') === 'Jdbc') {
-            const datasource = object.discovery.Jdbc;
+            datasource = object.discovery.Jdbc;
+
+            if (datasource.dataSourceBean && datasource.dialect)
+                return datasource;
+        } // Extract from JDBC checkpoint configuration.
+        else if (_.get(object, 'kind') === 'JDBC') {
+            datasource = object.JDBC;
 
             if (datasource.dataSourceBean && datasource.dialect)
                 return datasource;
         } // Extract from cache object
         else if (_.get(object, 'cacheStoreFactory.kind')) {
-            const storeFactory = object.cacheStoreFactory[object.cacheStoreFactory.kind];
+            datasource = object.cacheStoreFactory[object.cacheStoreFactory.kind];
 
-            if (storeFactory.dialect || (storeFactory.connectVia === 'DataSource'))
-                return storeFactory;
+            if (datasource.dialect || (datasource.connectVia === 'DataSource'))
+                return datasource;
         }
 
         return null;
@@ -244,10 +252,13 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
      * Compare datasources of caches or clusters.
      *
      * @param firstObj First cache or cluster.
+     * @param firstType Type of first object to compare.
      * @param secondObj Second cache or cluster.
+     * @param secondType Type of first object to compare.
+     * @param index Index of invalid object when check is failed.
      * @returns {*} Check result object.
      */
-    function compareDataSources(firstObj, secondObj) {
+    function compareDataSources(firstObj, firstType, secondObj, secondType, index) {
         const firstDs = extractDataSource(firstObj);
         const secondDs = extractDataSource(secondObj);
 
@@ -256,7 +267,7 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
             const secondDB = secondDs.dialect;
 
             if (firstDs.dataSourceBean === secondDs.dataSourceBean && firstDB !== secondDB)
-                return {checked: false, firstObj, firstDB, secondObj, secondDB};
+                return {checked: false, firstObj, firstDs, firstType, secondObj, secondDs, secondType, index};
         }
 
         return DS_CHECK_SUCCESS;
@@ -369,14 +380,25 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
             let res = DS_CHECK_SUCCESS;
 
             _.find(caches, (curCache, curIx) => {
-                res = compareDataSources(curCache, cluster);
+                // Check datasources of cluster JDBC ip finder and cache store factory datasource.
+                res = compareDataSources(curCache, 'cache', cluster, 'cluster');
 
                 if (!res.checked)
                     return true;
 
+                _.find(cluster.checkpointSpi, (spi, spiIx) => {
+                    res = compareDataSources(curCache, 'cache', spi, 'checkpoint', spiIx);
+
+                    return !res.checked;
+                });
+
+                if (!res.checked)
+                    return true;
+
+                // Check datasource of current saved cache and datasource of other cache in cluster.
                 if (isDefined(checkCacheExt)) {
                     if (checkCacheExt._id !== curCache._id) {
-                        res = compareDataSources(checkCacheExt, curCache);
+                        res = compareDataSources(checkCacheExt, 'cache', curCache, 'cache');
 
                         return !res.checked;
                     }
@@ -384,9 +406,10 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
                     return false;
                 }
 
+                // Check datasources of specified list of caches.
                 return _.find(caches, (checkCache, checkIx) => {
                     if (checkIx < curIx) {
-                        res = compareDataSources(checkCache, curCache);
+                        res = compareDataSources(checkCache, 'cache', curCache, 'cache');
 
                         return !res.checked;
                     }
@@ -394,6 +417,26 @@ export default ['IgniteLegacyUtils', ['IgniteErrorPopover', (ErrorPopover) => {
                     return false;
                 });
             });
+
+            if (res.checked) {
+                _.find(cluster.checkpointSpi, (curSpi, curIx) => {
+                    // Check datasources of cluster JDBC ip finder and cache store factory datasource.
+                    res = compareDataSources(cluster, 'cluster', curSpi, 'checkpoint', curIx);
+
+                    if (!res.checked)
+                        return true;
+
+                    _.find(cluster.checkpointSpi, (spi, spiIx) => {
+                        if (spiIx < curIx) {
+                            res = compareDataSources(curSpi, 'checkpoint', spi, 'checkpoint', curIx);
+
+                            return !res.checked;
+                        }
+
+                        return false;
+                    });
+                });
+            }
 
             return res;
         },

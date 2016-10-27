@@ -16,7 +16,7 @@
  */
 
 // import _ from 'lodash';
-import { EmptyBean, Bean, MethodBean } from './Beans';
+import { EmptyBean, Bean } from './Beans';
 
 export default ['JavaTypes', 'igniteClusterPlatformDefaults', 'igniteCachePlatformDefaults', (JavaTypes, clusterDflts, cacheDflts) => {
     class PlatformGenerator {
@@ -343,7 +343,7 @@ export default ['JavaTypes', 'igniteClusterPlatformDefaults', 'igniteCachePlatfo
                             if (_.isNil(domain.databaseTable))
                                 return acc;
 
-                            const typeBean = new MethodBean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
+                            const typeBean = new Bean('org.apache.ignite.cache.store.jdbc.JdbcType', 'type',
                                 _.merge({}, domain, {cacheName: cache.name}))
                                 .stringProperty('cacheName');
 
