@@ -482,6 +482,17 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         igfsThreadPoolSize: Number,
         igfss: [{type: ObjectId, ref: 'Igfs'}],
         includeEventTypes: [String],
+        eventStorage: {
+            kind: {type: String, enum: ['Memory', 'Custom']},
+            Memory: {
+                expireAgeMs: Number,
+                expireCount: Number,
+                filter: String
+            },
+            Custom: {
+                className: String
+            }
+        },
         managementThreadPoolSize: Number,
         marshaller: {
             kind: {type: String, enum: ['OptimizedMarshaller', 'JdkMarshaller']},

@@ -231,6 +231,9 @@ export default ['clustersController', [
 
                     if (!cluster.logger)
                         cluster.logger = {Log4j: { mode: 'Default'}};
+
+                    if (!cluster.eventStorage)
+                        cluster.eventStorage = { kind: 'Memory' };
                 });
 
                 if ($state.params.linkId)
@@ -340,6 +343,7 @@ export default ['clustersController', [
                 communication: {tcpNoDelay: true},
                 connector: {noDelay: true},
                 collision: {kind: 'Noop', JobStealing: {stealingEnabled: true}, PriorityQueue: {starvationPreventionEnabled: true}},
+                eventStorage: {kind: 'Memory'},
                 failoverSpi: [],
                 logger: {Log4j: { mode: 'Default'}},
                 caches: linkId && _.find($scope.caches, {value: linkId}) ? [linkId] : [],

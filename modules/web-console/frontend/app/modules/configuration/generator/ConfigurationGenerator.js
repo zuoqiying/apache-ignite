@@ -598,6 +598,35 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
         // Generate events group.
         static clusterEvents(cluster, cfg = this.igniteConfigurationBean(cluster)) {
+            const eventStorage = cluster.eventStorage;
+
+            let eventStorageBean = null;
+
+            switch (eventStorage.kind) {
+                case 'Memory':
+                    eventStorageBean = new Bean('org.apache.ignite.spi.eventstorage.memory.MemoryEventStorageSpi', 'eventStorage', eventStorage.Memory, clusterDflts.eventStorage.Memory);
+
+                    eventStorageBean.intProperty('expireAgeMs')
+                        .intProperty('expireCount')
+                        .emptyBeanProperty('filter');
+
+                    break;
+
+                case 'Custom':
+                    const className = _.get(eventStorage, 'Custom.className');
+
+                    if (className)
+                        eventStorageBean = new EmptyBean(className);
+
+                    break;
+
+                default:
+                    // No-op.
+            }
+
+            if (eventStorageBean && eventStorageBean.nonEmpty())
+                cfg.beanProperty('eventStorageSpi', eventStorageBean);
+
             if (_.nonEmpty(cluster.includeEventTypes))
                 cfg.eventTypes('evts', 'includeEventTypes', cluster.includeEventTypes);
 

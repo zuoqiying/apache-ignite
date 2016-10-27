@@ -29,7 +29,7 @@ export class EmptyBean {
     }
 
     isEmpty() {
-        return _.isEmpty(this.arguments) && _.isEmpty(this.properties);
+        return false;
     }
 
     nonEmpty() {
@@ -85,6 +85,10 @@ export class Bean extends EmptyBean {
             acc.push({clsName, name, value});
 
         return this;
+    }
+
+    isEmpty() {
+        return _.isEmpty(this.arguments) && _.isEmpty(this.properties);
     }
 
     constructorArgument(clsName, value) {
