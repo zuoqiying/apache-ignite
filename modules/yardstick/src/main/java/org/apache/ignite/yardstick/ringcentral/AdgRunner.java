@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @SuppressWarnings("FieldCanBeLocal")
 public class AdgRunner {
     /** Node count. */
-    private static final int NODE_CNT = 1;
+    private static final int NODE_CNT = 1; // Switch to 4 to see better throughput.
 
     /** Number of small accounts. */
     private static final int SMALL_ACC_CNT = 10_000;
@@ -50,7 +50,7 @@ public class AdgRunner {
     private static final String CACHE_NAME = "cache";
 
     /** Thread count. */
-    private static final int THREAD_CNT = 8;
+    private static final int THREAD_CNT = 1;
 
     /** Whether to use big account or not. */
     private static final boolean USE_BIG = true;
