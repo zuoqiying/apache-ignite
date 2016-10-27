@@ -46,7 +46,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                         .group-content(ng-show='#{loadBalancingSpi} && #{loadBalancingSpi}.length > 0' ng-repeat='model in #{loadBalancingSpi} track by $index')
                             hr(ng-if='$index != 0')
                             .settings-row
-                                +dropdown('Load balancing SPI:', 'model.kind', '"loadBalancingKind" + $index', 'true', 'Choose load balancing SPI', '[\
+                                +dropdown-required('Load balancing:', 'model.kind', '"loadBalancingKind" + $index', 'true', 'true', 'Choose load balancing SPI', '[\
                                         {value: "RoundRobin", label: "Round-robin"},\
                                         {value: "Adaptive", label: "Adaptive"},\
                                         {value: "WeightedRandom", label: "Random"},\
