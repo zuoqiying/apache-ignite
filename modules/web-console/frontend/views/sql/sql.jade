@@ -218,8 +218,8 @@ mixin chart-result
                                 .footer.clearfix
                                     a.pull-left(ng-click='showResultQuery(paragraph)') Show query
 
-                                    -var nextVisibleCondition = 'paragraph.queryId && paragraph.nonRefresh() && (paragraph.table() || paragraph.chart() && !paragraph.scanExplain())'
+                                    -var nextVisibleCondition = 'paragraph.queryId && paragraph.nonRefresh() && (paragraph.table() || paragraph.chart() && !paragraph.scanExplain()) && paragraph.resultType() !== "error"'
 
-                                    .pull-right(ng-show=nextVisibleCondition ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)')
+                                    .pull-right(ng-show='#{nextVisibleCondition}' ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)')
                                         i.fa.fa-chevron-circle-right
                                         a Next
