@@ -42,7 +42,7 @@ import org.apache.ignite.internal.processors.hadoop.impl.v2.HadoopV2TaskContext;
 /**
  * Context for test purpose.
  */
-class HadoopTestTaskContext extends HadoopV2TaskContext {
+public class HadoopTestTaskContext extends HadoopV2TaskContext {
     /**
      * Simple key-vale pair.
      * @param <K> Key class.

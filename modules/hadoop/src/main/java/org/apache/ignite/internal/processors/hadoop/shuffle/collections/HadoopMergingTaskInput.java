@@ -48,6 +48,7 @@ public class HadoopMergingTaskInput {
                 initialize(inMemorySegments.length + files.length);
             }
         };
+
         pq.clear();
 
         if (!F.isEmpty(inMemorySegments)) {
@@ -81,10 +82,29 @@ public class HadoopMergingTaskInput {
      * Creates new raw input merged from all the original sources.
      * @return
      */
-    public HadoopTaskInput input() {
+    public HadoopTaskInput rawInput() {
         // TODO: the number of inputs should be limited, since each input creates N input streams.
         return new MergedInput();
     }
+
+    // TODO: ? implement accept() method to make simpler
+    // TODO: to send ShuffleMessages , see
+    // TODO: org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob.collectUpdatesAndSend()
+    // TODO: problem is that HadoopMultimap.Visitor accepts values in "unsafe" form (long ptr, long size), while
+    // TODO: the raw Iterator we have gives "UnsafeValue" byte[] buffers.
+//    public void accept(HadoopMultimap.Visitor v) {
+//        HadoopTaskInput hti = rawInput();
+//
+//        while (hti.next()) {
+//            UnsafeValue k = (UnsafeValue)hti.key();
+//
+//            v.visitKey();
+//
+//            Iterator<UnsafeValue> it = hti.values();
+//
+//
+//        }
+//    }
 
     /**
      *

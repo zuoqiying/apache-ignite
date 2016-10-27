@@ -22,6 +22,7 @@ import org.apache.ignite.IgniteCheckedException;
 
 /**
  * Task input.
+ * TODO: add <K,V> parametrization!
  */
 public interface HadoopTaskInput extends AutoCloseable {
     /**

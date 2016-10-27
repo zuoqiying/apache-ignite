@@ -1,5 +1,12 @@
 package org.apache.ignite.internal.processors.hadoop.shuffle.collections;
 
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -7,7 +14,6 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskOutput;
-import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSpillable;
 import org.apache.ignite.internal.util.worker.GridWorker;
 import org.apache.ignite.thread.IgniteThread;
 
@@ -21,13 +27,13 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
     private final HadoopTaskOutput[] inOuts; // In fact, spillable outputs assumed.
 
     /** Current in-out we're writing into. */
-    private final AtomicStampedReference<HadoopTaskOutput> curInOut = new AtomicStampedReference<>(null, 0);
+    private final AtomicStampedReference<OutputAndSpills> curInOut = new AtomicStampedReference<>(null, 0);
 
     /** Full in-outs ready fro spilling. */
-    private final BlockingQueue<HadoopTaskOutput> toBeSpilledQueue;
+    private final BlockingQueue<OutputAndSpills> toBeSpilledQueue;
 
     /** Empty in-outs ready for writing. */
-    private final BlockingQueue<HadoopTaskOutput> spilledQueue;
+    private final BlockingQueue<OutputAndSpills> spilledQueue;
 
     /** */
     private final GridWorker spillWorker;
@@ -38,7 +44,7 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
     /**
      * Constructor.
      */
-    public SpillingHadoopTaskOutput(HadoopTaskOutput[] inOuts) {
+    public SpillingHadoopTaskOutput(HadoopTaskOutput[] inOuts, String[] baseNames) {
         assert inOuts.length > 1; // at least 2
 
         this.inOuts = inOuts;
@@ -49,9 +55,9 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
         // initially all in-outs assumed to be free (ready to write).
         // put all them to "spilled" queue, but the last one: it will be the current in-out:
         for (int i = 0; i<this.inOuts.length - 1; i++)
-            spilledQueue.offer(inOuts[i]);
+            spilledQueue.offer(new OutputAndSpills(inOuts[i], baseNames[i]));
 
-        boolean set = curInOut.compareAndSet(null, inOuts[inOuts.length - 1], 0, 1);
+        boolean set = curInOut.compareAndSet(null, spilledQueue.peek(), 0, 1);
 
         assert set;
 
@@ -60,11 +66,18 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
             @Override protected void body() {
                 try {
                     while (!isCancelled()) {
-                        HadoopTaskOutput io = toBeSpilledQueue.take();
+                        OutputAndSpills io = toBeSpilledQueue.take();
 
                         assert io != null;
 
-                        ((HadoopSpillable)io).spill(); // TODO: avoid casting
+                        DataOutput dout = io.nextSpill();
+
+                        try {
+                            ((HadoopSpillable)io.out).spill(dout);
+                        }
+                        finally {
+                            ((AutoCloseable)dout).close();
+                        }
 
                         boolean put = spilledQueue.offer(io);
 
@@ -82,6 +95,44 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
         spillThread.start();
     }
 
+    private static class OutputAndSpills {
+        final HadoopTaskOutput out;
+        private final String base;
+        private final List<String> spills = new ArrayList<>(4);
+
+        OutputAndSpills(HadoopTaskOutput out0, String base) {
+            this.out = out0;
+            this.base = base;
+        }
+
+        private void nextSpillName() {
+            int index = spills.size();
+
+            spills.add(base + "-" + index);
+        }
+
+        /**
+         * Generates *new* spill name and opens DataOutput on it.
+         * @return the new spill output.
+         * @throws IOException
+         */
+        DataOutput nextSpill() throws IOException {
+            nextSpillName();
+
+            String name = spills.get(spills.size() - 1);
+
+            return new DataOutputStream(new FileOutputStream(name, false));
+        }
+
+        /**
+         * Gets all spill names used.
+         * @return
+         */
+        Collection<String> getSpills() {
+            return spills;
+        }
+    }
+
     /**
      * Implements base logic of k-v pair writing.
      *
@@ -95,15 +146,15 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
         final int[] stampHolder = new int[1];
 
         while (true) {
-            HadoopTaskOutput cur = curInOut.get(stampHolder);
+            OutputAndSpills cur = curInOut.get(stampHolder);
 
             assert cur != null;
 
-            if (cur.write(key, val))
+            if (cur.out.write(key, val))
                 return true; // write succeeded.
             else {
                 // Current in-out is full, we should spill it.
-                HadoopTaskOutput other = spilledQueue.poll(10, TimeUnit.MILLISECONDS);
+                OutputAndSpills other = spilledQueue.poll(10, TimeUnit.MILLISECONDS);
 
                 if (other == null)
                     continue; // Likely the empty in-out is already taken by a concurrent thread, loop again.
@@ -115,7 +166,7 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
                     assert put;
 
                     // May be we should go to the next loop there?
-                    return other.write(key, val); // write to fresh empty in-out.
+                    return other.out.write(key, val); // write to fresh empty in-out.
                 }
                 else {
                     // Return the taken in-out back:

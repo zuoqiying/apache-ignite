@@ -18,7 +18,9 @@
 package org.apache.ignite.internal.processors.hadoop.shuffle;
 
 import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -357,16 +359,27 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             size = expectedSize;
         }
 
+        public byte[] range() {
+            return Arrays.copyOfRange(buf, off, size);
+        }
+
         /** */
         @Override public void copyTo(long ptr) {
             GridUnsafe.copyMemory(buf, GridUnsafe.BYTE_ARR_OFF + off, null, ptr, size);
         }
 
+        /** */
+        public void writeTo(DataOutput dout) throws IOException {
+            dout.write(buf, off, size);
+        }
+
+        /** */
         public boolean hasData() {
             // TODO: may be not the best implementation:
             return buf != null;
         }
 
+        /** */
         @Override public void close() {
             buf = null;
             off = 0;
