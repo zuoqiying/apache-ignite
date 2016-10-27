@@ -54,6 +54,7 @@ import org.apache.ignite.internal.transactions.IgniteTxTimeoutCheckedException;
 import org.apache.ignite.internal.util.IgniteUtils;
 import org.apache.ignite.internal.util.future.GridEmbeddedFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
+import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.lang.GridClosureException;
 import org.apache.ignite.internal.util.lang.GridInClosure3;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
@@ -64,6 +65,7 @@ import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
@@ -91,8 +93,8 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
         AtomicReferenceFieldUpdater.newUpdater(GridNearTxLocal.class, IgniteInternalFuture.class, "prepFut");
 
     /** Prepare future updater. */
-    private static final AtomicReferenceFieldUpdater<GridNearTxLocal, GridNearTxFinishFuture> COMMIT_FUT_UPD =
-        AtomicReferenceFieldUpdater.newUpdater(GridNearTxLocal.class, GridNearTxFinishFuture.class, "commitFut");
+    private static final AtomicReferenceFieldUpdater<GridNearTxLocal, IgniteInternalFuture> COMMIT_FUT_UPD =
+        AtomicReferenceFieldUpdater.newUpdater(GridNearTxLocal.class, IgniteInternalFuture.class, "commitFut");
 
     /** Rollback future updater. */
     private static final AtomicReferenceFieldUpdater<GridNearTxLocal, GridNearTxFinishFuture> ROLLBACK_FUT_UPD =
@@ -109,7 +111,7 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
     /** Commit future. */
     @SuppressWarnings("UnusedDeclaration")
     @GridToStringExclude
-    private volatile GridNearTxFinishFuture commitFut;
+    private volatile IgniteInternalFuture commitFut;
 
     /** Rollback future. */
     @SuppressWarnings("UnusedDeclaration")
@@ -248,14 +250,14 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
     /**
      * Marks transaction to check if commit on backup.
      */
-    public void markForBackupCheck() {
+    void markForBackupCheck() {
         needCheckBackup = true;
     }
 
     /**
      * @return If need to check tx commit on backup.
      */
-    public boolean onNeedCheckBackup() {
+    boolean onNeedCheckBackup() {
         Boolean check = needCheckBackup;
 
         if (check != null && check) {
@@ -270,7 +272,7 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
     /**
      * @return If backup check was requested.
      */
-    public boolean needCheckBackup() {
+    boolean needCheckBackup() {
         return needCheckBackup != null;
     }
 
@@ -284,7 +286,7 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
     /**
      * @param nearLocallyMapped {@code True} if transaction contains near key mapped to the local node.
      */
-    public void nearLocallyMapped(boolean nearLocallyMapped) {
+    void nearLocallyMapped(boolean nearLocallyMapped) {
         this.nearLocallyMapped = nearLocallyMapped;
     }
 
@@ -320,7 +322,7 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
     /**
      * @param optimisticLockEntries Optimistic lock entries.
      */
-    public void optimisticLockEntries(Collection<IgniteTxEntry> optimisticLockEntries) {
+    void optimisticLockEntries(Collection<IgniteTxEntry> optimisticLockEntries) {
         this.optimisticLockEntries = optimisticLockEntries;
     }
 
@@ -678,7 +680,7 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
      * @param committedVers Committed versions.
      * @param rolledbackVers Rolled back versions.
      */
-    void readyNearLock(IgniteTxEntry txEntry,
+    private void readyNearLock(IgniteTxEntry txEntry,
         GridCacheVersion dhtVer,
         Collection<GridCacheVersion> pendingVers,
         Collection<GridCacheVersion> committedVers,
@@ -857,42 +859,59 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
 
         prepareAsync();
 
-        GridNearTxFinishFuture fut = commitFut;
+        IgniteInternalFuture<IgniteInternalTx> finishFut = commitFut;
 
-        if (fut == null &&
-            !COMMIT_FUT_UPD.compareAndSet(this, null, fut = new GridNearTxFinishFuture<>(cctx, this, true)))
+        if (finishFut != null)
+            return finishFut;
+
+        GridNearTxFinishFuture nearFinishFut = new GridNearTxFinishFuture<>(cctx, this, true);
+
+        finishFut = txState().mvccEnabled(cctx) ? new FinishAndAckFuture(nearFinishFut) : nearFinishFut;
+
+        if (!COMMIT_FUT_UPD.compareAndSet(this, null, finishFut))
             return commitFut;
 
-        cctx.mvcc().addFuture(fut, fut.futureId());
+        cctx.mvcc().addFuture(nearFinishFut, nearFinishFut.futureId());
 
         final IgniteInternalFuture<?> prepareFut = prepFut;
 
         prepareFut.listen(new CI1<IgniteInternalFuture<?>>() {
             @Override public void apply(IgniteInternalFuture<?> f) {
-                GridNearTxFinishFuture fut0 = commitFut;
+                IgniteInternalFuture fut0 = commitFut;
 
                 try {
                     // Make sure that here are no exceptions.
                     prepareFut.get();
 
-                    fut0.finish(true);
+                    finish(fut0, true);
                 }
                 catch (Error | RuntimeException e) {
                     COMMIT_ERR_UPD.compareAndSet(GridNearTxLocal.this, null, e);
 
-                    fut0.finish(false);
+                    finish(fut0, false);
 
                     throw e;
                 }
                 catch (IgniteCheckedException e) {
                     COMMIT_ERR_UPD.compareAndSet(GridNearTxLocal.this, null, e);
 
-                    fut0.finish(false);
+                    finish(fut0, false);
                 }
             }
         });
 
-        return fut;
+        return finishFut;
+    }
+
+    /**
+     * @param fut Future.
+     * @param commit Commit flag.
+     */
+    private void finish(IgniteInternalFuture fut, boolean commit) {
+        if (fut instanceof FinishAndAckFuture)
+            ((FinishAndAckFuture)fut).finish(commit);
+        else
+            ((GridNearTxFinishFuture)fut).finish(commit);
     }
 
     /** {@inheritDoc} */
@@ -1375,6 +1394,102 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter {
      */
     public boolean hasRemoteLocks() {
         return hasRemoteLocks;
+    }
+
+
+    /**
+     *
+     */
+    private static class FinishAndAckFuture extends GridFutureAdapter {
+        /** */
+        private final GridNearTxFinishFuture finishFut;
+
+        /**
+         * @param finishFut Finish future.
+         */
+        FinishAndAckFuture(GridNearTxFinishFuture finishFut) {
+            this.finishFut = finishFut;
+        }
+
+        /**
+         * @param commit Commit flag.
+         */
+        void finish(boolean commit) {
+            if (commit) {
+                finishFut.finish(true);
+
+                finishFut.listen(new IgniteInClosure<IgniteInternalFuture>() {
+                    @Override public void apply(IgniteInternalFuture fut) {
+                        GridNearTxLocal tx = finishFut.tx();
+
+                        if (tx.mappings().coordinatorCountersGenerated()) {
+                            IgniteInternalFuture<Void> ackFut = finishFut.context().coordinators().ackTransactionCommit(
+                                tx.nearXidVersion(),
+                                tx.topologyVersion(),
+                                tx.mappings().coordinatorCounters());
+
+                            ackFut.listen(new IgniteInClosure<IgniteInternalFuture<Void>>() {
+                                @Override public void apply(IgniteInternalFuture<Void> ackFut) {
+                                    Exception err = null;
+
+                                    try {
+                                        finishFut.get();
+
+                                        ackFut.get();
+                                    }
+                                    catch (Exception e) {
+                                        err = e;
+                                    }
+                                    catch (Error e) {
+                                        onDone(e);
+
+                                        throw e;
+                                    }
+
+                                    if (err != null)
+                                        onDone(err);
+                                    else
+                                        onDone(finishFut.tx());
+                                }
+                            });
+                        }
+                        else
+                            finishWithFutureResult(fut);
+                    }
+                });
+            }
+            else {
+                finishFut.finish(false);
+
+                finishFut.listen(new IgniteInClosure<IgniteInternalFuture>() {
+                    @Override public void apply(IgniteInternalFuture fut) {
+                        finishWithFutureResult(fut);
+                    }
+                });
+            }
+        }
+
+        /**
+         * @param fut Future.
+         */
+        private void finishWithFutureResult(IgniteInternalFuture fut) {
+            try {
+                onDone(fut.get());
+            }
+            catch (IgniteCheckedException | RuntimeException e) {
+                onDone(e);
+            }
+            catch (Error e) {
+                onDone(e);
+
+                throw e;
+            }
+        }
+
+        /** {@inheritDoc} */
+        @Override public String toString() {
+            return S.toString(FinishAndAckFuture.class, this);
+        }
     }
 
     /** {@inheritDoc} */

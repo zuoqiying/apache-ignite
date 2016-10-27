@@ -45,9 +45,11 @@ import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.transactions.IgniteTxHeuristicCheckedException;
 import org.apache.ignite.internal.transactions.IgniteTxRollbackCheckedException;
 import org.apache.ignite.internal.util.future.GridCompoundIdentityFuture;
+import org.apache.ignite.internal.util.future.GridEmbeddedFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.C1;
+import org.apache.ignite.internal.util.typedef.C2;
 import org.apache.ignite.internal.util.typedef.CI1;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.CU;
@@ -173,6 +175,13 @@ public final class GridNearTxFinishFuture<K, V> extends GridCompoundIdentityFutu
      */
     public GridNearTxLocal tx() {
         return tx;
+    }
+
+    /**
+     * @return Context.
+     */
+    GridCacheSharedContext context() {
+        return cctx;
     }
 
     /** {@inheritDoc} */
@@ -395,6 +404,9 @@ public final class GridNearTxFinishFuture<K, V> extends GridCompoundIdentityFutu
      */
     @SuppressWarnings("ForLoopReplaceableByForEach")
     void finish(boolean commit) {
+        if (!commit && tx.mappings().coordinatorCountersGenerated())
+            cctx.coordinators().ackTransactionRollback(tx.nearXidVersion(), tx.mappings().coordinatorCounters().keySet());
+
         if (tx.onNeedCheckBackup()) {
             assert tx.onePhaseCommit();
 

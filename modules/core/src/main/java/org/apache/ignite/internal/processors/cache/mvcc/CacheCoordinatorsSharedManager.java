@@ -317,7 +317,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
 
 
-        return null;
+        return new GridFinishedFuture<>();
     }
 
     /**

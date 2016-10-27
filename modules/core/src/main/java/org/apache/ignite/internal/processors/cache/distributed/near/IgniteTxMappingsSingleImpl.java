@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.cache.distributed.near;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.ignite.cluster.ClusterNode;
@@ -111,7 +112,9 @@ public class IgniteTxMappingsSingleImpl implements IgniteTxMappings {
 
     /** {@inheritDoc} */
     @Override public Map<ClusterNode, Long> coordinatorCounters() {
-        return null;
+        assert mapping != null && mapping.mvccCoordinatorCounter() != TxMvccVersion.COUNTER_NA;
+
+        return Collections.singletonMap(mapping.coordinator(), mapping.mvccCoordinatorCounter());
     }
 
     /** {@inheritDoc} */
