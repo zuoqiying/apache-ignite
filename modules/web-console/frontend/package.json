@@ -7,7 +7,7 @@
     "dev": "cross-env NODE_ENV=development gulp watch",
     "build": "cross-env NODE_ENV=production gulp build --no-ll",
     "test": "cross-env NODE_ENV=test karma start ./test/karma.conf.js",
-    "eslint": "eslint --format node_modules/eslint-friendly-formatter gulpfile.babel.js/ app/ controllers/ generator/ ignite_modules/ ignite_modules_temp/ -- --eff-by-issue"
+    "eslint": "eslint --format node_modules/eslint-friendly-formatter gulpfile.babel.js/ app/ controllers/ ignite_modules/ ignite_modules_temp/ -- --eff-by-issue"
   },
   "author": "",
   "contributors": [
@@ -102,6 +102,7 @@
     "karma-babel-preprocessor": "^6.0.1",
     "karma-jasmine": "^1.0.2",
     "karma-mocha": "^1.0.1",
+    "karma-mocha-reporter": "^2.2.0",
     "karma-phantomjs-launcher": "^1.0.0",
     "karma-teamcity-reporter": "^1.0.0",
     "karma-webpack": "^1.7.0",

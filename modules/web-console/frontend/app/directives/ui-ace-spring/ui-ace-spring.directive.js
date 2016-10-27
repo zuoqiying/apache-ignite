@@ -37,12 +37,12 @@ export default ['igniteUiAceSpring', [() => {
         if (igniteUiAceTabs && igniteUiAceTabs.onChange)
             scope.onChange = igniteUiAceTabs.onChange;
 
-        const deepWatch = _.isNil(ctrl.client);
+        const noDeepWatch = !(typeof attrs.noDeepWatch !== 'undefined');
 
         // Setup watchers.
         scope.$watch('master', () => {
             ctrl.data = _.isNil(scope.master) ? null : ctrl.generate(scope.master, scope.detail).asString();
-        }, deepWatch);
+        }, noDeepWatch);
     };
 
     return {

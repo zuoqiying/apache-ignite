@@ -19,8 +19,8 @@
         .modal-content
             .modal-header
                 button.close(ng-click='$hide()' aria-hidden='true') &times;
-                h4.modal-title 
-                    i.fa.fa-info
+                h4.modal-title
+                    i.fa.fa-info-circle
                     | {{title}}
             .modal-body(ng-show='content')
                 p(ng-bind-html='content.join("<br/>")' style='text-align: left;')

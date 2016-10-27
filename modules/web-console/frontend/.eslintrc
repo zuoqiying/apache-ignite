@@ -29,7 +29,6 @@ globals:
     $generatorCommon: true
     $generatorSpring: true
     $generatorJava: true
-    $generatorReadme: true
     $generatorOptional: true
     saveAs: true
     process: true

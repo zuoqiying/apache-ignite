@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export default ['$scope', 'SpringTransformer', function($scope, generator) {
+export default ['$scope', 'SpringTransformer', function($scope, spring) {
     const ctrl = this;
 
     delete ctrl.data;
@@ -23,7 +23,7 @@ export default ['$scope', 'SpringTransformer', function($scope, generator) {
     // Setup generator.
     switch (ctrl.generator) {
         case 'igniteConfiguration':
-            ctrl.generate = (cluster) => generator.cluster(cluster, ctrl.client === 'true');
+            ctrl.generate = (cluster) => spring.cluster(cluster, ctrl.client === 'true');
 
             break;
         case 'clusterCaches':
@@ -35,9 +35,11 @@ export default ['$scope', 'SpringTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                const cfg = generator.clusterGeneral(cluster);
+                const cfg = spring.generator.clusterGeneral(cluster);
 
-                return generator.clusterCaches(cluster, clusterCaches, null, false, cfg);
+                spring.generator.clusterCaches(cluster, clusterCaches, null, false, cfg);
+
+                return spring.toSection(cfg);
             };
 
             break;
@@ -51,7 +53,7 @@ export default ['$scope', 'SpringTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                return generator[ctrl.generator](cache, cacheDomains);
+                return spring[ctrl.generator](cache, cacheDomains);
             };
 
             break;
@@ -63,7 +65,7 @@ export default ['$scope', 'SpringTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                return generator.cacheNodeFilter(cache, cacheIgfss);
+                return spring.cacheNodeFilter(cache, cacheIgfss);
             };
 
             break;
@@ -76,11 +78,11 @@ export default ['$scope', 'SpringTransformer', function($scope, generator) {
                     return acc;
                 }, []);
 
-                return generator.igfss(clusterIgfss);
+                return spring.clusterIgfss(clusterIgfss);
             };
 
             break;
         default:
-            ctrl.generate = (master) => generator[ctrl.generator](master);
+            ctrl.generate = (master, detail) => spring[ctrl.generator](master, detail);
     }
 }];

@@ -98,7 +98,7 @@ export class Bean extends EmptyBean {
     }
 
     intConstructorArgument(model) {
-        return this._property(this.arguments, 'int', model, null, _.nonEmpty);
+        return this._property(this.arguments, 'int', model, null, _.nonNil);
     }
 
     classConstructorArgument(model) {
@@ -118,6 +118,12 @@ export class Bean extends EmptyBean {
 
         if (_.nonNil(value) && _.nonNil(dflt) && value !== dflt.value)
             this.arguments.push({clsName: dflt.clsName, constant: true, value});
+
+        return this;
+    }
+
+    propertyConstructorArgument(value, hint) {
+        this.arguments.push({clsName: 'PROPERTY', value, hint});
 
         return this;
     }
@@ -173,6 +179,10 @@ export class Bean extends EmptyBean {
         });
     }
 
+    prop(clsName, name, value) {
+        this.properties.push({clsName, name, value});
+    }
+
     boolProperty(model, name = model) {
         return this._property(this.properties, 'boolean', model, name, _.nonNil);
     }
@@ -183,6 +193,10 @@ export class Bean extends EmptyBean {
 
     intProperty(model, name = model) {
         return this._property(this.properties, 'int', model, name, _.nonNil);
+    }
+
+    floatProperty(model, name = model) {
+        return this._property(this.properties, 'float', model, name, _.nonNil);
     }
 
     property(name, value, hint) {
@@ -335,7 +349,7 @@ export class Bean extends EmptyBean {
     /**
      * @param {String} id
      * @param {String} name
-     * @param {Bean} value
+     * @param {EmptyBean|Bean} value
      */
     dataSource(id, name, value) {
         if (value)

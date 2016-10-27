@@ -212,6 +212,7 @@ export default ['clustersController', [
         Resource.read()
             .then(({spaces, clusters, caches, domains, igfss}) => {
                 $scope.spaces = spaces;
+
                 $scope.clusters = clusters;
 
                 $scope.caches = _.map(caches, (cache) => {
@@ -222,6 +223,7 @@ export default ['clustersController', [
 
                     return {value: cache._id, label: cache.name, cache};
                 });
+
                 $scope.igfss = _.map(igfss, (igfs) => ({value: igfs._id, label: igfs.name, igfs}));
 
                 _.forEach($scope.clusters, (cluster) => {

@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
-const STORE_FACTORY = ['org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'org.apache.ignite.cache.store.jdbc.CacheJdbcBlobStoreFactory'];
+const STORE_FACTORY = ['org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory'];
 
 // Descriptors for generation of demo data.
 const PREDEFINED_QUERIES = [
@@ -127,7 +126,7 @@ const PREDEFINED_QUERIES = [
             {name: 'DEMO_MAX_DEPARTMENT_CNT', val: 5, comment: 'How many departments to generate.'}
         ],
         customGeneration(sb, conVar, stmtVar) {
-            sb.append(`${stmtVar} = ${conVar}.prepareStatement("INSERT INTO EMPLOYEE(ID, DEPARTMENT_ID, MANAGER_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB, SALARY) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")`);
+            sb.append(`${stmtVar} = ${conVar}.prepareStatement("INSERT INTO EMPLOYEE(ID, DEPARTMENT_ID, MANAGER_ID, FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER, HIRE_DATE, JOB, SALARY) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");`);
 
             sb.emptyLine();
 
@@ -158,10 +157,28 @@ const PREDEFINED_QUERIES = [
     }
 ];
 
+// Var name generator function.
+const beenNameSeed = () => {
+    let idx = '';
+    const names = [];
+
+    return (bean) => {
+        let name;
+
+        while (_.includes(names, name = `${bean.id}${idx ? '_' + idx : idx}`))
+            idx++;
+
+        names.push(name);
+
+        return name;
+    };
+};
+
 export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     class JavaTransformer extends AbstractTransformer {
         static generator = generator;
 
+        // Mapping for objects to method call.
         static METHOD_MAPPING = {
             'org.apache.ignite.configuration.CacheConfiguration': {
                 id: (ccfg) => JavaTypes.toJavaName('cache', ccfg.findProperty('name').value),
@@ -223,10 +240,12 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             }
         };
 
+        // Append comment line.
         static comment(sb, ...lines) {
             _.forEach(lines, (line) => sb.append(`// ${line}`));
         }
 
+        // Append comment block.
         static commentBlock(sb, ...lines) {
             if (lines.length === 1)
                 sb.append(`/** ${_.head(lines)} **/`);
@@ -340,7 +359,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
             const storeFactory = _.cloneDeep(bean);
 
-            _.remove(storeFactory.properties, (p) => _.includes(['dataSourceBean', 'dialect'], p.name));
+            _.remove(storeFactory.properties, (p) => _.includes(['dataSourceBean'], p.name));
 
             if (storeFactory.properties.length) {
                 sb.emptyLine();
@@ -356,7 +375,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         static _toObject(clsName, val) {
             const items = _.isArray(val) ? val : [val];
 
-            return _.map(items, (item, idx) => {
+            return _.map(items, (item) => {
                 if (_.isNil(item))
                     return 'null';
 
@@ -365,11 +384,12 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         return item;
                     case 'byte':
                         return `(byte) ${item}`;
+                    case 'float':
+                        return `${item}f`;
+                    case 'long':
+                        return `${item}L`;
                     case 'java.io.Serializable':
                     case 'java.lang.String':
-                        if (items.length > 1)
-                            return `"${item}"${idx !== items.length - 1 ? ' +' : ''}`;
-
                         return `"${item}"`;
                     case 'PATH':
                         return `"${item.replace(/\\/g, '\\\\')}"`;
@@ -398,41 +418,32 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
         }
 
         static _constructBeans(sb, type, items, vars, limitLines) {
-            // Construct objects inline for preview or simple objects.
-            const mapper = this.METHOD_MAPPING[type];
+            if (this._isBean(type)) {
+                // Construct objects inline for preview or simple objects.
+                const mapper = this.METHOD_MAPPING[type];
 
-            if (!limitLines || !mapper) {
-                _.forEach(items, (item) => {
-                    if (!item.isComplex())
-                        return;
+                const nextId = mapper ? mapper.id : beenNameSeed();
 
-                    const id = mapper ? mapper.id(item) : item.id;
+                // Prepare objects refs.
+                return _.map(items, (item) => {
+                    if (limitLines && mapper)
+                        return mapper.id(item) + (limitLines ? `(${mapper.args})` : '');
 
-                    this.constructBean(sb, item, vars, limitLines, id);
+                    if (item.isComplex()) {
+                        const id = nextId(item);
 
-                    sb.emptyLine();
+                        this.constructBean(sb, item, vars, limitLines, id);
 
-                    this._setProperties(sb, item, vars, limitLines, id);
+                        sb.emptyLine();
 
-                    sb.emptyLine();
+                        return id;
+                    }
+
+                    return this._newBean(item);
                 });
             }
 
-            const nonBean = !this._isBean(type);
-
-            // Prepare objects refs.
-            return _.map(items, (item) => {
-                if (nonBean)
-                    return this._toObject(type, item);
-
-                if (mapper)
-                    return mapper.id(item) + (limitLines ? `(${mapper.args})` : '');
-
-                if (item.isComplex())
-                    return item.id;
-
-                return this._newBean(item);
-            });
+            return this._toObject(type, items);
         }
 
         /**
@@ -507,12 +518,18 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 const key = this._toObject(map.keyClsName, entry[map.keyField]);
                 const val = entry[map.valField];
 
-                if (_.isArray(val)) {
-                    sb.startBlock(`${map.id}.put(${key},`);
+                if (_.isArray(val) && map.valClsName === 'java.lang.String') {
+                    if (val.length > 1) {
+                        sb.startBlock(`${map.id}.put(${key},`);
 
-                    sb.append(this._toObject(map.valClsName, val));
+                        _.forEach(val, (line, idx) => {
+                            sb.append(`"${line}"${idx !== val.length - 1 ? ' +' : ''}`);
+                        });
 
-                    sb.endBlock(');');
+                        sb.endBlock(');');
+                    }
+                    else
+                        sb.append(`${map.id}.put(${key}, ${this._toObject(map.valClsName, _.head(val))});`);
                 }
                 else
                     sb.append(`${map.id}.put(${key}, ${this._toObject(map.valClsName, val)});`);
@@ -541,7 +558,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             _.forEach(bean.properties, (prop, idx) => {
                 switch (prop.clsName) {
                     case 'DATA_SOURCE':
-                        this._setProperty(sb, id, prop.name, `DataSources.INSTANCE_${prop.id}`);
+                        this._setProperty(sb, id, 'dataSource', `DataSources.INSTANCE_${prop.id}`);
 
                         break;
                     case 'EVENT_TYPES':
@@ -586,9 +603,17 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         const nonBean = !this._isBean(prop.typeClsName);
 
                         if (nonBean && prop.implClsName === 'java.util.ArrayList') {
-                            const items = _.map(prop.items, (item) => this._toObject(prop.typeClsName, item)).join(', ');
+                            const items = _.map(prop.items, (item) => this._toObject(prop.typeClsName, item));
 
-                            this._setProperty(sb, id, prop.name, `Arrays.asList(${items})`);
+                            if (items.length > 1) {
+                                sb.startBlock(`${id}.set${_.upperFirst(prop.name)}(Arrays.asList(`);
+
+                                _.forEach(items, (item, i) => sb.append(item + (i !== items.length - 1 ? ',' : '')));
+
+                                sb.endBlock('));');
+                            }
+                            else
+                                this._setProperty(sb, id, prop.name, `Arrays.asList(${items})`);
                         }
                         else {
                             const colTypeClsName = JavaTypes.shortClassName(prop.typeClsName);
