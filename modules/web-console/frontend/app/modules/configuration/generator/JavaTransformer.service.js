@@ -494,17 +494,13 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             const arrType = JavaTypes.shortClassName(arrProp.typeClsName);
 
             // Set refs to property.
-            if (refs.length === 1)
-                this._setProperty(sb, parentId, arrProp.name, `new ${arrType}[] {${_.head(refs)}}`);
-            else {
-                sb.startBlock(`${parentId}.set${_.upperFirst(arrProp.name)}(new ${arrType}[] {`);
+            sb.startBlock(`${parentId}.set${_.upperFirst(arrProp.name)}(new ${arrType}[] {`);
 
-                const lastIdx = refs.length - 1;
+            const lastIdx = refs.length - 1;
 
-                _.forEach(refs, (ref, idx) => sb.append(ref + (lastIdx !== idx ? ',' : '')));
+            _.forEach(refs, (ref, idx) => sb.append(ref + (lastIdx !== idx ? ',' : '')));
 
-                sb.endBlock('});');
-            }
+            sb.endBlock('});');
         }
 
         static _constructMap(sb, map, vars = []) {
