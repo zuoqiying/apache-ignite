@@ -20,6 +20,7 @@ package org.apache.ignite.internal.processors.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -84,6 +85,7 @@ import org.apache.ignite.lang.IgniteFuture;
 import org.apache.ignite.lang.IgniteProductVersion;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.marshaller.Marshaller;
+import org.apache.ignite.marshaller.annotation.SerializableTransient;
 import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.resources.JobContextResource;
 import org.apache.ignite.resources.LoggerResource;
@@ -113,14 +115,8 @@ public class GridServiceProcessor extends GridProcessorAdapter {
     /** */
     public static final IgniteProductVersion LAZY_SERVICES_CFG_SINCE = IgniteProductVersion.fromString("1.5.22");
 
-    /** Versions that only compatible with each other. */
-    private static final Set<String> INCOMPATIBLE_VERSIONS;
-
-    /** Minimal incompatible version. */
-    private static final IgniteProductVersion INCOMPATIBLE_FROM = IgniteProductVersion.fromString("1.5.30");
-
-    /** Maximal incompatible version. */
-    private static final IgniteProductVersion INCOMPATIBLE_TO = IgniteProductVersion.fromString("1.5.32");
+    /** Versions that only compatible with each other, and from 1.5.33. */
+    private static final Set<IgniteProductVersion> BROKEN_VERSIONS;
 
     /** */
     private final Boolean srvcCompatibilitySysProp;
@@ -162,13 +158,17 @@ public class GridServiceProcessor extends GridProcessorAdapter {
     private GridLocalEventListener topLsnr = new TopologyListener();
 
     static {
-        Set<String> versions = new TreeSet<>();
+        Set<IgniteProductVersion> versions = new TreeSet<>(new Comparator<IgniteProductVersion>() {
+            @Override public int compare(final IgniteProductVersion o1, final IgniteProductVersion o2) {
+                return o1.compareToIgnoreTimestamp(o2);
+            }
+        });
 
-        versions.add("1.5.30");
-        versions.add("1.5.31");
-        versions.add("1.5.32");
+        versions.add(IgniteProductVersion.fromString("1.5.30"));
+        versions.add(IgniteProductVersion.fromString("1.5.31"));
+        versions.add(IgniteProductVersion.fromString("1.5.32"));
 
-        INCOMPATIBLE_VERSIONS = Collections.unmodifiableSet(versions);
+        BROKEN_VERSIONS = Collections.unmodifiableSet(versions);
     }
 
     /**
@@ -668,11 +668,13 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         ClusterNode node = cache.affinity().mapKeyToNode(name);
 
         if (node.version().compareTo(ServiceTopologyCallable.SINCE_VER) >= 0) {
-            final boolean v2 = node.version().compareTo(ServiceTopologyCallableV2.SINCE_VER) >= 0;
+            final ServiceTopologyCallable call = new ServiceTopologyCallable(name);
+
+            call.serialize = BROKEN_VERSIONS.contains(node.version());
 
             return ctx.closure().callAsyncNoFailover(
                 GridClosureCallMode.BALANCE,
-                v2 ? new ServiceTopologyCallableV2(name) : new ServiceTopologyCallable(name),
+                call,
                 Collections.singletonList(node),
                 false
             ).get();
@@ -1273,13 +1275,11 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         if (res != null)
             return res;
 
-        if (node.version().compareToIgnoreTimestamp(INCOMPATIBLE_FROM) >= 0 &&
-            node.version().compareToIgnoreTimestamp(INCOMPATIBLE_TO) <= 0) {
+        if (BROKEN_VERSIONS.contains(node.version())) {
             ClusterNode locNode = ctx.discovery().localNode();
 
-            log.warning("Local IgniteServices are not compatible with remote node. " +
-                "Avoid using incompatible versions. [locNodeId=" +
-                locNode.id() + ", rmtNodeId=" + node.id() + ", incompatibleVersions=" + INCOMPATIBLE_VERSIONS + "]");
+            log.warning("Remote IgniteServices are not compatible with releases less that 1.5.30 " +
+                "[locNodeId=" + locNode.id() + ", rmtNodeId=" + node.id() + ", brokenVersions=" + BROKEN_VERSIONS + "]");
         }
 
         boolean rmtNodeIsOld = node.version().compareToIgnoreTimestamp(LAZY_SERVICES_CFG_SINCE) < 0;
@@ -1828,6 +1828,7 @@ public class GridServiceProcessor extends GridProcessorAdapter {
     /**
      */
     @GridInternal
+    @SerializableTransient(notNullField = "svcName", methodName = "serializableTransient")
     private static class ServiceTopologyCallable implements IgniteCallable<Map<UUID, Integer>> {
         /** */
         private static final long serialVersionUID = 0L;
@@ -1836,51 +1837,34 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         private static final IgniteProductVersion SINCE_VER = IgniteProductVersion.fromString("1.5.7");
 
         /** */
-        final String svcName;
+        private static final String[] SER_FIELDS = {"waitedCacheInit", "jCtx", "log"};
+
+        /** */
+        private final String svcName;
+
+        /** */
+        private transient boolean waitedCacheInit;
 
         /** */
         @IgniteInstanceResource
-        IgniteEx ignite;
+        private IgniteEx ignite;
+
+        /** */
+        @JobContextResource
+        private transient ComputeJobContext jCtx;
+
+        /** */
+        @LoggerResource
+        private transient IgniteLogger log;
+
+        /** */
+        transient boolean serialize;
 
         /**
          * @param svcName Service name.
          */
         public ServiceTopologyCallable(String svcName) {
             this.svcName = svcName;
-        }
-
-        /** {@inheritDoc} */
-        @Override public Map<UUID, Integer> call() throws Exception {
-            return serviceTopology(ignite.context().cache().utilityCache(), svcName);
-        }
-    }
-
-    /**
-     */
-    @GridInternal
-    private static class ServiceTopologyCallableV2 extends ServiceTopologyCallable {
-        /** */
-        private static final long serialVersionUID = 0L;
-
-        /** */
-        private static final IgniteProductVersion SINCE_VER = IgniteProductVersion.fromString("1.5.33");
-
-        /** */
-        private boolean waitedCacheInit;
-
-        /** */
-        @JobContextResource
-        private ComputeJobContext jCtx;
-
-        /** */
-        @LoggerResource
-        private IgniteLogger log;
-
-        /**
-         * @param svcName Service name.
-         */
-        public ServiceTopologyCallableV2(String svcName) {
-            super(svcName);
         }
 
         /** {@inheritDoc} */
@@ -1919,6 +1903,15 @@ public class GridServiceProcessor extends GridProcessorAdapter {
             }
 
             return serviceTopology(cache, svcName);
+        }
+
+        /**
+         * @param unmarshalling Unmarshalling flag.
+         * @return List of serializable transient fields.
+         */
+        @SuppressWarnings("unused")
+        private String[] serializableTransient(boolean unmarshalling) {
+            return serialize || unmarshalling ? SER_FIELDS : null;
         }
     }
 

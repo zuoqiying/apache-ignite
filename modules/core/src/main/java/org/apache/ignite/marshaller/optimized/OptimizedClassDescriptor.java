@@ -49,6 +49,7 @@ import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.marshaller.MarshallerContext;
 import org.apache.ignite.marshaller.MarshallerExclusions;
+import org.apache.ignite.marshaller.annotation.SerializableTransient;
 import sun.misc.Unsafe;
 
 import static java.lang.reflect.Modifier.isFinal;
@@ -169,6 +170,12 @@ class OptimizedClassDescriptor {
 
     /** Proxy interfaces. */
     private Class<?>[] proxyIntfs;
+
+    /** Method returns serializable transient fields. */
+    private Method serTransMtd;
+
+    /** Indicator field, if value is not null then object deserialized normally. */
+    private Field notNullField;
 
     /**
      * Creates descriptor for class.
@@ -442,6 +449,37 @@ class OptimizedClassDescriptor {
                         }
 
                         readObjMtds.add(mtd);
+
+                        final SerializableTransient serTransAn = c.getAnnotation(SerializableTransient.class);
+
+                        // Custom serialization policy for transient fields.
+                        if (serTransAn != null) {
+                            try {
+                                serTransMtd = c.getDeclaredMethod(serTransAn.methodName(), boolean.class);
+
+                                int mod = serTransMtd.getModifiers();
+
+                                if (!isStatic(mod) && isPrivate(mod)
+                                    && serTransMtd.getReturnType() == String[].class)
+                                    serTransMtd.setAccessible(true);
+                                else
+                                    // Set method back to null if it has incorrect signature.
+                                    serTransMtd = null;
+                            } catch (NoSuchMethodException ignored) {
+                                serTransMtd = null;
+                            }
+
+                            try {
+                                final String fieldName = serTransAn.notNullField();
+
+                                notNullField = cls.getDeclaredField(fieldName);
+
+                                notNullField.setAccessible(true);
+                            } catch (NoSuchFieldException e) {
+                                notNullField = null;
+                                serTransMtd = null;
+                            }
+                        }
 
                         Field[] clsFields0 = c.getDeclaredFields();
 
@@ -799,12 +837,67 @@ class OptimizedClassDescriptor {
                 writeTypeData(out);
 
                 out.writeShort(checksum);
-                out.writeSerializable(obj, writeObjMtds, fields);
+                out.writeSerializable(obj, writeObjMtds, serializableFields(obj, false));
 
                 break;
 
             default:
                 throw new IllegalStateException("Invalid class type: " + type);
+        }
+    }
+
+    /**
+     * Gets list of serializable fields. If {@link #serTransMtd} method
+     * returns list of transient fields, they will be added to other fields.
+     * Transient fields that are not included in that list will be normally
+     * ignored.
+     *
+     * @param obj Object.
+     * @param unmarshalling Flag indicates if it is unmarshalling or not.
+     * @return Serializable fields.
+     */
+    @SuppressWarnings("ForLoopReplaceableByForEach")
+    private Fields serializableFields(Object obj, boolean unmarshalling) {
+        if (serTransMtd == null)
+            return fields;
+
+        try {
+            final Class<?> cls = obj.getClass();
+
+            final String[] transFields = (String[])serTransMtd.invoke(obj, unmarshalling);
+
+            if (transFields == null || transFields.length == 0)
+                return fields;
+
+            List<FieldInfo> clsFields = new ArrayList<>();
+
+            clsFields.addAll(fields.fields.get(0).fields);
+
+            for (int i = 0; i < transFields.length; i++) {
+                final String fieldName = transFields[i];
+
+                final Field f = cls.getDeclaredField(fieldName);
+
+                FieldInfo fieldInfo = new FieldInfo(f, f.getName(),
+                    UNSAFE.objectFieldOffset(f), fieldType(f.getType()));
+
+                clsFields.add(fieldInfo);
+            }
+
+            Collections.sort(clsFields, new Comparator<FieldInfo>() {
+                @Override public int compare(FieldInfo t1, FieldInfo t2) {
+                    return t1.name().compareTo(t2.name());
+                }
+            });
+
+            List<ClassFields> fields = new ArrayList<>();
+
+            fields.add(new ClassFields(clsFields));
+
+            return new Fields(fields);
+        }
+        catch (Exception e) {
+            return fields;
         }
     }
 
@@ -840,8 +933,38 @@ class OptimizedClassDescriptor {
             case SERIALIZABLE:
                 verifyChecksum(in.readShort());
 
-                return in.readSerializable(cls, readObjMtds, readResolveMtd, fields);
+                // If no serialize method, then unmarshal as usual.
+                if (serTransMtd == null)
+                    return in.readSerializable(cls, readObjMtds, readResolveMtd, fields);
 
+                // We have two tries to unmarshal object, so need possibility to rewind stream.
+                final RewindableInputStream rewindable = new RewindableInputStream();
+
+                // Try 1.
+                final Object obj0 = in.readSerializable(cls, readObjMtds, readResolveMtd, fields, rewindable);
+
+                Object obj = obj0;
+
+                for (int i = 0; i < 2; i++) {
+                    try {
+                        // If field indicator set, then OK.
+                        if (notNullField.get(obj) != null)
+                            return obj;
+
+                        // No more tries.
+                        if (i == 1)
+                            return obj0;
+
+                        rewindable.rewind();
+
+                        // Second try with another set of fields.
+                        obj = in.readSerializable(cls, readObjMtds, readResolveMtd, serializableFields(obj, true), rewindable);
+                    } catch (IllegalAccessException e) {
+                        return obj0;
+                    }
+                }
+
+                return obj0;
             default:
                 assert false : "Unexpected type: " + type;
 

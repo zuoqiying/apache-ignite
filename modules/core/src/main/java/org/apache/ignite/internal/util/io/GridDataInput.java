@@ -38,6 +38,11 @@ public interface GridDataInput extends DataInput {
     public void inputStream(InputStream in) throws IOException;
 
     /**
+     * @return Input stream.
+     */
+    public InputStream inputStream();
+
+    /**
      * Resets data output.
      *
      * @throws IOException In case of error.
