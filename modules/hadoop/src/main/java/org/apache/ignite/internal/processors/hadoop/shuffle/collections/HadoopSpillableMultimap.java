@@ -155,7 +155,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
                         private HadoopMultimap.Key key;
 
                         @Override public void visitKey(byte[] buf, int off, int len) throws IgniteCheckedException {
-                            keyInput.bytes(buf, off, len); // TODO: (buf, off, off + len) -> (buf, off, len) ? make sure this is correct.
+                            keyInput.bytes(buf, off, len); // TODO: changed (buf, off, off + len) -> (buf, off, len) ? make sure this is correct.
 
                             // TODO: debug only:
                             try {

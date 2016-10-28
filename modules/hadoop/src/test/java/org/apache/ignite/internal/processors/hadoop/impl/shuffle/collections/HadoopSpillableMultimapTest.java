@@ -19,36 +19,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.TreeSet;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import junit.framework.TestCase;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.ignite.internal.processors.hadoop.HadoopDefaultJobInfo;
-import org.apache.ignite.internal.processors.hadoop.HadoopHelperImpl;
-import org.apache.ignite.internal.processors.hadoop.HadoopJob;
-import org.apache.ignite.internal.processors.hadoop.HadoopJobId;
 import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
-import org.apache.ignite.internal.processors.hadoop.HadoopTaskInfo;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskOutput;
-import org.apache.ignite.internal.processors.hadoop.HadoopTaskType;
-import org.apache.ignite.internal.processors.hadoop.impl.HadoopTestTaskContext;
-import org.apache.ignite.internal.processors.hadoop.impl.examples.HadoopWordCount2;
-import org.apache.ignite.internal.processors.hadoop.impl.v2.HadoopV2Job;
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopMultimap;
-import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSkipList;
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSpillableMultimap;
 import org.apache.ignite.internal.util.GridRandom;
 import org.apache.ignite.internal.util.GridUnsafe;
@@ -56,20 +37,47 @@ import org.apache.ignite.internal.util.io.GridDataInput;
 import org.apache.ignite.internal.util.io.GridUnsafeDataInput;
 import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
 import org.apache.ignite.internal.util.typedef.X;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  *
  */
 public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
+    /** */
+    private final Random rnd = new Random(0L); // Seed set for reproducibility.
 
-    private final Random rnd = new Random();
-
+    /** */
     private final int mapSize = 16 << rnd.nextInt(6);
 
-    public void testHadoopSpillableMultimap() throws Exception {
-        long memLimit = 10 * 1024 * 1024; // 1 m
+    /** */
+    private final String dataDir = U.getIgniteHome() + File.separatorChar + "work"
+        + File.separatorChar + getClass().getName() + "-spill";
 
-        GridUnsafeMemory mem = new GridUnsafeMemory(memLimit);
+    /** {@inheritDoc} */
+    @Override protected void beforeTest() throws Exception {
+        File dir = new File(dataDir);
+
+        U.delete(new File(dataDir));
+
+        assertFalse(dir.exists());
+
+        dir.mkdirs();
+
+        assertTrue(dir.exists());
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void afterTest() throws Exception {
+        File dir = new File(dataDir);
+
+        U.delete(new File(dataDir));
+
+        assertFalse(dir.exists());
+    }
+
+    /** */
+    public void testHadoopSpillableMultimap() throws Exception {
+        GridUnsafeMemory mem = new GridUnsafeMemory(0);
 
         HadoopJobInfo job = new JobInfo();
 
@@ -81,11 +89,11 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
         putData(m, taskCtx, mm);
 
-        check(m, mm, taskCtx);
+        check(m, mm, taskCtx, true);
 
-        check(m, mm, taskCtx);
+        check(m, mm, taskCtx, true);
 
-        String file = "/tmp/a";
+        String file = dataDir + "/spill00";
 
         DataOutput dout = getDout(file);
 
@@ -121,10 +129,11 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
         assertEquals(read, written);
 
-        check(m, mm, taskCtx);
+        check(m, mm, taskCtx, true);
     }
 
-
+    /**
+     */
     public void testMapSimple() throws Exception {
         GridUnsafeMemory mem = new GridUnsafeMemory(0);
 
@@ -132,19 +141,25 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
         HadoopTaskContext taskCtx = new TaskContext();
 
-        HadoopMultimap m = new HadoopSkipList(job, mem);
+        HadoopMultimap m = new HadoopSpillableMultimap(taskCtx, job, mem);
 
         testMap(m, taskCtx, mem);
     }
 
+    /**
+     */
     private DataOutput getDout(String name) throws IOException {
         return new DataOutputStream(new FileOutputStream(name, false));
     }
 
+    /**
+     */
     private DataInput getDin(String name) throws IOException {
         return new DataInputStream(new FileInputStream(name));
     }
 
+    /**
+     */
     private void putData(HadoopMultimap m, HadoopTaskContext taskCtx, Multimap<Integer, Integer> mm) throws Exception {
         try (HadoopTaskOutput a = m.startAdding(taskCtx)) {
             boolean added;
@@ -164,31 +179,30 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
         }
     }
 
-    private void testMap(HadoopMultimap m, HadoopTaskContext taskCtx, GridUnsafeMemory mem) throws Exception  {
-        HadoopMultimap.Adder a = (HadoopMultimap.Adder)m.startAdding(taskCtx);
+    /**
+     */
+    private void testMap(HadoopMultimap m, HadoopTaskContext taskCtx, GridUnsafeMemory mem) throws Exception {
+        HadoopTaskOutput a = m.startAdding(taskCtx);
 
         Multimap<Integer, Integer> mm = ArrayListMultimap.create();
-        Multimap<Integer, Integer> vis = ArrayListMultimap.create();
 
         for (int i = 0, vals = 4 * mapSize + rnd.nextInt(25); i < vals; i++) {
             int key = rnd.nextInt(mapSize);
             int val = rnd.nextInt();
 
-            a.write(new IntWritable(key), new IntWritable(val));
+            boolean written = a.write(new IntWritable(key), new IntWritable(val));
+            assertTrue(written);
+
             mm.put(key, val);
 
-            //X.println("k: " + key + " v: " + val);
+            X.println("written, put: K=" + key + " V=" + val);
 
             a.close();
 
-            check(m, mm, taskCtx);
+            check(m, mm, taskCtx, true);
 
-            a = (HadoopMultimap.Adder)m.startAdding(taskCtx);
+            a = m.startAdding(taskCtx);
         }
-
-        //        a.add(new IntWritable(10), new IntWritable(2));
-        //        mm.put(10, 2);
-        //        check(m, mm);
 
         a.close();
 
@@ -199,11 +213,13 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
         assertEquals(0, mem.allocatedSize());
     }
 
-    private void check(HadoopMultimap m, Multimap<Integer, Integer> mm, HadoopTaskContext taskCtx)
+    /**
+     */
+    private void check(HadoopMultimap m, Multimap<Integer, Integer> mm, HadoopTaskContext taskCtx,
+            boolean valuesAnyOrder)
         throws Exception {
+        // 1. Check via the iterating input:
         final HadoopTaskInput in = m.input(taskCtx);
-
-        final Multimap<Integer, Integer> vis = ArrayListMultimap.create();
 
         Map<Integer, Collection<Integer>> mmm = mm.asMap();
 
@@ -240,33 +256,29 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
             Collection<Integer> exp = mmm.get(k.get());
 
-            if (!vs.equals(exp)) {
-                List rev = new ArrayList(exp);
-
-                Collections.reverse(rev);
-
-                assertEquals(rev, vs);
-            }
-//
-//            assertEquals(exp, vs);
+            // NB: values are read with Input in reversed order. When spill/unspill data,
+            // we get them in direct or reversed order. So, check both orders:
+            if (valuesAnyOrder)
+                assertEqualsAnyOrder(vs, exp);
+            else
+                assertEquals(vs, exp);
         }
 
         assertEquals(mmm.size(), keys);
 
-        //!        assertEquals(m.keys(), keys);
-
-        // Check visitor.
+        // 2. Check visitor.
+        final Multimap<Integer, Integer> vis = ArrayListMultimap.create();
 
         final byte[] buf = new byte[4];
 
         final GridDataInput dataInput = new GridUnsafeDataInput();
 
-        m.accept(false, new HadoopMultimap.Visitor() {
+        boolean accepted = m.accept(true/*false*/, new HadoopMultimap.Visitor() {
             /** */
-            IntWritable key = new IntWritable();
+            final IntWritable key = new IntWritable();
 
             /** */
-            IntWritable val = new IntWritable();
+            final IntWritable val = new IntWritable();
 
             @Override public void visitKey(long keyPtr, int keySize) {
                 read(keyPtr, keySize, key);
@@ -279,7 +291,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
             }
 
             private void read(long ptr, int size, Writable w) {
-                assert size == 4 : size;
+                assert buf.length >= size; // Otherwise we likely have segmentation fault.
 
                 GridUnsafe.copyMemory(null, ptr, buf, GridUnsafe.BYTE_ARR_OFF, size);
 
@@ -294,26 +306,40 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
             }
         });
 
-        //        X.println("vis: " + vis);
+        assertTrue(accepted);
 
-        //assertEquals(mm, vis);
-        compareMultimaps(mm, vis);
+        compareMultimaps(mm, vis, valuesAnyOrder);
 
         in.close();
     }
 
-    private void compareMultimaps(Multimap m1, Multimap m2) {
+    private static void compareMultimaps(Multimap m1, Multimap m2, boolean valuesAnyOrder) {
         assertEquals(m1.size(), m2.size());
 
         for (Object k : m1.keySet()) {
             Collection v1 = m1.get(k);
             Collection v2 = m2.get(k);
 
+            assertNotNull(v1);
             assertNotNull(v2);
 
-            // Order of elements may be different:
-            assertEqualsCollections(new TreeSet(v1), new TreeSet(v2));
+            if (valuesAnyOrder)
+                assertEqualsAnyOrder(v1, v2);
+            else
+                assertEquals(v1, v2);
         }
+    }
+
+    public static void assertEqualsAnyOrder(Collection c1, Collection c2) {
+        List list1 = new ArrayList<>(c1);
+        List list2 = new ArrayList<>(c2);
+
+        if (list1.equals(list2))
+            return;
+
+        Collections.reverse(list1);
+
+        assertEquals(list1, list2);
     }
 
     /**
@@ -331,7 +357,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
             final HadoopTaskContext taskCtx = new TaskContext();
 
-            final HadoopMultimap m = new HadoopSkipList(job, mem);
+            final HadoopMultimap m = new HadoopSpillableMultimap(taskCtx, job, mem);
 
             final ConcurrentMap<Integer, Collection<Integer>> mm = new ConcurrentHashMap<>();
 
@@ -411,5 +437,4 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
             assertEquals(0, mem.allocatedSize());
         }
     }
-
 }
