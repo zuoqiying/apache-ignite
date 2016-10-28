@@ -16,6 +16,7 @@
  */
 
 import '../public/stylesheets/style.scss';
+import '../app/directives/ui-grid-settings/ui-grid-settings.scss';
 import './helpers/jade/mixins.jade';
 
 import './app.config';

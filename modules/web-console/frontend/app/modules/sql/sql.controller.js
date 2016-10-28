@@ -53,6 +53,25 @@ class Paragraph {
 
         _.assign(this, paragraph);
 
+        const _enableColumns = (categories, visible) => {
+            _.forEach(categories, (cat) => {
+                cat.visible = visible;
+
+                _.forEach(this.gridOptions.columnDefs, (col) => {
+                    if (col.displayName === cat.name)
+                        col.visible = visible;
+                });
+            });
+
+            this.gridOptions.api.grid.refresh();
+        };
+
+        const _selectableColumns = () => _.filter(this.gridOptions.categories, (cat) => cat.selectable);
+
+        this.toggleColumns = (category, visible) => _enableColumns([category], visible);
+        this.selectAllColumns = () => _enableColumns(_selectableColumns(), true);
+        this.clearAllColumns = () => _enableColumns(_selectableColumns(), false);
+
         Object.defineProperty(this, 'gridOptions', {value: {
             enableGridMenu: false,
             enableColumnMenus: false,
@@ -62,6 +81,7 @@ class Paragraph {
                 if (_.isNil(this.api))
                     return;
 
+                this.categories = [];
                 this.columnDefs = _.reduce(self.meta, (cols, col, idx) => {
                     if (self.columnFilter(col)) {
                         cols.push({
@@ -70,6 +90,12 @@ class Paragraph {
                             field: idx.toString(),
                             minWidth: 50,
                             cellClass: 'cell-left'
+                        });
+
+                        this.categories.push({
+                            name: col.fieldName,
+                            visible: true,
+                            selectable: true
                         });
                     }
 
@@ -801,6 +827,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                                 nid: node.nodeId.toUpperCase(),
                                 ip: _.head(node.attributes['org.apache.ignite.ips'].split(', ')),
                                 version: node.attributes['org.apache.ignite.build.ver'],
+                                gridName: node.attributes['org.apache.ignite.ignite.name'],
                                 os: `${node.attributes['os.name']} ${node.attributes['os.arch']} ${node.attributes['os.version']}`
                             });
                         });

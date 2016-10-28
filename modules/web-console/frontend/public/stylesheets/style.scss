@@ -82,6 +82,11 @@ hr {
   vertical-align: middle;
 }
 
+.table .ui-grid-settings {
+    float: left;
+    padding-right: 10px;
+}
+
 ul.navbar-nav, .sidebar-nav {
     li.active > a {
         color: $link-color;
