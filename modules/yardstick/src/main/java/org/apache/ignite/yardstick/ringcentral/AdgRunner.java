@@ -29,6 +29,7 @@ import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.marshaller.optimized.OptimizedMarshaller;
 
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,9 +70,8 @@ public class AdgRunner {
         "min(phoneNumber), " +
         "max(extensionNumber) " +
         "from ADGENTITY " +
-        "    JOIN table(et INT = ?, es INT = ?) tet ON (tet.et = extensionType and test.es = extensionStatus) " +
+        "    JOIN table(et INT = ?, es INT = ?) t ON (t.et = extensionType and t.es = extensionStatus) " +
         "where accountId = ? " +
-        "and extensionStatus in (?,?) " +
         "and deleteTime > ?" +
         "and ((lcase(concat(firstName,' ',lastName)) like '%john%') " +
         "OR (lcase(phoneNumber) like '%john%') " +
@@ -118,6 +118,32 @@ public class AdgRunner {
         System.out.println("Loaded data: " + cache.size());
 
         explain(cache, QRY_FIRST, true);
+
+        SqlFieldsQuery testQry = new SqlFieldsQuery("SELECT * FROM table(et INT = ?, es INT = ?)");
+
+        TreeSet<Integer> extTypes = new TreeSet<>();
+
+        extTypes.add(AdgEntity.ExtensionType.randomValue());
+        extTypes.add(AdgEntity.ExtensionType.randomValue());
+
+        TreeSet<Integer> extStates = new TreeSet<>();
+
+        extStates.add(AdgEntity.ExtensionState.randomValue());
+        extStates.add(AdgEntity.ExtensionState.randomValue());
+
+        List<Integer> extTypesRes = new ArrayList<>();
+        List<Integer> extStatesRes = new ArrayList<>();
+
+        for (Integer extType : extTypes) {
+            for (Integer extState : extStates) {
+                extTypesRes.add(extType);
+                extStatesRes.add(extState);
+            }
+        }
+
+        testQry.setArgs(extTypesRes.toArray(), extStatesRes.toArray());
+
+        //System.out.println(cache.query(testQry).getAll());
 
         for (int i = 0; i < THREAD_CNT; i++)
             startDaemon("qry-exec-" + i, new QueryExecutor(cache));
@@ -171,11 +197,20 @@ public class AdgRunner {
         extStates.add(AdgEntity.ExtensionState.randomValue());
         extStates.add(AdgEntity.ExtensionState.randomValue());
 
+        List<Integer> extTypesRes = new ArrayList<>();
+        List<Integer> extStatesRes = new ArrayList<>();
+
+        for (Integer extType : extTypes) {
+            for (Integer extState : extStates) {
+                extTypesRes.add(extType);
+                extStatesRes.add(extState);
+            }
+        }
+
         Object[] res = new Object[]{
-            extTypes.toArray(),
+            extTypesRes.toArray(),
+            extStatesRes.toArray(),
             "10k",
-            AdgEntity.ExtensionState.randomValue(),
-            AdgEntity.ExtensionState.randomValue(),
             String.valueOf(System.currentTimeMillis())
         };
 
