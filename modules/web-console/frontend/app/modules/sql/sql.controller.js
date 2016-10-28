@@ -1145,10 +1145,11 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
         /**
          * @param {Object} paragraph Query
+         * @param {Boolean} clearChart Flag is need clear chart model.
          * @param {{columns: Array, rows: Array, responseNodeId: String, queryId: int, hasMore: Boolean}} res Query results.
          * @private
          */
-        const _processQueryResult = (paragraph, res) => {
+        const _processQueryResult = (paragraph, clearChart, res) => {
             const prevKeyCols = paragraph.chartKeyCols;
             const prevValCols = paragraph.chartValCols;
 
@@ -1208,12 +1209,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             const chartHistory = paragraph.chartHistory;
 
-            // Clear history on query change.
-            const queryChanged = paragraph.prevQuery !== paragraph.query;
-
-            if (queryChanged) {
-                paragraph.prevQuery = paragraph.query;
-
+                // Clear history on query change.
+            if (clearChart) {
                 chartHistory.length = 0;
 
                 _.forEach(paragraph.charts, (chart) => chart.data.length = 0);
@@ -1231,7 +1228,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             if (_.isNil(paragraph.result) || paragraph.result === 'none' || paragraph.scanExplain())
                 paragraph.result = 'table';
             else if (paragraph.chart()) {
-                let resetCharts = queryChanged;
+                let resetCharts = clearChart;
 
                 if (!resetCharts) {
                     const curKeyCols = paragraph.chartKeyCols;
@@ -1284,7 +1281,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then(() => _closeOldQuery(paragraph))
                 .then(() => args.localNid || _chooseNode(args.cacheName, false))
                 .then((nid) => agentMonitor.query(nid, args.cacheName, args.query, args.nonCollocatedJoins, !!args.localNid, args.pageSize))
-                .then(_processQueryResult.bind(this, paragraph))
+                .then(_processQueryResult.bind(this, paragraph, false))
                 .catch((err) => paragraph.errMsg = err.message);
         };
 
@@ -1345,7 +1342,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             return agentMonitor.query(nid, args.cacheName, qry, nonCollocatedJoins, local, args.pageSize);
                         })
                         .then((res) => {
-                            _processQueryResult(paragraph, res);
+                            _processQueryResult(paragraph, true, res);
 
                             _tryStartRefresh(paragraph);
                         })
@@ -1395,7 +1392,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     return agentMonitor.query(nid, args.cacheName, args.query, false, false, args.pageSize);
                 })
-                .then(_processQueryResult.bind(this, paragraph))
+                .then(_processQueryResult.bind(this, paragraph, true))
                 .catch((err) => {
                     paragraph.errMsg = err.message;
 
@@ -1433,12 +1430,12 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             if (paragraph.firstPageOnly) {
                                 res.hasMore = false;
 
-                                _processQueryResult(paragraph, res);
+                                _processQueryResult(paragraph, true, res);
 
                                 _closeOldQuery(paragraph);
                             }
                             else
-                                _processQueryResult(paragraph, res);
+                                _processQueryResult(paragraph, true, res);
                         })
                         .catch((err) => {
                             paragraph.errMsg = err.message;
