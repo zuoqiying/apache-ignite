@@ -50,7 +50,7 @@ public class AdgRunner {
     private static final String CACHE_NAME = "cache";
 
     /** Thread count. */
-    private static final int THREAD_CNT = 1;
+    private static final int THREAD_CNT = 8;
 
     /** Whether to use big account or not. */
     private static final boolean USE_BIG = true;
@@ -62,7 +62,7 @@ public class AdgRunner {
     private static final boolean VERBOSE = false;
 
     /** */
-    private static String QRY_FIRST2 = "select extensionId, " +
+    private static final String QRY_FIRST = "select extensionId, " +
         "min(extensionStatus), " +
         "max(concat(firstName,' ',lastName)), " +
         "min(phoneNumber), " +
@@ -78,7 +78,7 @@ public class AdgRunner {
         "group by extensionId order by 2 asc, 3 desc, 4 asc, 5 desc limit 100 offset 0";
 
     /** */
-    private static String QRY_FIRST = "select extensionId, " +
+    private static final String QRY_FIRST2 = "select extensionId, " +
         "extensionStatus, " +
         "concat(firstName,' ',lastName), " +
         "phoneNumber, " +
@@ -90,12 +90,12 @@ public class AdgRunner {
         "and deleteTime > ?";
 
     /** */
-    private static String QRY_SECOND = "select _val FROM ADGENTITY " +
+    private static final String QRY_SECOND = "select _val FROM ADGENTITY " +
         "join table(temp_extensionId VARCHAR = ?) i " +
         "on (extensionId = i.temp_extensionId and deleteTime > ?)";
 
     /** */
-    private static String QRY_THIRD = "select count(distinct extensionId) from ADGENTITY " +
+    private static final String QRY_THIRD = "select count(distinct extensionId) from ADGENTITY " +
         "where accountId = ? " +
         "and extensionType in (?,?) " +
         "and extensionStatus in (?,?) " +
@@ -352,6 +352,7 @@ public class AdgRunner {
         ccfg.setName(CACHE_NAME);
         ccfg.setIndexedTypes(AdgAffinityKey.class, AdgEntity.class);
         ccfg.setAffinityMapper(new AdgAffinityKeyMapper());
+
         cfg.setMarshaller(new OptimizedMarshaller());
 
         cfg.setCacheConfiguration(ccfg);
