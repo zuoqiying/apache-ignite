@@ -196,6 +196,17 @@ class GeneratorPom {
                 this.storeFactoryDependency(storeDeps, cluster.discovery.Jdbc);
         }
 
+        _.forEach(cluster.checkpointSpi, (spi) => {
+            if (spi.kind === 'S3') {
+                dep = POM_DEPENDENCIES.S3;
+
+                if (dep)
+                    this.addDependency(deps, 'org.apache.ignite', dep.artifactId, version);
+            }
+            else if (spi.kind === 'JDBC')
+                this.storeFactoryDependency(storeDeps, spi.JDBC);
+        });
+
         if (_.find(cluster.igfss, (igfs) => igfs.secondaryFileSystemEnabled))
             this.addDependency(deps, 'org.apache.ignite', 'ignite-hadoop', version);
 

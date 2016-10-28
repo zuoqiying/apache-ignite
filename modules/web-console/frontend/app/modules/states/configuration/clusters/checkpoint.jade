@@ -44,13 +44,12 @@ include ../../../../../app/helpers/jade/mixins.jade
                         .group-content(ng-show='#{model} && #{model}.length > 0' ng-repeat='model in #{model} track by $index')
                             hr(ng-if='$index != 0')
                             .settings-row
-                                +dropdown-required('Checkpoint SPI:', 'model.kind', '"checkpointKind" + $index', 'true', 'true', 'Default', '[\
+                                +dropdown-required('Checkpoint SPI:', 'model.kind', '"checkpointKind" + $index', 'true', 'true', 'Choose checkpoint configuration variant', '[\
                                         {value: "FS", label: "File System"},\
                                         {value: "Cache", label: "Cache"},\
                                         {value: "S3", label: "Amazon S3"},\
                                         {value: "JDBC", label: "Database"},\
-                                        {value: "Custom", label: "Custom"},\
-                                        {value: "Noop", label: "Default"}\
+                                        {value: "Custom", label: "Custom"}\
                                     ]',
                                     'Provides an ability to save an intermediate job state\
                                     <ul>\
@@ -59,7 +58,6 @@ include ../../../../../app/helpers/jade/mixins.jade
                                         <li>Amazon S3 - Uses Amazon S3 to store checkpoints</li>\
                                         <li>Database - Uses a database to store checkpoints</li>\
                                         <li>Custom - Custom checkpoint SPI implementation</li>\
-                                        <li>Default - No checkpoint SPI configured</li>\
                                     </ul>')
                                     +table-remove-button(model, 'Remove Checkpoint SPI')
 
