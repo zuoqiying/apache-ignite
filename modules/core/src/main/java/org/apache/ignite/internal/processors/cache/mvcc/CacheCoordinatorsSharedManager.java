@@ -344,7 +344,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
         Map<ClusterNode, Long> cntrs) {
         assert !F.isEmpty(cntrs);
 
-        Map<UUID, Long> cntrs0 = null;
+        Map<UUID, Long> cntrs0;
 
         Set<UUID> crdIds = U.newHashSet(cntrs.size());
 
@@ -414,7 +414,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
          * @param nodeId Node ID.
          */
         private void onResponse(UUID nodeId) {
-            boolean done = false;
+            boolean done;
 
             synchronized (nodes) {
                 done = nodes.remove(nodeId) && nodes.isEmpty();
@@ -440,23 +440,6 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
             }
 
             return false;
-        }
-    }
-
-    /**
-     *
-     */
-    private class CoordinatorMessageListener implements GridMessageListener {
-        /** {@inheritDoc} */
-        @Override public void onMessage(UUID nodeId, Object msg) {
-            if (msg instanceof CoordinatorCounterRequest)
-                processCoordinatorCounterRequest(nodeId, (CoordinatorCounterRequest)msg);
-            else if (msg instanceof CoordinatorCounterResponse)
-                processCoordinatorCounterResponse((CoordinatorCounterResponse)msg);
-            else if (msg instanceof CoordinatorAckRequest)
-                processCoordinatorAckRequest(nodeId, (CoordinatorAckRequest)msg);
-            else if (msg instanceof CoordinatorAckResponse)
-                processCoordinatorAckResponse(nodeId, (CoordinatorAckResponse)msg);
         }
     }
 
@@ -661,6 +644,25 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
         /** {@inheritDoc} */
         @Override public String toString() {
             return S.toString(CoordinatorsAssignment.class, this);
+        }
+    }
+
+    /**
+     *
+     */
+    private class CoordinatorMessageListener implements GridMessageListener {
+        /** {@inheritDoc} */
+        @Override public void onMessage(UUID nodeId, Object msg) {
+            if (msg instanceof CoordinatorCounterRequest)
+                processCoordinatorCounterRequest(nodeId, (CoordinatorCounterRequest)msg);
+            else if (msg instanceof CoordinatorCounterResponse)
+                processCoordinatorCounterResponse((CoordinatorCounterResponse)msg);
+            else if (msg instanceof CoordinatorAckRequest)
+                processCoordinatorAckRequest(nodeId, (CoordinatorAckRequest)msg);
+            else if (msg instanceof CoordinatorAckResponse)
+                processCoordinatorAckResponse(nodeId, (CoordinatorAckResponse)msg);
+            else
+                U.warn(log, "Unexpected message received: " + msg);
         }
     }
 }
