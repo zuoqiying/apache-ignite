@@ -32,6 +32,7 @@ import java.io.FileReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -68,8 +69,8 @@ public class AdgRunner {
         "min(phoneNumber), " +
         "max(extensionNumber) " +
         "from ADGENTITY " +
+        "    JOIN table(et INT = ?, es INT = ?) tet ON (tet.et = extensionType and test.es = extensionStatus) " +
         "where accountId = ? " +
-        "and extensionType in (?,?) " +
         "and extensionStatus in (?,?) " +
         "and deleteTime > ?" +
         "and ((lcase(concat(firstName,' ',lastName)) like '%john%') " +
@@ -160,10 +161,19 @@ public class AdgRunner {
      * @return Argument for first query.
      */
     private static Object[] argumentForQuery() {
+        TreeSet<Integer> extTypes = new TreeSet<>();
+
+        extTypes.add(AdgEntity.ExtensionType.randomValue());
+        extTypes.add(AdgEntity.ExtensionType.randomValue());
+
+        TreeSet<Integer> extStates = new TreeSet<>();
+
+        extStates.add(AdgEntity.ExtensionState.randomValue());
+        extStates.add(AdgEntity.ExtensionState.randomValue());
+
         Object[] res = new Object[]{
+            extTypes.toArray(),
             "10k",
-            AdgEntity.ExtensionType.randomValue(),
-            AdgEntity.ExtensionType.randomValue(),
             AdgEntity.ExtensionState.randomValue(),
             AdgEntity.ExtensionState.randomValue(),
             String.valueOf(System.currentTimeMillis())
