@@ -1,15 +1,10 @@
 package org.apache.ignite.internal.processors.hadoop.shuffle.collections;
 
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.Arrays;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
@@ -52,17 +47,25 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
     private final GridUnsafeMemory mem;
 
     /** */
-    public HadoopSpillableMultimap(HadoopTaskContext ctx, HadoopJobInfo info, GridUnsafeMemory mem) {
+    private final long limit;
+
+    /** */
+    public HadoopSpillableMultimap(HadoopTaskContext ctx, HadoopJobInfo info, GridUnsafeMemory mem, long limit) {
         this.ctx = ctx;
         this.info = info;
         this.mem = mem;
+        this.limit = limit;
 
         delegateMulimap = createNew();
     }
 
+    public HadoopSpillableMultimap(HadoopTaskContext ctx, HadoopJobInfo info, GridUnsafeMemory mem) {
+        this(ctx, info, mem, 0L/*unlimited*/);
+    }
+
     /** {@inheritDoc} */
     @Override public boolean accept(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException {
-        return delegateMulimap.accept(true, v);
+        return delegateMulimap.accept(true, v); // TODO: use parameter.
     }
 
     /** {@inheritDoc} */
@@ -82,7 +85,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 
     /** {@inheritDoc} */
     @Override public void close() {
-        buf = null;
+        //buf = null;
 
         delegateMulimap.close();
     }
@@ -119,7 +122,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 
             delegateMulimap.close();
 
-            delegateMulimap = null;
+            delegateMulimap = createNew();
 
             return cnt[0];
 //        }
@@ -130,7 +133,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 
     /** */
     protected HadoopMultimap createNew() {
-        return new HadoopSkipList(info, mem);
+        return new HadoopSkipList(info, mem, limit);
     }
 
     /** {@inheritDoc} */
@@ -157,17 +160,6 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
                         @Override public void visitKey(byte[] buf, int off, int len) throws IgniteCheckedException {
                             keyInput.bytes(buf, off, len); // TODO: changed (buf, off, off + len) -> (buf, off, len) ? make sure this is correct.
 
-                            // TODO: debug only:
-                            try {
-                                IntWritable iw = new IntWritable();
-                                iw.readFields(new DataInputStream(new ByteArrayInputStream(Arrays.copyOfRange(buf,
-                                    off, len))));
-                                System.out.println("UnSpill:   Key: " + iw.get());
-                            }
-                            catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-
                             key = adder.addKey(keyInput, key);
                         }
 
@@ -175,18 +167,6 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
                             val.setBuf(buf);
                             val.setOff(off);
                             val.setSize(len);
-
-                            // TODO: debug only:
-                            try {
-                                IntWritable iw = new IntWritable();
-                                iw.readFields(new DataInputStream(new ByteArrayInputStream(Arrays.copyOfRange(buf,
-                                    off, len))));
-
-                                System.out.println("UnSpill: val: " + iw.get());
-                            }
-                            catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
 
                             key.add(val);
                         }
@@ -263,17 +243,11 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 
     /** */
     private int addKey(DataOutput dout, long ptr, int size) throws IgniteCheckedException {
-        // TODO: debug only:
-        System.out.println("Spill: Key: " + mem.readInt(ptr) );
-
         return add(dout, MARKER_KEY, ptr, size);
     }
 
     /** */
     private int addValue(DataOutput dout, long ptr, int size) throws IgniteCheckedException {
-        // TODO: debug only:
-        System.out.println("Spill: Val: " + mem.readInt(ptr) );
-
         return add(dout, MARKER_VALUE, ptr, size);
     }
 

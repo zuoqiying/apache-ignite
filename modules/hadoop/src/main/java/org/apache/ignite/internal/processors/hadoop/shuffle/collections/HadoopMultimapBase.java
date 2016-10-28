@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
@@ -53,21 +55,49 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
     /** */
     private final Collection<Page> allPages = new ConcurrentLinkedQueue<>();
 
+    /**
+     * TODO: re-implement as wrapper around GridUnsafeMemory that would
+     * count the allocated bytes.
+     * Problem is that one instance of mem may be used for many HadoopMultimap instances.
+     * So, each one will use its own wrapper.
+     */
+    static class SizeChecker {
+        final long limit;
+
+        final AtomicInteger kvs = new AtomicInteger(0);
+
+        SizeChecker(long lim) {
+            limit = lim;
+        }
+
+        boolean canWrite(Object k, Object v) {
+            return limit <= 0 || kvs.incrementAndGet() <= limit;
+        }
+    }
+
     /** */
-    protected final long limit = 100 << 20; // TODO: make configurable: max bytes to hold in memory
-                                          // TODO: per mapper / reducer (or node?).
+    private final SizeChecker sizeChecker;
+
+    /** */
+    private static final int DEFAULT_SIZE_LIMIT = 100;
 
     /**
      * @param jobInfo Job info.
      * @param mem Memory.
      */
-    protected HadoopMultimapBase(HadoopJobInfo jobInfo, GridUnsafeMemory mem) {
+    protected HadoopMultimapBase(HadoopJobInfo jobInfo, GridUnsafeMemory mem, long limit) {
         assert jobInfo != null;
         assert mem != null;
 
         this.mem = mem;
 
         pageSize = get(jobInfo, SHUFFLE_OFFHEAP_PAGE_SIZE, 32 * 1024);
+
+        sizeChecker = new SizeChecker(limit);
+    }
+
+    protected HadoopMultimapBase(HadoopJobInfo jobInfo, GridUnsafeMemory mem) {
+        this(jobInfo, mem, DEFAULT_SIZE_LIMIT);
     }
 
     /**
@@ -134,7 +164,7 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
          * @param ser Serialization.
          */
         protected ReaderBase(HadoopSerialization ser) {
-            assert ser != null;
+            //assert ser != null;
 
             this.ser = ser;
         }
@@ -178,18 +208,6 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
             return tmp;
         }
 
-        /**
-         * Reads 'size' bytes starting from 'ptr'
-         * Used to read both key and value.
-         *
-         * @param ptr Pointer.
-         * @param size Object size.
-         * @return Object.
-         */
-        protected final void readInto(long ptr, int size, HadoopShuffleJob.UnsafeValue v) throws IgniteCheckedException {
-            v.readFrom(ptr, size);
-        }
-
         /** {@inheritDoc} */
         @Override public void close() throws IgniteCheckedException {
             ser.close();
@@ -214,6 +232,9 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
 
         /** Current page. */
         private Page curPage;
+
+        /** */
+        private final AtomicBoolean closedGuard = new AtomicBoolean();
 
         /**
          * @param ctx Task context.
@@ -320,7 +341,11 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
         }
 
         @Override public final boolean write(Object key, Object val) throws IgniteCheckedException {
-            if (!checkCanWrite(key, val))
+            // Closed output cannot write values:
+            if (closedGuard.get())
+                return false;
+
+            if (!sizeChecker.canWrite(key, val))
                 return false;
 
             writeImpl(key, val);
@@ -328,12 +353,11 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
             return true;
         }
 
-        private final boolean checkCanWrite(Object key, Object val) {
-            // TODO: how we treat the limit, what exactly does it mean?
-            // TODO: currently 'mem' is 1-to-1 with HadoopShuffle component.
-            return mem.allocatedSize() < limit;
-        }
-
+        /**
+         * @param key
+         * @param val
+         * @throws IgniteCheckedException
+         */
         protected abstract void writeImpl(Object key, Object val) throws IgniteCheckedException ;
 
         /**
@@ -393,11 +417,13 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
 
         /** {@inheritDoc} */
         @Override public void close() throws IgniteCheckedException {
-            if (curPage != null)
-                allPages.add(curPage);
+            if (closedGuard.compareAndSet(false, true)) {
+                if (curPage != null)
+                    allPages.add(curPage);
 
-            keySer.close();
-            valSer.close();
+                keySer.close();
+                valSer.close();
+            }
         }
     }
 

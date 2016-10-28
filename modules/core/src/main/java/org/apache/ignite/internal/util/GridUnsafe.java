@@ -1045,6 +1045,8 @@ public abstract class GridUnsafe {
      * @param len Length.
      */
     public static void copyMemory(Object srcBase, long srcOff, Object dstBase, long dstOff, long len) {
+        assert !(dstBase instanceof byte[]) || ((byte[])dstBase).length >= len;
+
         UNSAFE.copyMemory(srcBase, srcOff, dstBase, dstOff, len);
     }
 

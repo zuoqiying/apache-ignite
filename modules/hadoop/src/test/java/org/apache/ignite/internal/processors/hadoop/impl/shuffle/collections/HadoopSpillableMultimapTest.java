@@ -90,7 +90,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
         putData(m, taskCtx, mm);
 
         check(m, mm, taskCtx, true);
-
+        // Do it second time to ensure the check does not change state:
         check(m, mm, taskCtx, true);
 
         String file = dataDir + "/spill00";
@@ -106,7 +106,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
             ((AutoCloseable)dout).close();
         }
 
-        System.out.println("Written bytes: " + written);
+        //System.out.println("Written bytes: " + written);
 
         assertTrue(written > 0);
 
@@ -125,7 +125,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
             ((AutoCloseable)din).close();
         }
 
-        System.out.println("read: " + read);
+        //System.out.println("read: " + read);
 
         assertEquals(read, written);
 
@@ -168,13 +168,13 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
                 int key = rnd.nextInt(mapSize);
                 int val = rnd.nextInt();
 
-                System.out.println("gen: key: " + key + ", value: " + val);
+                //System.out.println("gen: key: " + key + ", value: " + val);
 
                 added = a.write(new IntWritable(key), new IntWritable(val));
                 assert added;
 
                 mm.put(key, val);
-                System.out.println("mm: key: " + key + ", value: " + mm.get(key));
+                //System.out.println("mm: key: " + key + ", value: " + mm.get(key));
             }
         }
     }
@@ -195,7 +195,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
             mm.put(key, val);
 
-            X.println("written, put: K=" + key + " V=" + val);
+            X.println("written & put:  K=" + key + "  V=" + val);
 
             a.close();
 
@@ -234,7 +234,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
             assertNotNull(k);
 
-            System.out.println("K: " + k.get());
+            //System.out.println("K: " + k.get());
 
             assertTrue(k.get() > prevKey);
 
@@ -251,7 +251,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
                 //vs.add(v);
                 vs.addFirst(v); // NB: ! For some reason the values are read in reverse order !
 
-                System.out.println("Read: " + v);
+                //System.out.println("Read: " + v);
             }
 
             Collection<Integer> exp = mmm.get(k.get());

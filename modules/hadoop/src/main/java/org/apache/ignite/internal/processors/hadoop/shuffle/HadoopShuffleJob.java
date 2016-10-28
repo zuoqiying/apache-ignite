@@ -329,10 +329,6 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             return off;
         }
 
-        public int getSize() {
-            return size;
-        }
-
         public void ensureLength(long size) {
             buf = HadoopSpillableMultimap.ensureLength(buf, size);
         }
@@ -345,6 +341,13 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             off = 0;
 
             size = (int)len;
+        }
+
+        public void readFrom(UnsafeValue uv) {
+            assert uv != null;
+            assert uv.hasData();
+
+            ensureLength(uv.size());
         }
 
         public void readFrom(DataInput din, int expectedSize) throws IOException {

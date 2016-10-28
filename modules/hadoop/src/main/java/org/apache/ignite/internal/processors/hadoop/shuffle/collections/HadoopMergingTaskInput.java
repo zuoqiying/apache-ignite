@@ -1,7 +1,9 @@
 package org.apache.ignite.internal.processors.hadoop.shuffle.collections;
 
 import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.EOFException;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -32,12 +34,12 @@ public class HadoopMergingTaskInput {
             UnsafeValue p2 = (UnsafeValue)s2.key();
 
             return sortingRawCmp.compare(
-                p1.getBuf(), p1.getOff(), p1.getSize(),
-                p2.getBuf(), p2.getOff(), p2.getSize());
+                p1.getBuf(), p1.getOff(), p1.size(),
+                p2.getBuf(), p2.getOff(), p2.size());
         }
     };
 
-    HadoopMergingTaskInput(final HadoopMultimap[] inMemorySegments, final String[] files,
+    public HadoopMergingTaskInput(final HadoopMultimap[] inMemorySegments, final String[] files,
         RawComparator sortingRawCmp) throws IgniteCheckedException {
         this.sortingRawCmp = sortingRawCmp;
 
@@ -57,6 +59,8 @@ public class HadoopMergingTaskInput {
 
                 Segment seg = new Segment(true, ri);
 
+                seg.next();
+
                 pq.put(seg);
             }
         }
@@ -68,13 +72,18 @@ public class HadoopMergingTaskInput {
 
             Segment seg = new Segment(false, fri);
 
+            seg.next();
+
             pq.put(seg);
         }
     }
 
     private DataInput getDataInput(String file) {
-        // TODO gets input for specified file.
-        return null;
+        try {
+            return new DataInputStream(new FileInputStream(file));
+        } catch (IOException ioe) {
+            throw new IgniteException(ioe);
+        }
     }
 
     /**

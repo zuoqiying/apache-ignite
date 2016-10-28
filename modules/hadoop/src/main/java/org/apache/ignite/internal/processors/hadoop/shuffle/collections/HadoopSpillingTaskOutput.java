@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicStampedReference;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskOutput;
 import org.apache.ignite.internal.util.worker.GridWorker;
 import org.apache.ignite.thread.IgniteThread;
@@ -23,11 +25,11 @@ import org.apache.ignite.thread.IgniteThread;
  * Class is thread-safe, many threads can write to it.
  * One worker thread currently performs the spill work.
  */
-public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
-    private final HadoopTaskOutput[] inOuts; // In fact, spillable outputs assumed.
+public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
+    private final HadoopSpillableMultimap[] outs; // In fact, spillable outputs assumed.
 
     /** Current in-out we're writing into. */
-    private final AtomicStampedReference<OutputAndSpills> curInOut = new AtomicStampedReference<>(null, 0);
+    private final AtomicStampedReference<OutputAndSpills> currOut = new AtomicStampedReference<>(null, 0);
 
     /** Full in-outs ready fro spilling. */
     private final BlockingQueue<OutputAndSpills> toBeSpilledQueue;
@@ -44,25 +46,32 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
     /**
      * Constructor.
      */
-    public SpillingHadoopTaskOutput(HadoopTaskOutput[] inOuts, String[] baseNames) {
-        assert inOuts.length > 1; // at least 2
+    public HadoopSpillingTaskOutput(HadoopSpillableMultimap[] maps, String[] baseNames, HadoopTaskContext ctx,
+        IgniteLogger log) throws IgniteCheckedException {
+        assert maps.length > 1; // at least 2 outputs must be present.
+        assert maps.length == baseNames.length;
+        assert log != null;
 
-        this.inOuts = inOuts;
+        this.outs = maps;
 
-        this.toBeSpilledQueue = new ArrayBlockingQueue<>(inOuts.length);
-        this.spilledQueue = new ArrayBlockingQueue<>(inOuts.length);
+        this.toBeSpilledQueue = new ArrayBlockingQueue<>(outs.length);
+        this.spilledQueue = new ArrayBlockingQueue<>(outs.length);
 
         // initially all in-outs assumed to be free (ready to write).
-        // put all them to "spilled" queue, but the last one: it will be the current in-out:
-        for (int i = 0; i<this.inOuts.length - 1; i++)
-            spilledQueue.offer(new OutputAndSpills(inOuts[i], baseNames[i]));
+        // put all them to "spilled" queue, then poll last one:
+        for (int i = 0; i<this.outs.length; i++)
+            spilledQueue.offer(new OutputAndSpills(ctx, outs[i], baseNames[i]));
 
-        boolean set = curInOut.compareAndSet(null, spilledQueue.peek(), 0, 1);
+        OutputAndSpills x = spilledQueue.poll();
+
+        x.createOutput();
+
+        boolean set = currOut.compareAndSet(null, x, 0, 1);
 
         assert set;
 
         // Takes in-outs from "toBeSpilled" queue, spills them, then puts into "spilled" queue.
-        spillWorker = new GridWorker("any-grid", "spill-worker", null, null) {
+        spillWorker = new GridWorker("any-grid", "spill-worker", log, null) {
             @Override protected void body() {
                 try {
                     while (!isCancelled()) {
@@ -70,14 +79,17 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
 
                         assert io != null;
 
+                        // Here we can assert this Map does not have open outputs.
+
                         DataOutput dout = io.nextSpill();
 
                         try {
-                            ((HadoopSpillable)io.out).spill(dout);
+                            io.getMultimap().spill(dout);
                         }
                         finally {
                             ((AutoCloseable)dout).close();
                         }
+
 
                         boolean put = spilledQueue.offer(io);
 
@@ -96,12 +108,15 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
     }
 
     private static class OutputAndSpills {
-        final HadoopTaskOutput out;
+        final HadoopTaskContext ctx;
+        final HadoopSpillableMultimap map;
         private final String base;
         private final List<String> spills = new ArrayList<>(4);
+        private HadoopTaskOutput out;
 
-        OutputAndSpills(HadoopTaskOutput out0, String base) {
-            this.out = out0;
+        OutputAndSpills(HadoopTaskContext ctx, HadoopSpillableMultimap map, String base) {
+            this.ctx = ctx;
+            this.map = map;
             this.base = base;
         }
 
@@ -131,6 +146,22 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
         Collection<String> getSpills() {
             return spills;
         }
+
+        /**
+         *
+         * @throws IgniteCheckedException
+         */
+        void createOutput() throws IgniteCheckedException {
+            out =  map.startAdding(ctx);
+        }
+
+        /**
+         *
+         * @return
+         */
+        HadoopSpillableMultimap getMultimap() {
+            return map;
+        }
     }
 
     /**
@@ -146,7 +177,7 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
         final int[] stampHolder = new int[1];
 
         while (true) {
-            OutputAndSpills cur = curInOut.get(stampHolder);
+            OutputAndSpills cur = currOut.get(stampHolder);
 
             assert cur != null;
 
@@ -156,14 +187,20 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
                 // Current in-out is full, we should spill it.
                 OutputAndSpills other = spilledQueue.poll(10, TimeUnit.MILLISECONDS);
 
+                assert other != cur;
+
                 if (other == null)
                     continue; // Likely the empty in-out is already taken by a concurrent thread, loop again.
 
                 // Swap output:
-                if (curInOut.compareAndSet(cur, other, stampHolder[0], stampHolder[0] + 1)) {
+                if (currOut.compareAndSet(cur, other, stampHolder[0], stampHolder[0] + 1)) {
+                    cur.out.close(); // Close the current output.
+
                     boolean put = toBeSpilledQueue.offer(cur); // schedule spilling
 
                     assert put;
+
+                    other.createOutput();
 
                     // May be we should go to the next loop there?
                     return other.out.write(key, val); // write to fresh empty in-out.
@@ -204,7 +241,29 @@ public class SpillingHadoopTaskOutput implements HadoopTaskOutput {
             throw new IgniteCheckedException(ie);
         }
 
-        for (HadoopTaskOutput inOut: inOuts)
-            inOut.close();
+        for (HadoopSpillableMultimap hsm: outs)
+            hsm.close();
     }
+
+    /**
+     * NB: this should be called after #close(), when all the files are closed.
+     */
+    public List<String> getFiles() {
+        List<String> files = new ArrayList<>(toBeSpilledQueue.size() + spilledQueue.size());
+
+        for (OutputAndSpills oas : toBeSpilledQueue)
+            files.addAll(oas.getSpills());
+
+        for (OutputAndSpills oas : spilledQueue)
+            files.addAll(oas.getSpills());
+
+        files.addAll(currOut.getReference().getSpills());
+
+        return files;
+    }
+
+    public HadoopMultimap currOut() {
+        return currOut.getReference().map;
+    }
+
 }

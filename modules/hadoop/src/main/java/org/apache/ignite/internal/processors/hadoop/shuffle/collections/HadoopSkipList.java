@@ -62,6 +62,12 @@ public class HadoopSkipList extends HadoopMultimapBase {
         heads = mem.allocate(HEADS_SIZE, true);
     }
 
+    public HadoopSkipList(HadoopJobInfo jobInfo, GridUnsafeMemory mem, long limit) {
+        super(jobInfo, mem, limit);
+
+        heads = mem.allocate(HEADS_SIZE, true);
+    }
+
     /** {@inheritDoc} */
     @Override public void close() {
         super.close();
