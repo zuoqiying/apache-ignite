@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,9 +42,11 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
+import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiTuple;
+import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.events.EventType.EVT_NODE_FAILED;
 import static org.apache.ignite.events.EventType.EVT_NODE_LEFT;
@@ -64,6 +67,9 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
     private ConcurrentMap<Long, TxCounterFuture> cntrFuts;
 
     /** */
+    private ConcurrentMap<Long, AckFuture> ackFuts;
+
+    /** */
     private final AtomicLong cntr = new AtomicLong();
 
     /** */
@@ -73,7 +79,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
     private ConcurrentMap<GridCacheVersion, Long> activeTxs = new ConcurrentHashMap<>();
 
     /** */
-    private final ConcurrentMap<Long, IntersectTxHistory> intersectTxHist = new ConcurrentHashMap<>();
+    private ConcurrentMap<Long, IntersectTxHistory> intersectTxHist;
 
     /** {@inheritDoc} */
     @Override protected void start0() throws IgniteCheckedException {
@@ -81,8 +87,12 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
         assignCache = new CoordinatorsAssignmentCache(cctx.kernalContext().clientNode());
 
+        cntrFuts = new ConcurrentHashMap<>();
+
+        ackFuts = new ConcurrentHashMap<>();
+
         if (!cctx.kernalContext().clientNode())
-            cntrFuts = new ConcurrentHashMap<>();
+            intersectTxHist = new ConcurrentHashMap<>();
     }
 
     /** {@inheritDoc} */
@@ -97,12 +107,11 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
                     UUID nodeId = discoEvt.eventNode().id();
 
-                    if (cntrFuts != null) {
-                        for (TxCounterFuture fut : cntrFuts.values()) {
-                            if (fut.crd.id().equals(nodeId) && cntrFuts.remove(fut.id) != null)
-                                fut.onDone(new ClusterTopologyCheckedException("Node failed: " + nodeId));
-                        }
-                    }
+                    for (TxCounterFuture fut : cntrFuts.values())
+                        fut.onNodeLeft(nodeId);
+
+                    for (AckFuture fut : ackFuts.values())
+                        fut.onNodeLeft(nodeId);
                 }
             },
             EVT_NODE_FAILED, EVT_NODE_LEFT);
@@ -235,9 +244,23 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
     }
 
     /**
+     * @param nodeId Sender node ID.
      * @param msg Message.
      */
-    private void processCoordinatorAckRequest(CoordinatorAckRequest msg) {
+    private void processCoordinatorAckResponse(UUID nodeId, CoordinatorAckResponse msg) {
+        AckFuture fut = ackFuts.get(msg.futureId());
+
+        if (fut != null)
+            fut.onResponse(nodeId);
+        else
+            U.warn(log, "Failed to find coordinator ack future: " + msg);
+    }
+
+    /**
+     * @param nodeId Sender node ID.
+     * @param msg Message.
+     */
+    private void processCoordinatorAckRequest(UUID nodeId, CoordinatorAckRequest msg) {
         activeTxs.remove(msg.txId());
 
         if (msg.coordinatorCounters() != null) {
@@ -253,6 +276,22 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
             }
 
             hist.addCounters(msg.coordinatorCounters());
+        }
+
+        if (!msg.skipResponse()) {
+            try {
+                cctx.gridIO().send(nodeId,
+                    TOPIC_COORDINATOR,
+                    new CoordinatorAckResponse(msg.futureId()),
+                    SYSTEM_POOL);
+            }
+            catch (ClusterTopologyCheckedException e) {
+                if (log.isDebugEnabled())
+                    log.debug("Failed to send tx ack response, node left [msg=" + msg + ", node=" + nodeId + ']');
+            }
+            catch (IgniteCheckedException e) {
+                U.error(log, "Failed to send tx ack response [msg=" + msg + ", node=" + nodeId + ']', e);
+            }
         }
     }
 
@@ -273,7 +312,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
      * @param crds Coordinators.
      */
     public void ackTransactionRollback(GridCacheVersion txId, Collection<ClusterNode> crds) {
-        CoordinatorAckRequest msg = new CoordinatorAckRequest(txId, 0, null);
+        CoordinatorAckRequest msg = new CoordinatorAckRequest(0, txId, 0, null);
 
         msg.skipResponse(true);
 
@@ -296,28 +335,112 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
     /**
      * @param txId Transaction ID.
+     * @param topVer Topology version.
      * @param cntrs Counters.
      * @return Acknowledge future.
      */
     public IgniteInternalFuture<Void> ackTransactionCommit(GridCacheVersion txId,
         AffinityTopologyVersion topVer,
         Map<ClusterNode, Long> cntrs) {
+        assert !F.isEmpty(cntrs);
+
         Map<UUID, Long> cntrs0 = null;
 
-        // No need to send counters if single coordinator participated in tx.
-        if (cntrs != null && cntrs.size() > 1) {
-            // TODO: optimize counters store.
-            cntrs0 = U.newHashMap(cntrs.size());
+        Set<UUID> crdIds = U.newHashSet(cntrs.size());
 
-            for (Map.Entry<ClusterNode, Long> e : cntrs.entrySet())
+        // TODO: optimize counters store.
+        // No need to send counters if single coordinator participated in tx.
+        cntrs0 = cntrs.size() > 1 ? U.<UUID, Long>newHashMap(cntrs.size()) : null;
+
+        for (Map.Entry<ClusterNode, Long> e : cntrs.entrySet()) {
+            if (cntrs0 != null)
                 cntrs0.put(e.getKey().id(), e.getValue());
+
+            crdIds.add(e.getKey().id());
         }
 
-        CoordinatorAckRequest msg = new CoordinatorAckRequest(txId, topVer.topologyVersion(), cntrs0);
+        AckFuture fut = new AckFuture(crdIds, futIdCntr.incrementAndGet());
+
+        ackFuts.put(fut.id, fut);
+
+        CoordinatorAckRequest msg = new CoordinatorAckRequest(fut.id, txId, topVer.topologyVersion(), cntrs0);
+
+        for (Map.Entry<ClusterNode, Long> entry : cntrs.entrySet()) {
+            ClusterNode crd = entry.getKey();
+
+            try {
+                cctx.gridIO().send(crd,
+                    TOPIC_COORDINATOR,
+                    msg,
+                    SYSTEM_POOL);
+            }
+            catch (ClusterTopologyCheckedException e) {
+                fut.onNodeLeft(crd.id());
+
+                if (log.isDebugEnabled())
+                    log.debug("Failed to send tx ack, node left [msg=" + msg + ", node=" + crd.id() + ']');
+            }
+            catch (IgniteCheckedException e) {
+                U.error(log, "Failed to send tx ack [msg=" + msg + ", node=" + crd.id() + ']', e);
+
+                fut.onDone(e);
+            }
+        }
+
+        return fut;
+    }
+
+    /**
+     *
+     */
+    private class AckFuture extends GridFutureAdapter<Void> {
+        /** */
+        private final Set<UUID> nodes;
+
+        /** */
+        private final Long id;
 
 
+        /**
+         * @param nodes Nodes.
+         * @param id Future ID.
+         */
+        AckFuture(Set<UUID> nodes, Long id) {
+            this.nodes = nodes;
+            this.id = id;
+        }
 
-        return new GridFinishedFuture<>();
+        /**
+         * @param nodeId Node ID.
+         */
+        private void onResponse(UUID nodeId) {
+            boolean done = false;
+
+            synchronized (nodes) {
+                done = nodes.remove(nodeId) && nodes.isEmpty();
+            }
+
+            if (done)
+                onDone();
+        }
+
+        /**
+         * @param nodeId Node ID.
+         */
+        private void onNodeLeft(UUID nodeId) {
+            onResponse(nodeId);
+        }
+
+        /** {@inheritDoc} */
+        @Override public boolean onDone(@Nullable Void res, @Nullable Throwable err) {
+            if (super.onDone(res, err)) {
+                ackFuts.remove(id);
+
+                return true;
+            }
+
+            return false;
+        }
     }
 
     /**
@@ -331,7 +454,9 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
             else if (msg instanceof CoordinatorCounterResponse)
                 processCoordinatorCounterResponse((CoordinatorCounterResponse)msg);
             else if (msg instanceof CoordinatorAckRequest)
-                processCoordinatorAckRequest((CoordinatorAckRequest)msg);
+                processCoordinatorAckRequest(nodeId, (CoordinatorAckRequest)msg);
+            else if (msg instanceof CoordinatorAckResponse)
+                processCoordinatorAckResponse(nodeId, (CoordinatorAckResponse)msg);
         }
     }
 
@@ -391,6 +516,14 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
          */
         void onResponse(CoordinatorCounterResponse msg) {
             onDone(msg.counter());
+        }
+
+        /**
+         * @param nodeId Failed node ID.
+         */
+        void onNodeLeft(UUID nodeId) {
+            if (crd.id().equals(nodeId) && cntrFuts.remove(id) != null)
+                onDone(new ClusterTopologyCheckedException("Node failed: " + nodeId));
         }
     }
 

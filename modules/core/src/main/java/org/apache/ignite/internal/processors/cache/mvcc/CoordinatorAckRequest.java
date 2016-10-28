@@ -20,8 +20,11 @@ package org.apache.ignite.internal.processors.cache.mvcc;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.ignite.internal.GridDirectMap;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.plugin.extensions.communication.Message;
+import org.apache.ignite.plugin.extensions.communication.MessageCollectionItemType;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
 import org.apache.ignite.plugin.extensions.communication.MessageWriter;
 
@@ -36,12 +39,16 @@ public class CoordinatorAckRequest implements Message {
     private static final int SKIP_RESPONSE_FLAG_MASK = 0x01;
 
     /** */
+    private long futId;
+
+    /** */
     private GridCacheVersion txId;
 
     /** */
     private long topVer;
 
     /** */
+    @GridDirectMap(keyType = UUID.class, valueType = Long.class)
     private Map<UUID, Long> cntrs;
 
     /** */
@@ -55,25 +62,36 @@ public class CoordinatorAckRequest implements Message {
     }
 
     /**
+     * @param futId Future ID.
      * @param txId Transaction ID.
+     * @param topVer Transaction topology version.
+     * @param cntrs Counters generated for transaction.
      */
-    public CoordinatorAckRequest(GridCacheVersion txId, long topVer, Map<UUID, Long> cntrs) {
+    CoordinatorAckRequest(long futId, GridCacheVersion txId, long topVer, Map<UUID, Long> cntrs) {
+        this.futId = futId;
         this.txId = txId;
         this.topVer = topVer;
         this.cntrs = cntrs;
     }
 
     /**
+     * @return Future ID.
+     */
+    long futureId() {
+        return futId;
+    }
+
+    /**
      * @return {@code True} if response message is not needed.
      */
-    public boolean skipResponse() {
+    boolean skipResponse() {
         return (flags & SKIP_RESPONSE_FLAG_MASK) != 0;
     }
 
     /**
      * @param val {@code True} if response message is not needed.
      */
-    public void skipResponse(boolean val) {
+    void skipResponse(boolean val) {
         if (val)
             flags |= SKIP_RESPONSE_FLAG_MASK;
         else
@@ -97,32 +115,127 @@ public class CoordinatorAckRequest implements Message {
     /**
      * @return Counters.
      */
-    public Map<UUID, Long> coordinatorCounters() {
+    Map<UUID, Long> coordinatorCounters() {
         return cntrs;
     }
 
     /** {@inheritDoc} */
     @Override public boolean writeTo(ByteBuffer buf, MessageWriter writer) {
-        return false;
+        writer.setBuffer(buf);
+
+        if (!writer.isHeaderWritten()) {
+            if (!writer.writeHeader(directType(), fieldsCount()))
+                return false;
+
+            writer.onHeaderWritten();
+        }
+
+        switch (writer.state()) {
+            case 0:
+                if (!writer.writeMap("cntrs", cntrs, MessageCollectionItemType.UUID, MessageCollectionItemType.LONG))
+                    return false;
+
+                writer.incrementState();
+
+            case 1:
+                if (!writer.writeByte("flags", flags))
+                    return false;
+
+                writer.incrementState();
+
+            case 2:
+                if (!writer.writeLong("futId", futId))
+                    return false;
+
+                writer.incrementState();
+
+            case 3:
+                if (!writer.writeLong("topVer", topVer))
+                    return false;
+
+                writer.incrementState();
+
+            case 4:
+                if (!writer.writeMessage("txId", txId))
+                    return false;
+
+                writer.incrementState();
+
+        }
+
+        return true;
     }
 
     /** {@inheritDoc} */
     @Override public boolean readFrom(ByteBuffer buf, MessageReader reader) {
-        return false;
+        reader.setBuffer(buf);
+
+        if (!reader.beforeMessageRead())
+            return false;
+
+        switch (reader.state()) {
+            case 0:
+                cntrs = reader.readMap("cntrs", MessageCollectionItemType.UUID, MessageCollectionItemType.LONG, false);
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 1:
+                flags = reader.readByte("flags");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 2:
+                futId = reader.readLong("futId");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 3:
+                topVer = reader.readLong("topVer");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 4:
+                txId = reader.readMessage("txId");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+        }
+
+        return reader.afterMessageRead(CoordinatorAckRequest.class);
     }
 
     /** {@inheritDoc} */
     @Override public byte directType() {
-        return 0;
+        return -30;
     }
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 0;
+        return 5;
     }
 
     /** {@inheritDoc} */
     @Override public void onAckReceived() {
         // No-op.
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(CoordinatorAckRequest.class, this);
     }
 }
