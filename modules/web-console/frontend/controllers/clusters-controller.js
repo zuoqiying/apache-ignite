@@ -580,6 +580,20 @@ export default ['clustersController', [
             return true;
         }
 
+        function checkLoadBalancingConfiguration(item) {
+            const balancingSpis = item.loadBalancingSpi;
+
+            return _.isNil(_.find(balancingSpis, (curSpi, curIx) => {
+                if (_.find(balancingSpis, (spi, ix) => curIx > ix && curSpi.kind === spi.kind)) {
+                    ErrorPopover.show('loadBalancingKind' + curIx, 'Load balancing SPI of that type is already configured', $scope.ui, 'loadBalancing');
+
+                    return true;
+                }
+
+                return false;
+            }));
+        }
+
         function checkSwapConfiguration(item) {
             const swapKind = item.swapSpaceSpi && item.swapSpaceSpi.kind;
 
@@ -655,6 +669,9 @@ export default ['clustersController', [
                 return false;
 
             if (!checkDiscoveryConfiguration(item))
+                return false;
+
+            if (!checkLoadBalancingConfiguration(item))
                 return false;
 
             if (!checkSwapConfiguration(item))

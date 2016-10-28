@@ -992,7 +992,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                                 break;
 
                             case 'Custom':
-                                probeBean = new Bean(spi.Adaptive.loadProbe.Custom.className, 'probe', spi.Adaptive.loadProbe.Job.Custom);
+                                const className = _.get(spi, 'Adaptive.loadProbe.Custom.className');
+
+                                if (className)
+                                    probeBean = new Bean(className, 'probe', spi.Adaptive.loadProbe.Job.Custom);
 
                                 break;
 
@@ -1012,7 +1015,10 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                         break;
                     case 'Custom':
-                        loadBalancingSpi = new Bean(spi.Custom.className, 'loadBalancingSpi', spi.Custom);
+                        const className = _.get(spi, 'Custom.className');
+
+                        if (className)
+                            loadBalancingSpi = new Bean(className, 'loadBalancingSpi', spi.Custom);
 
                         break;
                     default:
