@@ -32,12 +32,19 @@ public interface GridSqlAst {
     public int size();
 
     /**
-     * Get child.
+     * Get child by index.
      *
      * @param childIdx Index of the requested child.
      * @return Child element.
      */
     public <E extends GridSqlAst> E child(int childIdx);
+
+    /**
+     * Get the first child.
+     *
+     * @return Child element.
+     */
+    public <E extends GridSqlAst> E child();
 
     /**
      * Set child.
@@ -46,4 +53,9 @@ public interface GridSqlAst {
      * @param child Child element.
      */
     public <E extends GridSqlAst> void child(int childIdx, E child);
+
+    /**
+     * @return Optional expression result type (if this is an expression and result type is known).
+     */
+    public GridSqlType resultType();
 }

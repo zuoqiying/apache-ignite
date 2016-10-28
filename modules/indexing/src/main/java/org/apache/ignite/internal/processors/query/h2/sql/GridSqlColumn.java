@@ -43,7 +43,7 @@ public class GridSqlColumn extends GridSqlElement implements GridSqlValue {
      * @param sqlText Text.
      */
     public GridSqlColumn(Column col, GridSqlElement from, String name, String sqlText) {
-        super(Collections.<GridSqlElement>emptyList());
+        super(Collections.<GridSqlAst>emptyList());
 
         assert sqlText != null;
 

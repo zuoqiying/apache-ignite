@@ -36,7 +36,7 @@ public class GridSqlJoin extends GridSqlElement {
      * @param on Join condition.
      */
     public GridSqlJoin(GridSqlElement leftTbl, GridSqlElement rightTbl, boolean leftOuter, @Nullable GridSqlElement on) {
-        super(new ArrayList<GridSqlElement>(3));
+        super(new ArrayList<GridSqlAst>(3));
 
         addChild(leftTbl);
         addChild(rightTbl);

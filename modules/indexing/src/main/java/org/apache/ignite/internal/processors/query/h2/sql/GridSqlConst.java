@@ -36,7 +36,7 @@ public class GridSqlConst extends GridSqlElement implements GridSqlValue {
      * @param val Value.
      */
     public GridSqlConst(Value val) {
-        super(Collections.<GridSqlElement>emptyList());
+        super(Collections.<GridSqlAst>emptyList());
 
         this.val = val;
     }

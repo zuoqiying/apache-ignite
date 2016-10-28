@@ -30,7 +30,7 @@ public class GridSqlParameter extends GridSqlElement implements GridSqlValue {
      * @param idx Index.
      */
     public GridSqlParameter(int idx) {
-        super(Collections.<GridSqlElement>emptyList());
+        super(Collections.<GridSqlAst>emptyList());
 
         this.idx = idx;
     }

@@ -30,7 +30,7 @@ public class GridSqlSubquery extends GridSqlElement {
      * @param subQry Subquery.
      */
     public GridSqlSubquery(GridSqlQuery subQry) {
-        super(Collections.<GridSqlElement>emptyList());
+        super(Collections.<GridSqlAst>emptyList());
 
         this.subQry = subQry;
     }

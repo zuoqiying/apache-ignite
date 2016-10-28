@@ -57,7 +57,7 @@ public class GridSqlTable extends GridSqlElement {
      * @param tbl H2 Table.
      */
     private GridSqlTable(@Nullable String schema, String tblName, @Nullable Table tbl) {
-        super(Collections.<GridSqlElement>emptyList());
+        super(Collections.<GridSqlAst>emptyList());
 
         assert schema != null : "schema";
         assert tblName != null : "tblName";

@@ -34,7 +34,7 @@ public class GridSqlAlias extends GridSqlElement {
      * @param alias Alias.
      * @param expr Expr.
      */
-    public GridSqlAlias(String alias, GridSqlElement expr) {
+    public GridSqlAlias(String alias, GridSqlAst expr) {
         this(alias, expr, false);
     }
 
@@ -43,7 +43,7 @@ public class GridSqlAlias extends GridSqlElement {
      * @param expr Expr.
      * @param useAs Use 'AS' keyword.
      */
-    public GridSqlAlias(String alias, GridSqlElement expr, boolean useAs) {
+    public GridSqlAlias(String alias, GridSqlAst expr, boolean useAs) {
         super(new ArrayList<GridSqlAst>(1));
 
         addChild(expr);

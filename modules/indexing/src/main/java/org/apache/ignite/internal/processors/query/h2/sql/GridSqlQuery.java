@@ -27,16 +27,22 @@ import org.h2.util.StringUtils;
  */
 public abstract class GridSqlQuery implements GridSqlAst {
     /** */
+    public static final int OFFSET_CHILD = 0;
+
+    /** */
+    public static final int LIMIT_CHILD = 1;
+
+    /** */
     protected boolean distinct;
 
     /** */
     protected List<GridSqlSortColumn> sort = new ArrayList<>();
 
     /** */
-    private GridSqlElement offset;
+    private GridSqlAst offset;
 
     /** */
-    private GridSqlElement limit;
+    private GridSqlAst limit;
 
     /** */
     private boolean explain;
@@ -61,28 +67,28 @@ public abstract class GridSqlQuery implements GridSqlAst {
     /**
      * @return Offset.
      */
-    public GridSqlElement offset() {
+    public GridSqlAst offset() {
         return offset;
     }
 
     /**
      * @param offset Offset.
      */
-    public void offset(GridSqlElement offset) {
+    public void offset(GridSqlAst offset) {
         this.offset = offset;
     }
 
     /**
      * @param limit Limit.
      */
-    public void limit(GridSqlElement limit) {
+    public void limit(GridSqlAst limit) {
         this.limit = limit;
     }
 
     /**
      * @return Limit.
      */
-    public GridSqlElement limit() {
+    public GridSqlAst limit() {
         return limit;
     }
 
@@ -131,6 +137,54 @@ public abstract class GridSqlQuery implements GridSqlAst {
      * @return Expression for column index.
      */
     protected abstract GridSqlAst column(int col);
+
+    /** {@inheritDoc} */
+    @Override public GridSqlType resultType() {
+        return GridSqlType.RESULT_SET;
+    }
+
+    /** {@inheritDoc} */
+    @Override public <E extends GridSqlAst> E child() {
+        return child(0);
+    }
+
+    /** {@inheritDoc} */
+    @Override public <E extends GridSqlAst> E child(int childIdx) {
+        switch (childIdx) {
+            case OFFSET_CHILD:
+                return maskNull(offset);
+
+            case LIMIT_CHILD:
+                return maskNull(limit);
+
+            default:
+                throw new IllegalStateException("Child index: " + childIdx);
+        }
+    }
+
+    /**
+     * @param x Element.
+     * @return Empty placeholder if the element is {@code null}.
+     */
+    @SuppressWarnings("unchecked")
+    protected static <E extends GridSqlAst> E maskNull(GridSqlAst x) {
+        return (E)(x == null ? GridSqlPlaceholder.EMPTY : x);
+    }
+
+    /** {@inheritDoc} */
+    @Override public <E extends GridSqlAst> void child(int childIdx, E child) {
+        switch (childIdx) {
+            case OFFSET_CHILD:
+                offset = child;
+
+                break;
+
+            case LIMIT_CHILD:
+
+            default:
+                throw new IllegalStateException("Child index: " + childIdx);
+        }
+    }
 
     /**
      * @param buff Statement builder.

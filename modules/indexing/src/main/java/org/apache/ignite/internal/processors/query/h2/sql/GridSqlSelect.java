@@ -27,10 +27,13 @@ import org.h2.util.StringUtils;
  */
 public class GridSqlSelect extends GridSqlQuery {
     /** */
-    public static final int FROM_CHILD = 0;
+    public static final int FROM_CHILD = 2;
 
     /** */
-    public static final int WHERE_CHILD = 1;
+    public static final int WHERE_CHILD = 3;
+
+    /** */
+    private static final int COLS_CHILD = 4;
 
     /** */
     private List<GridSqlAst> cols = new ArrayList<>();
@@ -50,28 +53,45 @@ public class GridSqlSelect extends GridSqlQuery {
     /** */
     private int havingCol = -1;
 
+    /**
+     * @param colIdx Column index as for {@link #column(int)}.
+     * @return Child index for {@link #child(int)}.
+     */
+    public static int childIndexForColumn(int colIdx) {
+        return colIdx + COLS_CHILD;
+    }
+
     /** {@inheritDoc} */
     @Override public int size() {
-        return 2 + cols.size(); // + FROM + WHERE
+        return 4 + cols.size(); // + FROM + WHERE +
     }
 
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
     @Override public <E extends GridSqlAst> E child(int childIdx) {
+        if (childIdx < FROM_CHILD)
+            return super.child(childIdx);
+
         switch (childIdx) {
             case FROM_CHILD:
-                return (E)(from == null ? GridSqlPlaceholder.EMPTY : from);
+                return maskNull(from);
 
             case WHERE_CHILD:
-                return (E)(where == null ? GridSqlPlaceholder.EMPTY : where);
+                return maskNull(where);
 
             default:
-                return (E)cols.get(childIdx - 2);
+                return (E)cols.get(childIdx - COLS_CHILD);
         }
     }
 
     /** {@inheritDoc} */
     @Override public <E extends GridSqlAst> void child(int childIdx, E child) {
+        if (childIdx < FROM_CHILD) {
+            super.child(childIdx, child);
+
+            return;
+        }
+
         switch (childIdx) {
             case FROM_CHILD:
                 from = child;
@@ -84,7 +104,7 @@ public class GridSqlSelect extends GridSqlQuery {
                 break;
 
             default:
-                cols.set(childIdx - 2, child);
+                cols.set(childIdx - COLS_CHILD, child);
         }
     }
 
@@ -112,7 +132,7 @@ public class GridSqlSelect extends GridSqlQuery {
         if (distinct)
             buff.append(" DISTINCT");
 
-        for (GridSqlElement expression : columns(true)) {
+        for (GridSqlAst expression : columns(true)) {
             buff.appendExceptFirst(",");
             buff.append('\n');
             buff.append(expression.getSQL());
@@ -161,7 +181,7 @@ public class GridSqlSelect extends GridSqlQuery {
             offset() == null;
 
         if (simple) {
-            for (GridSqlElement expression : columns(true)) {
+            for (GridSqlAst expression : columns(true)) {
                 if (expression instanceof GridSqlAlias)
                     expression = expression.child();
 
@@ -210,7 +230,7 @@ public class GridSqlSelect extends GridSqlQuery {
      * @param visible Expression is visible in select phrase.
      * @return {@code this}.
      */
-    public GridSqlSelect addColumn(GridSqlElement expression, boolean visible) {
+    public GridSqlSelect addColumn(GridSqlAst expression, boolean visible) {
         if (expression == null)
             throw new NullPointerException();
 
@@ -231,7 +251,7 @@ public class GridSqlSelect extends GridSqlQuery {
      * @param expression Expression.
      * @return {@code this}.
      */
-    public GridSqlSelect setColumn(int colIdx, GridSqlElement expression) {
+    public GridSqlSelect setColumn(int colIdx, GridSqlAst expression) {
         if (expression == null)
             throw new NullPointerException();
 
@@ -309,7 +329,7 @@ public class GridSqlSelect extends GridSqlQuery {
     /**
      * @return Having.
      */
-    public GridSqlElement having() {
+    public GridSqlAst having() {
         return havingCol >= 0 ? column(havingCol) : null;
     }
 

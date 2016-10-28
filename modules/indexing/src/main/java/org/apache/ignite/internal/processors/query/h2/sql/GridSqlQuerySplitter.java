@@ -38,8 +38,13 @@ import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunction
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.MIN;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.SUM;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlPlaceholder.EMPTY;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQuery.LIMIT_CHILD;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQuery.OFFSET_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQueryParser.prepared;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQueryParser.query;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.FROM_CHILD;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.WHERE_CHILD;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.childIndexForColumn;
 import static org.apache.ignite.internal.processors.query.h2.twostep.GridReduceQueryExecutor.toArray;
 
 /**
@@ -107,9 +112,9 @@ public class GridSqlQuerySplitter {
      * @param qry Query.
      * @return Leftest simple query if this is UNION.
      */
-    private static GridSqlSelect leftest(GridSqlQuery qry) {
+    private static GridSqlSelect leftmost(GridSqlQuery qry) {
         if (qry instanceof GridSqlUnion)
-            return leftest(((GridSqlUnion)qry).left());
+            return leftmost(((GridSqlUnion)qry).left());
 
         return (GridSqlSelect)qry;
     }
@@ -128,11 +133,11 @@ public class GridSqlQuerySplitter {
         wrapQry.explain(qry.explain());
         qry.explain(false);
 
-        GridSqlSelect left = leftest(qry);
+        GridSqlSelect left = leftmost(qry);
 
         int c = 0;
 
-        for (GridSqlElement expr : left.columns(true)) {
+        for (GridSqlAst expr : left.columns(true)) {
             GridSqlType type = expr.resultType();
 
             String colName;
@@ -234,8 +239,8 @@ public class GridSqlQuerySplitter {
     ) {
         final int visibleCols = mapQry.visibleColumns();
 
-        List<GridSqlElement> rdcExps = new ArrayList<>(visibleCols);
-        List<GridSqlElement> mapExps = new ArrayList<>(mapQry.allColumns());
+        List<GridSqlAst> rdcExps = new ArrayList<>(visibleCols);
+        List<GridSqlAst> mapExps = new ArrayList<>(mapQry.allColumns());
 
         mapExps.addAll(mapQry.columns(false));
 
@@ -244,7 +249,7 @@ public class GridSqlQuerySplitter {
 
         boolean distinctAggregateFound = false;
 
-        if (!collocatedGroupBy) {
+        if (!collocatedGrpBy) {
             for (int i = 0, len = mapExps.size(); i < len; i++)
                 distinctAggregateFound |= hasDistinctAggregates(mapExps.get(i));
         }
@@ -253,7 +258,8 @@ public class GridSqlQuerySplitter {
 
         // Split all select expressions into map-reduce parts.
         for (int i = 0, len = mapExps.size(); i < len; i++) // Remember len because mapExps list can grow.
-            aggregateFound |= splitSelectExpression(mapExps, rdcExps, colNames, i, collocatedGrpBy, i == havingCol);
+            aggregateFound |= splitSelectExpression(mapExps, rdcExps, colNames, i, collocatedGrpBy, i == havingCol,
+                distinctAggregateFound);
 
         assert !(collocatedGrpBy && aggregateFound); // We do not split aggregates when collocatedGrpBy is true.
 
@@ -263,7 +269,7 @@ public class GridSqlQuerySplitter {
         // -- SELECT
         mapQry.clearColumns();
 
-        for (GridSqlElement exp : mapExps) // Add all map expressions as visible.
+        for (GridSqlAst exp : mapExps) // Add all map expressions as visible.
             mapQry.addColumn(exp, true);
 
         for (int i = 0; i < visibleCols; i++) // Add visible reduce columns.
@@ -295,7 +301,7 @@ public class GridSqlQuerySplitter {
             // TODO IGNITE-1140 - Find aggregate functions in HAVING clause or rewrite query to put all aggregates to SELECT clause.
             // We need to find HAVING column in reduce query.
             for (int i = visibleCols; i < rdcQry.allColumns(); i++) {
-                GridSqlElement c = rdcQry.column(i);
+                GridSqlAst c = rdcQry.column(i);
 
                 if (c instanceof GridSqlAlias && HAVING_COLUMN.equals(((GridSqlAlias)c).alias())) {
                     rdcQry.havingColumn(i);
@@ -369,11 +375,11 @@ public class GridSqlQuerySplitter {
      * @param cols Columns from SELECT clause.
      * @return Map of columns with types.
      */
-    private static LinkedHashMap<String,?> collectColumns(List<GridSqlElement> cols) {
+    private static LinkedHashMap<String,?> collectColumns(List<GridSqlAst> cols) {
         LinkedHashMap<String, GridSqlType> res = new LinkedHashMap<>(cols.size(), 1f, false);
 
         for (int i = 0; i < cols.size(); i++) {
-            GridSqlElement col = cols.get(i);
+            GridSqlAst col = cols.get(i);
             GridSqlType t = col.resultType();
 
             if (t == null)
@@ -410,14 +416,16 @@ public class GridSqlQuerySplitter {
             GridSqlSelect select = (GridSqlSelect)qry;
 
             // Normalize FROM first to update expression aliases then.
-            normalizeFrom(select.from());
+            normalizeFrom(select, FROM_CHILD);
 
-            for (GridSqlElement el : select.columns(false))
-                normalizeExpression(el);
+            List<GridSqlAst> cols = select.columns(false);
 
-            normalizeExpression(select.where());
-            normalizeExpression(select.offset());
-            normalizeExpression(select.limit());
+            for (int i = 0; i < cols.size(); i++)
+                normalizeExpression(select, childIndexForColumn(i));
+
+            normalizeExpression(select, WHERE_CHILD);
+            normalizeExpression(select, OFFSET_CHILD);
+            normalizeExpression(select, LIMIT_CHILD);
 
             // ORDER BY and HAVING must be in SELECT expressions.
         }
@@ -427,7 +435,7 @@ public class GridSqlQuerySplitter {
      * @param prnt Parent element.
      * @param childIdx Child index.
      */
-    private void normalizeFrom(GridSqlElement prnt, int childIdx) {
+    private void normalizeFrom(GridSqlAst prnt, int childIdx) {
         GridSqlElement from = prnt.child(childIdx);
 
         if (from instanceof GridSqlTable || from instanceof GridSqlSubquery) {
@@ -453,7 +461,7 @@ public class GridSqlQuerySplitter {
             normalizeFrom(from, 1);
 
             // Join condition (after ON keyword).
-            normalizeExpression(from.child(2));
+            normalizeExpression(from, 2);
         }
         else if (from instanceof GridSqlAlias)
             normalizeFrom(from, 0);
@@ -465,8 +473,8 @@ public class GridSqlQuerySplitter {
      * @param prnt Parent element.
      * @param childIdx Child index.
      */
-    private void normalizeExpression(GridSqlElement prnt, int childIdx) {
-        GridSqlElement el = prnt.child(childIdx);
+    private void normalizeExpression(GridSqlAst prnt, int childIdx) {
+        GridSqlAst el = prnt.child(childIdx);
 
         if (el instanceof GridSqlAlias || el instanceof GridSqlOperation || el instanceof GridSqlFunction) {
             for (int i = 0; i < el.size(); i++)
@@ -511,7 +519,7 @@ public class GridSqlQuerySplitter {
         if (params.length == 0)
             return target;
 
-        for (GridSqlElement el : qry.columns(false))
+        for (GridSqlAst el : qry.columns(false))
             findParams(el, params, target, paramIdxs);
 
         findParams(qry.from(), params, target, paramIdxs);
@@ -531,7 +539,7 @@ public class GridSqlQuerySplitter {
      * @param target Extracted parameters.
      * @param paramIdxs Parameter indexes.
      */
-    private static void findParams(@Nullable GridSqlElement el, Object[] params, ArrayList<Object> target,
+    private static void findParams(@Nullable GridSqlAst el, Object[] params, ArrayList<Object> target,
         IntArray paramIdxs) {
         if (el == null)
             return;
@@ -560,8 +568,8 @@ public class GridSqlQuerySplitter {
         else if (el instanceof GridSqlSubquery)
             findParams(((GridSqlSubquery)el).subquery(), params, target, paramIdxs);
         else
-            for (GridSqlElement child : el)
-                findParams(child, params, target, paramIdxs);
+            for (int i = 0; i < el.size(); i++)
+                findParams(el.child(i), params, target, paramIdxs);
     }
 
     /**
@@ -575,15 +583,15 @@ public class GridSqlQuerySplitter {
      * @return {@code true} If aggregate was found.
      */
     private static boolean splitSelectExpression(
-        List<GridSqlElement> mapSelect,
-        List<GridSqlElement> rdcSelect,
+        List<GridSqlAst> mapSelect,
+        List<GridSqlAst> rdcSelect,
         Set<String> colNames,
         final int idx,
         boolean collocatedGrpBy,
         boolean isHaving,
         boolean hasDistinctAggregate
     ) {
-        GridSqlElement el = mapSelect.get(idx);
+        GridSqlAst el = mapSelect.get(idx);
         GridSqlAlias alias = null;
 
         boolean aggregateFound = false;
@@ -642,12 +650,12 @@ public class GridSqlQuerySplitter {
      * @param el Expression.
      * @return {@code true} If expression contains aggregates.
      */
-    private static boolean hasAggregates(GridSqlElement el) {
+    private static boolean hasAggregates(GridSqlAst el) {
         if (el instanceof GridSqlAggregateFunction)
             return true;
 
-        for (GridSqlElement child : el) {
-            if (hasAggregates(child))
+        for (int i = 0; i < el.size(); i++) {
+            if (hasAggregates(el.child(i)))
                 return true;
         }
 
@@ -661,15 +669,15 @@ public class GridSqlQuerySplitter {
      * @param el Expression.
      * @return {@code true} If expression contains distinct aggregates.
      */
-    private static boolean hasDistinctAggregates(GridSqlElement el) {
+    private static boolean hasDistinctAggregates(GridSqlAst el) {
         if (el instanceof GridSqlAggregateFunction) {
             GridSqlFunctionType type = ((GridSqlAggregateFunction)el).type();
 
             return ((GridSqlAggregateFunction)el).distinct() && type != MIN && type != MAX;
         }
 
-        for (GridSqlElement child : el) {
-            if (hasDistinctAggregates(child))
+        for (int i = 0; i < el.size(); i++) {
+            if (hasDistinctAggregates(el.child(i)))
                 return true;
         }
 
@@ -686,13 +694,13 @@ public class GridSqlQuerySplitter {
      * @return {@code true} If the first aggregate is already found.
      */
     private static boolean splitAggregates(
-        final GridSqlElement parentExpr,
+        final GridSqlAst parentExpr,
         final int childIdx,
-        final List<GridSqlElement> mapSelect,
+        final List<GridSqlAst> mapSelect,
         final int exprIdx,
         boolean hasDistinctAggregate,
         boolean first) {
-        GridSqlElement el = parentExpr.child(childIdx);
+        GridSqlAst el = parentExpr.child(childIdx);
 
         if (el instanceof GridSqlAggregateFunction) {
             splitAggregate(parentExpr, childIdx, mapSelect, exprIdx, hasDistinctAggregate, first);
@@ -717,9 +725,9 @@ public class GridSqlQuerySplitter {
      * @param first If this is the first aggregate found in this expression.
      */
     private static void splitAggregate(
-        GridSqlElement parentExpr,
+        GridSqlAst parentExpr,
         int aggIdx,
-        List<GridSqlElement> mapSelect,
+        List<GridSqlAst> mapSelect,
         int exprIdx,
         boolean hasDistinctAggregate,
         boolean first
@@ -853,7 +861,7 @@ public class GridSqlQuerySplitter {
      * @param child Child.
      * @return Alias.
      */
-    private static GridSqlAlias alias(String alias, GridSqlElement child) {
+    private static GridSqlAlias alias(String alias, GridSqlAst child) {
         GridSqlAlias res = new GridSqlAlias(alias, child);
 
         res.resultType(child.resultType());
@@ -867,7 +875,7 @@ public class GridSqlQuerySplitter {
      * @param right Right expression.
      * @return Binary operator.
      */
-    private static GridSqlOperation op(GridSqlOperationType type, GridSqlElement left, GridSqlElement right) {
+    private static GridSqlOperation op(GridSqlOperationType type, GridSqlAst left, GridSqlAst right) {
         return new GridSqlOperation(type, left, right);
     }
 

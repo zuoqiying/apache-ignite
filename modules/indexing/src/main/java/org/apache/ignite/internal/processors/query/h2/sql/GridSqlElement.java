@@ -17,13 +17,12 @@
 
 package org.apache.ignite.internal.processors.query.h2.sql;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * Base class for all SQL AST nodes.
  */
-public abstract class GridSqlElement implements Iterable<GridSqlAst>, GridSqlAst {
+public abstract class GridSqlElement implements GridSqlAst {
     /** */
     private final List<GridSqlAst> children;
 
@@ -69,19 +68,18 @@ public abstract class GridSqlElement implements Iterable<GridSqlAst>, GridSqlAst
         return this;
     }
 
-    /**
-     * @param idx Index.
-     * @return Child.
-     */
+    /** {@inheritDoc} */
+    @Override public <E extends GridSqlAst> E child() {
+        return child(0);
+    }
+
+    /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
     @Override public <E extends GridSqlAst> E child(int idx) {
         return (E)children.get(idx);
     }
 
-    /**
-     * @param idx Index.
-     * @param child New child.
-     */
+    /** {@inheritDoc} */
     @Override public <E extends GridSqlAst> void child(int idx, E child) {
         if (child == null)
             throw new NullPointerException();
@@ -94,11 +92,6 @@ public abstract class GridSqlElement implements Iterable<GridSqlAst>, GridSqlAst
      */
     public int size() {
         return children.size();
-    }
-
-    /** {@inheritDoc} */
-    @Override public Iterator<GridSqlAst> iterator() {
-        return children.iterator();
     }
 
     /** {@inheritDoc} */
