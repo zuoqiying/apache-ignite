@@ -869,7 +869,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
             let eventStorageBean = null;
 
-            switch (eventStorage.kind) {
+            switch (_.get(eventStorage, 'kind')) {
                 case 'Memory':
                     eventStorageBean = new Bean('org.apache.ignite.spi.eventstorage.memory.MemoryEventStorageSpi', 'eventStorage', eventStorage.Memory, clusterDflts.eventStorage.Memory);
 
