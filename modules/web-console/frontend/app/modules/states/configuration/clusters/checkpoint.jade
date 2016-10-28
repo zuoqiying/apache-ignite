@@ -18,6 +18,7 @@ include ../../../../../app/helpers/jade/mixins.jade
 
 -var form = 'checkpoint'
 -var model = 'backupItem.checkpointSpi'
+-var CustomCheckpoint = 'model.kind === "Custom"'
 
 .panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
@@ -49,7 +50,7 @@ include ../../../../../app/helpers/jade/mixins.jade
                                         {value: "S3", label: "Amazon S3"},\
                                         {value: "JDBC", label: "Database"},\
                                         {value: "Custom", label: "Custom"},\
-                                        {value: "null", label: "Default"}\
+                                        {value: "Noop", label: "Default"}\
                                     ]',
                                     'Provides an ability to save an intermediate job state\
                                     <ul>\
@@ -79,8 +80,8 @@ include ../../../../../app/helpers/jade/mixins.jade
                             div(ng-show='model.kind === "JDBC"')
                                 include ./checkpoint/jdbc.jade
 
-                            .settings-row(ng-show='model.kind === "Custom"')
-                                +java-class('Class name:', 'model.Custom.className', '"checkpointCustomClassName" + $index', 'true', 'true',
+                            .settings-row(ng-show=CustomCheckpoint)
+                                +java-class('Class name:', 'model.Custom.className', '"checkpointCustomClassName" + $index', 'true', CustomCheckpoint,
                                 'Custom CheckpointSpi implementation class')
             .col-sm-6
                 +preview-xml-java('backupItem', 'clusterCheckpoint', 'caches')

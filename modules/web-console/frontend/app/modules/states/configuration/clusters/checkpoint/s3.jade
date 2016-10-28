@@ -27,13 +27,13 @@ include ../../../../../../app/helpers/jade/mixins.jade
 -var checkpointS3CustomRetry = clientRetryModel + '.kind === "Custom"'
 
 .settings-row
-    +dropdown-required('AWS credentials:', 'model.S3.awsCredentials.kind', '"checkpointS3AwsCredentials"', 'true', 'true', 'Custom', '[\
-                                            {value: "Basic", label: "Basic"},\
-                                            {value: "Properties", label: "Properties"},\
-                                            {value: "Anonymous", label: "Anonymous"},\
-                                            {value: "BasicSession", label: "Basic with session"},\
-                                            {value: "Custom", label: "Custom"}\
-                                        ]',
+    +dropdown-required('AWS credentials:', 'model.S3.awsCredentials.kind', '"checkpointS3AwsCredentials"', 'true', 'model.kind === "S3"', 'Custom', '[\
+        {value: "Basic", label: "Basic"},\
+        {value: "Properties", label: "Properties"},\
+        {value: "Anonymous", label: "Anonymous"},\
+        {value: "BasicSession", label: "Basic with session"},\
+        {value: "Custom", label: "Custom"}\
+    ]',
     'AWS credentials\
     <ul>\
         <li>Basic - Allows callers to pass in the AWS access key and secret access in the constructor</li>\

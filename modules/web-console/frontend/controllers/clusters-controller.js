@@ -122,6 +122,7 @@ export default ['clustersController', [
                 }
                 else if (field.type === 'checkpointSpi') {
                     const newCheckpointCfg = {
+                        kind: 'Noop',
                         FS: {
                             directoryPaths: []
                         },
