@@ -416,7 +416,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             if (_.isEmpty(items))
                 return cfg;
 
-            cfg.arrayProperty('cacheKeyConfiguration', 'keyConfigurations', items,
+            cfg.arrayProperty('cacheKeyConfiguration', 'cacheKeyConfiguration', items,
                 'org.apache.ignite.cache.CacheKeyConfiguration');
 
             return cfg;
