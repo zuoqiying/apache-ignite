@@ -1906,6 +1906,7 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         }
 
         /**
+         * @param self Instance of current class before serialization.
          * @param ver Sender job version.
          * @return List of serializable transient fields.
          */
