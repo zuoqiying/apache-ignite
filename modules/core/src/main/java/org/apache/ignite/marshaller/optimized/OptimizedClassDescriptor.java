@@ -49,7 +49,7 @@ import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.marshaller.MarshallerContext;
 import org.apache.ignite.marshaller.MarshallerExclusions;
-import org.apache.ignite.marshaller.annotation.SerializableTransient;
+import org.apache.ignite.internal.util.SerializableTransient;
 import sun.misc.Unsafe;
 
 import static java.lang.reflect.Modifier.isFinal;
@@ -465,7 +465,8 @@ class OptimizedClassDescriptor {
                                 else
                                     // Set method back to null if it has incorrect signature.
                                     serTransMtd = null;
-                            } catch (NoSuchMethodException ignored) {
+                            }
+                            catch (NoSuchMethodException ignored) {
                                 serTransMtd = null;
                             }
 
@@ -475,7 +476,8 @@ class OptimizedClassDescriptor {
                                 notNullField = cls.getDeclaredField(fieldName);
 
                                 notNullField.setAccessible(true);
-                            } catch (NoSuchFieldException e) {
+                            }
+                            catch (NoSuchFieldException e) {
                                 notNullField = null;
                                 serTransMtd = null;
                             }
@@ -959,7 +961,8 @@ class OptimizedClassDescriptor {
 
                         // Second try with another set of fields.
                         obj = in.readSerializable(cls, readObjMtds, readResolveMtd, serializableFields(obj, true), rewindable);
-                    } catch (IllegalAccessException e) {
+                    }
+                    catch (IllegalAccessException e) {
                         return obj0;
                     }
                 }

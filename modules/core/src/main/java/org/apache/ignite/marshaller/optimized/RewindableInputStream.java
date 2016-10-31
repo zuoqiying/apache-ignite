@@ -54,7 +54,7 @@ class RewindableInputStream extends InputStream {
 
         final int res = delegate.read();
 
-        if (res > 0) {
+        if (res >= 0) {
             ensureBuffer(1);
 
             buf.put((byte) res);
