@@ -17,6 +17,8 @@
 
 package org.apache.ignite.internal.util;
 
+import org.apache.ignite.lang.IgniteProductVersion;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -26,23 +28,25 @@ import java.lang.annotation.Target;
  * Marks class as it has transient fields that should be serialized.
  * Annotated class must have method that returns list of transient
  * fields that should be serialized.
+ * <p>
+ *     Works only for jobs. For other messages node version is not available.
+ * </p>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface SerializableTransient {
     /**
-     * If after deserialization that field is null Optimized marshaller
-     * will try to deserialize object with new fields set (normal fields, transient from
-     * list that returns specified method).
-     *
-     * @return Field that must be not null after successful deserialization.
-     */
-    String notNullField();
-
-    /**
-     * Name of the method that returns list of transient fields
-     * that should be serialized (String[]), and accepts boolean flag, indicating
-     * marshalling or unmarshalling procedure.
+     * Name of the private static method that returns list of transient fields
+     * that should be serialized (String[]), and accepts itself (before serialization)
+     * and {@link IgniteProductVersion}, e.g.
+     * <pre>
+     *     private static String[] fields(Object self, IgniteProductVersion ver){
+     *         return ver.compareTo("1.5.30") > 0 ? SERIALIZABLE_FIELDS : null;
+     *     }
+     * </pre>
+     * <p>
+     *     On serialization version argument <tt>ver</tt> is null, on deserialization - <tt>self</tt> is null.
+     * </p>
      * <p>
      *     If it returns empty array or null all transient fields will be normally
      *     ignored.

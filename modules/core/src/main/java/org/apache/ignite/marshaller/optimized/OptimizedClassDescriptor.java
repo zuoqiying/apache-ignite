@@ -47,9 +47,11 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteProductVersion;
 import org.apache.ignite.marshaller.MarshallerContext;
 import org.apache.ignite.marshaller.MarshallerExclusions;
 import org.apache.ignite.internal.util.SerializableTransient;
+import org.apache.ignite.marshaller.MarshallerUtils;
 import sun.misc.Unsafe;
 
 import static java.lang.reflect.Modifier.isFinal;
@@ -173,9 +175,6 @@ class OptimizedClassDescriptor {
 
     /** Method returns serializable transient fields. */
     private Method serTransMtd;
-
-    /** Indicator field, if value is not null then object deserialized normally. */
-    private Field notNullField;
 
     /**
      * Creates descriptor for class.
@@ -455,11 +454,11 @@ class OptimizedClassDescriptor {
                         // Custom serialization policy for transient fields.
                         if (serTransAn != null) {
                             try {
-                                serTransMtd = c.getDeclaredMethod(serTransAn.methodName(), boolean.class);
+                                serTransMtd = c.getDeclaredMethod(serTransAn.methodName(), cls, IgniteProductVersion.class);
 
                                 int mod = serTransMtd.getModifiers();
 
-                                if (!isStatic(mod) && isPrivate(mod)
+                                if (isStatic(mod) && isPrivate(mod)
                                     && serTransMtd.getReturnType() == String[].class)
                                     serTransMtd.setAccessible(true);
                                 else
@@ -467,18 +466,6 @@ class OptimizedClassDescriptor {
                                     serTransMtd = null;
                             }
                             catch (NoSuchMethodException ignored) {
-                                serTransMtd = null;
-                            }
-
-                            try {
-                                final String fieldName = serTransAn.notNullField();
-
-                                notNullField = cls.getDeclaredField(fieldName);
-
-                                notNullField.setAccessible(true);
-                            }
-                            catch (NoSuchFieldException e) {
-                                notNullField = null;
                                 serTransMtd = null;
                             }
                         }
@@ -839,7 +826,7 @@ class OptimizedClassDescriptor {
                 writeTypeData(out);
 
                 out.writeShort(checksum);
-                out.writeSerializable(obj, writeObjMtds, serializableFields(obj, false));
+                out.writeSerializable(obj, writeObjMtds, serializableFields(obj.getClass(), obj, null));
 
                 break;
 
@@ -854,19 +841,18 @@ class OptimizedClassDescriptor {
      * Transient fields that are not included in that list will be normally
      * ignored.
      *
+     * @param cls Class.
      * @param obj Object.
-     * @param unmarshalling Flag indicates if it is unmarshalling or not.
+     * @param ver Job sender version.
      * @return Serializable fields.
      */
     @SuppressWarnings("ForLoopReplaceableByForEach")
-    private Fields serializableFields(Object obj, boolean unmarshalling) {
+    private Fields serializableFields(Class<?> cls, Object obj, IgniteProductVersion ver) {
         if (serTransMtd == null)
             return fields;
 
         try {
-            final Class<?> cls = obj.getClass();
-
-            final String[] transFields = (String[])serTransMtd.invoke(obj, unmarshalling);
+            final String[] transFields = (String[])serTransMtd.invoke(cls, obj, ver);
 
             if (transFields == null || transFields.length == 0)
                 return fields;
@@ -936,38 +922,12 @@ class OptimizedClassDescriptor {
                 verifyChecksum(in.readShort());
 
                 // If no serialize method, then unmarshal as usual.
-                if (serTransMtd == null)
+                if (serTransMtd != null)
+                    return in.readSerializable(cls, readObjMtds, readResolveMtd,
+                        serializableFields(cls, null, MarshallerUtils.jobSenderVersion()));
+                else
                     return in.readSerializable(cls, readObjMtds, readResolveMtd, fields);
 
-                // We have two tries to unmarshal object, so need possibility to rewind stream.
-                final RewindableInputStream rewindable = new RewindableInputStream();
-
-                // Try 1.
-                final Object obj0 = in.readSerializable(cls, readObjMtds, readResolveMtd, fields, rewindable);
-
-                Object obj = obj0;
-
-                for (int i = 0; i < 2; i++) {
-                    try {
-                        // If field indicator set, then OK.
-                        if (notNullField.get(obj) != null)
-                            return obj;
-
-                        // No more tries.
-                        if (i == 1)
-                            return obj0;
-
-                        rewindable.rewind();
-
-                        // Second try with another set of fields.
-                        obj = in.readSerializable(cls, readObjMtds, readResolveMtd, serializableFields(obj, true), rewindable);
-                    }
-                    catch (IllegalAccessException e) {
-                        return obj0;
-                    }
-                }
-
-                return obj0;
             default:
                 assert false : "Unexpected type: " + type;
 

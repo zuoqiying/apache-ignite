@@ -19,7 +19,6 @@ package org.apache.ignite.marshaller.optimized;
 
 import java.io.Externalizable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.NotActiveException;
 import java.io.ObjectInputStream;
 import java.io.ObjectInputValidation;
@@ -539,37 +538,6 @@ class OptimizedObjectInputStream extends ObjectInputStream {
         }
 
         return obj;
-    }
-
-    /**
-     * Uses rewindable stream for reading serialized data.
-     *
-     * @param cls Class.
-     * @param mtds {@code readObject} methods.
-     * @param readResolveMtd {@code readResolve} method.
-     * @param fields class fields details.
-     * @param rewindable Rewindable input stream.
-     * @return Object.
-     * @throws ClassNotFoundException If class not found.
-     * @throws IOException In case of error.
-     */
-    Object readSerializable(Class<?> cls, List<Method> mtds, Method readResolveMtd,
-        OptimizedClassDescriptor.Fields fields, RewindableInputStream rewindable) throws ClassNotFoundException, IOException {
-        final InputStream original = in.inputStream();
-
-        if (original != null) {
-            rewindable.original(original);
-
-            in.inputStream(rewindable);
-        }
-
-        try {
-            return readSerializable(cls, mtds, readResolveMtd, fields);
-        }
-        finally {
-            if (original != null)
-                in.inputStream(rewindable.original());
-        }
     }
 
     /**

@@ -130,13 +130,6 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
     }
 
     /**
-     * @return Input stream.
-     */
-    @Override public InputStream inputStream() {
-        return in;
-    }
-
-    /**
      * Reads from stream to buffer. If stream is {@code null}, this method is no-op.
      *
      * @param size Number of bytes to read.

@@ -1828,7 +1828,7 @@ public class GridServiceProcessor extends GridProcessorAdapter {
     /**
      */
     @GridInternal
-    @SerializableTransient(notNullField = "svcName", methodName = "serializableTransient")
+    @SerializableTransient(methodName = "serializableTransient")
     private static class ServiceTopologyCallable implements IgniteCallable<Map<UUID, Integer>> {
         /** */
         private static final long serialVersionUID = 0L;
@@ -1906,12 +1906,12 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         }
 
         /**
-         * @param unmarshalling Unmarshalling flag.
+         * @param ver Sender job version.
          * @return List of serializable transient fields.
          */
         @SuppressWarnings("unused")
-        private String[] serializableTransient(boolean unmarshalling) {
-            return serialize || unmarshalling ? SER_FIELDS : null;
+        private static String[] serializableTransient(ServiceTopologyCallable self, IgniteProductVersion ver) {
+            return (self != null && self.serialize) || BROKEN_VERSIONS.contains(ver) ? SER_FIELDS : null;
         }
     }
 
