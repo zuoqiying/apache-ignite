@@ -129,6 +129,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
                 return Promise.reject(new errors.IllegalArgumentException('Cache id can not be undefined or null'));
 
             return mongo.Cluster.update({caches: {$in: [cacheId]}}, {$pull: {caches: cacheId}}, {multi: true}).exec()
+                .then(() => mongo.Cluster.update({}, {$pull: {checkpointSpi: {kind: 'Cache', Cache: {cache: cacheId}}}}, {multi: true}).exec())
                 .then(() => mongo.DomainModel.update({caches: {$in: [cacheId]}}, {$pull: {caches: cacheId}}, {multi: true}).exec())
                 .then(() => mongo.Cache.remove({_id: cacheId}).exec())
                 .then(convertRemoveStatus);

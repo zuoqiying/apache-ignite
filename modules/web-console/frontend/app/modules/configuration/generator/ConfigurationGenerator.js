@@ -439,7 +439,9 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         const cacheBean = new Bean('org.apache.ignite.spi.checkpoint.cache.CacheCheckpointSpi',
                             'checkpointSpi', spi.Cache);
 
-                        const cache = _.find(caches, (c) => c._id === _.get(spi, 'Cache.cache') || c.cache._id === _.get(spi, 'Cache.cache'));
+                        const curCache = _.get(spi, 'Cache.cache');
+
+                        const cache = _.find(caches, (c) => curCache && (c._id === curCache || c.cache._id === curCache));
 
                         if (cache)
                             cacheBean.prop('java.lang.String', 'cacheName', cache.name || cache.cache.name);
