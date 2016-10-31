@@ -438,23 +438,31 @@ public class GridSqlQuerySplitter {
     private void normalizeFrom(GridSqlAst prnt, int childIdx) {
         GridSqlElement from = prnt.child(childIdx);
 
-        if (from instanceof GridSqlTable || from instanceof GridSqlSubquery) {
-            if (from instanceof GridSqlTable) {
-                GridSqlTable tbl = (GridSqlTable)from;
+        if (from instanceof GridSqlTable) {
+            GridSqlTable tbl = (GridSqlTable)from;
 
-                String schema = tbl.schema();
+            String schema = tbl.schema();
 
-                boolean addSchema = tbls == null;
+            boolean addSchema = tbls == null;
 
-                if (tbls != null)
-                    addSchema = tbls.add(tbl.dataTable().identifier());
+            if (tbls != null)
+                addSchema = tbls.add(tbl.dataTable().identifier());
 
-                if (addSchema && schema != null && schemas != null)
-                    schemas.add(schema);
+            if (addSchema && schema != null && schemas != null)
+                schemas.add(schema);
+
+            // Generate unique alias for the table.
+            if (!(prnt instanceof GridSqlAlias)) {
+                // TODO
             }
-            else
-                normalizeQuery(((GridSqlSubquery)from).subquery());
         }
+        else if (from instanceof GridSqlAlias) {
+            // TODO
+
+            normalizeFrom(from, 0);
+        }
+        else if (from instanceof GridSqlSubquery)
+            normalizeQuery(((GridSqlSubquery)from).subquery());
         else if (from instanceof GridSqlJoin) {
             // Left and right.
             normalizeFrom(from, 0);
@@ -463,9 +471,11 @@ public class GridSqlQuerySplitter {
             // Join condition (after ON keyword).
             normalizeExpression(from, 2);
         }
-        else if (from instanceof GridSqlAlias)
-            normalizeFrom(from, 0);
-        else if (!(from instanceof GridSqlFunction))
+        else if (from instanceof GridSqlFunction) {
+            // TODO generate filtering function around the given function
+            // TODO SYSTEM_RANGE is a special case, it can not be wrapped
+        }
+        else
             throw new IllegalStateException(from.getClass().getName() + " : " + from.getSQL());
     }
 
