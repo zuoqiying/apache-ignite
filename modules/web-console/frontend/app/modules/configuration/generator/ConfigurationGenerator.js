@@ -441,7 +441,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                         const curCache = _.get(spi, 'Cache.cache');
 
-                        const cache = _.find(caches, (c) => curCache && (c._id === curCache || c.cache._id === curCache));
+                        const cache = _.find(caches, (c) => curCache && (c._id === curCache || _.get(c, 'cache._id') === curCache));
 
                         if (cache)
                             cacheBean.prop('java.lang.String', 'cacheName', cache.name || cache.cache.name);
