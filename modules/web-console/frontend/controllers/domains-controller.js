@@ -95,7 +95,7 @@ export default ['domainsController', [
 
                         break;
 
-                    case 'indexes':
+                    case 'table-indexes':
                         if ($scope.tableIndexSaveVisible(field, index))
                             return $scope.tableIndexSave(field, index, stopEdit);
 
@@ -1437,7 +1437,8 @@ export default ['domainsController', [
         }
 
         function _newNameIsValidJavaClass(newName) {
-            return LegacyUtils.isValidJavaClass('New name for value type', newName, false, 'copy-new-nameInput');
+            return !$scope.backupItem.generatePojo ||
+                LegacyUtils.isValidJavaClass('New name for value type', newName, false, 'copy-new-nameInput');
         }
 
         // Save domain model with new name.

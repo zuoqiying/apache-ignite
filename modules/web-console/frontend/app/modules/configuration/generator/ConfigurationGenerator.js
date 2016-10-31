@@ -1735,7 +1735,8 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                     .pathProperty('tokenDirectoryPath')
                     .intProperty('threadCount');
 
-                cfg.beanProperty('ipcEndpointConfiguration', bean);
+                if (bean.nonEmpty())
+                    cfg.beanProperty('ipcEndpointConfiguration', bean);
             }
 
             return cfg;
