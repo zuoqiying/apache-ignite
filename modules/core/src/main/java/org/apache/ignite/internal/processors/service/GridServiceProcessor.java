@@ -116,7 +116,7 @@ public class GridServiceProcessor extends GridProcessorAdapter {
     public static final IgniteProductVersion LAZY_SERVICES_CFG_SINCE = IgniteProductVersion.fromString("1.5.22");
 
     /** Versions that only compatible with each other, and from 1.5.33. */
-    private static final Set<IgniteProductVersion> BROKEN_VERSIONS;
+    private static final Set<IgniteProductVersion> SERVICE_TOP_CALLABLE_VER1;
 
     /** */
     private final Boolean srvcCompatibilitySysProp;
@@ -167,8 +167,19 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         versions.add(IgniteProductVersion.fromString("1.5.30"));
         versions.add(IgniteProductVersion.fromString("1.5.31"));
         versions.add(IgniteProductVersion.fromString("1.5.32"));
+        versions.add(IgniteProductVersion.fromString("1.6.3"));
+        versions.add(IgniteProductVersion.fromString("1.6.4"));
+        versions.add(IgniteProductVersion.fromString("1.6.5"));
+        versions.add(IgniteProductVersion.fromString("1.6.6"));
+        versions.add(IgniteProductVersion.fromString("1.6.7"));
+        versions.add(IgniteProductVersion.fromString("1.6.8"));
+        versions.add(IgniteProductVersion.fromString("1.6.9"));
+        versions.add(IgniteProductVersion.fromString("1.6.10"));
+        versions.add(IgniteProductVersion.fromString("1.7.0"));
+        versions.add(IgniteProductVersion.fromString("1.7.1"));
+        versions.add(IgniteProductVersion.fromString("1.7.2"));
 
-        BROKEN_VERSIONS = Collections.unmodifiableSet(versions);
+        SERVICE_TOP_CALLABLE_VER1 = Collections.unmodifiableSet(versions);
     }
 
     /**
@@ -670,7 +681,7 @@ public class GridServiceProcessor extends GridProcessorAdapter {
         if (node.version().compareTo(ServiceTopologyCallable.SINCE_VER) >= 0) {
             final ServiceTopologyCallable call = new ServiceTopologyCallable(name);
 
-            call.serialize = BROKEN_VERSIONS.contains(node.version());
+            call.serialize = SERVICE_TOP_CALLABLE_VER1.contains(node.version());
 
             return ctx.closure().callAsyncNoFailover(
                 GridClosureCallMode.BALANCE,
@@ -1274,13 +1285,6 @@ public class GridServiceProcessor extends GridProcessorAdapter {
 
         if (res != null)
             return res;
-
-        if (BROKEN_VERSIONS.contains(node.version())) {
-            ClusterNode locNode = ctx.discovery().localNode();
-
-            log.warning("Remote IgniteServices are not compatible with releases less that 1.5.30 " +
-                "[locNodeId=" + locNode.id() + ", rmtNodeId=" + node.id() + ", brokenVersions=" + BROKEN_VERSIONS + "]");
-        }
 
         boolean rmtNodeIsOld = node.version().compareToIgnoreTimestamp(LAZY_SERVICES_CFG_SINCE) < 0;
 
@@ -1912,7 +1916,7 @@ public class GridServiceProcessor extends GridProcessorAdapter {
          */
         @SuppressWarnings("unused")
         private static String[] serializableTransient(ServiceTopologyCallable self, IgniteProductVersion ver) {
-            return (self != null && self.serialize) || BROKEN_VERSIONS.contains(ver) ? SER_FIELDS : null;
+            return (self != null && self.serialize) || (ver != null && SERVICE_TOP_CALLABLE_VER1.contains(ver)) ? SER_FIELDS : null;
         }
     }
 
