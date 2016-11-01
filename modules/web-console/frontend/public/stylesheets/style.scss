@@ -1350,9 +1350,6 @@ label {
     margin: 0 5px;
 }
 
-.fa {
-    cursor: pointer;
-}
 
 .fa-cursor-default {
     cursor: default !important;
@@ -1370,10 +1367,6 @@ label {
 .fa-chevron-circle-right {
     color: $brand-primary;
     margin-right: 5px;
-}
-
-.fa-question-circle {
-    cursor: default;
 }
 
 label.required:after {
