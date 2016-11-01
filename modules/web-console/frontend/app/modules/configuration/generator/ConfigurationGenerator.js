@@ -104,8 +104,8 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                     dsBean = new Bean('com.ibm.db2.jcc.DB2DataSource', id, {})
                         .property('serverName', `${id}.jdbc.server_name`, 'YOUR_DATABASE_SERVER_NAME')
                         .propertyInt('portNumber', `${id}.jdbc.port_number`, 'YOUR_JDBC_PORT_NUMBER')
-                        .property('databaseName', `${id}.jdbc.database_name`, 'YOUR_JDBC_DRIVER_TYPE')
-                        .propertyInt('driverType', `${id}.jdbc.driver_type`, 'YOUR_DATABASE_NAME');
+                        .property('databaseName', `${id}.jdbc.database_name`, 'YOUR_DATABASE_NAME')
+                        .propertyInt('driverType', `${id}.jdbc.driver_type`, 'YOUR_JDBC_DRIVER_TYPE');
 
                     break;
                 case 'SQLServer':
