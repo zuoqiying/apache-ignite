@@ -28,7 +28,7 @@ public class HadoopMergingTaskInput {
     private final HadoopPriorityQueue<Segment> pq;
 
     /** */
-    final Comparator <Segment> cmp = new Comparator<Segment> () {
+    final Comparator<Segment> cmp = new Comparator<Segment> () {
         @Override public int compare(Segment s1, Segment s2) {
             UnsafeValue p1 = (UnsafeValue)s1.key();
             UnsafeValue p2 = (UnsafeValue)s2.key();
@@ -59,8 +59,6 @@ public class HadoopMergingTaskInput {
 
                 Segment seg = new Segment(true, ri);
 
-                seg.next();
-
                 pq.put(seg);
             }
         }
@@ -71,8 +69,6 @@ public class HadoopMergingTaskInput {
             HadoopTaskInput fri = new FileRawInput(din);
 
             Segment seg = new Segment(false, fri);
-
-            seg.next();
 
             pq.put(seg);
         }
@@ -93,7 +89,7 @@ public class HadoopMergingTaskInput {
      */
     public HadoopTaskInput rawInput() {
         // TODO: the number of inputs should be limited, since each input creates N input streams.
-        return new MergedInput();
+        return new MergedInput(pq);
     }
 
     // TODO: ? implement accept() method to make simpler
@@ -130,6 +126,7 @@ public class HadoopMergingTaskInput {
         }
 
         @Override public boolean next() {
+            //System.out.println(" f next");
             try {
                 try {
                     if (!keyMarkerRead) {
@@ -185,6 +182,8 @@ public class HadoopMergingTaskInput {
         }
 
         @Override public Object key() {
+            //System.out.println(" f key");
+
             if (!curKey.hasData())
                 throw new NoSuchElementException();
 
@@ -192,6 +191,7 @@ public class HadoopMergingTaskInput {
         }
 
         @Override public Iterator<?> values() {
+            //System.out.println(" f values");
             if (!curKey.hasData() || curValues.isEmpty())
                 throw new NoSuchElementException();
 
@@ -210,12 +210,18 @@ public class HadoopMergingTaskInput {
         }
     }
 
-    class MergedInput implements HadoopTaskInput {
-        /** The current (least) segment. */
+    static class MergedInput implements HadoopTaskInput {
+        /**
+         * The priority queue.
+         */
+        private final HadoopPriorityQueue<Segment> pq;
+        /**
+         * The current (least) segment.
+         */
         private HadoopTaskInput curSeg;
 
-        MergedInput() {
-            // noop
+        MergedInput(HadoopPriorityQueue<Segment> pq) {
+            this.pq = pq;
         }
 
         @Override public boolean next() {
@@ -266,6 +272,7 @@ public class HadoopMergingTaskInput {
     static class Segment implements AutoCloseable, HadoopTaskInput {
         private final HadoopTaskInput rawInput;
         private final boolean inMem;
+        private boolean initialized;
 
         Segment(boolean inMem, HadoopTaskInput rawInput) {
             this.inMem = inMem;
@@ -277,14 +284,34 @@ public class HadoopMergingTaskInput {
         }
 
         @Override public Object key() {
+            if (!initialized) {
+                initialized = true;
+
+                boolean hasNext = next();
+
+                if (!hasNext)
+                    throw new NoSuchElementException();
+            }
+
             return rawInput.key();
         }
 
         @Override public boolean next() {
+            initialized = true;
+
             return rawInput.next();
         }
 
         @Override public Iterator<?> values() {
+            if (!initialized) {
+                initialized = true;
+
+                boolean hasNext = next();
+
+                if (!hasNext)
+                    throw new NoSuchElementException();
+            }
+
             return rawInput.values();
         }
 

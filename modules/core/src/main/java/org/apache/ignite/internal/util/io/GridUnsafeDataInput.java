@@ -96,7 +96,7 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
     /**
      * @param bytes Bytes.
      * @param off Offset.
-     * @param len Length.
+     * @param len Length.  TODO: clarify exactly, this is 'length' or 'offset + length'?
      */
     public void bytes(byte[] bytes, int off, int len) {
         buf = bytes;

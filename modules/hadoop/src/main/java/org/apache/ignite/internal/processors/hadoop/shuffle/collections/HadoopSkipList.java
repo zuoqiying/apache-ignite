@@ -18,11 +18,15 @@
 package org.apache.ignite.internal.processors.hadoop.shuffle.collections;
 
 import java.io.DataInput;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.hadoop.io.RawComparator;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
@@ -32,6 +36,7 @@ import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
 import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob;
 import org.apache.ignite.internal.util.GridLongList;
 import org.apache.ignite.internal.util.GridRandom;
+import org.apache.ignite.internal.util.io.GridUnsafeDataInput;
 import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
 import org.apache.ignite.internal.util.typedef.internal.A;
 import org.jetbrains.annotations.Nullable;
@@ -123,6 +128,235 @@ public class HadoopSkipList extends HadoopMultimapBase {
         return in;
     }
 
+    public static class GroupedRawInput implements HadoopTaskInput {
+        private final HadoopTaskInput/*<UnsafeValue>*/ rawInput;
+
+        private final RawComparator rawGrpCmp;
+
+        private final List<Iterator<Object>> vals = new ArrayList<>(4);
+
+        private boolean finished;
+
+        private final HadoopShuffleJob.UnsafeValue prevKey = new HadoopShuffleJob.UnsafeValue();
+        private final HadoopShuffleJob.UnsafeValue nextKey = new HadoopShuffleJob.UnsafeValue();
+
+        public GroupedRawInput(HadoopTaskInput rawInput, RawComparator rawGrpCmp) throws IgniteCheckedException {
+            this.rawInput = rawInput;
+            this.rawGrpCmp = rawGrpCmp;
+        }
+
+        /** {@inheritDoc} */
+        @Override public void close() throws IgniteCheckedException {
+            vals.clear();
+
+            rawInput.close();
+
+            prevKey.close();
+            nextKey.close();
+        }
+
+        /** {@inheritDoc} */
+        @Override public boolean next() {
+            if (finished)
+                return false;
+
+            if (!prevKey.hasData()) { // First call.
+                if (!rawInput.next()) {
+                    finished = true;
+
+                    return false;
+                }
+
+                prevKey.readFrom((HadoopShuffleJob.UnsafeValue)rawInput.key());
+
+                assert prevKey.hasData();
+
+                //in.keyReader.resetReusedObject(null); // We need 2 instances of key object for comparison.
+            }
+            else {
+//                rawInput.
+//                if (in.metaPtr == 0) // We reached the end of the input.
+//                    return false;
+
+                vals.clear();
+
+                //in.keyReader.resetReusedObject(prevKey); // Switch key instances.
+
+                assert nextKey.hasData();
+
+                // Advance the prev key:
+                prevKey.readFrom(nextKey);
+            }
+
+            vals.add((Iterator)rawInput.values());
+
+            while (true) { // Fill with head value pointers with equal keys.
+                if (!rawInput.next()) {
+                    finished = true;
+
+                    break;
+                }
+
+                nextKey.readFrom((HadoopShuffleJob.UnsafeValue)rawInput.key());
+
+                assert nextKey.hasData();
+
+                if (rawGrpCmp.compare(
+                        prevKey.getBuf(), prevKey.getOff(), prevKey.size(),
+                        nextKey.getBuf(), nextKey.getOff(), nextKey.size()) == 0)
+                    vals.add((Iterator)rawInput.values());
+                else
+                    break;
+            }
+
+            assert !vals.isEmpty();
+
+            return true;
+        }
+
+        /** {@inheritDoc} */
+        @Override public Object key() {
+            return prevKey;
+        }
+
+        /** {@inheritDoc} */
+        @Override public Iterator<?> values() {
+            assert !vals.isEmpty();
+
+            return new CompositeIterator(new ArrayList<>(vals).iterator());
+        }
+    }
+
+    /**
+     *
+     */
+    public static class CompositeIterator<T> implements Iterator<T> {
+        /** */
+        private final Iterator<Iterator<T>> it;
+
+        /** */
+        private Iterator<T> i;
+
+        /** */
+        public CompositeIterator(Iterator<Iterator<T>> it) {
+             this.it = it;
+        }
+
+        /** {@inheritDoc} */
+        @Override public boolean hasNext() {
+            while (true) {
+                if (i == null) {
+                    if (it.hasNext())
+                        i = it.next();
+                    else
+                        return false; // negative exit
+                }
+
+                assert i != null;
+
+                if (i.hasNext())
+                    return true; // positive exit point
+                else
+                    i = null;
+            }
+        }
+
+        /** {@inheritDoc} */
+        @Override public T next() {
+            if (hasNext()) {
+                assert i != null;
+
+                return i.next();
+            }
+            else
+                throw new NoSuchElementException();
+        }
+
+        /** {@inheritDoc} */
+        @Override public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Input serializing a RawInput.
+     */
+    public static class InputForRawInput implements HadoopTaskInput {
+        private final HadoopTaskInput/*<UnsafeValue>*/ rawInput;
+
+        private final HadoopSerialization keySer;
+        private final HadoopSerialization valSer;
+
+        private final GridUnsafeDataInput dataInput = new GridUnsafeDataInput();
+
+        private Object keyReuse;
+
+        public InputForRawInput(HadoopTaskInput rawInput, HadoopTaskContext taskCtx) throws IgniteCheckedException {
+            this.rawInput = rawInput;
+
+            this.keySer = taskCtx.keySerialization();
+            this.valSer = taskCtx.valueSerialization();
+        }
+
+        private Object deserialize(HadoopSerialization ser, HadoopShuffleJob.UnsafeValue uv, @Nullable Object reuse)
+                throws IgniteCheckedException {
+            dataInput.bytes(uv.getBuf(), uv.getOff(), uv.size() + uv.getOff());
+
+            return ser.read(dataInput, reuse);
+        }
+
+        @Override public void close() throws IgniteCheckedException {
+            rawInput.close();
+        }
+
+        @Override public boolean next() {
+            return rawInput.next();
+        }
+
+        @Override public Object key() {
+            HadoopShuffleJob.UnsafeValue uv = (HadoopShuffleJob.UnsafeValue)rawInput.key();
+
+            try {
+                keyReuse = deserialize(keySer, uv, keyReuse);
+            }
+            catch (IgniteCheckedException ice) {
+                throw new IgniteException(ice);
+            }
+
+            return keyReuse;
+        }
+
+        @Override public Iterator<?> values() {
+            final Iterator<HadoopShuffleJob.UnsafeValue> rawIt = (Iterator)rawInput.values();
+
+            return new Iterator<Object>() {
+                private Object valReuse;
+
+                @Override public boolean hasNext() {
+                    return rawIt.hasNext();
+                }
+
+                @Override public Object next() {
+                    HadoopShuffleJob.UnsafeValue uv = rawIt.next();
+
+                    try {
+                        valReuse = deserialize(valSer, uv, valReuse);
+                    }
+                    catch (IgniteCheckedException ice) {
+                        throw new IgniteException(ice);
+                    }
+
+                    return valReuse;
+                }
+
+                @Override public void remove() {
+                    throw new UnsupportedOperationException("remove");
+                }
+            };
+        }
+    }
+
+    /** {@inheritDoc} */
     public Input rawInput() throws IgniteCheckedException {
         return new RawInput();
     }
@@ -619,6 +853,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
 
         /** {@inheritDoc} */
         @Override public boolean next() {
+            //System.out.println("   m next");
             metaPtr = nextMeta(metaPtr, 0);
 
             return metaPtr != 0;
@@ -626,11 +861,19 @@ public class HadoopSkipList extends HadoopMultimapBase {
 
         /** {@inheritDoc} */
         @Override public Object key() {
+            //System.out.println("   m key");
+            if (metaPtr <= 0L)
+                throw new NoSuchElementException();
+
             return keyReader.readKey(metaPtr);
         }
 
         /** {@inheritDoc} */
         @Override public Iterator<?> values() {
+            //System.out.println("   m values");
+            if (metaPtr == 0L)
+                throw new NoSuchElementException();
+
             return new ValueIterator(value(metaPtr), valReader);
         }
 
@@ -647,7 +890,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
     private class RawReader extends Reader {
         /** */
         private RawReader() {
-            super(null); //
+            super(null);
         }
 
         /** {@inheritDoc} */
@@ -672,7 +915,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
     }
 
     /**
-     * Input to get byte[] content of the Multimap.
+     * Input to get byte[] contents of the Multimap in iterator form.
      * Note that #key() and #values() objects are {@link HadoopShuffleJob.UnsafeValue}s,
      * that is, byte[] buffers with specified width and length.
      */
@@ -691,7 +934,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
         @Override protected Reader createValueReader(HadoopTaskContext taskCtx) throws IgniteCheckedException {
             /*
              * NB: We could reuse key reader there, because the readers only
-             * differ in the serializers, and here serializers are not used (nulls).
+             * differ in the serializers, and here serializers are not used at all (are nulls).
              * But this does not seem to be a good idea, since buffers of the 2 readers may overlap.
              */
             return new RawReader();
@@ -722,6 +965,8 @@ public class HadoopSkipList extends HadoopMultimapBase {
          * @param in Input.
          */
         private GroupedInput(Comparator<Object> grpCmp, Input in) {
+            assert grpCmp != null;
+
             this.grpCmp = grpCmp;
             this.in = in;
         }

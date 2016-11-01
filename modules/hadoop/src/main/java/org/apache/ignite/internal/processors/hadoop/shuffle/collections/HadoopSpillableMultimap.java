@@ -64,8 +64,8 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
     }
 
     /** {@inheritDoc} */
-    @Override public boolean accept(boolean ignoreLastVisited, Visitor v) throws IgniteCheckedException {
-        return delegateMulimap.accept(true, v); // TODO: use parameter.
+    @Override public boolean accept(boolean ignoreLastVisitedUnused, Visitor v) throws IgniteCheckedException {
+        return delegateMulimap.accept(true, v);
     }
 
     /** {@inheritDoc} */
@@ -87,7 +87,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
     @Override public void close() {
         //buf = null;
 
-        delegateMulimap.close();
+        //delegateMulimap.close();
     }
 
     /** {@inheritDoc} */
@@ -158,7 +158,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
                         private HadoopMultimap.Key key;
 
                         @Override public void visitKey(byte[] buf, int off, int len) throws IgniteCheckedException {
-                            keyInput.bytes(buf, off, len); // TODO: changed (buf, off, off + len) -> (buf, off, len) ? make sure this is correct.
+                            keyInput.bytes(buf, off, off + len);
 
                             key = adder.addKey(keyInput, key);
                         }

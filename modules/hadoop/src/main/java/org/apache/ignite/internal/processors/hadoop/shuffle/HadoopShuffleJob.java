@@ -348,6 +348,11 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             assert uv.hasData();
 
             ensureLength(uv.size());
+
+            off = uv.off;
+            size = uv.size;
+
+            System.arraycopy(uv.buf, 0, buf, 0, uv.size);
         }
 
         public void readFrom(DataInput din, int expectedSize) throws IOException {
@@ -376,7 +381,7 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             dout.write(buf, off, size);
         }
 
-        /** */
+        /** Note that 0 bytes value gives 'true' result. */
         public boolean hasData() {
             // TODO: may be not the best implementation:
             return buf != null;

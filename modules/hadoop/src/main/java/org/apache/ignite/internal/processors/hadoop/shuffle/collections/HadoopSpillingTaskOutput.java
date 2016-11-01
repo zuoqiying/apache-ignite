@@ -90,7 +90,6 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
                             ((AutoCloseable)dout).close();
                         }
 
-
                         boolean put = spilledQueue.offer(io);
 
                         assert put;
@@ -152,7 +151,7 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
          * @throws IgniteCheckedException
          */
         void createOutput() throws IgniteCheckedException {
-            out =  map.startAdding(ctx);
+            out = map.startAdding(ctx);
         }
 
         /**
@@ -265,5 +264,4 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
     public HadoopMultimap currOut() {
         return currOut.getReference().map;
     }
-
 }
