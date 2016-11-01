@@ -461,8 +461,8 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                             case 'Basic':
                                 credentialsBean = new Bean('com.amazonaws.auth.BasicAWSCredentials', 'awsCredentials', {});
 
-                                credentialsBean.constructorArgument('PROPERTY', 'checkpoint.s3.credentials.accessKey')
-                                    .constructorArgument('PROPERTY', 'checkpoint.s3.credentials.secretKey');
+                                credentialsBean.propertyConstructorArgument('checkpoint.s3.credentials.accessKey', 'YOUR_S3_ACCESS_KEY')
+                                    .propertyConstructorArgument('checkpoint.s3.credentials.secretKey', 'YOUR_S3_SECRET_KEY');
 
                                 break;
 
