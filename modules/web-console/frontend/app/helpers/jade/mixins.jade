@@ -517,9 +517,9 @@ mixin table-pair-edit(tbl, prefix, keyPlaceholder, valPlaceholder, keyJavaBuiltI
         .fieldSep !{divider}
         .input-tip
             if keyJavaBuiltInTypes
-                input.form-control(id=keyFocusId ignite-on-enter-focus-move=valFocusId type='text' ng-model=keyModel placeholder=keyPlaceholder bs-typeahead container='body' ignite-retain-selection data-min-length='1' bs-options='javaClass for javaClass in javaBuiltInClasses' ignite-on-escape='tableReset()')
+                input.form-control(id=keyFocusId ignite-on-enter-focus-move=valFocusId type='text' ng-model=keyModel placeholder=keyPlaceholder bs-typeahead container='body' ignite-retain-selection data-min-length='1' bs-options='javaClass for javaClass in javaBuiltInClasses' ignite-on-escape='tableReset(false)')
             else
-                input.form-control(id=keyFocusId ignite-on-enter-focus-move=valFocusId type='text' ng-model=keyModel placeholder=keyPlaceholder ignite-on-escape='tableReset()')
+                input.form-control(id=keyFocusId ignite-on-enter-focus-move=valFocusId type='text' ng-model=keyModel placeholder=keyPlaceholder ignite-on-escape='tableReset(false)')
     .col-xs-6.col-sm-6.col-md-6
         -var btnVisible = 'tablePairSaveVisible(' + tbl + ', ' + index + ')'
         -var btnSave = 'tablePairSave(tablePairValid, backupItem, ' + tbl + ', ' + index + ')'
@@ -528,9 +528,9 @@ mixin table-pair-edit(tbl, prefix, keyPlaceholder, valPlaceholder, keyJavaBuiltI
         +btn-save(btnVisible, btnSave)
         .input-tip
             if valueJavaBuiltInTypes
-                input.form-control(id=valFocusId type='text' ng-model=valModel placeholder=valPlaceholder bs-typeahead container='body' ignite-retain-selection data-min-length='1' bs-options='javaClass for javaClass in javaBuiltInClasses' ignite-on-enter=btnVisibleAndSave ignite-on-escape='tableReset()')
+                input.form-control(id=valFocusId type='text' ng-model=valModel placeholder=valPlaceholder bs-typeahead container='body' ignite-retain-selection data-min-length='1' bs-options='javaClass for javaClass in javaBuiltInClasses' ignite-on-enter=btnVisibleAndSave ignite-on-escape='tableReset(false)')
             else
-                input.form-control(id=valFocusId type='text' ng-model=valModel placeholder=valPlaceholder ignite-on-enter=btnVisibleAndSave ignite-on-escape='tableReset()')
+                input.form-control(id=valFocusId type='text' ng-model=valModel placeholder=valPlaceholder ignite-on-enter=btnVisibleAndSave ignite-on-escape='tableReset(false)')
 
 //- Mixin for DB dialect.
 mixin dialect(lbl, model, name, required, tipTitle, genericDialectName, placeholder)
