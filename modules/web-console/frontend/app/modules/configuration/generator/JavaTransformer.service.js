@@ -402,10 +402,12 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         return `${JavaTypes.shortClassName(item)}.class`;
                     case 'java.util.UUID':
                         return `UUID.fromString("${item}")`;
-                    case 'PROPERTY_CHAR':
-                        return `props.getProperty("${item}").toCharArray()`;
                     case 'PROPERTY':
                         return `props.getProperty("${item}")`;
+                    case 'PROPERTY_CHAR':
+                        return `props.getProperty("${item}").toCharArray()`;
+                    case 'PROPERTY_INT':
+                        return `Integer.parseInt(props.getProperty("${item}"))`;
                     default:
                         if (this._isBean(clsName)) {
                             if (item.isComplex())
@@ -744,6 +746,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         break;
                     case 'PROPERTY':
                     case 'PROPERTY_CHAR':
+                    case 'PROPERTY_INT':
                         imports.push('java.io.InputStream', 'java.util.Properties');
 
                         break;

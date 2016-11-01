@@ -37,6 +37,7 @@ export default class PropertiesGenerator {
                     break;
                 case 'PROPERTY':
                 case 'PROPERTY_CHAR':
+                case 'PROPERTY_INT':
                     props.push(`${prop.value}=${prop.hint}`);
 
                     break;

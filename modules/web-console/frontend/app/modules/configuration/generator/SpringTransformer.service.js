@@ -84,6 +84,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 switch (clsName) {
                     case 'PROPERTY':
                     case 'PROPERTY_CHAR':
+                    case 'PROPERTY_INT':
                         return `\${${item}}`;
                     case 'java.lang.Class':
                         return JavaTypes.fullClassName(item);
