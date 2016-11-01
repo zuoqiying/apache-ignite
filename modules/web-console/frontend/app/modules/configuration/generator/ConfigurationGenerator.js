@@ -428,7 +428,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                 switch (spi.kind) {
                     case 'FS':
                         const fsBean = new Bean('org.apache.ignite.spi.checkpoint.sharedfs.SharedFsCheckpointSpi',
-                            'checkpointSpi', spi.FS);
+                            'checkpointSpiFs', spi.FS);
 
                         fsBean.collectionProperty('directoryPaths', 'directoryPaths', _.get(spi, 'FS.directoryPaths'))
                             .emptyBeanProperty('checkpointListener');
@@ -437,7 +437,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     case 'Cache':
                         const cacheBean = new Bean('org.apache.ignite.spi.checkpoint.cache.CacheCheckpointSpi',
-                            'checkpointSpi', spi.Cache);
+                            'checkpointSpiCache', spi.Cache);
 
                         const curCache = _.get(spi, 'Cache.cache');
 
@@ -453,7 +453,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     case 'S3':
                         const s3Bean = new Bean('org.apache.ignite.spi.checkpoint.s3.S3CheckpointSpi',
-                            'checkpointSpi', spi.S3, clusterDflts.checkpointSpi.S3);
+                            'checkpointSpiS3', spi.S3, clusterDflts.checkpointSpi.S3);
 
                         let credentialsBean = null;
 
@@ -647,7 +647,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     case 'JDBC':
                         const jdbcBean = new Bean('org.apache.ignite.spi.checkpoint.jdbc.JdbcCheckpointSpi',
-                            'checkpointSpi', spi.JDBC, clusterDflts.checkpointSpi.JDBC);
+                            'checkpointSpiJdbc', spi.JDBC, clusterDflts.checkpointSpi.JDBC);
 
                         const id = jdbcBean.valueOf('dataSourceBean');
                         const dialect = _.get(spi.JDBC, 'dialect');
@@ -675,7 +675,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         const clsName = _.get(spi, 'Custom.className');
 
                         if (clsName)
-                            return new Bean(clsName, 'checkpointSpi', spi.Cache);
+                            return new Bean(clsName, 'checkpointSpiCustom', spi.Cache);
 
                         return null;
 
