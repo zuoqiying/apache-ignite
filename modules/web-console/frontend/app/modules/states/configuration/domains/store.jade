@@ -64,7 +64,7 @@ mixin table-db-field-edit(tbl, prefix, focusId, index)
 .panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle='' ng-click='ui.loadPanel("#{form}")')
         ignite-form-panel-chevron
-        label Domain model for cache store
+        label(id='store-title') Domain model for cache store
         ignite-form-field-tooltip.tipLabel
             | Domain model properties for binding database with cache via POJO cache store#[br]
             | #[a(href="https://apacheignite.readme.io/docs/persistent-store" target="_blank") More info]

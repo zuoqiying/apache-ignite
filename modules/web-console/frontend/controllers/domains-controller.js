@@ -1355,6 +1355,9 @@ export default ['domainsController', [
             if (!LegacyUtils.domainForStoreConfigured(item) && !LegacyUtils.domainForQueryConfigured(item) && item.queryMetadata === 'Configuration')
                 return ErrorPopover.show('query-title', 'SQL query domain model should be configured', $scope.ui, 'query');
 
+            if (!LegacyUtils.domainForStoreConfigured(item) && item.generatePojo)
+                return ErrorPopover.show('store-title', 'Domain model for cache store should be configured when generation of POJO classes is enabled', $scope.ui, 'store');
+
             return true;
         }
 

@@ -1262,8 +1262,8 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         const valueFields = _.clone(domain.valueFields);
 
                         if (includeKeyFields) {
-                            _.forEach(domain.keyFields, ({fld}) => {
-                                if (!_.find(valueFields, {name: fld.name}))
+                            _.forEach(domain.keyFields, (fld) => {
+                                if (!_.find(valueFields, {javaFieldName: fld.javaFieldName}))
                                     valueFields.push(fld);
                             });
                         }
