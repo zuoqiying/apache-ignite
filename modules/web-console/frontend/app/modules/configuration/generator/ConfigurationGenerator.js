@@ -959,13 +959,13 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                 switch (spi.kind) {
                     case 'RoundRobin':
-                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.roundrobin.RoundRobinLoadBalancingSpi', 'loadBalancingSpi', spi.RoundRobin, clusterDflts.loadBalancingSpi.RoundRobin);
+                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.roundrobin.RoundRobinLoadBalancingSpi', 'loadBalancingSpiRR', spi.RoundRobin, clusterDflts.loadBalancingSpi.RoundRobin);
 
                         loadBalancingSpi.boolProperty('perTask');
 
                         break;
                     case 'Adaptive':
-                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveLoadBalancingSpi', 'loadBalancingSpi', spi.Adaptive);
+                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveLoadBalancingSpi', 'loadBalancingSpiAdaptive', spi.Adaptive);
 
                         let probeBean;
 
@@ -1010,7 +1010,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                         break;
                     case 'WeightedRandom':
-                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.weightedrandom.WeightedRandomLoadBalancingSpi', 'loadBalancingSpi', spi.WeightedRandom, clusterDflts.loadBalancingSpi.WeightedRandom);
+                        loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.weightedrandom.WeightedRandomLoadBalancingSpi', 'loadBalancingSpiRandom', spi.WeightedRandom, clusterDflts.loadBalancingSpi.WeightedRandom);
 
                         loadBalancingSpi.intProperty('nodeWeight')
                             .boolProperty('useWeights');
@@ -1020,7 +1020,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                         const className = _.get(spi, 'Custom.className');
 
                         if (className)
-                            loadBalancingSpi = new Bean(className, 'loadBalancingSpi', spi.Custom);
+                            loadBalancingSpi = new Bean(className, 'loadBalancingSpiCustom', spi.Custom);
 
                         break;
                     default:
@@ -1032,7 +1032,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             });
 
             if (spis.length)
-                cfg.arrayProperty('loadBalancingSpi', 'loadBalancingSpi', spis, 'org.apache.ignite.spi.loadbalancing.LoadBalancingSpi');
+                cfg.varArgProperty('loadBalancingSpi', 'loadBalancingSpi', spis, 'org.apache.ignite.spi.loadbalancing.LoadBalancingSpi');
 
             return cfg;
         }

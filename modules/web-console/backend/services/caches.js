@@ -87,6 +87,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
      */
     const removeAllBySpaces = (spaceIds) => {
         return mongo.Cluster.update({space: {$in: spaceIds}}, {caches: []}, {multi: true}).exec()
+            .then(() => mongo.Cluster.update({space: {$in: spaceIds}}, {$pull: {checkpointSpi: {kind: 'Cache'}}}, {multi: true}).exec())
             .then(() => mongo.DomainModel.update({space: {$in: spaceIds}}, {caches: []}, {multi: true}).exec())
             .then(() => mongo.Cache.remove({space: {$in: spaceIds}}).exec());
     };
