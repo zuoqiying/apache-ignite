@@ -1078,7 +1078,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                 sb.startBlock(`public ${clsName}(${arg(_.head(fields))}${fields.length === 1 ? ') {' : ','}`);
 
                 _.forEach(_.tail(fields), (field, idx) => {
-                    sb.append(`${arg(field)}${idx !== fields.length - 1 ? ',' : ') {'}`);
+                    sb.append(`${arg(field)}${idx !== fields.length - 2 ? ',' : ') {'}`);
                 });
 
                 _.forEach(fields, (field) => sb.append(`this.${field.javaFieldName} = ${field.javaFieldName};`));
