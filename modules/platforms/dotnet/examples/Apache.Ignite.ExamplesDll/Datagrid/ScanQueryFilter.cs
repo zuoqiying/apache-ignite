@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -15,45 +15,36 @@
  * limitations under the License.
  */
 
-namespace Apache.Ignite.Core.Impl.Binary
+namespace Apache.Ignite.ExamplesDll.Datagrid
 {
+    using System;
+    using Apache.Ignite.Core.Cache;
+    using Apache.Ignite.ExamplesDll.Binary;
+    
     /// <summary>
-    /// Object handle. Wraps a single value.
+    /// Filter for scan query example.
     /// </summary>
-    internal class BinaryObjectHandle
+    [Serializable]
+    public class ScanQueryFilter : ICacheEntryFilter<int, Employee>
     {
-        /** Value. */
-        private readonly object _val;
+        /** Zip code to filter on. */
+        private readonly int _zipCode;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BinaryObjectHandle"/> class.
+        /// Initializes a new instance of the <see cref="ScanQueryFilter"/> class.
         /// </summary>
-        /// <param name="val">The value.</param>
-        public BinaryObjectHandle(object val)
+        /// <param name="zipCode">The zip code.</param>
+        public ScanQueryFilter(int zipCode)
         {
-            _val = val;
+            _zipCode = zipCode;
         }
 
         /// <summary>
-        /// Gets the value.
+        /// Returns a value indicating whether provided cache entry satisfies this predicate.
         /// </summary>
-        public object Value
+        public bool Invoke(ICacheEntry<int, Employee> entry)
         {
-            get { return _val; }
-        }
-
-        /** <inheritdoc /> */
-        public override bool Equals(object obj)
-        {
-            var that = obj as BinaryObjectHandle;
-
-            return that != null && _val == that._val;
-        }
-
-        /** <inheritdoc /> */
-        public override int GetHashCode()
-        {
-            return _val != null ? _val.GetHashCode() : 0;
+            return entry.Value.Address.Zip == _zipCode;
         }
     }
 }
