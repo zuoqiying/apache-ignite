@@ -47,7 +47,7 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
     /** */
     private final IgniteThread spillThread;
 
-    private final HadoopJobInfo info;
+    private final HadoopJobInfo info; // TODO: remove
 
     /**
      * Constructor.
@@ -134,7 +134,7 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
         }
 
         /**
-         * Generates *new* spill name and opens DataOutput on it.
+         * Generates *new* spill file name and opens DataOutput on it.
          * @return the new spill output.
          * @throws IOException
          */

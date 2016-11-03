@@ -21,7 +21,6 @@ import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
 import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob;
 import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob.*;
 import org.apache.ignite.internal.util.io.GridUnsafeDataInput;
-import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.jetbrains.annotations.Nullable;
@@ -155,7 +154,7 @@ public class HadoopMergingTaskInput {
          */
         boolean keyMarkerRead = false;
 
-        /** */
+        /** Read bytes counter. */
         private int read;
 
         FileRawInput(DataInput din) {

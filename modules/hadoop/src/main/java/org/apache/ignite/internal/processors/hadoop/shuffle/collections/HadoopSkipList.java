@@ -54,7 +54,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
     /** Heads for all the lists. */
     private final long heads;
 
-    /** */
+    /** Does not allow more than one visitor simultaneously. */
     private final AtomicBoolean acceptGuard = new AtomicBoolean();
 
     /**
