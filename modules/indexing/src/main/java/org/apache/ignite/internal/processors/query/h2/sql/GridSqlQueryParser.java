@@ -50,7 +50,6 @@ import org.h2.expression.Parameter;
 import org.h2.expression.Subquery;
 import org.h2.expression.TableFunction;
 import org.h2.expression.ValueExpression;
-import org.h2.index.ViewIndex;
 import org.h2.jdbc.JdbcPreparedStatement;
 import org.h2.result.SortOrder;
 import org.h2.table.Column;
@@ -214,6 +213,9 @@ public class GridSqlQueryParser {
     private static final Getter<JavaFunction, FunctionAlias> FUNC_ALIAS = getter(JavaFunction.class, "functionAlias");
 
     /** */
+    private static final Getter<ExpressionColumn, String> SCHEMA_NAME = getter(ExpressionColumn.class, "schemaName");
+
+    /** */
     private static final Getter<JdbcPreparedStatement, Command> COMMAND = getter(JdbcPreparedStatement.class, "command");
 
     /** */
@@ -255,11 +257,7 @@ public class GridSqlQueryParser {
             else if (tbl instanceof TableView) {
                 Query qry = VIEW_QUERY.get((TableView)tbl);
 
-                ViewIndex idx = (ViewIndex)filter.getIndex();
-
-                Query optimizedQry = idx != null ? idx.getQuery() : null;
-
-                res = new GridSqlSubquery(parseQuery(qry, optimizedQry));
+                res = new GridSqlSubquery(parseQuery(qry, null));
             }
             else if (tbl instanceof FunctionTable)
                 res = parseExpression(FUNC_EXPR.get((FunctionTable)tbl), false);
@@ -481,8 +479,9 @@ public class GridSqlQueryParser {
 
             return new GridSqlColumn(expCol.getColumn(),
                 parseTable(expCol.getTableFilter()),
-                expression.getColumnName(),
-                expression.getSQL());
+                SCHEMA_NAME.get(expCol),
+                expCol.getOriginalTableAliasName(),
+                expCol.getColumnName());
         }
 
         if (expression instanceof Alias)

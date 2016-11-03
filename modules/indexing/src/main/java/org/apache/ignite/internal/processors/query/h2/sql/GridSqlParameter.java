@@ -22,7 +22,7 @@ import java.util.Collections;
 /**
  * Query parameter.
  */
-public class GridSqlParameter extends GridSqlElement implements GridSqlValue {
+public class GridSqlParameter extends GridSqlElement {
     /** Index. */
     private int idx;
 

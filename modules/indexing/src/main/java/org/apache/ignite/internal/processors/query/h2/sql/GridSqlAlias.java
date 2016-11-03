@@ -56,12 +56,13 @@ public class GridSqlAlias extends GridSqlElement {
      * @param el Element.
      * @return Unwrapped from alias element.
      */
-    public static GridSqlAst unwrap(GridSqlAst el) {
-        el = el instanceof GridSqlAlias ? el.child(0) : el;
+    @SuppressWarnings("unchecked")
+    public static <X extends GridSqlAst> X unwrap(GridSqlAst el) {
+        el = el instanceof GridSqlAlias ? el.child() : el;
 
         assert el != null;
 
-        return el;
+        return (X)el;
     }
 
     /** {@inheritDoc} */

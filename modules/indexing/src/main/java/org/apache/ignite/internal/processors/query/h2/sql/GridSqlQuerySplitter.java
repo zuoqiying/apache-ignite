@@ -64,10 +64,13 @@ public class GridSqlQuerySplitter {
     private static final String HAVING_COLUMN = "__H";
 
     /** */
-    private static final String TABLE_FILTER_ALIAS_SUFFIX = "__Y";
+    private static final String TABLE_FILTER_ALIAS_SUFFIX = "__Z";
 
     /** */
     private int nextMergeTblIdx;
+
+    /** */
+    private int nextTblAliasIdx;
 
     /** */
     private Set<String> schemas;
@@ -415,7 +418,7 @@ public class GridSqlQuerySplitter {
         else {
             GridSqlSelect select = (GridSqlSelect)qry;
 
-            // Normalize FROM first to update expression aliases then.
+            // Normalize FROM first to update column aliases after.
             normalizeFrom(select, FROM_CHILD);
 
             List<GridSqlAst> cols = select.columns(false);
@@ -424,18 +427,40 @@ public class GridSqlQuerySplitter {
                 normalizeExpression(select, childIndexForColumn(i));
 
             normalizeExpression(select, WHERE_CHILD);
-            normalizeExpression(select, OFFSET_CHILD);
-            normalizeExpression(select, LIMIT_CHILD);
 
-            // ORDER BY and HAVING must be in SELECT expressions.
+            // ORDER BY and HAVING are in SELECT expressions.
         }
+
+        normalizeExpression(qry, OFFSET_CHILD);
+        normalizeExpression(qry, LIMIT_CHILD);
+    }
+
+    /**
+     * @param prnt Table parent element.
+     * @param childIdx Child index for the table or alias containing the table.
+     */
+    private void generateUniqueAlias(GridSqlAst prnt, int childIdx) {
+        GridSqlAst child = prnt.child(childIdx);
+        GridSqlTable tbl = GridSqlAlias.unwrap(child);
+
+        String uniqueAlias = TABLE_FILTER_ALIAS_SUFFIX + nextTblAliasIdx++;
+
+        if (tbl != child) // To make the generated query more readable.
+            uniqueAlias = ((GridSqlAlias)child).alias() + uniqueAlias;
+
+        GridSqlAlias uniqueAliasAst = new GridSqlAlias(uniqueAlias, tbl);
+
+        tbl.uniqueAlias(uniqueAliasAst);
+
+        prnt.child(childIdx, uniqueAliasAst);
     }
 
     /**
      * @param prnt Parent element.
      * @param childIdx Child index.
+     * @return {@code true} If the child was a table.
      */
-    private void normalizeFrom(GridSqlAst prnt, int childIdx) {
+    private boolean normalizeFrom(GridSqlAst prnt, int childIdx) {
         GridSqlElement from = prnt.child(childIdx);
 
         if (from instanceof GridSqlTable) {
@@ -451,18 +476,24 @@ public class GridSqlQuerySplitter {
             if (addSchema && schema != null && schemas != null)
                 schemas.add(schema);
 
-            // Generate unique alias for the table.
-            if (!(prnt instanceof GridSqlAlias)) {
-                // TODO
-            }
-        }
-        else if (from instanceof GridSqlAlias) {
-            // TODO
+            // In case of alias parent we need to replace the alias itself.
+            if (!(prnt instanceof GridSqlAlias))
+                generateUniqueAlias(prnt, childIdx);
 
-            normalizeFrom(from, 0);
+            return true;
         }
-        else if (from instanceof GridSqlSubquery)
+
+        if (from instanceof GridSqlAlias) {
+            // If it is a table inside of the alias, then replace current alias with generated unique alias.
+            if (normalizeFrom(from, 0))
+                generateUniqueAlias(prnt, childIdx);
+        }
+        else if (from instanceof GridSqlSubquery) {
+            // We do not need to wrap simple functional subqueries into filtering function,
+            // because we can not have any other tables than Ignite (which are already filtered)
+            // and functions we have to filter explicitly as well.
             normalizeQuery(((GridSqlSubquery)from).subquery());
+        }
         else if (from instanceof GridSqlJoin) {
             // Left and right.
             normalizeFrom(from, 0);
@@ -477,6 +508,8 @@ public class GridSqlQuerySplitter {
         }
         else
             throw new IllegalStateException(from.getClass().getName() + " : " + from.getSQL());
+
+        return false;
     }
 
     /**
@@ -486,12 +519,37 @@ public class GridSqlQuerySplitter {
     private void normalizeExpression(GridSqlAst prnt, int childIdx) {
         GridSqlAst el = prnt.child(childIdx);
 
-        if (el instanceof GridSqlAlias || el instanceof GridSqlOperation || el instanceof GridSqlFunction) {
+        if (el instanceof GridSqlAlias ||
+            el instanceof GridSqlOperation ||
+            el instanceof GridSqlFunction ||
+            el instanceof GridSqlArray) {
             for (int i = 0; i < el.size(); i++)
                 normalizeExpression(el, i);
         }
         else if (el instanceof GridSqlSubquery)
             normalizeQuery(((GridSqlSubquery)el).subquery());
+        else if (el instanceof GridSqlColumn) {
+            GridSqlColumn col = (GridSqlColumn)el;
+            GridSqlAst tbl = GridSqlAlias.unwrap(col.expressionInFrom());
+
+            // Change table alias part of the column to the generated unique table alias.
+            if (tbl instanceof GridSqlTable) {
+                GridSqlAlias uniqueAlias = ((GridSqlTable)tbl).uniqueAlias();
+
+                assert uniqueAlias != null: childIdx + "\n" + prnt.getSQL();
+
+                col.tableAlias(uniqueAlias.alias());
+
+                col.expressionInFrom(uniqueAlias);
+            }
+        }
+        else if (el instanceof GridSqlParameter ||
+            el instanceof GridSqlPlaceholder ||
+            el instanceof GridSqlConst) {
+            // No-op for simple expressions.
+        }
+        else
+            throw new IllegalStateException(el + ": " + el.getClass());
     }
 
     /**
@@ -863,7 +921,7 @@ public class GridSqlQuerySplitter {
      * @return Column.
      */
     private static GridSqlColumn column(String name) {
-        return new GridSqlColumn(null, null, name, name);
+        return new GridSqlColumn(null, null, null, null, name);
     }
 
     /**
