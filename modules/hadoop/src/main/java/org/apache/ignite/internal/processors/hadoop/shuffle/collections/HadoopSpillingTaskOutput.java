@@ -2,6 +2,7 @@ package org.apache.ignite.internal.processors.hadoop.shuffle.collections;
 
 import java.io.DataOutput;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,10 +12,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicStampedReference;
+import org.apache.hadoop.io.RawComparator;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
+import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
+import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskOutput;
 import org.apache.ignite.internal.util.worker.GridWorker;
 import org.apache.ignite.thread.IgniteThread;
@@ -43,11 +47,13 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
     /** */
     private final IgniteThread spillThread;
 
+    private final HadoopJobInfo info;
+
     /**
      * Constructor.
      */
     public HadoopSpillingTaskOutput(HadoopSpillableMultimap[] maps, String[] baseNames, HadoopTaskContext ctx,
-        IgniteLogger log) throws IgniteCheckedException {
+        IgniteLogger log, HadoopJobInfo info) throws IgniteCheckedException {
         assert maps.length > 1; // at least 2 outputs must be present.
         assert maps.length == baseNames.length;
         assert log != null;
@@ -56,6 +62,8 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
 
         this.toBeSpilledQueue = new ArrayBlockingQueue<>(outs.length);
         this.spilledQueue = new ArrayBlockingQueue<>(outs.length);
+
+        this.info = info;
 
         // initially all in-outs assumed to be free (ready to write).
         // put all them to "spilled" queue, then poll last one:
@@ -216,7 +224,7 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
     }
 
     /** {@inheritDoc} */
-    @Override public boolean write(Object key, Object val) throws IgniteCheckedException {
+    @Override public synchronized boolean write(Object key, Object val) throws IgniteCheckedException {
         try {
             if (!write0(key, val))
                 // If this failed, we're in trouble:
@@ -244,24 +252,32 @@ public class HadoopSpillingTaskOutput implements HadoopTaskOutput {
             hsm.close();
     }
 
-    /**
-     * NB: this should be called after #close(), when all the files are closed.
-     */
-    public List<String> getFiles() {
-        List<String> files = new ArrayList<>(toBeSpilledQueue.size() + spilledQueue.size());
+    public synchronized HadoopTaskInput getInput(HadoopTaskContext taskCtx, RawComparator cmp) throws IgniteCheckedException {
+        spillWorker.cancel();
 
-        for (OutputAndSpills oas : toBeSpilledQueue)
-            files.addAll(oas.getSpills());
+        try {
+            spillThread.join();
+        }
+        catch (InterruptedException ie) {
+            throw new IgniteCheckedException(ie);
+        }
+
+        assert toBeSpilledQueue.isEmpty(); // everything must be spilled.
+
+        List<String> files = new ArrayList<>(spilledQueue.size());
 
         for (OutputAndSpills oas : spilledQueue)
             files.addAll(oas.getSpills());
 
-        files.addAll(currOut.getReference().getSpills());
+        for (String f: files)
+            System.out.println("File: " + f + ", size = " + new File(f).length());
 
-        return files;
-    }
+        HadoopMultimap currMap = currOut.getReference().map;
 
-    public HadoopMultimap currOut() {
-        return currOut.getReference().map;
+        HadoopTaskInput in = new HadoopMergingTaskInput(
+            new HadoopMultimap[] { currMap },
+                files.toArray(new String[files.size()]), cmp, taskCtx, info).rawInput();
+
+        return in;
     }
 }

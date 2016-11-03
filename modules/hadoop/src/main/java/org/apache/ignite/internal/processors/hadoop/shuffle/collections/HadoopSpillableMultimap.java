@@ -5,6 +5,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.Arrays;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
@@ -19,7 +20,8 @@ import org.apache.ignite.internal.util.io.GridUnsafeDataInput;
 import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
 
 /**
- *
+ * TODO: work on concurrency there. In principle, this class is to be thread-safe.
+ * Currently solved just be synchronizing key methods.
  */
 public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap {
     /** Should correspond to maximum length of key or value. */
@@ -30,9 +32,6 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 
     /** */
     static final byte MARKER_VALUE = (byte)31;
-
-    /** */
-    private byte[] buf = new byte[INITIAL_BUF_SIZE];
 
     /** */
     private HadoopMultimap delegateMulimap;
@@ -69,7 +68,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
     }
 
     /** {@inheritDoc} */
-    @Override public HadoopTaskOutput startAdding(HadoopTaskContext ctx) throws IgniteCheckedException {
+    @Override public synchronized HadoopTaskOutput startAdding(HadoopTaskContext ctx) throws IgniteCheckedException {
         return delegateMulimap.startAdding(ctx);
     }
 
@@ -84,14 +83,12 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
     }
 
     /** {@inheritDoc} */
-    @Override public void close() {
-        //buf = null;
-
-        //delegateMulimap.close();
+    @Override public synchronized void close() {
+        delegateMulimap.close();
     }
 
     /** {@inheritDoc} */
-    @Override public long spill(final DataOutput dout) throws IgniteCheckedException {
+    @Override public synchronized long spill(final DataOutput dout) throws IgniteCheckedException {
         // TODO: since now we have method HadoopMultimap.rawInput(), we can read
         // TODO: the multimap content with #rawInput(), without the visitor.
 //        try {
@@ -137,7 +134,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
     }
 
     /** {@inheritDoc} */
-    @Override public long unSpill(DataInput din) throws IgniteCheckedException {
+    @Override public synchronized long unSpill(DataInput din) throws IgniteCheckedException {
         if (delegateMulimap != null)
             delegateMulimap.close();
 
@@ -172,6 +169,8 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
                         }
                     });
 
+                    System.out.println("unspill: Read bytes: " + r);
+
                     return r;
                 }
                 finally {
@@ -188,7 +187,7 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
      * Reading from file functionality.
      * @param v Visitor.
      */
-    public long acceptToRead(DataInput din, HadoopShuffleMessage.Visitor v) throws IgniteCheckedException, IOException {
+    private long acceptToRead(DataInput din, HadoopShuffleMessage.Visitor v) throws IgniteCheckedException, IOException {
         long read = 0;
 
         byte[] bb = new byte[INITIAL_BUF_SIZE];
@@ -202,16 +201,26 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 
                 size = din.readInt(); // read or just skip these bytes;
 
+                assert size >= 0;
+
                 bb = ensureLength(bb, size);
 
                 din.readFully(bb, 0, size);
 
                 read += size + 5;
 
-                if (marker == MARKER_VALUE)
+                if (marker == MARKER_VALUE) {
+                    //byte[] range = Arrays.copyOfRange(bb, 0, size);
+                    //System.out.println("Unspill: Read Value: [" + new String(range) + "]");
+
                     v.visitValue(bb, 0, size);
-                else if (marker == MARKER_KEY)
+                }
+                else if (marker == MARKER_KEY) {
+                    //byte[] range = Arrays.copyOfRange(bb, 0, size);
+                    //System.out.println("Unspill: Read Key: [" + new String(range) + "]");
+
                     v.visitKey(bb, 0, size);
+                }
                 else
                     throw new IllegalStateException("Unknown marker: " + marker);
             }
@@ -223,6 +232,12 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
         return read;
     }
 
+    /**
+     * TODO: move this utility method to an util class.
+     * @param buf
+     * @param requiredSize
+     * @return
+     */
     public static byte[] ensureLength(byte[] buf, long requiredSize) {
         // NB: 0 is possible value.
         assert requiredSize >= 0;
@@ -280,6 +295,8 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 //        catch (IOException ioe) {
 //            throw new IgniteCheckedException(ioe);
 //        }
+        byte[] buf = new byte[INITIAL_BUF_SIZE];
+
         try {
             dout.writeByte(marker);
 
@@ -289,6 +306,12 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
 
             GridUnsafe.copyMemory(null, ptr, buf, GridUnsafe.BYTE_ARR_OFF, size);
 
+            byte[] range = Arrays.copyOfRange(buf, 0, size);
+            if (marker == MARKER_KEY)
+                System.out.println("Spill Key: [" + new String(range) + "]");
+            else
+                System.out.println("   Spill Value: [" + new String(range) + "]");
+
             dout.write(buf, 0, size);
 
             return size + 5;
@@ -297,26 +320,4 @@ public class HadoopSpillableMultimap implements HadoopSpillable, HadoopMultimap 
             throw new IgniteCheckedException(ioe);
         }
     }
-
-//    private DataOutput createOutputFile() throws IgniteCheckedException {
-//        try {
-//            return new DataOutputStream(new FileOutputStream(new File(composeFileName())));
-//        }
-//        catch (IOException ioe) {
-//            throw new IgniteCheckedException(ioe);
-//        }
-//    }
-//
-//    private DataInput createInputFile() throws IgniteCheckedException {
-//        try {
-//            return new DataInputStream(new FileInputStream(new File(composeFileName())));
-//        }
-//        catch (IOException ioe) {
-//            throw new IgniteCheckedException(ioe);
-//        }
-//    }
-//
-//    private String composeFileName() {
-//        return "/tmp/foo";
-//    }
 }

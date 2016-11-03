@@ -96,12 +96,14 @@ public class GridUnsafeDataInput extends InputStream implements GridDataInput {
     /**
      * @param bytes Bytes.
      * @param off Offset.
-     * @param len Length.  TODO: clarify exactly, this is 'length' or 'offset + length'?
+     * @param maxOff Length.  TODO: clarify exactly, this is 'length' or 'offset + length'?
      */
-    public void bytes(byte[] bytes, int off, int len) {
+    public void bytes(byte[] bytes, int off, int maxOff) {
+        assert maxOff <= bytes.length : maxOff + " <= " + bytes.length;
+
         buf = bytes;
 
-        max = len;
+        max = maxOff;
         this.off = off;
     }
 

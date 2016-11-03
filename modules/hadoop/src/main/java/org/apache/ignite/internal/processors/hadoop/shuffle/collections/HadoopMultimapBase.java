@@ -75,8 +75,11 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
     /** */
     private final SizeChecker sizeChecker;
 
-    /** */
-    private static final int DEFAULT_SIZE_LIMIT = 100;
+    /**
+     * Zero or negative value means no limit.
+     * Multimap is unlimited by default.
+     */
+    private static final int DEFAULT_SIZE_LIMIT = 0;
 
     /**
      * @param jobInfo Job info.

@@ -11,11 +11,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.io.Text;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
+import org.apache.ignite.internal.processors.hadoop.HadoopSerialization;
+import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
+import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob;
 import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob.*;
+import org.apache.ignite.internal.util.io.GridUnsafeDataInput;
+import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.T2;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * TODO: support limiting the number of semultaneously open files (io.merge.factor).
@@ -27,11 +36,15 @@ public class HadoopMergingTaskInput {
     /** */
     private final HadoopPriorityQueue<Segment> pq;
 
+    private final HadoopJobInfo info; // TODO: remove
+
     /** */
     final Comparator<Segment> cmp = new Comparator<Segment> () {
         @Override public int compare(Segment s1, Segment s2) {
             UnsafeValue p1 = (UnsafeValue)s1.key();
             UnsafeValue p2 = (UnsafeValue)s2.key();
+
+            assert p1 != p2;
 
             return sortingRawCmp.compare(
                 p1.getBuf(), p1.getOff(), p1.size(),
@@ -40,8 +53,9 @@ public class HadoopMergingTaskInput {
     };
 
     public HadoopMergingTaskInput(final HadoopMultimap[] inMemorySegments, final String[] files,
-        RawComparator sortingRawCmp) throws IgniteCheckedException {
+        RawComparator sortingRawCmp, HadoopTaskContext taskCtx, HadoopJobInfo info) throws IgniteCheckedException {
         this.sortingRawCmp = sortingRawCmp;
+        this.info = info;
 
         // init inputs from files;
         // Create the priority queue and fill it up.
@@ -57,6 +71,9 @@ public class HadoopMergingTaskInput {
             for (HadoopMultimap hm: inMemorySegments) {
                 HadoopTaskInput ri = hm.rawInput();
 
+//                System.out.println("#### memory segment: ");
+//                checkRawInput(ri, taskCtx, sortingRawCmp);
+
                 Segment seg = new Segment(true, ri);
 
                 pq.put(seg);
@@ -66,7 +83,15 @@ public class HadoopMergingTaskInput {
         for (String f: files) {
             DataInput din = getDataInput(f);
 
-            HadoopTaskInput fri = new FileRawInput(din);
+//            // TODO: experimantal:
+//            HadoopSpillableMultimap m = new HadoopSpillableMultimap(taskCtx, info, new GridUnsafeMemory(0));
+//            m.unSpill(din);
+//            HadoopTaskInput fri = m.rawInput(); //new FileRawInput(din);
+
+            FileRawInput fri = new FileRawInput(din);
+
+//            System.out.println("#### file : " + f);
+//            checkRawInput(fri, taskCtx, sortingRawCmp);
 
             Segment seg = new Segment(false, fri);
 
@@ -74,6 +99,10 @@ public class HadoopMergingTaskInput {
         }
     }
 
+    /**
+     * @param file The file to read.
+     * @return The input.
+     */
     private DataInput getDataInput(String file) {
         try {
             return new DataInputStream(new FileInputStream(file));
@@ -116,21 +145,35 @@ public class HadoopMergingTaskInput {
      */
     public static class FileRawInput implements HadoopTaskInput {
         private final DataInput din;
+
         private final UnsafeValue curKey = new UnsafeValue();
+
         private final List<UnsafeValue> curValues = new ArrayList<>(1);
 
+        /**
+         * Means that the current read position is beyond the key type marker.
+         */
         boolean keyMarkerRead = false;
+
+        /** */
+        private int read;
 
         FileRawInput(DataInput din) {
             this.din = din;
         }
 
         @Override public boolean next() {
-            //System.out.println(" f next");
+            //System.out.println(" fri: next");
+
             try {
+                int valCnt = 0;
+
                 try {
+                    valCnt = 0;
+
                     if (!keyMarkerRead) {
                         byte marker = din.readByte();
+                        read++;
 
                         assert marker == HadoopSpillableMultimap.MARKER_KEY;
 
@@ -138,74 +181,91 @@ public class HadoopMergingTaskInput {
                     }
 
                     int size = din.readInt(); // read or just skip these bytes;
+                    read += 4;
 
                     curKey.readFrom(din, size);
+                    read += size;
 
-                    int valIdx = 0;
+                    //System.out.println("### Key: " + curKey);
 
                     while (true) {
                         byte marker = din.readByte();
+                        read++;
 
                         if (marker == HadoopSpillableMultimap.MARKER_KEY) {
                             // Next key in the stream:
                             keyMarkerRead = true;
 
-                            assert valIdx > 0 ; // Ensure we have at least 1 value, otherwise file is corrupted.
+                            assert valCnt > 0 ; // Ensure we have at least 1 value, otherwise file is corrupted.
 
-                            // truncate extra buffers
-                            while (curValues.size() > valIdx + 1)
-                                curValues.remove(curValues.size() - 1);
+                            // cut & clear extra buffers
+                            while (curValues.size() > valCnt) {
+                                UnsafeValue uv = curValues.remove(curValues.size() - 1);
+
+                                uv.close();
+                            }
+
+                            assert curValues.size() == valCnt;
 
                             return true; // have value
                         }
                         else if (marker == HadoopSpillableMultimap.MARKER_VALUE) {
                             size = din.readInt();
+                            read += 4;
 
-                            if (valIdx == curValues.size())
+                            if (valCnt == curValues.size())
+                                // The list is full:
                                 curValues.add(new UnsafeValue(size));
 
-                            curValues.get(valIdx).readFrom(din, size);
+                            curValues.get(valCnt).readFrom(din, size);
+                            read += size;
 
-                            valIdx++;
+                            //System.out.println("    ### Val: " + curValues.get(valCnt));
+
+                            valCnt++;
                         } else
                             throw new IgniteException("Unknown marker");
                     }
                 }
                 catch (EOFException eof) {
-                    close();
+                    //System.out.println("EOF. read bytes = " + read);
 
-                    return false; // No more value.
+                    return (valCnt > 0);
                 }
-            } catch (IOException | IgniteCheckedException e) {
+            } catch (IOException e) {
                 throw new IgniteException(e);
             }
         }
 
         @Override public Object key() {
-            //System.out.println(" f key");
-
             if (!curKey.hasData())
                 throw new NoSuchElementException();
+
+            //System.out.println(" fri: Key: " + curKey);
 
             return curKey;
         }
 
         @Override public Iterator<?> values() {
-            //System.out.println(" f values");
             if (!curKey.hasData() || curValues.isEmpty())
                 throw new NoSuchElementException();
+
+//            for (UnsafeValue uv: curValues)
+//                System.out.println("   fri: val: " + uv);
 
             return curValues.iterator();
         }
 
         @Override public void close() throws IgniteCheckedException {
+            //System.out.println(" fri: close");
+
             curKey.close();
 
             if (curValues != null) {
                 for (UnsafeValue v: curValues)
                     v.close();
 
-                curValues .clear();
+                curValues.clear();
             }
         }
     }
@@ -215,31 +275,48 @@ public class HadoopMergingTaskInput {
          * The priority queue.
          */
         private final HadoopPriorityQueue<Segment> pq;
+
+        /** */
+        private boolean first = true;
+
         /**
          * The current (least) segment.
          */
-        private HadoopTaskInput curSeg;
+        private Segment curSeg;
 
         MergedInput(HadoopPriorityQueue<Segment> pq) {
+            //System.out.println("Merged input created.");
+
             this.pq = pq;
         }
 
         @Override public boolean next() {
-            Segment seg = pq.top(); // ~ peek()
-
-            if (seg.next())
-                pq.adjustTop(); // heapify the top again.
+            if (first)
+                // #next() is already called one time on each objects that
+                // participated the comparison.
+                first = false;
             else {
-                Segment endedSegment = pq.pop(); // ~ poll()
-                // NB: this operation will re-heapify the queue automatically.
+                Segment seg = pq.top(); // peek()
 
-                assert endedSegment == seg;
+                if (seg.next())
+                    pq.adjustTop(); // heapify the top again.
+                else {
+                    Segment endedSegment = pq.pop(); // ~ poll()
+                    // NB: this operation will re-heapify the queue automatically.
+
+                    //System.out.println("#### Segment closed: " + endedSegment);
+
+                    assert endedSegment == seg;
+                }
             }
 
-            // Update top:
-            curSeg = pq.top();
+            curSeg = pq.top(); // peek()
 
-            return curSeg != null;
+            boolean b = curSeg != null;
+
+            //System.out.println("#### seg: next : " + b);
+
+            return b;
         }
 
         /**
@@ -253,10 +330,13 @@ public class HadoopMergingTaskInput {
         }
 
         @Override public Object key() {
-            return currentSegment().key();
+            Object k = currentSegment().key();
+            //System.out.println("#### seg: k : " + k);
+            return k;
         }
 
         @Override public Iterator<?> values() {
+            //System.out.println("#### seg: v : ");
             return currentSegment().values();
         }
 
@@ -270,8 +350,13 @@ public class HadoopMergingTaskInput {
      * The element of a priority queue.
      */
     static class Segment implements AutoCloseable, HadoopTaskInput {
+        /** */
         private final HadoopTaskInput rawInput;
+
+        /** */
         private final boolean inMem;
+
+        /** 'true' if #next() was called at least one time, 'false' otherwise. */
         private boolean initialized;
 
         Segment(boolean inMem, HadoopTaskInput rawInput) {
@@ -283,15 +368,19 @@ public class HadoopMergingTaskInput {
             return inMem;
         }
 
-        @Override public Object key() {
+        private void nextIfNeeded() {
             if (!initialized) {
-                initialized = true;
+                System.out.println("##### auto-next... inMem = " + inMem + ", this = " + this);
 
                 boolean hasNext = next();
 
                 if (!hasNext)
                     throw new NoSuchElementException();
             }
+        }
+
+        @Override public Object key() {
+            nextIfNeeded();
 
             return rawInput.key();
         }
@@ -299,18 +388,15 @@ public class HadoopMergingTaskInput {
         @Override public boolean next() {
             initialized = true;
 
-            return rawInput.next();
+            boolean b = rawInput.next();
+
+            //System.out.println("-- seg next: (" + inMem + ") -- " + b);
+
+            return b;
         }
 
         @Override public Iterator<?> values() {
-            if (!initialized) {
-                initialized = true;
-
-                boolean hasNext = next();
-
-                if (!hasNext)
-                    throw new NoSuchElementException();
-            }
+            nextIfNeeded();
 
             return rawInput.values();
         }
@@ -319,4 +405,79 @@ public class HadoopMergingTaskInput {
             rawInput.close();
         }
     }
+
+    /**
+     * DIAGNOSTIC
+     *
+     * @param in
+     * @param taskCtx
+     * @return
+     * @throws Exception
+     */
+    public static T2<Long, Long> checkRawInput(HadoopTaskInput in, HadoopTaskContext taskCtx, RawComparator rawCmp) throws IgniteCheckedException {
+        final HadoopSerialization keySer = taskCtx.keySerialization();
+        final HadoopSerialization valSer = taskCtx.valueSerialization();
+
+        long keyCnt = 0;
+        long valCnt = 0;
+
+        Text k = new Text();
+        Text v = new Text();
+
+        final HadoopShuffleJob.UnsafeValue prevKey = new HadoopShuffleJob.UnsafeValue();
+
+        try {
+            HadoopShuffleJob.UnsafeValue key;
+            HadoopShuffleJob.UnsafeValue val;
+
+            while (in.next()) {
+                key = (HadoopShuffleJob.UnsafeValue)in.key();
+
+                keyCnt++;
+
+                k = (Text)deserialize(keySer, key, k);
+
+                System.out.println(" k = " + k);
+
+                if (prevKey.hasData()) {
+                    int cmp = rawCmp.compare(
+                        prevKey.getBuf(), prevKey.getOff(), prevKey.size(),
+                        key.getBuf(), key.getOff(), key.size());
+
+                    assert (cmp <= 0);
+                }
+
+                prevKey.readFrom(key); // Save value.
+
+                Iterator<HadoopShuffleJob.UnsafeValue> it = (Iterator)in.values();
+
+                while (it.hasNext()) {
+                    val = it.next();
+
+                    v = (Text) deserialize(valSer, val, v);
+
+                    valCnt++;
+
+                    System.out.println("    v = " + v);
+                }
+            }
+        }
+        finally {
+            in.close();
+        }
+
+        return new T2<>(keyCnt, valCnt);
+    }
+
+    private static final GridUnsafeDataInput dataInput = new GridUnsafeDataInput();
+
+    private static Object deserialize(HadoopSerialization ser, HadoopShuffleJob.UnsafeValue uv, @Nullable Object reuse)
+        throws IgniteCheckedException {
+        //System.out.println("UV: buf=" + uv.getBuf().length + ", off=" + uv.getOff() + ", size=" + uv.size());
+
+        dataInput.bytes(uv.getBuf(), uv.getOff(), uv.size() + uv.getOff()); //TODO: clarify if this is correct call.
+
+        return ser.read(dataInput, reuse);
+    }
+
 }

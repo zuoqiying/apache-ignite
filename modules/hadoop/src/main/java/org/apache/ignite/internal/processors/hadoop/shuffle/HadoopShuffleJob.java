@@ -224,7 +224,7 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
      * @param msg Message.
      * @throws IgniteCheckedException Exception.
      */
-    public void onShuffleMessage(HadoopShuffleMessage msg) throws IgniteCheckedException {
+    public void onShuffleMessage(final HadoopShuffleMessage msg) throws IgniteCheckedException {
         assert msg.buffer() != null;
         assert msg.offset() > 0;
 
@@ -252,6 +252,8 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
                 }
 
                 @Override public void visitValue(byte[] buf, int off, int len) {
+                    assert msg.buffer() == buf;
+
                     val.off = off;
                     val.size = len;
 
@@ -288,7 +290,19 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
         /** */
         private int size;
 
+        /** */
+        private boolean hasData; // TODO
+
         public UnsafeValue() {
+        }
+
+        /** {@inheritDoc}
+         * DIAGNOSTIC only.
+         */
+        public String toString() {
+            byte[] range = range();
+
+            return new String(range);
         }
 
         /**
@@ -334,11 +348,13 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
         }
 
         public void readFrom(long ptr, long len) {
-            ensureLength(len);
-
-            GridUnsafe.copyMemory(null, ptr, buf, GridUnsafe.BYTE_ARR_OFF + off, len);
+            //off = -1; // TODO: do not set -1 there since off is used below!
+            //size = 0;
 
             off = 0;
+            ensureLength(len);
+
+            GridUnsafe.copyMemory(null, ptr, buf, GridUnsafe.BYTE_ARR_OFF + off, len); // TODO off must be 0 there?
 
             size = (int)len;
         }
@@ -347,26 +363,47 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             assert uv != null;
             assert uv.hasData();
 
+            //off = -1;
+            //size = 0;
+
             ensureLength(uv.size());
+
+            System.arraycopy(uv.buf, 0, buf, 0, uv.size);
 
             off = uv.off;
             size = uv.size;
-
-            System.arraycopy(uv.buf, 0, buf, 0, uv.size);
         }
 
         public void readFrom(DataInput din, int expectedSize) throws IOException {
             assert din != null;
 
-            ensureLength(expectedSize);
-
-            din.readFully(buf, 0, expectedSize);
-
             off = 0;
 
-            size = expectedSize;
+            ensureLength(expectedSize);
+
+            try {
+                din.readFully(buf, 0, expectedSize);
+
+                off = 0;
+                size = expectedSize;
+            }
+            catch (IOException ioe) {
+                clear(); // Mark buffer empty.
+
+                throw ioe;
+            }
         }
 
+        public void clear() {
+            buf = null;
+            off = 0;
+            size = 0;
+        }
+
+        /**
+         * Copies the valuable range of this buffer.
+         * @return The array exactly of data range.
+         */
         public byte[] range() {
             return Arrays.copyOfRange(buf, off, size);
         }
@@ -376,22 +413,25 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
             GridUnsafe.copyMemory(buf, GridUnsafe.BYTE_ARR_OFF + off, null, ptr, size);
         }
 
-        /** */
+        /**
+         * Writes this buffer to given DataOutput.
+         */
         public void writeTo(DataOutput dout) throws IOException {
             dout.write(buf, off, size);
         }
 
-        /** Note that 0 bytes value gives 'true' result. */
+        /**
+         * Note that 0 bytes value gives 'true' result.
+         */
         public boolean hasData() {
             // TODO: may be not the best implementation:
-            return buf != null;
+            return buf != null && off >= 0;
         }
 
-        /** */
+        /**
+         */
         @Override public void close() {
-            buf = null;
-            off = 0;
-            size = 0;
+            clear();
         }
     }
 

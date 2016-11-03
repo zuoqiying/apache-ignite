@@ -853,7 +853,9 @@ public class HadoopSkipList extends HadoopMultimapBase {
 
         /** {@inheritDoc} */
         @Override public boolean next() {
-            //System.out.println("   m next");
+            if (metaPtr <= 0)
+                return false;
+
             metaPtr = nextMeta(metaPtr, 0);
 
             return metaPtr != 0;
@@ -861,8 +863,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
 
         /** {@inheritDoc} */
         @Override public Object key() {
-            //System.out.println("   m key");
-            if (metaPtr <= 0L)
+            if (metaPtr <= 0)
                 throw new NoSuchElementException();
 
             return keyReader.readKey(metaPtr);
@@ -870,8 +871,7 @@ public class HadoopSkipList extends HadoopMultimapBase {
 
         /** {@inheritDoc} */
         @Override public Iterator<?> values() {
-            //System.out.println("   m values");
-            if (metaPtr == 0L)
+            if (metaPtr <= 0)
                 throw new NoSuchElementException();
 
             return new ValueIterator(value(metaPtr), valReader);

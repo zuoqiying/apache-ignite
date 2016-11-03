@@ -313,6 +313,12 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
         in.close();
     }
 
+    /**
+     *
+     * @param m1
+     * @param m2
+     * @param valuesAnyOrder
+     */
     private static void compareMultimaps(Multimap m1, Multimap m2, boolean valuesAnyOrder) {
         assertEquals(m1.size(), m2.size());
 
@@ -330,6 +336,11 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
         }
     }
 
+    /**
+     *
+     * @param c1
+     * @param c2
+     */
     public static void assertEqualsAnyOrder(Collection c1, Collection c2) {
         List list1 = new ArrayList<>(c1);
         List list2 = new ArrayList<>(c2);
@@ -350,7 +361,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
         X.println("___ Started");
 
-        Random rnd = new GridRandom();
+        final Random rnd = new GridRandom();
 
         for (int i = 0; i < 20; i++) {
             HadoopJobInfo job = new JobInfo();
@@ -363,6 +374,8 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
             X.println("___ MT");
 
+            final int threads = 3 + rnd.nextInt(27);
+
             multithreaded(new Callable<Object>() {
                 @Override public Object call() throws Exception {
                     X.println("___ TH in");
@@ -372,7 +385,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
                     IntWritable key = new IntWritable();
                     IntWritable val = new IntWritable();
 
-                    HadoopMultimap.Adder a = (HadoopMultimap.Adder)m.startAdding(taskCtx);
+                    HadoopTaskOutput a = m.startAdding(taskCtx);
 
                     for (int i = 0; i < 50000; i++) {
                         int k = rnd.nextInt(32000);
@@ -403,7 +416,7 @@ public class HadoopSpillableMultimapTest extends HadoopAbstractMapTest {
 
                     return null;
                 }
-            }, 3 + rnd.nextInt(27));
+            }, threads);
 
             HadoopTaskInput in = m.input(taskCtx);
 

@@ -2,9 +2,9 @@ package org.apache.ignite.internal.processors.hadoop.impl.shuffle.collections;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.Text;
@@ -15,15 +15,12 @@ import org.apache.ignite.internal.processors.hadoop.HadoopTaskContext;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskInput;
 import org.apache.ignite.internal.processors.hadoop.HadoopTaskOutput;
 import org.apache.ignite.internal.processors.hadoop.impl.v2.HadoopWritableSerialization;
-import org.apache.ignite.internal.processors.hadoop.shuffle.HadoopShuffleJob;
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopMergingTaskInput;
-import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopMultimap;
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSkipList;
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSpillableMultimap;
 import org.apache.ignite.internal.processors.hadoop.shuffle.collections.HadoopSpillingTaskOutput;
-import org.apache.ignite.internal.util.io.GridUnsafeDataInput;
 import org.apache.ignite.internal.util.offheap.unsafe.GridUnsafeMemory;
-import org.jetbrains.annotations.Nullable;
+import org.apache.ignite.internal.util.typedef.T2;
 
 /**
  * Tests Hadoop
@@ -32,7 +29,7 @@ public class HadoopSpillOutputInputTest extends HadoopAbstractMapTest {
     // TODO: 1) HadoopMultimap#write() return value should be consistent with its size, not a "mem" size.
 
     /** */
-    private final int totalKeys = 50;
+    private final int totalKeys = 3;
 
     /** */
     private final int valuesPerKey = 2;
@@ -40,13 +37,14 @@ public class HadoopSpillOutputInputTest extends HadoopAbstractMapTest {
     /**
      * Limit for one multimap (now in k-v s, not in bytes).
      */
-    private final long limit = 70;
+    private final long limit = 4;
 
     /** */
     private static final RawComparator<Text> rawCmp = new Text.Comparator();
 
     public void testOutput() throws Exception {
-        GridUnsafeMemory mem = new GridUnsafeMemory(0);
+        GridUnsafeMemory mem1 = new GridUnsafeMemory(0);
+        GridUnsafeMemory mem2 = new GridUnsafeMemory(0);
 
         HadoopJobInfo job = new JobInfo();
 
@@ -59,17 +57,17 @@ public class HadoopSpillOutputInputTest extends HadoopAbstractMapTest {
                 return new HadoopWritableSerialization(Text.class);
             }
 
-            @Override public Comparator<Object> groupComparator() {
-                return (Comparator)rawCmp;
-            }
+//            @Override public Comparator<Object> groupComparator() {
+//                return (Comparator)rawCmp;
+//            }
         };
 
         // 1. Output
         final HadoopSpillingTaskOutput out = new HadoopSpillingTaskOutput(
             new HadoopSpillableMultimap[] {
-                new HadoopSpillableMultimap(taskCtx, job, mem, limit),
-                new HadoopSpillableMultimap(taskCtx, job, mem, limit)
-        }, /*Base names*/ new String[] { "alpha", "beta" }, taskCtx, log());
+                new HadoopSpillableMultimap(taskCtx, job, mem1, limit),
+                new HadoopSpillableMultimap(taskCtx, job, mem2, limit)
+        }, /*Base names*/ new String[] { "alpha", "beta" }, taskCtx, log(), job);
 
         //HadoopSkipList list = new HadoopSkipList(job, mem);
         //HadoopTaskOutput out = list.startAdding(taskCtx);
@@ -93,132 +91,16 @@ public class HadoopSpillOutputInputTest extends HadoopAbstractMapTest {
             }
         }
 
-        // TODO: need a sync with spilling threads there. Otherwise not all files can be taken,
-        // TODO: objects can be between the queues, etc.
-        Thread.sleep(2000); //
-
-        HadoopMultimap currMap = out.currOut();
-
-        List<String> files = out.getFiles();
-
-        out.close();
-
-        System.out.println("files = " + files);
-
         // 2. Input.
-        final HadoopMergingTaskInput input =
-            new HadoopMergingTaskInput(new HadoopMultimap[] { currMap },
-            files.toArray(new String[files.size()]), rawCmp);
+        final HadoopTaskInput rawInput = out.getInput(taskCtx, rawCmp);
 
-        HadoopTaskInput rawInput = input.rawInput();
-        HadoopTaskInput groupedRawInput = new HadoopSkipList.GroupedRawInput(rawInput, rawCmp);
-        //HadoopTaskInput objectInput = new HadoopSkipList.InputForRawInput(rawInput, taskCtx);
+        // TODO: enable grouped input
+        //HadoopSkipList.GroupedRawInput gin = new HadoopSkipList.GroupedRawInput(rawInput, rawCmp);
 
-//        int keyCnt = 0;
-//        int valCnt = 0;
-//
-//        Text prevKey = new Text();
-//
-//        groupedRawInput
-//
-//        while (objectInput.next()) {
-//            Text key = (Text)objectInput.key();
-//
-//            keyCnt++;
-//
-//            System.out.println("k = " + key);
-//
-//            if (prevKey.toString() != null) {
-//                int cmp = rawCmp.compare(prevKey, key);
-//
-//                assertTrue(cmp <= 0);
-//            }
-//
-//            prevKey.set(key); // Save value.
-//
-//            Iterator<Text> it = (Iterator)objectInput.values();
-//
-//            Text val;
-//
-//            while (it.hasNext()) {
-//                val = it.next();
-//
-//                valCnt++;
-//
-//                System.out.println("     v = " + val);
-//            }
-//        }
-//
-//        assertEquals(totalKeys, keyCnt); // TODO: now fails because ungrouped.
-//        assertEquals(totalKeys * valuesPerKey , valCnt);
+        T2<Long, Long> counts = HadoopMergingTaskInput.checkRawInput(rawInput, taskCtx, rawCmp);
 
-        checkRawOutput(groupedRawInput, taskCtx, totalKeys, totalKeys * valuesPerKey);
-    }
-
-    private void checkRawOutput(HadoopTaskInput in, HadoopTaskContext taskCtx,
-            int expKeyCnt, int expValCnt) throws Exception {
-        final HadoopSerialization keySer = taskCtx.keySerialization();
-        final HadoopSerialization valSer = taskCtx.valueSerialization();
-
-        int keyCnt = 0;
-        int valCnt = 0;
-
-        Text k = new Text();
-        Text v = new Text();
-
-        final HadoopShuffleJob.UnsafeValue prevKey = new HadoopShuffleJob.UnsafeValue();
-
-        try {
-            HadoopShuffleJob.UnsafeValue key;
-            HadoopShuffleJob.UnsafeValue val;
-
-            while (in.next()) {
-                key = (HadoopShuffleJob.UnsafeValue)in.key();
-
-                keyCnt++;
-
-                k = (Text)deserialize(keySer, key, k);
-
-                System.out.println("k = " + k);
-
-                if (prevKey.hasData()) {
-                    int cmp = rawCmp.compare(
-                        prevKey.getBuf(), prevKey.getOff(), prevKey.size(),
-                        key.getBuf(), key.getOff(), key.size());
-
-                    assertTrue(cmp <= 0);
-                }
-
-                prevKey.readFrom(key); // Save value.
-
-                Iterator<HadoopShuffleJob.UnsafeValue> it = (Iterator)in.values();
-
-                while (it.hasNext()) {
-                    val = it.next();
-
-                    v = (Text) deserialize(valSer, val, v);
-
-                    valCnt++;
-
-                    System.out.println("     v = " + v);
-                }
-            }
-        }
-        finally {
-            in.close();
-        }
-
-        assertEquals(expKeyCnt, keyCnt);
-        assertEquals(expValCnt, valCnt);
-    }
-
-    private final GridUnsafeDataInput dataInput = new GridUnsafeDataInput();
-
-    private Object deserialize(HadoopSerialization ser, HadoopShuffleJob.UnsafeValue uv, @Nullable Object reuse)
-        throws IgniteCheckedException {
-        dataInput.bytes(uv.getBuf(), uv.getOff(), uv.size() + uv.getOff());
-
-        return ser.read(dataInput, reuse);
+        assertEquals(totalKeys, (long)counts.get1());
+        assertEquals(totalKeys * valuesPerKey, (long)counts.get2());
     }
 
     private String key(int keyIdx) {
@@ -230,14 +112,15 @@ public class HadoopSpillOutputInputTest extends HadoopAbstractMapTest {
     }
 
     private Iterator<Integer> createIterator() {
-        Iterator<Integer> it00 = new ArrayList<Integer>().iterator();
+        Iterator<Integer> it00 = Collections.<Integer>emptyList().iterator();
         Iterator<Integer> it0 = new ArrayList<>(Arrays.asList(new Integer[] { 0, 1, 2, 3 })).iterator();
+        Iterator<Integer> it01 = Collections.<Integer>emptyList().iterator();
         Iterator<Integer> it1 = new ArrayList<>(Arrays.asList(new Integer[] { 4, 5, 6, 7 })).iterator();
         Iterator<Integer> it2 = new ArrayList<>(Arrays.asList(new Integer[] { 8, 9, 10, 11 })).iterator();
-        Iterator<Integer> it20 = new ArrayList<Integer>().iterator();
+        Iterator<Integer> it20 = Collections.<Integer>emptyList().iterator();
 
         Iterator<Iterator<Integer>> itIt = (Iterator)Arrays.asList(
-            new Iterator[] { it00, it0, it1, it2, it20 }).iterator();
+            new Iterator[] { it00, it0, it01, it1, it2, it20 }).iterator();
 
         return new HadoopSkipList.CompositeIterator<>(itIt);
     }
@@ -371,5 +254,10 @@ public class HadoopSpillOutputInputTest extends HadoopAbstractMapTest {
             assertEquals(2, keyCnt);
             assertEquals(3 * 2, valCnt);
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override protected long getTestTimeout() {
+        return 1000 * super.getTestTimeout();
     }
 }
