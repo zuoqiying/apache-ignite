@@ -1102,7 +1102,7 @@ public class GridReduceQueryExecutor {
 
         for (int i = 0, mapQrys = qry.mapQueries().size(); i < mapQrys; i++) {
             ResultSet rs = h2.executeSqlQueryWithTimer(space, c,
-                "SELECT PLAN FROM " + mergeTableIdentifier(i), null, false);
+                "SELECT PLAN FROM " + mergeTableIdentifier(i), null, false, 0, null);
 
             lists.add(F.asList(getPlan(rs)));
         }
