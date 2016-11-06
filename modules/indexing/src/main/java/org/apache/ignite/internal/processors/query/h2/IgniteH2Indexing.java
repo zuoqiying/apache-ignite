@@ -902,9 +902,6 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         int timeoutMillis, @Nullable GridQueryCancel cancel)
         throws IgniteCheckedException {
 
-        if (timeoutMillis > 0)
-            session(conn).setQueryTimeout(timeoutMillis);
-
         if (cancel != null) {
             cancel.set(new Runnable() {
                 @Override public void run() {
@@ -917,6 +914,9 @@ public class IgniteH2Indexing implements GridQueryIndexing {
                 }
             });
         }
+
+        if (timeoutMillis > 0)
+            session(conn).setQueryTimeout(timeoutMillis);
 
         try {
             return stmt.executeQuery();
