@@ -903,7 +903,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         throws IgniteCheckedException {
 
         if (timeoutMillis > 0)
-            ((Session)((JdbcConnection)conn).getSession()).setQueryTimeout(timeoutMillis);
+            session(conn).setQueryTimeout(timeoutMillis);
 
         if (cancel != null) {
             cancel.set(new Runnable() {
@@ -930,7 +930,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         }
         finally {
             if (timeoutMillis > 0)
-                ((Session)((JdbcConnection)conn).getSession()).setQueryTimeout(0);
+                session(conn).setQueryTimeout(0);
         }
     }
 
