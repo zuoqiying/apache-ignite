@@ -30,7 +30,6 @@ import org.h2.jdbc.JdbcPreparedStatement;
 import org.h2.util.IntArray;
 import org.jetbrains.annotations.Nullable;
 
-import static org.apache.ignite.internal.processors.query.h2.opt.GridH2CollocationModel.isCollocated;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.AVG;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.CAST;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.COUNT;
@@ -41,7 +40,6 @@ import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlPlacehol
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQuery.LIMIT_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQuery.OFFSET_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQueryParser.prepared;
-import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQueryParser.query;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.FROM_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.WHERE_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.childIndexForColumn;
@@ -52,7 +50,7 @@ import static org.apache.ignite.internal.processors.query.h2.twostep.GridReduceQ
  */
 public class GridSqlQuerySplitter {
     /** */
-    private static final String TABLE_SCHEMA = "PUBLIC";
+    private static final String MERGE_TABLE_SCHEMA = "PUBLIC"; // Schema PUBLIC must always exist.
 
     /** */
     private static final String MERGE_TABLE_PREFIX = "__T";
@@ -64,7 +62,7 @@ public class GridSqlQuerySplitter {
     private static final String HAVING_COLUMN = "__H";
 
     /** */
-    private static final String TABLE_FILTER_ALIAS_SUFFIX = "__Z";
+    private static final String UNIQUE_TABLE_ALIAS_SUFFIX = "__Z";
 
     /** */
     private int nextMergeTblIdx;
@@ -92,7 +90,7 @@ public class GridSqlQuerySplitter {
      * @return Merge table.
      */
     private static GridSqlTable mergeTable(int idx) {
-        return new GridSqlTable(TABLE_SCHEMA, MERGE_TABLE_PREFIX + idx);
+        return new GridSqlTable(MERGE_TABLE_SCHEMA, MERGE_TABLE_PREFIX + idx);
     }
 
     /**
@@ -219,11 +217,7 @@ public class GridSqlQuerySplitter {
         twoStepQry.reduceQuery(splitter.rdcSqlQry);
         twoStepQry.skipMergeTable(splitter.rdcQrySimple);
         twoStepQry.explain(explain);
-
-        // We do not have to look at each map query separately here, because if
-        // the whole initial query is collocated, then all the map sub-queries
-        // will be collocated as well.
-        twoStepQry.distributedJoins(distributedJoins && !isCollocated(query(prepared)));
+        twoStepQry.distributedJoins(distributedJoins);
 
         return twoStepQry;
     }
@@ -443,7 +437,7 @@ public class GridSqlQuerySplitter {
         GridSqlAst child = prnt.child(childIdx);
         GridSqlTable tbl = GridSqlAlias.unwrap(child);
 
-        String uniqueAlias = TABLE_FILTER_ALIAS_SUFFIX + nextTblAliasIdx++;
+        String uniqueAlias = UNIQUE_TABLE_ALIAS_SUFFIX + nextTblAliasIdx++;
 
         if (tbl != child) // To make the generated query more readable.
             uniqueAlias = ((GridSqlAlias)child).alias() + uniqueAlias;
@@ -452,6 +446,7 @@ public class GridSqlQuerySplitter {
 
         tbl.uniqueAlias(uniqueAliasAst);
 
+        // Replace the child in the parent.
         prnt.child(childIdx, uniqueAliasAst);
     }
 
@@ -536,10 +531,10 @@ public class GridSqlQuerySplitter {
             if (tbl instanceof GridSqlTable) {
                 GridSqlAlias uniqueAlias = ((GridSqlTable)tbl).uniqueAlias();
 
+                // Unique aliases must be generated for all the tables already.
                 assert uniqueAlias != null: childIdx + "\n" + prnt.getSQL();
 
                 col.tableAlias(uniqueAlias.alias());
-
                 col.expressionInFrom(uniqueAlias);
             }
         }
@@ -635,9 +630,10 @@ public class GridSqlQuerySplitter {
         }
         else if (el instanceof GridSqlSubquery)
             findParams(((GridSqlSubquery)el).subquery(), params, target, paramIdxs);
-        else
+        else {
             for (int i = 0; i < el.size(); i++)
                 findParams(el.child(i), params, target, paramIdxs);
+        }
     }
 
     /**
@@ -767,7 +763,8 @@ public class GridSqlQuerySplitter {
         final List<GridSqlAst> mapSelect,
         final int exprIdx,
         boolean hasDistinctAggregate,
-        boolean first) {
+        boolean first
+    ) {
         GridSqlAst el = parentExpr.child(childIdx);
 
         if (el instanceof GridSqlAggregateFunction) {
