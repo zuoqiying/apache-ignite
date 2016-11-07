@@ -108,7 +108,7 @@ namespace Apache.Ignite.Core.Impl.Unmanaged
         private const int OpPrepareDotNet = 1;
 
         private delegate long CacheStoreCreateCallbackDelegate(void* target, long memPtr);
-        private delegate int CacheStoreInvokeCallbackDelegate(void* target, long objPtr, long memPtr, void* cb);
+        private delegate int CacheStoreInvokeCallbackDelegate(void* target, long objPtr, long memPtr);
         private delegate void CacheStoreDestroyCallbackDelegate(void* target, long objPtr);
         private delegate long CacheStoreSessionCreateCallbackDelegate(void* target, long storePtr);
 
@@ -331,22 +331,17 @@ namespace Apache.Ignite.Core.Impl.Unmanaged
 
         [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
-        private int CacheStoreInvoke(void* target, long objPtr, long memPtr, void* cb)
+        private int CacheStoreInvoke(void* target, long objPtr, long memPtr)
         {
             return SafeCall(() =>
             {
                 var t = _handleRegistry.Get<CacheStore>(objPtr, true);
 
-                IUnmanagedTarget cb0 = null;
-
-                if ((long) cb != 0)
-                    cb0 = new UnmanagedNonReleaseableTarget(_ctx, cb);
-
                 using (PlatformMemoryStream stream = IgniteManager.Memory.Get(memPtr).GetStream())
                 {
                     try
                     {
-                        return t.Invoke(stream, cb0, _ignite);
+                        return t.Invoke(stream, _ignite);
                     }
                     catch (Exception e)
                     {
@@ -1102,6 +1097,11 @@ namespace Apache.Ignite.Core.Impl.Unmanaged
         private void Error(void* target, int errType, sbyte* errClsChars, int errClsCharsLen, sbyte* errMsgChars,
             int errMsgCharsLen, sbyte* stackTraceChars, int stackTraceCharsLen, void* errData, int errDataLen)
         {
+            // errData mechanism is only needed for CachePartialUpdateException and is no longer used,
+            // since CacheImpl handles all errors itself.
+            Debug.Assert(errDataLen == 0);
+            Debug.Assert(errData == null);
+
             string errCls = IgniteUtils.Utf8UnmanagedToString(errClsChars, errClsCharsLen);
             string errMsg = IgniteUtils.Utf8UnmanagedToString(errMsgChars, errMsgCharsLen);
             string stackTrace = IgniteUtils.Utf8UnmanagedToString(stackTraceChars, stackTraceCharsLen);
@@ -1109,15 +1109,6 @@ namespace Apache.Ignite.Core.Impl.Unmanaged
             switch (errType)
             {
                 case ErrGeneric:
-                    if (_ignite != null && errDataLen > 0)
-                    {
-                        // Stream disposal intentionally omitted: IGNITE-1598
-                        var stream = new PlatformRawMemory(errData, errDataLen).GetStream();
-
-                        throw ExceptionUtils.GetException(_ignite, errCls, errMsg, stackTrace,
-                            _ignite.Marshaller.StartUnmarshal(stream));
-                    }
-
                     throw ExceptionUtils.GetException(_ignite, errCls, errMsg, stackTrace);
 
                 case ErrJvmInit:
