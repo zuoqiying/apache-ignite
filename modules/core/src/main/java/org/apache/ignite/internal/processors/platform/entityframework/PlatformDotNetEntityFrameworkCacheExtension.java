@@ -59,7 +59,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     /** Operation: get item. */
     private static final int OP_GET_ITEM = 3;
 
-    /** Cache key for cleanup node ID. Contains characters not allowed in SQL table name. */
+    /** Cache key for cleanup node ID. */
     private static final CleanupNodeId CLEANUP_NODE_ID = new CleanupNodeId();
 
     /** Indicates whether local cleanup is in progress, per cache name. */
