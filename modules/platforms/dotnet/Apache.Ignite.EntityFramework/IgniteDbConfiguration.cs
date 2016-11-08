@@ -190,7 +190,16 @@ namespace Apache.Ignite.EntityFramework
             var section = ConfigurationManager.GetSection(sectionName) as IgniteConfigurationSection;
 
             if (section != null)
+            {
+                if (section.IgniteConfiguration == null)
+                    throw new IgniteException(string.Format(CultureInfo.InvariantCulture,
+                        "Failed to initialize {0}. {1} with name {2} is defined in <configSections>, " +
+                        "but not present in configuration.",
+                        typeof(IgniteDbConfiguration), typeof(IgniteConfigurationSection), sectionName));
+
+
                 return section.IgniteConfiguration;
+            }
 
             if (!throwIfAbsent)
                 return null;
