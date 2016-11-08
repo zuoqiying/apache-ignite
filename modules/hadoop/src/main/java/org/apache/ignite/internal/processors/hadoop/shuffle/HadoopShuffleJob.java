@@ -362,9 +362,7 @@ public class HadoopShuffleJob<T> implements AutoCloseable {
         public void readFrom(UnsafeValue uv) {
             assert uv != null;
             assert uv.hasData();
-
-            //off = -1;
-            //size = 0;
+            assert uv.getOff() == 0;
 
             ensureLength(uv.size());
 

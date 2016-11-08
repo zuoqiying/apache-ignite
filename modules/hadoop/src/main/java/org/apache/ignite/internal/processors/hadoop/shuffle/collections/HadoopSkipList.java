@@ -26,7 +26,10 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.hadoop.HadoopJobInfo;
@@ -128,155 +131,155 @@ public class HadoopSkipList extends HadoopMultimapBase {
         return in;
     }
 
-    public static class GroupedRawInput implements HadoopTaskInput {
-        private final HadoopTaskInput/*<UnsafeValue>*/ rawInput;
-
-        private final RawComparator rawGrpCmp;
-
-        private final List<Iterator<Object>> vals = new ArrayList<>(4);
-
-        private boolean finished;
-
-        private final HadoopShuffleJob.UnsafeValue prevKey = new HadoopShuffleJob.UnsafeValue();
-        private final HadoopShuffleJob.UnsafeValue nextKey = new HadoopShuffleJob.UnsafeValue();
-
-        public GroupedRawInput(HadoopTaskInput rawInput, RawComparator rawGrpCmp) throws IgniteCheckedException {
-            this.rawInput = rawInput;
-            this.rawGrpCmp = rawGrpCmp;
-        }
-
-        /** {@inheritDoc} */
-        @Override public void close() throws IgniteCheckedException {
-            vals.clear();
-
-            rawInput.close();
-
-            prevKey.close();
-            nextKey.close();
-        }
-
-        /** {@inheritDoc} */
-        @Override public boolean next() {
-            if (finished)
-                return false;
-
-            if (!prevKey.hasData()) { // First call.
-                if (!rawInput.next()) {
-                    finished = true;
-
-                    return false;
-                }
-
-                prevKey.readFrom((HadoopShuffleJob.UnsafeValue)rawInput.key());
-
-                assert prevKey.hasData();
-
-                //in.keyReader.resetReusedObject(null); // We need 2 instances of key object for comparison.
-            }
-            else {
-//                rawInput.
-//                if (in.metaPtr == 0) // We reached the end of the input.
+//    public static class GroupedRawInput implements HadoopTaskInput {
+//        private final HadoopTaskInput/*<UnsafeValue>*/ rawInput;
+//
+//        private final RawComparator rawGrpCmp;
+//
+//        private final List<Iterator<Object>> vals = new ArrayList<>(4);
+//
+//        private boolean finished;
+//
+//        private final HadoopShuffleJob.UnsafeValue prevKey = new HadoopShuffleJob.UnsafeValue();
+//        private final HadoopShuffleJob.UnsafeValue nextKey = new HadoopShuffleJob.UnsafeValue();
+//
+//        public GroupedRawInput(HadoopTaskInput rawInput, RawComparator rawGrpCmp) throws IgniteCheckedException {
+//            this.rawInput = rawInput;
+//            this.rawGrpCmp = rawGrpCmp;
+//        }
+//
+//        /** {@inheritDoc} */
+//        @Override public void close() throws IgniteCheckedException {
+//            vals.clear();
+//
+//            rawInput.close();
+//
+//            prevKey.close();
+//            nextKey.close();
+//        }
+//
+//        /** {@inheritDoc} */
+//        @Override public boolean next() {
+//            if (finished)
+//                return false;
+//
+//            if (!prevKey.hasData()) { // First call.
+//                if (!rawInput.next()) {
+//                    finished = true;
+//
 //                    return false;
+//                }
+//
+//                prevKey.readFrom((HadoopShuffleJob.UnsafeValue)rawInput.key());
+//
+//                assert prevKey.hasData();
+//
+//                //in.keyReader.resetReusedObject(null); // We need 2 instances of key object for comparison.
+//            }
+//            else {
+////                rawInput.
+////                if (in.metaPtr == 0) // We reached the end of the input.
+////                    return false;
+//
+//                vals.clear();
+//
+//                //in.keyReader.resetReusedObject(prevKey); // Switch key instances.
+//
+//                assert nextKey.hasData();
+//
+//                // Advance the prev key:
+//                prevKey.readFrom(nextKey);
+//            }
+//
+//            vals.add((Iterator)rawInput.values());
+//
+//            while (true) { // Fill with head value pointers with equal keys.
+//                if (!rawInput.next()) {
+//                    finished = true;
+//
+//                    break;
+//                }
+//
+//                nextKey.readFrom((HadoopShuffleJob.UnsafeValue)rawInput.key());
+//
+//                assert nextKey.hasData();
+//
+//                if (rawGrpCmp.compare(
+//                        prevKey.getBuf(), prevKey.getOff(), prevKey.size(),
+//                        nextKey.getBuf(), nextKey.getOff(), nextKey.size()) == 0)
+//                    vals.add((Iterator)rawInput.values());
+//                else
+//                    break;
+//            }
+//
+//            assert !vals.isEmpty();
+//
+//            return true;
+//        }
+//
+//        /** {@inheritDoc} */
+//        @Override public Object key() {
+//            return prevKey;
+//        }
+//
+//        /** {@inheritDoc} */
+//        @Override public Iterator<?> values() {
+//            assert !vals.isEmpty();
+//
+//            return new CompositeIterator(new ArrayList<>(vals).iterator());
+//        }
+//    }
 
-                vals.clear();
-
-                //in.keyReader.resetReusedObject(prevKey); // Switch key instances.
-
-                assert nextKey.hasData();
-
-                // Advance the prev key:
-                prevKey.readFrom(nextKey);
-            }
-
-            vals.add((Iterator)rawInput.values());
-
-            while (true) { // Fill with head value pointers with equal keys.
-                if (!rawInput.next()) {
-                    finished = true;
-
-                    break;
-                }
-
-                nextKey.readFrom((HadoopShuffleJob.UnsafeValue)rawInput.key());
-
-                assert nextKey.hasData();
-
-                if (rawGrpCmp.compare(
-                        prevKey.getBuf(), prevKey.getOff(), prevKey.size(),
-                        nextKey.getBuf(), nextKey.getOff(), nextKey.size()) == 0)
-                    vals.add((Iterator)rawInput.values());
-                else
-                    break;
-            }
-
-            assert !vals.isEmpty();
-
-            return true;
-        }
-
-        /** {@inheritDoc} */
-        @Override public Object key() {
-            return prevKey;
-        }
-
-        /** {@inheritDoc} */
-        @Override public Iterator<?> values() {
-            assert !vals.isEmpty();
-
-            return new CompositeIterator(new ArrayList<>(vals).iterator());
-        }
-    }
-
-    /**
-     *
-     */
-    public static class CompositeIterator<T> implements Iterator<T> {
-        /** */
-        private final Iterator<Iterator<T>> it;
-
-        /** */
-        private Iterator<T> i;
-
-        /** */
-        public CompositeIterator(Iterator<Iterator<T>> it) {
-             this.it = it;
-        }
-
-        /** {@inheritDoc} */
-        @Override public boolean hasNext() {
-            while (true) {
-                if (i == null) {
-                    if (it.hasNext())
-                        i = it.next();
-                    else
-                        return false; // negative exit
-                }
-
-                assert i != null;
-
-                if (i.hasNext())
-                    return true; // positive exit point
-                else
-                    i = null;
-            }
-        }
-
-        /** {@inheritDoc} */
-        @Override public T next() {
-            if (hasNext()) {
-                assert i != null;
-
-                return i.next();
-            }
-            else
-                throw new NoSuchElementException();
-        }
-
-        /** {@inheritDoc} */
-        @Override public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
+//    /**
+//     *
+//     */
+//    public static class CompositeIterator<T> implements Iterator<T> {
+//        /** */
+//        private final Iterator<Iterator<T>> itIt;
+//
+//        /** Current iterator */
+//        private Iterator<T> currIt;
+//
+//        /** */
+//        public CompositeIterator(Iterator<Iterator<T>> itIt) {
+//             this.itIt = itIt;
+//        }
+//
+//        /** {@inheritDoc} */
+//        @Override public boolean hasNext() {
+//            while (true) {
+//                if (currIt == null) {
+//                    if (itIt.hasNext())
+//                        currIt = itIt.next();
+//                    else
+//                        return false; // no more iterators, negative exit
+//                }
+//
+//                assert currIt != null;
+//
+//                if (currIt.hasNext())
+//                    return true; // positive exit point
+//                else
+//                    currIt = null;
+//            }
+//        }
+//
+//        /** {@inheritDoc} */
+//        @Override public T next() {
+//            if (hasNext()) {
+//                assert currIt != null;
+//
+//                return currIt.next();
+//            }
+//            else
+//                throw new NoSuchElementException();
+//        }
+//
+//        /** {@inheritDoc} */
+//        @Override public void remove() {
+//            throw new UnsupportedOperationException();
+//        }
+//    }
 
     /**
      * Input serializing a RawInput.
@@ -543,6 +546,8 @@ public class HadoopSkipList extends HadoopMultimapBase {
             keyReader = new Reader(keySer);
 
             cmp = ctx.sortComparator();
+
+            assert cmp != null;
         }
 
         /** {@inheritDoc} */
@@ -1053,4 +1058,207 @@ public class HadoopSkipList extends HadoopMultimapBase {
             in.close();
         }
     }
+
+    public static interface Shell <T> {
+//        public void readFrom(Shell <T> shell);
+
+        public T get();
+
+        boolean hasValue();
+
+        void set (T t);
+    }
+
+    public static class ShellImpl <T> implements Shell<T>, AutoCloseable {
+        private T t;
+
+        ShellImpl(T t) {
+            this.t = t;
+        }
+
+        @Override public void set(T t1) {
+            if (t1 == null) {
+                t = null;
+
+                return;
+            }
+
+            if (t == t1)
+                return;
+
+            // TODO: temp solution
+            if (t1 instanceof IntWritable) {
+                if (t == null) {
+                    t = (T)new IntWritable();
+                }
+
+                ((IntWritable)t).set(((IntWritable)t1).get());
+            }
+            else if (t1 instanceof Text) {
+                if (t == null) {
+                    t = (T)new Text();
+                }
+
+                ((Text)t).set(((Text)t1).getBytes());
+            }
+            else
+                assert false;
+        }
+
+        @Override public T get() {
+            return t;
+        }
+
+        @Override public boolean hasValue() {
+            return t != null;
+        }
+
+        @Override public void close() {
+            t = null;
+        }
+    }
+
+        public static class GroupedObjectInput implements HadoopTaskInput {
+            private final HadoopTaskInput/*<UnsafeValue>*/ rawInput;
+
+            private final RawComparator rawGrpCmp;
+
+            private final List<Iterator<Object>> vals = new ArrayList<>(4);
+
+            private boolean finished;
+
+            private final ShellImpl prevKey = new ShellImpl(null);
+            private final ShellImpl nextKey = new ShellImpl(null);
+
+            public GroupedObjectInput(HadoopTaskInput rawInput, RawComparator rawGrpCmp) throws IgniteCheckedException {
+                this.rawInput = rawInput;
+                this.rawGrpCmp = rawGrpCmp;
+            }
+
+            /** {@inheritDoc} */
+            @Override public void close() throws IgniteCheckedException {
+                vals.clear();
+
+                rawInput.close();
+
+                prevKey.close();
+                nextKey.close();
+            }
+
+            /** {@inheritDoc} */
+            @Override public boolean next() {
+                if (finished)
+                    return false;
+
+                if (!prevKey.hasValue()) { // First call.
+                    if (!rawInput.next()) {
+                        finished = true;
+
+                        return false;
+                    }
+
+                    prevKey.set(rawInput.key());
+
+                    assert prevKey.hasValue();
+
+                    //in.keyReader.resetReusedObject(null); // We need 2 instances of key object for comparison.
+                }
+                else {
+                    vals.clear();
+
+                    assert nextKey.hasValue();
+
+                    // Advance the prev key:
+                    prevKey.set(nextKey.get());
+                }
+
+                vals.add((Iterator)rawInput.values());
+
+                while (true) { // Fill with head value pointers with equal keys.
+                    if (!rawInput.next()) {
+                        finished = true;
+
+                        break;
+                    }
+
+                    nextKey.set(rawInput.key());
+
+                    assert nextKey.hasValue();
+                    assert prevKey.get() != nextKey.get();
+
+                    if (rawGrpCmp.compare(prevKey.get(), nextKey.get()) == 0)
+                        vals.add((Iterator)rawInput.values());
+                    else
+                        break;
+                }
+
+                assert !vals.isEmpty();
+
+                return true;
+            }
+
+            /** {@inheritDoc} */
+            @Override public Object key() {
+                return prevKey.get();
+            }
+
+            /** {@inheritDoc} */
+            @Override public Iterator<?> values() {
+                assert !vals.isEmpty();
+
+                return new CompositeIterator(new ArrayList<>(vals).iterator());
+            }
+        }
+
+        /**
+         *
+         */
+        public static class CompositeIterator<T> implements Iterator<T> {
+            /** */
+            private final Iterator<Iterator<T>> itIt;
+
+            /** Current iterator */
+            private Iterator<T> currIt;
+
+            /** */
+            public CompositeIterator(Iterator<Iterator<T>> itIt) {
+                 this.itIt = itIt;
+            }
+
+            /** {@inheritDoc} */
+            @Override public boolean hasNext() {
+                while (true) {
+                    if (currIt == null) {
+                        if (itIt.hasNext())
+                            currIt = itIt.next();
+                        else
+                            return false; // no more iterators, negative exit
+                    }
+
+                    assert currIt != null;
+
+                    if (currIt.hasNext())
+                        return true; // positive exit point
+                    else
+                        currIt = null;
+                }
+            }
+
+            /** {@inheritDoc} */
+            @Override public T next() {
+                if (hasNext()) {
+                    assert currIt != null;
+
+                    return currIt.next();
+                }
+                else
+                    throw new NoSuchElementException();
+            }
+
+            /** {@inheritDoc} */
+            @Override public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        }
+
 }
