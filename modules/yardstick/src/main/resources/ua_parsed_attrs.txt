@@ -1,0 +1,1000 @@
+(StealthActive)	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/14.9.0.33.26;FBBV/4302539;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/16.0.0.13.22;FBBV/4697910;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/3; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/17.0.0.14.13;FBBV/4950859;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/17.0.0.14.13;FBBV/4950859;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/20.1.0.15.10;FBBV/5758778;FBDV/iPhone6,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/TIM;FBID/phone;FBLC/pt_BR;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/24.0.0.12.7;FBBV/6890242;FBDV/iPad3,4;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/;FBID/tablet;FBLC/es_LA;FBOP/1]	Safari	-	4107112	Apple	iPad /retina display	iOS	-	iPad Retina	Apple	2012	Tablet	1536	2048	9.7	264	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/29.0.0.9.13;FBBV/9374459;FBDV/iPhone5,4;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/vodafoneUK;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/31.0.0.44.261;FBBV/10598108;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/Sprint;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/33.0.0.36.243;FBBV/11752013;FBDV/iPad3,1;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/;FBID/tablet;FBLC/en_US;FBOP/1]	Safari	-	4107112	Apple	iPad /retina display	iOS	-	iPad Retina	Apple	2012	Tablet	1536	2048	9.7	264	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/33.0.0.36.243;FBBV/11752013;FBDV/iPhone4,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	4105197	Apple	iPhone 4S	iOS	-	iPhone 4S	Apple	2011	Mobile Phone	640	960	3.5	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/34.0.0.36.265;FBBV/12376726;FBDV/iPhone5,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Carrier;FBID/phone;FBLC/vi_VN;FBOP/5]	Safari	-	4105198	Apple	iPhone 5	iOS	-	iPhone 5	Apple	2012	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/35.0.0.34.220;FBBV/12945441;FBDV/iPhone5,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/O2;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	4105198	Apple	iPhone 5	iOS	-	iPhone 5	Apple	2012	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/35.0.0.34.220;FBBV/12945441;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/3; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/38.0.0.6.79;FBBV/14316658;FBDV/iPad2,5;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/1; FBCR/;FBID/tablet;FBLC/es_LA;FBOP/1]	Safari	-	3914582	Apple	iPad mini	iOS	-	iPad mini	Apple	2012	Tablet	768	1024	7.85	163	1	32	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/39.1.0.41.31;FBBV/14951342;FBDV/iPad2,5;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/1; FBCR/;FBID/tablet;FBLC/en_US;FBOP/1]	Safari	-	3914582	Apple	iPad mini	iOS	-	iPad mini	Apple	2012	Tablet	768	1024	7.85	163	1	32	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/39.1.0.41.31;FBBV/14951342;FBDV/iPhone5,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	4105198	Apple	iPhone 5	iOS	-	iPhone 5	Apple	2012	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/40.0.0.42.290;FBBV/15252421;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/T-Mobile;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/41.0.0.22.268;FBBV/15798540;FBDV/iPad3,4;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/;FBID/tablet;FBLC/es_LA;FBOP/1]	Safari	-	4107112	Apple	iPad /retina display	iOS	-	iPad Retina	Apple	2012	Tablet	1536	2048	9.7	264	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/41.0.0.22.268;FBBV/15798540;FBDV/iPhone5,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/EMT;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	4105198	Apple	iPhone 5	iOS	-	iPhone 5	Apple	2012	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/41.0.0.22.268;FBBV/15798540;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/41.0.0.22.268;FBBV/15798540;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/CSpire;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/41.0.0.22.268;FBBV/15798540;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/VodafoneIndia;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/43.0.0.26.314;FBBV/17000587;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/CC;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/43.0.0.26.314;FBBV/17000587;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/3; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/43.0.0.26.314;FBBV/17000587;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/OPTUS;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/44.0.0.54.111;FBBV/17684769;FBDV/iPad4,2;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/AT&T;FBID/tablet;FBLC/en_US;FBOP/1]	Safari	-	5815388	Apple	iPad Air	iOS	-	iPad Air	Apple	2013	Tablet	1536	2048	9.7	264	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/44.0.0.54.111;FBBV/17684769;FBDV/iPhone4,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	4105197	Apple	iPhone 4S	iOS	-	iPhone 4S	Apple	2011	Mobile Phone	640	960	3.5	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/45.0.0.45.96;FBBV/18289579;FBDV/iPhone5,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	4105198	Apple	iPhone 5	iOS	-	iPhone 5	Apple	2012	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/45.0.0.45.96;FBBV/18289579;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/45.0.0.45.96;FBBV/18289579;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/Sprint;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/45.0.0.45.96;FBBV/18289579;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/3; FBCR/T-Mobile;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/45.0.0.45.96;FBBV/18289579;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Sprint;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPad3,4;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/;FBID/tablet;FBLC/en_US;FBOP/1]	Safari	-	4107112	Apple	iPad /retina display	iOS	-	iPad Retina	Apple	2012	Tablet	1536	2048	9.7	264	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPad4,4;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/;FBID/tablet;FBLC/en_US;FBOP/1]	Safari	-	5815409	Apple	iPad mini Retina	iOS	-	iPad mini Retina	Apple	2013	Tablet	1536	2048	7.9	324	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/T-Mobile;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/3; FBCR/Sprint;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/3; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/KDDI;FBID/phone;FBLC/ja_JP;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Sprint;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/46.0.0.54.156;FBBV/18972819;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/CSpire;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/47.0.0.43.396;FBBV/20481971;FBDV/iPhone4,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	4105197	Apple	iPhone 4S	iOS	-	iPhone 4S	Apple	2011	Mobile Phone	640	960	3.5	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/47.0.0.43.396;FBBV/20481971;FBDV/iPhone5,4;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/TIM;FBID/phone;FBLC/pt_BR;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/47.0.0.43.396;FBBV/20481971;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/48.0.0.64.162;FBBV/21316239;FBDV/iPad4,1;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/;FBID/tablet;FBLC/en_GB;FBOP/1]	Safari	-	5815388	Apple	iPad Air	iOS	-	iPad Air	Apple	2013	Tablet	1536	2048	9.7	264	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/48.0.0.64.162;FBBV/21316239;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/O2;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/49.0.0.72.166;FBBV/22916291;FBDV/iPhone6,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/Three;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/50.0.0.47.191;FBBV/23973043;FBDV/iPhone6,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/vodafoneUK;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/50.0.0.47.191;FBBV/23973043;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/EE;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/52.0.0.46.157;FBBV/26424168;FBDV/iPhone5,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2; FBCR/vodafoneUK;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	4105198	Apple	iPhone 5	iOS	-	iPhone 5	Apple	2012	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/52.0.0.46.157;FBBV/26424168;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/52.0.0.46.157;FBBV/26424168;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2; FBCR/VodafoneIndia;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/52.0.0.46.157;FBBV/26424168;FBDV/iPhone8,4;FBMD/iPhone;FBSN/iPhone OS;FBSV/9.3.1;FBSS/2; FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	11888557	Apple	iPhone SE	iOS	-	iPhone SE	Apple	2016	Mobile Phone	640	1136	4.0	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/53.0.0.36.140;FBBV/27547874;FBRV/0;FBDV/iPhone5,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2;FBCR/BASE;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	4105198	Apple	iPhone 5	iOS	-	iPhone 5	Apple	2012	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/53.0.0.36.140;FBBV/27547874;FBRV/0;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2;FBCR/TIM;FBID/phone;FBLC/pt_BR;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/54.0.0.42.135;FBBV/28674375;FBRV/0;FBDV/iPhone4,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2;FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	4105197	Apple	iPhone 4S	iOS	-	iPhone 4S	Apple	2011	Mobile Phone	640	960	3.5	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/54.0.0.42.135;FBBV/28674375;FBRV/0;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2;FBCR/Sprint;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/54.0.0.42.135;FBBV/28674375;FBRV/0;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2;FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/55.0.0.40.137;FBBV/29582208;FBRV/0;FBDV/iPad2,4;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0;FBSS/1;FBCR/;FBID/tablet;FBLC/en_US;FBOP/5]	Safari	-	4105199	Apple	iPad 2	iOS	-	iPad 2	Apple	2011	Tablet	768	1024	9.7	132	1	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/55.0.0.40.137;FBBV/29582208;FBRV/0;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/3;FBCR/AT&T;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/56.0.0.58.135;FBBV/30582859;FBRV/0;FBDV/iPhone6,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/9.3.2;FBSS/2;FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5453727	Apple	iPhone 5S	iOS	-	iPhone 5S	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/56.0.0.58.135;FBBV/30582859;FBRV/0;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/3;FBCR/ClaroBrasil;FBID/phone;FBLC/pt_BR;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/56.0.0.58.135;FBBV/30582859;FBRV/0;FBDV/iPhone7,1;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/3;FBCR/T-Mobile;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180687	Apple	iPhone 6 Plus	iOS	-	iPhone 6 Plus	Apple	2014	Mobile Phone	1080	1920	5.5	401	3	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/56.0.0.58.135;FBBV/30582859;FBRV/0;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2;FBCR/T-Mobile;FBID/phone;FBLC/es_LA;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/56.0.0.58.135;FBBV/30582859;FBRV/0;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2;FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/56.0.0.58.135;FBBV/30582859;FBRV/0;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2;FBCR/Sprint;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/57.0.0.41.136;FBBV/31395714;FBRV/0;FBDV/iPad2,4;FBMD/iPad;FBSN/iPhone OS;FBSV/8.0.2;FBSS/1;FBCR/;FBID/tablet;FBLC/en_US;FBOP/5]	Safari	-	4105199	Apple	iPad 2	iOS	-	iPad 2	Apple	2011	Tablet	768	1024	9.7	132	1	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/57.0.0.41.136;FBBV/31395714;FBRV/0;FBDV/iPhone5,3;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2;FBCR/Verizon;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	5454143	Apple	iPhone 5C	iOS	-	iPhone 5C	Apple	2013	Mobile Phone	640	1136	4	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/59.0.0.51.142;FBBV/33266808;FBRV/0;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0.2;FBSS/2;FBCR/O2;FBID/phone;FBLC/en_GB;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+(null) [FBAN/FBIOS;FBAV/59.0.0.51.142;FBBV/33266808;FBRV/0;FBDV/iPhone7,2;FBMD/iPhone;FBSN/iPhone OS;FBSV/8.0;FBSS/2;FBCR/vodaAU;FBID/phone;FBLC/en_US;FBOP/5]	Safari	-	7180628	Apple	iPhone 6	iOS	-	iPhone 6	Apple	2014	Mobile Phone	750	1334	4.7	326	2	24	false	-	2016-08-18
+1.4) Gecko/20030624 Netscape/7.1 (ax)	Android Browser	-	3959166	LG	P760	Android	-	Optimus L9	LG	2012	Mobile Phone	540	960	4.7	234	1.5	24	false	-	2016-08-18
+11.0) like Gecko	Android Browser	-	5544605	Beyond	B78	Android	-	-	-	2012	Mobile Phone	480	800	5.3	176	-	0	false	-	2016-08-18
+1126QUoC	Android Browser	-	5544605	Beyond	B78	Android	-	-	-	2012	Mobile Phone	480	800	5.3	176	-	0	false	-	2016-08-18
+11dhHvtA')); waitfor delay '0:0:6' --	Android Browser	-	5544605	Beyond	B78	Android	-	-	-	2012	Mobile Phone	480	800	5.3	176	-	0	false	-	2016-08-18
+11uVqFjk');select pg_sleep(6); --	Android Browser	-	5544605	Beyond	B78	Android	-	-	-	2012	Mobile Phone	480	800	5.3	176	-	0	false	-	2016-08-18
+1s6YKg0W')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+1sWiGzwv'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+1sg9941I';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+3	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+30AH8GCh';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+30Tq8icZ	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+31.0) Gecko/20100101 Firefox/31.0	Firefox	31.0	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31CMgGnM'));select pg_sleep(3); --	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31FdSiQf'));select pg_sleep(6); --	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31Nol4qc')); waitfor delay '0:0:9' --	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31OdL6m4');select pg_sleep(9); --	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31QEGaBU'));select pg_sleep(9); --	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31Ywoc14	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31awbo0p');select pg_sleep(6); --	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31fxaKu7')); waitfor delay '0:0:6' --	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+31gJynII')); waitfor delay '0:0:9' --	Nokia S40 Browser	-	4336544	Nokia	Asha 310	Nokia OS	-	-	Nokia	2013	Mobile Phone	240	400	3.01	155	-	16	false	-	2016-08-18
+320*400	Internet Explorer Mobile	-	1475846	UTStarcom	XV6800/Verizon	Windows Mobile	-	Verizon	UTStarcom	2005	Mobile Phone	240	320	2.82	142	1	16	false	-	2016-08-18
+323NMRci'; waitfor delay '0:0:9' --	Internet Explorer Mobile	-	1475846	UTStarcom	XV6800/Verizon	Windows Mobile	-	Verizon	UTStarcom	2005	Mobile Phone	240	320	2.82	142	1	16	false	-	2016-08-18
+32Anyqxc'));select pg_sleep(9); --	Internet Explorer Mobile	-	1475846	UTStarcom	XV6800/Verizon	Windows Mobile	-	Verizon	UTStarcom	2005	Mobile Phone	240	320	2.82	142	1	16	false	-	2016-08-18
+32ObvbPp'));select pg_sleep(9); --	Internet Explorer Mobile	-	1475846	UTStarcom	XV6800/Verizon	Windows Mobile	-	Verizon	UTStarcom	2005	Mobile Phone	240	320	2.82	142	1	16	false	-	2016-08-18
+32fd92T8'; waitfor delay '0:0:9' --	Internet Explorer Mobile	-	1475846	UTStarcom	XV6800/Verizon	Windows Mobile	-	Verizon	UTStarcom	2005	Mobile Phone	240	320	2.82	142	1	16	false	-	2016-08-18
+333kaSBy')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+33gemEhc'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+33kBbvY8'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+33ld4hGE')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+33xCGATK'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+344Pj4lY'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+345vuu9b41xulf39jhzn86iuplvct0ls9nwdk2	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+34DqKYwj')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+34S9buht');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+34w5Jlxx';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+350D82NE'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+355HGIUl'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+35vp59Ez')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+360spider	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+361Sm06g');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+36M9kz0E'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+36W05siY	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+36gkx81n'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+36jL1b4t');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+36lQjpQl');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+371tN1WG'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+373noOWC')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37Kj8T9Q')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37LVBDVQ'; waitfor delay '0:0:3' -- 	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37SPz2E8'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37XGKYuS'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37YCtwSx	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37hXrHYC');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37hhBaqg'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37o7KG9i')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37v9lvDa'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+37xu0ICL	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38.100.184.53	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38.100.184.77	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38.123.201.244	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38.123.202.225	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38.124.169.133	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38.124.172.20	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38.124.173.180	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38.124.173.3	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38EawHWG')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38PV4Tsp'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38VisjR8'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38a5DXKM	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38nC8vZ8');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+38pQ4fP1'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+39cC3NW9')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3A6EC8Vw')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3A6pJ6UT'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3AONQLQL'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3AcPIKWI	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ApRTB2W';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3BGx4DmP'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3BOzxXkx'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3BXHGjXP'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Bbwa6vP'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3BfxieMa	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3C0KIuju';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3C7swlxz';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3CYjhtUn';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ChQTHtQ	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ChyaHCJ	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Ci2ZSpe	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3D9QVCq0');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3DGayi7Y');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3DStpJzs'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3DeD7d5N'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Dqn2a6I');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Drpct19');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Dxvb474');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3DyzdAwo'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3DzzxPhx'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3E4sEGHs	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3E59rdYS'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3E6PxcqK'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3EKlD4wj'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3FeAcZln	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3FuOLXsy'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3FvLyhNm');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3GLVnvid');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3GX3LitP'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3GrmVEBf'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Gwp5sFP'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3HArrsdZ');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3HEqdUyf');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3HO81ROT	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3HR8IqmR')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3HbWj9GQ');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3HvyL905')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3I76QNbl')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Iej8Go7';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3J1wGDUh	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3J3RgyEK'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3J8OdYMB';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3JUOq24E'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3JWJrd7Y';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3JiyW4rm	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3K0hunrH'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3KRTOKuV'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3KZ5E3T1');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3KdLZczA'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3KkUkyiF')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Kso8kma'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3KxmDSm1	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3KzR5DdO'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3L1Yu4rN'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3L9EKRbS'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3LFchRjk	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3LJAyEJw')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3LJQQ4uH';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3LUS6qsv')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3LwTvaRX	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3M40l5LZ';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3M8p5a31';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3M9sFlEB');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3MFNoYul');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3MV1h2fB')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3NHtBSR6'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3NOZf1nO'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3O3ULpbp'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3OU2wkby')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3OW2NqrD'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3OcTEuyg	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3P1bEMlB'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3PDFTPCi'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3PLhyla1';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3POsMuMQ';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3PZVIP0T'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Pav57x2';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3PyhvSy2	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Q4XBNgl'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3QG00InZ');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3QTvlBin'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3QYYdXX8';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3QcrL1bM';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3R78iFOm'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3RCK0Wdw')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3RFDt3U5'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3RMhiDfX'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ROCap2E')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3RR7BVSL');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3RXjbrmA	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Ra47IZZ');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3RbX88gQ')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Rd2b8oK');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Rkj0hbQ'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3RlP2prl')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3SE4c0Yy';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3SSGW7t9');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3SnXUNl8'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3SuEsG63')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3TG6Xhaj	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3TUtoh0J');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Ty19cP3')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3UjCUHzH'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Uz8oKLj');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3V1lWo0e'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3V1pfAdo	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3V4TuPzm');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3V9KqCq5'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3VBlsmvk')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3VMGiFZg');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3VmqX66w');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3VpBdgpQ';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Vq40nS0'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Vq4uJQG	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3W7oKNnM'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3WF2U7Cz';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3WMryThP'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3WdybKWy');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3WhV2B6k';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3WmkiAc3'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Wxj0gqo');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3X0NkPFF')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3X5nP4Ih';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Xes2bZC');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3XutUgXd'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3XwfWFUH'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Y5pISqe');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Y7mlhc9'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3YFV80nW')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3YIGgfQT';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3YOHKKgN')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3YPAcBbN');select pg_sleep(3); -- 	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3YPhXvj4')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3YXh80Ak';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3YZfs851'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Yn1xorZ	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3Z1k2VZM'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ZCLYXk8';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ZM1TfT1'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ZaLOm8n'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3a2Jt71n'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3a6yfn17t0	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3aUH3Erj'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3aqE1QJi'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3aqVNu1M'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3b1ki4gR'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3bFqo5KQ')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3beYVYtj'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3byRI8d9'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3cFl080R	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3cXnJIv3'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3cfkNfEN';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3d0HAI1q'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3d2mNsQM');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3dOUgU9i'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3dUCXLzm'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3dWn33br')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3dYyhlET';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3daOC7MG');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3decyPwm'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3e5LzINF'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3eBfc3xQ'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3eJn07Zo';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3eLkSXD9');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3eSxbY7a');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ekWaQ75'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3esNmIBR');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ezhj1hveh	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3f2ZQj21	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3f2vuvSf';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3f3LSoVs'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3fDiBJZg');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3fEkn99e')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3fGORvEk';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3fQa3WwA';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3fQrCg5w	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3fjkugx1ry7iw3lc61kg8ynktbz6uummahx7lw	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3fqxT8FP'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ftVTCco');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3g7RQV5n	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3gHe3nZS')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3gHev6AI'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3gW8tkRE';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3gWZsHOw	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3gi76WWg'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3hAonoq1');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3hDmxL9L')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3hFkAhdi'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3hQ6wZho'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3heuWDc7'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3hlz8gNt'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3hpr0XAQ'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3hwhaG4c	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3i0u5qiG'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3iDKoPAj'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3iTaIRuD	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3iYuiScA';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3iaPGOFk')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3iksvqKD'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3imbKRQO'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3imv8unbi1buzfh9xhdnm6wu3l9c801owbmzb.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3j0sLuFa'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3j7A8SSp'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3jKw9e2w'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3jOW4lCS'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3jQJUxLD	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3jvZSh1O'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3k1VyaJ6')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3k68vTlW'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3k8jRvxw';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3kFzZU26')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3kGutzVa'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3kHZsMrb'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3kJ0C8Q6')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3kZQFA4H'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3lCoeqzb'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3lcxQm6l'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3lm86fT0'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3lpk0g31xydi23rcc1qgeytkzb592xvlq8gw5.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3lx7DNzw')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3mVydQIO'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3n1tz49i23	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3n3ohWwR';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3n8IzJ2U';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3nIqdqYg');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3nTgux4Q');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3nZU05L2';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3nnMdUak'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3nsvKaKG')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3nvnatQ6'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3o51mZ7L'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3oApLqsG');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3oDiEdWH'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3oMz0JnQ');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ofcavxr'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ojfpiQl');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3omkPgAi';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3oxou52j	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3p20Z4ql'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3p2G7khP'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3p2kYolP')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3pBZkBjh')); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3pPDJEfy	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3pVxRIVs	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ppKv9tk	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3qHu2Z2m'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3qkIIGNS'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3qyCe3hm'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3rOq5qav';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3rhHtgHh	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3rv6bmrfgzwatbhlvjlyyizxjopidb16owcl.burpcollaborator.net/5.0 (Windows NT 10.0; WOW64; rv:44.0) Gecko/20100101 Firefox/44.0	Firefox	44.0	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3rywv2S0'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3sAvaH1h'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3sKwFg3q	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3sgsDYJ0';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3su4IH9j'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3svTiRuq'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3t1Tlezw	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3t8lFn6j';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3tNAjdmL')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3tjxMC5p'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3tuOdR6h'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3u6hmLwD'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3uIdLpgu')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3uTXF8DR'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ub7H2Xo';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ug4bHri'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3ullLsgq'); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3usfB57C	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3v8422cw'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3vdTewjL'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3vhpL3nH'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3voKI0zH';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3voQsj11');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3vt41rcY');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3vxeYrNQ'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3wIquW49')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3wzXGgPg'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3x5oGwPU');select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3xJ2p61T';select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3xVyNHKF'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3xg9cCXD'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3xmV4USU')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3xqGHCOB'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3yBwK3iy'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3yFaljPO	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3yI3C88D'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3yR79HmA'); waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3yVBEAMQ	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3yydBG9F'));select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zBfLKnY');select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zC7UBcg'); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zFc325f')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zIddLyd'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zLQfuiD'));select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zLu94QM'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zfNadbP';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zqkDmsE'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+3zraW1T6';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	240	0	-	0	-	16	false	-	2016-08-18
+50.137.227.111	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.198.153.74	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.205.136.40	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.206.64.101	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.24.121.199	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.241.83.250	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.242.22.237	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.250.101.85	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.253.179.114	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.58.71.99	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.62.144.201	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.73.35.130	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.73.77.241	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.77.178.97	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.77.90.69	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.78.201.241	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50.78.55.34	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+504Qv6Gn'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50B4SLnx'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50Gh1UeG');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+50a1bSzI'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5140*686	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51CbPnso	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51LMlvUx')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51MpNJ1A';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51NLeNCU')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51OTm5mE'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51jUtsP3'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51kXj6Pz'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51wUdFM3')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+51yEcQpt');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+524hakjU'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+528N2MJD'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+52MEDLsw'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+52TmiERZ';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+52ixpdaf'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+52pU1RAy');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+53Bm2Qi3';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+53U2ZqyF')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+53eqsYNL	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+53keOdg7	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+53oeUWiB');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+54.172.182.186	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+540udK7T';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+545Cmjgb')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+547iuwmjvhoxahkqu4v6hydrfillo6jdcu1.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+54AqmG3e'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+54Jq1FSx');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+54YWLnR5'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+54aP9u2y')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+54gGcVRb'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+54kWFEPP	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+54t76AGB');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5575RsSI';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+558mkin3h0xkm5bew3aiy0dmjdp6muem2hp7dw	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55AaFwdv'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55Sf9GaY'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55WLfRzY'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55aEZ1NB	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55bQvFB2'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55v3jY1X';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55vJ5O6K'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55wW2bhB'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+55xUNvxK';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+569xz1vg157aa8xfyq7zde0n3e9640cvtogd.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+56FkKgZQ'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+56O17bys'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+56TNIydj	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+56VSlpGc	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+56WAdd4Y'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+56zyaE9R'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+571Wu6KA')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+573ZOLdc'));select pg_sleep(6); -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+57H3Ta89');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+57dvawwo';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+57viZF1t'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+57wGZW15'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+585jShDr')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+58LW9UGY');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+58PmVSC2');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+58wU1yQu';select pg_sleep(3); -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+595Wb1Vy'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+59DVZTIW');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+59INssSm	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+59OT2XyP');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+59P02MQL'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+59TtUiMB');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+59cx21yg45aad80f1qazge3n6ec5eav6ezpo.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+59hadTQA'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5A0QpBsm');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ACoEHaG'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5AM7nMtV'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5AZrarp9')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5AaEvWrg'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Af566oN'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Ajiaak3'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Ayd4Aq6'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5BSLfKOj'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5BScv8qJ'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Bk6bcQd'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5CCBtZ8J'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5CTf7GwJ'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5D3si9PZ'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5DBMj8qm'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5DMswEYs');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5DhYHLDQ';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5DrIjZPr')); waitfor delay '0:0:9' -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5DuE6nQH'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5E0hyD7k'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5EEblCVQ');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5EGmlryT'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5EfasJ39'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Ev1jANI	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5F3z7O2C'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5FBqaq7x	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5FPqz6CS'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Fpdzzwd');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5FqM4YkX';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Fw63y5J');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Fx34yYL');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5G8C7DUq');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5G9haUqM');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5GXmO9W9';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5GykfpIg';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5HGNvf7O');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5HMkEGWQ')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5HQLn0Ab'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5HZjJ0eO'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Hd8QV5W'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5HjAEfZP'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Hwyb81Z'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5I0v1zwh');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5IQV8FAp');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5IT2IRmx'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5IXsarGi'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5IdpDyIE';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Iq7cqTM	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5IrBQBJs';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JCMuIAU'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JLvBt4B'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JPgmFPA	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JRUaXxP	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JSSjel8'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JTxH8tw';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Jjg192q')); waitfor delay '0:0:6' -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JnGmxiN';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JoiEMg1');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5JpWOHQj')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Jw8V3cS	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Jxm9fVJ')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5K3yfF1r'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5KF9dAq5'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5KLGmrcU'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5KR2UrTF';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5KUjSNMf')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5KZzTowG');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Kn59e17'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5L9WJftT'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5LASyYPp'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5LBg2K4v'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Li0ezBZ'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Ls9oQBI')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5LtPI4Kk	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5LyKbrWj');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5LzBkIao');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5M4Wpi0Q';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5MAIxLm6');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5MKVjhG1'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5MPXoyYt'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5MTKRqFi';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5MVHyKbh'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Mlmdi0M';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Mn2SJ1B';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5MoS0gVA');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Mp9dN89	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5MuUDr2V')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5MvxkKMb');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5NGOL2pq');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5NJ9J3pb'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5NfyTAzE');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5NhkB20Y'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5NlLI5Oj'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5NroXnwG';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5O9dDarg'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5OLVZoZm'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5OSXec93'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5OYxtDsb'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5OZH8tlm'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Oq0644M'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5PIanveK')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5PLJulWN	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5PgvmylJ'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5PkrC1th';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5PlJqvIX'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Ptc8Tju');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Q6HTXV4'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Q7vjEZy'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5QKMJrQv'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5QVZk2iv'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5QXm53uK');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5QfmU4GF'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Qxqr4Mz	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5R1CS5H6')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5RDVT6Ch';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5RRpRNHP'));select pg_sleep(3); -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5RVA8srt'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5RnfoRJV');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5RsRLDmt'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5S2fd1vm'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5S6xPBre');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5STA8sfZ');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5SXKRqLa';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5SllZl2f';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5SrfucnP'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5TF1GC6h	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5TP3cmar'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5TXaTDMp'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5TkBcGUz'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Tw6IWiT'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5U2NxWoT');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5U33XWPz'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5UCyvDvk	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Uf6BTTn	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Ujx2M7c'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5V72lCGK'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5VBAFzP0	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5VTWphK8';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5VwdDnOE');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Vyf6N6Q'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5W1DCrgA'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5W3A3jrw')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5W6wGs5q	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5W8kmEdv'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5WGSNqkf';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5WJcHESE'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5WVDaxP7')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5WztWLkI')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5XIwaFBN')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5XUA1O7X'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Xdhmta0');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5XvoG02Q');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Y4sL4Si')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Y5uVi5n'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5YQ6bySf'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5YTP3hR8';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5YYyHlqE'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5YjZnTZf');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Yx3koh3');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Z9ZvlQO');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ZJfc0kj';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ZXS2lgg'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ZYHx9j8'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5Zc9PUq8')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ZmqWRNk';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ZoKK1u1'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ZpMUYva'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ZwBxGR8')); waitfor delay '0:0:6' -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5aT3YTt6');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5aerGK0M';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5alofZci');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5aoymqAN	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5b16k0PV'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5bWU0wsc');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5bl83FCi'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5bu4Pi7b'; waitfor delay '0:0:3' -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5bxAwOj3'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5bzysrst	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5c766gfn2m	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5cAx8nI1'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5cNlUc6L'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5clptwvu	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5cuRtFzC'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5cvFsIvX';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5cy04ZSj'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5dIOBLsE'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5dj9j6fbqd01r0c38dupjji31u7qxeq2lpbd0.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5eLik4IM');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5eLvDxEr	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5eO4YfaA'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5fOA2L1U')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5fR91oNQ	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5fmPKYQ9');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5gFT7u0i')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5gOXKpxA');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5gRIvbsg'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5gfMB26t')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5gmi6wyj7h0xmhwq6476typrrix9o17wtp3e.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5gmmviy3s08kx5me73li90omud08uwmoajx9ly	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5gpBbPrS')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5h9fYeHp');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5hEMexVo');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5hGLvcXh');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5hJStWGg');select pg_sleep(5); -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5haym0ra'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5hiotiQB'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5hkA3ZqF')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5hxq6Yw9'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5hyoH4Km';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5i1AC9m4');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5i9GTvev'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5i9ojjWY');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5iIepa56';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5iatz2kqcc	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5igS6DGp'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5j0lpboT';select pg_sleep(6); -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5jMorvID'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5jf41VUu');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5juI0nCk'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5jwc9di1'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5jxZTYSh')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5kTmZyds';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5kVGOubB')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5l3wEyz8')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5l7GWTlE');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5m6EibEA'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5m75mDo8	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5m9lfZW2'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5maEoiNo'));select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5mpiTOEJ'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5msm1i43y0ek35sed3rif0um0d6a0ysqgl3br0	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5n0S7LAv'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5n97WRYP');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5nQpFlnD')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5nkI8ihG'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ntzs59fzegbyen4h866gsier5x2ludi85ytn	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5o2kR4jb'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5oXuHLdj	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5oZpekAP';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5oboytqA'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5oipPLmx';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5opOh22V	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5p1w8WUa')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5p2vyv49	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pAN7Pyo';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pDS4XCb	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pEaghMQ');select pg_sleep(3); -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pLIYNhd'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pQje8rC'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pZcMr4h')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pcPxSs4');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pisyEMG'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5pzuobFg	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qDuEzl4';select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qFCIKOr');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qR9K0a2')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qY44q7y';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qZKoETe	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qj0GN4E'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qjgv97r	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qmhaC6E'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qu3z3Bo'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5qwigw8jhhaxwh6qg4h63yzr1i7n8b3jw0l.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5r5qFXRP')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5rA3hf5A');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5rISolm0'); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5reME4zk'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5riwlDvg'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5rxMTtSm'));select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5rxm6i9330jk85xei3wik0zm5dbb4zxnsaiy7.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5rz5fLOH')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5s4byUbx'; waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5s71Z8Oc';select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5sTnKzfk')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5sUXiywu	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5sfXHJF1')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5smGqAAW'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5suQ9VOC	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5sxBjnpv'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5t50zGx4')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5t7ioQkI	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5tMmeGEL');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5tW0S0q9');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5tdM5JZA')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5tiu5sWS');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5u0906wb7dh180t3pdbp0jz3iuonqbjzem4at.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5u1GxzJh')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5uybnQEq')); waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5vKDQKxD');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5vNeC9eM';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5vSufgl3'));select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5veWeNYK	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5vqs79ascn	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5vx0ayPz')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5w0ScP6W')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5wAhyEX5')); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5wFbasJA';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5wxXlNXL');select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5x0XS5Zl'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5xX7pKRS'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5yAYcHe9')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5yCkKS0J';select pg_sleep(6); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5yGC7eGi'); waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ySBArkZ'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5yXYUMH7'); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5yYfR95b');select pg_sleep(3); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ybOPhsr	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5ywLnN1K'; waitfor delay '0:0:6' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5z5rtoHu'); waitfor delay '0:0:3' -- 	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5zmkmtyI'; waitfor delay '0:0:9' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5znGZuk0');select pg_sleep(9); --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+5znPOywu')); waitfor delay '0:0:3' --	Android Browser	-	0	-	-	Android	-	-	-	0	Tablet	800	0	-	0	-	0	false	-	2016-08-18
+60QLcOpW'));select pg_sleep(6); --	WAP Browser	-	11602834	Karbonn	Kphone 1	Other	-	-	Karbonn	2013	Mobile Phone	240	320	2.4	167	-	24	false	-	2016-08-18
+60dIr1pC'));select pg_sleep(6); --	WAP Browser	-	11602834	Karbonn	Kphone 1	Other	-	-	Karbonn	2013	Mobile Phone	240	320	2.4	167	-	24	false	-	2016-08-18
+60iehvRk');select pg_sleep(9); --	WAP Browser	-	11602834	Karbonn	Kphone 1	Other	-	-	Karbonn	2013	Mobile Phone	240	320	2.4	167	-	24	false	-	2016-08-18
+60thcHXu'; waitfor delay '0:0:3' --	WAP Browser	-	11602834	Karbonn	Kphone 1	Other	-	-	Karbonn	2013	Mobile Phone	240	320	2.4	167	-	24	false	-	2016-08-18
+60xGUXVm')); waitfor delay '0:0:6' --	WAP Browser	-	11602834	Karbonn	Kphone 1	Other	-	-	Karbonn	2013	Mobile Phone	240	320	2.4	167	-	24	false	-	2016-08-18
+775i5Iqq';select pg_sleep(9); --	UP.Browser	-	211173	Sharp	770SH	-	-	-	Sharp	2006	Mobile Phone	240	320	2.23	179	1	18	false	-	2016-08-18
+77AaaNi0'); waitfor delay '0:0:3' --	UP.Browser	-	211173	Sharp	770SH	-	-	-	Sharp	2006	Mobile Phone	240	320	2.23	179	1	18	false	-	2016-08-18
+77Cj6dRJ'; waitfor delay '0:0:3' --	UP.Browser	-	211173	Sharp	770SH	-	-	-	Sharp	2006	Mobile Phone	240	320	2.23	179	1	18	false	-	2016-08-18
+77HZKiKM	UP.Browser	-	211173	Sharp	770SH	-	-	-	Sharp	2006	Mobile Phone	240	320	2.23	179	1	18	false	-	2016-08-18
+77Q4Ncdl	UP.Browser	-	211173	Sharp	770SH	-	-	-	Sharp	2006	Mobile Phone	240	320	2.23	179	1	18	false	-	2016-08-18
+77k9ann6');select pg_sleep(3); --	UP.Browser	-	211173	Sharp	770SH	-	-	-	Sharp	2006	Mobile Phone	240	320	2.23	179	1	18	false	-	2016-08-18
+820WnlvD	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+821QroSw')); waitfor delay '0:0:9' --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+821WkDAx'; waitfor delay '0:0:3' --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+82C5oghC');select pg_sleep(9); --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+82FZrRFq'); waitfor delay '0:0:6' --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+82FzQ9TG');select pg_sleep(3); --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+82Nf0nP1')); waitfor delay '0:0:9' --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+82NvI8Wi');select pg_sleep(3); --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+82WWoePV';select pg_sleep(3); --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+82aTi5He'; waitfor delay '0:0:3' --	Obigo	-	1383141	Lexus	828B	-	-	-	Lexus	2008	Mobile Phone	128	128	-	0	1	8	false	-	2016-08-18
+83BS8Qq9	-	-	987971	Ezze	8352RC	-	-	-	Ezze	2002	Mobile Phone	128	160	-	0	1	16	false	-	2016-08-18
+83dcgggV'); waitfor delay '0:0:3' --	-	-	987971	Ezze	8352RC	-	-	-	Ezze	2002	Mobile Phone	128	160	-	0	1	16	false	-	2016-08-18
+83qjQVT9	-	-	987971	Ezze	8352RC	-	-	-	Ezze	2002	Mobile Phone	128	160	-	0	1	16	false	-	2016-08-18
+83qrwmcm');select pg_sleep(9); --	-	-	987971	Ezze	8352RC	-	-	-	Ezze	2002	Mobile Phone	128	160	-	0	1	16	false	-	2016-08-18
+83tl5qjgkw	-	-	987971	Ezze	8352RC	-	-	-	Ezze	2002	Mobile Phone	128	160	-	0	1	16	false	-	2016-08-18
+8575Xp2O'));select pg_sleep(9); --	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85B3NH01'); waitfor delay '0:0:6' --	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85FQ6QeT	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85FQa7p4'; waitfor delay '0:0:3' --	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85OMPIkf';select pg_sleep(6); --	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85W5nUqB');select pg_sleep(3); --	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85WRuMAh')); waitfor delay '0:0:6' --	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85blvznmwkp0bkltv7w9i1euglmqlzgj90y.burpcollaborator.net/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85kWSroX');select pg_sleep(9); --	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+85vNV4Fx'); waitfor delay '0:0:6' --	BlackBerry Browser	-	1563234	BlackBerry	8520	RIM	-	Curve	RIM	2009	Mobile Phone	320	240	2.46	151	-	16	false	-	2016-08-18
+894pLqyM'); waitfor delay '0:0:3' --	Internet Explorer Mobile	-	0	HTC	-	Windows Mobile	-	-	HTC	0	Mobile Phone	240	320	2.8	143	1	16	false	-	2016-08-18
+89QtKunS	Internet Explorer Mobile	-	0	HTC	-	Windows Mobile	-	-	HTC	0	Mobile Phone	240	320	2.8	143	1	16	false	-	2016-08-18
+89tjE4AL')); waitfor delay '0:0:9' --	Internet Explorer Mobile	-	0	HTC	-	Windows Mobile	-	-	HTC	0	Mobile Phone	240	320	2.8	143	1	16	false	-	2016-08-18
+939cSFT1	BlackBerry Browser	-	1978594	BlackBerry	9300	RIM	-	Curve	RIM	2010	Mobile Phone	320	240	2.45	163	1	16	false	-	2016-08-18
+93DrXshs'; waitfor delay '0:0:9' --	BlackBerry Browser	-	1978594	BlackBerry	9300	RIM	-	Curve	RIM	2010	Mobile Phone	320	240	2.45	163	1	16	false	-	2016-08-18
+93aTq3r8')); waitfor delay '0:0:6' --	BlackBerry Browser	-	1978594	BlackBerry	9300	RIM	-	Curve	RIM	2010	Mobile Phone	320	240	2.45	163	1	16	false	-	2016-08-18
+93khky92'));select pg_sleep(3); --	BlackBerry Browser	-	1978594	BlackBerry	9300	RIM	-	Curve	RIM	2010	Mobile Phone	320	240	2.45	163	1	16	false	-	2016-08-18
+93w04wwi	BlackBerry Browser	-	1978594	BlackBerry	9300	RIM	-	Curve	RIM	2010	Mobile Phone	320	240	2.45	163	1	16	false	-	2016-08-18
+A31F3ham');select pg_sleep(6); --	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3FIhgRY');select pg_sleep(9); --	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3GnWwjp')); waitfor delay '0:0:6' --	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3IsApCe	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3PrqvKS';select pg_sleep(3); --	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3XBDjJ5');select pg_sleep(3); --	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3eoor23'); waitfor delay '0:0:3' --	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3hMUENh	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3i685ss')); waitfor delay '0:0:6' --	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A3iCDhNQ'));select pg_sleep(6); --	Internet Explorer Mobile	-	1560091	Motorola	A3100	Windows Mobile	-	-	Motorola	2007	Mobile Phone	240	320	2.82	142	1	12	false	-	2016-08-18
+A710yoyd');select pg_sleep(6); --	-	-	1966931	K-Touch	A7722	-	-	-	K-Touch	2009	Mobile Phone	240	320	2.8	143	-	16	false	-	2016-08-18
+A7AY5iUe');select pg_sleep(3); --	-	-	1966931	K-Touch	A7722	-	-	-	K-Touch	2009	Mobile Phone	240	320	2.8	143	-	16	false	-	2016-08-18
+A7PbUuEP';select pg_sleep(6); --	-	-	1966931	K-Touch	A7722	-	-	-	K-Touch	2009	Mobile Phone	240	320	2.8	143	-	16	false	-	2016-08-18
+A7W7Ta9e')); waitfor delay '0:0:9' --	-	-	1966931	K-Touch	A7722	-	-	-	K-Touch	2009	Mobile Phone	240	320	2.8	143	-	16	false	-	2016-08-18
+A7w8NYQU');select pg_sleep(3); --	-	-	1966931	K-Touch	A7722	-	-	-	K-Touch	2009	Mobile Phone	240	320	2.8	143	-	16	false	-	2016-08-18
+AIR/V1 Linux/3.4.67 Android/4.4.2 Release/12.11.2014 Browser/AppleWebKit537.36 Mobile Safari/537.36 MBBMS/2.2 System/Android 4.4.2	-	-	205049	Airness	Air99	-	-	-	-	2006	Mobile Phone	128	160	-	0	1	16	false	-	2016-08-18
+AL2mzk1L')); waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	Alcatel	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+AL9jXDsn'; waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	Alcatel	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ALAtxbRw'; waitfor delay '0:0:6' --	-	-	0	-	-	-	-	-	Alcatel	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ALCATEL_2012D/1.0 ObigoInternetBrowser/Q03C	-	-	9371639	Alcatel	2012G	Other	-	One Touch 2012	Alcatel	2014	Mobile Phone	240	320	2.8	143	-	0	false	-	2016-08-18
+ALCATEL_3003G/1.0 ObigoInternetBrowser/Q03C	-	-	9351721	Alcatel	3003G	Other	-	One Touch Tribe	Alcatel	2013	Mobile Phone	128	160	2.0	176	-	0	false	-	2016-08-18
+ALCATEL_3020G/1.0 ObigoInternetBrowser/Q03C	-	-	0	Alcatel	-	-	-	-	Alcatel	2013	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ALCATEL_TRIBE_3075A/1.0 Profile/MIDP-2.0 Configuration/CLDC-1.1 ObigoInternetBrowser/Q05A	-	-	8586363	Alcatel	3075A	Other	-	One Touch Tribe	Alcatel	2013	Mobile Phone	176	220	2	141	-	18	false	-	2016-08-18
+ALCATEL_one_touch_803A/1.0 Profile/MIDP-2.0 Configuration/CLDC-1.1 ObigoInternetBrowser/Q05A	Obigo	Q05A	3873983	Alcatel	OT-803A	Nucleus	-	One Touch 803A	Alcatel	2011	Mobile Phone	320	240	2.4	167	-	18	false	-	2016-08-18
+ALCATEL_one_touch_900/1.0 Profile/MIDP-2.0 Configuration/CLDC-1.1 ObigoInternetBrowser/Q05A	Obigo	Q05A	3311721	Alcatel	OT-900	Nucleus	-	One Touch 900	Alcatel	2011	Mobile Phone	320	240	2.4	167	-	18	false	-	2016-08-18
+ALF4O2F3';select pg_sleep(6); --	-	-	0	-	-	-	-	-	Alcatel	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ALPINE/Y15E	-	-	0	-	-	-	-	-	Alcatel	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ALT	-	-	0	-	-	-	-	-	Alcatel	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ALTclRLb');select pg_sleep(9); --	-	-	0	-	-	-	-	-	Alcatel	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ALmipVU6');select pg_sleep(3); --	-	-	0	-	-	-	-	-	Alcatel	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+AM505/V1 Linux/3.4.67 Android/4.4.2 Release/01.26.2015 Browser/AppleWebKit537.36 Mobile Safari/537.36 MBBMS/2.2 System/Android 4.4.2	Android Browser	-	9714565	Amgoo	AM505	Android	-	Flare	Amgoo	2014	Mobile Phone	320	480	3.5	165	-	18	false	-	2016-08-18
+AM505/V1 Linux/3.4.67 Android/4.4.2 Release/12.10.2014 Browser/AppleWebKit537.36 Mobile Safari/537.36 MBBMS/2.2 System/Android 4.4.2	Android Browser	-	9714565	Amgoo	AM505	Android	-	Flare	Amgoo	2014	Mobile Phone	320	480	3.5	165	-	18	false	-	2016-08-18
+AM506/V1 Linux/3.4.67 Android/4.4.2 Release/06.11.2015 Browser/AppleWebKit537.36 Mobile Safari/537.36 MBBMS/2.2 System/Android 4.4.2	Android Browser	-	9714565	Amgoo	AM505	Android	-	Flare	Amgoo	2014	Mobile Phone	320	480	3.5	165	-	18	false	-	2016-08-18
+AM531/V1 Linux/3.4.67 Android/4.4.2 Release/04.15.2015 Browser/AppleWebKit537.36 Mobile Safari/537.36 MBBMS/2.2 System/Android 4.4.2	Android Browser	-	9714565	Amgoo	AM505	Android	-	Flare	Amgoo	2014	Mobile Phone	320	480	3.5	165	-	18	false	-	2016-08-18
+AMOi0A7i	-	-	0	Amoi	-	-	-	-	Amoi	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+AQ5RTlWV'; waitfor delay '0:0:6' --	Android Browser	-	5176179	Intex	Aqua 5.0	Android	-	-	Intex	2012	Mobile Phone	480	800	5	187	-	0	false	-	2016-08-18
+AQAXWtim')); waitfor delay '0:0:6' --	Android Browser	-	5176179	Intex	Aqua 5.0	Android	-	-	Intex	2012	Mobile Phone	480	800	5	187	-	0	false	-	2016-08-18
+AQBANvKF';select pg_sleep(9); --	Android Browser	-	5176179	Intex	Aqua 5.0	Android	-	-	Intex	2012	Mobile Phone	480	800	5	187	-	0	false	-	2016-08-18
+AQUA 5.0 Linux/3.0.13 Android/4.0.4 Release/01.10.2013 Browser/AppleWebKit534.30 Profile/MIDP-2.0 Configuration/CLDC-1.1 Mobile Safari/534.30 Android 4.0.1;	Android Browser	-	5176179	Intex	Aqua 5.0	Android	-	-	Intex	2012	Mobile Phone	480	800	5	187	-	0	false	-	2016-08-18
+AQe3LDqT	Android Browser	-	5176179	Intex	Aqua 5.0	Android	-	-	Intex	2012	Mobile Phone	480	800	5	187	-	0	false	-	2016-08-18
+AQifp555')); waitfor delay '0:0:3' --	Android Browser	-	5176179	Intex	Aqua 5.0	Android	-	-	Intex	2012	Mobile Phone	480	800	5	187	-	0	false	-	2016-08-18
+AR2yXgs3';select pg_sleep(3); --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+AR4DX64v');select pg_sleep(9); --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+AR6JMEV3'; waitfor delay '0:0:9' --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARCCRA A6/1.0 Android 4.4.4 Release/KTU84P Browser/AppleWebKit534.30 Profile/MIDP-2.0 Configuration/CLDC-1.1	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARK Benefit M7/V1 Linux/3.10.65 Android/5.1 Release/03.03.2015 Browser/AppleWebKit537.36 Chrome/39.0.0.0 Mobile Safari/537.36 System/Android 5.1;	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARMlkI4A');select pg_sleep(3); --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARSDCJRW')); waitfor delay '0:0:6' --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARVTa35k'; waitfor delay '0:0:9' --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARVVPKGC	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARZzr3zc';select pg_sleep(3); --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARcILDVl'); waitfor delay '0:0:6' --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ARhK8EwW'; waitfor delay '0:0:6' --	-	-	0	Lava	-	-	-	-	Lava	2014	Mobile Phone	240	320	2.4	167	-	0	false	-	2016-08-18
+ASM Http Client	Obigo	-	1007861	Asmobile	PAVO	AMX	-	-	-	2002	Mobile Phone	128	128	-	0	1	16	false	-	2016-08-18
+AT3hcXdz'; waitfor delay '0:0:9' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+AT65HqTk')); waitfor delay '0:0:3' --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ATJSHMyM';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ATLdsn8L';select pg_sleep(3); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ATUPnsPm'));select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ATboZxYK';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ATu1074u';select pg_sleep(6); --	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+ATuPE0eX	-	-	0	-	-	-	-	-	-	0	Mobile Phone	0	0	-	0	-	0	false	-	2016-08-18
+AWYEF5tg	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+AWZQlUdP');select pg_sleep(9); --	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+AWdM9Vbi	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+AWeb	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+AWfbB2kF	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+AWowCtnA';select pg_sleep(3); -- 	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Ace Explorer	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+ActiveWorlds/3.xx (xxx)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Activeworlds	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.3.1 rv:223 (Macintosh; Mac OS X 10.11.4; ru_RU)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.3.3 rv:237 (Macintosh; Mac OS X 10.11.4; en_US_POSIX)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4 rv:247 (Macintosh; Mac OS X 10.10.3; en_US)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4 rv:247 (Macintosh; Mac OS X 10.10.5; en_US_POSIX)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4 rv:247 (Macintosh; Mac OS X 10.10.5; ja_JP)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4 rv:247 (Macintosh; Mac OS X 10.11.2; fr_FR)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4 rv:247 (Macintosh; Mac OS X 10.11.4; en_US)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4 rv:247 (Macintosh; Mac OS X 10.11.5; fr_FR)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.10.5; en_CA)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.10.5; en_MX)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.10.5; en_US)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.2; en_US)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.3; de_DE)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.3; en_MY)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.3; en_NL)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.3; fr_FR)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.3; pl_PL)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.3; pt_BR)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.3; sv_SE)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.4; fr_FR)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.4; ru_RU)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.5; en_AT)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.5; es_HN)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.11.5; ja_JP)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.9.5; pt_PT)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.1 rv:249 (Macintosh; Mac OS X 10.9.5; ru_BY)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.2 rv:251 (Macintosh; Mac OS X 10.10.3; ja_JP)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.2 rv:251 (Macintosh; Mac OS X 10.10.4; en_US)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.2 rv:251 (Macintosh; Mac OS X 10.10.5; de_DE)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.2 rv:251 (Macintosh; Mac OS X 10.11.2; en_US)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18
+Airmail 1.4.2 rv:251 (Macintosh; Mac OS X 10.11.3; de_DE)	-	-	0	-	-	-	-	-	-	0	Desktop	0	0	-	0	-	0	false	-	2016-08-18

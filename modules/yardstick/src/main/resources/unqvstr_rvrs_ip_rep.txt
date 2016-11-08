@@ -1,0 +1,1000 @@
+1.43.235.121,Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.361.43.235.121AUoptus.com.auisp\NOptus\N\NOceania\N448414672610900002016-07-01
+10.10.106.12,192.65.0.216,Mozilla/5.0 (Windows NT 6.1; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0192.65.0.216USsfccmo.edubiz\NState Fair Community CollegeSedaliaMONorth AmericaAmerica/Chicago23614672970780002016-07-01
+101.87.69.216,Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36101.87.69.216CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai314672948910002016-07-01
+104.133.2.88,Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36104.133.2.88USgoogle.comisp\NGoogle IncMountain ViewCANorth AmericaAmerica/Los_Angeles11980514673357600002016-07-01
+107.77.232.175,Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36107.77.232.175USatt.comisp\NAT&T\N\NNorth America\N15975114673144210002016-07-01
+107.77.94.86,Mozilla/5.0 (iPhone; CPU iPhone OS 9_3_2 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Mobile/13F69107.77.94.86USatt.comisp\NAT&T\N\NNorth America\N15975114673419670002016-07-01
+108.171.129.188,Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.10240108.171.129.188DEcisco.combiz\NCisco Systems, IncFrankfurt am MainHesseEuropeEurope/Berlin6500214672948160002016-07-01
+112.208.34.28,Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/601.6.17 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17112.208.34.28PHpldt.comisp\NPLDT CORPORATEManilaNational Capital RegionAsiaAsia/Manila94414673487320002016-07-01
+112.96.109.189,Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/601.6.17 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17112.96.109.189CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai514672589870002016-07-01
+113.128.132.114,Mozilla/5.0 (Windows; U; MSIE 8.0; Windows NT 6.1; Win64; x64; Trident/5.0; zh-cn; 360SE)113.128.132.114CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314673553510002016-07-01
+113.128.132.190,Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 5.1; GTB7.5; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET4.0C; .NET4.0E; 360SE)113.128.132.190CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314673493390002016-07-01
+113.185.25.22,Mozilla/5.0 (Linux; Android 5.0.1; LG-D851 Build/LRX21Y) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36113.185.25.22VNvnpt.vnisp\NVNPT Dong NaiTinh Ha TinhAsiaAsia/Ho_Chi_Minh614673466600002016-07-01
+114.91.141.52,Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:47.0) Gecko/20100101 Firefox/47.0114.91.141.52CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai314673525000002016-07-01
+117.216.22.160,Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36117.216.22.160INbsnl.co.inisp\NBSNLBengaluruKarnatakaAsiaAsia/Kolkata150014673085980002016-07-01
+117.247.186.158,Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586117.247.186.158INlykapack.combiz\N\NKochiKeralaAsiaAsia/Kolkata\N14673509370002016-07-01
+119.153.151.79,Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5 Build/MOB30H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36119.153.151.79PKptcl.com.pkisp\NPTCLRawalpindiPunjabAsiaAsia/Karachi12414672754780002016-07-01
+12.10.219.226.144431580699905212.10.219.222USamericanexpress.combiz\NAMERICAN EXPRESS COMPANYPhoenixAZNorth AmericaAmerica/Phoenix113314673458130002016-07-01
+12.47.63.248,Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.3612.47.63.248USatt.comisp\NAT&TSan JoseCANorth AmericaAmerica/Los_Angeles15975114673370990002016-07-01
+122.161.191.235,Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/601.6.17 (KHTML, like Gecko) Version/9.1.1 Safari/601.6.17122.161.191.235INairtel.comisp\NBharti Enterprises LtdJaipurRajasthanAsiaAsia/Kolkata47714672707390002016-07-01
+123.193.238.80,Mozilla/5.0 (Windows NT 6.1; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0123.193.238.80TWkbronet.com.twisp\Nkbro CO.,LTDTaipei\NAsiaAsia/Taipei8014672542670002016-07-01
+124.123.89.103,Mozilla/5.0 (iPhone; CPU iPhone OS 9_3_2 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13F69 Safari/601.1124.123.89.103INbeamtele.comisp\NBEAM TELECOM PVT. LTD\N\NAsiaAsia/Kolkata2614672670110002016-07-01
+124.195.15.162,Mozilla/5.0 (Windows NT 6.1; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0124.195.15.162IDooredoo.comisp\NOoredooJakartaJakartaAsiaAsia/Jakarta\N14672832330002016-07-01
+124.253.137.172,Mozilla/5.0 (iPhone; CPU iPhone OS 9_3_2 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Mobile/13F69124.253.137.172INconnectzone.inisp\NConnectPatialaPunjabAsiaAsia/Kolkata13814673088700002016-07-01
+125.62.117.137,Mozilla/5.0 (Linux; Android 5.1.1; SM-G925I Build/LMY47X; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/51.0.2704.81 Mobile Safari/537.36125.62.117.137INconnectzone.inisp\NConnectBhawanState of Himachal PradeshAsiaAsia/Kolkata13814673540840002016-07-01
+134.159.168.75,Mozilla/5.0 (Windows NT 6.1; rv:43.0) Gecko/20100101 Firefox/43.0134.159.168.75AUtelstra.com.auisp\NTelstra\N\NOceania\N37214673536820002016-07-01
+139.255.47.179,Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36139.255.47.179IDlink.net.idisp\NLinkNet\N\NAsia\N169814673546610002016-07-01
+14.96.102.135,Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)14.96.102.135INtatateleservices.comisp\NTata Teleservices LimitedHyderabad\NAsiaAsia/Kolkata714673497990002016-07-01
+142.129.101.150,Mozilla/5.0 (Linux; Android 6.0.1; Nexus 6P Build/MTC19V) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36142.129.101.150UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCAnaheimCANorth AmericaAmerica/Los_Angeles111114672753370002016-07-01
+144.124.20.18,Mozilla/5.0 (X11; Linux x86_64; rv:38.0) Gecko/20100101 Firefox/38.0144.124.20.18GBaber.ac.ukbiz\NAberystwyth UniversityAberystwythCeredigionEuropeEurope/London213714672761340002016-07-01
+148.107.1.20,Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36148.107.1.20UScapgroup.combiz\NThe Capital GroupLos AngelesCANorth AmericaAmerica/Los_Angeles508814673514870002016-07-01
+155.188.123.16,Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko155.188.123.16USnationwide.combiz\NNationwideColumbusOHNorth AmericaAmerica/New_York3439714673053960002016-07-01
+155.69.205.236,Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0155.69.205.236SGntu.edu.sgbiz\NNANYANG TECHNOLOGICAL UNIVERSITY\N\NAsiaAsia/Singapore635814673535920002016-07-01
+159.115.116.180,Mozilla/5.0 (Windows NT 6.1; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0159.115.116.180UScccd.edubiz\NCoast Community College DistrictCosta MesaCANorth AmericaAmerica/Los_Angeles33314672497880002016-07-01
+164.100.41.2,Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36164.100.41.2INnic.inisp\NNational Informatics CentreDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata605514673547960002016-07-01
+165.225.98.95,Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; InfoPath.2)165.225.98.95AUzscaler.combiz\NZscaler, IncMelbourneVICOceaniaAustralia/Melbourne9614672526320002016-07-01
+166.137.125.112,Mozilla/5.0 (iPhone; CPU iPhone OS 9_3_2 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Mobile/13F69166.137.125.112UScingular.comisp\NAT&T Privacy Policy\NTXNorth AmericaAmerica/Chicago2811314672985770002016-07-01
+170.135.176.108.1445267441837527170.135.176.108USefirstbank.combiz\NFirstBank Holding CompanyMinneapolisMNNorth AmericaAmerica/Chicago66714673028400002016-07-01
+173.36.27.119.146587182787345672.163.217.102INcisco.combiz\NCisco Systems, IncSholinganallurTamil NaduAsiaAsia/Kolkata6500214673428230002016-07-01
+173.37.111.55.144131417846146264.101.143.164UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673110800002016-07-01
+173.37.138.14.146169176330884371.232.169.105UScomcast.comisp\NComcast Corporation\NMANorth America\N45864214673109040002016-07-01
+173.37.138.15.1410596894763661178.203.233.126DEunitymedia.deisp\NUnitymedia KabelBW GmbH\N\NEurope\N6114673523980002016-07-01
+173.37.138.15.1411533646734340126.245.14.90JPsoftbank.jpisp\NSoftBank Group Corp\N\NAsiaAsia/Tokyo7314672773380002016-07-01
+173.37.138.15.141394727292593615.211.185.76PHhp.combiz\NHewlett PackardPasigNational Capital RegionAsiaAsia/Manila16564014672822450002016-07-01
+173.37.138.15.1425033104256028193.127.200.35EUproduban.combiz\NProduban Servicios Informáticos Generales S.L 2, Morrisey Boulevard\N\NEurope\N2514673545820002016-07-01
+173.37.138.15.1428887786923358118.103.88.130JPkokuhoren.jpbiz\N\NTokyoTokyoAsiaAsia/Tokyo\N14673494840002016-07-01
+173.37.138.15.143328282343126515.211.201.93UShp.combiz\NHewlett PackardPalo AltoCANorth AmericaAmerica/Los_Angeles16564014673356900002016-07-01
+173.37.138.15.1435255470103193106.166.145.152JPkddi.comisp\NKDDI CORPORATION\N\NAsiaAsia/Tokyo28214672702490002016-07-01
+173.37.138.15.1435630724875670160.96.212.146SGgov.sgbiz\N\NSingaporeCentral Singapore Community Development CouncilAsiaAsia/Singapore3614672732340002016-07-01
+173.37.138.15.1436168023531063126.236.216.93JPsoftbank.jpisp\NSoftBank Group Corp\N\NAsiaAsia/Tokyo7314673523940002016-07-01
+173.37.138.15.143675665177766949.195.79.227AUoptus.com.auisp\NOptusDee WhyNSWOceaniaAustralia/Sydney448414673384450002016-07-01
+173.37.138.15.143679455216234494.219.193.227DEvodafone.deisp\NVodafoneFrankfurt am MainHesseEuropeEurope/Berlin193614673478080002016-07-01
+173.37.138.15.144086135174256963.146.153.223UScenturylink.comisp\NCenturyLink, Inc.\NAZNorth AmericaAmerica/Phoenix712014672942590002016-07-01
+173.37.138.15.1441063186728857125.207.61.119JPntt-global.comisp\NNippon Telegraph and Telephone Corporation\N\NAsiaAsia/Tokyo\N14673344170002016-07-01
+173.37.138.15.1441344181154142221.132.36.234VNnetsoft.com.vnbiz\NnetsoftHo Chi Minh CityHo Chi Minh CityAsiaAsia/Ho_Chi_Minh4814673449780002016-07-01
+173.37.138.15.1442470202112724148.177.129.210USjnj.combiz\NJohnson & Johnson\N\NNorth America\N283114672853340002016-07-01
+173.37.138.15.1445497413362318140.206.88.216CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai514673425240002016-07-01
+173.37.138.15.144888056025886141.67.136.183NGnetcomafrica.combiz\N\NLagosLagosAfricaAfrica/Lagos114672974410002016-07-01
+173.37.138.15.1450679647614327133.250.250.4JPnri-secure.co.jpbiz\NNRI SecureTechnologies,LtdYokohamaKanagawaAsiaAsia/Tokyo1214673496040002016-07-01
+173.37.138.15.1451256621771954177.64.57.53BRamericamovil.comisp\NAmérica Móvil\N\NSouth America\N11614672925030002016-07-01
+173.37.138.15.145227919868761776.111.15.10UScomcast.comisp\NComcast CorporationColumbiaMDNorth AmericaAmerica/New_York45864214673421050002016-07-01
+173.37.138.15.1452508634149784217.19.32.13ATvideo-broadcast.atbiz\Nvideo-broadcast\N\NEuropeEurope/Vienna\N14672843330002016-07-01
+173.37.138.15.1452871746501297151.193.220.35USthesabregroup.combiz\N\NIrvingTXNorth AmericaAmerica/Chicago\N14673117890002016-07-01
+173.37.138.15.1453361217951865210.19.251.94MYtime.com.myisp\NTIME dotCom Berhad (413292-P)Shah AlamSelangorAsiaAsia/Kuala_Lumpur136114673422610002016-07-01
+173.37.138.15.1453837315705409189.207.223.40MXaxtel.mxisp\NAXTELMexico CityMexico CityNorth AmericaAmerica/Mexico_City714673313140002016-07-01
+173.37.138.15.1454392445204185182.171.83.197JPso-net.ne.jpisp\NSo-netTokyoTokyoAsiaAsia/Tokyo33814672634910002016-07-01
+173.37.138.15.14548671453454181.39.27.172INvodafone.inisp\NVodafone India LimitedMumbaiMaharashtraAsiaAsia/Kolkata19714673540660002016-07-01
+173.37.138.15.1456431281291447207.245.233.43CAmts.caisp\NManitoba Telecom Services IncMarkhamONNorth AmericaAmerica/Toronto57714673021010002016-07-01
+173.37.138.15.1456808537129695204.153.193.206USisp.netbiz\NISP.comSan FranciscoCANorth AmericaAmerica/Los_Angeles77114673455630002016-07-01
+173.37.138.15.1459727169852085203.176.107.66AUnn.com.aubiz\NNextgen NetworksSydneyNSWOceaniaAustralia/Sydney5514673327800002016-07-01
+173.37.138.15.1459906265172429219.148.101.20CNhbtele.combiz\N\N\N\NAsia\N314673448010002016-07-01
+173.37.138.15.146035995947320761.126.189.93JPntt-global.comisp\NNippon Telegraph and Telephone Corporation\N\NAsiaAsia/Tokyo\N14673483680002016-07-01
+173.37.138.15.1461055001685942182.89.71.214CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanningGuangxi Zhuang Autonomous RegionAsiaAsia/Shanghai314672602480002016-07-01
+173.37.138.15.1461217953823972140.135.10.151TWmoe.gov.twbiz\N\N\N\NAsiaAsia/Taipei\N14673514150002016-07-01
+173.37.138.15.146129677808720861.184.80.168CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWuhanHubeiAsiaAsia/Shanghai314672712460002016-07-01
+173.37.138.15.1461658063337042121.31.21.46CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanningGuangxi Zhuang Autonomous RegionAsiaAsia/Shanghai314672481420002016-07-01
+173.37.138.15.146172768609850249.98.173.135JPntt-global.comisp\NNippon Telegraph and Telephone CorporationTokyoTokyoAsiaAsia/Tokyo\N14673253980002016-07-01
+173.37.138.15.1461737529318159150.61.31.77JPcanon.jpbiz\NCANON INC\N\NAsiaAsia/Tokyo214673327600002016-07-01
+173.37.138.15.146204970127432998.165.110.191UScox.comisp\NCox Communications, IncChandlerAZNorth AmericaAmerica/Phoenix7058914673436440002016-07-01
+173.37.138.15.1462262679012292125.209.114.250PKmulti.net.pkbiz\NMultinetKarachiSindhAsiaAsia/Karachi15214672678140002016-07-01
+173.37.138.15.1462272581075480213.205.253.181GBorange.comisp\NORANGESutton ColdfieldBirminghamEuropeEurope/London156614672864930002016-07-01
+173.37.138.15.1462824471379616212.77.221.73QAooredoo.comisp\NOoredooDohaBaladiyat ad DawhahAsiaAsia/Qatar\N14672777600002016-07-01
+173.37.138.15.1462879109316584171.109.232.239CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanningGuangxi Zhuang Autonomous RegionAsiaAsia/Shanghai314672487780002016-07-01
+173.37.138.15.146291456637697165.184.92.131UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCMarionSCNorth AmericaAmerica/New_York111114673388200002016-07-01
+173.37.138.15.146306363430791437.58.166.123FRrmi.frbiz\NADISTA\N\NEuropeEurope/Paris1714672732020002016-07-01
+173.37.138.15.1463230376937231101.222.228.224INaircel.comisp\NAircel LtdPudukkottaiTamil NaduAsiaAsia/Kolkata21214672856290002016-07-01
+173.37.138.15.146354367196664159.12.187.126KRkt.comisp\Nkt corpIncheonIncheonAsiaAsia/Seoul34114673473070002016-07-01
+173.37.138.15.1463546282578925106.6.55.41CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanchangJiangxiAsiaAsia/Shanghai314673462470002016-07-01
+173.37.138.15.1463745457353086120.60.35.124INmtnl.net.inisp\NMahanagar Telephone Nigam Limited\N\NAsiaAsia/Kolkata670314673542690002016-07-01
+173.37.138.15.1463819321762068180.183.20.184TH3bb.co.thisp\NTriple T Broadband Company Limited (PCL)\N\NAsiaAsia/Bangkok314672713630002016-07-01
+173.37.138.15.1463964604147693221.1.200.242CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314673552200002016-07-01
+173.37.138.15.1464001376776421120.85.81.252CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai514673538930002016-07-01
+173.37.138.15.1464006852037707195.160.233.252UAsoftserveinc.combiz\NSoftServe Inc\N\NEurope\N8214673469550002016-07-01
+173.37.138.15.1464131658805434203.161.148.30AUtpg.com.auisp\NTPG Internet Pty LtdMelbourneVICOceaniaAustralia/Melbourne4351814672533930002016-07-01
+173.37.138.15.1464136628093872203.19.88.130AUtomago.com.aubiz\NTomagoThorntonNSWOceaniaAustralia/Sydney4514673240340002016-07-01
+173.37.138.15.1464255238968434182.19.82.138INfabdeal.combiz\NFABDEALNew DelhiNational Capital Territory of DelhiAsiaAsia/Kolkata\N14673499980002016-07-01
+173.37.138.15.1464832169196023117.136.75.74CNchinamobileltd.comisp\NChina Mobile LimitedFuzhouFujianAsiaAsia/Shanghai214673322890002016-07-01
+173.37.138.15.1464851887591289117.223.120.87INbsnl.co.inisp\NBSNLBengaluruKarnatakaAsiaAsia/Kolkata150014673548010002016-07-01
+173.37.138.15.1464851986559790220.135.41.196TWcht.com.twisp\NChunghwa Telecom Co., Ltd\N\NAsiaAsia/Taipei89014673545330002016-07-01
+173.37.138.15.1465797566282667157.2.11.254JPnetone.co.jpbiz\NNet One Systems Co.,LtdTokyoTokyoAsiaAsia/Tokyo10714672653420002016-07-01
+173.37.138.15.1466127415657452180.115.191.156CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314673373370002016-07-01
+173.37.138.15.1466128519715173202.19.227.74JPiij.ad.jpisp\NInternet Initiative Japan Inc.TokyoTokyoAsiaAsia/Tokyo9614673529140002016-07-01
+173.37.138.15.146680212238001472.163.217.105INcisco.combiz\NCisco Systems, IncSholinganallurTamil NaduAsiaAsia/Kolkata6500214672914150002016-07-01
+173.37.138.15.1467033854259320185.32.8.50SEconnectel.sebiz\NConnectel ABStockholmStockholmEuropeEurope/Stockholm214672910910002016-07-01
+173.37.138.15.146711112946416549.201.68.80INtatateleservices.comisp\NTata Teleservices LimitedMumbaiMaharashtraAsiaAsia/Kolkata714673402380002016-07-01
+173.37.138.15.1467212833749555202.174.93.103INgloballogic.combiz\NGlobalLogicNew DelhiNational Capital Territory of DelhiAsiaAsia/Kolkata103714672973380002016-07-01
+173.37.138.15.146724317453943354.84.227.163USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672448790002016-07-01
+173.37.138.15.146724464774701864.134.240.236USatt.comisp\NAT&T\N\NNorth America\N15975114672452910002016-07-01
+173.37.138.15.1467246080674774212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614672460820002016-07-01
+173.37.138.15.146724739990510276.176.95.100UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCFallbrookCANorth AmericaAmerica/Los_Angeles111114672474020002016-07-01
+173.37.138.15.1467249285300848128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672492860002016-07-01
+173.37.138.15.1467252702479212202.246.252.97JPhitachi.co.jpbiz\NHitachi, LtdTokyoTokyoAsiaAsia/Tokyo3414672527770002016-07-01
+173.37.138.15.1467253400839955180.122.138.181CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314672541180002016-07-01
+173.37.138.15.1467254927006252137.81.15.48USwisc.edubiz\NUniversity of WisconsinSuperiorWINorth AmericaAmerica/Chicago3962314672549270002016-07-01
+173.37.138.15.146725516005659850.16.243.133USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672551600002016-07-01
+173.37.138.15.1467256429326377119.72.192.3JPsoftbank.jpisp\NSoftBank Group CorpTokyoTokyoAsiaAsia/Tokyo7314672564330002016-07-01
+173.37.138.15.1467257209013595218.88.46.209CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChengduSichuanAsiaAsia/Shanghai314672579550002016-07-01
+173.37.138.15.146725845195096354.208.223.229USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672590970002016-07-01
+173.37.138.15.146725864353136966.249.88.123USgoogle.comisp\NGoogle IncMountain ViewCANorth AmericaAmerica/Los_Angeles11980514672586460002016-07-01
+173.37.138.15.1467261605222440203.35.82.174AUcom.aubiz\NParallels IP Holdings GmbHSt KildaVICOceaniaAustralia/Melbourne46114673362120002016-07-01
+173.37.138.15.146726196604603049.104.27.61JPntt-global.comisp\NNippon Telegraph and Telephone CorporationHanabatachoKumamotoAsiaAsia/Tokyo\N14672619720002016-07-01
+173.37.138.15.1467262734455390221.246.250.70JParteria-net.comisp\N\NTokyoTokyoAsiaAsia/Tokyo\N14673543400002016-07-01
+173.37.138.15.1467264523552929173.36.55.69UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672645580002016-07-01
+173.37.138.15.1467268218725832180.179.118.244INnetmagicians.combiz\NMehratex India Pvt Ltd\N\NAsiaAsia/Kolkata414672684660002016-07-01
+173.37.138.15.1467268273211583117.200.124.133INbsnl.co.inisp\NBSNLShimogaKarnatakaAsiaAsia/Kolkata150014672682790002016-07-01
+173.37.138.15.146726829870025414.152.68.104CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai314672683010002016-07-01
+173.37.138.15.146726870201505659.178.59.246INbol.net.inisp\NMTNL Mahanagar Telephone Nigam Limited\N\NAsiaAsia/Kolkata814114672687090002016-07-01
+173.37.138.15.1467269021201996220.164.44.229CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedKunmingYunnanAsiaAsia/Shanghai314672690670002016-07-01
+173.37.138.15.1467269160576814212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614672691610002016-07-01
+173.37.138.15.1467269520506675212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614672695210002016-07-01
+173.37.138.15.1467269626500136119.29.151.201CNtencent.comisp\NTencent Technology (Shenzhen) Co., Ltd.BeijingBeijingAsiaAsia/Shanghai23614672699140002016-07-01
+173.37.138.15.1467270341846261173.36.55.69UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672703630002016-07-01
+173.37.138.15.1467270672357456137.81.15.48USwisc.edubiz\NUniversity of WisconsinSuperiorWINorth AmericaAmerica/Chicago3962314672706720002016-07-01
+173.37.138.15.146727244174304578.190.251.43TRttnet.com.trisp\NTTNETIstanbulIstanbulAsiaEurope/Istanbul8214672741810002016-07-01
+173.37.138.15.146727290682934537.49.141.200DKnianet.dkisp\NNianet A/SSkanderborgCentral JutlandEuropeEurope/Copenhagen614672729070002016-07-01
+173.37.138.15.1467273060449367182.68.22.229INairtel.comisp\NBharti Enterprises LtdDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata47714672734410002016-07-01
+173.37.138.15.146727357127242495.213.183.147RUselectel.orgisp\NSelectel Ltd\N\NEurope\N\N14672735710002016-07-01
+173.37.138.15.1467274854885063123.180.244.242CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314672749000002016-07-01
+173.37.138.15.14672765403551761.55.193.75VNfpt.com.vnisp\NFPTHanoiThanh Pho Ha NoiAsiaAsia/Ho_Chi_Minh218614672765430002016-07-01
+173.37.138.15.146727844689438089.14.69.52DEtelefonica.comisp\Ntelefonica\N\NEurope\N193314672784490002016-07-01
+173.37.138.15.146727927295834954.223.38.87CNchinanetcenter.comisp\N\NBeijingBeijingAsiaAsia/Shanghai7214672793660002016-07-01
+173.37.138.15.146727950246570136.35.30.173CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHefeiAnhuiAsiaAsia/Shanghai314672801930002016-07-01
+173.37.138.15.1467279556596118106.220.56.60INairtel.comisp\NBharti Enterprises LtdHyderabad\NAsiaAsia/Kolkata47714673547130002016-07-01
+173.37.138.15.146728061998482241.164.192.74ZAneotel.co.zaisp\NNeotelCape TownProvince of the Western CapeAfricaAfrica/Johannesburg44414672806210002016-07-01
+173.37.138.15.1467280620566312212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614672806210002016-07-01
+173.37.138.15.1467281615824607109.188.124.21RUmegafon.ruisp\NMegaFonMoscowMoscowEuropeEurope/Moscow7614672816290002016-07-01
+173.37.138.15.146728166075825231.149.115.42NLkpn.comisp\NKPN\N\NEuropeEurope/Amsterdam319714672817320002016-07-01
+173.37.138.15.1467283102864539202.56.198.206INairtel.comisp\NBharti Enterprises LtdHyderabad\NAsiaAsia/Kolkata47714672834460002016-07-01
+173.37.138.15.146728341755480082.158.67.171ESono.comisp\NCABLEUROPA, S.A.U\N\NEurope\N1521914672834180002016-07-01
+173.37.138.15.146728552334705478.46.91.238DEhetzner.deisp\NHetzner Online AG\N\NEurope\N4214672860700002016-07-01
+173.37.138.15.1467285840628374212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614672858420002016-07-01
+173.37.138.15.146728735718977152.9.162.250USamazon.comisp\NAmazon.com, IncSan JoseCANorth AmericaAmerica/Los_Angeles1248614672873660002016-07-01
+173.37.138.15.146728773813582952.9.162.250USamazon.comisp\NAmazon.com, IncSan JoseCANorth AmericaAmerica/Los_Angeles1248614672877770002016-07-01
+173.37.138.15.1467288689473424109.26.178.98FRaltice.netisp\NAltice Africa SARLVaulx-en-VelinAuvergne-Rhone-AlpesEuropeEurope/Paris114672886900002016-07-01
+173.37.138.15.1467289860434753212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614672898610002016-07-01
+173.37.138.15.1467289920422513212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614672899210002016-07-01
+173.37.138.15.1467290022103872198.140.134.12CAcogeco.caisp\NCOGECO IncMontrealQCNorth AmericaAmerica/Toronto12145314672900220002016-07-01
+173.37.138.15.146729152291314085.42.221.162ITtelecomitalia.comisp\NTelecom Italia S.p.A\N\NEuropeEurope/Rome1814672916530002016-07-01
+173.37.138.15.1467292038329169117.114.147.147CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedBeijingBeijingAsiaAsia/Shanghai314672920900002016-07-01
+173.37.138.15.1467292761310505132.229.43.50NLleidenuniv.nlbiz\NUniversiteit LeidenLeidenSouth HollandEuropeEurope/Amsterdam3114672927610002016-07-01
+173.37.138.15.1467293787499422186.101.94.50ECtelconet.netisp\NTelconet S.AGuayaquilProvincia del GuayasSouth AmericaAmerica/Guayaquil191214672937910002016-07-01
+173.37.138.15.1467294180449873212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614672941810002016-07-01
+173.37.138.15.1467294424814593217.91.69.241DEtelekom.comisp\NDeutsche Telkom Ag\N\NEurope\N9914672944280002016-07-01
+173.37.138.15.1467295094421318168.235.194.181USquantil.comisp\N\NPasadenaCANorth AmericaAmerica/Los_Angeles\N14672950970002016-07-01
+173.37.138.15.1467297434427263184.2.109.72UScenturylink.comisp\NCenturyLink, Inc.GardnerKSNorth AmericaAmerica/Chicago712014672974910002016-07-01
+173.37.138.15.1467298733793398101.222.175.247INaircel.comisp\NAircel LtdKolkataWest BengalAsiaAsia/Kolkata21214672995140002016-07-01
+173.37.138.15.1467302548149281194.178.124.235USverizonenterprise.comisp\NVerizon\NPANorth AmericaAmerica/New_York\N14673026960002016-07-01
+173.37.138.15.14673028521491961.39.20.250INvodafone.inisp\NVodafone India Limited\NTamil NaduAsiaAsia/Kolkata19714673028590002016-07-01
+173.37.138.15.146730551507185424.94.72.33UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCMililani TownHINorth AmericaPacific/Honolulu111114673059080002016-07-01
+173.37.138.15.146730629370969669.247.15.192UScomcast.comisp\NComcast CorporationMadisonTNNorth AmericaAmerica/Chicago45864214673093210002016-07-01
+173.37.138.15.1467306654653514106.219.26.146INairtel.comisp\NBharti Enterprises LtdDehradunUttarakhandAsiaAsia/Kolkata47714673067460002016-07-01
+173.37.138.15.1467306956989556107.21.69.153USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614673070010002016-07-01
+173.37.138.15.146730775488014172.163.217.105INcisco.combiz\NCisco Systems, IncSholinganallurTamil NaduAsiaAsia/Kolkata6500214673077620002016-07-01
+173.37.138.15.1467308843085930192.136.109.21USsyringanetworks.netisp\NSyringa NetworksIdaho FallsIDNorth AmericaAmerica/Boise4014673090110002016-07-01
+173.37.138.15.1467309138037662212.179.21.194ILbezeq.co.ilisp\NBezeq The Israel Telecommunication Corp. Ltd.\N\NAsiaAsia/Jerusalem20414673091390002016-07-01
+173.37.138.15.1467313796683367137.81.15.48USwisc.edubiz\NUniversity of WisconsinSuperiorWINorth AmericaAmerica/Chicago3962314673137970002016-07-01
+173.37.138.15.1467314849850265201.47.43.188BRvivendi.comisp\NVivendiSao JoseSanta CatarinaSouth AmericaAmerica/Sao_Paulo24214673148530002016-07-01
+173.37.138.15.1467318900621641212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614673189010002016-07-01
+173.37.138.15.146731978407917167.190.99.213UScomcast.comisp\NComcast CorporationColorado SpringsCONorth AmericaAmerica/Denver45864214673200630002016-07-01
+173.37.138.15.146732028121185087.180.85.199DEtelekom.comisp\NDeutsche Telkom AgErdingBavariaEuropeEurope/Berlin9914673202810002016-07-01
+173.37.138.15.146732174558898369.194.133.98USswitchnap.comisp\NSwitch, Las Vegas\N\NNorth America\N3114673217460002016-07-01
+173.37.138.15.1467323272455225132.255.144.106BRosirnet.com.brbiz\N\N\N\NSouth America\N\N14673432270002016-07-01
+173.37.138.15.1467325860456365212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614673258610002016-07-01
+173.37.138.15.1467333485483882108.171.131.169UScisco.combiz\NCisco Systems, IncElk Grove VillageILNorth AmericaAmerica/Chicago6500214673334880002016-07-01
+173.37.138.15.146733582007451924.251.68.229UScox.comisp\NCox Communications, IncTucsonAZNorth AmericaAmerica/Phoenix7058914673382700002016-07-01
+173.37.138.15.1467335914690859202.224.137.11JPiij.ad.jpisp\NInternet Initiative Japan Inc.\N\NAsiaAsia/Tokyo9614673359390002016-07-01
+173.37.138.15.1467336052014369210.160.8.66JPntt-global.comisp\NNippon Telegraph and Telephone CorporationYokohamaKanagawaAsiaAsia/Tokyo\N14673360780002016-07-01
+173.37.138.15.146733647527297472.69.2.234USverizon.comisp\NVerizonBrooklynNYNorth AmericaAmerica/New_York16437814673367270002016-07-01
+173.37.138.15.146733697781039193.115.29.124RObalticservers.eubiz\N\N\N\NEuropeEurope/Bucharest\N14673369860002016-07-01
+173.37.138.15.146733756242047370.239.14.140USatt.comisp\NAT&TBeachwoodOHNorth AmericaAmerica/New_York15975114673376010002016-07-01
+173.37.138.15.14673385639468575.0.72.65SYste.gov.syisp\N\N\N\NAsiaAsia/Damascus114673385680002016-07-01
+173.37.138.15.146733888226862849.98.147.86JPntt-global.comisp\NNippon Telegraph and Telephone CorporationTokyoTokyoAsiaAsia/Tokyo\N14673388840002016-07-01
+173.37.138.15.1467339268632884107.198.91.167USatt.comisp\NAT&TUnion CityCANorth AmericaAmerica/Los_Angeles15975114673392680002016-07-01
+173.37.138.15.1467340496595907180.43.32.103JPntt-global.comisp\NNippon Telegraph and Telephone Corporation\NTokyoAsiaAsia/Tokyo\N14673404990002016-07-01
+173.37.138.15.1467341020717751117.120.23.40SGsymantec.comisp\NSymantecSingapore\NAsiaAsia/Singapore1499514673410250002016-07-01
+173.37.138.15.1467341022028348115.65.165.31JPwakwak.ne.jpisp\Nntt-me corporationYokohamaKanagawaAsiaAsia/Tokyo514673410350002016-07-01
+173.37.138.15.1467342300565162212.144.115.158DEvodafone.deisp\NVodafone\N\NEurope\N193614673423010002016-07-01
+173.37.138.15.1467342439405406221.187.32.187JPntt-global.comisp\NNippon Telegraph and Telephone CorporationTokyoTokyoAsiaAsia/Tokyo\N14673424410002016-07-01
+173.37.138.15.1467342718638948108.12.203.122USverizon.comisp\NVerizonSaunderstownRINorth AmericaAmerica/New_York16437814673428420002016-07-01
+173.37.138.15.146734369133422766.102.7.211USgoogle.comisp\NGoogle Inc\N\NNorth America\N11980514673436940002016-07-01
+173.37.138.15.1467344252486161119.118.144.249CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShenyangLiaoningAsiaAsia/Shanghai314673442800002016-07-01
+173.37.138.15.146734476336993360.238.182.10JPbiglobe.co.jpisp\NNEC BIGLOBE, LtdTokyoTokyoAsiaAsia/Tokyo2914673447680002016-07-01
+173.37.138.15.146734478490798961.185.82.47CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedXi'anShaanxiAsiaAsia/Shanghai314673448390002016-07-01
+173.37.138.15.1467348105601249106.117.61.63CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314673482050002016-07-01
+173.37.138.15.1467349035318907221.230.211.144CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314673497200002016-07-01
+173.37.138.15.1467349060148173123.54.254.236CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedZhengzhouHenanAsiaAsia/Shanghai314673490660002016-07-01
+173.37.138.15.1467349541730995180.102.193.94CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314673502830002016-07-01
+173.37.138.15.146734989203233789.240.113.37GBtalktalkgroup.comisp\NTalkTalk Telecom Group PLC\N\NEuropeEurope/London3014673499120002016-07-01
+173.37.138.15.1467349933839465216.183.89.134CAblink.cabiz\NRogers CommunicationsScarboroughONNorth AmericaAmerica/Toronto1314673499360002016-07-01
+173.37.138.15.146735007716567866.249.83.234USgoogle.comisp\NGoogle IncPhiladelphiaPANorth AmericaAmerica/New_York11980514673500830002016-07-01
+173.37.138.15.1467350281439728211.31.193.150AUoptus.com.auisp\NOptusCraigieburnVICOceaniaAustralia/Melbourne448414673521030002016-07-01
+173.37.138.15.1467350287289303187.201.41.107MXamericamovil.comisp\NAmérica Móvil\N\NNorth America\N11614673502880002016-07-01
+173.37.138.15.1467351316509181131.248.58.40JPctc-g.co.jpbiz\NITOCHU Techno-Solutions CorporationHatogaya-honchoSaitamaAsiaAsia/Tokyo28214673513200002016-07-01
+173.37.138.15.1467351430823655175.184.246.134TWchinatrust.com.twbiz\NCHINATRUST COMMERCIAL BANKTaipei\NAsiaAsia/Taipei15514673517290002016-07-01
+173.37.138.15.146735155630776364.233.173.249USgoogle.comisp\NGoogle Inc\N\NNorth America\N11980514673515590002016-07-01
+173.37.138.15.146735157984016659.58.141.218CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedFuzhouFujianAsiaAsia/Shanghai314673527820002016-07-01
+173.37.138.15.1467351960914251222.131.157.126CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedBeijingBeijingAsiaAsia/Shanghai514673534760002016-07-01
+173.37.138.15.1467353557235606117.247.186.21INlykapack.combiz\N\NKochiKeralaAsiaAsia/Kolkata\N14673535670002016-07-01
+173.37.138.15.1467354228870565180.179.118.205INnetmagicians.combiz\NMehratex India Pvt Ltd\N\NAsiaAsia/Kolkata414673542910002016-07-01
+173.37.138.15.1467354867758205137.81.15.48USwisc.edubiz\NUniversity of WisconsinSuperiorWINorth AmericaAmerica/Chicago3962314673548680002016-07-01
+173.37.145.113.1467266613051485121.216.142.68AUtelstra.com.auisp\NTelstraMaroubraNSWOceaniaAustralia/Sydney37214672666940002016-07-01
+173.37.145.113.146729652451381631.185.177.130GBbtplc.comisp\NBT Group plc\N\NEuropeEurope/London314672965320002016-07-01
+173.37.145.113.1467320836531152185.26.180.67ZAopera.comisp\NOPERA SOFTWARE ASA\N\NAfricaAfrica/Johannesburg116614673208390002016-07-01
+173.37.145.12.146726227363601178.189.43.157TRttnet.com.trisp\NTTNET\N\NAsiaEurope/Istanbul8214672942240002016-07-01
+173.37.145.12.1467337850896433123.51.222.64TWfetnet.netisp\NFar Eastone Telecommunications Co., LtdTaipei\NAsiaAsia/Taipei43814673462270002016-07-01
+173.37.145.14.146733913189499068.194.65.41UScablevision.comisp\NCablevision Systems CorpBridgewaterNJNorth AmericaAmerica/New_York579714673391330002016-07-01
+173.37.145.6.1467315576581069186.32.6.84CRmillicom.comisp\NMillicom Telecommunications SASan JoséProvincia de San JoseNorth AmericaAmerica/Costa_Rica12614673155780002016-07-01
+173.37.145.6.1467336414637273211.202.0.9KRsk.comisp\NSK\N\NAsiaAsia/Seoul38114673364230002016-07-01
+173.37.145.6.1467341317188360210.71.217.252TWcht.com.twisp\NChunghwa Telecom Co., LtdTaipei\NAsiaAsia/Taipei89014673526030002016-07-01
+173.37.145.7.1467294856545956193.109.88.125ATwkstmk.atbiz\NWirtschaftskammer Steiermark\N\NEuropeEurope/Vienna2314672948580002016-07-01
+173.37.145.7.1467341096951924218.47.118.71JPntt-global.comisp\NNippon Telegraph and Telephone Corporation\N\NAsiaAsia/Tokyo\N14673416470002016-07-01
+173.37.145.89.146732487031687664.126.156.107USfsr.combiz\NFirst Step InternetSaint MariesIDNorth AmericaAmerica/Los_Angeles7214673271020002016-07-01
+173.37.145.89.146732487170063624.114.43.39CArogers.comisp\NRogers Plus Communications\NABNorth AmericaAmerica/Edmonton51807814673249250002016-07-01
+173.37.145.89.146732630603172869.162.8.80USmgmmirage.netbiz\NMGM Resorts International Operations, IncLas VegasNVNorth AmericaAmerica/Los_Angeles11614673263080002016-07-01
+173.37.145.89.1467326789477113209.136.235.13UStwtelecom.comisp\Ntw telecomAlbuquerqueNMNorth AmericaAmerica/Denver298814673267940002016-07-01
+173.37.145.89.1467327113881206197.239.7.51UGairtel.comisp\NBharti Enterprises LtdKampalaCentral RegionAfricaAfrica/Kampala47714673289050002016-07-01
+173.37.145.89.1467327815991603174.116.90.199CArogers.comisp\NRogers Plus Communications\N\NNorth America\N51807814673278600002016-07-01
+173.37.145.89.146732789201932754.190.95.228USamazon.comisp\NAmazon.com, IncBoardmanORNorth AmericaAmerica/Los_Angeles1248614673279040002016-07-01
+173.37.145.89.146732794539968889.139.131.248ILelron.netbiz\NElron Electronic Industries Ltd\N\NAsiaAsia/Jerusalem6014673279460002016-07-01
+173.37.145.90.1441286787496553194.25.155.1DEkvwl.debiz\Nkvwl\N\NEurope\N814672877630002016-07-01
+173.37.145.90.144822697250848797.77.204.105UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCCypressTXNorth AmericaAmerica/Chicago111114673189600002016-07-01
+173.37.145.90.1459341480347603212.175.100.148TRttnet.com.trisp\NTTNET\N\NAsiaEurope/Istanbul8214672925610002016-07-01
+173.37.145.90.14604601883325918.37.233.27USquantil.comisp\N\NPasadenaCANorth AmericaAmerica/Los_Angeles\N14673536400002016-07-01
+173.37.145.90.1464331013122951210.236.162.36JPztv.co.jpisp\NZTV Co., Ltd\N\NAsiaAsia/Tokyo314672751150002016-07-01
+173.37.145.90.1465806827930564192.68.151.152GBdimensiondata.comisp\NDimension DataLondon\NEuropeEurope/London11014672943120002016-07-01
+173.37.145.90.146622590973628564.233.173.253USgoogle.comisp\NGoogle Inc\N\NNorth America\N11980514673545800002016-07-01
+173.37.145.90.146628652359590431.223.178.140PScitynet.psbiz\N\N\N\NAsia\N\N14673383110002016-07-01
+173.37.145.90.146643395546995565.196.97.6USverizonenterprise.comisp\NVerizonChantillyVANorth AmericaAmerica/New_York\N14673171260002016-07-01
+173.37.145.90.146659926104012736.49.100.34CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChangchunJilinAsiaAsia/Shanghai314673555460002016-07-01
+173.37.145.90.146660237786186580.14.26.57FRorange.comisp\NORANGE\N\NEuropeEurope/Paris156614672896330002016-07-01
+173.37.145.90.1466662460432736202.167.192.36INorange.comisp\NORANGENew DelhiNational Capital Territory of DelhiAsiaAsia/Kolkata156614672680520002016-07-01
+173.37.145.90.1466667553482676223.153.8.52CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChangshaHunanAsiaAsia/Shanghai314673323190002016-07-01
+173.37.145.90.1467127590508192209.203.79.110USkia.combiz\NKIAIrvineCANorth AmericaAmerica/Los_Angeles9914672916040002016-07-01
+173.37.145.90.14671459710288638.37.233.71USquantil.comisp\N\NPasadenaCANorth AmericaAmerica/Los_Angeles\N14673534710002016-07-01
+173.37.145.90.1467172988728955121.245.143.79INtatacommunications.comisp\NTata Communications LtdDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata188414673502430002016-07-01
+173.37.145.90.1467227866968688173.36.240.174UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673080320002016-07-01
+173.37.145.90.1467229971321687173.179.24.92CAquebecor.comisp\NQuebecorChamblyQCNorth AmericaAmerica/Toronto18714672448590002016-07-01
+173.37.145.90.1467252383261345125.85.90.152CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChongqingChongqingAsiaAsia/Shanghai314672523910002016-07-01
+173.37.145.90.1467252532961009171.101.101.195THtrueinternet.co.thisp\NTrue Internet Co., LtdBangkokBangkokAsiaAsia/Bangkok7914672769930002016-07-01
+173.37.145.90.1467254021618835122.179.178.210INairtel.comisp\NBharti Enterprises LtdMumbaiMaharashtraAsiaAsia/Kolkata47714672540270002016-07-01
+173.37.145.90.1467258738783565171.8.107.40CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedZhengzhouHenanAsiaAsia/Shanghai314672588550002016-07-01
+173.37.145.90.146726352693886566.44.187.46USnutelecom.netisp\NNew Ulm Telecom, IncGoodhueMNNorth AmericaAmerica/Chicago1814672635360002016-07-01
+173.37.145.90.1467263864036826124.112.226.241CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHefeiAnhuiAsiaAsia/Shanghai314673434240002016-07-01
+173.37.145.90.1467264912710850121.97.120.109PHbayan.com.phisp\NBayan Telecommunications, IncQuezon CityNational Capital RegionAsiaAsia/Manila119714672659340002016-07-01
+173.37.145.90.1467270525891885216.158.203.138USenzu.comisp\NENZU INC.Delray BeachFLNorth AmericaAmerica/New_York514672705320002016-07-01
+173.37.145.90.146727248679158289.212.162.24SIt-2.netisp\NT-2 d.o.oLjubljanaLjubljanaEuropeEurope/Ljubljana169314672733430002016-07-01
+173.37.145.90.1467273273150163202.94.147.222JPsonybsc.combiz\NSony Business Solutions CorporationTokyoTokyoAsiaAsia/Tokyo\N14672732750002016-07-01
+173.37.145.90.1467275968134630182.71.186.49INairtel.comisp\NBharti Enterprises Ltd\N\NAsiaAsia/Kolkata47714672815510002016-07-01
+173.37.145.90.1467277878161700195.33.34.79NLwolters-kluwer.combiz\NWolters Kluwer\N\NEurope\N914672786290002016-07-01
+173.37.145.90.146727801333379282.122.148.162FRorange.comisp\NORANGE\N\NEuropeEurope/Paris156614672780330002016-07-01
+173.37.145.90.1467278173898473122.180.255.213INairtel.comisp\NBharti Enterprises LtdDwarkaGujaratAsiaAsia/Kolkata47714672781790002016-07-01
+173.37.145.90.1467278474385494140.207.147.34CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai514673534030002016-07-01
+173.37.145.90.146727929168274762.134.62.230EUbtplc.comisp\NBT Group plc\N\NEurope\N314672792920002016-07-01
+173.37.145.90.146728145083027680.215.240.92FRbouyguestelecom.frisp\NBouygues Telecom\N\NEuropeEurope/Paris121914672845780002016-07-01
+173.37.145.90.1467282195752197217.9.60.197DEversatel.deisp\NVersatel GmbH\N\NEurope\N32514672822280002016-07-01
+173.37.145.90.146728295359062686.151.111.240GBbtplc.comisp\NBT Group plcLondon\NEuropeEurope/London314672891580002016-07-01
+173.37.145.90.146728480531176689.139.131.248ILelron.netbiz\NElron Electronic Industries Ltd\N\NAsiaAsia/Jerusalem6014672848060002016-07-01
+173.37.145.90.146728588827893784.101.110.139FRaltice.netisp\NAltice Africa SARLChevreuseÎle-de-FranceEuropeEurope/Paris114672866520002016-07-01
+173.37.145.90.146728668801871389.247.137.124DEversatel.deisp\NVersatel GmbH\N\NEurope\N32514672867210002016-07-01
+173.37.145.90.1467288122008644121.61.84.152CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWuhanHubeiAsiaAsia/Shanghai314672881350002016-07-01
+173.37.145.90.146728812875512289.139.131.248ILelron.netbiz\NElron Electronic Industries Ltd\N\NAsiaAsia/Jerusalem6014672881290002016-07-01
+173.37.145.90.146729274928617391.225.19.229GBhants.gov.ukbiz\NHampshire County CouncilSouthamptonSouthamptonEuropeEurope/London161714672927500002016-07-01
+173.37.145.90.1467293233077499101.206.130.212CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChengduSichuanAsiaAsia/Shanghai314672932630002016-07-01
+173.37.145.90.146729343707524380.26.88.15EStelefonica.comisp\Ntelefonica\N\NEurope\N193314672934640002016-07-01
+173.37.145.90.1467295642598162120.52.73.25CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedBeijingBeijingAsiaAsia/Shanghai514672956580002016-07-01
+173.37.145.90.1467295985061102222.42.77.182CNchinatietong.comisp\NChina Tietong Telecommunications CorporationBeijingBeijingAsiaAsia/Shanghai814672960020002016-07-01
+173.37.145.90.146729616373852962.23.44.138FRcolt.netisp\NColt Technology Services\N\NEuropeEurope/Paris113414673031150002016-07-01
+173.37.145.90.1467302286164654107.77.87.79USatt.comisp\NAT&T\N\NNorth America\N15975114673022890002016-07-01
+173.37.145.90.1467302754937827192.54.144.229FRthalesgroup.combiz\NThales Group\N\NEuropeEurope/Paris164914673028130002016-07-01
+173.37.145.90.14673066458538494.15.190.186USlevel3.comisp\NLevel 3 Communications\N\NNorth America\N582614673073050002016-07-01
+173.37.145.90.146730781992096280.7.205.200GBlibertyglobal.comisp\NLiberty GlobalLeicesterLeicesterEuropeEurope/London3014673225100002016-07-01
+173.37.145.90.146730828335168788.138.184.3FRaltice.netisp\NAltice Africa SARLEgletonsAquitaine-Limousin-Poitou-CharentesEuropeEurope/Paris114673082850002016-07-01
+173.37.145.90.146731449508866346.184.74.200SAatheeb.combiz\NAtheeb Group\N\NAsiaAsia/Riyadh3714673144980002016-07-01
+173.37.145.90.1467314844922959198.206.243.225USsimpson.edubiz\NSimpson CollegeIndianolaIANorth AmericaAmerica/Chicago197014673162490002016-07-01
+173.37.145.90.1467320033516955173.224.3.130UShctc.netisp\NHill Country Telephone CooperativeKerrvilleTXNorth AmericaAmerica/Chicago423814673200800002016-07-01
+173.37.145.90.1467324500532650167.127.104.141USallstate.combiz\NThe Allstate CorporationNorthbrookILNorth AmericaAmerica/Chicago7664514673245710002016-07-01
+173.37.145.90.1467325641496245164.153.246.242USteloip.comisp\NTELoIP INC.BurlingtonNJNorth AmericaAmerica/New_York3314673271400002016-07-01
+173.37.145.90.146732654587302568.100.228.73UScox.comisp\NCox Communications, IncFalls ChurchVANorth AmericaAmerica/New_York7058914673265510002016-07-01
+173.37.145.90.1467329169705343128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673291710002016-07-01
+173.37.145.90.1467329215273630190.102.146.226PEopticalip.com.pebiz\NOptical NetworksLimaProvincia de LimaSouth AmericaAmerica/Lima3314673303430002016-07-01
+173.37.145.90.14673320101845351.46.160.249THdtacnetwork.co.thisp\N\N\NChangwat Surat ThaniAsiaAsia/Bangkok\N14673320110002016-07-01
+173.37.145.90.146733204413966054.174.55.108USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614673320440002016-07-01
+173.37.145.90.1467332196726180173.25.204.88USmediacomcable.comisp\NMediacom Communications CorporationBerlinMDNorth AmericaAmerica/New_York614673335550002016-07-01
+173.37.145.90.1467333861988633190.197.62.136BZbelizetelemedia.netbiz\NBelize Telemedia LimitedBelize CityBelize DistrictNorth AmericaAmerica/Belize20414673338630002016-07-01
+173.37.145.90.1467334423337210223.196.254.195INiclnet.orgbiz\N\N\N\NAsiaAsia/Kolkata914673344580002016-07-01
+173.37.145.90.1467335111480725115.150.14.73CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanchangJiangxiAsiaAsia/Shanghai314673351230002016-07-01
+173.37.145.90.146733596247522388.171.144.179FRiliad.frisp\NILIADAvonÎle-de-FranceEuropeEurope/Paris3114673359680002016-07-01
+173.37.145.90.146733637475948737.252.225.18FRanexia.atbiz\NANEXIA ParisÎle-de-FranceEuropeEurope/Paris814673363780002016-07-01
+173.37.145.90.14673377257317414.71.102.218USlevel3.comisp\NLevel 3 CommunicationsProspect HeightsILNorth AmericaAmerica/Chicago582614673377400002016-07-01
+173.37.145.90.1467337874937491108.206.197.160USatt.comisp\NAT&TNapervilleILNorth AmericaAmerica/Chicago15975114673378790002016-07-01
+173.37.145.90.146733873427276870.196.193.149USverizonwireless.comisp\NVerizon WirelessConnect with usDenverCONorth AmericaAmerica/Denver3280614673387370002016-07-01
+173.37.145.90.1467339247762034222.93.237.127CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314673392580002016-07-01
+173.37.145.90.1467339571392173101.227.64.13CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai314673409630002016-07-01
+173.37.145.90.1467339706281892113.246.59.165CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChangshaHunanAsiaAsia/Shanghai314673398190002016-07-01
+173.37.145.90.146733979447639897.91.144.40UScharter.comisp\NCharter Communications Operating, LLCChesterfieldMONorth AmericaAmerica/Chicago4269214673399090002016-07-01
+173.37.145.90.1467339896857686183.9.48.32CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai314673399050002016-07-01
+173.37.145.90.1467340563272185189.121.23.123BRamericamovil.comisp\NAmérica MóvilSão PauloSao PauloSouth AmericaAmerica/Sao_Paulo11614673441160002016-07-01
+173.37.145.90.1467341463693866201.231.164.154ARfibertel.com.arisp\NFibertel\N\NSouth America\N5565814673422530002016-07-01
+173.37.145.90.1467343142079952108.61.197.154GBchoopa.comisp\NCHOOPA LLC.London\NEuropeEurope/London2214673431430002016-07-01
+173.37.145.90.1467343370240452104.32.241.35UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCNorth HollywoodCANorth AmericaAmerica/Los_Angeles111114673433890002016-07-01
+173.37.145.90.146734345847086189.139.131.248ILelron.netbiz\NElron Electronic Industries Ltd\N\NAsiaAsia/Jerusalem6014673434590002016-07-01
+173.37.145.90.146734347766858873.162.15.243UScomcast.comisp\NComcast CorporationSunnyvaleCANorth AmericaAmerica/Los_Angeles45864214673435160002016-07-01
+173.37.145.90.1467343794839083182.48.158.4NZcompassnet.co.nzisp\NCompass Communications LtdAucklandAucklandOceaniaPacific/Auckland514673438860002016-07-01
+173.37.145.90.1467344192572558180.180.130.153THtot.co.thisp\NTOT\N\NAsiaAsia/Bangkok148714673443830002016-07-01
+173.37.145.90.1467344660106004222.127.171.245PHsalgroupco.combiz\N\N\N\NAsiaAsia/Manila\N14673456390002016-07-01
+173.37.145.90.1467344675522241152.216.15.5USirs.govbiz\NInternal Revenue ServiceWashingtonDCNorth AmericaAmerica/New_York2062114673446790002016-07-01
+173.37.145.90.14673448228929641.205.6.226CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuiyangGuizhouAsiaAsia/Shanghai314673450100002016-07-01
+173.37.145.90.1467344885352341219.140.191.138CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWuhanHubeiAsiaAsia/Shanghai314673450110002016-07-01
+173.37.145.90.146734503950253673.70.227.244UScomcast.comisp\NComcast Corporation\N\NNorth America\N45864214673560570002016-07-01
+173.37.145.90.1467346263783791203.21.151.14AUhunterwater.com.aubiz\NHunter Water CorporationNew LambtonNSWOceaniaAustralia/Sydney7614673462660002016-07-01
+173.37.145.90.1467346460148078119.136.120.96CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai314673465350002016-07-01
+173.37.145.90.1467346667071769175.8.24.149CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChangshaHunanAsiaAsia/Shanghai314673467900002016-07-01
+173.37.145.90.146734670832293669.31.136.206USinteliquent.comisp\NNOW . INTELIQUENTMcLeanVANorth AmericaAmerica/New_York\N14673467230002016-07-01
+173.37.145.90.1467347778191337117.22.175.193CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedXi'anShaanxiAsiaAsia/Shanghai314673477880002016-07-01
+173.37.145.90.146734814308076060.7.105.96CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314673481510002016-07-01
+173.37.145.90.1467348190875447113.161.204.188VNvnpt.vnisp\NVNPT HanoiThanh Pho Ha NoiAsiaAsia/Ho_Chi_Minh614673484220002016-07-01
+173.37.145.90.146734827454632149.15.36.106INiclnet.orgbiz\N\N\N\NAsiaAsia/Kolkata914673483110002016-07-01
+173.37.145.90.1467348502936669202.246.252.102JPhitachi.co.jpbiz\NHitachi, LtdTokyoTokyoAsiaAsia/Tokyo3414673490440002016-07-01
+173.37.145.90.1467350639330991116.224.42.108CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai314673507290002016-07-01
+173.37.145.90.1467350823917597106.39.99.134CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedBeijingBeijingAsiaAsia/Shanghai314673508750002016-07-01
+173.37.145.90.1467351293159292152.216.15.5USirs.govbiz\NInternal Revenue ServiceWashingtonDCNorth AmericaAmerica/New_York2062114673512960002016-07-01
+173.37.145.90.146735150999415362.100.255.186HUinfornax.hubiz\N\N\N\NEuropeEurope/Budapest3814673515280002016-07-01
+173.37.145.90.1467351675350548116.210.194.139CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWuhanHubeiAsiaAsia/Shanghai314673516880002016-07-01
+173.37.145.90.146735194770449912.250.212.250USatt.comisp\NAT&T\N\NNorth America\N15975114673519640002016-07-01
+173.37.145.90.146735219981864391.183.52.215BEbelgacom.comisp\NBelgacom S.A\N\NEuropeEurope/Brussels6014673522020002016-07-01
+173.37.145.90.1467352711782350117.218.59.181INbsnl.co.inisp\NBSNLCoimbatoreTamil NaduAsiaAsia/Kolkata150014673528480002016-07-01
+173.37.145.90.1467352791685248188.52.226.219SAstc.com.saisp\NSaudi Telecom CompanyKhulaysMakkah ProvinceAsiaAsia/Riyadh668914673527930002016-07-01
+173.37.145.90.1467353165378231202.195.129.247CNcernet.edu.cnisp\N\NSuzhouJiangsuAsiaAsia/Shanghai1414673532420002016-07-01
+173.37.145.90.146735323775343961.175.197.70CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314673532960002016-07-01
+173.37.145.90.1467353318700988117.201.93.35INbsnl.co.inisp\NBSNLAragharUttarakhandAsiaAsia/Kolkata150014673533500002016-07-01
+173.37.145.90.1467353628896501180.111.64.24CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314673536480002016-07-01
+173.37.145.90.1467353795253941106.66.96.237INiclnet.orgbiz\N\N\N\NAsiaAsia/Kolkata914673537960002016-07-01
+173.37.145.90.1467354048312968115.235.175.227CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWenzhouZhejiangAsiaAsia/Shanghai314673541780002016-07-01
+173.37.145.90.1467354230614041117.247.162.43INbsnl.co.inisp\NBSNLJaipurRajasthanAsiaAsia/Kolkata150014673542560002016-07-01
+173.37.145.90.1467354277459040119.235.50.4INvainavi.netisp\NVAINAVIGunturAndhra PradeshAsiaAsia/Kolkata\N14673542800002016-07-01
+173.37.145.90.1467354522663189106.76.115.1INiclnet.orgbiz\N\N\N\NAsiaAsia/Kolkata914673545240002016-07-01
+173.37.145.90.1467354552243977123.159.225.114CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314673546790002016-07-01
+173.37.145.90.1467355787790622223.176.150.103INairtel.comisp\NBharti Enterprises LtdDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata47714673557900002016-07-01
+173.37.145.91.1453884244689988182.171.83.197JPso-net.ne.jpisp\NSo-netTokyoTokyoAsiaAsia/Tokyo33814672663760002016-07-01
+173.37.145.91.1460637172774353201.243.225.121VEcantv.netisp\NCompania Anonima Nacional Telefonos de VenezuelaCaracasCapitalSouth AmericaAmerica/Caracas18172614672882190002016-07-01
+173.37.145.91.1462102714579124198.102.219.143USthewaltdisneycompany.combiz\NWalt Disney Co.\N\NNorth America\N114673447550002016-07-01
+173.37.145.91.1464804304751432117.139.205.250CNchinamobileltd.comisp\NChina Mobile LimitedChengduSichuanAsiaAsia/Shanghai214673505690002016-07-01
+173.37.145.91.146577799694825669.181.68.142UScomcast.comisp\NComcast CorporationSan FranciscoCANorth AmericaAmerica/Los_Angeles45864214672568670002016-07-01
+173.37.145.91.146598760009212791.179.173.173BEbelgacom.comisp\NBelgacom S.AKeerbergenFlandersEuropeEurope/Brussels6014673507240002016-07-01
+173.37.145.91.1466079696697197144.172.130.214CAquebecor.comisp\NQuebecorLavalQCNorth AmericaAmerica/Toronto18714673397940002016-07-01
+173.37.145.91.146613963386477858.140.90.50KRcnm.co.krisp\Nc&m co ltdSeoulSeoulAsiaAsia/Seoul814672526520002016-07-01
+173.37.145.91.1466410085332492202.83.18.77INacttv.inisp\NAtria Convergence Technologies Pvt. LtdBengaluruKarnatakaAsiaAsia/Kolkata1914672759000002016-07-01
+173.37.145.91.146644411239165538.104.27.114UScogentco.comisp\NCogent Communications, IncDenverCONorth AmericaAmerica/Denver53014673139190002016-07-01
+173.37.145.91.1466501034109713211.91.235.134CNchinatelecom-h.comisp\NChina Telecom Corporation Limited\N\NAsia\N314673449710002016-07-01
+173.37.145.91.1466517423760079106.112.173.179CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314673474740002016-07-01
+173.37.145.91.146655021052847969.161.24.146USalaskacommunications.comisp\NAlaska CommunicationsAnchorageAKNorth AmericaAmerica/Anchorage114673251390002016-07-01
+173.37.145.91.1466756820674643123.201.71.79INyoubroadband.inisp\NYOU Broadband & Cable India LimitedHyderabad\NAsiaAsia/Kolkata314672803610002016-07-01
+173.37.145.91.1466997753132997223.112.6.26CNchinamobileltd.comisp\NChina Mobile Limited\N\NAsia\N214673545900002016-07-01
+173.37.145.91.1467032442976069117.239.215.177INsupremegroup.co.inbiz\N\N\N\NAsia\N2814673488370002016-07-01
+173.37.145.91.1467032967511982144.49.98.1USbrocade.combiz\NBrocade Communications Systems, Inc.San JoseCANorth AmericaAmerica/Los_Angeles576214673561710002016-07-01
+173.37.145.91.1467116573777626192.54.144.229FRthalesgroup.combiz\NThales Group\N\NEuropeEurope/Paris164914672824200002016-07-01
+173.37.145.91.1467143453570312187.114.98.140BRvivendi.comisp\NVivendiCocalPiauiSouth AmericaAmerica/Fortaleza24214672489940002016-07-01
+173.37.145.91.146718948378409849.38.2.148INril.comisp\NReliance Industries Limited\N\NAsiaAsia/Kolkata1856314673506930002016-07-01
+173.37.145.91.1467204205804006212.30.132.2RUcomstar-r.rubiz\NMTS\N\NEurope\N114672738920002016-07-01
+173.37.145.91.146724443043667896.39.203.166UScharter.comisp\NCharter Communications Operating, LLCYakimaWANorth AmericaAmerica/Los_Angeles4269214672449850002016-07-01
+173.37.145.91.146724600478144864.102.215.220UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672462920002016-07-01
+173.37.145.91.1467248444523227107.167.108.174UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414672484660002016-07-01
+173.37.145.91.146725004990114452.90.166.103USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672511520002016-07-01
+173.37.145.91.146725265194076459.124.155.121TWcht.com.twisp\NChunghwa Telecom Co., Ltd\N\NAsiaAsia/Taipei89014672560550002016-07-01
+173.37.145.91.1467255619171605221.231.53.129CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314672557250002016-07-01
+173.37.145.91.146725683661798827.195.101.112CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314672568600002016-07-01
+173.37.145.91.1467257352070942210.212.249.130INbsnl.co.inisp\NBSNL\N\NAsia\N150014672577260002016-07-01
+173.37.145.91.146725780514132864.102.215.220UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672580870002016-07-01
+173.37.145.91.146725968422151164.102.215.220UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672599690002016-07-01
+173.37.145.91.1467262051065824182.71.110.2INairtel.comisp\NBharti Enterprises Ltd\N\NAsia\N47714673502760002016-07-01
+173.37.145.91.146726692738596614.98.59.31INtatateleservices.comisp\NTata Teleservices LimitedDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata714672691470002016-07-01
+173.37.145.91.1467268986671745123.252.235.242INtatateleservices.comisp\NTata Teleservices Limited\N\NAsiaAsia/Kolkata714672692980002016-07-01
+173.37.145.91.146726962634451827.156.206.211CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedFuzhouFujianAsiaAsia/Shanghai314672701200002016-07-01
+173.37.145.91.1467270717470904185.61.128.18RUigorsd.rubiz\N\N\N\NEurope\N114672707450002016-07-01
+173.37.145.91.1467271224641934187.114.77.93BRvivendi.comisp\NVivendiSorocabaSao PauloSouth AmericaAmerica/Sao_Paulo24214672712280002016-07-01
+173.37.145.91.146727391438761284.241.26.33IRrasana.netisp\NShatel\N\NAsiaAsia/Tehran10614672743130002016-07-01
+173.37.145.91.146727393844530461.156.32.131CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314672739480002016-07-01
+173.37.145.91.1467276168855999103.208.24.37THpop-idc.combiz\N\NBan Khlong PrawetBangkokAsiaAsia/Bangkok\N14672761710002016-07-01
+173.37.145.91.1467276218585812107.167.108.95UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414672762220002016-07-01
+173.37.145.91.1467276436590552183.144.219.216CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShaoxingZhejiangAsiaAsia/Shanghai314672764500002016-07-01
+173.37.145.91.146727734782105450.16.243.133USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672773480002016-07-01
+173.37.145.91.146727806544720550.16.243.133USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672780670002016-07-01
+173.37.145.91.1467279300987185160.211.126.42DEinteroute.comisp\NInteroute Communications LimitedDuisburgNorth Rhine-WestphaliaEuropeEurope/Berlin28714672793180002016-07-01
+173.37.145.91.1467279360308572111.224.85.65CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314672794160002016-07-01
+173.37.145.91.1467280638897804221.200.240.223CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShenyangLiaoningAsiaAsia/Shanghai314672809200002016-07-01
+173.37.145.91.1467282046935438116.197.184.14INjuniper.netbiz\NJuniper Networks IncBengaluruKarnatakaAsiaAsia/Kolkata530314672820510002016-07-01
+173.37.145.91.146728295526587961.138.58.26CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHarbinHeilongjiangAsiaAsia/Shanghai314672829690002016-07-01
+173.37.145.91.146728525527869854.208.223.229USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672865290002016-07-01
+173.37.145.91.1467286472792935141.91.210.210DEdataport.debiz\Ndataport.deHamburgHamburgEuropeEurope/Berlin1714672880700002016-07-01
+173.37.145.91.1467288870456822175.106.45.191AFinstatelecom.comisp\NInsta Telecom LimitedKabulKabulAsiaAsia/Kabul3814672890490002016-07-01
+173.37.145.91.146728915333743160.222.14.173CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedTaiyuanShanxiAsiaAsia/Shanghai314672891600002016-07-01
+173.37.145.91.146729052986598292.192.9.201DEqsc.deisp\NQSC AGBensheimHesseEuropeEurope/Berlin21414672905380002016-07-01
+173.37.145.91.1467290550366092199.64.6.153UShoneywell.combiz\NHoneywellMorristownNJNorth AmericaAmerica/New_York4613014672969730002016-07-01
+173.37.145.91.1467293146462443117.67.171.150CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHefeiAnhuiAsiaAsia/Shanghai314672932790002016-07-01
+173.37.145.91.146729405422364799.254.159.122CArogers.comisp\NRogers Plus CommunicationsTorontoONNorth AmericaAmerica/Toronto51807814672940650002016-07-01
+173.37.145.91.1467294580806157113.58.102.32CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHaikouHainanAsiaAsia/Shanghai314672947260002016-07-01
+173.37.145.91.146729468343622843.240.101.66BDmetrobd.netbiz\NMetroNet Bangladesh Limited\N\NAsiaAsia/Dhaka2914673546470002016-07-01
+173.37.145.91.146729545765429962.44.246.181FIdna.fiisp\NDNA VaeaeksyPäijänne TavastiaEuropeEurope/Helsinki5714672987530002016-07-01
+173.37.145.91.146729668340927162.134.45.132EUbtplc.comisp\NBT Group plc\N\NEurope\N314672966950002016-07-01
+173.37.145.91.1467298945748072120.52.73.127CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedBeijingBeijingAsiaAsia/Shanghai514672990320002016-07-01
+173.37.145.91.1467299603189030223.8.49.35CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedXi'anShaanxiAsiaAsia/Shanghai314673067310002016-07-01
+173.37.145.91.146729980436839182.110.142.234GBeasynet.comisp\NMDNXSloughSloughEuropeEurope/London17214672998960002016-07-01
+173.37.145.91.1467300312404498221.195.55.182CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314673003620002016-07-01
+173.37.145.91.146730115917548258.176.14.168HKhkbn.netisp\NHong Kong Broadband Network LimitedCentral District\NAsiaAsia/Hong_Kong203414673011600002016-07-01
+173.37.145.91.1467305147047868128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673051470002016-07-01
+173.37.145.91.146730588534101658.187.24.141VNfpt.com.vnisp\NFPTHanoiThanh Pho Ha NoiAsiaAsia/Ho_Chi_Minh218614673071200002016-07-01
+173.37.145.91.1467307193198646128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673071940002016-07-01
+173.37.145.91.1467308550756138180.76.15.147CNbaidu.comisp\NBaidu BeijingBeijingAsiaAsia/Shanghai24214673085510002016-07-01
+173.37.145.91.146730951064658488.217.181.99DEm-net.deisp\NM-net Telekommunikations GmbHMunichBavariaEuropeEurope/Berlin2414673095110002016-07-01
+173.37.145.91.146730962769891489.139.131.248ILelron.netbiz\NElron Electronic Industries Ltd\N\NAsiaAsia/Jerusalem6014673096280002016-07-01
+173.37.145.91.1467310811634551151.225.188.148GBsky.comisp\NSkySouthamptonSouthamptonEuropeEurope/London9527114673108160002016-07-01
+173.37.145.91.1467311035707345203.106.152.52MYtm.com.myisp\NTMGeorge TownPenangAsiaAsia/Kuala_Lumpur1041914673150890002016-07-01
+173.37.145.91.1467319698698492201.48.10.1BRalgartelecom.com.brisp\NAlgar Telecom\N\NSouth America\N2414673199970002016-07-01
+173.37.145.91.1467322346808206115.63.174.218CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedZhengzhouHenanAsiaAsia/Shanghai314673223470002016-07-01
+173.37.145.91.1467323385539995200.73.10.50CLintcomex.clbiz\NINTCOMEXSantiagoSantiago MetropolitanSouth AmericaAmerica/Santiago1914673234200002016-07-01
+173.37.145.91.1467323824372527213.111.176.251UAalnet.com.uabiz\N\N\N\NEurope\N\N14673247370002016-07-01
+173.37.145.91.146732680974772998.150.242.187UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCWahiawaHINorth AmericaPacific/Honolulu111114673408610002016-07-01
+173.37.145.91.1467328807579916177.13.233.21BRskybandalarga.com.brbiz\NSKY BelémParaSouth AmericaAmerica/Belem\N14673289430002016-07-01
+173.37.145.91.146733223104636270.78.240.52CAshaw.caisp\Nshaw\N\NNorth America\N61512714673322310002016-07-01
+173.37.145.91.1467332532942052171.15.132.172CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedZhengzhouHenanAsiaAsia/Shanghai314673325540002016-07-01
+173.37.145.91.1467332657290760195.169.119.33NLsurf.nlisp\NSURF\N\NEuropeEurope/Amsterdam3114673326570002016-07-01
+173.37.145.91.146733270134408354.84.227.163USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614673336340002016-07-01
+173.37.145.91.1467334177653134189.36.8.194BRcom.brbiz\N\N\N\NSouth America\N38514673341780002016-07-01
+173.37.145.91.146733465727321092.99.149.5AEetisalat.aeisp\NEtisalat\N\NAsiaAsia/Dubai151314673489660002016-07-01
+173.37.145.91.1467334658088782181.65.77.227PEtelefonica.comisp\Ntelefonica\N\NSouth AmericaAmerica/Lima193314673348200002016-07-01
+173.37.145.91.1467335611266005117.67.169.197CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHefeiAnhuiAsiaAsia/Shanghai314673357180002016-07-01
+173.37.145.91.146733568478103864.102.215.220UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673359700002016-07-01
+173.37.145.91.1467335768271322221.204.33.34CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedTaiyuanShanxiAsiaAsia/Shanghai314673359210002016-07-01
+173.37.145.91.1467335893159863164.116.193.41USkent.k12.wa.usbiz\NKENT PHOENIX ACADEMYKentWANorth AmericaAmerica/Los_Angeles190914673358940002016-07-01
+173.37.145.91.1467336309398050120.40.31.106CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedFuzhouFujianAsiaAsia/Shanghai314673364150002016-07-01
+173.37.145.91.1467336345756574173.30.218.48USmediacomcable.comisp\NMediacom Communications CorporationSanta Rosa BeachFLNorth AmericaAmerica/Chicago614673363480002016-07-01
+173.37.145.91.1467336493110720164.116.193.41USkent.k12.wa.usbiz\NKENT PHOENIX ACADEMYKentWANorth AmericaAmerica/Los_Angeles190914673364930002016-07-01
+173.37.145.91.146733731796288374.84.217.30USpeak10.comisp\NPeak 10CaryNCNorth AmericaAmerica/New_York22814673373350002016-07-01
+173.37.145.91.146733742953902324.187.149.155UScablevision.comisp\NCablevision Systems CorpBergenfieldNJNorth AmericaAmerica/New_York579714673389770002016-07-01
+173.37.145.91.1467338261801217190.232.70.79PEtelefonica.comisp\NtelefonicaLimaProvincia de LimaSouth AmericaAmerica/Lima193314673382650002016-07-01
+173.37.145.91.146733937693533827.185.195.119CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314673395150002016-07-01
+173.37.145.91.14673393988924411.39.98.221INvodafone.inisp\NVodafone India LimitedMumbaiMaharashtraAsiaAsia/Kolkata19714673394180002016-07-01
+173.37.145.91.1467339569263711114.99.89.218CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHefeiAnhuiAsiaAsia/Shanghai314673396760002016-07-01
+173.37.145.91.146733964076653167.195.61.201USyahoo-inc.comisp\NYahoo! IncSunnyvaleCANorth AmericaAmerica/Los_Angeles1982014673396560002016-07-01
+173.37.145.91.1467340007207393195.169.119.33NLsurf.nlisp\NSURF\N\NEuropeEurope/Amsterdam3114673400070002016-07-01
+173.37.145.91.1467340432334894113.224.135.172CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShenyangLiaoningAsiaAsia/Shanghai314673404360002016-07-01
+173.37.145.91.1467341080387465107.167.109.61UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414673410810002016-07-01
+173.37.145.91.1467342204171335125.234.101.210VNviettel.com.vnisp\NViettelHanoiThanh Pho Ha NoiAsiaAsia/Ho_Chi_Minh131214673422290002016-07-01
+173.37.145.91.146734234642586860.178.217.203CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNingboZhejiangAsiaAsia/Shanghai314673423620002016-07-01
+173.37.145.91.146734239740172160.187.125.236CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShaoxingZhejiangAsiaAsia/Shanghai314673425060002016-07-01
+173.37.145.91.1467342417687257113.128.132.23CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314673424370002016-07-01
+173.37.145.91.1467342685925411222.245.223.112CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChangshaHunanAsiaAsia/Shanghai314673427350002016-07-01
+173.37.145.91.1467342752439295223.203.208.50CNxgslb.netbiz\N\NBeijingBeijingAsiaAsia/Shanghai\N14673430880002016-07-01
+173.37.145.91.1467343291833388116.117.94.147CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedBaotouInner Mongolia Autonomous RegionAsiaAsia/Shanghai314673433130002016-07-01
+173.37.145.91.1467344196173181106.2.234.52CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedBeijingBeijingAsiaAsia/Shanghai314673442010002016-07-01
+173.37.145.91.146734454695100086.191.134.107GBbtplc.comisp\NBT Group plcLondon\NEuropeEurope/London314673445670002016-07-01
+173.37.145.91.14673451169816651.39.21.241INvodafone.inisp\NVodafone India Limited\NTamil NaduAsiaAsia/Kolkata19714673451430002016-07-01
+173.37.145.91.1467345173538026159.220.78.16USthomsonreuters.combiz\NThomson ReutersStamfordCTNorth AmericaAmerica/New_York1713214673451740002016-07-01
+173.37.145.91.146734574527894254.208.3.112USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614673457460002016-07-01
+173.37.145.91.1467346517744427222.127.21.210PHglobe.com.phisp\NGLOBE TELECOM, INC.\NCentral VisayasAsiaAsia/Manila47614673465800002016-07-01
+173.37.145.91.1467346739231590107.167.109.19UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414673467400002016-07-01
+173.37.145.91.1467347694601788119.82.75.114INspectranet.inisp\NSpectra ISP Networks Pvt. LtdNew DelhiNational Capital Territory of DelhiAsiaAsia/Kolkata4814673511140002016-07-01
+173.37.145.91.146734778482345364.102.215.220UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673480650002016-07-01
+173.37.145.91.146734902509330717.200.11.170USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614673490250002016-07-01
+173.37.145.91.1467349246652110220.190.180.36CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWenzhouZhejiangAsiaAsia/Shanghai314673492530002016-07-01
+173.37.145.91.1467349424133499107.167.107.225UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414673494250002016-07-01
+173.37.145.91.1467349521684811193.212.51.164NOtelenor.noisp\NTelenor Norge ASOsloOslo CountyEuropeEurope/Oslo6514673548040002016-07-01
+173.37.145.91.146734953285481345.21.151.100USatt.comisp\NAT&T\N\NNorth America\N15975114673495340002016-07-01
+173.37.145.91.1467350353026864164.116.193.41USkent.k12.wa.usbiz\NKENT PHOENIX ACADEMYKentWANorth AmericaAmerica/Los_Angeles190914673503530002016-07-01
+173.37.145.91.1467350514898788117.166.58.51CNchinamobileltd.comisp\NChina Mobile Limited\N\NAsia\N214673505320002016-07-01
+173.37.145.91.1467350717969212113.128.128.165CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314673507310002016-07-01
+173.37.145.91.1467350769960393123.159.226.253CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWenzhouZhejiangAsiaAsia/Shanghai314673507850002016-07-01
+173.37.145.91.146735268766891460.28.166.225CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedTianjinTianjinAsiaAsia/Shanghai314673527730002016-07-01
+173.37.145.91.146735290870142761.49.62.104CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedBeijingBeijingAsiaAsia/Shanghai514673529110002016-07-01
+173.37.145.91.1467353350254234223.196.4.6INideacellular.comisp\NIdea Cellular Limited\N\NAsiaAsia/Kolkata248714673541220002016-07-01
+173.37.145.91.1467353406334074202.63.241.81NPsubisu.net.npisp\NSubisu Cablenet (P.) LtdKathmanduCentral RegionAsiaAsia/Kathmandu12314673534690002016-07-01
+173.37.145.91.1467354433607695190.239.81.62PEtelefonica.comisp\NtelefonicaLimaProvincia de LimaSouth AmericaAmerica/Lima193314673544380002016-07-01
+173.37.145.91.1467354532330256113.75.69.17CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai314673546530002016-07-01
+173.37.145.91.1467354585870355121.244.52.90INtatacommunications.comisp\NTata Communications Ltd\N\NAsiaAsia/Kolkata188414673546070002016-07-01
+173.37.145.92.1426275927575694163.185.148.245USslb.combiz\NSchlumbergerKatyTXNorth AmericaAmerica/Chicago1219714673105240002016-07-01
+173.37.145.92.1428640390812414173.39.193.41UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673527480002016-07-01
+173.37.145.92.1436201707291317156.211.13.161EGtedata.netisp\NTelecom Egypt\N\NAfricaAfrica/Cairo69214673389100002016-07-01
+173.37.145.92.1451982650608359212.72.194.227BGnetissat.bgbiz\NNET IS SAT\N\NEuropeEurope/Sofia8114672920320002016-07-01
+173.37.145.92.145502169957683793.197.26.167DEtelekom.comisp\NDeutsche Telkom AgCalauBrandenburgEuropeEurope/Berlin9914673473600002016-07-01
+173.37.145.92.145945422969236497.65.40.82UStwtelecom.comisp\Ntw telecom\NTXNorth AmericaAmerica/Chicago298814673208690002016-07-01
+173.37.145.92.146495378740362427.203.87.80CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314673546700002016-07-01
+173.37.145.92.146517732601837860.191.195.38CNchinatelecom-h.comisp\NChina Telecom Corporation Limited\N\NAsia\N314673400970002016-07-01
+173.37.145.92.1465526860330581192.8.250.51INhcl.combiz\NHCL Corporation Ltd\N\NAsiaAsia/Kolkata176114672602990002016-07-01
+173.37.145.92.146611912905944250.135.59.246UScomcast.comisp\NComcast CorporationBellevueWANorth AmericaAmerica/Los_Angeles45864214673105070002016-07-01
+173.37.145.92.146614134975114458.57.107.42CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314672632110002016-07-01
+173.37.145.92.1466199769037359108.33.116.180USverizon.comisp\NVerizonBradentonFLNorth AmericaAmerica/New_York16437814673434440002016-07-01
+173.37.145.92.1466560840735457187.210.139.114MXamericamovil.comisp\NAmérica Móvil\N\NNorth America\N11614673402720002016-07-01
+173.37.145.92.1466742208432006202.189.75.226AUamcom.com.auisp\NAmcom Telecommunications LtdModburySAOceaniaAustralia/Adelaide7014673325460002016-07-01
+173.37.145.92.1466747223020151208.167.241.249USchoopa.comisp\NCHOOPA LLC.\N\NNorth America\N2214673542980002016-07-01
+173.37.145.92.146677532571070464.233.173.253USgoogle.comisp\NGoogle Inc\N\NNorth America\N11980514672975120002016-07-01
+173.37.145.92.1466990148384641198.212.199.34USamtrak.combiz\NAmtrak\N\NNorth America\N387014672926090002016-07-01
+173.37.145.92.146703299409908570.208.205.136USverizonwireless.comisp\NVerizon WirelessConnect with usBucyrusOHNorth AmericaAmerica/New_York3280614672947810002016-07-01
+173.37.145.92.1467083213842703106.114.253.138CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314672535690002016-07-01
+173.37.145.92.146710024542965760.48.221.160MYtm.com.myisp\NTMTaman Sri AmpangSelangorAsiaAsia/Kuala_Lumpur1041914672523730002016-07-01
+173.37.145.92.1467178440888901124.40.244.90INbbnl.co.inbiz\NBangalore Broadband Network Pvt Ltd (BBNL)\N\NAsia\N214672660950002016-07-01
+173.37.145.92.146724539603666659.167.155.224AUtpg.com.auisp\NTPG Internet Pty LtdPurgaQLDOceaniaAustralia/Brisbane4351814672453960002016-07-01
+173.37.145.92.1467245730159044203.25.27.106AUzetta.net.auisp\NZettaNet Pty LtdPerthWAOceaniaAustralia/Perth\N14672460330002016-07-01
+173.37.145.92.146724804363015199.98.251.66USatt.comisp\NAT&TMission ViejoCANorth AmericaAmerica/Los_Angeles15975114672480520002016-07-01
+173.37.145.92.146724997403185066.203.207.68CAtelusinternational.comisp\NTELUS InternationalScarboroughONNorth AmericaAmerica/Toronto1314672500570002016-07-01
+173.37.145.92.1467251512721426157.2.11.254JPnetone.co.jpbiz\NNet One Systems Co.,LtdTokyoTokyoAsiaAsia/Tokyo10714672515290002016-07-01
+173.37.145.92.14672543950771698.37.233.194USquantil.comisp\N\NPasadenaCANorth AmericaAmerica/Los_Angeles\N14672544390002016-07-01
+173.37.145.92.146725531421800013.17.125.9USxerox.combiz\NXerox CorporationNorwalkCTNorth AmericaAmerica/New_York2374714672553150002016-07-01
+173.37.145.92.1467258533392823106.113.122.88CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314672586540002016-07-01
+173.37.145.92.1467266880169851125.84.203.203CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChongqingChongqingAsiaAsia/Shanghai314672669000002016-07-01
+173.37.145.92.146726971735068060.182.16.38CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinhuaZhejiangAsiaAsia/Shanghai314672697960002016-07-01
+173.37.145.92.1467270485377774203.125.109.34SGsingtel.comisp\NSingTelSingaporeCentral Singapore Community Development CouncilAsiaAsia/Singapore329114672707990002016-07-01
+173.37.145.92.1467271247509870219.74.35.84SGsingtel.comisp\NSingTelSingaporeCentral Singapore Community Development CouncilAsiaAsia/Singapore329114673505650002016-07-01
+173.37.145.92.1467274171629495125.92.33.242CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai314672742860002016-07-01
+173.37.145.92.1467275177196964121.232.246.100CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314672752000002016-07-01
+173.37.145.92.1467275384546050203.125.192.100SGsingtel.comisp\NSingTel\N\NAsiaAsia/Singapore329114672757060002016-07-01
+173.37.145.92.1467276355725579217.58.182.100ITtelecomitalia.comisp\NTelecom Italia S.p.ABorgaro TorinesePiedmontEuropeEurope/Rome1814672781160002016-07-01
+173.37.145.92.146727653894046158.42.236.220CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuiyangGuizhouAsiaAsia/Shanghai314672765430002016-07-01
+173.37.145.92.1467277157764767117.232.2.5INbsnl.co.inisp\NBSNLKolkataWest BengalAsiaAsia/Kolkata150014672772390002016-07-01
+173.37.145.92.146727803244895458.37.125.85CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai314672780400002016-07-01
+173.37.145.92.1467278372486675116.224.40.96CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai314672784970002016-07-01
+173.37.145.92.1467281081258863115.70.157.74AUexetel.com.auisp\NExetel Pty Ltd\N\NOceania\N12114672813800002016-07-01
+173.37.145.92.146728215573167849.32.4.176INril.comisp\NReliance Industries Limited\N\NAsiaAsia/Kolkata1856314672834470002016-07-01
+173.37.145.92.146728229172628041.72.122.129ZMzamtel.zmisp\NZamtel\N\NAfricaAfrica/Lusaka310414672823090002016-07-01
+173.37.145.92.146728269624614068.67.139.244USappnexus.netisp\N2012 AppNexus Inc.New YorkNYNorth AmericaAmerica/New_York\N14672826970002016-07-01
+173.37.145.92.1467283229929600119.96.126.137CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWuhanHubeiAsiaAsia/Shanghai314672832360002016-07-01
+173.37.145.92.1467283416873145115.214.210.118CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNingboZhejiangAsiaAsia/Shanghai314672834170002016-07-01
+173.37.145.92.1467283704695898182.75.130.10INairtel.comisp\NBharti Enterprises Ltd\N\NAsiaAsia/Kolkata47714672879970002016-07-01
+173.37.145.92.146728483285128117.198.8.206USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614672848420002016-07-01
+173.37.145.92.1467285662211971128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672856630002016-07-01
+173.37.145.92.146728689066526649.236.207.186MYmyloca.combiz\N\N\N\NAsia\N114672868960002016-07-01
+173.37.145.92.146728808489813279.179.194.44ILbezeq.co.ilisp\NBezeq The Israel Telecommunication Corp. Ltd.\N\NAsiaAsia/Jerusalem20414672880860002016-07-01
+173.37.145.92.146729108735068464.233.173.253USgoogle.comisp\NGoogle Inc\N\NNorth America\N11980514672910910002016-07-01
+173.37.145.92.146729204476520317.200.2.246USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614672920450002016-07-01
+173.37.145.92.1467292356445810125.17.125.193INairtel.comisp\NBharti Enterprises LtdNew DelhiNational Capital Territory of DelhiAsiaAsia/Kolkata47714672923900002016-07-01
+173.37.145.92.146729578104632479.225.221.222DEtelekom.comisp\NDeutsche Telkom AgMunichBavariaEuropeEurope/Berlin9914673015930002016-07-01
+173.37.145.92.146729791596498749.49.250.58TH3bb.co.thisp\NTriple T Broadband Company Limited (PCL)BangkokBangkokAsiaAsia/Bangkok314672979710002016-07-01
+173.37.145.92.146730067766094417.198.8.206USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614673006820002016-07-01
+173.37.145.92.146730471606982361.12.82.214INtatateleservices.comisp\NTata Teleservices LimitedBengaluruKarnatakaAsiaAsia/Kolkata714673047330002016-07-01
+173.37.145.92.1467305452912416151.99.198.170ITtelecomitalia.comisp\NTelecom Italia S.p.A\N\NEuropeEurope/Rome1814673063300002016-07-01
+173.37.145.92.1467307030389737106.51.25.70INacttv.inisp\NAtria Convergence Technologies Pvt. LtdBengaluruKarnatakaAsiaAsia/Kolkata1914673070480002016-07-01
+173.37.145.92.146730726238601364.71.166.35UShe.netisp\NHurricane ElectricFremontCANorth AmericaAmerica/Los_Angeles171014673072620002016-07-01
+173.37.145.92.1467308325793455159.203.253.25USdigitalocean.comisp\NDigitalOcean™, LLCSan FranciscoCANorth AmericaAmerica/Los_Angeles914673083640002016-07-01
+173.37.145.92.146731154863540694.96.74.199SAstc.com.saisp\NSaudi Telecom CompanyAl QatifEastern ProvinceAsiaAsia/Riyadh668914673115750002016-07-01
+173.37.145.92.146731364504861566.116.126.68USswitchnap.comisp\NSwitch, Las VegasIrvineCANorth AmericaAmerica/Los_Angeles3114673157710002016-07-01
+173.37.145.92.146731479132865746.19.86.134ILpelephone.co.ilbiz\NPelephone Communications Ltd\N\NAsiaAsia/Jerusalem67414673150160002016-07-01
+173.37.145.92.1467314958126659109.203.189.147IRfarahoosh.irbiz\N\N\N\NAsiaAsia/Tehran114673149710002016-07-01
+173.37.145.92.146731516371042184.215.46.202NOget.noisp\NGet ASOsloOslo CountyEuropeEurope/Oslo6014673163820002016-07-01
+173.37.145.92.1467317893022150208.90.217.187USflhsi.combiz\NFlorida High Speed InternetMelbourneFLNorth AmericaAmerica/New_York214673178950002016-07-01
+173.37.145.92.1467319837537850195.21.136.161GBinteroute.comisp\NInteroute Communications Limited\N\NEuropeEurope/London28714673210240002016-07-01
+173.37.145.92.1467325089766594175.10.195.217CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChangshaHunanAsiaAsia/Shanghai314673253270002016-07-01
+173.37.145.92.1467328377204085123.151.174.190CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedTianjinTianjinAsiaAsia/Shanghai314673287190002016-07-01
+173.37.145.92.1467329149398868203.193.223.26AUcommunitytelco.com.auisp\NCommunity TelcoBendigoVICOceaniaAustralia/Melbourne1514673315020002016-07-01
+173.37.145.92.1467331271827080138.121.184.1BRwiff.com.brbiz\N\NAnápolisGoiasSouth AmericaAmerica/Sao_Paulo\N14673313180002016-07-01
+173.37.145.92.1467331607546679195.169.119.33NLsurf.nlisp\NSURF\N\NEuropeEurope/Amsterdam3114673316080002016-07-01
+173.37.145.92.1467332524091666105.105.184.247DZalgerietelecom.dzisp\NAlgerie Telecom SPA\N\NAfricaAfrica/Algiers7214673327870002016-07-01
+173.37.145.92.146733266668131776.100.236.155UScomcast.comisp\NComcast CorporationFrederickMDNorth AmericaAmerica/New_York45864214673326720002016-07-01
+173.37.145.92.146733319779026737.228.238.137IElibertyglobal.comisp\NLiberty GlobalDublinLeinsterEuropeEurope/Dublin3014673332130002016-07-01
+173.37.145.92.1467333587066998185.80.220.20GBuk2group.comisp\NUK2\N\NEuropeEurope/London914673335880002016-07-01
+173.37.145.92.146733371010246017.200.11.170USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614673337100002016-07-01
+173.37.145.92.1467334648901273193.5.216.100CHadmin.chbiz\NadminBernBernEuropeEurope/Zurich1814673346710002016-07-01
+173.37.145.92.1467334736755774211.137.186.34CNchinamobileltd.comisp\NChina Mobile Limited\NShandongAsiaAsia/Shanghai214673347410002016-07-01
+173.37.145.92.146733484692259293.172.133.75ILcellcom.co.ilisp\Ncellcom\N\NAsiaAsia/Jerusalem87214673348480002016-07-01
+173.37.145.92.1467335155377510222.42.78.16CNchinatietong.comisp\NChina Tietong Telecommunications CorporationBeijingBeijingAsiaAsia/Shanghai814673352740002016-07-01
+173.37.145.92.1467335305004516123.152.172.144CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314673353410002016-07-01
+173.37.145.92.1467335374735425124.161.202.199CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChengduSichuanAsiaAsia/Shanghai314673355080002016-07-01
+173.37.145.92.146733574561254027.185.194.20CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314673357610002016-07-01
+173.37.145.92.1467335808343223110.102.235.84CNchinatietong.comisp\NChina Tietong Telecommunications CorporationBeijingBeijingAsiaAsia/Shanghai814673358410002016-07-01
+173.37.145.92.1467335953082552171.8.201.42CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedZhengzhouHenanAsiaAsia/Shanghai314673359590002016-07-01
+173.37.145.92.1467336010610071187.220.72.145MXamericamovil.comisp\NAmérica Móvil\N\NNorth America\N11614673366520002016-07-01
+173.37.145.92.1467336240343867120.85.80.209CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai514673363560002016-07-01
+173.37.145.92.146733689189390042.235.133.107CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedZhengzhouHenanAsiaAsia/Shanghai314673371540002016-07-01
+173.37.145.92.1467337109425567120.195.235.15CNchinamobileltd.comisp\NChina Mobile Limited\N\NAsia\N214673371220002016-07-01
+173.37.145.92.1467337446808922122.231.6.250CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJiaxingZhejiangAsiaAsia/Shanghai314673374570002016-07-01
+173.37.145.92.1467337518440690116.68.74.44INasianet.co.inisp\NASIANET SATELLITE COMMUNICATIONS LTDThiruvananthapuramKeralaAsiaAsia/Kolkata26314673375350002016-07-01
+173.37.145.92.1467337658140223125.124.243.219CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJiaxingZhejiangAsiaAsia/Shanghai314673376680002016-07-01
+173.37.145.92.1467338250509621103.8.80.51NZgmi.co.nzbiz\NGareth Morgan Investments Limited PartnershipWellingtonWellingtonOceaniaPacific/Auckland1114673382570002016-07-01
+173.37.145.92.1467338681565008173.25.73.93USmediacomcable.comisp\NMediacom Communications CorporationApache JunctionAZNorth AmericaAmerica/Phoenix614673387040002016-07-01
+173.37.145.92.146733881212193860.1.83.199CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314673388270002016-07-01
+173.37.145.92.1467339176461739106.208.185.215INairtel.comisp\NBharti Enterprises LtdChennaiTamil NaduAsiaAsia/Kolkata47714673391790002016-07-01
+173.37.145.92.1467339433049138164.116.193.41USkent.k12.wa.usbiz\NKENT PHOENIX ACADEMYKentWANorth AmericaAmerica/Los_Angeles190914673394330002016-07-01
+173.37.145.92.1467340676885168106.69.125.35AUtpg.com.auisp\NTPG Internet Pty LtdKelvin GroveQLDOceaniaAustralia/Brisbane4351814673433570002016-07-01
+173.37.145.92.146734104410939068.67.139.244USappnexus.netisp\N2012 AppNexus Inc.New YorkNYNorth AmericaAmerica/New_York\N14673410450002016-07-01
+173.37.145.92.146734120997375913.17.125.9USxerox.combiz\NXerox CorporationNorwalkCTNorth AmericaAmerica/New_York2374714673412110002016-07-01
+173.37.145.92.1467341282598596183.91.86.246IDidola.net.idbiz\N\N\N\NAsia\N153214673413560002016-07-01
+173.37.145.92.14673422738827541.39.49.70INvodafone.inisp\NVodafone India LimitedAnandGujaratAsiaAsia/Kolkata19714673422760002016-07-01
+173.37.145.92.146734242656625558.137.16.27THcsloxinfo.comisp\NCS LOXINFOBangkokBangkokAsiaAsia/Bangkok198114673425820002016-07-01
+173.37.145.92.1467342695096991122.227.184.218CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNingboZhejiangAsiaAsia/Shanghai314673428300002016-07-01
+173.37.145.92.1467342925275975113.122.236.124CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314673430660002016-07-01
+173.37.145.92.1467342932057571101.87.192.137CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShanghaiShanghaiAsiaAsia/Shanghai314673430770002016-07-01
+173.37.145.92.146734315802418260.176.156.144CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314673432110002016-07-01
+173.37.145.92.1467343206454360183.141.139.139CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJiaxingZhejiangAsiaAsia/Shanghai314673433300002016-07-01
+173.37.145.92.1467343288493210117.71.128.250CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHefeiAnhuiAsiaAsia/Shanghai314673433000002016-07-01
+173.37.145.92.1467343345045780114.239.244.130CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314673435110002016-07-01
+173.37.145.92.1467343799208640221.226.0.219CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314673439770002016-07-01
+173.37.145.92.1467345633201668112.5.166.92CNchinamobileltd.comisp\NChina Mobile Limited\N\NAsia\N214673456470002016-07-01
+173.37.145.92.1467345638716295183.228.83.64CNchinamobileltd.comisp\NChina Mobile Limited\N\NAsia\N214673456540002016-07-01
+173.37.145.92.1467347959443953186.212.228.253BRvivendi.comisp\NVivendiRecifePernambucoSouth AmericaAmerica/Recife24214673499170002016-07-01
+173.37.145.92.14673479982823055.160.243.84IRtfshops.combiz\N\N\N\NAsiaAsia/Tehran\N14673480000002016-07-01
+173.37.145.92.1467348064430530202.150.5.250INntsindia.inbiz\NNuance Transcription Services India Pvt. Ltd\N\NAsiaAsia/Kolkata\N14673480860002016-07-01
+173.37.145.92.146734823962764687.68.77.206ILorange.co.ilisp\NorangeShohamCentral DistrictAsiaAsia/Jerusalem98414673482400002016-07-01
+173.37.145.92.146734858792954483.110.232.185AEetisalat.aeisp\NEtisalatDubaiDubaiAsiaAsia/Dubai151314673485910002016-07-01
+173.37.145.92.1467349179375914157.2.11.254JPnetone.co.jpbiz\NNet One Systems Co.,LtdTokyoTokyoAsiaAsia/Tokyo10714673491960002016-07-01
+173.37.145.92.1467349208830417199.188.192.130USmonkeybrains.netisp\NMonkeyBrainsSan FranciscoCANorth AmericaAmerica/Los_Angeles9314673493460002016-07-01
+173.37.145.92.146734956722603761.0.253.82INbsnl.co.inisp\NBSNLNew DelhiNational Capital Territory of DelhiAsiaAsia/Kolkata150014673495690002016-07-01
+173.37.145.92.146734963555844414.139.155.24INnkn.inisp\NNational Knowledge Network\N\NAsia\N\N14673496470002016-07-01
+173.37.145.92.146735024174261424.55.14.105UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCAustinTXNorth AmericaAmerica/Chicago111114673503310002016-07-01
+173.37.145.92.1467350572736844213.155.157.190GBteliasonera.comisp\NTeliaSonera\N\NEuropeEurope/London179414673506050002016-07-01
+173.37.145.92.146735064337698542.61.41.218SGjcintlogistics.combiz\N\NSingaporeCentral Singapore Community Development CouncilAsiaAsia/Singapore\N14673508080002016-07-01
+173.37.145.92.146735072339621640.85.134.247IEmicrosoft.comisp\NMicrosoft CorporationDublinLeinsterEuropeEurope/Dublin14700314673507280002016-07-01
+173.37.145.92.1467350732315293191.126.5.253CLtelefonica.comisp\NtelefonicaSantiagoSantiago MetropolitanSouth AmericaAmerica/Santiago193314673507670002016-07-01
+173.37.145.92.1467351765431501179.11.177.27BRtim.com.brisp\NTIM Celular\N\NSouth America\N80214673517760002016-07-01
+173.37.145.92.1467352040244083202.33.250.226JPsoftbank.jpisp\NSoftBank Group Corp\N\NAsiaAsia/Tokyo7314673521980002016-07-01
+173.37.145.92.1467352136640020113.70.46.163CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai314673521470002016-07-01
+173.37.145.92.146735261508205914.98.211.62INtatateleservices.comisp\NTata Teleservices LimitedDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata714673526170002016-07-01
+173.37.145.92.146735334986456427.106.127.220INsysconinfoway.comisp\N\NMira RoadMaharashtraAsiaAsia/Kolkata914673533650002016-07-01
+173.37.145.92.146735374253060712.250.60.218USatt.comisp\NAT&TMedfordMANorth AmericaAmerica/New_York15975114673537600002016-07-01
+173.37.145.92.1467354294737396107.220.151.78USatt.comisp\NAT&TCupertinoCANorth AmericaAmerica/Los_Angeles15975114673542960002016-07-01
+173.37.145.92.146735459612392268.67.139.247USappnexus.netisp\N2012 AppNexus Inc.New YorkNYNorth AmericaAmerica/New_York\N14673545990002016-07-01
+173.37.145.92.146735464325661864.183.41.10UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCLos AngelesCANorth AmericaAmerica/Los_Angeles111114673546730002016-07-01
+173.37.145.92.1467354854190831136.186.140.168AUswin.edu.aubiz\NSWINBURNE UNIVERSITY OF TECHNOLOGY\N\NOceania\N178614673548580002016-07-01
+173.37.145.92.1467354983949389182.75.103.206INairtel.comisp\NBharti Enterprises Ltd\N\NAsiaAsia/Kolkata47714673550090002016-07-01
+173.37.145.92.1467355507963256188.73.254.159GRwind.grisp\N\N\N\NEuropeEurope/Athens114673555110002016-07-01
+173.37.145.92.1467355881361669116.212.232.174AUamcom.com.auisp\NAmcom Telecommunications Ltd\NWAOceaniaAustralia/Perth7014673559240002016-07-01
+173.37.145.92.146735590048686817.217.36.69USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614673559040002016-07-01
+173.37.145.92.146735595183467517.200.11.34USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614673559520002016-07-01
+173.37.145.93.1441603555744923170.66.1.236BRbb.com.brbiz\NBanco do Brasil SaBrasíliaFederal DistrictSouth AmericaAmerica/Sao_Paulo156914673070840002016-07-01
+173.37.145.93.144797280204216250.27.149.190USsuddenlink.comisp\NSuddenlink CommunicationsAbileneTXNorth AmericaAmerica/Chicago984714673054180002016-07-01
+173.37.145.93.1449494132135617141.113.3.11DEdaimler.combiz\NDaimler AG.Weil der StadtBaden-Württemberg RegionEuropeEurope/Berlin499414673524730002016-07-01
+173.37.145.93.1450693841031130210.175.128.74JPd-cruise.co.jpbiz\NTOYOTA DIGITAL CRUISE, INC\N\NAsiaAsia/Tokyo714672541220002016-07-01
+173.37.145.93.1458124698097646195.188.250.67GBlibertyglobal.comisp\NLiberty Global\N\NEurope\N3014672936170002016-07-01
+173.37.145.93.146440809560455773.70.227.244UScomcast.comisp\NComcast Corporation\N\NNorth America\N45864214673453600002016-07-01
+173.37.145.93.146467176987424242.81.45.184CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedTianjinTianjinAsiaAsia/Shanghai314673521700002016-07-01
+173.37.145.93.146483262145143366.76.194.236USsuddenlink.comisp\NSuddenlink CommunicationsCharlestonWVNorth AmericaAmerica/New_York984714673149470002016-07-01
+173.37.145.93.146525067498989637.237.234.135IQearthlinktele.comisp\N\N\N\NAsiaAsia/Baghdad1014673056420002016-07-01
+173.37.145.93.146536436232333958.248.30.211CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai514673387830002016-07-01
+173.37.145.93.1465561264492635192.68.151.152GBdimensiondata.comisp\NDimension DataLondon\NEuropeEurope/London11014672739000002016-07-01
+173.37.145.93.1466586804932010223.74.128.38CNchinamobileltd.comisp\NChina Mobile Limited\N\NAsia\N214673426950002016-07-01
+173.37.145.93.1466622819339403187.159.81.188MXamericamovil.comisp\NAmérica Móvil\N\NNorth America\N11614673105340002016-07-01
+173.37.145.93.1467062436130177189.219.121.250MXtelumasp.netbiz\N\NApodacaNuevo LeónNorth AmericaAmerica/Monterrey\N14673526270002016-07-01
+173.37.145.93.1467191505592685210.12.249.129CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedTongcunTibet Autonomous RegionAsiaAsia/Urumqi514672540350002016-07-01
+173.37.145.93.1467201738513403169.143.0.105USjeppesen.combiz\NJEPPESENLittletonCONorth AmericaAmerica/Denver138114673035050002016-07-01
+173.37.145.93.1467230425810890181.166.172.229ARizzi.mxisp\N\N\N\NSouth America\N\N14673524100002016-07-01
+173.37.145.93.1467245312424859131.248.58.39JPctc-g.co.jpbiz\NITOCHU Techno-Solutions CorporationHatogaya-honchoSaitamaAsiaAsia/Tokyo28214672453400002016-07-01
+173.37.145.93.1467251535774058182.140.184.88CNchinanet.combiz\N\NChengduSichuanAsiaAsia/Shanghai2014672559570002016-07-01
+173.37.145.93.1467252661185618205.174.8.4USamvescap.combiz\NInvesco LtdHoustonTXNorth AmericaAmerica/Chicago28814672526810002016-07-01
+173.37.145.93.1467259561173990205.174.8.4USamvescap.combiz\NInvesco LtdHoustonTXNorth AmericaAmerica/Chicago28814672595830002016-07-01
+173.37.145.93.1467260755160945106.216.157.42INairtel.comisp\NBharti Enterprises LtdBengaluruKarnatakaAsiaAsia/Kolkata47714672607590002016-07-01
+173.37.145.93.1467262247826809222.221.255.62CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedKunmingYunnanAsiaAsia/Shanghai314672623500002016-07-01
+173.37.145.93.1467263069746226187.216.136.86MXamericamovil.comisp\NAmérica MóvilGuadalajaraJaliscoNorth AmericaAmerica/Mexico_City11614672631700002016-07-01
+173.37.145.93.1467266395093612122.164.116.216INairtel.comisp\NBharti Enterprises LtdChennaiTamil NaduAsiaAsia/Kolkata47714672664040002016-07-01
+173.37.145.93.1467267868209517223.176.7.15INairtel.comisp\NBharti Enterprises LtdDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata47714672679300002016-07-01
+173.37.145.93.1467268333468283117.67.172.104CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHefeiAnhuiAsiaAsia/Shanghai314672683370002016-07-01
+173.37.145.93.1467272093435431106.220.207.252INairtel.comisp\NBharti Enterprises LtdHyderabad\NAsiaAsia/Kolkata47714672723180002016-07-01
+173.37.145.93.1467272160513641221.175.181.59CNchinatietong.comisp\NChina Tietong Telecommunications CorporationBeijingBeijingAsiaAsia/Shanghai814672722730002016-07-01
+173.37.145.93.1467272305227903125.21.240.2INairtel.comisp\NBharti Enterprises LtdDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata47714672750680002016-07-01
+173.37.145.93.1467276989584846122.167.245.108INairtel.comisp\NBharti Enterprises LtdBengaluruKarnatakaAsiaAsia/Kolkata47714672770390002016-07-01
+173.37.145.93.146727747569499991.65.244.85DEkabeldeutschland.deisp\NKabel DeutschlandBerlinLand BerlinEuropeEurope/Berlin12014672774860002016-07-01
+173.37.145.93.1467277858307598157.2.11.254JPnetone.co.jpbiz\NNet One Systems Co.,LtdTokyoTokyoAsiaAsia/Tokyo10714672783760002016-07-01
+173.37.145.93.1467278277097274166.137.14.94UScingular.comisp\NAT&T Privacy PolicyReynoldsburgOHNorth AmericaAmerica/New_York2811314672783540002016-07-01
+173.37.145.93.1467280561957811205.174.8.4USamvescap.combiz\NInvesco LtdHoustonTXNorth AmericaAmerica/Chicago28814672806020002016-07-01
+173.37.145.93.1467280822552417175.100.148.15INyoubroadband.inisp\NYOU Broadband & Cable India LimitedJalalpurGujaratAsiaAsia/Kolkata314672808400002016-07-01
+173.37.145.93.1467284168065658195.238.24.42BEbelgacom.comisp\NBelgacom S.ABrusselsBrussels CapitalEuropeEurope/Brussels6014672894260002016-07-01
+173.37.145.93.1467285541081887106.219.31.199INairtel.comisp\NBharti Enterprises LtdNagarRajasthanAsiaAsia/Kolkata47714672855700002016-07-01
+173.37.145.93.146728687458328798.200.89.125UScomcast.comisp\NComcast CorporationLa PorteTXNorth AmericaAmerica/Chicago45864214672869520002016-07-01
+173.37.145.93.146728766407440449.32.40.134INril.comisp\NReliance Industries LimitedLucknowUttar PradeshAsiaAsia/Kolkata1856314672876730002016-07-01
+173.37.145.93.1467287932208683209.203.79.110USkia.combiz\NKIAIrvineCANorth AmericaAmerica/Los_Angeles9914672879380002016-07-01
+173.37.145.93.146728898997934662.169.66.5PTsonae.combiz\NSonaecomPortoPortoEuropeEurope/Lisbon62314672891900002016-07-01
+173.37.145.93.1467291641818062186.31.216.155COetb.net.coisp\NEMPRESA DE TELECOMUNICACIONES DE BOGOTA S.A. E.S.P. - ETB\N\NSouth AmericaAmerica/Bogota2262914672916570002016-07-01
+173.37.145.93.1467295786093764106.76.39.137INiclnet.orgbiz\N\N\N\NAsiaAsia/Kolkata914672957870002016-07-01
+173.37.145.93.1467300772559999213.221.129.240CHnetplus.chbiz\Nnetplus\N\NEuropeEurope/Zurich179114673007760002016-07-01
+173.37.145.93.1467301693829974192.107.156.200USharris.combiz\NHarris CorporationMelbourneFLNorth AmericaAmerica/New_York1085914673016990002016-07-01
+173.37.145.93.1467301824468469106.79.89.178INiclnet.orgbiz\N\N\N\NAsiaAsia/Kolkata914673018500002016-07-01
+173.37.145.93.1467302616473239155.70.39.45UScenturylink.comisp\NCenturyLink, Inc.MonroeLANorth AmericaAmerica/Chicago712014673026310002016-07-01
+173.37.145.93.1467304583945369120.61.216.135INmtnl.net.inisp\NMahanagar Telephone Nigam Limited\N\NAsiaAsia/Kolkata670314673045920002016-07-01
+173.37.145.93.1467310035746015205.174.8.4USamvescap.combiz\NInvesco LtdHoustonTXNorth AmericaAmerica/Chicago28814673100400002016-07-01
+173.37.145.93.1467310126064044148.251.237.136DEhetzner.deisp\NHetzner Online AG\N\NEurope\N4214673102560002016-07-01
+173.37.145.93.14673113549877871.22.219.158INtikona.inisp\NTikona Digital NetworksGurgaonHaryanaAsiaAsia/Kolkata7214673115940002016-07-01
+173.37.145.93.146731313256606441.82.167.115SNsonatel.snisp\Nsonatel\N\NAfricaAfrica/Dakar30414673405540002016-07-01
+173.37.145.93.1467321274178710212.35.0.87CHgib-solutions.chbiz\Ngib-Solutions AGSpreitenbachAargauEuropeEurope/Zurich\N14673212880002016-07-01
+173.37.145.93.1467331599556851221.203.23.8CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedShenyangLiaoningAsiaAsia/Shanghai314673316010002016-07-01
+173.37.145.93.1467332567389448195.169.119.33NLsurf.nlisp\NSURF\N\NEuropeEurope/Amsterdam3114673325670002016-07-01
+173.37.145.93.1467336255351371187.190.164.202MXiusacell.com.mxisp\NiusacellMexico CityMexico CityNorth AmericaAmerica/Mexico_City185814673362560002016-07-01
+173.37.145.93.1467336514945270184.69.183.250CAgmta.cabiz\N\N\N\NNorth America\N\N14673365550002016-07-01
+173.37.145.93.1467337202268782200.122.181.126CRcostarricense.crbiz\N\NSan JoséProvincia de San JoseNorth AmericaAmerica/Costa_Rica3553214673372150002016-07-01
+173.37.145.93.1467337622155314112.206.90.118PHpldt.comisp\NPLDT CORPORATE\N\NAsiaAsia/Manila94414673379110002016-07-01
+173.37.145.93.1467337846895887180.76.15.160CNbaidu.comisp\NBaidu BeijingBeijingAsiaAsia/Shanghai24214673378480002016-07-01
+173.37.145.93.146733967769459173.137.64.6UScomcast.comisp\NComcast CorporationAtlantaGANorth AmericaAmerica/New_York45864214673396890002016-07-01
+173.37.145.93.146733972984535098.193.200.15UScomcast.comisp\NComcast CorporationWhite HouseTNNorth AmericaAmerica/Chicago45864214673397300002016-07-01
+173.37.145.93.1467340002431132152.216.7.5USirs.govbiz\NInternal Revenue ServiceWashingtonDCNorth AmericaAmerica/New_York2062114673400040002016-07-01
+173.37.145.93.146734142323714650.22.158.103USsoftlayer.comisp\NSoftlayer Technologies IncSeattleWANorth AmericaAmerica/Los_Angeles11314673414280002016-07-01
+173.37.145.93.1467341680577611186.141.131.209ARtelefonica.comisp\NtelefonicaBuenos AiresBuenos Aires F.D.South AmericaAmerica/Argentina/Buenos_Aires193314673416970002016-07-01
+173.37.145.93.1467342313638307108.70.89.11USatt.comisp\NAT&TRichton ParkILNorth AmericaAmerica/Chicago15975114673423180002016-07-01
+173.37.145.93.1467342524760368180.179.43.209INnetmagicians.combiz\NMehratex India Pvt Ltd\N\NAsiaAsia/Kolkata414673425300002016-07-01
+173.37.145.93.146734319722333971.222.140.89UScenturylink.comisp\NCenturyLink, Inc.AlbuquerqueNMNorth AmericaAmerica/Denver712014673436760002016-07-01
+173.37.145.93.146734353691935914.125.53.79CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai314673436560002016-07-01
+173.37.145.93.1467343608229837103.250.72.116JPight.jpbiz\N\NTokyoTokyoAsiaAsia/Tokyo\N14673436100002016-07-01
+173.37.145.93.1467346635604173173.57.208.127USverizon.comisp\NVerizonPlanoTXNorth AmericaAmerica/Chicago16437814673466360002016-07-01
+173.37.145.93.1467347573063942189.199.228.111MXmegacable.com.mxisp\NMegacable\N\NNorth America\N58114673475830002016-07-01
+173.37.145.93.1467348708935884199.168.151.177USzscaler.combiz\NZscaler, Inc\N\NNorth America\N9614673487110002016-07-01
+173.37.145.93.1467349167488316203.41.62.126AUtelstra.com.auisp\NTelstraTorquayVICOceaniaAustralia/Melbourne37214673493580002016-07-01
+173.37.145.93.1467349770601471203.141.91.13JPibm.combiz\NIBM CorporationChibaChibaAsiaAsia/Tokyo5163114673497730002016-07-01
+173.37.145.93.146734977661467512.196.232.16USatt.comisp\NAT&THoustonTXNorth AmericaAmerica/Chicago15975114673497790002016-07-01
+173.37.145.93.1467349857592120187.220.196.25MXamericamovil.comisp\NAmérica Móvil\N\NNorth America\N11614673499050002016-07-01
+173.37.145.93.1467350466544867223.73.37.172CNchinamobileltd.comisp\NChina Mobile Limited\N\NAsia\N214673504770002016-07-01
+173.37.145.93.146735152020630349.98.152.103JPntt-global.comisp\NNippon Telegraph and Telephone CorporationTokyoTokyoAsiaAsia/Tokyo\N14673515370002016-07-01
+173.37.145.93.146735185373066261.0.42.91INbsnl.co.inisp\NBSNLBengaluruKarnatakaAsiaAsia/Kolkata150014673539920002016-07-01
+173.37.145.93.1467352147140941101.109.73.91THtot.co.thisp\NTOTPhuketPhuketAsiaAsia/Bangkok148714673547470002016-07-01
+173.37.145.93.1467352299660256131.248.58.39JPctc-g.co.jpbiz\NITOCHU Techno-Solutions CorporationHatogaya-honchoSaitamaAsiaAsia/Tokyo28214673523010002016-07-01
+173.37.145.93.146735257199200392.97.106.54AEetisalat.aeisp\NEtisalat\N\NAsiaAsia/Dubai151314673537650002016-07-01
+173.37.145.93.1467352866323294205.174.8.4USamvescap.combiz\NInvesco LtdHoustonTXNorth AmericaAmerica/Chicago28814673528820002016-07-01
+173.37.145.93.1467353060980841119.72.198.133JPsoftbank.jpisp\NSoftBank Group Corp\N\NAsia\N7314673531750002016-07-01
+173.37.145.93.1467353165676836171.44.161.52CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWuhanHubeiAsiaAsia/Shanghai314673532250002016-07-01
+173.37.145.93.1467353736523494221.175.181.156CNchinatietong.comisp\NChina Tietong Telecommunications CorporationBeijingBeijingAsiaAsia/Shanghai814673537990002016-07-01
+173.37.145.93.1467353865771265182.69.226.46INairtel.comisp\NBharti Enterprises LtdNoidaUttar PradeshAsiaAsia/Kolkata47714673538740002016-07-01
+173.37.145.93.146735387698102761.2.56.124INbsnl.co.inisp\NBSNLBengaluruKarnatakaAsiaAsia/Kolkata150014673539400002016-07-01
+173.37.145.93.1467354218731838182.75.193.78INairtel.comisp\NBharti Enterprises Ltd\N\NAsiaAsia/Kolkata47714673542640002016-07-01
+173.37.145.93.1467354232975900182.75.112.118INairtel.comisp\NBharti Enterprises Ltd\N\NAsiaAsia/Kolkata47714673542350002016-07-01
+173.37.145.93.146735440298239370.169.66.194UScox.comisp\NCox Communications, IncBaton RougeLANorth AmericaAmerica/Chicago7058914673544050002016-07-01
+173.37.145.93.1467354556611228108.181.117.204CAtelusinternational.comisp\NTELUS InternationalCalgaryABNorth AmericaAmerica/Edmonton1314673545680002016-07-01
+173.37.145.94.144433397869390112.217.68.2USspotlink.combiz\NSpotLinkRancho Santa FeCANorth AmericaAmerica/Los_Angeles\N14673210820002016-07-01
+173.37.145.94.1464738042790785210.143.35.14JPnec.co.jpbiz\NNECTokyoTokyoAsiaAsia/Tokyo1014673463990002016-07-01
+173.37.145.94.1464829287151646118.212.237.10CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedNanchangJiangxiAsiaAsia/Shanghai514673535030002016-07-01
+173.37.145.94.1464844305251597183.248.234.197CNchinamobileltd.comisp\NChina Mobile Limited\N\NAsia\N214673533290002016-07-01
+173.37.145.94.1465376738823788198.147.19.2GBdiscovery.combiz\NDiscovery Communications, IncLondon\NEuropeEurope/London649014672969650002016-07-01
+173.37.145.94.146663705647091412.177.68.254USactel.combiz\NActel CorporationSanta ClaraCANorth AmericaAmerica/Los_Angeles76914673177340002016-07-01
+173.37.145.94.1466661940721910134.159.96.222AUtelstra.com.auisp\NTelstra\N\NOceania\N37214672720970002016-07-01
+173.37.145.94.146682115449245824.192.37.190USwowway.comisp\NWIDEOPENWEST LLCEvansvilleINNorth AmericaAmerica/Chicago16376114673301010002016-07-01
+173.37.145.94.1467046018372740111.91.88.110INhns.net.inisp\NHonesty Net Solutions (India) Pvt. LtdThaneMaharashtraAsiaAsia/Kolkata814673083090002016-07-01
+173.37.145.94.1467126762791205107.72.164.76USatt.comisp\NAT&T\NFLNorth AmericaAmerica/New_York15975114672537150002016-07-01
+173.37.145.94.1467194834980734222.45.222.194CNchinatietong.comisp\NChina Tietong Telecommunications CorporationBeijingBeijingAsiaAsia/Shanghai814673011860002016-07-01
+173.37.145.94.1467199308594910203.99.205.107INcognizant.combiz\NCognizantBengaluruKarnatakaAsiaAsia/Kolkata3404714672587180002016-07-01
+173.37.145.94.1467244888437865108.233.45.140USatt.comisp\NAT&TRedwood CityCANorth AmericaAmerica/Los_Angeles15975114672448920002016-07-01
+173.37.145.94.1467247036360200111.79.142.232CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanchangJiangxiAsiaAsia/Shanghai314672470530002016-07-01
+173.37.145.94.1467248440748668187.202.131.16MXamericamovil.comisp\NAmérica Móvil\N\NNorth America\N11614672484910002016-07-01
+173.37.145.94.146724908308127471.197.110.217UScomcast.comisp\NComcast Corporation\NCANorth America\N45864214672490830002016-07-01
+173.37.145.94.1467251485672786168.77.204.100PApancanal.combiz\NPanama CanalEl AradoProvincia de PanamaNorth AmericaAmerica/Panama269814672514880002016-07-01
+173.37.145.94.1467253381376612110.85.5.216CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedFuzhouFujianAsiaAsia/Shanghai314672533840002016-07-01
+173.37.145.94.1467254855931317112.26.239.171CNchinamobileltd.comisp\NChina Mobile LimitedBengbuAnhuiAsiaAsia/Shanghai214672548850002016-07-01
+173.37.145.94.1467256407673370111.205.136.97CNchinaunicom.comisp\NChina United Network Communications Corporation LimitedBeijingBeijingAsiaAsia/Shanghai514672564080002016-07-01
+173.37.145.94.146725684093982417.198.8.206USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614672568610002016-07-01
+173.37.145.94.1467257765951540128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672577730002016-07-01
+173.37.145.94.1467263143277223211.47.211.2KRskglobal.comisp\NSK NetworksSeoulSeoulAsiaAsia/Seoul7114673321250002016-07-01
+173.37.145.94.146726672155890027.255.211.240INconnectzone.inisp\NConnectBadheriChandigarhAsiaAsia/Kolkata13814672667480002016-07-01
+173.37.145.94.146727062199017880.193.88.250GBlibertyglobal.comisp\NLiberty Global\N\NEuropeEurope/London3014672708240002016-07-01
+173.37.145.94.146727272510751495.185.251.115SAstc.com.saisp\NSaudi Telecom Company\N\NAsiaAsia/Riyadh668914672727400002016-07-01
+173.37.145.94.1467273107936836175.101.67.107INexcellmedia.netisp\NExcell Media Private Limited\N\NAsia\N4814672731610002016-07-01
+173.37.145.94.1467274171105250138.162.140.54USnic.milbiz\N\NOceansideCANorth AmericaAmerica/Los_Angeles1914672742320002016-07-01
+173.37.145.94.1467274852428826183.129.80.84CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314672748700002016-07-01
+173.37.145.94.1467274919838360183.68.244.46CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChongqingChongqingAsiaAsia/Shanghai314672750440002016-07-01
+173.37.145.94.1467275441481183128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672754480002016-07-01
+173.37.145.94.1467275458037498128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672754600002016-07-01
+173.37.145.94.146727806004480449.151.155.170PHpldt.comisp\NPLDT CORPORATEConcepcionCentral LuzonAsiaAsia/Manila94414672780980002016-07-01
+173.37.145.94.1467288386876133168.77.204.100PApancanal.combiz\NPanama CanalEl AradoProvincia de PanamaNorth AmericaAmerica/Panama269814672883900002016-07-01
+173.37.145.94.146728946274668417.198.8.206USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614672894840002016-07-01
+173.37.145.94.146728986036426990.145.31.146NLu-servers.netbiz\N\N\N\NEuropeEurope/Amsterdam\N14672898700002016-07-01
+173.37.145.94.1467289977558383117.0.174.70VNviettel.com.vnisp\NViettelHanoiThanh Pho Ha NoiAsiaAsia/Ho_Chi_Minh131214672900810002016-07-01
+173.37.145.94.1467298412412600190.4.184.248CWonenet.cwbiz\N\NWillemstad\NNorth AmericaAmerica/Curacao\N14672984210002016-07-01
+173.37.145.94.14672991679941605.155.169.145SYste.gov.syisp\N\N\N\NAsiaAsia/Damascus114672997200002016-07-01
+173.37.145.94.1467300261028228113.155.243.142JPkddi.comisp\NKDDI CORPORATION\N\NAsiaAsia/Tokyo28214673002620002016-07-01
+173.37.145.94.1467302547125013209.203.79.110USkia.combiz\NKIAIrvineCANorth AmericaAmerica/Los_Angeles9914673239630002016-07-01
+173.37.145.94.1467306074441797201.226.91.179PAobaldia.sld.pabiz\N\N\N\NNorth AmericaAmerica/Panama\N14673060950002016-07-01
+173.37.145.94.1467309249166709172.56.31.201UStelekom.comisp\NDeutsche Telkom AgLos AngelesCANorth AmericaAmerica/Los_Angeles9914673101230002016-07-01
+173.37.145.94.1467312870752707201.144.82.149MXamericamovil.comisp\NAmérica Móvil\N\NNorth America\N11614673128760002016-07-01
+173.37.145.94.1467315098615407201.164.201.226MXmegacable.com.mxisp\NMegacable\N\NNorth America\N58114673151010002016-07-01
+173.37.145.94.146731916788703765.121.228.201USskillsoft.combiz\NSkillsoft\N\NNorth America\N216014673191700002016-07-01
+173.37.145.94.1467320099943734190.129.187.35BOadsib.gob.bobiz\N\NLa PazDepartamento de La PazSouth AmericaAmerica/La_Paz1214673359500002016-07-01
+173.37.145.94.1467321818526225152.201.13.117COtelecom.com.coisp\NColombia TelecomunicacionesBogotáBogota D.C.South AmericaAmerica/Bogota638814673229600002016-07-01
+173.37.145.94.146732200150178937.237.156.68IQearthlinktele.comisp\N\N\N\NAsiaAsia/Baghdad1014673225750002016-07-01
+173.37.145.94.1467325129054352209.210.35.194USintegratelecom.comisp\NIntegra TelecomKentWANorth AmericaAmerica/Los_Angeles176414673251370002016-07-01
+173.37.145.94.146732838497095464.47.189.124USmasergy.combiz\NMasergy Communications, Inc\N\NNorth America\N23314673283910002016-07-01
+173.37.145.94.1467331014593082200.54.110.71CLtelefonica.comisp\NtelefonicaSantiagoSantiago MetropolitanSouth AmericaAmerica/Santiago193314673356070002016-07-01
+173.37.145.94.146733229542303754.200.161.161USamazon.comisp\NAmazon.com, IncBoardmanORNorth AmericaAmerica/Los_Angeles1248614673323030002016-07-01
+173.37.145.94.1467334255383106192.232.130.221AUbhtafe.edu.aubiz\NBox Hill InstituteBox HillVICOceaniaAustralia/Melbourne52614673349330002016-07-01
+173.37.145.94.1467334997268701195.169.119.33NLsurf.nlisp\NSURF\N\NEuropeEurope/Amsterdam3114673349970002016-07-01
+173.37.145.94.1467336166101920107.193.46.121USatt.comisp\NAT&TClovisCANorth AmericaAmerica/Los_Angeles15975114673363020002016-07-01
+173.37.145.94.1467339120642482203.177.88.125PHglobe.com.phisp\NGLOBE TELECOM, INC.\N\NAsiaAsia/Manila47614673395980002016-07-01
+173.37.145.94.146733914450469066.102.7.204USgoogle.comisp\NGoogle Inc\N\NNorth America\N11980514673392810002016-07-01
+173.37.145.94.1467339409762577115.235.152.96CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWenzhouZhejiangAsiaAsia/Shanghai314673395280002016-07-01
+173.37.145.94.1467339568571194183.158.46.54CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314673396890002016-07-01
+173.37.145.94.1467339739717395109.203.251.52GPaltice.netisp\NAltice Africa SARLPetit-Bourg\NNorth AmericaAmerica/Guadeloupe114673402220002016-07-01
+173.37.145.94.1467339928052973184.91.128.75USbrighthouse.comisp\NBright House NetworksCocoaFLNorth AmericaAmerica/New_York34614673399970002016-07-01
+173.37.145.94.146733996567559566.102.8.215USgoogle.comisp\NGoogle Inc\NFLNorth AmericaAmerica/New_York11980514673399980002016-07-01
+173.37.145.94.146734038079315917.198.8.206USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614673404010002016-07-01
+173.37.145.94.1467341840688743141.0.15.235NOopera.comisp\NOPERA SOFTWARE ASA\N\NEuropeEurope/Oslo116614673421710002016-07-01
+173.37.145.94.146734213783428217.200.11.34USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614673421380002016-07-01
+173.37.145.94.1467342839166791177.5.72.48BRtelefonica.comisp\Ntelefonica\N\NSouth America\N193314673448690002016-07-01
+173.37.145.94.1467343834673837107.167.112.125UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414673440020002016-07-01
+173.37.145.94.1467345481880228203.187.211.91INyoubroadband.inisp\NYOU Broadband & Cable India LimitedMumbaiMaharashtraAsiaAsia/Kolkata314673454820002016-07-01
+173.37.145.94.1467345727676761183.89.134.138TH3bb.co.thisp\NTriple T Broadband Company Limited (PCL)Ban PaoChangwat LampangAsiaAsia/Bangkok314673457310002016-07-01
+173.37.145.94.146734608508735775.162.167.96UScenturylink.comisp\NCenturyLink, Inc.Salt Lake CityUTNorth AmericaAmerica/Denver712014673464620002016-07-01
+173.37.145.94.1467347201987708122.15.11.155INcloudns.netbiz\N\NFaridabadHaryanaAsiaAsia/Kolkata114673473160002016-07-01
+173.37.145.94.1467347453504573183.48.38.54CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedGuangzhouGuangdongAsiaAsia/Shanghai314673474900002016-07-01
+173.37.145.94.1467348287207046195.169.119.33NLsurf.nlisp\NSURF\N\NEuropeEurope/Amsterdam3114673482870002016-07-01
+173.37.145.94.146734858651809151.255.50.31FRovh.comisp\NOVH\N\NEuropeEurope/Paris1314673486040002016-07-01
+173.37.145.94.14673495707960078.37.234.71USquantil.comisp\N\NPasadenaCANorth AmericaAmerica/Los_Angeles\N14673495760002016-07-01
+173.37.145.94.1467349716258123218.0.213.68CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314673498360002016-07-01
+173.37.145.94.1467351389523902118.249.175.7CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChangshaHunanAsiaAsia/Shanghai314673514000002016-07-01
+173.37.145.94.1467351518978023115.249.209.117INrcom.co.inisp\NReliance Communications LimitedKarimnagar\NAsiaAsia/Kolkata414673515200002016-07-01
+173.37.145.94.1467351778094562210.56.124.119INconnectzone.inisp\NConnectBhawanHimachal PradeshAsiaAsia/Kolkata13814673522450002016-07-01
+173.37.145.94.146735235510668776.246.235.77USatt.comisp\NAT&TRiversideCANorth AmericaAmerica/Los_Angeles15975114673523580002016-07-01
+173.37.145.94.1467352928946053137.222.248.32GBbris.ac.ukbiz\NUniversity of BristolBristolBristolEuropeEurope/London102614673529290002016-07-01
+173.37.145.94.1467354013061197219.148.50.244CNhbtele.combiz\N\NHebeiHebeiAsiaAsia/Shanghai314673540310002016-07-01
+173.37.145.94.14673541043955901.39.12.65INvodafone.inisp\NVodafone India LimitedMumbaiMaharashtraAsiaAsia/Kolkata19714673541050002016-07-01
+173.37.145.94.1467354108044031180.150.242.124INspeedonline.netisp\NSpeed Online.Net.Pvt.Ltd\N\NAsiaAsia/Kolkata1114673542910002016-07-01
+173.37.145.94.1467354114306635106.215.181.64INairtel.comisp\NBharti Enterprises LtdDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata47714673541160002016-07-01
+173.37.145.94.146735441157464739.7.56.31KRkt.comisp\Nkt corpSeoulSeoulAsiaAsia/Seoul34114673544140002016-07-01
+173.37.145.94.1467354703657143182.250.250.227JPkddi.comisp\NKDDI CORPORATIONTokyoTokyoAsiaAsia/Tokyo28214673547060002016-07-01
+173.37.145.94.1467355526618927213.229.153.228EScolt.netisp\NColt Technology ServicesBarcelonaCataloniaEuropeEurope/Madrid113414673556200002016-07-01
+173.37.145.94.146735605635380562.12.14.25NLkpn.comisp\NKPN\N\NEuropeEurope/Amsterdam319714673563610002016-07-01
+173.37.145.95.1386259231306413146.7.42.245USmore.netisp\NMOREnetSpringfieldMONorth AmericaAmerica/Chicago25314673215370002016-07-01
+173.37.145.95.1434739804718872144.160.226.93USatt.comisp\NAT&TOld BridgeNJNorth AmericaAmerica/New_York15975114673199160002016-07-01
+173.37.145.95.1438891580809585107.141.32.168USatt.comisp\NAT&TDublinCANorth AmericaAmerica/Los_Angeles15975114673529680002016-07-01
+173.37.145.95.1457870580039287112.198.72.217PHglobe.com.phisp\NGLOBE TELECOM, INC.\N\NAsiaAsia/Manila47614673440260002016-07-01
+173.37.145.95.1458653021117314217.89.113.14DEtelekom.comisp\NDeutsche Telkom Ag\N\NEurope\N9914672897370002016-07-01
+173.37.145.95.1459414935193297219.146.135.140CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314672713080002016-07-01
+173.37.145.95.1463296397640619119.30.38.254BDgrameenphone.comisp\NGrameenphone LtdDhakaDhaka DivisionAsiaAsia/Dhaka620114672819160002016-07-01
+173.37.145.95.1463733219431877165.225.80.59GBzscaler.combiz\NZscaler, IncLondon\NEuropeEurope/London9614672737240002016-07-01
+173.37.145.95.1465368125369262222.134.135.254CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedJinanShandongAsiaAsia/Shanghai314673439300002016-07-01
+173.37.145.95.1465798457416919118.37.69.32KRkt.comisp\Nkt corp\N\NAsiaAsia/Seoul34114673541940002016-07-01
+173.37.145.95.1466037094383209198.184.248.250USopc.combiz\NOglethorpe Power CorporationLithoniaGANorth AmericaAmerica/New_York31214673142980002016-07-01
+173.37.145.95.146613901944156169.174.87.20UScisco.combiz\NCisco Systems, Inc\N\NNorth America\N6500214672623380002016-07-01
+173.37.145.95.1466423766021363192.8.193.101INhcl.combiz\NHCL Corporation Ltd\N\NAsiaAsia/Kolkata176114673551300002016-07-01
+173.37.145.95.1466535597112057214.36.0.135USnic.milbiz\N\NAlexandriaVANorth AmericaAmerica/New_York1914673049360002016-07-01
+173.37.145.95.1466609481740842140.242.100.8USpolycom.combiz\NPolycom IncMaldenMANorth AmericaAmerica/New_York278714673091970002016-07-01
+173.37.145.95.146666635895678991.98.173.15IRpol.irbiz\NPars Online\NOstan-e TehranAsiaAsia/Tehran714672737030002016-07-01
+173.37.145.95.1466670463592139132.222.121.99JPnttcom.co.jpbiz\NNTT COMWARE CORPORATION\N\NAsiaAsia/Tokyo6014673368580002016-07-01
+173.37.145.95.1466735191595981120.60.40.81INmtnl.net.inisp\NMahanagar Telephone Nigam LimitedMumbaiMaharashtraAsiaAsia/Kolkata670314673455790002016-07-01
+173.37.145.95.1466743427879571124.114.245.94CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedXi'anShaanxiAsiaAsia/Shanghai314673515510002016-07-01
+173.37.145.95.146695912246716731.173.86.51RUmegafon.ruisp\NMegaFonMoscowMoscowEuropeEurope/Moscow7614673000580002016-07-01
+173.37.145.95.1467000642434974186.159.24.63COedatel.com.coisp\N\NMedellínAntioquiaSouth AmericaAmerica/Bogota45614673495160002016-07-01
+173.37.145.95.1467028206073644192.8.214.105INhcl.combiz\NHCL Corporation Ltd\N\NAsiaAsia/Kolkata176114672940170002016-07-01
+173.37.145.95.146703183331710983.164.137.22ATlagis.atbiz\NlagisLinzUpper AustriaEuropeEurope/Vienna\N14673514550002016-07-01
+173.37.145.95.1467101750076583202.246.252.97JPhitachi.co.jpbiz\NHitachi, LtdTokyoTokyoAsiaAsia/Tokyo3414672622240002016-07-01
+173.37.145.95.1467119050132449208.44.206.101USforce3.combiz\NForce 3, IncCroftonMDNorth AmericaAmerica/New_York27514672913540002016-07-01
+173.37.145.95.1467122827639416108.131.3.59USatt.comisp\NAT&TPicayuneMSNorth AmericaAmerica/Chicago15975114673529120002016-07-01
+173.37.145.95.146715154223680424.79.153.15CAshaw.caisp\NshawWinnipegMBNorth AmericaAmerica/Winnipeg61512714673172320002016-07-01
+173.37.145.95.1467158776314140104.175.248.209UStimewarnercable.comisp\NTIME WARNER CABLE ENTERPRISES LLCHacienda HeightsCANorth AmericaAmerica/Los_Angeles111114673532360002016-07-01
+173.37.145.95.146719423566987464.233.173.253USgoogle.comisp\NGoogle Inc\N\NNorth America\N11980514672691890002016-07-01
+173.37.145.95.1467199428493025212.170.98.196EStelefonica.comisp\Ntelefonica\N\NEurope\N193314672826220002016-07-01
+173.37.145.95.146720426692120936.101.7.125CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHaikouHainanAsiaAsia/Shanghai314672886400002016-07-01
+173.37.145.95.146721151940830757.250.231.247BEequant.netisp\Nequant\N\NEuropeEurope/Brussels614672826890002016-07-01
+173.37.145.95.1467228367798736141.202.54.2USca.combiz\NCA, Inc.IslandiaNYNorth AmericaAmerica/New_York1402314673184480002016-07-01
+173.37.145.95.1467245362411757150.61.31.78JPcanon.jpbiz\NCANON INC\N\NAsiaAsia/Tokyo214672453640002016-07-01
+173.37.145.95.146724966473295027.32.62.49AUtpg.com.auisp\NTPG Internet Pty LtdLeichhardtNSWOceaniaAustralia/Sydney4351814672497880002016-07-01
+173.37.145.95.1467250203041450223.67.190.5CNchinamobileltd.comisp\NChina Mobile LimitedYanchengJiangsuAsiaAsia/Shanghai214672502040002016-07-01
+173.37.145.95.1467250475511864108.227.219.123USatt.comisp\NAT&THoustonTXNorth AmericaAmerica/Chicago15975114672504780002016-07-01
+173.37.145.95.1467250805575305172.56.41.204UStelekom.comisp\NDeutsche Telkom AgLos AngelesCANorth AmericaAmerica/Los_Angeles9914672508200002016-07-01
+173.37.145.95.146725103804994449.164.114.74KRkrnic.netisp\NkisaSeoulSeoulAsiaAsia/Seoul514672510650002016-07-01
+173.37.145.95.1467252073620469124.123.197.73INbeamtele.comisp\NBEAM TELECOM PVT. LTDHyderabad\NAsiaAsia/Kolkata2614672520790002016-07-01
+173.37.145.95.146725321993449195.71.233.93RUrostelecom.ruisp\NAtos\N\NEurope\N114672532230002016-07-01
+173.37.145.95.1467254589054651180.111.193.163CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNanjingJiangsuAsiaAsia/Shanghai314672547270002016-07-01
+173.37.145.95.146725510944800517.200.2.246USapple.combiz\NAppleCupertinoCANorth AmericaAmerica/Los_Angeles1882614672551090002016-07-01
+173.37.145.95.146725545732239950.16.243.133USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672554580002016-07-01
+173.37.145.95.146725731781659154.174.56.234USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614672573180002016-07-01
+173.37.145.95.1467257627078931110.167.157.230CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedXiningQinghaiAsiaAsia/Shanghai314672576330002016-07-01
+173.37.145.95.1467260371511717189.224.72.222MXprod-infinitum.com.mxisp\NUninet S.A. de C.V\N\NNorth America\N13314672603880002016-07-01
+173.37.145.95.146726563457406437.237.186.48IQearthlinktele.comisp\N\N\N\NAsiaAsia/Baghdad1014672662920002016-07-01
+173.37.145.95.1467265735489995202.159.221.54INdmrc.orgbiz\N\NDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata3014672782980002016-07-01
+173.37.145.95.146726744325216979.236.103.6DEtelekom.comisp\NDeutsche Telkom AgHamburgHamburgEuropeEurope/Berlin9914672674650002016-07-01
+173.37.145.95.1467268006582347107.167.104.222UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414672680080002016-07-01
+173.37.145.95.1467268183431882107.167.107.251UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414672682080002016-07-01
+173.37.145.95.1467268860908679107.167.108.222UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414672688620002016-07-01
+173.37.145.95.1467270495634905192.8.193.101INhcl.combiz\NHCL Corporation Ltd\N\NAsiaAsia/Kolkata176114672717130002016-07-01
+173.37.145.95.1467272885049956128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672728850002016-07-01
+173.37.145.95.1467272968409563128.107.237.221UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214672729680002016-07-01
+173.37.145.95.146727382156501837.236.230.34IQearthlinktele.comisp\N\N\N\NAsiaAsia/Baghdad1014672744110002016-07-01
+173.37.145.95.1467277660793113117.201.208.196INbsnl.co.inisp\NBSNLBengaluruKarnatakaAsiaAsia/Kolkata150014672777060002016-07-01
+173.37.145.95.146727876100716396.43.180.50JMflow.combiz\NFlow Snowboarding (USA)May PenParish of ClarendonNorth AmericaAmerica/Jamaica14214672789660002016-07-01
+173.37.145.95.1467279257975197117.218.31.121INbsnl.co.inisp\NBSNLBengaluruKarnatakaAsiaAsia/Kolkata150014672879620002016-07-01
+173.37.145.95.1467282067908297195.61.140.5EUcat.combiz\NCaterpillar\N\NEurope\N1564814672832910002016-07-01
+173.37.145.95.146728208193221577.154.202.8FRaltice.netisp\NAltice Africa SARL\N\NEuropeEurope/Paris114672828760002016-07-01
+173.37.145.95.1467282533764724109.122.16.162UAmegastyle.comisp\N\N\N\NEurope\N1414672825340002016-07-01
+173.37.145.95.1467282960381272149.62.200.100BGtelenor.bgisp\NTelenor Bulgaria\N\NEuropeEurope/Sofia\N14672844220002016-07-01
+173.37.145.95.146728392101448645.126.144.185INrkinfratel.comisp\N\N\N\NAsiaAsia/Kolkata\N14672839580002016-07-01
+173.37.145.95.146728578250323698.93.218.8USatt.comisp\NAT&TBeaver DamKYNorth AmericaAmerica/Chicago15975114672857840002016-07-01
+173.37.145.95.146728809757974993.226.145.211DEtelekom.comisp\NDeutsche Telkom Ag\N\NEurope\N9914672896270002016-07-01
+173.37.145.95.1467292043865884109.231.220.50GBexponential-e.comisp\NExponential-e LtdLondon\NEuropeEurope/London8614672925370002016-07-01
+173.37.145.95.1467293018238352109.64.104.118ILbezeq.co.ilisp\NBezeq The Israel Telecommunication Corp. Ltd.\N\NAsiaAsia/Jerusalem20414672947220002016-07-01
+173.37.145.95.146729327193558838.104.44.38UScogentco.comisp\NCogent Communications, IncMaplewoodNJNorth AmericaAmerica/New_York53014672932760002016-07-01
+173.37.145.95.1467293940346638104.129.204.74USzscaler.combiz\NZscaler, IncAtlantaGANorth AmericaAmerica/New_York9614672941930002016-07-01
+173.37.145.95.1467295998888094180.191.61.12PHglobe.com.phisp\NGLOBE TELECOM, INC.\N\NAsiaAsia/Manila47614672960340002016-07-01
+173.37.145.95.1467298727207108173.227.88.196UStwtelecom.comisp\Ntw telecomAustinTXNorth AmericaAmerica/Chicago298814672991030002016-07-01
+173.37.145.95.146729891975225470.210.49.186USverizonwireless.comisp\NVerizon WirelessConnect with usAntiochTNNorth AmericaAmerica/Chicago3280614672989450002016-07-01
+173.37.145.95.146729921595705598.218.162.205UScomcast.comisp\NComcast CorporationManassasVANorth AmericaAmerica/New_York45864214672992160002016-07-01
+173.37.145.95.1467299953694566192.154.149.195CAconcorde2000.combiz\N\NMontrealQCNorth AmericaAmerica/Toronto6114673399610002016-07-01
+173.37.145.95.1467302007503884193.55.113.196FReurecom.frbiz\NeurecomNiceProvence-Alpes-Côte d'AzurEuropeEurope/Paris16914673020150002016-07-01
+173.37.145.95.1467303129378000107.167.109.17UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414673031320002016-07-01
+173.37.145.95.146730417550407570.209.72.138USverizonwireless.comisp\NVerizon WirelessConnect with usPhoenixAZNorth AmericaAmerica/Phoenix3280614673045770002016-07-01
+173.37.145.95.1467305223907591184.180.13.102UScox.comisp\NCox Communications, IncManchesterCTNorth AmericaAmerica/New_York7058914673052300002016-07-01
+173.37.145.95.146730758725485689.139.131.248ILelron.netbiz\NElron Electronic Industries Ltd\N\NAsiaAsia/Jerusalem6014673075880002016-07-01
+173.37.145.95.146730813540470065.156.135.211UScenturylink.comisp\NCenturyLink, Inc.ChamplinMNNorth AmericaAmerica/Chicago712014673081370002016-07-01
+173.37.145.95.146730877698289331.170.39.228RUtp86.rubiz\N\N\N\NEurope\N\N14673087790002016-07-01
+173.37.145.95.1467311211916836172.56.3.27UStelekom.comisp\NDeutsche Telkom AgWashingtonDCNorth AmericaAmerica/New_York9914673147980002016-07-01
+173.37.145.95.14673114546681432.90.194.150SAstc.com.saisp\NSaudi Telecom Company\N\NAsiaAsia/Riyadh668914673123260002016-07-01
+173.37.145.95.1467311627922985155.178.180.12USfaa.govbiz\NFederal Aviation Administration\N\NNorth America\N1463714673116290002016-07-01
+173.37.145.95.146731175152968123.22.21.201USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614673117630002016-07-01
+173.37.145.95.1467312597388668107.167.107.194UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414673125980002016-07-01
+173.37.145.95.146731306769374570.209.16.130USverizonwireless.comisp\NVerizon WirelessConnect with us\NFLNorth AmericaAmerica/New_York3280614673131620002016-07-01
+173.37.145.95.146731322545502689.139.131.248ILelron.netbiz\NElron Electronic Industries Ltd\N\NAsiaAsia/Jerusalem6014673132260002016-07-01
+173.37.145.95.146732008548473924.0.150.207UScomcast.comisp\NComcast CorporationJersey CityNJNorth AmericaAmerica/New_York45864214673200900002016-07-01
+173.37.145.95.146732022984166996.255.171.117USverizon.comisp\NVerizonLanhamMDNorth AmericaAmerica/New_York16437814673202530002016-07-01
+173.37.145.95.1467320401723442114.121.132.42IDtelkomsel.comisp\NTELKOMSELJakartaJakartaAsiaAsia/Jakarta17814673204160002016-07-01
+173.37.145.95.146732052630197624.10.245.107UScomcast.comisp\NComcast CorporationSalt Lake CityUTNorth AmericaAmerica/Denver45864214673205280002016-07-01
+173.37.145.95.1467320702533477206.53.249.12USlightbound.comisp\NLightBoundFishersINNorth AmericaAmerica/Indiana/Indianapolis172614673207120002016-07-01
+173.37.145.95.146732211040022154.243.187.26USamazon.comisp\NAmazon.com, IncAshburnVANorth AmericaAmerica/New_York1248614673221110002016-07-01
+173.37.145.95.1467323876442659129.24.23.136USunm.edubiz\NThe University of New MexicoAlbuquerqueNMNorth AmericaAmerica/Denver2223714673239100002016-07-01
+173.37.145.95.1467325349796001100.6.167.66USverizon.comisp\NVerizonPittsburghPANorth AmericaAmerica/New_York16437814673253520002016-07-01
+173.37.145.95.146733178195673087.138.100.196DEtelekom.comisp\NDeutsche Telkom AgBerlinLand BerlinEuropeEurope/Berlin9914673317930002016-07-01
+173.37.145.95.1467331816857859107.167.109.172UScbandt.combiz\NCommonwealth Bank & Trust CompanySan MateoCANorth AmericaAmerica/Los_Angeles19414673318180002016-07-01
+173.37.145.95.1467332569605019180.215.121.26INmtsindia.inisp\NSistema Shyam TeleServices Limited (SSTL)NamakkalTamil NaduAsiaAsia/Kolkata51814673325730002016-07-01
+173.37.145.95.146733292858701471.81.157.136UScharter.comisp\NCharter Communications Operating, LLCCity of Saint PetersMONorth AmericaAmerica/Chicago4269214673329890002016-07-01
+173.37.145.95.146733301982153060.178.225.241CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedNingboZhejiangAsiaAsia/Shanghai314673333550002016-07-01
+173.37.145.95.146733394400156612.250.60.218USatt.comisp\NAT&TMedfordMANorth AmericaAmerica/New_York15975114673339590002016-07-01
+173.37.145.95.146733398560313366.102.8.215USgoogle.comisp\NGoogle Inc\NFLNorth AmericaAmerica/New_York11980514673339850002016-07-01
+173.37.145.95.1467335553191310190.98.227.111CLgrupogtd.comisp\NGtd Teleductos S.A.SantiagoSantiago MetropolitanSouth AmericaAmerica/Santiago17014673355620002016-07-01
+173.37.145.95.1467337572422807222.248.73.123CNeachome.com.cnbiz\N\NShenzhenGuangdongAsiaAsia/Shanghai\N14673379200002016-07-01
+173.37.145.95.1467338044651580120.14.23.197CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHebeiHebeiAsiaAsia/Shanghai314673380670002016-07-01
+173.37.145.95.146733836790630996.244.40.250USverizon.comisp\NVerizonCroftonMDNorth AmericaAmerica/New_York16437814673383880002016-07-01
+173.37.145.95.1467338549003575181.232.113.44COedatel.com.coisp\N\NMedellínAntioquiaSouth AmericaAmerica/Bogota45614673385740002016-07-01
+173.37.145.95.1467338827739854223.158.170.42CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedChangshaHunanAsiaAsia/Shanghai314673388440002016-07-01
+173.37.145.95.1467339866219196115.235.171.134CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWenzhouZhejiangAsiaAsia/Shanghai314673399770002016-07-01
+173.37.145.95.146734066722006091.200.12.141UAalnet.com.uabiz\N\N\N\NEurope\N\N14673406690002016-07-01
+173.37.145.95.146734069294286324.219.47.14USygnition.comisp\NYgnition Networks, Inc.MerrickNYNorth AmericaAmerica/New_York14414673407090002016-07-01
+173.37.145.95.1467341178494188202.121.132.19CNshufe.edu.cnbiz\NShanghai University of Finance and EconomicsShanghaiShanghaiAsiaAsia/Shanghai1114673411940002016-07-01
+173.37.145.95.146734139839167272.69.190.209USverizon.comisp\NVerizonNew_York_CityNYNorth America\N16437814673413990002016-07-01
+173.37.145.95.1467342631558905182.74.27.250INairtel.comisp\NBharti Enterprises LtdKotaRajasthanAsiaAsia/Kolkata47714673427410002016-07-01
+173.37.145.95.1467342653816655186.150.99.89DOtricom.netisp\NTricomSanto DomingoNacionalNorth AmericaAmerica/Santo_Domingo316514673426640002016-07-01
+173.37.145.95.1467343125325276129.250.195.158USntt-global.comisp\NNippon Telegraph and Telephone CorporationEnglewoodCONorth AmericaAmerica/Denver\N14673431400002016-07-01
+173.37.145.95.146734409900981150.190.159.65UScomcast.comisp\NComcast CorporationTakoma ParkMDNorth AmericaAmerica/New_York45864214673445700002016-07-01
+173.37.145.95.1467344498605845111.181.55.105CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedWuhanHubeiAsiaAsia/Shanghai314673445100002016-07-01
+173.37.145.95.1467345323528005190.239.230.85PEtelefonica.comisp\Ntelefonica\N\NSouth AmericaAmerica/Lima193314673453350002016-07-01
+173.37.145.95.146734564584076538.104.3.42UScogentco.comisp\NCogent Communications, Inc\N\NNorth America\N53014673456710002016-07-01
+173.37.145.95.1467345736437043122.230.25.176CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHuzhouZhejiangAsiaAsia/Shanghai314673457460002016-07-01
+173.37.145.95.1467345810599841122.176.107.113INairtel.comisp\NBharti Enterprises LtdDelhiNational Capital Territory of DelhiAsiaAsia/Kolkata47714673458240002016-07-01
+173.37.145.95.146734582319963464.132.245.154UStwtelecom.comisp\Ntw telecomMemphisTNNorth AmericaAmerica/Chicago298814673458390002016-07-01
+173.37.145.95.1467346569198609123.11.86.115CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedZhengzhouHenanAsiaAsia/Shanghai314673466540002016-07-01
+173.37.145.95.146734742221649479.177.185.80ILbezeq.co.ilisp\NBezeq The Israel Telecommunication Corp. Ltd.\N\NAsiaAsia/Jerusalem20414673474230002016-07-01
+173.37.145.95.1467348207187499190.237.183.2PEtelefonica.comisp\Ntelefonica\N\NSouth AmericaAmerica/Lima193314673554800002016-07-01
+173.37.145.95.1467348617493544160.33.195.20USverizon.comisp\NVerizonPark RidgeNJNorth AmericaAmerica/New_York16437814673486200002016-07-01
+173.37.145.95.1467349438228743202.134.171.140IN7starnetworks.combiz\N\NMumbaiMaharashtraAsiaAsia/Kolkata\N14673495020002016-07-01
+173.37.145.95.1467349453267452115.178.211.249IDwireless.net.idisp\N\NCipaduWest JavaAsiaAsia/Jakarta414673517960002016-07-01
+173.37.145.95.146734969696872588.77.77.168DEvodafone.deisp\NVodafoneLünenNorth Rhine-WestphaliaEuropeEurope/Berlin193614673497050002016-07-01
+173.37.145.95.146734973551604279.179.180.140ILbezeq.co.ilisp\NBezeq The Israel Telecommunication Corp. Ltd.HerzliyaTel AvivAsiaAsia/Jerusalem20414673497450002016-07-01
+173.37.145.95.1467349901499536190.233.16.113PEtelefonica.comisp\Ntelefonica\N\NSouth AmericaAmerica/Lima193314673499310002016-07-01
+173.37.145.95.14673499534609678.37.233.222USquantil.comisp\N\NPasadenaCANorth AmericaAmerica/Los_Angeles\N14673500200002016-07-01
+173.37.145.95.1467350061336285189.174.202.103MXamericamovil.comisp\NAmérica Móvil\N\NNorth America\N11614673500780002016-07-01
+173.37.145.95.146735030667095098.167.72.94UScox.comisp\NCox Communications, IncNorth Las VegasNVNorth AmericaAmerica/Los_Angeles7058914673504190002016-07-01
+173.37.145.95.1467350391949442189.215.136.191MXcableonline.com.mxisp\NTV CABLE S.A. DE C.V\N\NNorth America\N97214673504100002016-07-01
+173.37.145.95.1467350736530093115.198.11.40CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314673508530002016-07-01
+173.37.145.95.14673507393412895.56.199.186DEunitymedia.deisp\NUnitymedia KabelBW GmbHSingenBaden-Württemberg RegionEuropeEurope/Berlin6114673507660002016-07-01
+173.37.145.95.146735084752373460.177.165.142CNchinatelecom-h.comisp\NChina Telecom Corporation LimitedHangzhouZhejiangAsiaAsia/Shanghai314673509670002016-07-01
+173.37.145.95.146735122464300412.250.60.218USatt.comisp\NAT&TMedfordMANorth AmericaAmerica/New_York15975114673512470002016-07-01
+173.37.145.95.14673513666475871.39.13.253INvodafone.inisp\NVodafone India LimitedMumbaiMaharashtraAsiaAsia/Kolkata19714673513820002016-07-01
+173.37.145.95.1467352106045483152.216.7.5USirs.govbiz\NInternal Revenue ServiceWashingtonDCNorth AmericaAmerica/New_York2062114673521090002016-07-01
+173.37.145.95.1467353145202835123.237.163.20INrcom.co.inisp\NReliance Communications LimitedMumbaiMaharashtraAsiaAsia/Kolkata414673531590002016-07-01
+173.37.145.95.1467353320254684182.75.146.54INairtel.comisp\NBharti Enterprises Ltd\N\NAsiaAsia/Kolkata47714673534250002016-07-01
+173.37.145.95.1467353389748820150.96.0.100JPco-nss.co.jpbiz\NNISSIN SYSTEMS CO,. ltd\N\NAsiaAsia/Tokyo614673533910002016-07-01
+173.37.145.95.1467353467658554119.235.55.66INskytel.inbiz\NVAINAVI\N\NAsia\N614673534850002016-07-01
+173.37.145.95.146735422057979897.84.42.18UScharter.comisp\NCharter Communications Operating, LLCChesterfieldMONorth AmericaAmerica/Chicago4269214673542380002016-07-01
+173.37.145.95.1467354968346482106.215.134.47INairtel.comisp\NBharti Enterprises Ltd\NRajasthanAsiaAsia/Kolkata47714673549700002016-07-01
+173.37.145.95.1467355344050644125.209.126.115PKmulti.net.pkbiz\NMultinet\N\NAsiaAsia/Karachi15214673553460002016-07-01
+173.37.145.95.1467356137778334183.83.49.20INbeamtele.netisp\NBeam Telecom Pvt LtdChennaiTamil NaduAsiaAsia/Kolkata\N14673561450002016-07-01
+173.37.146.70.146732308752896494.183.146.179IRrasana.netisp\NShatel\N\NAsiaAsia/Tehran10614673231790002016-07-01
+173.37.146.70.146734923397658796.53.90.214CAshaw.caisp\NshawSurreyBCNorth AmericaAmerica/Vancouver61512714673502190002016-07-01
+173.37.146.71.146729606314169699.247.85.199CArogers.comisp\NRogers Plus CommunicationsTorontoONNorth AmericaAmerica/Toronto51807814672960980002016-07-01
+173.37.146.71.146734376579737169.181.197.136UScomcast.comisp\NComcast CorporationSan FranciscoCANorth AmericaAmerica/Los_Angeles45864214673445200002016-07-01
+173.38.27.145.146734928907155364.101.207.156UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673493930002016-07-01
+173.39.28.154,Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0173.39.28.154UScisco.combiz\NCisco Systems, IncSan JoseCANorth AmericaAmerica/Los_Angeles6500214673462860002016-07-01
+173.66.211.209,Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36173.66.211.209USverizonenterprise.comisp\NVerizonDumfriesVANorth AmericaAmerica/New_York\N14673436980002016-07-01
+175.136.1.29,Mozilla/5.0 (Linux; Android 4.4.2; GT-N7100 Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36175.136.1.29MYtm.com.myisp\NTM\N\NAsia\N1041914673496480002016-07-01
+175.143.106.81,Mozilla/5.0 (Windows NT 6.1; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0175.143.106.81MYtm.com.myisp\NTMPuchong Batu Dua BelasSelangorAsiaAsia/Kuala_Lumpur1041914673343070002016-07-01
+175.45.23.82,Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko175.45.23.82HKwharftt.comisp\NWharf T&T LimitedCentral District\NAsiaAsia/Hong_Kong8714672594870002016-07-01
+176.26.99.119,Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36176.26.99.119GBsky.comisp\NSky\N\NEuropeEurope/London9527114673115490002016-07-01
+178.152.157.95,Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36178.152.157.95QAooredoo.comisp\NOoredooDohaBaladiyat ad DawhahAsiaAsia/Qatar\N14672756930002016-07-01
+180.87.129.138.1447817776672032180.87.129.138HKtatacommunications.comisp\NTata Communications Ltd\N\NAsiaAsia/Hong_Kong188414672658040002016-07-01
+181.65.183.234,Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36181.65.183.234PEtelefonica.comisp\Ntelefonica\N\NSouth AmericaAmerica/Lima193314673321570002016-07-01
+186.143.130.228,Mozilla/5.0 (Linux; Android 6.0; XT1097 Build/MPE24.49-18) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.81 Mobile Safari/537.36186.143.130.228ARtelefonica.comisp\NtelefonicaBuenos AiresBuenos Aires F.D.South AmericaAmerica/Argentina/Buenos_Aires193314673374490002016-07-01
+187.190.62.59,Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36187.190.62.59MXiusacell.com.mxisp\NiusacellMexico CityMexico CityNorth AmericaAmerica/Mexico_City185814672618910002016-07-01
+189.177.67.141,Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36189.177.67.141MXamericamovil.comisp\NAmérica MóvilQuerétaro CityQuerétaroNorth AmericaAmerica/Mexico_City11614672466980002016-07-01
+190.2.62.185,Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko190.2.62.185ARnss.combiz\NNSS Enterprises, IncQuilmesBuenos AiresSouth AmericaAmerica/Argentina/Buenos_Aires10014673147570002016-07-01
+190.234.73.197,Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0190.234.73.197PEtelefonica.comisp\Ntelefonica\N\NSouth AmericaAmerica/Lima193314673162850002016-07-01
+190.79.132.18,Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36190.79.132.18VEcantv.netisp\NCompania Anonima Nacional Telefonos de Venezuela\N\NSouth AmericaAmerica/Caracas18172614673093300002016-07-01
+192.12.219.10.1441290217845536192.12.219.20USnorthlandcontrols.combiz\NNorthland Control Systems, Inc\N\NNorth America\N2314673371790002016-07-01
+193.238.13.241,Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36193.238.13.241PL3.plbiz\NWarpol\N\NEuropeEurope/Warsaw114673547120002016-07-01
+194.145.239.240,Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36194.145.239.240DEconsinto.debiz\N\N\N\NEurope\N\N14672835800002016-07-01
+197.225.146.236,Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36197.225.146.236MUmauritiustelecom.comisp\NMauritius TelecomRose HillPlaines Wilhems DistrictAfricaIndian/Mauritius25414672867570002016-07-01
