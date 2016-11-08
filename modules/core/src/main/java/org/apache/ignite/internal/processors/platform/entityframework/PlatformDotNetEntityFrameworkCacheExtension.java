@@ -39,6 +39,8 @@ import javax.cache.processor.EntryProcessorResult;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -209,7 +211,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
 
         IgniteCache<String, PlatformDotNetEntityFrameworkCacheEntry> cache = ignite.cache(dataCacheName);
 
-        Set<String> keysToRemove = new HashSet<>();
+        SortedSet<String> keysToRemove = new TreeSet<>();
 
         ClusterNode localNode = ignite.cluster().localNode();
 
