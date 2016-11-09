@@ -17,25 +17,31 @@
 
 package org.apache.ignite.internal.processors.platform.entityframework;
 
+import org.apache.ignite.binary.BinaryObjectException;
+import org.apache.ignite.binary.BinaryRawReader;
+import org.apache.ignite.binary.BinaryRawWriter;
+import org.apache.ignite.binary.BinaryReader;
+import org.apache.ignite.binary.BinaryWriter;
+import org.apache.ignite.binary.Binarylizable;
+
 import java.util.Arrays;
 
 /**
  * EntityFramework cache key: query + versions.
  */
 @SuppressWarnings("WeakerAccess")
-public class PlatformDotNetEntityFrameworkCacheKey {
+public class PlatformDotNetEntityFrameworkCacheKey implements Binarylizable {
     /** Query text. */
-    private final String query;
+    private String query;
 
     /** Entity set versions. */
-    private final long[] versions;
+    private long[] versions;
 
     /**
      * Ctor.
      */
     public PlatformDotNetEntityFrameworkCacheKey() {
-        query = null;
-        versions = null;
+        // No-op.
     }
 
     /**
@@ -93,5 +99,39 @@ public class PlatformDotNetEntityFrameworkCacheKey {
         result = 31 * result + Arrays.hashCode(versions);
 
         return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
+        final BinaryRawWriter raw = writer.rawWriter();
+
+        raw.writeString(query);
+
+        if (versions != null) {
+            raw.writeInt(versions.length);
+
+            for (long ver : versions)
+                raw.writeLong(ver);
+        }
+        else
+            raw.writeInt(-1);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
+        BinaryRawReader raw = reader.rawReader();
+
+        query = raw.readString();
+
+        int cnt = raw.readInt();
+
+        if (cnt >= 0) {
+            versions = new long[cnt];
+
+            for (int i = 0; i < cnt; i++)
+                versions[i] = raw.readLong();
+        }
+        else
+            versions = null;
     }
 }

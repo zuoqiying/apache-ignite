@@ -139,9 +139,23 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
             }
 
             case OP_GET_ITEM: {
-                String key = reader.readString();
+                String query = reader.readString();
 
-                IgniteCache<String, PlatformDotNetEntityFrameworkCacheEntry> dataCache = target.rawCache();
+                long[] versions = null;
+
+                int cnt = reader.readInt();
+
+                if (cnt >= 0) {
+                    versions = new long[cnt];
+
+                    for (int i = 0; i < cnt; i++)
+                        versions[i] = reader.readLong();
+                }
+
+                IgniteCache<PlatformDotNetEntityFrameworkCacheKey, PlatformDotNetEntityFrameworkCacheEntry> dataCache
+                    = target.rawCache();
+
+                PlatformDotNetEntityFrameworkCacheKey key = new PlatformDotNetEntityFrameworkCacheKey(query, versions);
 
                 PlatformDotNetEntityFrameworkCacheEntry entry = dataCache.get(key);
 
@@ -232,7 +246,7 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
         IgniteCache<PlatformDotNetEntityFrameworkCacheKey, PlatformDotNetEntityFrameworkCacheEntry> cache =
             ignite.cache(dataCacheName);
 
-        SortedSet<PlatformDotNetEntityFrameworkCacheKey> keysToRemove = new TreeSet<>();
+        Set<PlatformDotNetEntityFrameworkCacheKey> keysToRemove = new TreeSet<>();
 
         ClusterNode localNode = ignite.cluster().localNode();
 
