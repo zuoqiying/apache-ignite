@@ -35,6 +35,24 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
     private byte[] data;
 
     /**
+     * Ctor.
+     */
+    public PlatformDotNetEntityFrameworkCacheEntry() {
+        // No-op.
+    }
+
+    /**
+     * Ctor.
+     *
+     * @param entitySets Entity set names.
+     * @param data Data bytes.
+     */
+    public PlatformDotNetEntityFrameworkCacheEntry(String[] entitySets, byte[] data) {
+        this.entitySets = entitySets;
+        this.data = data;
+    }
+
+    /**
      * @return Dependent entity sets with versions.
      */
     public String[] entitySets() {
@@ -50,49 +68,35 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
 
     /** {@inheritDoc} */
     @Override public void writeBinary(BinaryWriter writer) throws BinaryObjectException {
-        writeBinary(writer.rawWriter());
+        final BinaryRawWriter raw = writer.rawWriter();
+
+        if (entitySets != null) {
+            raw.writeInt(entitySets.length);
+
+            for (String entitySet : entitySets)
+                raw.writeString(entitySet);
+        }
+        else
+            raw.writeInt(-1);
+
+        raw.writeByteArray(data);
     }
 
     /** {@inheritDoc} */
     @Override public void readBinary(BinaryReader reader) throws BinaryObjectException {
-        readBinary(reader.rawReader());
-    }
+        BinaryRawReader raw = reader.rawReader();
 
-    /**
-     * Reads from a binary reader.
-     *
-     * @param reader Raw reader.
-     */
-    public void readBinary(BinaryRawReader reader) {
-        int cnt = reader.readInt();
+        int cnt = raw.readInt();
 
         if (cnt >= 0) {
             entitySets = new String[cnt];
 
             for (int i = 0; i < cnt; i++)
-                entitySets[i] = reader.readString();
+                entitySets[i] = raw.readString();
         }
         else
             entitySets = null;
 
-        data = reader.readByteArray();
-    }
-
-    /**
-     * Writes to a binary writer.
-     *
-     * @param writer Raw writer.
-     */
-    private void writeBinary(BinaryRawWriter writer) {
-        if (entitySets != null) {
-            writer.writeInt(entitySets.length);
-
-            for (String entitySet : entitySets)
-                writer.writeString(entitySet);
-        }
-        else
-            writer.writeInt(-1);
-
-        writer.writeByteArray(data);
+        data = raw.readByteArray();
     }
 }
