@@ -26,6 +26,7 @@ namespace Apache.Ignite.EntityFramework.Impl
     using System.Linq;
     using System.Runtime.Serialization.Formatters.Binary;
     using Apache.Ignite.Core;
+    using Apache.Ignite.Core.Binary;
     using Apache.Ignite.Core.Cache;
     using Apache.Ignite.Core.Cache.Configuration;
     using Apache.Ignite.Core.Cache.Expiry;
@@ -122,7 +123,7 @@ namespace Apache.Ignite.EntityFramework.Impl
         public bool GetItem(DbCacheKey key, out object value)
         {
             var valueBytes = ((ICacheInternal) _cache).DoOutInOpExtension(ExtensionId, OpGetItem,
-                w => w.WriteString(key.GetStringKey()), r => r.ReadObject<byte[]>());
+                w => WriteKey(key, w, false), r => r.ReadObject<byte[]>());
 
             if (valueBytes == null)
             {
@@ -150,26 +151,11 @@ namespace Apache.Ignite.EntityFramework.Impl
 
                 var valueBytes = stream.ToArray();
 
-                var versions = key.EntitySetVersions;
-
                 var cache = GetCacheWithExpiry(absoluteExpiration);
 
                 ((ICacheInternal)cache).DoOutInOpExtension<object>(ExtensionId, OpPutItem, w =>
                 {
-                    w.WriteString(key.GetStringKey());
-
-                    if (key.EntitySetVersions != null)
-                    {
-                        w.WriteInt(versions.Count);
-
-                        foreach (var version in versions)
-                        {
-                            w.WriteString(version.Key);
-                            w.WriteLong(version.Value);
-                        }
-                    }
-                    else
-                        w.WriteInt(0);
+                    WriteKey(key, w, true);
 
                     w.WriteByteArray(valueBytes);
                 }, null);
@@ -278,6 +264,32 @@ namespace Apache.Ignite.EntityFramework.Impl
             Debug.Assert(sets.Count == versions.Count);
 
             return versions;
+        }
+
+        /// <summary>
+        /// Writes the key.
+        /// </summary>
+        private static void WriteKey(DbCacheKey key, IBinaryRawWriter writer, bool includeNames)
+        {
+            writer.WriteString(key.Key);
+
+            if (key.EntitySetVersions != null)
+            {
+                writer.WriteInt(key.EntitySetVersions.Count);
+
+                // Versions should be in the same order, so we can't iterate over the dictionary.
+                foreach (var entitySet in key.EntitySets)
+                {
+                    writer.WriteLong(key.EntitySetVersions[entitySet.Name]);
+
+                    if (includeNames)
+                        writer.WriteString(entitySet.Name);
+                }
+            }
+            else
+            {
+                writer.WriteInt(-1);
+            }
         }
     }
 }
