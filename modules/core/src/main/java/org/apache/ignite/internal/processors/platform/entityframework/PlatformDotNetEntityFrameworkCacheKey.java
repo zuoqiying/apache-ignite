@@ -22,6 +22,7 @@ import java.util.Arrays;
 /**
  * EntityFramework cache key: query + versions.
  */
+@SuppressWarnings("WeakerAccess")
 public class PlatformDotNetEntityFrameworkCacheKey {
     /** Query text. */
     private final String query;
@@ -30,7 +31,15 @@ public class PlatformDotNetEntityFrameworkCacheKey {
     private final long[] versions;
 
     /**
-     * Ctro.
+     * Ctor.
+     */
+    public PlatformDotNetEntityFrameworkCacheKey() {
+        query = null;
+        versions = null;
+    }
+
+    /**
+     * Ctor.
      *
      * @param query Query text.
      * @param versions Versions.
@@ -70,6 +79,7 @@ public class PlatformDotNetEntityFrameworkCacheKey {
 
         PlatformDotNetEntityFrameworkCacheKey key = (PlatformDotNetEntityFrameworkCacheKey)o;
 
+        //noinspection SimplifiableIfStatement
         if (!query.equals(key.query))
             return false;
 

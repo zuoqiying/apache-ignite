@@ -21,7 +21,6 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteCompute;
-import org.apache.ignite.binary.BinaryRawReader;
 import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.cluster.ClusterGroup;
 import org.apache.ignite.cluster.ClusterNode;
@@ -109,13 +108,30 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
             case OP_PUT_ITEM: {
                 String query = reader.readString();
 
-                PlatformDotNetEntityFrameworkCacheEntry efEntry = new PlatformDotNetEntityFrameworkCacheEntry();
-                efEntry.readBinary(reader);
+                long[] versions = null;
+                String[] names = null;
+
+                int cnt = reader.readInt();
+
+                if (cnt >= 0) {
+                    versions = new long[cnt];
+                    names = new String[cnt];
+
+                    for (int i = 0; i < cnt; i++) {
+                        versions[i] = reader.readLong();
+                        names[i] = reader.readString();
+                    }
+                }
+
+                byte[] data = reader.readByteArray();
+
+                PlatformDotNetEntityFrameworkCacheEntry efEntry =
+                    new PlatformDotNetEntityFrameworkCacheEntry(names, data);
 
                 IgniteCache<PlatformDotNetEntityFrameworkCacheKey, PlatformDotNetEntityFrameworkCacheEntry> dataCache
                     = target.rawCache();
 
-                PlatformDotNetEntityFrameworkCacheKey key = new PlatformDotNetEntityFrameworkCacheKey()
+                PlatformDotNetEntityFrameworkCacheKey key = new PlatformDotNetEntityFrameworkCacheKey(query, versions);
 
                 dataCache.put(key, efEntry);
 
