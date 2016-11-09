@@ -52,7 +52,7 @@ public class PlatformDotNetEntityFrameworkCacheKey
      * @param query Query text.
      * @param versions Versions.
      */
-    public PlatformDotNetEntityFrameworkCacheKey(String query, long[] versions) {
+    PlatformDotNetEntityFrameworkCacheKey(String query, long[] versions) {
         assert query != null;
 
         this.query = query;

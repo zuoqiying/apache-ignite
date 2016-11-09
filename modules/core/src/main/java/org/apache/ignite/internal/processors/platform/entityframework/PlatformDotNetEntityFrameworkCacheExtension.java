@@ -39,7 +39,6 @@ import javax.cache.processor.EntryProcessorResult;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,24 +108,24 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
                 String query = reader.readString();
 
                 long[] versions = null;
-                String[] names = null;
+                String[] entitySets = null;
 
                 int cnt = reader.readInt();
 
                 if (cnt >= 0) {
                     versions = new long[cnt];
-                    names = new String[cnt];
+                    entitySets = new String[cnt];
 
                     for (int i = 0; i < cnt; i++) {
                         versions[i] = reader.readLong();
-                        names[i] = reader.readString();
+                        entitySets[i] = reader.readString();
                     }
                 }
 
                 byte[] data = reader.readByteArray();
 
                 PlatformDotNetEntityFrameworkCacheEntry efEntry =
-                    new PlatformDotNetEntityFrameworkCacheEntry(names, data);
+                    new PlatformDotNetEntityFrameworkCacheEntry(entitySets, data);
 
                 IgniteCache<PlatformDotNetEntityFrameworkCacheKey, PlatformDotNetEntityFrameworkCacheEntry> dataCache
                     = target.rawCache();
@@ -258,11 +257,10 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
                 continue;
 
             long[] versions = cacheEntry.getKey().versions();
-            String[] setNames = cacheEntry.getValue().entitySets();
+            String[] entitySets = cacheEntry.getValue().entitySets();
 
-            for (int i = 0; i < setNames.length; i++) {
-                String entitySet = setNames[i];
-                EntryProcessorResult<Long> curVer = currentVersions.get(entitySet);
+            for (int i = 0; i < entitySets.length; i++) {
+                EntryProcessorResult<Long> curVer = currentVersions.get(entitySets[i]);
 
                 if (curVer != null && versions[i] < curVer.get())
                     keysToRemove.add(cacheEntry.getKey());

@@ -47,7 +47,7 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
      * @param entitySets Entity set names.
      * @param data Data bytes.
      */
-    public PlatformDotNetEntityFrameworkCacheEntry(String[] entitySets, byte[] data) {
+    PlatformDotNetEntityFrameworkCacheEntry(String[] entitySets, byte[] data) {
         this.entitySets = entitySets;
         this.data = data;
     }
