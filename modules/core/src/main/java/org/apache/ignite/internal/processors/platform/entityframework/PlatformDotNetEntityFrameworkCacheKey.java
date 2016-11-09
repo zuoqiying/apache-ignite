@@ -17,6 +17,8 @@
 
 package org.apache.ignite.internal.processors.platform.entityframework;
 
+import java.util.Arrays;
+
 /**
  * EntityFramework cache key: query + versions.
  */
@@ -35,8 +37,6 @@ public class PlatformDotNetEntityFrameworkCacheKey {
      */
     public PlatformDotNetEntityFrameworkCacheKey(String query, long[] versions) {
         assert query != null;
-        assert versions != null;
-        assert versions.length > 0;
 
         this.query = query;
         this.versions = versions;
@@ -58,5 +58,30 @@ public class PlatformDotNetEntityFrameworkCacheKey {
      */
     public long[] versions() {
         return versions;
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean equals(Object o) {
+        if (this == o)
+            return true;
+
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        PlatformDotNetEntityFrameworkCacheKey key = (PlatformDotNetEntityFrameworkCacheKey)o;
+
+        if (!query.equals(key.query))
+            return false;
+
+        return Arrays.equals(versions, key.versions);
+    }
+
+    /** {@inheritDoc} */
+    @Override public int hashCode() {
+        int result = query.hashCode();
+
+        result = 31 * result + Arrays.hashCode(versions);
+
+        return result;
     }
 }
