@@ -21,6 +21,7 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteCompute;
+import org.apache.ignite.binary.BinaryRawReader;
 import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.cluster.ClusterGroup;
 import org.apache.ignite.cluster.ClusterNode;
@@ -106,12 +107,15 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
             }
 
             case OP_PUT_ITEM: {
-                String key = reader.readString();
+                String query = reader.readString();
 
                 PlatformDotNetEntityFrameworkCacheEntry efEntry = new PlatformDotNetEntityFrameworkCacheEntry();
                 efEntry.readBinary(reader);
 
-                IgniteCache<String, PlatformDotNetEntityFrameworkCacheEntry> dataCache = target.rawCache();
+                IgniteCache<PlatformDotNetEntityFrameworkCacheKey, PlatformDotNetEntityFrameworkCacheEntry> dataCache
+                    = target.rawCache();
+
+                PlatformDotNetEntityFrameworkCacheKey key = new PlatformDotNetEntityFrameworkCacheKey()
 
                 dataCache.put(key, efEntry);
 
@@ -209,25 +213,28 @@ public class PlatformDotNetEntityFrameworkCacheExtension implements PlatformCach
     private static void removeOldEntries(final Ignite ignite, final String dataCacheName,
         final Map<String, EntryProcessorResult<Long>> currentVersions) {
 
-        IgniteCache<String, PlatformDotNetEntityFrameworkCacheEntry> cache = ignite.cache(dataCacheName);
+        IgniteCache<PlatformDotNetEntityFrameworkCacheKey, PlatformDotNetEntityFrameworkCacheEntry> cache =
+            ignite.cache(dataCacheName);
 
-        SortedSet<String> keysToRemove = new TreeSet<>();
+        SortedSet<PlatformDotNetEntityFrameworkCacheKey> keysToRemove = new TreeSet<>();
 
         ClusterNode localNode = ignite.cluster().localNode();
 
-        for (Cache.Entry<String, PlatformDotNetEntityFrameworkCacheEntry> cacheEntry :
+        for (Cache.Entry<PlatformDotNetEntityFrameworkCacheKey, PlatformDotNetEntityFrameworkCacheEntry> cacheEntry :
             cache.localEntries(CachePeekMode.ALL)) {
             // Check if we are on a primary node for the key, since we use CachePeekMode.ALL
             // and we don't want to process backup entries.
             if (!ignite.affinity(dataCacheName).isPrimary(localNode, cacheEntry.getKey()))
                 continue;
 
-            PlatformDotNetEntityFrameworkCacheEntry entry = cacheEntry.getValue();
+            long[] versions = cacheEntry.getKey().versions();
+            String[] setNames = cacheEntry.getValue().entitySets();
 
-            for (Map.Entry<String, Long> entitySet : entry.entitySets().entrySet()) {
-                EntryProcessorResult<Long> curVer = currentVersions.get(entitySet.getKey());
+            for (int i = 0; i < setNames.length; i++) {
+                String entitySet = setNames[i];
+                EntryProcessorResult<Long> curVer = currentVersions.get(entitySet);
 
-                if (curVer != null && entitySet.getValue() < curVer.get())
+                if (curVer != null && versions[i] < curVer.get())
                     keysToRemove.add(cacheEntry.getKey());
             }
         }

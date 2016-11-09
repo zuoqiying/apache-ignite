@@ -24,15 +24,12 @@ import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * EntityFramework cache entry.
  */
 public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
-    /** Map from entity set name to version. */
-    private Map<String, Long> entitySets;
+    /** Dependent entity set names. */
+    private String[] entitySets;
 
     /** Cached data bytes. */
     private byte[] data;
@@ -40,7 +37,7 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
     /**
      * @return Dependent entity sets with versions.
      */
-    public Map<String, Long> entitySets() {
+    public String[] entitySets() {
         return entitySets;
     }
 
@@ -70,10 +67,10 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
         int cnt = reader.readInt();
 
         if (cnt >= 0) {
-            entitySets = new HashMap<>(cnt);
+            entitySets = new String[cnt];
 
             for (int i = 0; i < cnt; i++)
-                entitySets.put(reader.readString(), reader.readLong());
+                entitySets[i] = reader.readString();
         }
         else
             entitySets = null;
@@ -88,12 +85,10 @@ public class PlatformDotNetEntityFrameworkCacheEntry implements Binarylizable {
      */
     private void writeBinary(BinaryRawWriter writer) {
         if (entitySets != null) {
-            writer.writeInt(entitySets.size());
+            writer.writeInt(entitySets.length);
 
-            for (Map.Entry<String, Long> e : entitySets.entrySet()) {
-                writer.writeString(e.getKey());
-                writer.writeLong(e.getValue());
-            }
+            for (String entitySet : entitySets)
+                writer.writeString(entitySet);
         }
         else
             writer.writeInt(-1);
