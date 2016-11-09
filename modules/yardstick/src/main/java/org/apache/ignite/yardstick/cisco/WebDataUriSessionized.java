@@ -17,6 +17,7 @@
 
 package org.apache.ignite.yardstick.cisco;
 
+import java.util.Date;
 import java.util.Map;
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.springframework.core.annotation.Order;
@@ -115,7 +116,7 @@ public class WebDataUriSessionized {
 
     @Order(20)
     @QuerySqlField
-    private String dwelltime;
+    private Date dwelltime;
 
 //    @Order(23)
     @QuerySqlField
@@ -300,11 +301,11 @@ public class WebDataUriSessionized {
         this.source = source;
     }
 
-    public String getDwelltime() {
+    public Date getDwelltime() {
         return dwelltime;
     }
 
-    public void setDwelltime(String dwelltime) {
+    public void setDwelltime(Date dwelltime) {
         this.dwelltime = dwelltime;
     }
 

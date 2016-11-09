@@ -19,7 +19,10 @@ package org.apache.ignite.yardstick.cisco;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteDataStreamer;
+import org.apache.ignite.Ignition;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
 import org.yardstickframework.BenchmarkConfiguration;
 
@@ -34,12 +37,29 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
         put("cpr_user_info_vw.txt", CprUserInfoVw.class);
         put("ds2_brm_master.txt", Ds2BrmMaster.class);
         put("dw_ua_url.txt", DwUaUrl.class);
+        put("ua_parsed_attrs.txt", UaParsedAttrs.class);
         put("unqvstr_rvrs_ip_rep.txt", UnqvstrRvrsIpRep.class);
         put("wbx_telephony_participant_f.txt", WbxTelephonyParticipantF.class);
         put("web_data_uri_sessionized_2.txt", WebDataUriSessionized.class);
         put("XXRPT_HGSMEETINGREPORT.txt", XxrptHgsMeetingReport.class);
         put("XXRPT_HGSMEETINGUSERREPORT.txt", XxrptHgsMeetingUserReport.class);
     }};
+
+    private static String NQ1 =
+        "SELECT " +
+        "  s.key,s.ip,s.userid,s.dattime,s.useragent,s.calltype,s.url,s.referrerUrl,s.dwelltime " +
+        "FROM \"web_data_uri_sessionized_2\".WEBDATAURISESSIONIZED s " +
+        "WHERE s.dwelltime BETWEEN '2016-01-01' AND '2016-12-12' " +
+        "LIMIT 99999";
+
+    private static String NQ2 =
+        "SELECT " +
+        " dwelltime, count(key) AS `events` " +
+        "FROM \"web_data_uri_sessionized_2\".WEBDATAURISESSIONIZED " +
+        "WHERE dwelltime BETWEEN '2016-01-01' AND '2016-12-12' " +
+        "  AND calltype = 'pg' " +
+        "  AND url = '//www.cisco.com/go/license' " +
+        "GROUP BY dwelltime";
 
     /** {@inheritDoc} */
     @Override public void setUp(BenchmarkConfiguration cfg) throws Exception {
@@ -61,7 +81,7 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
      * @throws Exception If failed.
      */
     private void populateCacheFromCsv(String fileName, Class clazz) throws Exception {
-        try (IgniteDataStreamer<Integer, Object> dataLdr = ignite().dataStreamer(fileName);
+        try (IgniteDataStreamer<Integer, Object> dataLdr = ignite().dataStreamer(cacheName(fileName));
             CsvImporter imp = new CsvImporter(fileName, clazz)) {
             Object o;
             int keyGen = 0;
@@ -75,8 +95,41 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
         }
     }
 
+    /**
+     * @param fileName File name.
+     * @return Cache name.
+     */
+    private String cacheName(String fileName) {
+        return fileName.replace(".txt", "");
+    }
+
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
         return false;
+    }
+
+    /**
+     * @param args Arguments.
+     * @throws Exception If failed.
+     */
+    public static void main(String[] args) throws Exception {
+        try (Ignite ignore = Ignition.start("D:\\projects\\incubator-ignite\\modules\\yardstick\\" +
+            "config\\ignite-localhost-config.xml")) {
+
+            IgniteBenchmarkCiscoQuery b = new IgniteBenchmarkCiscoQuery();
+
+            BenchmarkConfiguration cfg = new BenchmarkConfiguration();
+
+            cfg.output(System.out);
+            cfg.error(System.err);
+
+            cfg.commandLineArguments(new String[] {"-r", "10"});
+
+            b.setUp(cfg);
+
+            TimeUnit.HOURS.sleep(1);
+
+            b.test(null);
+        }
     }
 }

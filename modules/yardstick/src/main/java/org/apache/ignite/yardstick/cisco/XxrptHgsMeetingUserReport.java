@@ -218,7 +218,7 @@ public class XxrptHgsMeetingUserReport {
 
     @Order(48)
     @QuerySqlField
-    private String subscriptionCode;
+    private String subscription_code;
 
     @Order(49)
     @QuerySqlField

@@ -411,7 +411,7 @@ public class Ds2BrmMaster {
 
     @Order(96)
     @QuerySqlField
-    private Integer rownum;
+    private Integer rowNumber;
 
     @Order(97)
     @QuerySqlField
@@ -1416,12 +1416,12 @@ public class Ds2BrmMaster {
         this.acquisitionSourceRptg = acquisitionSourceRptg;
     }
 
-    public Integer getRownum() {
-        return rownum;
+    public Integer getRowNumber() {
+        return rowNumber;
     }
 
-    public void setRownum(Integer rownum) {
-        this.rownum = rownum;
+    public void setRowNumber(Integer rowNumber) {
+        this.rowNumber = rowNumber;
     }
 
     public String getCampaignName() {

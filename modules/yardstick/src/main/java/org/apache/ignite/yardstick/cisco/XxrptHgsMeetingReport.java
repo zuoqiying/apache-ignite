@@ -270,7 +270,7 @@ public class XxrptHgsMeetingReport {
 
     @Order(61)
     @QuerySqlField
-    private String subscriptionCode;
+    private String subscription_code;
 
     @Order(62)
     @QuerySqlField
@@ -1067,12 +1067,12 @@ public class XxrptHgsMeetingReport {
         this.consumptionDate = consumptionDate;
     }
 
-    public String getSubscriptionCode() {
-        return subscriptionCode;
+    public String getSubscription_code() {
+        return subscription_code;
     }
 
-    public void setSubscriptionCode(String subscriptionCode) {
-        this.subscriptionCode = subscriptionCode;
+    public void setSubscription_code(String subscription_code) {
+        this.subscription_code = subscription_code;
     }
 
     public Double getBossContractid() {

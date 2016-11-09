@@ -18,14 +18,10 @@
 package org.apache.ignite.yardstick.cisco;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.nio.charset.Charset;
 import java.util.Date;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.springframework.core.annotation.Order;
@@ -34,6 +30,15 @@ import org.springframework.core.annotation.Order;
  *
  */
 public class CsvImporter<T> implements AutoCloseable {
+    /** */
+    private static final String DELIMITER = "\u0001";
+
+    /** */
+    private static final String SPACE_DELIMITER = "\t";
+
+    /** */
+    private String delimiter;
+
     /** File name. */
     private final String fileName;
 
@@ -43,8 +48,23 @@ public class CsvImporter<T> implements AutoCloseable {
     /** File. */
     private InputStream is;
 
+    /** Buffer reader. */
     private BufferedReader br;
 
+    /**
+     * @param fileName File name.
+     * @param clazz Entity class.
+     */
+    CsvImporter(String fileName, Class clazz) {
+        this.fileName = fileName;
+        this.clazz = clazz;
+        this.delimiter = UaParsedAttrs.class == clazz ? SPACE_DELIMITER : DELIMITER;
+    }
+
+    /**
+     * @return Read object.
+     * @throws Exception If failed.
+     */
     public T readObject() throws Exception {
         if (is == null) {
             ClassLoader classloader = Thread.currentThread().getContextClassLoader();
@@ -70,16 +90,17 @@ public class CsvImporter<T> implements AutoCloseable {
         is.close();
     }
 
-    public CsvImporter(String fileName, Class clazz) {
-        this.fileName = fileName;
-        this.clazz = clazz;
-    }
-
+    /**
+     * @param line Csv line.
+     * @param clazz Class.
+     * @return Parsed object.
+     * @throws Exception If failed.
+     */
     private Object parseLine(String line, Class clazz) throws Exception {
         if (line == null || line.isEmpty())
             return null;
 
-        String[] vals = line.split("\u0001");
+        String[] vals = line.split(delimiter);
 
         Object o = clazz.newInstance();
 
@@ -105,6 +126,12 @@ public class CsvImporter<T> implements AutoCloseable {
         return o;
     }
 
+    /**
+     * @param clazz Class.
+     * @param val Value.
+     * @return Converted object.
+     * @throws Exception If failed.
+     */
     private Object convertValue(Class clazz, String val) throws Exception {
         if (val.equals("\\N"))
             return null;
@@ -123,7 +150,12 @@ public class CsvImporter<T> implements AutoCloseable {
             throw new IllegalArgumentException("Unsupported type: " + clazz + ", val=" + val);
     }
 
-    private Date parseDate(String val) throws java.text.ParseException {
+    /**
+     * @param val Value.
+     * @return Parsed date.
+     * @throws Exception If failed.
+     */
+    private Date parseDate(String val) throws Exception {
         try {
             return U.parse(val, "yyyy-mm-dd");
         }
@@ -132,10 +164,14 @@ public class CsvImporter<T> implements AutoCloseable {
         }
     }
 
+    /**
+     * @param args Arguments.
+     * @throws Exception If failed.
+     */
     public static void main(String[] args) throws Exception {
         int cnt = 0;
 
-        try (CsvImporter imp = new CsvImporter("XXRPT_HGSMEETINGUSERREPORT.txt", XxrptHgsMeetingUserReport.class)) {
+        try (CsvImporter imp = new CsvImporter("ua_parsed_attrs.txt", UaParsedAttrs.class)) {
             while(imp.readObject() != null) ++cnt;
 
             System.out.println("Object: " + cnt);
