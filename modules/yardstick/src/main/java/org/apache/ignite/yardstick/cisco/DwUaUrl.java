@@ -37,7 +37,7 @@ public class DwUaUrl {
     private String areaLevel3;
 
     @Order(3)
-    @QuerySqlField
+    @QuerySqlField(index = true)
     private String areaLevel4;
 
     @Order(4)

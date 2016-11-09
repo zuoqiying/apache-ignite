@@ -156,6 +156,17 @@ public class IgniteBenchmarkArguments {
     @Parameter(names = {"-ltops", "--allowedLoadTestOperations"}, variableArity = true, description = "List of enabled load test operations")
     private List<String> allowedLoadTestOps = new ArrayList<>();
 
+    /** */
+    @Parameter(names = {"-q", "--queryNumber"}, description = "Number of query")
+    private int qryNum = 1;
+
+    /**
+     * @return Query of number.
+     */
+    public int queryNumber() {
+        return qryNum;
+    }
+
     /**
      * @return List of enabled load test operations.
      */

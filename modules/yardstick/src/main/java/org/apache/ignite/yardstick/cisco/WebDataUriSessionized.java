@@ -59,7 +59,7 @@ public class WebDataUriSessionized {
     private String request;
 
     @Order(8)
-    @QuerySqlField
+    @QuerySqlField(index = true)
     private String useragent;
 
     @Order(9)
@@ -71,7 +71,7 @@ public class WebDataUriSessionized {
     private String xff;
 
     @Order(11)
-    @QuerySqlField
+    @QuerySqlField(index = true)
     private String calltype;
 
     @Order(12)
@@ -107,7 +107,7 @@ public class WebDataUriSessionized {
     private Map<String, String> eventsSubcategory;
 
     @Order(18)
-    @QuerySqlField
+    @QuerySqlField(index = true)
     private String sessionId;
 
     @Order(19)
@@ -115,7 +115,7 @@ public class WebDataUriSessionized {
     private String source;
 
     @Order(20)
-    @QuerySqlField
+    @QuerySqlField(index = true)
     private Date dwelltime;
 
 //    @Order(23)

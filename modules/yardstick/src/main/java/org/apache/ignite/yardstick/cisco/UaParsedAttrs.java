@@ -25,11 +25,11 @@ import org.springframework.core.annotation.Order;
  */
 public class UaParsedAttrs {
     @Order(0)
-    @QuerySqlField
+    @QuerySqlField(index = true)
     private String useragent;
 
     @Order(1)
-    @QuerySqlField
+    @QuerySqlField(index = true)
     private String browsername;
 
     @Order(2)
@@ -49,7 +49,7 @@ public class UaParsedAttrs {
     private String model;
 
     @Order(6)
-    @QuerySqlField
+    @QuerySqlField(index = true)
     private String osname;
 
     @Order(7)

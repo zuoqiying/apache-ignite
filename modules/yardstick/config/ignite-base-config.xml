@@ -83,7 +83,7 @@
                     <property name="indexedTypes">
                         <list>
                             <value>java.lang.Integer</value>
-                            <value>org.apache.ignite.yardstick.cisco.DwUaUrl</value>
+                            <value>org.apache.ignite.yardstick.cisco.UaParsedAttrs</value>
                         </list>
                     </property>
                 </bean>

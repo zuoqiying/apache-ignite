@@ -19,11 +19,12 @@ package org.apache.ignite.yardstick.cisco;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.Ignition;
-import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
+import org.apache.ignite.cache.query.SqlFieldsQuery;
+import org.apache.ignite.yardstick.cache.IgniteCacheAbstractBenchmark;
 import org.yardstickframework.BenchmarkConfiguration;
 
 import static org.yardstickframework.BenchmarkUtils.println;
@@ -31,7 +32,7 @@ import static org.yardstickframework.BenchmarkUtils.println;
 /**
  *
  */
-public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
+public class IgniteBenchmarkCiscoQuery extends IgniteCacheAbstractBenchmark {
     /** Map file on classes. */
     private Map<String, Class> maps = new HashMap<String, Class>() {{
         put("cpr_user_info_vw.txt", CprUserInfoVw.class);
@@ -45,6 +46,7 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
         put("XXRPT_HGSMEETINGUSERREPORT.txt", XxrptHgsMeetingUserReport.class);
     }};
 
+    /** */
     private static String NQ1 =
         "SELECT " +
         "  s.key,s.ip,s.userid,s.dattime,s.useragent,s.calltype,s.url,s.referrerUrl,s.dwelltime " +
@@ -52,6 +54,7 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
         "WHERE s.dwelltime BETWEEN '2016-01-01' AND '2016-12-12' " +
         "LIMIT 99999";
 
+    /** */
     private static String NQ2 =
         "SELECT " +
         " dwelltime, count(key) AS `events` " +
@@ -61,9 +64,58 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
         "  AND url = '//www.cisco.com/go/license' " +
         "GROUP BY dwelltime";
 
+    /** */
+    private static String NQ3 =
+        "SELECT " +
+        "  cg.arealevel5, cg.arealevel6, count(web.key) Views, count(distinct web.sessionid) Visits, month(web.dwelltime), year(web.dwelltime) " +
+        "FROM \"web_data_uri_sessionized_2\".WEBDATAURISESSIONIZED web " +
+        "INNER JOIN \"dw_ua_url\".DWUAURL cg " +
+        "ON web.url = cg.url " +
+        "  AND calltype = 'pg' " +
+        "  AND cg.arealevel4 = 'Tools' " +
+        "  AND web.dwelltime BETWEEN '2016-01-01' AND '2016-12-31' " +
+        "GROUP BY cg.arealevel5, cg.arealevel6, month(web.dwelltime), year(web.dwelltime)";
+
+    /** */
+    private static String NQ4 =
+        "SELECT " +
+        "  ua.browsername as Browser, max(web.dattime) as Lastvisit, count(web.key) as Views, count(distinct web.SessionId) as Visits, month(web.dwelltime) " +
+        "FROM \"web_data_uri_sessionized_2\".WEBDATAURISESSIONIZED web  " +
+        "LEFT JOIN \"ua_parsed_attrs\".UAPARSEDATTRS ua " +
+        "  ON web.useragent = ua.useragent " +
+        "LEFT JOIN \"dw_ua_url\".DWUAURL mdf  " +
+        "  ON web.url=mdf.url  " +
+        "WHERE  ua.browsername IS NOT NULL   " +
+        "  AND ua.browsername NOT IN ('-') " +
+        "  AND mdf.arealevel4 = 'Tools' " +
+        "  AND web.dwelltime BETWEEN '2016-01-01' AND '2016-12-31' " +
+        "  AND web.calltype = 'pg' " +
+        "GROUP BY ua.browsername, month(web.dwelltime)";
+
+    /** */
+    private static String NQ5 =
+        "SELECT " +
+        "  ua.osname as Platform, max(web.DWELLTIME) as Lastvisit, count(web.key) as Views, count(distinct web.Sessionid) as Visits, month(web.DWELLTIME), year(web.DWELLTIME) " +
+        "FROM \"web_data_uri_sessionized_2\".WEBDATAURISESSIONIZED  web " +
+        "LEFT JOIN \"ua_parsed_attrs\".UAPARSEDATTRS ua " +
+        "  ON web.useragent = ua.useragent " +
+        "LEFT JOIN \"dw_ua_url\".DWUAURL mdf " +
+        "  ON web.url=mdf.url " +
+        "WHERE ua.osname IS NOT NULL " +
+        "  AND ua.osname NOT IN ('-') " +
+        "  AND mdf.arealevel4 = 'TechSupport' " +
+        "  AND web.DWELLTIME BETWEEN '2016-08-01' AND '2016-08-31' " +
+        "  AND web.calltype = 'pg' " +
+        "GROUP BY ua.osname, month(web.DWELLTIME), year(web.DWELLTIME);";
+
+    /** Query. */
+    private String query;
+
     /** {@inheritDoc} */
     @Override public void setUp(BenchmarkConfiguration cfg) throws Exception {
         super.setUp(cfg);
+
+        query();
 
         println(cfg, "Populating query data...");
 
@@ -73,6 +125,37 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
             populateCacheFromCsv(e.getKey(), e.getValue());
 
         println(cfg, "Finished populating query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
+        println(cfg, "Will benchmark query: " + query);
+    }
+
+    /**
+     * Init query.
+     */
+    private void query() {
+        switch (args.queryNumber()) {
+            case 1:
+                query = NQ1;
+                break;
+
+            case 2:
+                query = NQ2;
+                break;
+
+            case 3:
+                query = NQ3;
+                break;
+
+            case 4:
+                query = NQ4;
+                break;
+
+            case 5:
+                query = NQ5;
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid query number: " + args.queryNumber());
+        }
     }
 
     /**
@@ -105,7 +188,16 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
 
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
-        return false;
+        SqlFieldsQuery qry = new SqlFieldsQuery(query);
+
+        cache.query(qry).getAll();
+
+        return true;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected IgniteCache cache() {
+        return ignite().cache("cpr_user_info_vw");
     }
 
     /**
@@ -123,11 +215,11 @@ public class IgniteBenchmarkCiscoQuery extends IgniteAbstractBenchmark {
             cfg.output(System.out);
             cfg.error(System.err);
 
-            cfg.commandLineArguments(new String[] {"-r", "10"});
+            cfg.commandLineArguments(new String[] {"-r", "10", "-q", "5"});
 
             b.setUp(cfg);
 
-            TimeUnit.HOURS.sleep(1);
+//            TimeUnit.HOURS.sleep(1);
 
             b.test(null);
         }
