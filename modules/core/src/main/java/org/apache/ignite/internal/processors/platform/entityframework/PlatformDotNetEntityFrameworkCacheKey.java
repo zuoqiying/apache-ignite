@@ -23,6 +23,7 @@ import org.apache.ignite.binary.BinaryRawWriter;
 import org.apache.ignite.binary.BinaryReader;
 import org.apache.ignite.binary.BinaryWriter;
 import org.apache.ignite.binary.Binarylizable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -30,7 +31,8 @@ import java.util.Arrays;
  * EntityFramework cache key: query + versions.
  */
 @SuppressWarnings("WeakerAccess")
-public class PlatformDotNetEntityFrameworkCacheKey implements Binarylizable {
+public class PlatformDotNetEntityFrameworkCacheKey
+    implements Binarylizable, Comparable<PlatformDotNetEntityFrameworkCacheKey> {
     /** Query text. */
     private String query;
 
@@ -133,5 +135,11 @@ public class PlatformDotNetEntityFrameworkCacheKey implements Binarylizable {
         }
         else
             versions = null;
+    }
+
+    /** {@inheritDoc} */
+    @Override public int compareTo(@NotNull PlatformDotNetEntityFrameworkCacheKey o) {
+        // TODO
+        return 0;
     }
 }
