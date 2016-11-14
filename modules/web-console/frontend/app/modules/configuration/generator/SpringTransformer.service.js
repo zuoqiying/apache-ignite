@@ -100,9 +100,9 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
             return JavaTypes.nonBuiltInClass(clsName) && JavaTypes.nonEnum(clsName) && _.includes(clsName, '.');
         }
 
-        static _setCollection(sb, prop, tag) {
+        static _setCollection(sb, prop) {
             sb.startBlock(`<property name="${prop.name}">`);
-            sb.startBlock(`<${tag}>`);
+            sb.startBlock('<list>');
 
             _.forEach(prop.items, (item, idx) => {
                 if (this._isBean(prop.typeClsName)) {
@@ -115,7 +115,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                     sb.append(`<value>${item}</value>`);
             });
 
-            sb.endBlock(`</${tag}>`);
+            sb.endBlock('</list>');
             sb.endBlock('</property>');
         }
 
@@ -202,11 +202,8 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
 
                         break;
                     case 'ARRAY':
-                        this._setCollection(sb, prop, 'array');
-
-                        break;
                     case 'COLLECTION':
-                        this._setCollection(sb, prop, 'list');
+                        this._setCollection(sb, prop);
 
                         break;
                     case 'MAP':
