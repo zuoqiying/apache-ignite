@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-namespace Apache.Ignite.Core.Impl.Cluster
+namespace Apache.Ignite.Core.SwapSpace
 {
-    using Apache.Ignite.Core.Binary;
-    using Apache.Ignite.Core.Cluster;
+    using System.Diagnostics.CodeAnalysis;
+    using Apache.Ignite.Core.SwapSpace.File;
 
     /// <summary>
-    /// Extended internal Ignite interface.
+    /// Provides a mechanism in grid for storing data on disk. Ignite cache uses swap space to overflow 
+    /// data to disk if it cannot fit in memory. 
+    /// Logically storage is organized into independent 'spaces' in which data is stored.
+    /// <para />
+    /// Only predefined implementation is supported now: <see cref="FileSwapSpaceSpi"/>.
     /// </summary>
-    internal interface IClusterGroupEx : IClusterGroup
+    [SuppressMessage("Microsoft.Design", "CA1040:AvoidEmptyInterfaces")]
+    public interface ISwapSpaceSpi
     {
-        /// <summary>
-        /// Gets protable metadata for type.
-        /// </summary>
-        /// <param name="typeId">Type ID.</param>
-        /// <returns>Metadata.</returns>
-        IBinaryType GetBinaryType(int typeId);
+        // No-op.
     }
 }
