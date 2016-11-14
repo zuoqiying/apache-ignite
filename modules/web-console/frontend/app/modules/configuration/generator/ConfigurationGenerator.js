@@ -234,12 +234,14 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                     ipFinder.emptyBeanProperty('curator')
                         .stringProperty('zkConnectionString');
 
-                    if (_.get(src, 'retryPolicy.kind')) {
+                    const kind = _.get(src, 'retryPolicy.kind');
+
+                    if (kind) {
                         const policy = src.retryPolicy;
 
                         let retryPolicyBean;
 
-                        switch (policy.kind) {
+                        switch (kind) {
                             case 'ExponentialBackoff':
                                 retryPolicyBean = new Bean('org.apache.curator.retry.ExponentialBackoffRetry', null,
                                     policy.ExponentialBackoff, dflt.ExponentialBackoff)
@@ -289,6 +291,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                                 break;
                             default:
+                                // No-op.
                         }
 
                         if (retryPolicyBean)
@@ -301,6 +304,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     break;
                 default:
+                    // No-op.
             }
 
             if (ipFinder)
@@ -425,7 +429,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         // Generate checkpoint configurations.
         static clusterCheckpoint(cluster, caches, cfg = this.igniteConfigurationBean()) {
             const cfgs = _.filter(_.map(cluster.checkpointSpi, (spi) => {
-                switch (spi.kind) {
+                switch (_.get(spi, 'kind')) {
                     case 'FS':
                         const fsBean = new Bean('org.apache.ignite.spi.checkpoint.sharedfs.SharedFsCheckpointSpi',
                             'checkpointSpiFs', spi.FS);
@@ -693,7 +697,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         static clusterCollision(collision, cfg = this.igniteConfigurationBean()) {
             let colSpi;
 
-            switch (collision.kind) {
+            switch (_.get(collision, 'kind')) {
                 case 'JobStealing':
                     colSpi = new Bean('org.apache.ignite.spi.collision.jobstealing.JobStealingCollisionSpi',
                         'colSpi', collision.JobStealing, clusterDflts.collision.JobStealing);
@@ -909,7 +913,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             _.forEach(cluster.failoverSpi, (spi) => {
                 let failoverSpi;
 
-                switch (spi.kind) {
+                switch (_.get(spi, 'kind')) {
                     case 'JobStealing':
                         failoverSpi = new Bean('org.apache.ignite.spi.failover.jobstealing.JobStealingFailoverSpi',
                             'failoverSpi', spi.JobStealing, clusterDflts.failoverSpi.JobStealing);
@@ -957,7 +961,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
             _.forEach(cluster.loadBalancingSpi, (spi) => {
                 let loadBalancingSpi;
 
-                switch (spi.kind) {
+                switch (_.get(spi, 'kind')) {
                     case 'RoundRobin':
                         loadBalancingSpi = new Bean('org.apache.ignite.spi.loadbalancing.roundrobin.RoundRobinLoadBalancingSpi', 'loadBalancingSpiRR', spi.RoundRobin, clusterDflts.loadBalancingSpi.RoundRobin);
 
@@ -969,14 +973,13 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                         let probeBean;
 
-                        switch (spi.Adaptive.loadProbe.kind) {
+                        switch (_.get(spi, 'Adaptive.loadProbe.kind')) {
                             case 'Job':
                                 probeBean = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveJobCountLoadProbe', 'jobProbe', spi.Adaptive.loadProbe.Job, clusterDflts.loadBalancingSpi.Adaptive.loadProbe.Job);
 
                                 probeBean.boolProperty('useAverage');
 
                                 break;
-
                             case 'CPU':
                                 probeBean = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveCpuLoadProbe', 'cpuProbe', spi.Adaptive.loadProbe.CPU, clusterDflts.loadBalancingSpi.Adaptive.loadProbe.CPU);
 
@@ -985,14 +988,12 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                                     .intProperty('processorCoefficient');
 
                                 break;
-
                             case 'ProcessingTime':
                                 probeBean = new Bean('org.apache.ignite.spi.loadbalancing.adaptive.AdaptiveProcessingTimeLoadProbe', 'timeProbe', spi.Adaptive.loadProbe.ProcessingTime, clusterDflts.loadBalancingSpi.Adaptive.loadProbe.ProcessingTime);
 
                                 probeBean.boolProperty('useAverage');
 
                                 break;
-
                             case 'Custom':
                                 const className = _.get(spi, 'Adaptive.loadProbe.Custom.className');
 
@@ -1000,7 +1001,6 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                                     probeBean = new Bean(className, 'probe', spi.Adaptive.loadProbe.Job.Custom);
 
                                 break;
-
                             default:
                                 // No-op.
                         }
@@ -1039,12 +1039,9 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
         // Generate logger group.
         static clusterLogger(logger, cfg = this.igniteConfigurationBean()) {
-            if (_.isNil(logger))
-                return cfg;
-
             let loggerBean;
 
-            switch (logger.kind) {
+            switch (_.get(logger, 'kind')) {
                 case 'Log4j':
                     if (logger.Log4j && (logger.Log4j.mode === 'Default' || logger.Log4j.mode === 'Path' && _.nonEmpty(logger.Log4j.path))) {
                         loggerBean = new Bean('org.apache.ignite.logger.log4j.Log4JLogger',
@@ -1089,6 +1086,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     break;
                 default:
+                    return cfg;
             }
 
             if (loggerBean)
@@ -1118,33 +1116,33 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
         // Generate marshaller group.
         static clusterMarshaller(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            const marshaller = cluster.marshaller;
+            const kind = _.get(cluster.marshaller, 'kind');
+            const settings = _.get(cluster.marshaller, kind);
 
-            if (marshaller && marshaller.kind) {
-                let bean;
+            if (_.isNil(settings))
+                return cfg;
 
-                switch (marshaller.kind) {
-                    case 'OptimizedMarshaller':
-                        bean = new Bean('org.apache.ignite.marshaller.optimized.OptimizedMarshaller', 'marshaller',
-                            marshaller[marshaller.kind]);
+            let bean;
 
-                        bean.intProperty('poolSize')
-                            .intProperty('requireSerializable');
+            switch (kind) {
+                case 'OptimizedMarshaller':
+                    bean = new Bean('org.apache.ignite.marshaller.optimized.OptimizedMarshaller', 'marshaller', settings)
+                        .intProperty('poolSize')
+                        .intProperty('requireSerializable');
 
-                        break;
+                    break;
 
-                    case 'JdkMarshaller':
-                        bean = new Bean('org.apache.ignite.marshaller.jdk.JdkMarshaller', 'marshaller',
-                            marshaller[marshaller.kind]);
+                case 'JdkMarshaller':
+                    bean = new Bean('org.apache.ignite.marshaller.jdk.JdkMarshaller', 'marshaller', settings);
 
-                        break;
+                    break;
 
-                    default:
-                }
-
-                if (bean)
-                    cfg.beanProperty('marshaller', bean);
+                default:
+                    // No-op.
             }
+
+            if (bean)
+                cfg.beanProperty('marshaller', bean);
 
             cfg.intProperty('marshalLocalJobs')
                 .intProperty('marshallerCacheKeepAliveTime')
@@ -1216,7 +1214,7 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
         // Generate swap group.
         static clusterSwap(cluster, cfg = this.igniteConfigurationBean(cluster)) {
-            if (cluster.swapSpaceSpi && cluster.swapSpaceSpi.kind === 'FileSwapSpaceSpi') {
+            if (_.get(cluster.swapSpaceSpi, 'kind') === 'FileSwapSpaceSpi') {
                 const bean = new Bean('org.apache.ignite.spi.swapspace.file.FileSwapSpaceSpi', 'swapSpaceSpi',
                     cluster.swapSpaceSpi.FileSwapSpaceSpi);
 
@@ -1557,30 +1555,34 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
         static cacheNodeFilter(cache, igfss, ccfg = this.cacheConfigurationBean(cache)) {
             const kind = _.get(cache, 'nodeFilter.kind');
 
-            if (kind && cache.nodeFilter[kind]) {
-                let bean = null;
+            const settings = _.get(cache.nodeFilter, kind);
 
-                switch (kind) {
-                    case 'IGFS':
-                        const foundIgfs = _.find(igfss, (igfs) => igfs._id === cache.nodeFilter.IGFS.igfs);
+            if (_.isNil(settings))
+                return ccfg;
 
-                        if (foundIgfs) {
-                            bean = new Bean('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate', 'nodeFilter', foundIgfs)
-                                .stringConstructorArgument('name');
-                        }
+            let bean = null;
 
-                        break;
-                    case 'Custom':
-                        bean = new Bean(cache.nodeFilter.Custom.className, 'nodeFilter');
+            switch (kind) {
+                case 'IGFS':
+                    const foundIgfs = _.find(igfss, {_id: settings.igfs});
 
-                        break;
-                    default:
-                        return ccfg;
-                }
+                    if (foundIgfs) {
+                        bean = new Bean('org.apache.ignite.internal.processors.igfs.IgfsNodePredicate', 'nodeFilter', foundIgfs)
+                            .stringConstructorArgument('name');
+                    }
 
-                if (bean)
-                    ccfg.beanProperty('nodeFilter', bean);
+                    break;
+                case 'Custom':
+                    if (_.nonEmpty(settings.className))
+                        bean = new EmptyBean(settings.className);
+
+                    break;
+                default:
+                    // No-op.
             }
+
+            if (bean)
+                ccfg.beanProperty('nodeFilter', bean);
 
             return ccfg;
         }
