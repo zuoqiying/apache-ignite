@@ -647,7 +647,10 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     @Override public final CacheDataStore createCacheDataStore(int p) throws IgniteCheckedException {
         CacheDataStore dataStore = createCacheDataStore0(p);
 
-        partDataStores.put(p, dataStore);
+        CacheDataStore old = partDataStores.put(p, dataStore);
+
+        if (old != null)
+            log.warning("Replacing existing dataStore for partition " + p);
 
         return dataStore;
     }
