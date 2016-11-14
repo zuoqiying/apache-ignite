@@ -173,8 +173,12 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
      * @return Data store.
      */
     public CacheDataStore dataStore() {
-        if (state() == EVICTED)
-            log.warning("??? Obtained dataStore of EVICTED partition: " + id);
+        if (state() == EVICTED) {
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+
+            if (!stackTrace[2].getMethodName().equals("destroyCacheDataStore"))
+                log.warning("??? Obtained dataStore of EVICTED partition: " + id);
+        }
 
         return store;
     }
