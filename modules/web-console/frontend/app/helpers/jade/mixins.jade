@@ -433,10 +433,8 @@ mixin evictionPolicy(model, name, enabled, required, tip)
             {value: "SORTED", label: "Sorted"},\
             {value: undefined, label: "Not set"}\
         ]', tip)
-    span(ng-if=kind ng-init='__ = {};')
-        a.customize(ng-show='__.expanded' ng-click='__.expanded = false') Hide settings
-        a.customize(ng-hide='__.expanded' ng-click='__.expanded = true') Show settings
-        .panel-details(ng-if='__.expanded')
+    span(ng-show=kind)
+        +showHideLink('expanded', 'settings')
             .details-row
                 +number('Batch size', policy + '.batchSize', name + '+ "batchSize"', enabled, '1', '1',
                     'Number of entries to remove on shrink')
@@ -553,3 +551,13 @@ mixin dialect(lbl, model, name, required, tipTitle, genericDialectName, placehol
             <li>PostgreSQL</li>\
             <li>H2 database</li>\
         </ul>')
+
+//- Mixin for show/hide links.
+mixin showHideLink(name, text)
+    span(ng-init='__ = {};')
+        a.customize(ng-show='__.#{name}' ng-click='__.#{name} = false') Hide #{text}
+        a.customize(ng-hide='__.#{name}' ng-click='__.#{name} = true; ui.loadPanel("#{name}");') Show #{text}
+        div(ng-if='ui.isPanelLoaded("#{name}")')
+            .panel-details(ng-show='__.#{name}')
+                if block
+                    block
