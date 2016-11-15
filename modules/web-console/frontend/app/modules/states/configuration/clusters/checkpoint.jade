@@ -61,10 +61,10 @@ include ../../../../../app/helpers/jade/mixins.jade
                                     </ul>')
                                     +table-remove-button(model, 'Remove Checkpoint SPI')
 
-                            div(ng-if='model.kind === "FS"')
+                            div(ng-show='model.kind === "FS"')
                                 include ./checkpoint/fs.jade
 
-                            div(ng-if='model.kind === "Cache"')
+                            div(ng-show='model.kind === "Cache"')
                                 .settings-row
                                     +dropdown-required-empty('Cache:', 'model.Cache.cache', '"checkpointCacheCache"+ $index', 'true', 'true',
                                         'Choose cache', 'No caches configured for current cluster', 'clusterCaches', 'Cache to use for storing checkpoints')

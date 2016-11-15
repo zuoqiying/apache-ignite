@@ -733,18 +733,18 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
 
                     break;
                 case 'Custom':
-                    colSpi = new Bean(collision.Custom.class,
-                        'colSpi', collision.PriorityQueue, clusterDflts.collision.PriorityQueue);
+                    if (!_.isNil(_.get(collision, 'Custom.class'))) {
+                        colSpi = new Bean(collision.Custom.class,
+                            'colSpi', collision.PriorityQueue, clusterDflts.collision.PriorityQueue);
+                    }
 
                     break;
                 default:
                     return cfg;
             }
 
-            if (colSpi.isEmpty())
-                return cfg;
-
-            cfg.beanProperty('collisionSpi', colSpi);
+            if (!_.isNil(colSpi))
+                cfg.beanProperty('collisionSpi', colSpi);
 
             return cfg;
         }
