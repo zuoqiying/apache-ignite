@@ -1185,7 +1185,8 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         else {
             final UUID locNodeId = ctx.localNodeId();
 
-            setupConnection(c, distributedJoins, enforceJoinOrder);
+            // Here we will just parse the statement, no need to optimize it at all.
+            setupConnection(c, /*distributedJoins*/false, /*enforceJoinOrder*/true);
 
             GridH2QueryContext.set(new GridH2QueryContext(locNodeId, locNodeId, 0, PREPARE)
                 .distributedJoins(distributedJoins));
@@ -1226,7 +1227,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
                 bindParameters(stmt, F.asList(qry.getArgs()));
 
                 twoStepQry = GridSqlQuerySplitter.split((JdbcPreparedStatement)stmt, qry.getArgs(), grpByCollocated,
-                    distributedJoins);
+                    distributedJoins, enforceJoinOrder, this);
 
                 List<Integer> caches;
                 List<Integer> extraCaches = null;

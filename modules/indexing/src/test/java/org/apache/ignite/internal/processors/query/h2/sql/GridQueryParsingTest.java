@@ -324,7 +324,7 @@ public class GridQueryParsingTest extends GridCommonAbstractTest {
     private void checkQuery(String qry) throws Exception {
         Prepared prepared = parse(qry);
 
-        GridSqlQuery gQry = new GridSqlQueryParser().parse(prepared);
+        GridSqlQuery gQry = new GridSqlQueryParser(false).parse(prepared);
 
         String res = gQry.getSQL();
 

@@ -17,15 +17,22 @@
 
 package org.apache.ignite.internal.processors.query.h2.sql;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import javax.cache.CacheException;
+import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlQuery;
 import org.apache.ignite.internal.processors.cache.query.GridCacheTwoStepQuery;
+import org.apache.ignite.internal.processors.query.h2.IgniteH2Indexing;
+import org.apache.ignite.internal.util.typedef.F;
 import org.h2.command.Prepared;
 import org.h2.jdbc.JdbcPreparedStatement;
 import org.h2.util.IntArray;
@@ -72,7 +79,7 @@ public class GridSqlQuerySplitter {
     private int nextTblAliasIdx;
 
     /** */
-    private char splitId = 'A' - 1; // Then the first split will be 'A'.
+    private int splitId = -1; // The first one will be 0.
 
     /** */
     private Set<String> schemas;
@@ -88,6 +95,19 @@ public class GridSqlQuerySplitter {
 
     /** */
     private boolean rdcQrySimple;
+
+    /** */
+    private IgniteH2Indexing h2;
+
+    /** */
+    private IdentityHashMap<GridSqlAst, GridSqlAlias> uniqueFromAliases;
+
+    /**
+     * @param h2 Indexing.
+     */
+    public GridSqlQuerySplitter(IgniteH2Indexing h2) {
+        this.h2 = h2;
+    }
 
     /**
      * @param idx Index of table.
@@ -111,7 +131,7 @@ public class GridSqlQuerySplitter {
      */
     private String columnName(int idx) {
         // We must have unique columns for each split to avoid name clashes.
-        return COLUMN_PREFIX + splitId + idx;
+        return COLUMN_PREFIX + splitId + '_' + idx;
     }
 
     /**
@@ -119,37 +139,51 @@ public class GridSqlQuerySplitter {
      * @param params Parameters.
      * @param collocatedGrpBy Whether the query has collocated GROUP BY keys.
      * @param distributedJoins If distributed joins enabled.
+     * @param enforceJoinOrder Enforce join order.
+     * @param h2 Indexing.
      * @return Two step query.
+     * @throws SQLException If failed.
+     * @throws IgniteCheckedException If failed.
      */
     public static GridCacheTwoStepQuery split(
         JdbcPreparedStatement stmt,
         Object[] params,
         final boolean collocatedGrpBy,
-        final boolean distributedJoins
-    ) {
+        final boolean distributedJoins,
+        boolean enforceJoinOrder,
+        IgniteH2Indexing h2
+    ) throws SQLException, IgniteCheckedException {
         if (params == null)
             params = GridCacheSqlQuery.EMPTY_PARAMS;
 
-        final Prepared prepared = prepared(stmt);
-
-        GridSqlQuery qry = new GridSqlQueryParser().parse(prepared);
+        // Here we will just parse the query without any optimizations.
+        GridSqlQuery qry = parse(stmt, /*useOptimizedSubqry*/false);
 
         final boolean explain = qry.explain();
 
         qry.explain(false);
 
-        GridSqlQuerySplitter splitter = new GridSqlQuerySplitter();
+        GridSqlQuerySplitter splitter = new GridSqlQuerySplitter(h2);
 
         splitter.tbls = new HashSet<>();
         splitter.schemas = new HashSet<>();
+        splitter.uniqueFromAliases = new IdentityHashMap<>();
 
         // Normalization will generate unique aliases for all the table filters.
-        // Also it will build the query model to transform it further.
-        QueryModel qrym = splitter.normalizeQuery(qry);
+        // Also it will collect all tables and schemas from the query.
+        splitter.normalizeQuery(qry);
+
+        splitter.uniqueFromAliases = null; // We do not need this stuff anymore.
+
+        // Here we will have correct AST with optimized join order.
+        // If the join order is enforced, then the result will be the same.
+        if (!enforceJoinOrder)
+            qry = splitter.optimize(stmt.getConnection(), qry, params);
 
         // Map query will be direct reference to the original query AST.
         // Thus all the modifications will be performed on the original AST, so we should be careful when
         // nullifying or updating things, have to make sure that we will not need them in the original form later.
+        // TODO handle UNION
         splitter.splitSelect((GridSqlSelect)qry, params, collocatedGrpBy);
 
         // Build resulting two step query.
@@ -176,7 +210,7 @@ public class GridSqlQuerySplitter {
         Object[] params,
         boolean collocatedGrpBy
     ) {
-        if (++splitId > 'Z')
+        if (++splitId > 99)
             throw new CacheException("Too complex query to process.");
 
         final int visibleCols = mapQry.visibleColumns();
@@ -345,26 +379,60 @@ public class GridSqlQuerySplitter {
     }
 
     /**
+     * @param stmt Statement.
+     * @param useOptimizedSubqry Use optimized subqueries order for table filters.
+     * @return Parsed SQL query AST.
+     */
+    private static GridSqlQuery parse(PreparedStatement stmt, boolean useOptimizedSubqry) {
+        Prepared prepared = prepared(stmt);
+
+        return new GridSqlQueryParser(useOptimizedSubqry).parse(prepared);
+    }
+
+    /**
+     * @param c Connection.
+     * @param qry Parsed query.
+     * @param params Query parameters.
+     * @return Optimized query AST.
+     * @throws SQLException If failed.
+     * @throws IgniteCheckedException If failed.
+     */
+    private GridSqlQuery optimize(
+        Connection c,
+        GridSqlQuery qry,
+        Object[] params
+    ) throws SQLException, IgniteCheckedException {
+        // Here we will optimize the query if it was just a usual local query to have
+        // correct plan for reduce step.
+        // We disrespect distributedJoins flag here, because it will make sense only
+        // for each separate map query (some of them can be colocated, others may be not).
+        h2.setupConnection(c, /*distributedJoins*/false, /*enforceJoinOrder*/ false);
+
+        try (PreparedStatement s = c.prepareStatement(qry.getSQL())) {
+            h2.bindParameters(s, F.asList(params));
+
+            // Here we need to have correct optimized join order in our AST.
+            qry = parse(s, /*useOptimizedSubqry*/true);
+        }
+
+        return qry;
+    }
+
+    /**
      * @param qry Query.
      */
-    private QueryModel normalizeQuery(GridSqlQuery qry) {
-        QueryModel res;
-
+    private void normalizeQuery(GridSqlQuery qry) {
         if (qry instanceof GridSqlUnion) {
             GridSqlUnion union = (GridSqlUnion)qry;
 
-            res = new QueryModel(Type.UNION, union);
-
-            res.add(normalizeQuery(union.left()));
-            res.add(normalizeQuery(union.right()));
+            normalizeQuery(union.left());
+            normalizeQuery(union.right());
         }
         else {
             GridSqlSelect select = (GridSqlSelect)qry;
 
-            res = new QueryModel(Type.SELECT, select);
-
             // Normalize FROM first to update column aliases after.
-            normalizeFrom(select, FROM_CHILD, res);
+            normalizeFrom(select, FROM_CHILD, false);
 
             List<GridSqlAst> cols = select.columns(false);
 
@@ -378,8 +446,6 @@ public class GridSqlQuerySplitter {
 
         normalizeExpression(qry, OFFSET_CHILD);
         normalizeExpression(qry, LIMIT_CHILD);
-
-        return res;
     }
 
     /**
@@ -389,7 +455,10 @@ public class GridSqlQuerySplitter {
      */
     private GridSqlAlias generateUniqueAlias(GridSqlAst prnt, int childIdx) {
         GridSqlAst child = prnt.child(childIdx);
-        GridSqlTable tbl = GridSqlAlias.unwrap(child);
+        GridSqlAst tbl = GridSqlAlias.unwrap(child);
+
+        assert tbl instanceof GridSqlTable || tbl instanceof GridSqlSubquery ||
+            tbl instanceof GridSqlFunction: tbl.getClass();
 
         String uniqueAlias = UNIQUE_TABLE_ALIAS_SUFFIX + nextTblAliasIdx++;
 
@@ -398,7 +467,7 @@ public class GridSqlQuerySplitter {
 
         GridSqlAlias uniqueAliasAst = new GridSqlAlias(uniqueAlias, tbl);
 
-        tbl.uniqueAlias(uniqueAliasAst);
+        uniqueFromAliases.put(tbl, uniqueAliasAst);
 
         // Replace the child in the parent.
         prnt.child(childIdx, uniqueAliasAst);
@@ -409,10 +478,9 @@ public class GridSqlQuerySplitter {
     /**
      * @param prnt Parent element.
      * @param childIdx Child index.
-     * @param qrym Parent query model.
-     * @return {@code true} If the child was a table.
+     * @param prntAlias If the parent is {@link GridSqlAlias}.
      */
-    private boolean normalizeFrom(GridSqlAst prnt, int childIdx, QueryModel qrym) {
+    private void normalizeFrom(GridSqlAst prnt, int childIdx, boolean prntAlias) {
         GridSqlElement from = prnt.child(childIdx);
 
         if (from instanceof GridSqlTable) {
@@ -429,27 +497,27 @@ public class GridSqlQuerySplitter {
                 schemas.add(schema);
 
             // In case of alias parent we need to replace the alias itself.
-            if (!(prnt instanceof GridSqlAlias))
-                qrym.add(new QueryModel(Type.TABLE, generateUniqueAlias(prnt, childIdx)));
-
-            return true;
+            if (!prntAlias)
+                generateUniqueAlias(prnt, childIdx);
         }
-
-        if (from instanceof GridSqlAlias) {
-            // If it is a table inside of the alias, then replace current alias with generated unique alias.
-            if (normalizeFrom(from, 0, qrym))
-                qrym.add(new QueryModel(Type.TABLE, generateUniqueAlias(prnt, childIdx)));
+        else if (from instanceof GridSqlAlias) {
+            // Replace current alias with generated unique alias.
+            normalizeFrom(from, 0, true);
+            generateUniqueAlias(prnt, childIdx);
         }
         else if (from instanceof GridSqlSubquery) {
             // We do not need to wrap simple functional subqueries into filtering function,
             // because we can not have any other tables than Ignite (which are already filtered)
             // and functions we have to filter explicitly as well.
-            qrym.add(normalizeQuery(((GridSqlSubquery)from).subquery()));
+            normalizeQuery(((GridSqlSubquery)from).subquery());
+
+            if (!prntAlias) // H2 generates aliases for subqueries in FROM clause.
+                throw new IllegalStateException("No alias for subquery: " + from.getSQL());
         }
         else if (from instanceof GridSqlJoin) {
             // Left and right.
-            normalizeFrom(from, 0, qrym);
-            normalizeFrom(from, 1, qrym);
+            normalizeFrom(from, 0, false);
+            normalizeFrom(from, 1, false);
 
             // Join condition (after ON keyword).
             normalizeExpression(from, 2);
@@ -457,12 +525,13 @@ public class GridSqlQuerySplitter {
         else if (from instanceof GridSqlFunction) {
             // TODO generate filtering function around the given function
             // TODO SYSTEM_RANGE is a special case, it can not be wrapped
-            qrym.add(new QueryModel(Type.FUNCTION, from));
+
+            // In case of alias parent we need to replace the alias itself.
+            if (!prntAlias)
+                generateUniqueAlias(prnt, childIdx);
         }
         else
             throw new IllegalStateException(from.getClass().getName() + " : " + from.getSQL());
-
-        return false;
     }
 
     /**
@@ -486,15 +555,13 @@ public class GridSqlQuerySplitter {
             GridSqlAst tbl = GridSqlAlias.unwrap(col.expressionInFrom());
 
             // Change table alias part of the column to the generated unique table alias.
-            if (tbl instanceof GridSqlTable) {
-                GridSqlAlias uniqueAlias = ((GridSqlTable)tbl).uniqueAlias();
+            GridSqlAlias uniqueAlias = uniqueFromAliases.get(tbl);
 
-                // Unique aliases must be generated for all the tables already.
-                assert uniqueAlias != null: childIdx + "\n" + prnt.getSQL();
+            // Unique aliases must be generated for all the table filters already.
+            assert uniqueAlias != null: childIdx + "\n" + prnt.getSQL();
 
-                col.tableAlias(uniqueAlias.alias());
-                col.expressionInFrom(uniqueAlias);
-            }
+            col.tableAlias(uniqueAlias.alias());
+            col.expressionInFrom(uniqueAlias);
         }
         else if (el instanceof GridSqlParameter ||
             el instanceof GridSqlPlaceholder ||

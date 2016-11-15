@@ -36,9 +36,6 @@ public class GridSqlTable extends GridSqlElement {
     /** */
     private final GridH2Table tbl;
 
-    /** */
-    private GridSqlAlias uniqueAlias;
-
     /**
      * @param schema Schema.
      * @param tblName Table name.
@@ -98,23 +95,6 @@ public class GridSqlTable extends GridSqlElement {
      */
     public GridH2Table dataTable() {
         return tbl;
-    }
-
-    /**
-     * @param uniqueAlias Generated unique alias for this table.
-     */
-    public void uniqueAlias(GridSqlAlias uniqueAlias) {
-        assert uniqueAlias != null;
-        assert this.uniqueAlias == null; // Must be set only once.
-
-        this.uniqueAlias = uniqueAlias;
-    }
-
-    /**
-     * @return Generated unique alias for this table.
-     */
-    public GridSqlAlias uniqueAlias() {
-        return uniqueAlias;
     }
 
     /** {@inheritDoc} */
