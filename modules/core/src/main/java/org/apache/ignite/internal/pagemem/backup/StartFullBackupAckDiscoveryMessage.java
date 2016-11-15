@@ -19,6 +19,7 @@
 package org.apache.ignite.internal.pagemem.backup;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.ignite.internal.managers.discovery.DiscoveryCustomMessage;
 import org.apache.ignite.lang.IgniteUuid;
@@ -35,7 +36,7 @@ public class StartFullBackupAckDiscoveryMessage implements DiscoveryCustomMessag
     private IgniteUuid id = IgniteUuid.randomUuid();
 
     /** */
-    private long backupId;
+    private long globalBackupId;
 
     /** */
     private Exception err;
@@ -46,14 +47,22 @@ public class StartFullBackupAckDiscoveryMessage implements DiscoveryCustomMessag
     /** */
     private UUID initiatorNodeId;
 
+    private boolean incremental;
+
+    private Map<Integer, Long> lastFullBackupIdForCache;
+
     /**
-     * @param backupId Backup ID.
+     * @param globalBackupId Backup ID.
      * @param err Error.
      * @param cacheNames Cache names.
      */
-    public StartFullBackupAckDiscoveryMessage(long backupId, Collection<String> cacheNames, Exception err,
+    public StartFullBackupAckDiscoveryMessage(long globalBackupId, boolean incremental,
+        Map<Integer, Long> lastFullBackupIdForCache,
+        Collection<String> cacheNames, Exception err,
         UUID initiatorNodeId) {
-        this.backupId = backupId;
+        this.globalBackupId = globalBackupId;
+        this.incremental = incremental;
+        this.lastFullBackupIdForCache = lastFullBackupIdForCache;
         this.err = err;
         this.cacheNames = cacheNames;
         this.initiatorNodeId = initiatorNodeId;
@@ -95,8 +104,16 @@ public class StartFullBackupAckDiscoveryMessage implements DiscoveryCustomMessag
     /**
      * @return Backup ID.
      */
-    public long backupId() {
-        return backupId;
+    public long globalBackupId() {
+        return globalBackupId;
+    }
+
+    public boolean incremental() {
+        return incremental;
+    }
+
+    @Nullable public Long lastFullBackupId(int cacheId) {
+        return lastFullBackupIdForCache.get(cacheId);
     }
 
     /** {@inheritDoc} */

@@ -25,10 +25,28 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PageMetaIO extends PageIO {
     /** */
-    protected static final int METASTORE_ROOT_OFF = PageIO.COMMON_HEADER_END;
+    private static final int METASTORE_ROOT_OFF = PageIO.COMMON_HEADER_END;
 
     /** */
-    protected static final int REUSE_LIST_ROOT_OFF = METASTORE_ROOT_OFF + 8;
+    private static final int REUSE_LIST_ROOT_OFF = METASTORE_ROOT_OFF + 8;
+
+    /** Last successful backup id offset. */
+    private static final int LAST_SUCCESSFUL_BACKUP_ID_OFF = REUSE_LIST_ROOT_OFF + 8;
+
+    /** Last successful full backup id offset. */
+    private static final int LAST_SUCCESSFUL_FULL_BACKUP_ID_OFF = LAST_SUCCESSFUL_BACKUP_ID_OFF + 8;
+
+    /** Next backup id offset. */
+    private static final int NEXT_BACKUP_ID_OFF = LAST_SUCCESSFUL_FULL_BACKUP_ID_OFF + 8;
+
+    /** Last allocated index offset. */
+    private static final int LAST_ALLOCATED_INDEX_OFF = NEXT_BACKUP_ID_OFF + 8;
+
+    /** Candidate allocated index offset. */
+    private static final int CANDIDATE_ALLOCATED_INDEX_OFF = LAST_ALLOCATED_INDEX_OFF + 4;
+
+    /** End of page meta. */
+    static final int END_OF_PAGE_META = CANDIDATE_ALLOCATED_INDEX_OFF + 4;
 
     /** */
     public static final IOVersions<PageMetaIO> VERSIONS = new IOVersions<>(
@@ -56,6 +74,11 @@ public class PageMetaIO extends PageIO {
 
         setTreeRoot(buf, 0);
         setReuseListRoot(buf, 0);
+        setLastSuccessfulFullBackupId(buf, 0);
+        setLastSuccessfulBackupId(buf, 0);
+        setNextBackupId(buf, 1);
+        setLastAllocatedIndex(buf, 0);
+        setCandidateAllocatedIndex(buf, 0);
     }
 
     /**
@@ -88,5 +111,80 @@ public class PageMetaIO extends PageIO {
      */
     public void setReuseListRoot(@NotNull ByteBuffer buf, long pageId) {
         buf.putLong(REUSE_LIST_ROOT_OFF, pageId);
+    }
+
+    /**
+     * @param buf Buffer.
+     * @param lastSuccessfulBackupId Last successful backup id.
+     */
+    public void setLastSuccessfulBackupId(@NotNull ByteBuffer buf, long lastSuccessfulBackupId) {
+        buf.putLong(LAST_SUCCESSFUL_BACKUP_ID_OFF, lastSuccessfulBackupId);
+    }
+
+    /**
+     * @param buf Buffer.
+     */
+    public long getLastSuccessfulBackupId(@NotNull ByteBuffer buf) {
+        return buf.getLong(LAST_SUCCESSFUL_BACKUP_ID_OFF);
+    }
+
+    /**
+     * @param buf Buffer.
+     * @param lastSuccessfulFullBackupId Last successful full backup id.
+     */
+    public void setLastSuccessfulFullBackupId(@NotNull ByteBuffer buf, long lastSuccessfulFullBackupId) {
+        buf.putLong(LAST_SUCCESSFUL_FULL_BACKUP_ID_OFF, lastSuccessfulFullBackupId);
+    }
+
+    /**
+     * @param buf Buffer.
+     */
+    public long getLastSuccessfulFullBackupId(@NotNull ByteBuffer buf) {
+        return buf.getLong(LAST_SUCCESSFUL_FULL_BACKUP_ID_OFF);
+    }
+
+    /**
+     * @param buf Buffer.
+     * @param nextBackupId Next backup id.
+     */
+    public void setNextBackupId(@NotNull ByteBuffer buf, long nextBackupId) {
+        buf.putLong(NEXT_BACKUP_ID_OFF, nextBackupId);
+    }
+
+    /**
+     * @param buf Buffer.
+     * @param lastAllocatedIdx Last allocated index.
+     */
+    public void setLastAllocatedIndex(@NotNull ByteBuffer buf, int lastAllocatedIdx) {
+        buf.putInt(LAST_ALLOCATED_INDEX_OFF, lastAllocatedIdx);
+    }
+
+    /**
+     * @param buf Buffer.
+     */
+    public int getLastAllocatedIndex(@NotNull ByteBuffer buf) {
+        return buf.getInt(LAST_ALLOCATED_INDEX_OFF);
+    }
+
+    /**
+     * @param buf Buffer.
+     * @param previousAllocatedIdx Last allocated index.
+     */
+    public void setCandidateAllocatedIndex(@NotNull ByteBuffer buf, int previousAllocatedIdx) {
+        buf.putInt(CANDIDATE_ALLOCATED_INDEX_OFF, previousAllocatedIdx);
+    }
+
+    /**
+     * @param buf Buffer.
+     */
+    public int getCandidateAllocatedIndex(@NotNull ByteBuffer buf) {
+        return buf.getInt(CANDIDATE_ALLOCATED_INDEX_OFF);
+    }
+
+    /**
+     * @param buf Buffer.
+     */
+    public long getNextBackupId(@NotNull ByteBuffer buf) {
+        return buf.getLong(NEXT_BACKUP_ID_OFF);
     }
 }

@@ -130,7 +130,25 @@ public abstract class WALRecord {
         PARTITION_META_PAGE_UPDATE_COUNTERS,
 
         /** */
-        MEMORY_RECOVERY
+        MEMORY_RECOVERY,
+
+        /** */
+        TRACKING_PAGE_DELTA,
+
+        /** Meta page update last successful backup id. */
+        META_PAGE_UPDATE_LAST_SUCCESSFUL_BACKUP_ID,
+
+        /** Meta page update last successful full backup id. */
+        META_PAGE_UPDATE_LAST_SUCCESSFUL_FULL_BACKUP_ID,
+
+        /** Meta page update next backup id. */
+        META_PAGE_UPDATE_NEXT_BACKUP_ID,
+
+        /** Meta page update last allocated index. */
+        META_PAGE_UPDATE_LAST_ALLOCATED_INDEX,
+
+        /** Meta page update candidate allocated index. */
+        META_PAGE_UPDATE_CANDIDATE_ALLOCATED_INDEX
         ;
 
         /** */
