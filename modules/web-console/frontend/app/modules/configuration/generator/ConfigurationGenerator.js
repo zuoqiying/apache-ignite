@@ -1451,14 +1451,20 @@ export default ['JavaTypes', 'igniteClusterDefaults', 'igniteCacheDefaults', 'ig
                 switch (kind) {
                     case 'CacheJdbcPojoStoreFactory':
                         bean = new Bean('org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory', 'cacheStoreFactory',
-                            storeFactory);
+                            storeFactory, cacheDflts.cacheStoreFactory.CacheJdbcPojoStoreFactory);
 
                         const jdbcId = bean.valueOf('dataSourceBean');
 
                         bean.dataSource(jdbcId, 'dataSourceBean', this.dataSourceBean(jdbcId, storeFactory.dialect))
                             .beanProperty('dialect', new EmptyBean(this.dialectClsName(storeFactory.dialect)));
 
-                        bean.boolProperty('sqlEscapeAll');
+                        bean.intProperty('batchSize')
+                            .intProperty('maximumPoolSize')
+                            .intProperty('maximumWriteAttempts')
+                            .intProperty('parallelLoadCacheMinimumThreshold')
+                            .emptyBeanProperty('hasher')
+                            .emptyBeanProperty('transformer')
+                            .boolProperty('sqlEscapeAll');
 
                         const setType = (typeBean, propName) => {
                             if (JavaTypes.nonBuiltInClass(typeBean.valueOf(propName)))
