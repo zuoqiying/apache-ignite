@@ -39,6 +39,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import org.apache.ignite.console.agent.handlers.DatabaseHandler;
 import org.apache.ignite.console.agent.handlers.RestHandler;
+import org.apache.ignite.console.agent.handlers.TopologyHandler;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
@@ -58,6 +59,12 @@ import static org.apache.ignite.console.agent.AgentConfiguration.DFLT_SERVER_POR
 public class AgentLauncher {
     /** */
     private static final Logger log = Logger.getLogger(AgentLauncher.class.getName());
+
+    /** */
+    private static final String EVENT_START_COLLECT_TOPOLOGY = "cluster:start:collect";
+
+    /** */
+    private static final String EVENT_STOP_COLLECT_TOPOLOGY = "cluster:stop:collect";
 
     /** */
     private static final String EVENT_NODE_REST = "node:rest";
@@ -217,128 +224,136 @@ public class AgentLauncher {
 
             System.out.print("Enter security tokens separated by comma: ");
 
-            cfg.tokens(Arrays.asList(System.console().readLine().trim().split(",")));
+            String tokens = System.console().readLine();
+
+            if (tokens != null)
+                cfg.tokens(Arrays.asList(tokens.trim().split(",")));
         }
 
-        final RestHandler restHnd = new RestHandler(cfg);
+        URI uri = URI.create(cfg.serverUri());
+
+        if (uri.getPort() == -1)
+            uri = URI.create(cfg.serverUri() + ':' + DFLT_SERVER_PORT);
+
+        IO.Options opts = new IO.Options();
+
+        opts.reconnectionDelay = RECONNECT_INTERVAL;
+
+        // Workaround for use self-signed certificate
+        if (Boolean.getBoolean("trust.all")) {
+            SSLContext ctx = SSLContext.getInstance("TLS");
+
+            // Create an SSLContext that uses our TrustManager
+            ctx.init(null, getTrustManagers(), null);
+
+            opts.sslContext = ctx;
+        }
+
+        final Socket client = IO.socket(uri, opts);
+        final RestExecutor restExecutor = new RestExecutor(cfg.nodeUri());
 
         try {
-            restHnd.start();
+            Emitter.Listener onConnecting = new Emitter.Listener() {
+                @Override public void call(Object... args) {
+                    log.info("Connecting to: " + cfg.serverUri());
+                }
+            };
 
-            URI uri = URI.create(cfg.serverUri());
+            final TopologyHandler topHnd = new TopologyHandler(client, restExecutor);
 
-            if (uri.getPort() == -1)
-                uri = URI.create(cfg.serverUri() + ':' + DFLT_SERVER_PORT);
+            Emitter.Listener onConnect = new Emitter.Listener() {
+                @Override public void call(Object... args) {
+                    log.info("Connection established.");
 
-            IO.Options opts = new IO.Options();
+                    JSONObject authMsg = new JSONObject();
 
-            opts.reconnectionDelay = RECONNECT_INTERVAL;
+                    try {
+                        authMsg.put("tokens", cfg.tokens());
 
-            // Workaround for use self-signed certificate
-            if (Boolean.getBoolean("trust.all")) {
-                SSLContext ctx = SSLContext.getInstance("TLS");
+                        String clsName = AgentLauncher.class.getSimpleName() + ".class";
 
-                // Create an SSLContext that uses our TrustManager
-                ctx.init(null, getTrustManagers(), null);
+                        String clsPath = AgentLauncher.class.getResource(clsName).toString();
 
-                opts.sslContext = ctx;
-            }
+                        if (clsPath.startsWith("jar")) {
+                            String manifestPath = clsPath.substring(0, clsPath.lastIndexOf('!') + 1) +
+                                "/META-INF/MANIFEST.MF";
 
-            final Socket client = IO.socket(uri, opts);
+                            Manifest manifest = new Manifest(new URL(manifestPath).openStream());
 
-            try {
-                Emitter.Listener onConnecting = new Emitter.Listener() {
-                    @Override public void call(Object... args) {
-                        log.info("Connecting to: " + cfg.serverUri());
-                    }
-                };
+                            Attributes attr = manifest.getMainAttributes();
 
-                Emitter.Listener onConnect = new Emitter.Listener() {
-                    @Override public void call(Object... args) {
-                        log.info("Connection established.");
+                            authMsg.put("ver", attr.getValue("Implementation-Version"));
+                            authMsg.put("bt", attr.getValue("Build-Time"));
+                        }
 
-                        JSONObject authMsg = new JSONObject();
+                        client.emit("agent:auth", authMsg, new Ack() {
+                            @Override public void call(Object... args) {
+                                // Authentication failed if response contains args.
+                                if (args != null && args.length > 0) {
+                                    onDisconnect.call(args);
 
-                        try {
-                            authMsg.put("tokens", cfg.tokens());
-
-                            String clsName = AgentLauncher.class.getSimpleName() + ".class";
-
-                            String clsPath = AgentLauncher.class.getResource(clsName).toString();
-
-                            if (clsPath.startsWith("jar")) {
-                                String manifestPath = clsPath.substring(0, clsPath.lastIndexOf('!') + 1) +
-                                    "/META-INF/MANIFEST.MF";
-
-                                Manifest manifest = new Manifest(new URL(manifestPath).openStream());
-
-                                Attributes attr = manifest.getMainAttributes();
-
-                                authMsg.put("ver", attr.getValue("Implementation-Version"));
-                                authMsg.put("bt", attr.getValue("Build-Time"));
-                            }
-
-                            client.emit("agent:auth", authMsg, new Ack() {
-                                @Override public void call(Object... args) {
-                                    // Authentication failed if response contains args.
-                                    if (args != null && args.length > 0) {
-                                        onDisconnect.call(args);
-
-                                        System.exit(1);
-                                    }
-
-                                    log.info("Authentication success.");
+                                    System.exit(1);
                                 }
-                            });
-                        }
-                        catch (JSONException | IOException e) {
-                            log.error("Failed to construct authentication message", e);
 
-                            client.close();
-                        }
+                                log.info("Authentication success.");
+
+                                topHnd.start().call();
+                            }
+                        });
                     }
-                };
+                    catch (JSONException | IOException e) {
+                        log.error("Failed to construct authentication message", e);
 
-                DatabaseHandler dbHnd = new DatabaseHandler(cfg);
+                        client.close();
+                    }
+                }
+            };
 
-                final CountDownLatch latch = new CountDownLatch(1);
+            DatabaseHandler dbHnd = new DatabaseHandler(cfg);
+            RestHandler restHnd = new RestHandler(restExecutor);
 
-                client
-                    .on(EVENT_CONNECTING, onConnecting)
-                    .on(EVENT_CONNECT, onConnect)
-                    .on(EVENT_CONNECT_ERROR, onError)
-                    .on(EVENT_RECONNECTING, onConnecting)
-                    .on(EVENT_NODE_REST, restHnd)
-                    .on(EVENT_SCHEMA_IMPORT_DRIVERS, dbHnd.availableDriversListener())
-                    .on(EVENT_SCHEMA_IMPORT_SCHEMAS, dbHnd.schemasListener())
-                    .on(EVENT_SCHEMA_IMPORT_METADATA, dbHnd.metadataListener())
-                    .on(EVENT_ERROR, onError)
-                    .on(EVENT_DISCONNECT, onDisconnect)
-                    .on(EVENT_AGENT_WARNING, new Emitter.Listener() {
-                        @Override public void call(Object... args) {
-                            log.warn(args[0]);
-                        }
-                    })
-                    .on(EVENT_AGENT_CLOSE, new Emitter.Listener() {
-                        @Override public void call(Object... args) {
-                            onDisconnect.call(args);
+            final CountDownLatch latch = new CountDownLatch(1);
 
-                            client.off();
+            client
+                .on(EVENT_CONNECTING, onConnecting)
+                .on(EVENT_CONNECT, onConnect)
+                .on(EVENT_CONNECT_ERROR, onError)
+                .on(EVENT_RECONNECTING, onConnecting)
 
-                            latch.countDown();
-                        }
-                    });
+                .on(EVENT_START_COLLECT_TOPOLOGY, topHnd.start())
+                .on(EVENT_STOP_COLLECT_TOPOLOGY, topHnd.stop())
 
-                client.connect();
+                .on(EVENT_NODE_REST, restHnd)
 
-                latch.await();
-            }
-            finally {
-                client.close();
-            }
+                .on(EVENT_SCHEMA_IMPORT_DRIVERS, dbHnd.availableDriversListener())
+                .on(EVENT_SCHEMA_IMPORT_SCHEMAS, dbHnd.schemasListener())
+                .on(EVENT_SCHEMA_IMPORT_METADATA, dbHnd.metadataListener())
+
+                .on(EVENT_ERROR, onError)
+                .on(EVENT_DISCONNECT, onDisconnect)
+                .on(EVENT_AGENT_WARNING, new Emitter.Listener() {
+                    @Override public void call(Object... args) {
+                        log.warn(args[0]);
+                    }
+                })
+                .on(EVENT_AGENT_CLOSE, new Emitter.Listener() {
+                    @Override public void call(Object... args) {
+                        onDisconnect.call(args);
+
+                        client.off();
+
+                        latch.countDown();
+                    }
+                });
+
+            client.connect();
+
+            latch.await();
         }
         finally {
-            restHnd.stop();
+            restExecutor.stop();
+
+            client.close();
         }
     }
 }

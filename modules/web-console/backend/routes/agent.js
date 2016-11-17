@@ -38,7 +38,7 @@ module.exports.factory = function(_, express, agentsService) {
         router.get('/download/zip', (req, res) => {
             const host = req.hostname.match(/:/g) ? req.hostname.slice(0, req.hostname.indexOf(':')) : req.hostname;
 
-            agentsService.getArchive(host, req.user.token)
+            agentsService.prepareArchive(host, req.user.token)
                 .then(({fileName, buffer}) => {
                     // Set the archive name.
                     res.attachment(fileName);

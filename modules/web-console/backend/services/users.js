@@ -21,7 +21,7 @@
 
 module.exports = {
     implements: 'services/users',
-    inject: ['require(lodash)', 'mongo', 'settings', 'services/spaces', 'services/mails', 'agent-manager', 'errors']
+    inject: ['require(lodash)', 'errors', 'settings', 'mongo', 'services/spaces', 'services/mails', 'agent-manager']
 };
 
 /**
@@ -131,7 +131,7 @@ module.exports.factory = (_, mongo, settings, spacesService, mailsService, agent
                 })
                 .then((user) => {
                     if (changed.token && user.token !== changed.token)
-                        agentMgr.close(user._id, user.token);
+                        agentMgr.tryStopAgents(user);
 
                     _.extend(user, changed);
 

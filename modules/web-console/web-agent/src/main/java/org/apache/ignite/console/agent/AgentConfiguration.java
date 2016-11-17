@@ -27,15 +27,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Agent configuration.
  */
 public class AgentConfiguration {
     /** Default server port. */
     public static final int DFLT_SERVER_PORT = 3001;
-
-    /** Default Ignite node HTTP port. */
-    public static final int DFLT_NODE_PORT = 8080;
 
     /** Default path to agent property file. */
     public static final String DFLT_CFG_PATH = "default.properties";
@@ -173,7 +172,7 @@ public class AgentConfiguration {
     public void load(URL cfgUrl) throws IOException {
         Properties props = new Properties();
 
-        try (Reader reader = new InputStreamReader(cfgUrl.openStream())) {
+        try (Reader reader = new InputStreamReader(cfgUrl.openStream(), UTF_8)) {
             props.load(reader);
         }
 

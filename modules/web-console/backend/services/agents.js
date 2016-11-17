@@ -41,7 +41,7 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
          *
          * @returns {*} - readable stream for further piping. (http://stuk.github.io/jszip/documentation/api_jszip/generate_node_stream.html)
          */
-        static getArchive(host, token) {
+        prepareArchive(host, token) {
             const latest = agentMgr.supportedAgents.latest;
 
             if (_.isEmpty(latest))
@@ -62,13 +62,13 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
                         .then((zip) => {
                             const prop = [];
 
-                            prop.push('tokens=' + token);
-                            prop.push('server-uri=' + (settings.agent.SSLOptions ? 'https' : 'http') + '://' + host + ':' + settings.agent.port);
+                            prop.push(`tokens=${token}`);
+                            prop.push(`server-uri=${settings.agent.SSLOptions ? 'https' : 'http'}://${host}:${settings.agent.port}`);
                             prop.push('#Uncomment following options if needed:');
                             prop.push('#node-uri=http://localhost:8080');
                             prop.push('#driver-folder=./jdbc-drivers');
 
-                            zip.file(folder + '/default.properties', prop.join('\n'));
+                            zip.file(`${folder}/default.properties`, prop.join('\n'));
 
                             return zip.generateAsync({type: 'nodebuffer', platform: 'UNIX'})
                                 .then((buffer) => resolve({filePath, fileName, buffer}));
@@ -77,7 +77,9 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
                 });
             });
         }
+
+
     }
 
-    return AgentsService;
+    return new AgentsService();
 };

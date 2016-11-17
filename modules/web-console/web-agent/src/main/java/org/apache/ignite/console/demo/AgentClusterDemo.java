@@ -50,13 +50,14 @@ import org.apache.ignite.console.demo.model.Employee;
 import org.apache.ignite.console.demo.model.Parking;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.typedef.F;
-import org.apache.ignite.logger.log4j.Log4JLogger;
+import org.apache.ignite.logger.slf4j.Slf4jLogger;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.spi.swapspace.file.FileSwapSpaceSpi;
 import org.apache.ignite.transactions.Transaction;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.ignite.IgniteSystemProperties.IGNITE_ATOMIC_CACHE_DELETE_HISTORY_SIZE;
 import static org.apache.ignite.IgniteSystemProperties.IGNITE_PERFORMANCE_SUGGESTIONS_DISABLED;
@@ -76,10 +77,10 @@ import static org.apache.ignite.transactions.TransactionIsolation.REPEATABLE_REA
  */
 public class AgentClusterDemo {
     /** */
-    private static final Logger log = Logger.getLogger(AgentClusterDemo.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AgentClusterDemo.class);
 
     /** */
-    private static final AtomicBoolean initLatch = new AtomicBoolean();
+    private static final AtomicBoolean INIT_LATCH = new AtomicBoolean();
 
     /** */
     private static final int NODE_CNT = 3;
@@ -104,7 +105,7 @@ public class AgentClusterDemo {
         DEPARTMENT_CACHE_NAME, EMPLOYEE_CACHE_NAME, PARKING_CACHE_NAME, CAR_CACHE_NAME));
 
     /** */
-    private static final Random rnd = new Random();
+    private static final Random RND = new Random();
 
     /** Countries count. */
     private static final int CNTR_CNT = 10;
@@ -355,7 +356,7 @@ public class AgentClusterDemo {
         commSpi.setLocalPort(60800);
 
         cfg.setCommunicationSpi(commSpi);
-        cfg.setGridLogger(new Log4JLogger(log));
+        cfg.setGridLogger(new Slf4jLogger(log));
         cfg.setMetricsLogFrequency(0);
         cfg.getConnectorConfiguration().setPort(60700);
 
@@ -405,19 +406,19 @@ public class AgentClusterDemo {
         IgniteCache<Integer, Employee> cacheEmployee = ignite.cache(EMPLOYEE_CACHE_NAME);
 
         for (int i = 0, n = 1; i < DEP_CNT; i++, n++) {
-            cacheDepartment.put(i, new Department(n, rnd.nextInt(CNTR_CNT), "Department #" + n));
+            cacheDepartment.put(i, new Department(n, RND.nextInt(CNTR_CNT), "Department #" + n));
 
-            double r = rnd.nextDouble();
+            double r = RND.nextDouble();
 
-            cacheEmployee.put(i, new Employee(i, rnd.nextInt(DEP_CNT), null, "First name manager #" + n,
+            cacheEmployee.put(i, new Employee(i, RND.nextInt(DEP_CNT), null, "First name manager #" + n,
                 "Last name manager #" + n, "Email manager #" + n, "Phone number manager #" + n,
                 new java.sql.Date((long)(r * range)), "Job manager #" + n, 1000 + round(r * 4000, 2)));
         }
 
         for (int i = 0, n = 1; i < EMPL_CNT; i++, n++) {
-            Integer depId = rnd.nextInt(DEP_CNT);
+            Integer depId = RND.nextInt(DEP_CNT);
 
-            double r = rnd.nextDouble();
+            double r = RND.nextDouble();
 
             cacheEmployee.put(i, new Employee(i, depId, depId, "First name employee #" + n,
                 "Last name employee #" + n, "Email employee #" + n, "Phone number employee #" + n,
@@ -443,7 +444,7 @@ public class AgentClusterDemo {
         IgniteCache<Integer, Car> cacheCar = ignite.cache(CAR_CACHE_NAME);
 
         for (int i = 0, n = 1; i < CAR_CNT; i++, n++)
-            cacheCar.put(i, new Car(i, rnd.nextInt(PARK_CNT), "Car #" + n));
+            cacheCar.put(i, new Car(i, RND.nextInt(PARK_CNT), "Car #" + n));
 
         if (log.isDebugEnabled())
             log.debug("DEMO: Finished cars population.");
@@ -499,13 +500,13 @@ public class AgentClusterDemo {
 
                             if (otherCache != null) {
                                 for (int i = 0, n = 1; i < cnt; i++, n++) {
-                                    Integer key = rnd.nextInt(1000);
+                                    Integer key = RND.nextInt(1000);
 
                                     String val = otherCache.get(key);
 
                                     if (val == null)
                                         otherCache.put(key, "other-" + key);
-                                    else if (rnd.nextInt(100) < 30)
+                                    else if (RND.nextInt(100) < 30)
                                         otherCache.remove(key);
                                 }
                             }
@@ -517,23 +518,23 @@ public class AgentClusterDemo {
                     if (cacheEmployee != null)
                         try(Transaction tx = ignite.transactions().txStart(PESSIMISTIC, REPEATABLE_READ)) {
                             for (int i = 0, n = 1; i < cnt; i++, n++) {
-                                Integer id = rnd.nextInt(EMPL_CNT);
+                                Integer id = RND.nextInt(EMPL_CNT);
 
-                                Integer depId = rnd.nextInt(DEP_CNT);
+                                Integer depId = RND.nextInt(DEP_CNT);
 
-                                double r = rnd.nextDouble();
+                                double r = RND.nextDouble();
 
                                 cacheEmployee.put(id, new Employee(id, depId, depId, "First name employee #" + n,
                                     "Last name employee #" + n, "Email employee #" + n, "Phone number employee #" + n,
                                     new java.sql.Date((long)(r * diff)), "Job employee #" + n, 500 + round(r * 2000, 2)));
 
-                                if (rnd.nextBoolean())
-                                    cacheEmployee.remove(rnd.nextInt(EMPL_CNT));
+                                if (RND.nextBoolean())
+                                    cacheEmployee.remove(RND.nextInt(EMPL_CNT));
 
-                                cacheEmployee.get(rnd.nextInt(EMPL_CNT));
+                                cacheEmployee.get(RND.nextInt(EMPL_CNT));
                             }
 
-                            if (rnd.nextInt(100) > 20)
+                            if (RND.nextInt(100) > 20)
                                 tx.commit();
                         }
                 }
@@ -551,12 +552,12 @@ public class AgentClusterDemo {
 
                     if (cache != null)
                         for (int i = 0; i < cnt; i++) {
-                            Integer carId = rnd.nextInt(CAR_CNT);
+                            Integer carId = RND.nextInt(CAR_CNT);
 
-                            cache.put(carId, new Car(carId, rnd.nextInt(PARK_CNT), "Car #" + (i + 1)));
+                            cache.put(carId, new Car(carId, RND.nextInt(PARK_CNT), "Car #" + (i + 1)));
 
-                            if (rnd.nextBoolean())
-                                cache.remove(rnd.nextInt(CAR_CNT));
+                            if (RND.nextBoolean())
+                                cache.remove(RND.nextInt(CAR_CNT));
                         }
                 }
                 catch (IllegalStateException ignored) {
@@ -573,8 +574,8 @@ public class AgentClusterDemo {
     /**
      * Start ignite node with cacheEmployee and populate it with data.
      */
-    public static boolean testDrive(AgentConfiguration acfg) {
-        if (initLatch.compareAndSet(false, true)) {
+    public static boolean testDrive(AgentConfiguration cfg) {
+        if (INIT_LATCH.compareAndSet(false, true)) {
             log.info("DEMO: Starting embedded nodes for demo...");
 
             System.setProperty(IGNITE_ATOMIC_CACHE_DELETE_HISTORY_SIZE, "1");
@@ -623,7 +624,7 @@ public class AgentClusterDemo {
                     return false;
                 }
 
-                acfg.demoNodeUri(String.format("http://%s:%d", host, port));
+                cfg.demoNodeUri(String.format("http://%s:%d", host, port));
 
                 log.info("DEMO: Embedded nodes for sql and monitoring demo successfully started");
 

@@ -26,12 +26,21 @@ const igfss = require('./demo/igfss.json');
 
 module.exports = {
     implements: 'routes/demo',
-    inject: ['require(lodash)', 'require(express)', 'settings', 'mongo', 'services/spaces', 'errors']
+    inject: ['require(lodash)', 'require(express)', 'errors', 'settings', 'mongo', 'services/spaces', 'agent-manager']
 };
 
-module.exports.factory = (_, express, settings, mongo, spacesService, errors) => {
+module.exports.factory = (_, express, errors, settings, mongo, spacesService, AgentManager) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
+
+        /**
+         * Reset demo configuration.
+         */
+        router.post('/start', (req, res) => {
+            AgentManager.forAccount(req.user._id)
+                .then((agentSocket) => {
+                });
+        });
 
         /**
          * Reset demo configuration.
