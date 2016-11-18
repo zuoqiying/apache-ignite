@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.ignite.cache;
+package org.apache.ignite;
 
-import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteCountDownLatch;
-import org.apache.ignite.IgniteDataStreamer;
-import org.apache.ignite.IgniteInterruptedException;
-import org.apache.ignite.Ignition;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cache.CacheMemoryMode;
+import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.query.QueryCursor;
+import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
@@ -37,6 +36,7 @@ import org.junit.runners.MethodSorters;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.logging.Level;
@@ -127,11 +127,11 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     /** */
     public static void main(String[] args) {
         try (final IgniteCacheEntrySizeTest app = new IgniteCacheEntrySizeTest()) {
-            //app.test01_nodeFootprint();
-            app.keepNodesRunningAfterTest = true;
-            app.startEventOnStartNode = false;
+            app.test01_nodeFootprint();
+            //app.keepNodesRunningAfterTest = true;
+            //app.startEventOnStartNode = false;
             app.test02_emptyEntryFootprint();
-            //app.test03_fullEntryFootprint();
+            app.test03_fullEntryFootprint();
         }
         catch (Exception ex) {
             Logger.getLogger(IgniteCacheEntrySizeTest.class.getName()).log(Level.SEVERE, null, ex);
@@ -284,14 +284,13 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
                     streamer.addData(new CacheKey(i), cacheValue);
                 }
             }
-            final IgniteBiTuple<Long, Long> minMax = ignite.compute().broadcast(new IgniteCallable<IgniteBiTuple<Long, Long>>() {
+            /*final IgniteBiTuple<Long, Long> minMax = ignite.compute().broadcast(new IgniteCallable<IgniteBiTuple<Long, Long>>() {
 
                 @IgniteInstanceResource
                 private Ignite ignite;
 
                 @Override public IgniteBiTuple<Long, Long> call() throws Exception {
                     final IgniteBiTuple<Long, Long> tuple = new IgniteBiTuple<>(Long.MAX_VALUE, Long.MIN_VALUE);
-                    final long[] count = {0};
                     cache.localEntries().forEach((e) -> {
                         tuple.set1(Long.min(tuple.get1(), e.getValue().value));
                         tuple.set2(Long.max(tuple.get2(), e.getValue().value));
@@ -306,7 +305,14 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
                     result.set1(Long.min(result.get1(), tuple.get1()));
                     result.set2(Long.max(result.get2(), tuple.get2()));
                     return result;
-                });
+                });*/
+            final IgniteBiTuple<Long, Long> minMax = new IgniteBiTuple<>();
+            final long[] count = {0};
+            try (QueryCursor<List<?>> cursor = cache.query(new SqlFieldsQuery("select count(value), min(value), max(value) from CacheValue"))) {
+                final List<?> vals = cursor.iterator().next();
+                count[0] = (Long)vals.get(0);
+                minMax.set((Long)vals.get(1), (Long)vals.get(2));
+            }
             cache.rebalance().get();
             printf("Cache size = %d, min = %d, max = %d%n",
                 cache.sizeLong(), minMax.get1(), minMax.get2());
