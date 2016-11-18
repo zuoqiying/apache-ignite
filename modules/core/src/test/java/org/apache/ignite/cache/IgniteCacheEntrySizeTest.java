@@ -25,6 +25,8 @@ import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.lang.IgniteBiInClosure;
 import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgniteCallable;
+import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
@@ -52,9 +54,9 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     /** */
     private static final String TEST_CACHE_NAME = "cache";
     /** */
-    private static final long TEST_EMPTY_ENTRIES_NUMBER = 1_000_000;
+    private static final long TEST_EMPTY_ENTRIES_NUMBER = 10_000_000;
     /** */
-    private static final long TEST_FULL_ENTRIES_NUMBER = 100_000;
+    private static final long TEST_FULL_ENTRIES_NUMBER = 1_000_000;
     /** */
     private static final int ENTRY_ARRAY_SIZE = 1_000;
     /** */
@@ -70,11 +72,11 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     /** */
     private boolean keepNodesRunningAfterTest;
     /** */
-    private long estimatedNodeFootprint;
+    private long estimatedNodeFootprint = 15L << 20;
     /** */
-    private long estimatedEmptyEntryFootprint;
+    private long estimatedEmptyEntryFootprint = 350L;
     /** */
-    private double estimatedArrayElementFootprint;
+    private double estimatedArrayElementFootprint = 2.5D;
 
     /** */
     public IgniteCacheEntrySizeTest() {
@@ -87,9 +89,11 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     }
 
     /** */
-    private static IgniteConfiguration getConfig(String gridName) {
+    private static IgniteConfiguration config(String gridName) {
         IgniteConfiguration cfg = new IgniteConfiguration();
         cfg.setGridName(gridName);
+        cfg.setPeerClassLoadingEnabled(false);
+
         TcpDiscoverySpi discovery = new TcpDiscoverySpi();
         TcpDiscoveryMulticastIpFinder ipFinder = new TcpDiscoveryMulticastIpFinder();
         ipFinder.setAddresses(Arrays.asList("127.0.0.1:47500..47510"));
@@ -102,14 +106,13 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
         cacheCache.setBackups(0);
         cacheCache.setAtomicityMode(CacheAtomicityMode.ATOMIC);
 
-        /** ONHEAP_TIERED
-         cacheCache.setMemoryMode(CacheMemoryMode.ONHEAP_TIERED);
-         cacheCache.setOffHeapMaxMemory(0);
-         cacheCache.setCopyOnRead(false); */
+        /** ONHEAP_TIERED */
+        cacheCache.setMemoryMode(CacheMemoryMode.ONHEAP_TIERED);
+        cacheCache.setOffHeapMaxMemory(0);
 
-        /** OFFHEAP_TIERED */
-        cacheCache.setMemoryMode(CacheMemoryMode.OFFHEAP_TIERED);
-        cacheCache.setOffHeapMaxMemory(512L << 20);
+        /** OFFHEAP_TIERED
+         cacheCache.setMemoryMode(CacheMemoryMode.OFFHEAP_TIERED);
+         cacheCache.setOffHeapMaxMemory(512L << 20); */
 
         cfg.setCacheConfiguration(cacheCache);
         return cfg;
@@ -118,16 +121,13 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     /** */
     public static void main(String[] args) {
         try (final IgniteCacheEntrySizeTest app = new IgniteCacheEntrySizeTest()) {
-            app.test01_nodeFootprint();
-            app.test02_emptyEntryFootprint();
+            //app.test01_nodeFootprint();
             //app.keepNodesRunningAfterTest = true;
+            app.test02_emptyEntryFootprint();
             app.test03_fullEntryFootprint();
         }
         catch (Exception ex) {
             Logger.getLogger(IgniteCacheEntrySizeTest.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        finally {
-            System.exit(0);
         }
     }
 
@@ -277,25 +277,36 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
                     streamer.addData(new CacheKey(i), cacheValue);
                 }
             }
-            final IgniteBiTuple<Long, Long> minMax = ignite.compute().broadcast(
-                () -> {
+            final IgniteBiTuple<Long, Long> minMax = ignite.compute().broadcast(new IgniteCallable<IgniteBiTuple<Long, Long>>() {
+
+                @IgniteInstanceResource
+                private Ignite ignite;
+
+                @Override public IgniteBiTuple<Long, Long> call() throws Exception {
                     final IgniteBiTuple<Long, Long> tuple = new IgniteBiTuple<>(Long.MAX_VALUE, Long.MIN_VALUE);
+                    final long[] count = {0};
                     cache.localEntries().forEach((e) -> {
                         tuple.set1(Long.min(tuple.get1(), e.getValue().value));
                         tuple.set2(Long.max(tuple.get2(), e.getValue().value));
+                        ++count[0];
                     });
+                    printf("Local cache values: node=%s, count = %d, min = %d, max = %d%n",
+                        ignite.name(), count[0], tuple.get1(), tuple.get2());
                     return tuple;
-
-                }).stream().reduce(new IgniteBiTuple<Long, Long>(Long.MAX_VALUE, Long.MIN_VALUE),
+                }
+            }).stream().reduce(new IgniteBiTuple<Long, Long>(Long.MAX_VALUE, Long.MIN_VALUE),
                 (result, tuple) -> {
                     result.set1(Long.min(result.get1(), tuple.get1()));
                     result.set2(Long.max(result.get2(), tuple.get2()));
-                    return tuple;
+                    return result;
                 });
             cache.rebalance().get();
             printf("Cache size = %d, min = %d, max = %d%n",
                 cache.sizeLong(), minMax.get1(), minMax.get2());
         }, (ignite, cnt) -> {
+            if (ignite == null)
+                return;
+
             final IgniteCache<Object, Object> cache = ignite.getOrCreateCache(TEST_CACHE_NAME);
             cache.rebalance().get();
             printf("Cache size = %d%n", cache.sizeLong());
@@ -313,7 +324,7 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
         while (cnt < IGNITE_INSTANCES_MAX_NUMBER) {
             ++cnt;
             printf("Starting node = %d%n", cnt);
-            final Ignite ignite = Ignition.getOrStart(getConfig("testIgniteFootprint-" + cnt));
+            final Ignite ignite = Ignition.getOrStart(config("testIgniteFootprint-" + cnt));
             printf("Started node = %d%n", cnt);
             running.add(ignite);
             if (onStart != null)
@@ -321,7 +332,6 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
             usedMemoryOnStart[cnt] = runtimeUsedMemory();
         }
 
-        --cnt;
         usedMemoryOnStop[cnt] = usedMemoryOnStart[cnt];
         if (keepNodesRunningAfterTest) {
             while (cnt > 0) {
@@ -346,7 +356,7 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     private static class CacheKey {
 
         /** */
-        public final long value; // indexed
+        public final long value;
 
         /** */
         CacheKey(long value) {
