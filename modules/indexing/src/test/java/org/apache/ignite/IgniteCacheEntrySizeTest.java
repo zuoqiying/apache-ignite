@@ -281,6 +281,12 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
                     streamer.addData(new CacheKey(i), cacheValue);
                 }
             }
+            /*for (long i = 0; i < entryNumber; ++i) {
+                final CacheValue cacheValue = new CacheValue(i, arraySize);
+                for (int j = 0; j < arraySize; ++j)
+                    cacheValue.bytes[j] = (byte)j;
+                cache.put(new CacheKey(i), cacheValue);
+            }*/
             final IgniteBiTuple<Long, Long> minMax = ignite.compute().broadcast(new IgniteCallable<IgniteBiTuple<Long, Long>>() {
 
                 @IgniteInstanceResource
