@@ -103,10 +103,10 @@ module.exports.factory = function(_) {
          *
          * @this {AgentSocket}
          * @param {String} event Command name.
-         * @param {Object} data Command params.
+         * @param {Array.<Object>} args - Transmitted arguments.
          * @param {Function} [callback] on finish
          */
-        _emit(event, data, callback) {
+        _emit(event, args, callback) {
             if (!this.socket.connected) {
                 if (callback)
                     callback('org.apache.ignite.agent.AgentException: Connection is closed');
@@ -114,7 +114,7 @@ module.exports.factory = function(_) {
                 return;
             }
 
-            this.socket.emit(event, data, callback);
+            this.socket.emit(event, ...args, callback);
         }
 
         /**
@@ -126,7 +126,7 @@ module.exports.factory = function(_) {
          */
         emitEvent(event, ...args) {
             return new Promise((resolve, reject) =>
-                this._emit(event, ...args, (error, res) => {
+                this._emit(event, args, (error, res) => {
                     if (error)
                         return reject(error);
 
@@ -147,37 +147,26 @@ module.exports.factory = function(_) {
             for (const param of cmd._params)
                 params[param.key] = param.value;
 
-            return new Promise((resolve, reject) => {
-                this._emit('node:rest', {uri: 'ignite', params, demo: cmd._demo, method: 'GET'}, (error, res) => {
-                    if (error)
-                        return reject(new Error(error));
-
-                    error = res.error;
-
+            return this.emitEvent('node:rest', {uri: 'ignite', params, demo: cmd._demo, method: 'GET'})
+                .then((res) => {
                     const code = res.code;
 
                     if (code === 401)
-                        return reject(new Error('AgentSocket failed to authenticate in grid. Please check agent\'s login and password or node port.'));
+                        throw new Error('AgentSocket failed to authenticate in grid. Please check agent\'s login and password or node port.');
 
                     if (code !== 200)
-                        return reject(new Error(error || 'Failed connect to node and execute REST command.'));
+                        throw new Error(res.error || 'Failed connect to node and execute REST command.');
 
-                    try {
-                        const msg = JSON.parse(res.data);
+                    const msg = JSON.parse(res.data);
 
-                        if (msg.successStatus === 0)
-                            return resolve(msg.response);
+                    if (msg.successStatus === 0)
+                        return msg.response;
 
-                        if (msg.successStatus === 2)
-                            return reject(new Error('AgentSocket failed to authenticate in grid. Please check agent\'s login and password or node port.'));
+                    if (msg.successStatus === 2)
+                        throw new Error('AgentSocket failed to authenticate in grid. Please check agent\'s login and password or node port.');
 
-                        reject(new Error(msg.error));
-                    }
-                    catch (e) {
-                        return reject(e);
-                    }
+                    throw new Error(msg.error);
                 });
-            });
         }
 
         gatewayCommand(demo, nids, taskCls, argCls, ...args) {

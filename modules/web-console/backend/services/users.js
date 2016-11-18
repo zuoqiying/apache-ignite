@@ -27,14 +27,14 @@ module.exports = {
 /**
  * @param _
  * @param mongo
+ * @param errors
  * @param settings
  * @param {SpacesService} spacesService
  * @param {MailsService} mailsService
- * @param agentMgr
- * @param errors
+ * @param {AgentManager} agentMgr
  * @returns {UsersService}
  */
-module.exports.factory = (_, mongo, settings, spacesService, mailsService, agentMgr, errors) => {
+module.exports.factory = (_, errors, settings, mongo, spacesService, mailsService, agentMgr) => {
     const _randomString = () => {
         const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const possibleLen = possible.length;

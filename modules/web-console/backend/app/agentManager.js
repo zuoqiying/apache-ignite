@@ -137,15 +137,13 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
          * @param {http.Server|https.Server} srv Server instance that we want to attach agent handler.
          */
         attach(srv) {
-            if (this._server)
+            if (this.socket)
                 throw 'Agent server already started!';
-
-            this._server = srv;
 
             /**
              * @type {socketIo.Server}
              */
-            this.socket = socketio(this._server);
+            this.socket = socketio(srv);
 
             this.socket.on('connection', (socket) => {
                 socket.on('agent:auth', ({ver, bt, tokens}, cb) => {
@@ -228,7 +226,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
          * @returns {Promise.<AgentSocket>}
          */
         forAccount(accId) {
-            if (!this._server)
+            if (!this.socket)
                 return Promise.reject(new Error('Agent server not started yet!'));
 
             const agentSockets = this._agentSockets[accId];
@@ -274,7 +272,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
          * @param {mongo.<Account>} account
          */
         tryStopAgents(account) {
-            if (_.isNil(this._server))
+            if (_.isNil(this.socket))
                 return;
 
             const accId = account._id;
