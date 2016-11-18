@@ -28,7 +28,7 @@
     </parent>
 
     <artifactId>ignite-examples</artifactId>
-    <version>1.6.1.b1-SNAPSHOT</version>
+    <version>1.10.1.ea4</version>
 
     <dependencies>
         <dependency>
