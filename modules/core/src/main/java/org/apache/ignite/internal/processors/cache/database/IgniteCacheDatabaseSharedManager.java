@@ -127,6 +127,13 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     }
 
     /**
+     * @return {@code True} if current thread holds checkpoint read or write lock.
+     */
+    public boolean holdsCheckpointReadLock() {
+        return true; // Always true for non-persistent storage.
+    }
+
+    /**
      *
      */
     @Nullable public IgniteInternalFuture wakeupForCheckpoint(String reason) {
