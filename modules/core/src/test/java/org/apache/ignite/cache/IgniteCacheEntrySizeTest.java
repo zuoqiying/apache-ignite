@@ -21,6 +21,7 @@ import org.apache.ignite.IgniteCountDownLatch;
 import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.IgniteInterruptedException;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.lang.IgniteBiInClosure;
@@ -50,7 +51,7 @@ import java.util.logging.Logger;
 public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements AutoCloseable {
 
     /** */
-    private static final int IGNITE_INSTANCES_MAX_NUMBER = 10;
+    private static final int IGNITE_NODES_MAX_NUMBER = 10;
     /** */
     private static final String TEST_CACHE_NAME = "cache";
     /** */
@@ -62,9 +63,9 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     /** */
     private final String lineSeparator = System.getProperty("line.separator");
     /** */
-    private final long[] usedMemoryOnStart = new long[IGNITE_INSTANCES_MAX_NUMBER + 1];
+    private final long[] usedMemoryOnStart = new long[IGNITE_NODES_MAX_NUMBER + 1];
     /** */
-    private final long[] usedMemoryOnStop = new long[IGNITE_INSTANCES_MAX_NUMBER + 1];
+    private final long[] usedMemoryOnStop = new long[IGNITE_NODES_MAX_NUMBER + 1];
     /** */
     private StringWriter summary = new StringWriter();
     /** */
@@ -72,11 +73,15 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     /** */
     private boolean keepNodesRunningAfterTest;
     /** */
+    private boolean startEventOnStartNode = true;
+    /** */
+    private boolean stopEventOnStopNode = true;
+    /** */
     private long estimatedNodeFootprint = 15L << 20;
     /** */
-    private long estimatedEmptyEntryFootprint = 350L;
+    private long estimatedEmptyEntryFootprint = 300L;
     /** */
-    private double estimatedArrayElementFootprint = 2.5D;
+    private double estimatedArrayElementFootprint = 1D;
 
     /** */
     public IgniteCacheEntrySizeTest() {
@@ -105,6 +110,7 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
         cacheCache.setCacheMode(CacheMode.PARTITIONED);
         cacheCache.setBackups(0);
         cacheCache.setAtomicityMode(CacheAtomicityMode.ATOMIC);
+        cacheCache.setIndexedTypes(CacheKey.class, CacheValue.class);
 
         /** ONHEAP_TIERED */
         cacheCache.setMemoryMode(CacheMemoryMode.ONHEAP_TIERED);
@@ -122,9 +128,10 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     public static void main(String[] args) {
         try (final IgniteCacheEntrySizeTest app = new IgniteCacheEntrySizeTest()) {
             //app.test01_nodeFootprint();
-            //app.keepNodesRunningAfterTest = true;
+            app.keepNodesRunningAfterTest = true;
+            app.startEventOnStartNode = false;
             app.test02_emptyEntryFootprint();
-            app.test03_fullEntryFootprint();
+            //app.test03_fullEntryFootprint();
         }
         catch (Exception ex) {
             Logger.getLogger(IgniteCacheEntrySizeTest.class.getName()).log(Level.SEVERE, null, ex);
@@ -206,14 +213,14 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
             "Mem used: nodes = 0, on start = %d M, on stop = %d M%n",
             sizeInMegabytes(usedMemoryOnStart[0]), sizeInMegabytes(usedMemoryOnStop[0]));
         long totalNodeFootprint = 0;
-        for (int cnt = 1; cnt <= IGNITE_INSTANCES_MAX_NUMBER; ++cnt) {
+        for (int cnt = 1; cnt <= IGNITE_NODES_MAX_NUMBER; ++cnt) {
             long onStartPerNode = usedMemoryOnStart[cnt] - usedMemoryOnStart[cnt - 1];
             long onStopPerNode = usedMemoryOnStop[cnt] - usedMemoryOnStop[cnt - 1];
             totalNodeFootprint += onStartPerNode;
             printfSummary("Mem used per node: nodes = %d, on start = %d M, on stop = %d M%n",
                 cnt, sizeInMegabytes(onStartPerNode), sizeInMegabytes(onStopPerNode));
         }
-        estimatedNodeFootprint = totalNodeFootprint / IGNITE_INSTANCES_MAX_NUMBER;
+        estimatedNodeFootprint = totalNodeFootprint / IGNITE_NODES_MAX_NUMBER;
         printfSummary("Estimated node mem used = %d M%n", sizeInMegabytes(estimatedNodeFootprint));
     }
 
@@ -224,18 +231,18 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
 
         testEntryFootprint(TEST_EMPTY_ENTRIES_NUMBER, 0);
         long totalEmptyEntryFootprint = 0;
-        for (int cnt = 1; cnt <= IGNITE_INSTANCES_MAX_NUMBER; ++cnt) {
+        for (int cnt = 1; cnt <= IGNITE_NODES_MAX_NUMBER; ++cnt) {
             final long estimatedNodesFootprint = estimatedNodeFootprint * cnt;
             final long onStart = (usedMemoryOnStart[cnt] - usedMemoryOnStart[0]
                 - estimatedNodesFootprint) / TEST_EMPTY_ENTRIES_NUMBER;
             final long onStop = (usedMemoryOnStop[cnt] - usedMemoryOnStop[0]
-                - estimatedNodesFootprint) * IGNITE_INSTANCES_MAX_NUMBER
+                - estimatedNodesFootprint) * IGNITE_NODES_MAX_NUMBER
                 / TEST_EMPTY_ENTRIES_NUMBER / cnt;
             totalEmptyEntryFootprint += onStart;
             printfSummary("Mem used per entry: nodes = %d, on start = %d, on stop = %d%n",
                 cnt, onStart, onStop);
         }
-        estimatedEmptyEntryFootprint = totalEmptyEntryFootprint / IGNITE_INSTANCES_MAX_NUMBER;
+        estimatedEmptyEntryFootprint = totalEmptyEntryFootprint / IGNITE_NODES_MAX_NUMBER;
         printfSummary("Estimated empty entry mem used = %d%n", estimatedEmptyEntryFootprint);
     }
 
@@ -246,7 +253,7 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
 
         testEntryFootprint(TEST_FULL_ENTRIES_NUMBER, ENTRY_ARRAY_SIZE);
         double totalArrElementFootprint = 0;
-        for (int cnt = 1; cnt <= IGNITE_INSTANCES_MAX_NUMBER; ++cnt) {
+        for (int cnt = 1; cnt <= IGNITE_NODES_MAX_NUMBER; ++cnt) {
             final long estimatedNodesFootprint = estimatedNodeFootprint * cnt;
             final long estimatedEntriesFootprint = estimatedEmptyEntryFootprint * TEST_FULL_ENTRIES_NUMBER;
             final double onStart = ((double)(usedMemoryOnStart[cnt] - usedMemoryOnStart[0]
@@ -254,13 +261,13 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
                 / TEST_FULL_ENTRIES_NUMBER / ENTRY_ARRAY_SIZE;
             final double onStop = ((double)(usedMemoryOnStop[cnt] - usedMemoryOnStop[0]
                 - estimatedNodesFootprint - estimatedEntriesFootprint))
-                * IGNITE_INSTANCES_MAX_NUMBER / cnt
+                * IGNITE_NODES_MAX_NUMBER / cnt
                 / TEST_FULL_ENTRIES_NUMBER / ENTRY_ARRAY_SIZE;
             totalArrElementFootprint += onStart;
             printfSummary("Mem used per array element: nodes = %d, on start = %.3f, on stop = %.3f%n",
                 cnt, onStart, onStop);
         }
-        estimatedArrayElementFootprint = totalArrElementFootprint / IGNITE_INSTANCES_MAX_NUMBER;
+        estimatedArrayElementFootprint = totalArrElementFootprint / IGNITE_NODES_MAX_NUMBER;
         printfSummary("Estimated array element mem used = %.3f%n", estimatedArrayElementFootprint);
     }
 
@@ -317,17 +324,17 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     private void testFootprint(IgniteBiInClosure<Ignite, Integer> onStart,
         IgniteBiInClosure<Ignite, Integer> onStop) throws Exception {
 
-        final Queue<Ignite> running = new ArrayBlockingQueue<>(IGNITE_INSTANCES_MAX_NUMBER);
+        final Queue<Ignite> running = new ArrayBlockingQueue<>(IGNITE_NODES_MAX_NUMBER);
 
         int cnt = 0;
         usedMemoryOnStart[cnt] = runtimeUsedMemory();
-        while (cnt < IGNITE_INSTANCES_MAX_NUMBER) {
+        while (cnt < IGNITE_NODES_MAX_NUMBER) {
             ++cnt;
             printf("Starting node = %d%n", cnt);
             final Ignite ignite = Ignition.getOrStart(config("testIgniteFootprint-" + cnt));
             printf("Started node = %d%n", cnt);
             running.add(ignite);
-            if (onStart != null)
+            if (onStart != null && (startEventOnStartNode || cnt == IGNITE_NODES_MAX_NUMBER))
                 onStart.apply(ignite, cnt);
             usedMemoryOnStart[cnt] = runtimeUsedMemory();
         }
@@ -346,7 +353,7 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
                 ignite.close();
                 printf("Stopped node = %d%n", cnt);
                 --cnt;
-                if (onStop != null)
+                if (onStop != null && (stopEventOnStopNode || cnt == 0))
                     onStop.apply(running.peek(), cnt);
                 usedMemoryOnStop[cnt] = runtimeUsedMemory();
             }
@@ -356,6 +363,7 @@ public class IgniteCacheEntrySizeTest extends GridCommonAbstractTest implements 
     private static class CacheKey {
 
         /** */
+        @QuerySqlField(index = true)
         public final long value;
 
         /** */
