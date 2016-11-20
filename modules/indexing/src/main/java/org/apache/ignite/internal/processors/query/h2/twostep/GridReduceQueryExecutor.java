@@ -592,7 +592,8 @@ public class GridReduceQueryExecutor {
                     mapQrys = new ArrayList<>(qry.mapQueries().size());
 
                     for (GridCacheSqlQuery mapQry : qry.mapQueries())
-                        mapQrys.add(new GridCacheSqlQuery("EXPLAIN " + mapQry.query(), mapQry.parameters()));
+                        mapQrys.add(new GridCacheSqlQuery("EXPLAIN " + mapQry.query())
+                            .parameters(mapQry.parameters(), mapQry.parameterIndexes()));
                 }
 
                 IgniteProductVersion minNodeVer = cctx.shared().exchange().minimumNodeVersion(topVer);

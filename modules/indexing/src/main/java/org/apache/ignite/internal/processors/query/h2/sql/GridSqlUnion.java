@@ -130,6 +130,13 @@ public class GridSqlUnion extends GridSqlQuery {
         return buff.toString();
     }
 
+    /** {@inheritDoc} */
+    @Override public boolean simpleQuery() {
+        return unionType() == SelectUnion.UNION_ALL && sort().isEmpty() &&
+            offset() == null && limit() == null &&
+            left().simpleQuery() && right().simpleQuery();
+    }
+
     /**
      * @return Union type.
      */

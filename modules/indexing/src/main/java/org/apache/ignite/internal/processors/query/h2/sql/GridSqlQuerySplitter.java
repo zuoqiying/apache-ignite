@@ -73,9 +73,6 @@ public class GridSqlQuerySplitter {
     private static final String UNIQUE_TABLE_ALIAS_SUFFIX = "__Z";
 
     /** */
-    private int nextMergeTblIdx;
-
-    /** */
     private int nextTblAliasIdx;
 
     /** */
@@ -86,15 +83,6 @@ public class GridSqlQuerySplitter {
 
     /** */
     private Set<String> tbls;
-
-    /** */
-    private GridCacheSqlQuery mapSqlQry;
-
-    /** */
-    private GridCacheSqlQuery rdcSqlQry;
-
-    /** */
-    private boolean rdcQrySimple;
 
     /** */
     private IgniteH2Indexing h2;
@@ -175,23 +163,33 @@ public class GridSqlQuerySplitter {
 
         splitter.uniqueFromAliases = null; // We do not need this stuff anymore.
 
+        // Build resulting two step query. Schemas and tables must be collected at this point.
+        GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(splitter.schemas, splitter.tbls);
+
         // Here we will have correct AST with optimized join order.
         // If the join order is enforced, then the result will be the same.
         if (!enforceJoinOrder)
-            qry = splitter.optimize(stmt.getConnection(), qry, params);
+            qry = optimize(h2, stmt.getConnection(), qry, params);
+
+        // Create a fake parent AST element for the query to allow replacing the query.
+        GridSqlSubquery fakePrnt = new GridSqlSubquery(qry);
 
         // Map query will be direct reference to the original query AST.
         // Thus all the modifications will be performed on the original AST, so we should be careful when
         // nullifying or updating things, have to make sure that we will not need them in the original form later.
         // TODO handle UNION
-        splitter.splitSelect((GridSqlSelect)qry, params, collocatedGrpBy);
+        GridCacheSqlQuery mapSqlQry = splitter.splitSelect(fakePrnt, 0, params, collocatedGrpBy);
 
-        // Build resulting two step query.
-        GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(splitter.schemas, splitter.tbls);
+        // Get back the updated query. It will be our reduce query.
+        qry = fakePrnt.subquery();
 
-        twoStepQry.addMapQuery(splitter.mapSqlQry);
-        twoStepQry.reduceQuery(splitter.rdcSqlQry);
-        twoStepQry.skipMergeTable(splitter.rdcQrySimple);
+        // Setup a reduce query.
+        GridCacheSqlQuery rdcSqlQry = new GridCacheSqlQuery(qry.getSQL());
+        setupParameters(rdcSqlQry, qry, params);
+
+        twoStepQry.addMapQuery(mapSqlQry);
+        twoStepQry.reduceQuery(rdcSqlQry);
+        twoStepQry.skipMergeTable(qry.simpleQuery());
         twoStepQry.explain(explain);
         twoStepQry.distributedJoins(distributedJoins);
 
@@ -201,17 +199,22 @@ public class GridSqlQuerySplitter {
     /**
      * !!! Notice that here we will modify the original query AST.
      *
-     * @param mapQry The original query AST to be split. It will be used as a base for map query.
+     * @param prnt Parent AST element.
+     * @param childIdx Index of child select.
      * @param params Query parameters.
      * @param collocatedGrpBy Whether the query has collocated GROUP BY keys.
+     * @return Generated map query.
      */
-    private void splitSelect(
-        final GridSqlSelect mapQry,
-        Object[] params,
-        boolean collocatedGrpBy
+    private GridCacheSqlQuery splitSelect(
+        final GridSqlAst prnt,
+        final int childIdx,
+        final Object[] params,
+        final boolean collocatedGrpBy
     ) {
         if (++splitId > 99)
             throw new CacheException("Too complex query to process.");
+
+        final GridSqlSelect mapQry = prnt.child(childIdx);
 
         final int visibleCols = mapQry.visibleColumns();
 
@@ -239,8 +242,8 @@ public class GridSqlQuerySplitter {
 
         assert !(collocatedGrpBy && aggregateFound); // We do not split aggregates when collocatedGrpBy is true.
 
-        // Create reduce query AST.
-        GridSqlSelect rdcQry = new GridSqlSelect().from(mergeTable(nextMergeTblIdx++));
+        // Create reduce query AST. Use unique merge table for this split.
+        GridSqlSelect rdcQry = new GridSqlSelect().from(mergeTable(splitId));
 
         // -- SELECT
         mapQry.clearColumns();
@@ -257,11 +260,7 @@ public class GridSqlQuerySplitter {
         for (int i = rdcExps.size(); i < mapExps.size(); i++)  // Add all extra map columns as invisible reduce columns.
             rdcQry.addColumn(column(((GridSqlAlias)mapExps.get(i)).alias()), false);
 
-        // -- FROM TODO
-        mapQry.from();
-
-        // -- WHERE TODO
-        mapQry.where();
+        // -- FROM WHERE: do nothing
 
         // -- GROUP BY
         if (mapQry.groupColumns() != null && !collocatedGrpBy) {
@@ -326,25 +325,29 @@ public class GridSqlQuerySplitter {
             rdcQry.distinct(true);
         }
 
+        // Replace the given select with generated reduce query in the parent.
+        prnt.child(childIdx, rdcQry);
+
+        // Setup resulting map query.
+        GridCacheSqlQuery map = new GridCacheSqlQuery(mapQry.getSQL());
+
+        setupParameters(map, mapQry, params);
+        map.columns(collectColumns(mapExps));
+
+        return map;
+    }
+
+    /**
+     * @param sqlQry Query.
+     * @param qryAst Select AST.
+     * @param params All parameters.
+     */
+    private static void setupParameters(GridCacheSqlQuery sqlQry, GridSqlQuery qryAst, Object[] params) {
         IntArray paramIdxs = new IntArray(params.length);
 
-        GridCacheSqlQuery map = new GridCacheSqlQuery(mapQry.getSQL(),
-            findParams(mapQry, params, new ArrayList<>(params.length), paramIdxs).toArray());
+        params = findParams(qryAst, params, new ArrayList<>(params.length), paramIdxs).toArray();
 
-        map.columns(collectColumns(mapExps));
-        map.parameterIndexes(toArray(paramIdxs));
-
-        paramIdxs = new IntArray(params.length);
-
-        GridCacheSqlQuery rdc = new GridCacheSqlQuery(rdcQry.getSQL(),
-            findParams(rdcQry, params, new ArrayList<>(), paramIdxs).toArray());
-
-        rdc.parameterIndexes(toArray(paramIdxs));
-
-        // Setup result fields.
-        mapSqlQry = map;
-        rdcSqlQry = rdc;
-        rdcQrySimple = rdcQry.simpleQuery();
+        sqlQry.parameters(params, toArray(paramIdxs));
     }
 
     /**
@@ -390,6 +393,7 @@ public class GridSqlQuerySplitter {
     }
 
     /**
+     * @param h2 Indexing.
      * @param c Connection.
      * @param qry Parsed query.
      * @param params Query parameters.
@@ -397,7 +401,8 @@ public class GridSqlQuerySplitter {
      * @throws SQLException If failed.
      * @throws IgniteCheckedException If failed.
      */
-    private GridSqlQuery optimize(
+    private static GridSqlQuery optimize(
+        IgniteH2Indexing h2,
         Connection c,
         GridSqlQuery qry,
         Object[] params
@@ -596,27 +601,31 @@ public class GridSqlQuerySplitter {
     }
 
     /**
-     * @param qry Select.
+     * @param select Select.
      * @param params Parameters.
      * @param target Extracted parameters.
      * @param paramIdxs Parameter indexes.
      * @return Extracted parameters list.
      */
-    private static List<Object> findParams(GridSqlSelect qry, Object[] params, ArrayList<Object> target,
-        IntArray paramIdxs) {
+    private static List<Object> findParams(
+        GridSqlSelect select,
+        Object[] params,
+        ArrayList<Object> target,
+        IntArray paramIdxs
+    ) {
         if (params.length == 0)
             return target;
 
-        for (GridSqlAst el : qry.columns(false))
+        for (GridSqlAst el : select.columns(false))
             findParams(el, params, target, paramIdxs);
 
-        findParams(qry.from(), params, target, paramIdxs);
-        findParams(qry.where(), params, target, paramIdxs);
+        findParams(select.from(), params, target, paramIdxs);
+        findParams(select.where(), params, target, paramIdxs);
 
         // Don't search in GROUP BY and HAVING since they expected to be in select list.
 
-        findParams(qry.limit(), params, target, paramIdxs);
-        findParams(qry.offset(), params, target, paramIdxs);
+        findParams(select.limit(), params, target, paramIdxs);
+        findParams(select.offset(), params, target, paramIdxs);
 
         return target;
     }

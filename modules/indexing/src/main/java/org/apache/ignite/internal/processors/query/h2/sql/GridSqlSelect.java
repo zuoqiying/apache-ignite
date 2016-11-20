@@ -42,6 +42,9 @@ public class GridSqlSelect extends GridSqlQuery {
     private int visibleCols;
 
     /** */
+    private boolean distinct;
+
+    /** */
     private int[] grpCols;
 
     /** */
@@ -170,7 +173,7 @@ public class GridSqlSelect extends GridSqlQuery {
      * @return {@code True} if this simple SQL query like 'SELECT A, B, C from SOME_TABLE' without any conditions
      *      and expressions.
      */
-    public boolean simpleQuery() {
+    @Override public boolean simpleQuery() {
         boolean simple = !distinct &&
             from instanceof GridSqlTable &&
             where == null &&
@@ -292,6 +295,20 @@ public class GridSqlSelect extends GridSqlQuery {
         this.from = from;
 
         return this;
+    }
+
+    /**
+     * @return Distinct.
+     */
+    public boolean distinct() {
+        return distinct;
+    }
+
+    /**
+     * @param distinct New distinct.
+     */
+    public void distinct(boolean distinct) {
+        this.distinct = distinct;
     }
 
     /**

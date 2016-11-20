@@ -33,9 +33,6 @@ public abstract class GridSqlQuery implements GridSqlAst {
     public static final int LIMIT_CHILD = 1;
 
     /** */
-    protected boolean distinct;
-
-    /** */
     protected List<GridSqlSortColumn> sort = new ArrayList<>();
 
     /** */
@@ -90,20 +87,6 @@ public abstract class GridSqlQuery implements GridSqlAst {
      */
     public GridSqlAst limit() {
         return limit;
-    }
-
-    /**
-     * @return Distinct.
-     */
-    public boolean distinct() {
-        return distinct;
-    }
-
-    /**
-     * @param distinct New distinct.
-     */
-    public void distinct(boolean distinct) {
-        this.distinct = distinct;
     }
 
     /**
@@ -185,6 +168,11 @@ public abstract class GridSqlQuery implements GridSqlAst {
                 throw new IllegalStateException("Child index: " + childIdx);
         }
     }
+
+    /**
+     * @return If this is a simple query with no conditions, expressions, sorting, etc...
+     */
+    public abstract boolean simpleQuery();
 
     /**
      * @param buff Statement builder.
