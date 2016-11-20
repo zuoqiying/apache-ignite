@@ -88,13 +88,23 @@ public class GridSqlQuerySplitter {
     private IgniteH2Indexing h2;
 
     /** */
+    private Object[] params;
+
+    /** */
+    private boolean collocatedGrpBy;
+
+    /** */
     private IdentityHashMap<GridSqlAst, GridSqlAlias> uniqueFromAliases;
 
     /**
      * @param h2 Indexing.
+     * @param params Query parameters.
+     * @param collocatedGrpBy If it is a collocated GROUP BY query.
      */
-    public GridSqlQuerySplitter(IgniteH2Indexing h2) {
+    public GridSqlQuerySplitter(IgniteH2Indexing h2, Object[] params, boolean collocatedGrpBy) {
         this.h2 = h2;
+        this.params = params;
+        this.collocatedGrpBy = collocatedGrpBy;
     }
 
     /**
@@ -144,26 +154,27 @@ public class GridSqlQuerySplitter {
         if (params == null)
             params = GridCacheSqlQuery.EMPTY_PARAMS;
 
-        // Here we will just parse the query without any optimizations.
+        // Here we will just do initial query parsing. Do not use optimized
+        // subqueries because we do not have unique FROM aliases yet.
         GridSqlQuery qry = parse(stmt, /*useOptimizedSubqry*/false);
 
         final boolean explain = qry.explain();
 
         qry.explain(false);
 
-        GridSqlQuerySplitter splitter = new GridSqlQuerySplitter(h2);
+        GridSqlQuerySplitter splitter = new GridSqlQuerySplitter(h2, params, collocatedGrpBy);
 
         splitter.tbls = new HashSet<>();
         splitter.schemas = new HashSet<>();
         splitter.uniqueFromAliases = new IdentityHashMap<>();
 
-        // Normalization will generate unique aliases for all the table filters.
+        // Normalization will generate unique aliases for all the table filters in FROM.
         // Also it will collect all tables and schemas from the query.
         splitter.normalizeQuery(qry);
 
         splitter.uniqueFromAliases = null; // We do not need this stuff anymore.
 
-        // Build resulting two step query. Schemas and tables must be collected at this point.
+        // Build resulting two step query. Schemas and tables must be already collected at this point.
         GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(splitter.schemas, splitter.tbls);
 
         // Here we will have correct AST with optimized join order.
@@ -172,16 +183,16 @@ public class GridSqlQuerySplitter {
             qry = optimize(h2, stmt.getConnection(), qry, params);
 
         // Create a fake parent AST element for the query to allow replacing the query.
-        GridSqlSubquery fakePrnt = new GridSqlSubquery(qry);
+        GridSqlSubquery fakeQryPrnt = new GridSqlSubquery(qry);
 
         // Map query will be direct reference to the original query AST.
         // Thus all the modifications will be performed on the original AST, so we should be careful when
         // nullifying or updating things, have to make sure that we will not need them in the original form later.
         // TODO handle UNION
-        GridCacheSqlQuery mapSqlQry = splitter.splitSelect(fakePrnt, 0, params, collocatedGrpBy);
+        GridCacheSqlQuery mapSqlQry = splitter.splitSelect(fakeQryPrnt, 0);
 
         // Get back the updated query. It will be our reduce query.
-        qry = fakePrnt.subquery();
+        qry = fakeQryPrnt.subquery();
 
         // Setup a reduce query.
         GridCacheSqlQuery rdcSqlQry = new GridCacheSqlQuery(qry.getSQL());
@@ -201,15 +212,11 @@ public class GridSqlQuerySplitter {
      *
      * @param prnt Parent AST element.
      * @param childIdx Index of child select.
-     * @param params Query parameters.
-     * @param collocatedGrpBy Whether the query has collocated GROUP BY keys.
      * @return Generated map query.
      */
     private GridCacheSqlQuery splitSelect(
         final GridSqlAst prnt,
-        final int childIdx,
-        final Object[] params,
-        final boolean collocatedGrpBy
+        final int childIdx
     ) {
         if (++splitId > 99)
             throw new CacheException("Too complex query to process.");
