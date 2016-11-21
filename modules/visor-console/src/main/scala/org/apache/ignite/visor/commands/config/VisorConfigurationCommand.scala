@@ -157,38 +157,38 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val cmnT = VisorTextTable()
 
-        val basic = cfg.basic()
+        val basic = cfg.getBasic
 
-        cmnT += ("Grid name", escapeName(basic.gridName()))
-        cmnT += ("Ignite home", safe(basic.ggHome()))
-        cmnT += ("Localhost", safe(basic.localHost()))
-        cmnT += ("Node ID", safe(basic.nodeId()))
-        cmnT += ("Marshaller", basic.marshaller())
-        cmnT += ("Deployment mode", safe(basic.deploymentMode()))
-        cmnT += ("ClientMode", javaBoolToStr(basic.clientMode()))
-        cmnT += ("Daemon", bool2Str(basic.daemon()))
-        cmnT += ("Remote JMX", bool2Str(basic.jmxRemote()))
-        cmnT += ("Restart", bool2Str(basic.restart()))
-        cmnT += ("Network timeout", basic.networkTimeout() + "ms")
-        cmnT += ("Grid logger", safe(basic.logger()))
-        cmnT += ("Discovery startup delay", basic.discoStartupDelay() + "ms")
-        cmnT += ("MBean server", safe(basic.mBeanServer()))
-        cmnT += ("ASCII logo disabled", bool2Str(basic.noAscii()))
-        cmnT += ("Discovery order not required", bool2Str(basic.noDiscoOrder()))
-        cmnT += ("Shutdown hook disabled", bool2Str(basic.noShutdownHook()))
-        cmnT += ("Program name", safe(basic. programName()))
-        cmnT += ("Quiet mode", bool2Str(basic.quiet()))
-        cmnT += ("Success filename", safe(basic.successFile()))
-        cmnT += ("Update notification", bool2Str(basic.updateNotifier()))
-        cmnT += ("Include properties", safe(cfg.includeProperties()))
+        cmnT += ("Grid name", escapeName(basic.getGridName))
+        cmnT += ("Ignite home", safe(basic.getGgHome))
+        cmnT += ("Localhost", safe(basic.getLocalHost))
+        cmnT += ("Node ID", safe(basic.getNodeId))
+        cmnT += ("Marshaller", basic.getMarshaller)
+        cmnT += ("Deployment mode", safe(basic.getDeploymentMode))
+        cmnT += ("ClientMode", javaBoolToStr(basic.isClientMode))
+        cmnT += ("Daemon", bool2Str(basic.isDaemon))
+        cmnT += ("Remote JMX enabled", bool2Str(basic.isJmxRemote))
+        cmnT += ("Node restart enabled", bool2Str(basic.isRestart))
+        cmnT += ("Network timeout", basic.getNetworkTimeout + "ms")
+        cmnT += ("Grid logger", safe(basic.getLogger))
+        cmnT += ("Discovery startup delay", basic.getDiscoStartupDelay + "ms")
+        cmnT += ("MBean server", safe(basic.getMBeanServer))
+        cmnT += ("ASCII logo disabled", bool2Str(basic.isNoAscii))
+        cmnT += ("Discovery order not required", bool2Str(basic.isNoDiscoOrder))
+        cmnT += ("Shutdown hook disabled", bool2Str(basic.isNoShutdownHook))
+        cmnT += ("Program name", safe(basic.getProgramName))
+        cmnT += ("Quiet mode", bool2Str(basic.isQuiet))
+        cmnT += ("Success filename", safe(basic.getSuccessFile))
+        cmnT += ("Update notification enabled", bool2Str(basic.isUpdateNotifier))
+        cmnT += ("Include properties", safe(cfg.getIncludeProperties))
 
-        val atomic = cfg.atomic()
+        val atomic = cfg.getAtomic
 
-        cmnT += ("Atomic Cache Mode", atomic.cacheMode())
-        cmnT += ("Atomic Sequence Reservation Size", atomic.atomicSequenceReserveSize())
-        cmnT += ("Atomic Number Of Backup Nodes", atomic.backups())
+        cmnT += ("Atomic Cache Mode", atomic.getCacheMode)
+        cmnT += ("Atomic Sequence Reservation Size", atomic.getAtomicSequenceReserveSize)
+        cmnT += ("Atomic Number Of Backup Nodes", atomic.getBackups)
 
-        val trn = cfg.transaction()
+        val trn = cfg.getTransaction
 
         cmnT += ("Transaction Concurrency", trn.defaultTxConcurrency())
         cmnT += ("Transaction Isolation", trn.defaultTxIsolation())
@@ -203,11 +203,13 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val metricsT = VisorTextTable()
 
-        val expTime = cfg.metrics().expireTime()
+        val metricsCfg = cfg.getMetrics
+
+        val expTime = metricsCfg.expireTime()
 
         metricsT += ("Metrics expire time", if (expTime != Long.MaxValue) expTime + "ms" else "<never>")
-        metricsT += ("Metrics history size", cfg.metrics().historySize())
-        metricsT += ("Metrics log frequency", cfg.metrics().loggerFrequency())
+        metricsT += ("Metrics history size", metricsCfg.historySize())
+        metricsT += ("Metrics log frequency", metricsCfg.loggerFrequency())
 
         metricsT.render()
 
@@ -223,15 +225,17 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
             spis.map(spiClass).mkString("[", ", ", "]")
         }
 
-        spisT += ("Discovery", spiClass(cfg.spis().discoverySpi()))
-        spisT += ("Communication", spiClass(cfg.spis().communicationSpi()))
-        spisT += ("Event storage", spiClass(cfg.spis().eventStorageSpi()))
-        spisT += ("Collision", spiClass(cfg.spis().collisionSpi()))
-        spisT += ("Deployment", spiClass(cfg.spis().deploymentSpi()))
-        spisT += ("Checkpoints", spisClass(cfg.spis().checkpointSpis()))
-        spisT += ("Failovers", spisClass(cfg.spis().failoverSpis()))
-        spisT += ("Load balancings", spisClass(cfg.spis().loadBalancingSpis()))
-        spisT += ("Indexing", spisClass(cfg.spis().indexingSpis()))
+        val spisCfg = cfg.getSpis
+
+        spisT += ("Discovery", spiClass(spisCfg.discoverySpi()))
+        spisT += ("Communication", spiClass(spisCfg.communicationSpi()))
+        spisT += ("Event storage", spiClass(spisCfg.eventStorageSpi()))
+        spisT += ("Collision", spiClass(spisCfg.collisionSpi()))
+        spisT += ("Deployment", spiClass(spisCfg.deploymentSpi()))
+        spisT += ("Checkpoints", spisClass(spisCfg.checkpointSpis()))
+        spisT += ("Failovers", spisClass(spisCfg.failoverSpis()))
+        spisT += ("Load balancings", spisClass(spisCfg.loadBalancingSpis()))
+        spisT += ("Indexing", spisClass(spisCfg.indexingSpis()))
 
         spisT.render()
 
@@ -239,9 +243,11 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val p2pT = VisorTextTable()
 
-        p2pT += ("Peer class loading enabled", bool2Str(cfg.p2p().p2pEnabled()))
-        p2pT += ("Missed resources cache size", cfg.p2p().p2pMissedResponseCacheSize())
-        p2pT += ("Peer-to-Peer loaded packages", safe(cfg.p2p().p2pLocalClassPathExclude()))
+        val p2pCfg = cfg.getP2p
+
+        p2pT += ("Peer class loading enabled", bool2Str(p2pCfg.p2pEnabled()))
+        p2pT += ("Missed resources cache size", p2pCfg.p2pMissedResponseCacheSize())
+        p2pT += ("Peer-to-Peer loaded packages", safe(p2pCfg.p2pLocalClassPathExclude()))
 
         p2pT.render()
 
@@ -249,7 +255,7 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val lifecycleT = VisorTextTable()
 
-        lifecycleT += ("Beans", safe(cfg.lifecycle().beans()))
+        lifecycleT += ("Beans", safe(cfg.getLifecycle.beans()))
 
         lifecycleT.render()
 
@@ -257,7 +263,7 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val execSvcT = VisorTextTable()
 
-        val execCfg = cfg.executeService()
+        val execCfg = cfg.getExecutorService
 
         execSvcT += ("Public thread pool size", safe(execCfg.publicThreadPoolSize()))
         execSvcT += ("System thread pool size", safe(execCfg.systemThreadPoolSize()))
@@ -272,11 +278,13 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val segT = VisorTextTable()
 
-        segT += ("Segmentation policy", safe(cfg.segmentation().policy()))
-        segT += ("Segmentation resolvers", safe(cfg.segmentation().resolvers()))
-        segT += ("Segmentation check frequency", cfg.segmentation().checkFrequency())
-        segT += ("Wait for segmentation on start", bool2Str(cfg.segmentation().waitOnStart()))
-        segT += ("All resolvers pass required", bool2Str(cfg.segmentation().passRequired()))
+        val segmentationCfg = cfg.getSegmentation
+
+        segT += ("Segmentation policy", safe(segmentationCfg.policy()))
+        segT += ("Segmentation resolvers", safe(segmentationCfg.resolvers()))
+        segT += ("Segmentation check frequency", segmentationCfg.checkFrequency())
+        segT += ("Wait for segmentation on start", bool2Str(segmentationCfg.waitOnStart()))
+        segT += ("All resolvers pass required", bool2Str(segmentationCfg.passRequired()))
 
         segT.render()
 
@@ -284,7 +292,7 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val evtsT = VisorTextTable()
 
-        val inclEvtTypes = Option(cfg.includeEventTypes()).fold(NA)(et => arr2Str(et.map(U.gridEventName)))
+        val inclEvtTypes = Option(cfg.getIncludeEventTypes).fold(NA)(et => arr2Str(et.map(U.gridEventName)))
 
         evtsT += ("Included event types", inclEvtTypes)
 
@@ -294,32 +302,34 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val restT = VisorTextTable()
 
-        restT += ("REST enabled", bool2Str(cfg.rest().restEnabled()))
-        restT += ("Rest accessible folders", safe(cfg.rest().accessibleFolders()))
-        restT += ("Jetty path", safe(cfg.rest().jettyPath()))
-        restT += ("Jetty host", safe(cfg.rest().jettyHost()))
-        restT += ("Jetty port", safe(cfg.rest().jettyPort()))
-        restT += ("Tcp ssl enabled", bool2Str(cfg.rest().tcpSslEnabled()))
-        restT += ("Tcp ssl context factory", safe(cfg.rest().tcpSslContextFactory()))
-        restT += ("Tcp host", safe(cfg.rest().tcpHost()))
-        restT += ("Tcp port", safe(cfg.rest().tcpPort()))
+        val restCfg = cfg.getRest
+
+        restT += ("REST enabled", bool2Str(restCfg.restEnabled()))
+        restT += ("Rest accessible folders", safe(restCfg.accessibleFolders()))
+        restT += ("Jetty path", safe(restCfg.jettyPath()))
+        restT += ("Jetty host", safe(restCfg.jettyHost()))
+        restT += ("Jetty port", safe(restCfg.jettyPort()))
+        restT += ("Tcp ssl enabled", bool2Str(restCfg.tcpSslEnabled()))
+        restT += ("Tcp ssl context factory", safe(restCfg.tcpSslContextFactory()))
+        restT += ("Tcp host", safe(restCfg.tcpHost()))
+        restT += ("Tcp port", safe(restCfg.tcpPort()))
 
         restT.render()
 
-        if (cfg.userAttributes().nonEmpty) {
+        if (cfg.getUserAttributes.nonEmpty) {
             println("\nUser attributes:")
 
             val uaT = VisorTextTable()
 
             uaT #= ("Name", "Value")
 
-            cfg.userAttributes().foreach(a => uaT += (a._1, a._2))
+            cfg.getUserAttributes.foreach(a => uaT += (a._1, a._2))
 
             uaT.render()
         } else
             println("\nNo user attributes defined.")
 
-        if (cfg.env().nonEmpty) {
+        if (cfg.getEnv.nonEmpty) {
             println("\nEnvironment variables:")
 
             val envT = VisorTextTable()
@@ -328,13 +338,13 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
             envT #= ("Name", "Value")
 
-            cfg.env().foreach(v => envT += (v._1, compactProperty(v._1, v._2)))
+            cfg.getEnv.foreach(v => envT += (v._1, compactProperty(v._1, v._2)))
 
             envT.render()
         } else
             println("\nNo environment variables defined.")
 
-        val sysProps = cfg.systemProperties().toMap
+        val sysProps = cfg.getSystemProperties.toMap
 
         if (sysProps.nonEmpty) {
             println("\nSystem properties:")

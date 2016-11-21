@@ -24,7 +24,6 @@ import java.util.Properties;
 import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
@@ -32,7 +31,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
 /**
  * Data transfer object for node configuration data.
  */
-public class VisorGridConfiguration implements Serializable, LessNamingBean {
+public class VisorGridConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -88,15 +87,16 @@ public class VisorGridConfiguration implements Serializable, LessNamingBean {
     private VisorMemoryConfiguration memCfg;
 
     /**
+     * Create data transfer object with node configuration data.
+     *
      * @param ignite Grid.
-     * @return Fill data transfer object with node configuration data.
      */
-    public VisorGridConfiguration from(IgniteEx ignite) {
+    public VisorGridConfiguration(IgniteEx ignite) {
         assert ignite != null;
 
         IgniteConfiguration c = ignite.configuration();
 
-        basic = VisorBasicConfiguration.from(ignite, c);
+        basic = new VisorBasicConfiguration(ignite, c);
         metrics = VisorMetricsConfiguration.from(c);
         spis = VisorSpisConfiguration.from(c);
         p2p = VisorPeerToPeerConfiguration.from(c);
@@ -110,129 +110,127 @@ public class VisorGridConfiguration implements Serializable, LessNamingBean {
         igfss = VisorIgfsConfiguration.list(c.getFileSystemConfiguration());
         env = new HashMap<>(System.getenv());
         sysProps = IgniteSystemProperties.snapshot();
-        atomic = VisorAtomicConfiguration.from(c.getAtomicConfiguration());
+        atomic = new VisorAtomicConfiguration(c.getAtomicConfiguration());
         txCfg = VisorTransactionConfiguration.from(c.getTransactionConfiguration());
-        memCfg = VisorMemoryConfiguration.from(c.getMemoryConfiguration());
-
-        return this;
+        memCfg = new VisorMemoryConfiguration(c.getMemoryConfiguration());
     }
 
     /**
      * @return Basic.
      */
-    public VisorBasicConfiguration basic() {
+    public VisorBasicConfiguration getBasic() {
         return basic;
     }
 
     /**
      * @return Metrics.
      */
-    public VisorMetricsConfiguration metrics() {
+    public VisorMetricsConfiguration getMetrics() {
         return metrics;
     }
 
     /**
      * @return SPIs.
      */
-    public VisorSpisConfiguration spis() {
+    public VisorSpisConfiguration getSpis() {
         return spis;
     }
 
     /**
      * @return P2P.
      */
-    public VisorPeerToPeerConfiguration p2p() {
+    public VisorPeerToPeerConfiguration getP2p() {
         return p2p;
     }
 
     /**
      * @return Lifecycle.
      */
-    public VisorLifecycleConfiguration lifecycle() {
+    public VisorLifecycleConfiguration getLifecycle() {
         return lifecycle;
     }
 
     /**
      * @return Executors service configuration.
      */
-    public VisorExecutorServiceConfiguration executeService() {
+    public VisorExecutorServiceConfiguration getExecutorService() {
         return execSvc;
     }
 
     /**
      * @return Segmentation.
      */
-    public VisorSegmentationConfiguration segmentation() {
+    public VisorSegmentationConfiguration getSegmentation() {
         return seg;
     }
 
     /**
      * @return Include properties.
      */
-    public String includeProperties() {
+    public String getIncludeProperties() {
         return inclProps;
     }
 
     /**
      * @return Include events types.
      */
-    public int[] includeEventTypes() {
+    public int[] getIncludeEventTypes() {
         return inclEvtTypes;
     }
 
     /**
      * @return Rest.
      */
-    public VisorRestConfiguration rest() {
+    public VisorRestConfiguration getRest() {
         return rest;
     }
 
     /**
      * @return User attributes.
      */
-    public Map<String, ?> userAttributes() {
+    public Map<String, ?> getUserAttributes() {
         return userAttrs;
     }
 
     /**
      * @return Igfss.
      */
-    public Iterable<VisorIgfsConfiguration> igfss() {
+    public Iterable<VisorIgfsConfiguration> getIgfss() {
         return igfss;
     }
 
     /**
      * @return Environment.
      */
-    public Map<String, String> env() {
+    public Map<String, String> getEnv() {
         return env;
     }
 
     /**
      * @return System properties.
      */
-    public Properties systemProperties() {
+    public Properties getSystemProperties() {
         return sysProps;
     }
 
     /**
      * @return Configuration of atomic data structures.
      */
-    public VisorAtomicConfiguration atomic() {
+    public VisorAtomicConfiguration getAtomic() {
         return atomic;
     }
 
     /**
      * @return Transactions configuration.
      */
-    public VisorTransactionConfiguration transaction() {
+    public VisorTransactionConfiguration getTransaction() {
         return txCfg;
     }
 
     /**
      * @return Memory configuration.
      */
-    public VisorMemoryConfiguration memoryConfiguration() {
+    public VisorMemoryConfiguration getMemoryConfiguration() {
         return memCfg;
     }
 
