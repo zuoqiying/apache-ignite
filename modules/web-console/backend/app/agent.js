@@ -634,6 +634,19 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo)
                 });
         }
 
+        attachLegacy(srv) {
+            /**
+             * @type {socketIo.Server}
+             */
+            const io = socketio(srv);
+
+            io.on('connection', (socket) => {
+                socket.on('agent:auth', (data, cb) => {
+                    return cb('You are using an older version of the agent. Please reload agent archive');
+                });
+            });
+        }
+
         /**
          * @param {http.Server|https.Server} srv Server instance that we want to attach agent handler.
          */
@@ -646,7 +659,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo)
             /**
              * @type {socketIo.Server}
              */
-            this._socket = socketio(this._server);
+            this._socket = socketio(this._server, {path: '/agents'});
 
             this._socket.on('connection', (socket) => {
                 socket.on('agent:auth', (data, cb) => {
