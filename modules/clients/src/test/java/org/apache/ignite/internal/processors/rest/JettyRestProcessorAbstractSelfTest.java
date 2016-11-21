@@ -72,7 +72,6 @@ import org.apache.ignite.internal.visor.cache.VisorCacheRebalanceTask;
 import org.apache.ignite.internal.visor.cache.VisorCacheResetMetricsTask;
 import org.apache.ignite.internal.visor.cache.VisorCacheStartTask;
 import org.apache.ignite.internal.visor.cache.VisorCacheStopTask;
-import org.apache.ignite.internal.visor.cache.VisorCacheSwapBackupsTask;
 import org.apache.ignite.internal.visor.compute.VisorComputeCancelSessionsTask;
 import org.apache.ignite.internal.visor.compute.VisorComputeResetMetricsTask;
 import org.apache.ignite.internal.visor.compute.VisorComputeToggleMonitoringTask;
@@ -1283,14 +1282,6 @@ public abstract class JettyRestProcessorAbstractSelfTest extends AbstractRestPro
             .tuple3(Set.class, Long.class, Object[].class, "person", 0, "null"));
 
         info("VisorCacheLoadTask result: " + ret);
-
-        jsonTaskResult(ret);
-
-        ret = content(new VisorGatewayArgument(VisorCacheSwapBackupsTask.class)
-            .forNode(locNode)
-            .set(String.class, "person"));
-
-        info("VisorCacheSwapBackupsTask result: " + ret);
 
         jsonTaskResult(ret);
 

@@ -139,7 +139,7 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
             cacheConfigurations(nid).foreach(ccfg => {
                 println()
 
-                printCacheConfiguration(s"Cache '${escapeName(ccfg.name())}':", ccfg)
+                printCacheConfiguration(s"Cache '${escapeName(ccfg.getName)}':", ccfg)
             })
         }
         catch {

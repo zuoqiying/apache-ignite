@@ -71,6 +71,9 @@ public class VisorCacheConfiguration implements Serializable, LessNamingBean {
     /** Cache interceptor. */
     private String interceptor;
 
+    /** Gets default lock acquisition timeout. */
+    private long dfltLockTimeout;
+
     /** Cache affinityCfg config. */
     private VisorCacheAffinityConfiguration affinityCfg;
 
@@ -82,9 +85,6 @@ public class VisorCacheConfiguration implements Serializable, LessNamingBean {
 
     /** Near cache config. */
     private VisorCacheNearConfiguration nearCfg;
-
-    /** Default config. */
-    private VisorCacheDefaultConfiguration dfltCfg;
 
     /** Store config. */
     private VisorCacheStoreConfiguration storeCfg;
@@ -130,6 +130,7 @@ public class VisorCacheConfiguration implements Serializable, LessNamingBean {
         offHeapMaxMemory = ccfg.getOffHeapMaxMemory();
         maxConcurrentAsyncOps = ccfg.getMaxConcurrentAsyncOperations();
         interceptor = compactClass(ccfg.getInterceptor());
+        dfltLockTimeout = ccfg.getDefaultLockTimeout();
         typeMeta = VisorCacheTypeMetadata.list(ccfg.getQueryEntities(), ccfg.getCacheStoreFactory(), ccfg.getTypeMetadata());
         statisticsEnabled = ccfg.isStatisticsEnabled();
         mgmtEnabled = ccfg.isManagementEnabled();
@@ -142,7 +143,6 @@ public class VisorCacheConfiguration implements Serializable, LessNamingBean {
         rebalanceCfg = VisorCacheRebalanceConfiguration.from(ccfg);
         evictCfg = VisorCacheEvictionConfiguration.from(ccfg);
         nearCfg = VisorCacheNearConfiguration.from(ccfg);
-        dfltCfg = VisorCacheDefaultConfiguration.from(ccfg);
 
         storeCfg = new VisorCacheStoreConfiguration().from(ignite, ccfg);
 
@@ -154,175 +154,175 @@ public class VisorCacheConfiguration implements Serializable, LessNamingBean {
     /**
      * @return Cache name.
      */
-    @Nullable public String name() {
+    @Nullable public String getName() {
         return name;
     }
 
     /**
      * @return Cache mode.
      */
-    public CacheMode mode() {
+    public CacheMode getMode() {
         return mode;
     }
 
     /**
      * @return Cache atomicity mode
      */
-    public CacheAtomicityMode atomicityMode() {
+    public CacheAtomicityMode getAtomicityMode() {
         return atomicityMode;
     }
 
     /**
      * @return Cache atomicity write ordering mode.
      */
-    public CacheAtomicWriteOrderMode atomicWriteOrderMode() {
+    public CacheAtomicWriteOrderMode getAtomicWriteOrderMode() {
         return atomicWriteOrderMode;
     }
 
     /**
      * @return Eager ttl flag
      */
-    public boolean eagerTtl() {
+    public boolean getEagerTtl() {
         return eagerTtl;
     }
 
     /**
      * @return Write synchronization mode.
      */
-    public CacheWriteSynchronizationMode writeSynchronizationMode() {
+    public CacheWriteSynchronizationMode getWriteSynchronizationMode() {
         return writeSynchronizationMode;
     }
 
     /**
      * @return Invalidate.
      */
-    public boolean invalidate() {
+    public boolean isInvalidate() {
         return invalidate;
     }
 
     /**
      * @return Start size.
      */
-    public int startSize() {
+    public int getStartSize() {
         return startSize;
     }
 
     /**
      * @return Off-heap max memory.
      */
-    public long offsetHeapMaxMemory() {
+    public long getOffsetHeapMaxMemory() {
         return offHeapMaxMemory;
     }
 
     /**
      * @return Max concurrent async operations
      */
-    public int maxConcurrentAsyncOperations() {
+    public int getMaxConcurrentAsyncOperations() {
         return maxConcurrentAsyncOps;
     }
 
     /**
      * @return Cache interceptor.
      */
-    @Nullable public String interceptor() {
+    @Nullable public String getInterceptor() {
         return interceptor;
+    }
+
+    /**
+     * @return Gets default lock acquisition timeout.
+     */
+    public long getDefaultLockTimeout() {
+        return dfltLockTimeout;
     }
 
     /**
      * @return Collection of type metadata.
      */
-    public Collection<VisorCacheTypeMetadata> typeMeta() {
+    public Collection<VisorCacheTypeMetadata> getTypeMeta() {
         return typeMeta;
     }
 
     /**
      * @return {@code true} if cache statistics enabled.
      */
-    public boolean statisticsEnabled() {
+    public boolean isStatisticsEnabled() {
         return statisticsEnabled;
     }
 
     /**
      * @return Whether management is enabled.
      */
-    public boolean managementEnabled() {
+    public boolean isManagementEnabled() {
         return mgmtEnabled;
     }
 
     /**
      * @return Class name of cache loader factory.
      */
-    public String loaderFactory() {
+    public String getLoaderFactory() {
         return ldrFactory;
     }
 
     /**
      * @return Class name of cache writer factory.
      */
-    public String writerFactory() {
+    public String getWriterFactory() {
         return writerFactory;
     }
 
     /**
      * @return Class name of expiry policy factory.
      */
-    public String expiryPolicyFactory() {
+    public String getExpiryPolicyFactory() {
         return expiryPlcFactory;
     }
 
     /**
      * @return Cache affinityCfg config.
      */
-    public VisorCacheAffinityConfiguration affinityConfiguration() {
+    public VisorCacheAffinityConfiguration getAffinityConfiguration() {
         return affinityCfg;
     }
 
     /**
      * @return Preload config.
      */
-    public VisorCacheRebalanceConfiguration rebalanceConfiguration() {
+    public VisorCacheRebalanceConfiguration getRebalanceConfiguration() {
         return rebalanceCfg;
     }
 
     /**
      * @return Eviction config.
      */
-    public VisorCacheEvictionConfiguration evictConfiguration() {
+    public VisorCacheEvictionConfiguration getEvictConfiguration() {
         return evictCfg;
     }
 
     /**
      * @return Near cache config.
      */
-    public VisorCacheNearConfiguration nearConfiguration() {
+    public VisorCacheNearConfiguration getNearConfiguration() {
         return nearCfg;
-    }
-
-    /**
-     * @return Dgc config
-     */
-    public VisorCacheDefaultConfiguration defaultConfiguration() {
-        return dfltCfg;
     }
 
     /**
      * @return Store config
      */
-    public VisorCacheStoreConfiguration storeConfiguration() {
+    public VisorCacheStoreConfiguration getStoreConfiguration() {
         return storeCfg;
     }
 
     /**
      * @return Cache query configuration.
      */
-    public VisorCacheQueryConfiguration queryConfiguration() {
+    public VisorCacheQueryConfiguration getQueryConfiguration() {
         return qryCfg;
     }
 
     /**
      * @return System cache state.
      */
-    public boolean system() {
+    public boolean isSystem() {
         return sys;
     }
 

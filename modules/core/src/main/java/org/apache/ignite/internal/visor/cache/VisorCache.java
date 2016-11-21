@@ -79,12 +79,6 @@ public class VisorCache implements Serializable, LessNamingBean {
     /** Number of cache entries stored in off-heap memory. */
     private long offHeapEntriesCnt;
 
-    /** Size in bytes for swap space. */
-    private long swapSize;
-
-    /** Number of cache entries stored in swap space. */
-    private long swapKeys;
-
     /** Number of partitions. */
     private int partitions;
 
@@ -135,9 +129,8 @@ public class VisorCache implements Serializable, LessNamingBean {
             if (dca != null) {
                 GridDhtPartitionTopology top = dca.topology();
 
-                if (cfg.getCacheMode() != CacheMode.LOCAL && cfg.getBackups() > 0) {
+                if (cfg.getCacheMode() != CacheMode.LOCAL && cfg.getBackups() > 0)
                     partitionsMap = top.localPartitionMap();
-                }
             }
         }
 
@@ -208,8 +201,6 @@ public class VisorCache implements Serializable, LessNamingBean {
         c.primarySize = primarySize;
         c.offHeapAllocatedSize = offHeapAllocatedSize;
         c.offHeapEntriesCnt = offHeapEntriesCnt;
-        c.swapSize = swapSize;
-        c.swapKeys = swapKeys;
         c.partitions = partitions;
         c.metrics = metrics;
         c.near = near;
@@ -301,20 +292,6 @@ public class VisorCache implements Serializable, LessNamingBean {
      */
     public long offHeapEntriesCount() {
         return offHeapEntriesCnt;
-    }
-
-    /**
-     * @return Size in bytes for swap space.
-     */
-    public long swapSize() {
-        return swapSize;
-    }
-
-    /**
-     * @return Number of cache entries stored in swap space.
-     */
-    public long swapKeys() {
-        return swapKeys;
     }
 
     /**
