@@ -27,6 +27,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GridSqlJoin extends GridSqlElement {
     /** */
+    public static final int LEFT_TABLE_CHILD = 0;
+
+    /** */
+    public static final int RIGHT_TABLE_CHILD = 1;
+
+    /** */
+    public static final int ON_CHILD = 2;
+
+    /** */
     private boolean leftOuter;
 
     /**

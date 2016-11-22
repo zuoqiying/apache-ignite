@@ -178,9 +178,7 @@ public class GridSqlQuerySplitter {
         GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(splitter.schemas, splitter.tbls);
 
         // Here we will have correct AST with optimized join order.
-        // If the join order is enforced, then the result will be the same.
-        if (!enforceJoinOrder)
-            qry = optimize(h2, stmt.getConnection(), qry, params);
+        qry = optimize(h2, stmt.getConnection(), qry, params);
 
         // Create a fake parent AST element for the query to allow replacing the query.
         GridSqlSubquery fakeQryPrnt = new GridSqlSubquery(qry);
@@ -205,6 +203,57 @@ public class GridSqlQuerySplitter {
         twoStepQry.distributedJoins(distributedJoins);
 
         return twoStepQry;
+    }
+
+    /**
+     * @param prntModel Parent model.
+     * @param prnt Parent AST element.
+     * @param childIdx Child index.
+     */
+    private void buildQueryModel(QueryModel prntModel, GridSqlAst prnt, int childIdx) {
+        GridSqlAst child = prnt.child(childIdx);
+
+        assert child != null;
+
+        if (child instanceof GridSqlSelect) {
+            QueryModel model = new QueryModel(Type.SELECT, prnt, childIdx);
+
+            prntModel.add(model);
+
+            buildQueryModel(model, child, GridSqlSelect.FROM_CHILD);
+        }
+        else if (child instanceof GridSqlUnion) {
+            QueryModel model;
+
+            // We will collect all the selects into a single UNION model.
+            if (prntModel.type == Type.UNION)
+                model = prntModel;
+            else {
+                model = new QueryModel(Type.UNION, prnt, childIdx);
+
+                prntModel.add(model);
+            }
+
+            buildQueryModel(model, child, GridSqlUnion.LEFT_CHILD);
+            buildQueryModel(model, child, GridSqlUnion.RIGHT_CHILD);
+        }
+        else {
+            // Here we must be in FROM clause of the SELECT.
+            assert prntModel.type == Type.SELECT : prntModel.type;
+
+            if (child instanceof GridSqlAlias || child instanceof GridSqlSubquery)
+                buildQueryModel(prntModel, child, 0);
+            else if (child instanceof GridSqlJoin) {
+                buildQueryModel(prntModel, child, GridSqlJoin.LEFT_TABLE_CHILD);
+                buildQueryModel(prntModel, child, GridSqlJoin.RIGHT_TABLE_CHILD);
+            }
+            else if (child instanceof GridSqlFunction)
+                prntModel.add(new QueryModel(Type.FUNCTION, prnt, childIdx));
+            else if (child instanceof GridSqlTable)
+                prntModel.add(new QueryModel(Type.TABLE, prnt, childIdx));
+            else
+                throw new IllegalStateException("Unknown child type: " + child.getClass());
+        }
     }
 
     /**
@@ -1004,15 +1053,20 @@ public class GridSqlQuerySplitter {
         final Type type;
 
         /** */
-        GridSqlAst ast;
+        GridSqlAst prnt;
+
+        /** */
+        int childIdx;
 
         /**
          * @param type Type.
-         * @param ast Ast.
+         * @param prnt Parent element.
+         * @param childIdx Child index.
          */
-        QueryModel(Type type, GridSqlAst ast) {
+        QueryModel(Type type, GridSqlAst prnt, int childIdx) {
             this.type = type;
-            this.ast = ast;
+            this.prnt = prnt;
+            this.childIdx = childIdx;
         }
     }
 
