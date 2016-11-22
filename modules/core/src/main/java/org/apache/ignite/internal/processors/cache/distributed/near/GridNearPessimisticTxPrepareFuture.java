@@ -141,7 +141,7 @@ public class GridNearPessimisticTxPrepareFuture extends GridNearTxPrepareFutureA
             for (int i = 0; i < futuresCount(); i++) {
                 IgniteInternalFuture fut = future(i);
 
-                if (fut instanceof  MiniFuture) {
+                if (fut instanceof MiniFuture) {
                     MiniFuture mini = (MiniFuture)fut;
 
                     if (mini.futureId().equals(miniId)) {

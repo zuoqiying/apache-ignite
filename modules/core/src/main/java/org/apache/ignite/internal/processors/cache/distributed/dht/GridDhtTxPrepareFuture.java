@@ -1171,7 +1171,7 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
                         }
                     });
 
-                    add((IgniteInternalFuture) coordCntrFut);
+                    add((IgniteInternalFuture)coordCntrFut);
                 }
             }
 
