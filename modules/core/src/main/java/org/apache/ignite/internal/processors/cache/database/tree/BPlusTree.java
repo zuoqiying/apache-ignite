@@ -550,6 +550,8 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure {
 
             io.addRoot(buf, rootPageId);
 
+            U.debug("Updated root page for tree [meta=" + meta + ", newRoot=" + U.hexLong(rootPageId) + ", tree=" + this + ']');
+
             if (needWalDeltaRecord(meta))
                 wal.log(new MetaPageAddRootRecord(cacheId, meta.id(), rootPageId));
 
@@ -642,11 +644,15 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure {
         long rootId = allocatePage(null);
 
         try (Page root = page(rootId)) {
+            U.debug("Using page as a root [page=" + root + ", BTree=" + this + ']');
+
             initPage(root, this, latestLeafIO(), wal);
         }
 
         // Initialize meta page with new root page.
         try (Page meta = page(metaPageId)) {
+            U.debug("Set root page to the meta page [meta=" + meta + ", rootId=" + U.hexLong(rootId) + ", tree=" + this + ']');
+
             Bool res = writePage(meta, this, initRoot, BPlusMetaIO.VERSIONS.latest(), wal, rootId, 0, FALSE);
 
             assert res == TRUE: res;
@@ -702,13 +708,22 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure {
 
         try (Page meta = page(metaPageId)) {
             firstPageId = getFirstPageId(meta, 0); // Level 0 is always at the bottom.
+
+            U.debug("Reading meta page in findLowerUnbounded [meta=" + meta + ", firstPageId=" + U.hexLong(firstPageId) + ", tree=" + this + ']');
         }
 
         try (Page first = page(firstPageId)) {
             ByteBuffer buf = readLock(first); // We always merge pages backwards, the first page is never removed.
 
             try {
+                U.debug("Reading root page of the tree [first=" + first + ", tree=" + this + ']');
+
                 cursor.init(buf, io(buf), 0);
+            }
+            catch (IllegalStateException e) {
+                U.debug("Failed to get IO [first=" + first + ", meta=" + U.hexLong(metaPageId) + ", tree=" + this + ']');
+
+                throw e;
             }
             finally {
                 readUnlock(first, buf);
