@@ -20,6 +20,14 @@ import _ from 'lodash';
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
+const escapeXml = (str) => {
+    return str.replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;')
+        .replace(/>/g, '&gt;')
+        .replace(/</g, '&lt;');
+};
+
 export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator', (JavaTypes, eventGroups, generator) => {
     return class SpringTransformer extends AbstractTransformer {
         static generator = generator;
@@ -91,7 +99,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                     case 'long':
                         return `${item}L`;
                     case 'java.lang.String':
-                        return item.replace(/"/g, '&quot;');
+                        return escapeXml(item);
                     default:
                         return item;
                 }
