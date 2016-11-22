@@ -121,46 +121,41 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
      * Create data transfer object for aggregated cache metrics.
      *
      * @param cm Source cache metrics.
-     * @return Data transfer object for aggregated cache metrics.
      */
-    public static VisorCacheAggregatedMetrics from(VisorCacheMetrics cm) {
-        VisorCacheAggregatedMetrics acm = new VisorCacheAggregatedMetrics();
-
-        acm.name = cm.name();
-        acm.mode = cm.mode();
-        acm.sys = cm.system();
-
-        return acm;
+    public VisorCacheAggregatedMetrics(VisorCacheMetrics cm) {
+        name = cm.name();
+        mode = cm.mode();
+        sys = cm.system();
     }
 
     /**
      * @return Cache name.
      */
-    public String name() {
+    public String getName() {
         return name;
     }
 
     /** @return Cache mode. */
-    public CacheMode mode() {
+    public CacheMode getMode() {
         return mode;
     }
 
     /** @return Cache system state. */
-    public boolean system() {
+    public boolean isSystem() {
         return sys;
     }
 
     /**
      * @return Nodes.
      */
-    public Collection<UUID> nodes() {
+    public Collection<UUID> getNodes() {
         return metrics.keySet();
     }
 
     /**
      * @return Minimum number of elements in heap.
      */
-    public long minimumHeapSize() {
+    public long getMinimumHeapSize() {
         if (minHeapSize == null) {
             minHeapSize = Long.MAX_VALUE;
 
@@ -174,7 +169,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Average number of elements in heap.
      */
-    public double averageHeapSize() {
+    public double getAverageHeapSize() {
         if (avgHeapSize == null) {
             avgHeapSize = 0.0d;
 
@@ -190,7 +185,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Maximum number of elements in heap.
      */
-    public long maximumHeapSize() {
+    public long getMaximumHeapSize() {
         if (maxHeapSize == null) {
             maxHeapSize = Long.MIN_VALUE;
 
@@ -205,19 +200,19 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
      * @param metric Metrics to process.
      * @return Off heap entries count.
      */
-    private long offHeapEntriesCount(VisorCacheMetrics metric) {
+    private long getOffHeapEntriesCount(VisorCacheMetrics metric) {
         return metric.offHeapEntriesCount();
     }
 
     /**
      * @return Minimum number of elements in off heap.
      */
-    public long minimumOffHeapSize() {
+    public long getMinimumOffHeapSize() {
         if (minOffHeapSize == null) {
             minOffHeapSize = Long.MAX_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                minOffHeapSize = Math.min(minOffHeapSize, offHeapEntriesCount(metric));
+                minOffHeapSize = Math.min(minOffHeapSize, getOffHeapEntriesCount(metric));
         }
 
         return minOffHeapSize;
@@ -226,12 +221,12 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Average number of elements in off heap.
      */
-    public double averageOffHeapSize() {
+    public double getAverageOffHeapSize() {
         if (avgOffHeapSize == null) {
             avgOffHeapSize = 0.0d;
 
             for (VisorCacheMetrics metric : metrics.values())
-                avgOffHeapSize += offHeapEntriesCount(metric);
+                avgOffHeapSize += getOffHeapEntriesCount(metric);
 
             avgOffHeapSize /= metrics.size();
         }
@@ -242,12 +237,12 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Maximum number of elements in off heap in the cache.
      */
-    public long maximumOffHeapSize() {
+    public long getMaximumOffHeapSize() {
         if (maxOffHeapSize == null) {
             maxOffHeapSize = Long.MIN_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                maxOffHeapSize = Math.max(maxOffHeapSize, offHeapEntriesCount(metric));
+                maxOffHeapSize = Math.max(maxOffHeapSize, getOffHeapEntriesCount(metric));
         }
 
         return maxOffHeapSize;
@@ -256,7 +251,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Minimum hits of the owning cache.
      */
-    public long minimumHits() {
+    public long getMinimumHits() {
         if (minHits == null) {
             minHits = Long.MAX_VALUE;
 
@@ -270,7 +265,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Average hits of the owning cache.
      */
-    public double averageHits() {
+    public double getAverageHits() {
         if (avgHits == null) {
             avgHits = 0.0d;
 
@@ -286,7 +281,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Maximum hits of the owning cache.
      */
-    public long maximumHits() {
+    public long getMaximumHits() {
         if (maxHits == null) {
             maxHits = Long.MIN_VALUE;
 
@@ -300,7 +295,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Minimum misses of the owning cache.
      */
-    public long minimumMisses() {
+    public long getMinimumMisses() {
         if (minMisses == null) {
             minMisses = Long.MAX_VALUE;
 
@@ -314,7 +309,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Average misses of the owning cache.
      */
-    public double averageMisses() {
+    public double getAverageMisses() {
         if (avgMisses == null) {
             avgMisses = 0.0d;
 
@@ -330,7 +325,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Maximum misses of the owning cache.
      */
-    public long maximumMisses() {
+    public long getMaximumMisses() {
         if (maxMisses == null) {
             maxMisses = Long.MIN_VALUE;
 
@@ -344,7 +339,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Minimum total number of reads of the owning cache.
      */
-    public long minimumReads() {
+    public long getMinimumReads() {
         if (minReads == null) {
             minReads = Long.MAX_VALUE;
 
@@ -358,7 +353,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Average total number of reads of the owning cache.
      */
-    public double averageReads() {
+    public double getAverageReads() {
         if (avgReads == null) {
             avgReads = 0.0d;
 
@@ -374,7 +369,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Maximum total number of reads of the owning cache.
      */
-    public long maximumReads() {
+    public long getMaximumReads() {
         if (maxReads == null) {
             maxReads = Long.MIN_VALUE;
 
@@ -388,7 +383,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Minimum total number of writes of the owning cache.
      */
-    public long minimumWrites() {
+    public long getMinimumWrites() {
         if (minWrites == null) {
             minWrites = Long.MAX_VALUE;
 
@@ -402,7 +397,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Average total number of writes of the owning cache.
      */
-    public double averageWrites() {
+    public double getAverageWrites() {
         if (avgWrites == null) {
             avgWrites = 0.0d;
 
@@ -418,7 +413,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Maximum total number of writes of the owning cache.
      */
-    public long maximumWrites() {
+    public long getMaximumWrites() {
         if (maxWrites == null) {
             maxWrites = Long.MIN_VALUE;
 
@@ -432,7 +427,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Minimum execution time of query.
      */
-    public long minimumQueryTime() {
+    public long getMinimumQueryTime() {
         if (minQryTime == null) {
             minQryTime = Long.MAX_VALUE;
 
@@ -446,7 +441,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Average execution time of query.
      */
-    public double averageQueryTime() {
+    public double getAverageQueryTime() {
         if (avgQryTime == null) {
             avgQryTime = 0.0d;
 
@@ -462,7 +457,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Maximum execution time of query.
      */
-    public long maximumQueryTime() {
+    public long getMaximumQueryTime() {
         if (maxQryTime == null) {
             maxQryTime = Long.MIN_VALUE;
 
@@ -476,9 +471,9 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Total execution time of query.
      */
-    public long totalQueryTime() {
+    public long getTotalQueryTime() {
         if (totalQryTime == null)
-            totalQryTime = (long)(averageQueryTime() * execsQuery());
+            totalQryTime = (long)(getAverageQueryTime() * getQueryExecutions());
 
         return totalQryTime;
     }
@@ -486,7 +481,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Number of executions.
      */
-    public int execsQuery() {
+    public int getQueryExecutions() {
         if (execsQry == null) {
             execsQry = 0;
 
@@ -500,7 +495,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     /**
      * @return Total number of times a query execution failed.
      */
-    public int failsQuery() {
+    public int getQueryFailures() {
         if (failsQry == null) {
             failsQry = 0;
 
@@ -512,9 +507,9 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
     }
 
     /**
-     * @return Node IDs with cache metrics.
+     * @return Map of Node IDs to cache metrics.
      */
-    public Map<UUID, VisorCacheMetrics> metrics() {
+    public Map<UUID, VisorCacheMetrics> getMetrics() {
         return metrics;
     }
 

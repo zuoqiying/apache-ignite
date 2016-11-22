@@ -139,7 +139,7 @@ public class VisorCacheConfiguration implements Serializable, LessNamingBean {
         expiryPlcFactory = compactClass(ccfg.getExpiryPolicyFactory());
         sys = ignite.context().cache().systemCache(ccfg.getName());
 
-        affinityCfg = VisorCacheAffinityConfiguration.from(ccfg);
+        affinityCfg = new VisorCacheAffinityConfiguration(ccfg);
         rebalanceCfg = VisorCacheRebalanceConfiguration.from(ccfg);
         evictCfg = VisorCacheEvictionConfiguration.from(ccfg);
         nearCfg = VisorCacheNearConfiguration.from(ccfg);

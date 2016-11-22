@@ -18,19 +18,20 @@
 package org.apache.ignite.internal.visor.cache;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import org.apache.ignite.cache.affinity.AffinityFunction;
-import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
 
+import static org.apache.ignite.internal.util.IgniteUtils.findNonPublicMethod;
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 
 /**
  * Data transfer object for affinity configuration properties.
  */
-public class VisorCacheAffinityConfiguration implements Serializable, LessNamingBean {
+public class VisorCacheAffinityConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -40,74 +41,73 @@ public class VisorCacheAffinityConfiguration implements Serializable, LessNaming
     /** Cache affinity mapper. */
     private String mapper;
 
-    /** Count of key backups. */
+    /** Number of backup nodes for one partition. */
     private int partitionedBackups;
 
-    /** Cache affinity partitions. */
+    /** Total partition count. */
     private Integer partitions;
 
     /** Cache partitioned affinity exclude neighbors. */
-    private Boolean excludeNeighbors;
+    private Boolean exclNeighbors;
 
     /**
+     * Create data transfer object for affinity configuration properties.
+     *
      * @param ccfg Cache configuration.
-     * @return Data transfer object for affinity configuration properties.
      */
-    public static VisorCacheAffinityConfiguration from(CacheConfiguration ccfg) {
+    public VisorCacheAffinityConfiguration(CacheConfiguration ccfg) {
         AffinityFunction aff = ccfg.getAffinity();
 
-        Boolean excludeNeighbors = null;
+        function = compactClass(aff);
+        mapper = compactClass(ccfg.getAffinityMapper());
+        partitions = aff.partitions();
+        partitionedBackups = ccfg.getBackups();
 
-        if (aff instanceof RendezvousAffinityFunction) {
-            RendezvousAffinityFunction hashAffFunc = (RendezvousAffinityFunction)aff;
+        Method mthd = findNonPublicMethod(aff.getClass(), "isExcludeNeighbors");
 
-            excludeNeighbors = hashAffFunc.isExcludeNeighbors();
+        if (mthd != null) {
+            try {
+                exclNeighbors = (Boolean)mthd.invoke(aff);
+            }
+            catch (InvocationTargetException | IllegalAccessException ignored) {
+                //  No-op.
+            }
         }
-
-        VisorCacheAffinityConfiguration cfg = new VisorCacheAffinityConfiguration();
-
-        cfg.function = compactClass(aff);
-        cfg.mapper = compactClass(ccfg.getAffinityMapper());
-        cfg.partitions = aff.partitions();
-        cfg.partitionedBackups = ccfg.getBackups();
-        cfg.excludeNeighbors = excludeNeighbors;
-
-        return cfg;
     }
 
     /**
      * @return Cache affinity.
      */
-    public String function() {
+    public String getFunction() {
         return function;
     }
 
     /**
      * @return Cache affinity mapper.
      */
-    public String mapper() {
+    public String getMapper() {
         return mapper;
     }
 
     /**
-     * @return Count of key backups.
+     * @return Number of backup nodes for one partition.
      */
-    public int partitionedBackups() {
+    public int getPartitionedBackups() {
         return partitionedBackups;
     }
 
     /**
-     * @return Cache affinity partitions.
+     * @return Total partition count.
      */
-    public Integer partitions() {
+    public Integer getPartitions() {
         return partitions;
     }
 
     /**
      * @return Cache partitioned affinity exclude neighbors.
      */
-    @Nullable public Boolean excludeNeighbors() {
-        return excludeNeighbors;
+    @Nullable public Boolean isExcludeNeighbors() {
+        return exclNeighbors;
     }
 
     /** {@inheritDoc} */

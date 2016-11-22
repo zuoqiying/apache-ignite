@@ -58,12 +58,12 @@ public class VisorCacheMetricsCollectorTask extends VisorMultiNodeTask<IgniteBiT
                     VisorCacheAggregatedMetrics am = grpAggrMetrics.get(cm.name());
 
                     if (am == null) {
-                        am = VisorCacheAggregatedMetrics.from(cm);
+                        am = new VisorCacheAggregatedMetrics(cm);
 
                         grpAggrMetrics.put(cm.name(), am);
                     }
 
-                    am.metrics().put(res.getNode().id(), cm);
+                    am.getMetrics().put(res.getNode().id(), cm);
                 }
             }
         }

@@ -269,7 +269,7 @@ class VisorCacheCommand {
                     if (hasArgFlag("scan", argLst))
                         VisorCacheScanCommand().scan(argLst, node)
                     else {
-                        if (aggrData.nonEmpty && !aggrData.exists(cache => safeEquals(cache.name(), name) && cache.system())) {
+                        if (aggrData.nonEmpty && !aggrData.exists(cache => safeEquals(cache.getName, name) && cache.isSystem)) {
                             if (hasArgFlag("clear", argLst))
                                 VisorCacheClearCommand().clear(argLst, node)
                             else if (hasArgFlag("stop", argLst))
@@ -322,39 +322,39 @@ class VisorCacheCommand {
             sortAggregatedData(aggrData, sortType.getOrElse("cn"), reversed).foreach(
                 ad => {
                     // Add cache host as visor variable.
-                    registerCacheName(ad.name())
+                    registerCacheName(ad.getName)
 
                     sumT += (
-                        mkCacheName(ad.name()),
-                        ad.mode(),
-                        ad.nodes.size(),
+                        mkCacheName(ad.getName),
+                        ad.getMode,
+                        ad.getNodes.size(),
                         (
-                            "min: " + (ad.minimumHeapSize() + ad.minimumOffHeapSize()) +
-                                " (" + ad.minimumHeapSize() + " / " + ad.minimumOffHeapSize() + ")",
-                            "avg: " + formatDouble(ad.averageHeapSize() + ad.averageOffHeapSize()) +
-                                " (" + formatDouble(ad.averageHeapSize()) + " / " + formatDouble(ad.averageOffHeapSize()) + ")",
-                            "max: " + (ad.maximumHeapSize() + ad.maximumOffHeapSize()) +
-                                " (" + ad.maximumHeapSize() + " / " + ad.maximumOffHeapSize() + ")"
+                            "min: " + (ad.getMinimumHeapSize + ad.getMinimumOffHeapSize) +
+                                " (" + ad.getMinimumHeapSize + " / " + ad.getMinimumOffHeapSize + ")",
+                            "avg: " + formatDouble(ad.getAverageHeapSize + ad.getAverageOffHeapSize) +
+                                " (" + formatDouble(ad.getAverageHeapSize) + " / " + formatDouble(ad.getAverageOffHeapSize) + ")",
+                            "max: " + (ad.getMaximumHeapSize + ad.getMaximumOffHeapSize) +
+                                " (" + ad.getMaximumHeapSize + " / " + ad.getMaximumOffHeapSize + ")"
                             ),
                         (
-                            "min: " + ad.minimumHits,
-                            "avg: " + formatDouble(ad.averageHits),
-                            "max: " + ad.maximumHits
+                            "min: " + ad.getMinimumHits,
+                            "avg: " + formatDouble(ad.getAverageHits),
+                            "max: " + ad.getMaximumHits
                             ),
                         (
-                            "min: " + ad.minimumMisses,
-                            "avg: " + formatDouble(ad.averageMisses),
-                            "max: " + ad.maximumMisses
+                            "min: " + ad.getMinimumMisses,
+                            "avg: " + formatDouble(ad.getAverageMisses),
+                            "max: " + ad.getMaximumMisses
                             ),
                         (
-                            "min: " + ad.minimumReads,
-                            "avg: " + formatDouble(ad.averageReads),
-                            "max: " + ad.maximumReads
+                            "min: " + ad.getMinimumReads,
+                            "avg: " + formatDouble(ad.getAverageReads),
+                            "max: " + ad.getMaximumReads
                             ),
                         (
-                            "min: " + ad.minimumWrites,
-                            "avg: " + formatDouble(ad.averageWrites),
-                            "max: " + ad.maximumWrites
+                            "min: " + ad.getMinimumWrites,
+                            "avg: " + formatDouble(ad.getAverageWrites),
+                            "max: " + ad.getMaximumWrites
                             )
                         )
                 }
@@ -364,11 +364,11 @@ class VisorCacheCommand {
 
             if (all) {
                 val sorted = aggrData.sortWith((k1, k2) => {
-                    if (k1.name() == null)
+                    if (k1.getName == null)
                         true
-                    else if (k2.name() == null)
+                    else if (k2.getName == null)
                         false
-                    else k1.name().compareTo(k2.name()) < 0
+                    else k1.getName.compareTo(k2.getName) < 0
                 })
 
                 val gCfg = node.map(config).collect {
@@ -376,23 +376,23 @@ class VisorCacheCommand {
                 }
 
                 sorted.foreach(ad => {
-                    val cacheNameVar = mkCacheName(ad.name())
+                    val cacheNameVar = mkCacheName(ad.getName)
 
                     println("\nCache '" + cacheNameVar + "':")
 
-                    val m = ad.metrics()
+                    val m = ad.getMetrics
 
                     val csT = VisorTextTable()
 
                     csT += ("Name(@)", cacheNameVar)
                     csT += ("Nodes", m.size())
-                    csT += ("Total size Min/Avg/Max", (ad.minimumHeapSize() + ad.minimumOffHeapSize()) + " / " +
-                        formatDouble(ad.averageHeapSize() + ad.averageOffHeapSize()) + " / " +
-                        (ad.maximumHeapSize() + ad.maximumOffHeapSize()))
-                    csT += ("  Heap size Min/Avg/Max", ad.minimumHeapSize() + " / " +
-                        formatDouble(ad.averageHeapSize()) + " / " + ad.maximumHeapSize())
-                    csT += ("  Off-heap size Min/Avg/Max", ad.minimumOffHeapSize() + " / " +
-                        formatDouble(ad.averageOffHeapSize()) + " / " + ad.maximumOffHeapSize())
+                    csT += ("Total size Min/Avg/Max", (ad.getMinimumHeapSize + ad.getMinimumOffHeapSize) + " / " +
+                        formatDouble(ad.getAverageHeapSize + ad.getAverageOffHeapSize) + " / " +
+                        (ad.getMaximumHeapSize + ad.getMaximumOffHeapSize))
+                    csT += ("  Heap size Min/Avg/Max", ad.getMinimumHeapSize + " / " +
+                        formatDouble(ad.getAverageHeapSize) + " / " + ad.getMaximumHeapSize)
+                    csT += ("  Off-heap size Min/Avg/Max", ad.getMinimumOffHeapSize + " / " +
+                        formatDouble(ad.getAverageOffHeapSize) + " / " + ad.getMaximumOffHeapSize)
 
                     val ciT = VisorTextTable()
 
@@ -439,13 +439,13 @@ class VisorCacheCommand {
                     // Print metrics.
                     nl()
                     println("Aggregated queries metrics:")
-                    println("  Minimum execution time: " + X.timeSpan2HMSM(ad.minimumQueryTime()))
-                    println("  Maximum execution time: " + X.timeSpan2HMSM(ad.maximumQueryTime))
-                    println("  Average execution time: " + X.timeSpan2HMSM(ad.averageQueryTime.toLong))
-                    println("  Total number of executions: " + ad.execsQuery)
-                    println("  Total number of failures:   " + ad.failsQuery)
+                    println("  Minimum execution time: " + X.timeSpan2HMSM(ad.getMinimumQueryTime))
+                    println("  Maximum execution time: " + X.timeSpan2HMSM(ad.getMaximumQueryTime))
+                    println("  Average execution time: " + X.timeSpan2HMSM(ad.getAverageQueryTime.toLong))
+                    println("  Total number of executions: " + ad.getQueryExecutions)
+                    println("  Total number of failures:   " + ad.getQueryFailures)
 
-                    gCfg.foreach(ccfgs => ccfgs.find(ccfg => safeEquals(ccfg.getName, ad.name()))
+                    gCfg.foreach(ccfgs => ccfgs.find(ccfg => safeEquals(ccfg.getName, ad.getName))
                         .foreach(ccfg => {
                             nl()
 
@@ -591,12 +591,12 @@ class VisorCacheCommand {
         List[VisorCacheAggregatedMetrics] = {
 
         val sorted = arg.trim match {
-            case "hi" => data.toList.sortBy(_.averageHits)
-            case "mi" => data.toList.sortBy(_.averageMisses)
-            case "rd" => data.toList.sortBy(_.averageReads)
-            case "wr" => data.toList.sortBy(_.averageWrites)
+            case "hi" => data.toList.sortBy(_.getAverageHits)
+            case "mi" => data.toList.sortBy(_.getAverageMisses)
+            case "rd" => data.toList.sortBy(_.getAverageReads)
+            case "wr" => data.toList.sortBy(_.getAverageWrites)
             case "cn" => data.toList.sortWith((x, y) =>
-                x.name() == null || (y.name() != null && x.name().toLowerCase < y.name().toLowerCase))
+                x.getName == null || (y.getName != null && x.getName.toLowerCase < y.getName.toLowerCase))
 
             case _ =>
                 assert(false, "Unknown sorting type: " + arg)
@@ -638,19 +638,19 @@ class VisorCacheCommand {
             val ad = sortedAggrData(i)
 
             // Add cache host as visor variable.
-            registerCacheName(ad.name())
+            registerCacheName(ad.getName)
 
             sumT += (
                 i,
-                mkCacheName(ad.name()),
-                ad.mode(),
+                mkCacheName(ad.getName),
+                ad.getMode,
                 (
-                    "min: " + (ad.minimumHeapSize() + ad.minimumOffHeapSize()) +
-                        " (" + ad.minimumHeapSize() + " / " + ad.minimumOffHeapSize() + ")",
-                    "avg: " + formatDouble(ad.averageHeapSize() + ad.averageOffHeapSize()) +
-                        " (" + formatDouble(ad.averageHeapSize()) + " / " + formatDouble(ad.averageOffHeapSize()) + ")",
-                    "max: " + (ad.maximumHeapSize() + ad.maximumOffHeapSize()) +
-                        " (" + ad.maximumHeapSize() + " / " + ad.maximumOffHeapSize() + ")"
+                    "min: " + (ad.getMinimumHeapSize + ad.getMinimumOffHeapSize) +
+                        " (" + ad.getMinimumHeapSize + " / " + ad.getMinimumOffHeapSize + ")",
+                    "avg: " + formatDouble(ad.getAverageHeapSize + ad.getAverageOffHeapSize) +
+                        " (" + formatDouble(ad.getAverageHeapSize) + " / " + formatDouble(ad.getAverageOffHeapSize) + ")",
+                    "max: " + (ad.getMaximumHeapSize + ad.getMaximumOffHeapSize) +
+                        " (" + ad.getMaximumHeapSize + " / " + ad.getMaximumOffHeapSize + ")"
                 ))
         })
 
@@ -662,7 +662,7 @@ class VisorCacheCommand {
             None
         else {
             try
-                Some(sortedAggrData(a.toInt).name())
+                Some(sortedAggrData(a.toInt).getName)
             catch {
                 case e: Throwable =>
                     warn("Invalid selection: " + a)
@@ -850,11 +850,11 @@ object VisorCacheCommand {
         cacheT += ("Invalidate", bool2Str(cfg.isInvalidate))
         cacheT += ("Start Size", cfg.getStartSize)
 
-        cacheT += ("Affinity Function", safe(affinityCfg.function()))
-        cacheT += ("Affinity Backups", affinityCfg.partitionedBackups())
-        cacheT += ("Affinity Partitions", safe(affinityCfg.partitions()))
-        cacheT += ("Affinity Exclude Neighbors", safe(affinityCfg.excludeNeighbors()))
-        cacheT += ("Affinity Mapper", safe(affinityCfg.mapper()))
+        cacheT += ("Affinity Function", safe(affinityCfg.getFunction))
+        cacheT += ("Affinity Backups", affinityCfg.getPartitionedBackups)
+        cacheT += ("Affinity Partitions", safe(affinityCfg.getPartitions))
+        cacheT += ("Affinity Exclude Neighbors", safe(affinityCfg.isExcludeNeighbors))
+        cacheT += ("Affinity Mapper", safe(affinityCfg.getMapper))
 
         cacheT += ("Rebalance Mode", rebalanceCfg.mode())
         cacheT += ("Rebalance Batch Size", rebalanceCfg.batchSize())
