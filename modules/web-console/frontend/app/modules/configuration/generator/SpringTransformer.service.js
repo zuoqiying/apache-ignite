@@ -90,6 +90,8 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         return JavaTypes.fullClassName(item);
                     case 'long':
                         return `${item}L`;
+                    case 'java.lang.String':
+                        return item.replace(/"/g, '&quot;');
                     default:
                         return item;
                 }
