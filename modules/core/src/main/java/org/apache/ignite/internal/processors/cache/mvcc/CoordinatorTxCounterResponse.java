@@ -26,7 +26,7 @@ import org.apache.ignite.plugin.extensions.communication.MessageWriter;
 /**
  *
  */
-public class CoordinatorCounterResponse implements Message {
+public class CoordinatorTxCounterResponse implements Message {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -39,7 +39,7 @@ public class CoordinatorCounterResponse implements Message {
     /**
      *
      */
-    public CoordinatorCounterResponse() {
+    public CoordinatorTxCounterResponse() {
         // No-op.
     }
 
@@ -47,7 +47,7 @@ public class CoordinatorCounterResponse implements Message {
      * @param cntr Counter.
      * @param futId Future ID.
      */
-    public CoordinatorCounterResponse(long cntr, long futId) {
+    CoordinatorTxCounterResponse(long cntr, long futId) {
         this.cntr = cntr;
         this.futId = futId;
     }
@@ -121,7 +121,7 @@ public class CoordinatorCounterResponse implements Message {
 
         }
 
-        return reader.afterMessageRead(CoordinatorCounterResponse.class);
+        return reader.afterMessageRead(CoordinatorTxCounterResponse.class);
     }
 
     /** {@inheritDoc} */
@@ -141,6 +141,6 @@ public class CoordinatorCounterResponse implements Message {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(CoordinatorCounterResponse.class, this);
+        return S.toString(CoordinatorTxCounterResponse.class, this);
     }
 }

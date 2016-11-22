@@ -26,29 +26,32 @@ import org.apache.ignite.plugin.extensions.communication.MessageWriter;
 /**
  *
  */
-public class CoordinatorAckResponse implements Message {
+public class CoordinatorQueryAckRequest implements Message {
     /** */
-    private long futId;
+    private static final long serialVersionUID = 0L;
+
+    /** */
+    private long cntr;
 
     /**
      *
      */
-    public CoordinatorAckResponse() {
+    public CoordinatorQueryAckRequest() {
         // No-op.
     }
 
     /**
-     * @param futId Future ID.
+     * @param cntr Query counter.
      */
-    CoordinatorAckResponse(long futId) {
-        this.futId = futId;
+    CoordinatorQueryAckRequest(long cntr) {
+        this.cntr = cntr;
     }
 
     /**
-     * @return Future ID.
+     * @return Counter.
      */
-    long futureId() {
-        return futId;
+    public long counter() {
+        return cntr;
     }
 
     /** {@inheritDoc} */
@@ -64,7 +67,7 @@ public class CoordinatorAckResponse implements Message {
 
         switch (writer.state()) {
             case 0:
-                if (!writer.writeLong("futId", futId))
+                if (!writer.writeLong("cntr", cntr))
                     return false;
 
                 writer.incrementState();
@@ -83,7 +86,7 @@ public class CoordinatorAckResponse implements Message {
 
         switch (reader.state()) {
             case 0:
-                futId = reader.readLong("futId");
+                cntr = reader.readLong("cntr");
 
                 if (!reader.isLastRead())
                     return false;
@@ -92,12 +95,12 @@ public class CoordinatorAckResponse implements Message {
 
         }
 
-        return reader.afterMessageRead(CoordinatorAckResponse.class);
+        return reader.afterMessageRead(CoordinatorQueryAckRequest.class);
     }
 
     /** {@inheritDoc} */
     @Override public byte directType() {
-        return -31;
+        return -32;
     }
 
     /** {@inheritDoc} */
@@ -112,6 +115,6 @@ public class CoordinatorAckResponse implements Message {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(CoordinatorAckResponse.class, this);
+        return S.toString(CoordinatorQueryAckRequest.class, this);
     }
 }

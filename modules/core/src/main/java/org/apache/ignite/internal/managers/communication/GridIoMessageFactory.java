@@ -92,10 +92,13 @@ import org.apache.ignite.internal.processors.cache.distributed.near.GridNearTxFi
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearTxPrepareRequest;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearTxPrepareResponse;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearUnlockRequest;
-import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorAckRequest;
-import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorAckResponse;
-import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorCounterRequest;
-import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorCounterResponse;
+import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorQueryAckRequest;
+import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorQueryStateRequest;
+import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorQueryStateResponse;
+import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorTxAckRequest;
+import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorTxAckResponse;
+import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorTxCounterRequest;
+import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorTxCounterResponse;
 import org.apache.ignite.internal.processors.cache.query.GridCacheQueryRequest;
 import org.apache.ignite.internal.processors.cache.query.GridCacheQueryResponse;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlQuery;
@@ -165,23 +168,38 @@ public class GridIoMessageFactory implements MessageFactory {
         Message msg = null;
 
         switch (type) {
+            case -34:
+                msg = new CoordinatorQueryStateResponse();
+
+                break;
+
+            case -33:
+                msg = new CoordinatorQueryStateRequest();
+
+                break;
+
+            case -32:
+                msg = new CoordinatorQueryAckRequest();
+
+                break;
+
             case -31:
-                msg = new CoordinatorAckResponse();
+                msg = new CoordinatorTxAckResponse();
 
                 break;
 
             case -30:
-                msg = new CoordinatorAckRequest();
+                msg = new CoordinatorTxAckRequest();
 
                 break;
 
             case -29:
-                msg = new CoordinatorCounterResponse();
+                msg = new CoordinatorTxCounterResponse();
 
                 break;
 
             case -28:
-                msg = new CoordinatorCounterRequest();
+                msg = new CoordinatorTxCounterRequest();
 
                 break;
 

@@ -18,7 +18,6 @@
 package org.apache.ignite.internal.processors.cache.mvcc;
 
 import java.nio.ByteBuffer;
-import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
@@ -27,46 +26,29 @@ import org.apache.ignite.plugin.extensions.communication.MessageWriter;
 /**
  *
  */
-public class CoordinatorCounterRequest implements Message {
-    /** */
-    private static final long serialVersionUID = 0L;
-
+public class CoordinatorTxAckResponse implements Message {
     /** */
     private long futId;
-
-    /** */
-    private GridCacheVersion txId;
 
     /**
      *
      */
-    public CoordinatorCounterRequest() {
+    public CoordinatorTxAckResponse() {
         // No-op.
     }
 
     /**
      * @param futId Future ID.
-     * @param txId Transaction ID.
      */
-    public CoordinatorCounterRequest(long futId, GridCacheVersion txId) {
-        assert txId != null;
-
+    CoordinatorTxAckResponse(long futId) {
         this.futId = futId;
-        this.txId = txId;
     }
 
     /**
      * @return Future ID.
      */
-    public long futureId() {
+    long futureId() {
         return futId;
-    }
-
-    /**
-     * @return Transaction ID.
-     */
-    public GridCacheVersion txId() {
-        return txId;
     }
 
     /** {@inheritDoc} */
@@ -83,12 +65,6 @@ public class CoordinatorCounterRequest implements Message {
         switch (writer.state()) {
             case 0:
                 if (!writer.writeLong("futId", futId))
-                    return false;
-
-                writer.incrementState();
-
-            case 1:
-                if (!writer.writeMessage("txId", txId))
                     return false;
 
                 writer.incrementState();
@@ -114,27 +90,19 @@ public class CoordinatorCounterRequest implements Message {
 
                 reader.incrementState();
 
-            case 1:
-                txId = reader.readMessage("txId");
-
-                if (!reader.isLastRead())
-                    return false;
-
-                reader.incrementState();
-
         }
 
-        return reader.afterMessageRead(CoordinatorCounterRequest.class);
+        return reader.afterMessageRead(CoordinatorTxAckResponse.class);
     }
 
     /** {@inheritDoc} */
     @Override public byte directType() {
-        return -28;
+        return -31;
     }
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 2;
+        return 1;
     }
 
     /** {@inheritDoc} */
@@ -144,6 +112,6 @@ public class CoordinatorCounterRequest implements Message {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(CoordinatorCounterRequest.class, this);
+        return S.toString(CoordinatorTxAckResponse.class, this);
     }
 }

@@ -172,9 +172,9 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
     @Override public boolean onNodeLeft(UUID nodeId) {
         boolean found = false;
 
-        for (IgniteInternalFuture<Map<K, V>> fut : futures())
+        for (IgniteInternalFuture<Map<K, V>> fut : futures()) {
             if (isMini(fut)) {
-                MiniFuture f = (MiniFuture)fut;
+                MiniFuture f = (MiniFuture) fut;
 
                 if (f.node().id().equals(nodeId)) {
                     found = true;
@@ -182,6 +182,7 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
                     f.onNodeLeft(new ClusterTopologyCheckedException("Remote node left grid (will retry): " + nodeId));
                 }
             }
+        }
 
         return found;
     }
