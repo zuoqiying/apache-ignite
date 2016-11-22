@@ -59,6 +59,7 @@ import org.apache.ignite.internal.util.lang.GridCursor;
 import org.apache.ignite.internal.util.lang.GridIterator;
 import org.apache.ignite.internal.util.lang.IgniteInClosure2X;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteClosure;
@@ -83,7 +84,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     protected final ConcurrentMap<Integer, CacheDataStore> partDataStores = new ConcurrentHashMap<>();
 
     /** */
-    protected final CacheDataStore removedStore = new CacheDataStoreImpl(-1, null, null, null);
+    protected final CacheDataStore removedStore = new CacheDataStoreImpl(0, -1, null, null, null);
 
     /** */
     protected PendingEntriesTree pendingEntries;
@@ -324,6 +325,11 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
     /** {@inheritDoc} */
     @Override public void onPartitionCounterUpdated(int part, long cntr) {
+        // No-op.
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onPartitionInitialCounterUpdated(int part, long cntr) {
         // No-op.
     }
 
@@ -676,7 +682,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             rootPage,
             true);
 
-        return new CacheDataStoreImpl(p, idxName, rowStore, dataTree);
+        return new CacheDataStoreImpl(cctx.cacheId(), p, idxName, rowStore, dataTree);
     }
 
     /** {@inheritDoc} */
@@ -734,6 +740,10 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      */
     protected class CacheDataStoreImpl implements CacheDataStore {
         /** */
+        private final int cacheId;
+
+
+        /** */
         private final int partId;
 
         /** Tree name. */
@@ -760,11 +770,13 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          * @param dataTree Data tree.
          */
         public CacheDataStoreImpl(
+            int cacheId,
             int partId,
             String name,
             CacheDataRowStore rowStore,
             CacheDataTree dataTree
         ) {
+            this.cacheId = cacheId;
             this.partId = partId;
             this.name = name;
             this.rowStore = rowStore;
@@ -790,6 +802,9 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          * @param val Update index value.
          */
         @Override public void updateCounter(long val) {
+            if (cacheId == CU.cacheId("cache1") && partId() == 3 && val > 50)
+                log().error(cctx.grid().context().localNodeId().toString() + ", val = " + val, new Throwable());
+
             while (true) {
                 long val0 = cntr.get();
 
@@ -917,6 +932,14 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         /** {@inheritDoc} */
         @Override public long initialUpdateCounter() {
             return initCntr;
+        }
+
+        /** {@inheritDoc} */
+        @Override public void updateInitialCounter(long cntr) {
+            if (updateCounter() < cntr)
+                updateCounter(cntr);
+
+            initCntr = cntr;
         }
 
         /** {@inheritDoc} */
