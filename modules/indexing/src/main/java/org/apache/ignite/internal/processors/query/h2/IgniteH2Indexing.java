@@ -1040,7 +1040,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
      * @param distributedJoins If distributed joins are enabled.
      * @param enforceJoinOrder Enforce join order of tables.
      */
-    public void setupConnection(Connection conn, boolean distributedJoins, boolean enforceJoinOrder) {
+    public static void setupConnection(Connection conn, boolean distributedJoins, boolean enforceJoinOrder) {
         Session s = session(conn);
 
         s.setForceJoinOrder(enforceJoinOrder);

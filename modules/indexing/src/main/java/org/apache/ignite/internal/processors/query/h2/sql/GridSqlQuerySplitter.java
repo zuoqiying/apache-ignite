@@ -38,6 +38,7 @@ import org.h2.jdbc.JdbcPreparedStatement;
 import org.h2.util.IntArray;
 import org.jetbrains.annotations.Nullable;
 
+import static org.apache.ignite.internal.processors.query.h2.IgniteH2Indexing.setupConnection;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.AVG;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.CAST;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.COUNT;
@@ -85,7 +86,13 @@ public class GridSqlQuerySplitter {
     private Set<String> tbls;
 
     /** */
-    private IgniteH2Indexing h2;
+    private boolean rdcQrySimple;
+
+    /** */
+    private GridCacheSqlQuery rdcSqlQry;
+
+    /** */
+    private List<GridCacheSqlQuery> mapSqlQrys;
 
     /** */
     private Object[] params;
@@ -97,12 +104,10 @@ public class GridSqlQuerySplitter {
     private IdentityHashMap<GridSqlAst, GridSqlAlias> uniqueFromAliases;
 
     /**
-     * @param h2 Indexing.
      * @param params Query parameters.
      * @param collocatedGrpBy If it is a collocated GROUP BY query.
      */
-    public GridSqlQuerySplitter(IgniteH2Indexing h2, Object[] params, boolean collocatedGrpBy) {
-        this.h2 = h2;
+    public GridSqlQuerySplitter(Object[] params, boolean collocatedGrpBy) {
         this.params = params;
         this.collocatedGrpBy = collocatedGrpBy;
     }
@@ -162,7 +167,7 @@ public class GridSqlQuerySplitter {
 
         qry.explain(false);
 
-        GridSqlQuerySplitter splitter = new GridSqlQuerySplitter(h2, params, collocatedGrpBy);
+        GridSqlQuerySplitter splitter = new GridSqlQuerySplitter(params, collocatedGrpBy);
 
         splitter.tbls = new HashSet<>();
         splitter.schemas = new HashSet<>();
@@ -172,33 +177,28 @@ public class GridSqlQuerySplitter {
         // Also it will collect all tables and schemas from the query.
         splitter.normalizeQuery(qry);
 
-        splitter.uniqueFromAliases = null; // We do not need this stuff anymore.
+        splitter.uniqueFromAliases = null; // We do not need this stuff anymore after normalization.
 
-        // Build resulting two step query. Schemas and tables must be already collected at this point.
+        // Here we will have correct normalized AST with optimized join order.
+        qry = optimize(h2, stmt.getConnection(), qry, params, enforceJoinOrder);
+
+        // Do the actual query split. The result will be our reduce query.
+        splitter.splitQuery(qry);
+
+        qry = null; // Do not use it after the split.
+
+        assert !F.isEmpty(splitter.mapSqlQrys): "map"; // We must have at least one map query.
+        assert splitter.rdcSqlQry != null: "rdc"; // We must have a reduce query.
+
+        // Setup resulting two step query and return it.
         GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(splitter.schemas, splitter.tbls);
 
-        // Here we will have correct AST with optimized join order.
-        qry = optimize(h2, stmt.getConnection(), qry, params);
+        twoStepQry.reduceQuery(splitter.rdcSqlQry);
 
-        // Create a fake parent AST element for the query to allow replacing the query.
-        GridSqlSubquery fakeQryPrnt = new GridSqlSubquery(qry);
+        for (GridCacheSqlQuery mapSqlQry : splitter.mapSqlQrys)
+            twoStepQry.addMapQuery(mapSqlQry);
 
-        // Map query will be direct reference to the original query AST.
-        // Thus all the modifications will be performed on the original AST, so we should be careful when
-        // nullifying or updating things, have to make sure that we will not need them in the original form later.
-        // TODO handle UNION
-        GridCacheSqlQuery mapSqlQry = splitter.splitSelect(fakeQryPrnt, 0);
-
-        // Get back the updated query. It will be our reduce query.
-        qry = fakeQryPrnt.subquery();
-
-        // Setup a reduce query.
-        GridCacheSqlQuery rdcSqlQry = new GridCacheSqlQuery(qry.getSQL());
-        setupParameters(rdcSqlQry, qry, params);
-
-        twoStepQry.addMapQuery(mapSqlQry);
-        twoStepQry.reduceQuery(rdcSqlQry);
-        twoStepQry.skipMergeTable(qry.simpleQuery());
+        twoStepQry.skipMergeTable(splitter.rdcQrySimple);
         twoStepQry.explain(explain);
         twoStepQry.distributedJoins(distributedJoins);
 
@@ -206,11 +206,48 @@ public class GridSqlQuerySplitter {
     }
 
     /**
+     * @param qry Optimized and normalized query to split.
+     */
+    private void splitQuery(GridSqlQuery qry) {
+        // Create a fake parent AST element for the query to allow replacing the query.
+        GridSqlSubquery fakeQryPrnt = new GridSqlSubquery(qry);
+
+        // Fake parent query model. We need it just for convenience because buildQueryModel needs parent model.
+        QueryModel fakeQrym = new QueryModel(null, null, -1);
+
+        // Build a simplified query model. We need it because navigation over the original AST is too complex.
+        buildQueryModel(fakeQrym, fakeQryPrnt, 0);
+
+        // Split the real query model, that will be the only child of our fake model.
+        splitQueryModel(fakeQrym.get(0));
+
+        // Get back the updated query from the fake parent. It will be our reduce query.
+        qry = fakeQryPrnt.subquery();
+
+        // Setup a resulting reduce query.
+        rdcSqlQry = new GridCacheSqlQuery(qry.getSQL());
+        rdcQrySimple = qry.simpleQuery();
+
+        setupParameters(rdcSqlQry, qry, params);
+    }
+
+    /**
+     * @param qrym Query model to split.
+     */
+    private void splitQueryModel(QueryModel qrym) {
+        // Map query will be direct reference to the original query AST.
+        // Thus all the modifications will be performed on the original AST, so we should be careful when
+        // nullifying or updating things, have to make sure that we will not need them in the original form later.
+        // TODO handle UNION
+        splitSelect(qrym.prnt, qrym.childIdx);
+    }
+
+    /**
      * @param prntModel Parent model.
      * @param prnt Parent AST element.
      * @param childIdx Child index.
      */
-    private void buildQueryModel(QueryModel prntModel, GridSqlAst prnt, int childIdx) {
+    private static void buildQueryModel(QueryModel prntModel, GridSqlAst prnt, int childIdx) {
         GridSqlAst child = prnt.child(childIdx);
 
         assert child != null;
@@ -241,29 +278,35 @@ public class GridSqlQuerySplitter {
             // Here we must be in FROM clause of the SELECT.
             assert prntModel.type == Type.SELECT : prntModel.type;
 
-            if (child instanceof GridSqlAlias || child instanceof GridSqlSubquery)
+            if (child instanceof GridSqlAlias)
                 buildQueryModel(prntModel, child, 0);
             else if (child instanceof GridSqlJoin) {
                 buildQueryModel(prntModel, child, GridSqlJoin.LEFT_TABLE_CHILD);
                 buildQueryModel(prntModel, child, GridSqlJoin.RIGHT_TABLE_CHILD);
             }
-            else if (child instanceof GridSqlFunction)
-                prntModel.add(new QueryModel(Type.FUNCTION, prnt, childIdx));
-            else if (child instanceof GridSqlTable)
-                prntModel.add(new QueryModel(Type.TABLE, prnt, childIdx));
-            else
-                throw new IllegalStateException("Unknown child type: " + child.getClass());
+            else {
+                // Here we must be inside of generated unique alias for FROM clause element.
+                assert prnt instanceof GridSqlAlias: prnt.getClass();
+
+                if (child instanceof GridSqlTable)
+                    prntModel.add(new QueryModel(Type.TABLE, prnt, childIdx));
+                else if (child instanceof GridSqlSubquery)
+                    buildQueryModel(prntModel, child, 0);
+                else if (child instanceof GridSqlFunction)
+                    prntModel.add(new QueryModel(Type.FUNCTION, prnt, childIdx));
+                else
+                    throw new IllegalStateException("Unknown child type: " + child.getClass());
+            }
         }
     }
 
     /**
-     * !!! Notice that here we will modify the original query AST.
+     * !!! Notice that here we will modify the original query AST in this method.
      *
      * @param prnt Parent AST element.
      * @param childIdx Index of child select.
-     * @return Generated map query.
      */
-    private GridCacheSqlQuery splitSelect(
+    private void splitSelect(
         final GridSqlAst prnt,
         final int childIdx
     ) {
@@ -390,7 +433,10 @@ public class GridSqlQuerySplitter {
         setupParameters(map, mapQry, params);
         map.columns(collectColumns(mapExps));
 
-        return map;
+        if (mapSqlQrys == null)
+            mapSqlQrys = new ArrayList<>(8);
+
+        mapSqlQrys.add(map);
     }
 
     /**
@@ -453,6 +499,7 @@ public class GridSqlQuerySplitter {
      * @param c Connection.
      * @param qry Parsed query.
      * @param params Query parameters.
+     * @param enforceJoinOrder Enforce join order.
      * @return Optimized query AST.
      * @throws SQLException If failed.
      * @throws IgniteCheckedException If failed.
@@ -461,13 +508,14 @@ public class GridSqlQuerySplitter {
         IgniteH2Indexing h2,
         Connection c,
         GridSqlQuery qry,
-        Object[] params
+        Object[] params,
+        boolean enforceJoinOrder
     ) throws SQLException, IgniteCheckedException {
-        // Here we will optimize the query if it was just a usual local query to have
+        // Here we will optimize the query like if it was just a usual local query to have
         // correct plan for reduce step.
         // We disrespect distributedJoins flag here, because it will make sense only
         // for each separate map query (some of them can be colocated, others may be not).
-        h2.setupConnection(c, /*distributedJoins*/false, /*enforceJoinOrder*/ false);
+        setupConnection(c, /*distributedJoins*/false, enforceJoinOrder);
 
         try (PreparedStatement s = c.prepareStatement(qry.getSQL())) {
             h2.bindParameters(s, F.asList(params));
