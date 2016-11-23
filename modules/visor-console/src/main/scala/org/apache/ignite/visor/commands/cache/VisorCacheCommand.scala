@@ -409,16 +409,16 @@ class VisorCacheCommand {
                             formatDouble(nm.getCurrentCpuLoad * 100d) + " %",
                             X.timeSpan2HMSM(nm.getUpTime),
                             (
-                                "Total: " + (cm.keySize() + cm.offHeapEntriesCount()),
-                                "  Heap: " + cm.keySize(),
+                                "Total: " + (cm.getKeySize + cm.offHeapEntriesCount()),
+                                "  Heap: " + cm.getKeySize,
                                 "  Off-Heap: " + cm.offHeapEntriesCount(),
-                                "  Off-Heap Memory: " + formatMemory(cm.offHeapAllocatedSize())
+                                "  Off-Heap Memory: " + formatMemory(cm.getOffHeapAllocatedSize)
                             ),
                             (
-                                "Hi: " + cm.hits(),
-                                "Mi: " + cm.misses(),
-                                "Rd: " + cm.reads(),
-                                "Wr: " + cm.writes()
+                                "Hi: " + cm.getHits,
+                                "Mi: " + cm.getMisses,
+                                "Rd: " + cm.getReads,
+                                "Wr: " + cm.getWrites
                             )
                         )
                     }
@@ -564,10 +564,10 @@ class VisorCacheCommand {
         assert(arg != null)
 
         val sorted = arg.trim match {
-            case "hi" => data.toSeq.sortBy(_._2.hits)
-            case "mi" => data.toSeq.sortBy(_._2.misses)
-            case "rd" => data.toSeq.sortBy(_._2.reads)
-            case "wr" => data.toSeq.sortBy(_._2.writes)
+            case "hi" => data.toSeq.sortBy(_._2.getHits)
+            case "mi" => data.toSeq.sortBy(_._2.getMisses)
+            case "rd" => data.toSeq.sortBy(_._2.getReads)
+            case "wr" => data.toSeq.sortBy(_._2.getWrites)
             case "cn" => data.toSeq.sortBy(_._1)
 
             case _ =>
@@ -881,18 +881,18 @@ object VisorCacheCommand {
         cacheT += ("Metadata type count", cfg.getTypeMeta.size())
         cacheT += ("Cache Interceptor", safe(cfg.getInterceptor))
 
-        cacheT += ("Store Enabled", bool2Str(storeCfg.enabled()))
-        cacheT += ("Store Class", safe(storeCfg.store()))
-        cacheT += ("Store Factory Class", storeCfg.storeFactory())
-        cacheT += ("Store Keep Binary", storeCfg.storeKeepBinary())
-        cacheT += ("Store Read Through", bool2Str(storeCfg.readThrough()))
-        cacheT += ("Store Write Through", bool2Str(storeCfg.writeThrough()))
+        cacheT += ("Store Enabled", bool2Str(storeCfg.isEnabled))
+        cacheT += ("Store Class", safe(storeCfg.getStore))
+        cacheT += ("Store Factory Class", storeCfg.getStoreFactory)
+        cacheT += ("Store Keep Binary", storeCfg.isStoreKeepBinary)
+        cacheT += ("Store Read Through", bool2Str(storeCfg.isReadThrough))
+        cacheT += ("Store Write Through", bool2Str(storeCfg.isWriteThrough))
 
-        cacheT += ("Write-Behind Enabled", bool2Str(storeCfg.enabled()))
-        cacheT += ("Write-Behind Flush Size", storeCfg.flushSize())
-        cacheT += ("Write-Behind Frequency", storeCfg.flushFrequency())
-        cacheT += ("Write-Behind Flush Threads Count", storeCfg.flushThreadCount())
-        cacheT += ("Write-Behind Batch Size", storeCfg.batchSize())
+        cacheT += ("Write-Behind Enabled", bool2Str(storeCfg.isEnabled))
+        cacheT += ("Write-Behind Flush Size", storeCfg.getFlushSize)
+        cacheT += ("Write-Behind Frequency", storeCfg.getFlushFrequency)
+        cacheT += ("Write-Behind Flush Threads Count", storeCfg.getFlushThreadCount)
+        cacheT += ("Write-Behind Batch Size", storeCfg.getBatchSize)
 
         cacheT += ("Concurrent Asynchronous Operations Number", cfg.getMaxConcurrentAsyncOperations)
         cacheT += ("Off-Heap Size", cfg.getOffsetHeapMaxMemory match {
@@ -905,19 +905,19 @@ object VisorCacheCommand {
         cacheT += ("Writer Factory Class Name", safe(cfg.getWriterFactory))
         cacheT += ("Expiry Policy Factory Class Name", safe(cfg.getExpiryPolicyFactory))
 
-        cacheT +=("Query Execution Time Threshold", queryCfg.longQueryWarningTimeout())
-        cacheT +=("Query Schema Name", queryCfg.sqlSchema())
-        cacheT +=("Query Escaped Names", bool2Str(queryCfg.sqlEscapeAll()))
-        cacheT +=("Query Onheap Cache Size", queryCfg.sqlOnheapRowCacheSize())
+        cacheT +=("Query Execution Time Threshold", queryCfg.getLongQueryWarningTimeout)
+        cacheT +=("Query Schema Name", queryCfg.getSqlSchema)
+        cacheT +=("Query Escaped Names", bool2Str(queryCfg.isSqlEscapeAll))
+        cacheT +=("Query Onheap Cache Size", queryCfg.getSqlOnheapRowCacheSize)
 
-        val sqlFxs = queryCfg.sqlFunctionClasses()
+        val sqlFxs = queryCfg.getSqlFunctionClasses
 
         val hasSqlFxs = sqlFxs != null && sqlFxs.nonEmpty
 
         if (!hasSqlFxs)
             cacheT +=("Query SQL functions", NA)
 
-        val indexedTypes = queryCfg.indexedTypes()
+        val indexedTypes = queryCfg.getIndexedTypes
 
         val hasIndexedTypes = indexedTypes != null && indexedTypes.nonEmpty
 

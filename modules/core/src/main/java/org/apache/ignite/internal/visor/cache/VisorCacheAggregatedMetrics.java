@@ -23,13 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.ignite.cache.CacheMode;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for aggregated cache metrics.
  */
-public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean {
+public class VisorCacheAggregatedMetrics implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -123,9 +122,9 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
      * @param cm Source cache metrics.
      */
     public VisorCacheAggregatedMetrics(VisorCacheMetrics cm) {
-        name = cm.name();
-        mode = cm.mode();
-        sys = cm.system();
+        name = cm.getName();
+        mode = cm.getMode();
+        sys = cm.isSystem();
     }
 
     /**
@@ -160,7 +159,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             minHeapSize = Long.MAX_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                minHeapSize = Math.min(minHeapSize, metric.keySize());
+                minHeapSize = Math.min(minHeapSize, metric.getKeySize());
         }
 
         return minHeapSize;
@@ -174,7 +173,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             avgHeapSize = 0.0d;
 
             for (VisorCacheMetrics metric : metrics.values())
-                avgHeapSize += metric.keySize();
+                avgHeapSize += metric.getKeySize();
 
             avgHeapSize /= metrics.size();
         }
@@ -190,7 +189,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             maxHeapSize = Long.MIN_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                maxHeapSize = Math.max(maxHeapSize, metric.keySize());
+                maxHeapSize = Math.max(maxHeapSize, metric.getKeySize());
         }
 
         return maxHeapSize;
@@ -256,7 +255,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             minHits = Long.MAX_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                minHits = Math.min(minHits, metric.hits());
+                minHits = Math.min(minHits, metric.getHits());
         }
 
         return minHits;
@@ -270,7 +269,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             avgHits = 0.0d;
 
             for (VisorCacheMetrics metric : metrics.values())
-                avgHits += metric.hits();
+                avgHits += metric.getHits();
 
             avgHits /= metrics.size();
         }
@@ -286,7 +285,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             maxHits = Long.MIN_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                maxHits = Math.max(maxHits, metric.hits());
+                maxHits = Math.max(maxHits, metric.getHits());
         }
 
         return maxHits;
@@ -300,7 +299,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             minMisses = Long.MAX_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                minMisses = Math.min(minMisses, metric.misses());
+                minMisses = Math.min(minMisses, metric.getMisses());
         }
 
         return minMisses;
@@ -314,7 +313,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             avgMisses = 0.0d;
 
             for (VisorCacheMetrics metric : metrics.values())
-                avgMisses += metric.misses();
+                avgMisses += metric.getMisses();
 
             avgMisses /= metrics.size();
         }
@@ -330,7 +329,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             maxMisses = Long.MIN_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                maxMisses = Math.max(maxMisses, metric.misses());
+                maxMisses = Math.max(maxMisses, metric.getMisses());
         }
 
         return maxMisses;
@@ -344,7 +343,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             minReads = Long.MAX_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                minReads = Math.min(minReads, metric.reads());
+                minReads = Math.min(minReads, metric.getReads());
         }
 
         return minReads;
@@ -358,7 +357,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             avgReads = 0.0d;
 
             for (VisorCacheMetrics metric : metrics.values())
-                avgReads += metric.reads();
+                avgReads += metric.getReads();
 
             avgReads /= metrics.size();
         }
@@ -374,7 +373,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             maxReads = Long.MIN_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                maxReads = Math.max(maxReads, metric.reads());
+                maxReads = Math.max(maxReads, metric.getReads());
         }
 
         return maxReads;
@@ -388,7 +387,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             minWrites = Long.MAX_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                minWrites = Math.min(minWrites, metric.writes());
+                minWrites = Math.min(minWrites, metric.getWrites());
         }
 
         return minWrites;
@@ -402,7 +401,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             avgWrites = 0.0d;
 
             for (VisorCacheMetrics metric : metrics.values())
-                avgWrites += metric.writes();
+                avgWrites += metric.getWrites();
 
             avgWrites /= metrics.size();
         }
@@ -418,7 +417,7 @@ public class VisorCacheAggregatedMetrics implements Serializable, LessNamingBean
             maxWrites = Long.MIN_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                maxWrites = Math.max(maxWrites, metric.writes());
+                maxWrites = Math.max(maxWrites, metric.getWrites());
         }
 
         return maxWrites;

@@ -286,6 +286,26 @@ public class VisorTaskUtils {
     }
 
     /**
+     * Compact classes names.
+
+     * @param clss Classes to compact.
+     * @return Compacted string.
+     */
+    @Nullable public static String[] compactClasses(Class<?>[] clss) {
+        if (clss == null)
+            return null;
+
+        int len = clss.length;
+
+        String[] res = new String[len];
+
+        for (int i = 0; i < len; i++)
+            res[i] = U.compact(clss[i].getName());
+
+        return res;
+    }
+
+    /**
      * Joins array elements to string.
      *
      * @param arr Array.
@@ -621,11 +641,11 @@ public class VisorTaskUtils {
             else {
                 int toRead = Math.min(blockSz, (int)(fSz - pos));
 
-                byte[] buf = new byte[toRead];
-
                 raf = new RandomAccessFile(file, "r");
 
                 raf.seek(pos);
+
+                byte[] buf = new byte[toRead];
 
                 int cntRead = raf.read(buf, 0, toRead);
 
@@ -871,7 +891,6 @@ public class VisorTaskUtils {
         try {
             for (int i = 0; i < nodesToStart; i++) {
                 if (U.isMacOs()) {
-                    StringBuilder envs = new StringBuilder();
 
                     Map<String, String> macEnv = new HashMap<>(System.getenv());
 
@@ -888,6 +907,8 @@ public class VisorTaskUtils {
                             else
                                 macEnv.put(ent.getKey(), ent.getValue());
                     }
+
+                    StringBuilder envs = new StringBuilder();
 
                     for (Map.Entry<String, String> entry : macEnv.entrySet()) {
                         String val = entry.getValue();
@@ -1008,9 +1029,9 @@ public class VisorTaskUtils {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(initBufSize);
 
         try (ZipOutputStream zos = new ZipOutputStream(bos)) {
-            ZipEntry entry = new ZipEntry("");
-
             try {
+                ZipEntry entry = new ZipEntry("");
+
                 entry.setSize(input.length);
 
                 zos.putNextEntry(entry);

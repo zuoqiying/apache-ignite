@@ -142,7 +142,7 @@ public class VisorCache implements Serializable, LessNamingBean {
         offHeapAllocatedSize = ca.offHeapAllocatedSize();
         offHeapEntriesCnt = ca.offHeapEntriesCount();
         partitions = ca.affinity().partitions();
-        metrics = new VisorCacheMetrics().from(ignite, cacheName);
+        metrics = new VisorCacheMetrics(ignite, cacheName);
         near = cctx.isNear();
 
         estimateMemorySize(ignite, ca, sample);
