@@ -36,6 +36,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheEntryInfo;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryRemovedException;
 import org.apache.ignite.internal.processors.cache.IgniteCacheExpiryPolicy;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
+import org.apache.ignite.internal.processors.cache.mvcc.MvccQueryVersion;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxLocalEx;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.future.GridCompoundFuture;
@@ -115,6 +116,9 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
     /** */
     private final boolean recovery;
 
+    /** */
+    private final MvccQueryVersion mvccVer;
+
     /**
      * @param cctx Context.
      * @param msgId Message ID.
@@ -127,6 +131,7 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
      * @param taskNameHash Task name hash code.
      * @param expiryPlc Expiry policy.
      * @param skipVals Skip values flag.
+     * @param mvccVer Optional mvcc version.
      */
     public GridDhtGetFuture(
         GridCacheContext<K, V> cctx,
@@ -140,7 +145,8 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
         int taskNameHash,
         @Nullable IgniteCacheExpiryPolicy expiryPlc,
         boolean skipVals,
-        boolean recovery
+        boolean recovery,
+        @Nullable MvccQueryVersion mvccVer
     ) {
         super(CU.<GridCacheEntryInfo>collectionsReducer(keys.size()));
 
@@ -159,6 +165,7 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
         this.expiryPlc = expiryPlc;
         this.skipVals = skipVals;
         this.recovery = recovery;
+        this.mvccVer = mvccVer;
 
         futId = IgniteUuid.randomUuid();
 
@@ -404,7 +411,8 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
                     expiryPlc,
                     skipVals,
                     /*can remap*/true,
-                    recovery);
+                    recovery,
+                    mvccVer);
             }
             else {
                 fut = tx.getAllAsync(cctx,
@@ -437,7 +445,8 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
                                 expiryPlc,
                                 skipVals,
                                 /*can remap*/true,
-                                recovery);
+                                recovery,
+                                mvccVer);
                         }
                         else {
                             return tx.getAllAsync(cctx,

@@ -99,6 +99,7 @@ import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorTxAckRequest;
 import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorTxAckResponse;
 import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorTxCounterRequest;
 import org.apache.ignite.internal.processors.cache.mvcc.CoordinatorTxCounterResponse;
+import org.apache.ignite.internal.processors.cache.mvcc.MvccQueryVersion;
 import org.apache.ignite.internal.processors.cache.query.GridCacheQueryRequest;
 import org.apache.ignite.internal.processors.cache.query.GridCacheQueryResponse;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlQuery;
@@ -168,6 +169,11 @@ public class GridIoMessageFactory implements MessageFactory {
         Message msg = null;
 
         switch (type) {
+            case -35:
+                msg = new MvccQueryVersion();
+
+                break;
+
             case -34:
                 msg = new CoordinatorQueryStateResponse();
 

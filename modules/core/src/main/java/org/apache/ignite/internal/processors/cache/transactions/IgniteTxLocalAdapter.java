@@ -457,7 +457,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                             null,
                             resolveTaskName(),
                             expiryPlc,
-                            txEntry == null ? keepBinary : txEntry.keepBinary());
+                            txEntry == null ? keepBinary : txEntry.keepBinary(),
+                            null);
 
                         if (res == null) {
                             if (misses == null)
@@ -1276,7 +1277,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                     transformClo,
                                     resolveTaskName(),
                                     null,
-                                    txEntry.keepBinary());
+                                    txEntry.keepBinary(),
+                                    null);
 
                                 if (res != null) {
                                     val = res.get1();
@@ -1294,7 +1296,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                     transformClo,
                                     resolveTaskName(),
                                     null,
-                                    txEntry.keepBinary());
+                                    txEntry.keepBinary(),
+                                    null);
                             }
 
                             if (val != null) {
@@ -1356,7 +1359,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                         null,
                                         resolveTaskName(),
                                         accessPlc,
-                                        !deserializeBinary) : null;
+                                        !deserializeBinary,
+                                        null) : null;
 
                                 if (res != null) {
                                     val = res.get1();
@@ -1374,7 +1378,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                     null,
                                     resolveTaskName(),
                                     accessPlc,
-                                    !deserializeBinary);
+                                    !deserializeBinary,
+                                    null);
                             }
 
                             if (val != null) {
@@ -1699,13 +1704,14 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                         T2<CacheObject, GridCacheVersion> res = cached.innerGetVersioned(
                                             null,
                                             IgniteTxLocalAdapter.this,
-                                            /**update-metrics*/true,
+                                            /*update-metrics*/true,
                                             /*event*/!skipVals,
                                             CU.subjectId(IgniteTxLocalAdapter.this, cctx),
                                             transformClo,
                                             resolveTaskName(),
                                             null,
-                                            txEntry.keepBinary());
+                                            txEntry.keepBinary(),
+                                            null);
 
                                         if (res != null) {
                                             val = res.get1();
@@ -1723,7 +1729,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                             transformClo,
                                             resolveTaskName(),
                                             null,
-                                            txEntry.keepBinary());
+                                            txEntry.keepBinary(),
+                                            null);
                                     }
 
                                     // If value is in cache and passed the filter.
@@ -2437,7 +2444,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                         entryProcessor,
                                         resolveTaskName(),
                                         null,
-                                        keepBinary) : null;
+                                        keepBinary,
+                                        null) : null;
 
                                 if (res != null) {
                                     old = res.get1();
@@ -2455,7 +2463,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                     entryProcessor,
                                     resolveTaskName(),
                                     null,
-                                    keepBinary);
+                                    keepBinary,
+                                    null);
                             }
                         }
                         catch (ClusterTopologyCheckedException e) {
@@ -2771,7 +2780,8 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                     null,
                                     resolveTaskName(),
                                     null,
-                                    txEntry.keepBinary());
+                                    txEntry.keepBinary(),
+                                    null);
                             }
                         }
                         else {

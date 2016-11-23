@@ -320,7 +320,8 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                         taskName == null ? 0 : taskName.hashCode(),
                         expiryPlc,
                         skipVals,
-                        recovery);
+                        recovery,
+                        null);
 
                 final Collection<Integer> invalidParts = fut.invalidPartitions();
 
@@ -444,13 +445,14 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                         T2<CacheObject, GridCacheVersion> res = entry.innerGetVersioned(
                             null,
                             null,
-                            /**update-metrics*/true,
+                            /*update-metrics*/true,
                             /*event*/!skipVals,
                             subjId,
                             null,
                             taskName,
                             expiryPlc,
-                            !deserializeBinary);
+                            !deserializeBinary,
+                            null);
 
                         if (res != null) {
                             v = res.get1();
@@ -468,7 +470,8 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                             null,
                             taskName,
                             expiryPlc,
-                            !deserializeBinary);
+                            !deserializeBinary,
+                            null);
                     }
                 }
 
@@ -580,13 +583,14 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                         T2<CacheObject, GridCacheVersion> res = dhtEntry.innerGetVersioned(
                             null,
                             null,
-                            /**update-metrics*/false,
+                            /*update-metrics*/false,
                             /*event*/!nearRead && !skipVals,
                             subjId,
                             null,
                             taskName,
                             expiryPlc,
-                            !deserializeBinary);
+                            !deserializeBinary,
+                            null);
 
                         if (res != null) {
                             v = res.get1();
@@ -604,7 +608,8 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                             null,
                             taskName,
                             expiryPlc,
-                            !deserializeBinary);
+                            !deserializeBinary,
+                            null);
                     }
 
                     // Entry was not in memory or in swap, so we remove it from cache.

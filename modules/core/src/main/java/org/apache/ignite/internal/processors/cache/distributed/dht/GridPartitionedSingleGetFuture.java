@@ -237,7 +237,8 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                 taskName == null ? 0 : taskName.hashCode(),
                 expiryPlc,
                 skipVals,
-                recovery);
+                recovery,
+                null);
 
             final Collection<Integer> invalidParts = fut.invalidPartitions();
 
@@ -389,13 +390,14 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                         T2<CacheObject, GridCacheVersion> res = entry.innerGetVersioned(
                             null,
                             null,
-                            /**update-metrics*/false,
+                            /*update-metrics*/false,
                             /*event*/!skipVals,
                             subjId,
                             null,
                             taskName,
                             expiryPlc,
-                            true);
+                            true,
+                            null);
 
                         if (res != null) {
                             v = res.get1();
@@ -407,13 +409,14 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                             null,
                             null,
                             /*read-through*/false,
-                            /**update-metrics*/false,
+                            /*update-metrics*/false,
                             /*event*/!skipVals,
                             subjId,
                             null,
                             taskName,
                             expiryPlc,
-                            true);
+                            true,
+                            null);
                     }
 
                     colocated.context().evicts().touch(entry, topVer);

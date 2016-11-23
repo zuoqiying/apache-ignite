@@ -385,7 +385,8 @@ public final class GridDhtTxPrepareFuture extends GridCompoundFuture<Object, Gri
                         entryProc,
                         tx.resolveTaskName(),
                         null,
-                        keepBinary);
+                        keepBinary,
+                        null);
 
                     if (retVal || txEntry.op() == TRANSFORM) {
                         if (!F.isEmpty(txEntry.entryProcessors())) {

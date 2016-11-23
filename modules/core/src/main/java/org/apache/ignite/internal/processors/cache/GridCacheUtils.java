@@ -708,26 +708,8 @@ public class GridCacheUtils {
      * @param <V> Value type.
      * @return Reducer.
      */
-    public static <K, V> IgniteReducer<Map<K, V>, Map<K, V>> mapsReducer(final int size) {
-        return new IgniteReducer<Map<K, V>, Map<K, V>>() {
-            private final Map<K, V> ret = new ConcurrentHashMap8<>(size);
-
-            @Override public boolean collect(Map<K, V> map) {
-                if (map != null)
-                    ret.putAll(map);
-
-                return true;
-            }
-
-            @Override public Map<K, V> reduce() {
-                return ret;
-            }
-
-            /** {@inheritDoc} */
-            @Override public String toString() {
-                return "Map reducer: " + ret;
-            }
-        };
+    public static <K, V> ConcurrentMapReducer<K, V> mapsReducer(final int size) {
+        return new ConcurrentMapReducer<>(size);
     }
 
     /**
@@ -1758,5 +1740,45 @@ public class GridCacheUtils {
         return sysCacheCtx != null && sysCacheCtx.systemTx()
             ? DEFAULT_TX_CFG
             : cfg.getTransactionConfiguration();
+    }
+
+    /**
+     *
+     */
+    public static class ConcurrentMapReducer<K, V> implements IgniteReducer<Map<K, V>, Map<K, V>> {
+        /** */
+        private final ConcurrentHashMap8<K, V> ret;
+
+        /**
+         * @param size Expected size of result map,
+         */
+        ConcurrentMapReducer(int size) {
+            ret = new ConcurrentHashMap8<>(size);
+        }
+
+        /**
+         *
+         */
+        public void clear() {
+            ret.clear();
+        }
+
+        /** {@inheritDoc} */
+        @Override public boolean collect(Map<K, V> map) {
+            if (map != null)
+                ret.putAll(map);
+
+            return true;
+        }
+
+        /** {@inheritDoc} */
+        @Override public Map<K, V> reduce() {
+            return ret;
+        }
+
+        /** {@inheritDoc} */
+        @Override public String toString() {
+            return "Map reducer [ret=" + ret + ']';
+        }
     }
 }

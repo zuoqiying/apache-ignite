@@ -362,7 +362,8 @@ public final class GridDhtGetSingleFuture<K, V> extends GridFutureAdapter<GridCa
                     expiryPlc,
                     skipVals,
                     /*can remap*/true,
-                    recovery);
+                    recovery,
+                    null);
             }
             else {
                 fut = tx.getAllAsync(cctx,
@@ -398,7 +399,8 @@ public final class GridDhtGetSingleFuture<K, V> extends GridFutureAdapter<GridCa
                                 expiryPlc,
                                 skipVals,
                                 /*can remap*/true,
-                                recovery);
+                                recovery,
+                                null);
                         }
                         else {
                             fut0 = tx.getAllAsync(cctx,

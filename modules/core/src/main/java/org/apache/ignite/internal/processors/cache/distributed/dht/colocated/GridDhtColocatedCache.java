@@ -492,13 +492,14 @@ public class GridDhtColocatedCache<K, V> extends GridDhtTransactionalCacheAdapte
                                 T2<CacheObject, GridCacheVersion> res = entry.innerGetVersioned(
                                     null,
                                     null,
-                                    /**update-metrics*/false,
+                                    /*update-metrics*/false,
                                     /*event*/!skipVals,
                                     subjId,
                                     null,
                                     taskName,
                                     expiryPlc,
-                                    !deserializeBinary);
+                                    !deserializeBinary,
+                                    null);
 
                                 if (res != null) {
                                     v = res.get1();
@@ -510,13 +511,14 @@ public class GridDhtColocatedCache<K, V> extends GridDhtTransactionalCacheAdapte
                                     null,
                                     null,
                                     /*read-through*/false,
-                                    /**update-metrics*/false,
+                                    /*update-metrics*/false,
                                     /*event*/!skipVals,
                                     subjId,
                                     null,
                                     taskName,
                                     expiryPlc,
-                                    !deserializeBinary);
+                                    !deserializeBinary,
+                                    null);
                             }
 
                             // Entry was not in memory or in swap, so we remove it from cache.

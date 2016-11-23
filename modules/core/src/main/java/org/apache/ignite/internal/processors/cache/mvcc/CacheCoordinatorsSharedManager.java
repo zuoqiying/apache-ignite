@@ -153,7 +153,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
      * @param topVer Topology version.
      * @return Future.
      */
-    public IgniteInternalFuture<MvccQueryState> requestQueryCounters(GridCacheContext cctx,
+    public IgniteInternalFuture<MvccQueryVersions> requestQueryCounters(GridCacheContext cctx,
         Collection<KeyCacheObject> keys,
         AffinityTopologyVersion topVer) {
         QueryCountersFuture fut = new QueryCountersFuture(futIdCntr.getAndIncrement());
@@ -166,10 +166,10 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
     }
 
     /**
-     * @param qryState Query state.
+     * @param mvccVers Query counters.
      */
-    public void ackQueryDone(MvccQueryState qryState) {
-        for (Map.Entry<UUID, Long> crdCntr : qryState.counters().entrySet()) {
+    public void ackQueryDone(MvccQueryVersions mvccVers) {
+        for (Map.Entry<UUID, Long> crdCntr : mvccVers.counters().entrySet()) {
             try {
                 cctx.gridIO().send(crdCntr.getKey(),
                     TOPIC_COORDINATOR,
@@ -259,6 +259,10 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
         // TODO: remove counter from 'in-use' list.
     }
 
+    private void processCoordinatorQueryAckRequest(UUID nodeId, long cntr) {
+        // TODO: remove counter from 'in-use' list.
+    }
+
     /**
      * @param nodeId Sender node ID.
      * @param msg Message.
@@ -273,19 +277,7 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
             return;
         }
 
-        // TODO: need mark counter as 'in-use'.
-        // TODO: do not return counter from 'activeTxs'.
-        // TODO: return transactions history data.
-        // TODO: handle sender node failures.
-
-        long qryCntr = cntr.get();
-
-        Collection<GridCacheVersion> qryActiveTxs = new ArrayList<>();
-
-        for (GridCacheVersion ver : activeTxs.keySet())
-            qryActiveTxs.add(ver);
-
-        CoordinatorQueryStateResponse res = new CoordinatorQueryStateResponse(msg.futureId(), qryCntr, qryActiveTxs);
+        CoordinatorQueryStateResponse res = requestQueryState(msg.futureId());
 
         try {
             cctx.gridIO().send(nodeId,
@@ -300,6 +292,26 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
         catch (IgniteCheckedException e) {
             U.error(log, "Failed to send query counter response [msg=" + msg + ", node=" + nodeId + ']', e);
         }
+    }
+
+    /**
+     * @param futId Future ID.
+     * @return Response message.
+     */
+    private CoordinatorQueryStateResponse requestQueryState(long futId) {
+        // TODO: need mark counter as 'in-use'.
+        // TODO: do not return counter from 'activeTxs'.
+        // TODO: return transactions history data.
+        // TODO: handle sender node failures.
+
+        long qryCntr = cntr.get();
+
+        Collection<GridCacheVersion> qryActiveTxs = new ArrayList<>();
+
+        for (GridCacheVersion ver : activeTxs.keySet())
+            qryActiveTxs.add(ver);
+
+        return new CoordinatorQueryStateResponse(futId, qryCntr, qryActiveTxs);
     }
 
     /**
@@ -771,9 +783,12 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
     /**
      *
      */
-    private class QueryCountersFuture extends GridFutureAdapter<MvccQueryState> {
+    private class QueryCountersFuture extends GridFutureAdapter<MvccQueryVersions> {
         /** */
         private final Long id;
+
+        /** */
+        private AffinityTopologyVersion topVer;
 
         /** */
         private boolean initDone;
@@ -803,6 +818,10 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
          * @param topVer Topology version.
          */
         void map(GridCacheContext cctx, Collection<KeyCacheObject> keys, AffinityTopologyVersion topVer) {
+            this.topVer = topVer;
+
+            ClusterNode loc = null;
+
             for (KeyCacheObject key : keys) {
                 ClusterNode node = cctx.affinity().primary(key, topVer);
 
@@ -822,10 +841,15 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
 
                 if (snd) {
                     try {
-                        cctx.gridIO().send(crd,
-                            TOPIC_COORDINATOR,
-                            new CoordinatorQueryStateRequest(id),
-                            SYSTEM_POOL);
+                        if (!cctx.localNodeId().equals(crd.id())) {
+                            cctx.gridIO().send(crd,
+                                TOPIC_COORDINATOR,
+                                new CoordinatorQueryStateRequest(id),
+                                SYSTEM_POOL);
+                        }
+                        else
+                            loc = crd;
+
                     }
                     catch (ClusterTopologyCheckedException e) {
                         onNodeError(crd.id(), e);
@@ -836,6 +860,12 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
                         onNodeError(crd.id(), e);
                     }
                 }
+            }
+
+            if (loc != null) {
+                CoordinatorQueryStateResponse res = requestQueryState(id);
+
+                onResponse(loc.id(), res);
             }
 
             boolean done;
@@ -927,10 +957,16 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
                 for (Map.Entry<UUID, Long> crdCntr : crdCounters.entrySet()) {
                     if (crdCntr.getValue() != null) {
                         try {
-                            cctx.gridIO().send(crdCntr.getKey(),
-                                TOPIC_COORDINATOR,
-                                new CoordinatorQueryAckRequest(crdCntr.getValue()),
-                                SYSTEM_POOL);
+                            UUID crdNodeId = crdCntr.getKey();
+
+                            if (!cctx.localNodeId().equals(crdNodeId)) {
+                                cctx.gridIO().send(crdNodeId,
+                                    TOPIC_COORDINATOR,
+                                    new CoordinatorQueryAckRequest(crdCntr.getValue()),
+                                    SYSTEM_POOL);
+                            }
+                            else
+                                processCoordinatorQueryAckRequest(cctx.localNodeId(), crdCntr.getValue());
                         }
                         catch (ClusterTopologyCheckedException e) {
                             if (log.isDebugEnabled())
@@ -945,11 +981,11 @@ public class CacheCoordinatorsSharedManager<K, V> extends GridCacheSharedManager
                 onDone(failedCrds.values().iterator().next());
             }
             else
-                onDone(new MvccQueryState(crdCounters, activeTxs));
+                onDone(new MvccQueryVersions(topVer, crdCounters, activeTxs));
         }
 
         /** {@inheritDoc} */
-        @Override public boolean onDone(@Nullable MvccQueryState res, @Nullable Throwable err) {
+        @Override public boolean onDone(@Nullable MvccQueryVersions res, @Nullable Throwable err) {
             if (super.onDone(res, err)) {
                 qryCntrFuts.remove(id);
 

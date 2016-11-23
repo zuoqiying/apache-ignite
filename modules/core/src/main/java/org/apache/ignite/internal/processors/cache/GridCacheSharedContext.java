@@ -355,7 +355,7 @@ public class GridCacheSharedContext<K, V> {
     /**
      * @return Coordinators manager.
      */
-    public CacheCoordinatorsSharedManager coordinators() {
+    public CacheCoordinatorsSharedManager<K, V> coordinators() {
         return coords;
     }
 

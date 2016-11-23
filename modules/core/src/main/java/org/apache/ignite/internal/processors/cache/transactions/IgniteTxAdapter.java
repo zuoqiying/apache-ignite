@@ -1515,10 +1515,11 @@ public abstract class IgniteTxAdapter extends GridMetadataAwareAdapter implement
                     /*metrics*/metrics,
                     /*event*/recordEvt,
                     /*subjId*/subjId,
-                    /**closure name */recordEvt ? F.first(txEntry.entryProcessors()).get1() : null,
+                    /*closure name */recordEvt ? F.first(txEntry.entryProcessors()).get1() : null,
                     resolveTaskName(),
                     null,
-                    keepBinary);
+                    keepBinary,
+                    null);
 
             boolean modified = false;
 

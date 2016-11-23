@@ -324,6 +324,13 @@ public class GridCompoundFuture<T, R> extends GridFutureAdapter<R> implements Ig
         }
     }
 
+    /**
+     * @return Reducer.
+     */
+    @Nullable protected final IgniteReducer<T, R> reducer() {
+        return rdc;
+    }
+
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(GridCompoundFuture.class, this,

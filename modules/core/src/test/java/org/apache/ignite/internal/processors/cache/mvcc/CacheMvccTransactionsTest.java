@@ -18,7 +18,10 @@
 package org.apache.ignite.internal.processors.cache.mvcc;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteTransactions;
@@ -118,6 +121,33 @@ public class CacheMvccTransactionsTest extends GridCommonAbstractTest {
             stopAllGrids();
         }
     }
+
+    /**
+     * @throws Exception If failed.
+     */
+    public void testGetAll1() throws Exception {
+        startGridsMultiThreaded(SRVS);
+
+        try {
+            client = true;
+
+            Ignite ignite = startGrid(SRVS);
+
+            CacheConfiguration ccfg = cacheConfiguration(PARTITIONED, FULL_SYNC, 1);
+
+            IgniteCache<Integer, Integer> cache = ignite.createCache(ccfg);
+
+            Set<Integer> keys = new HashSet<>();
+
+            keys.addAll(primaryKeys(ignite(0).cache(ccfg.getName()), 2));
+
+            Map<Integer, Integer> res = cache.getAll(keys);
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
     /**
      * @return Cache configurations.
      */

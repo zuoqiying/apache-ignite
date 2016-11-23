@@ -48,6 +48,7 @@ import org.apache.ignite.internal.processors.cache.extras.GridCacheEntryExtras;
 import org.apache.ignite.internal.processors.cache.extras.GridCacheMvccEntryExtras;
 import org.apache.ignite.internal.processors.cache.extras.GridCacheObsoleteEntryExtras;
 import org.apache.ignite.internal.processors.cache.extras.GridCacheTtlEntryExtras;
+import org.apache.ignite.internal.processors.cache.mvcc.MvccQueryVersion;
 import org.apache.ignite.internal.processors.cache.mvcc.TxMvccVersion;
 import org.apache.ignite.internal.processors.cache.query.continuous.CacheContinuousQueryListener;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
@@ -490,7 +491,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
         Object transformClo,
         String taskName,
         @Nullable IgniteCacheExpiryPolicy expirePlc,
-        boolean keepBinary)
+        boolean keepBinary,
+        @Nullable MvccQueryVersion mvccVer)
         throws IgniteCheckedException, GridCacheEntryRemovedException {
         return (CacheObject)innerGet0(
             ver,
@@ -503,7 +505,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
             taskName,
             expirePlc,
             false,
-            keepBinary);
+            keepBinary,
+            mvccVer);
     }
 
     /** {@inheritDoc} */
@@ -516,7 +519,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
         Object transformClo,
         String taskName,
         @Nullable IgniteCacheExpiryPolicy expiryPlc,
-        boolean keepBinary)
+        boolean keepBinary,
+        @Nullable MvccQueryVersion mvccVer)
         throws IgniteCheckedException, GridCacheEntryRemovedException {
         return (T2<CacheObject, GridCacheVersion>)innerGet0(
             ver,
@@ -529,7 +533,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
             taskName,
             expiryPlc,
             true,
-            keepBinary);
+            keepBinary,
+            mvccVer);
     }
 
     /** {@inheritDoc} */
@@ -545,7 +550,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
         String taskName,
         @Nullable IgniteCacheExpiryPolicy expiryPlc,
         boolean retVer,
-        boolean keepBinary
+        boolean keepBinary,
+        @Nullable MvccQueryVersion mvccVer
     ) throws IgniteCheckedException, GridCacheEntryRemovedException {
         assert !(retVer && readThrough);
 
@@ -579,9 +585,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 val = this.val;
 
                 if (val == null) {
-                    if (isStartVersion()) {
+                    if (isStartVersion())
                         val = unswap(true, false);
-                    }
                 }
 
                 if (val != null) {
