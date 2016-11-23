@@ -66,7 +66,7 @@ public class VisorNodeDataCollectorTask extends VisorMultiNodeTask<VisorNodeData
                 else {
                     // Ignore nodes that left topology.
                     if (!(unhandledEx instanceof ClusterGroupEmptyException))
-                        taskRes.unhandledEx().put(nid, new VisorExceptionWrapper(unhandledEx));
+                        taskRes.getUnhandledEx().put(nid, new VisorExceptionWrapper(unhandledEx));
                 }
             }
         }
@@ -83,33 +83,33 @@ public class VisorNodeDataCollectorTask extends VisorMultiNodeTask<VisorNodeData
      */
     protected void reduceJobResult(VisorNodeDataCollectorTaskResult taskRes,
         VisorNodeDataCollectorJobResult jobRes, UUID nid) {
-        taskRes.gridNames().put(nid, jobRes.gridName());
+        taskRes.getGridNames().put(nid, jobRes.gridName());
 
-        taskRes.topologyVersions().put(nid, jobRes.topologyVersion());
+        taskRes.getTopologyVersions().put(nid, jobRes.topologyVersion());
 
-        taskRes.taskMonitoringEnabled().put(nid, jobRes.taskMonitoringEnabled());
+        taskRes.getTaskMonitoringEnabled().put(nid, jobRes.taskMonitoringEnabled());
 
-        taskRes.errorCounts().put(nid, jobRes.errorCount());
+        taskRes.getErrorCounts().put(nid, jobRes.errorCount());
 
         if (!jobRes.events().isEmpty())
-            taskRes.events().addAll(jobRes.events());
+            taskRes.getEvents().addAll(jobRes.events());
 
         if (jobRes.eventsEx() != null)
-            taskRes.eventsEx().put(nid, new VisorExceptionWrapper(jobRes.eventsEx()));
+            taskRes.getEventsEx().put(nid, new VisorExceptionWrapper(jobRes.eventsEx()));
 
         if (!jobRes.caches().isEmpty())
-            taskRes.caches().put(nid, jobRes.caches());
+            taskRes.getCaches().put(nid, jobRes.caches());
 
         if (jobRes.cachesEx() != null)
-            taskRes.cachesEx().put(nid, new VisorExceptionWrapper(jobRes.cachesEx()));
+            taskRes.getCachesEx().put(nid, new VisorExceptionWrapper(jobRes.cachesEx()));
 
         if (!jobRes.igfss().isEmpty())
-            taskRes.igfss().put(nid, jobRes.igfss());
+            taskRes.getIgfss().put(nid, jobRes.igfss());
 
         if (!jobRes.igfsEndpoints().isEmpty())
-            taskRes.igfsEndpoints().put(nid, jobRes.igfsEndpoints());
+            taskRes.getIgfsEndpoints().put(nid, jobRes.igfsEndpoints());
 
         if (jobRes.igfssEx() != null)
-            taskRes.igfssEx().put(nid, new VisorExceptionWrapper(jobRes.igfssEx()));
+            taskRes.getIgfssEx().put(nid, new VisorExceptionWrapper(jobRes.igfssEx()));
     }
 }
