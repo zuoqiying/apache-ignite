@@ -20,7 +20,6 @@ package org.apache.ignite.internal.visor.cache;
 import java.io.Serializable;
 import org.apache.ignite.cache.eviction.EvictionPolicy;
 import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.evictionPolic
 /**
  * Data transfer object for eviction configuration properties.
  */
-public class VisorCacheEvictionConfiguration implements Serializable, LessNamingBean {
+public class VisorCacheEvictionConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -59,79 +58,75 @@ public class VisorCacheEvictionConfiguration implements Serializable, LessNaming
     private float maxOverflowRatio;
 
     /**
+     * Create data transfer object for eviction configuration properties.
      * @param ccfg Cache configuration.
-     * @return Data transfer object for eviction configuration properties.
      */
-    public static VisorCacheEvictionConfiguration from(CacheConfiguration ccfg) {
-        VisorCacheEvictionConfiguration cfg = new VisorCacheEvictionConfiguration();
+    public VisorCacheEvictionConfiguration(CacheConfiguration ccfg) {
+        final EvictionPolicy evictionPlc = ccfg.getEvictionPolicy();
 
-        final EvictionPolicy plc = ccfg.getEvictionPolicy();
-
-        cfg.plc = compactClass(plc);
-        cfg.plcMaxSize = evictionPolicyMaxSize(plc);
-        cfg.filter = compactClass(ccfg.getEvictionFilter());
-        cfg.syncConcurrencyLvl = ccfg.getEvictSynchronizedConcurrencyLevel();
-        cfg.syncTimeout = ccfg.getEvictSynchronizedTimeout();
-        cfg.syncKeyBufSize = ccfg.getEvictSynchronizedKeyBufferSize();
-        cfg.evictSynchronized = ccfg.isEvictSynchronized();
-        cfg.maxOverflowRatio = ccfg.getEvictMaxOverflowRatio();
-
-        return cfg;
+        plc = compactClass(evictionPlc);
+        plcMaxSize = evictionPolicyMaxSize(evictionPlc);
+        filter = compactClass(ccfg.getEvictionFilter());
+        syncConcurrencyLvl = ccfg.getEvictSynchronizedConcurrencyLevel();
+        syncTimeout = ccfg.getEvictSynchronizedTimeout();
+        syncKeyBufSize = ccfg.getEvictSynchronizedKeyBufferSize();
+        evictSynchronized = ccfg.isEvictSynchronized();
+        maxOverflowRatio = ccfg.getEvictMaxOverflowRatio();
     }
 
     /**
      * @return Eviction policy.
      */
-    @Nullable public String policy() {
+    @Nullable public String getPolicy() {
         return plc;
     }
 
     /**
      * @return Cache eviction policy max size.
      */
-    @Nullable public Integer policyMaxSize() {
+    @Nullable public Integer getPolicyMaxSize() {
         return plcMaxSize;
     }
 
     /**
      * @return Eviction filter to specify which entries should not be evicted.
      */
-    @Nullable public String filter() {
+    @Nullable public String getFilter() {
         return filter;
     }
 
     /**
      * @return synchronized eviction concurrency level.
      */
-    public int synchronizedConcurrencyLevel() {
+    public int getSynchronizedConcurrencyLevel() {
         return syncConcurrencyLvl;
     }
 
     /**
      * @return synchronized eviction timeout.
      */
-    public long synchronizedTimeout() {
+    public long getSynchronizedTimeout() {
         return syncTimeout;
     }
 
     /**
      * @return Synchronized key buffer size.
      */
-    public int synchronizedKeyBufferSize() {
+    public int getSynchronizedKeyBufferSize() {
         return syncKeyBufSize;
     }
 
     /**
      * @return Synchronous evicts flag.
      */
-    public boolean evictSynchronized() {
+    public boolean isEvictSynchronized() {
         return evictSynchronized;
     }
 
     /**
      * @return Eviction max overflow ratio.
      */
-    public float maxOverflowRatio() {
+    public float getMaxOverflowRatio() {
         return maxOverflowRatio;
     }
 

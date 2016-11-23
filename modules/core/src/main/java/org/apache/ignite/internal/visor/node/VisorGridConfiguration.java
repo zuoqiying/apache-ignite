@@ -101,7 +101,7 @@ public class VisorGridConfiguration implements Serializable {
         spis = VisorSpisConfiguration.from(c);
         p2p = VisorPeerToPeerConfiguration.from(c);
         lifecycle = VisorLifecycleConfiguration.from(c);
-        execSvc = VisorExecutorServiceConfiguration.from(c);
+        execSvc = new VisorExecutorServiceConfiguration(c);
         seg = VisorSegmentationConfiguration.from(c);
         inclProps = compactArray(c.getIncludeProperties());
         inclEvtTypes = c.getIncludeEventTypes();

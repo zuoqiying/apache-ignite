@@ -25,7 +25,6 @@ import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.IgniteEx;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 /**
  * Data transfer object for cache configuration properties.
  */
-public class VisorCacheConfiguration implements Serializable, LessNamingBean {
+public class VisorCacheConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -114,11 +113,12 @@ public class VisorCacheConfiguration implements Serializable, LessNamingBean {
     private boolean sys;
 
     /**
+     * Create data transfer object for cache configuration properties.
+     *
      * @param ignite Grid.
      * @param ccfg Cache configuration.
-     * @return Data transfer object for cache configuration properties.
      */
-    public VisorCacheConfiguration from(IgniteEx ignite, CacheConfiguration ccfg) {
+    public VisorCacheConfiguration(IgniteEx ignite, CacheConfiguration ccfg) {
         name = ccfg.getName();
         mode = ccfg.getCacheMode();
         atomicityMode = ccfg.getAtomicityMode();
@@ -140,15 +140,13 @@ public class VisorCacheConfiguration implements Serializable, LessNamingBean {
         sys = ignite.context().cache().systemCache(ccfg.getName());
 
         affinityCfg = new VisorCacheAffinityConfiguration(ccfg);
-        rebalanceCfg = VisorCacheRebalanceConfiguration.from(ccfg);
-        evictCfg = VisorCacheEvictionConfiguration.from(ccfg);
+        rebalanceCfg = new VisorCacheRebalanceConfiguration(ccfg);
+        evictCfg = new VisorCacheEvictionConfiguration(ccfg);
         nearCfg = VisorCacheNearConfiguration.from(ccfg);
 
         storeCfg = new VisorCacheStoreConfiguration().from(ignite, ccfg);
 
         qryCfg = new VisorCacheQueryConfiguration().from(ccfg);
-
-        return this;
     }
 
     /**

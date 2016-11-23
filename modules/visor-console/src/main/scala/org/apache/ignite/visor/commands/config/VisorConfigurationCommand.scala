@@ -265,12 +265,13 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val execCfg = cfg.getExecutorService
 
-        execSvcT += ("Public thread pool size", safe(execCfg.publicThreadPoolSize()))
-        execSvcT += ("System thread pool size", safe(execCfg.systemThreadPoolSize()))
-        execSvcT += ("Management thread pool size", safe(execCfg.managementThreadPoolSize()))
-        execSvcT += ("IGFS thread pool size", safe(execCfg.igfsThreadPoolSize()))
-        execSvcT += ("Peer-to-Peer thread pool size", safe(execCfg.peerClassLoadingThreadPoolSize()))
-        execSvcT += ("REST thread pool size", safe(execCfg.restThreadPoolSize()))
+        execSvcT += ("Public thread pool size", safe(execCfg.getPublicThreadPoolSize))
+        execSvcT += ("System thread pool size", safe(execCfg.getSystemThreadPoolSize))
+        execSvcT += ("Management thread pool size", safe(execCfg.getManagementThreadPoolSize))
+        execSvcT += ("IGFS thread pool size", safe(execCfg.getIgfsThreadPoolSize))
+        execSvcT += ("Peer-to-Peer thread pool size", safe(execCfg.getPeerClassLoadingThreadPoolSize))
+        execSvcT += ("Rebalance Thread Pool size", execCfg.getRebalanceThreadPoolSize)
+        execSvcT += ("REST thread pool size", safe(execCfg.getRestThreadPoolSize))
 
         execSvcT.render()
 
