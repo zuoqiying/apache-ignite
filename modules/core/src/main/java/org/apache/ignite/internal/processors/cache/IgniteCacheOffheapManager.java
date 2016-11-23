@@ -328,6 +328,9 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
          */
         public RowStore rowStore();
 
+        /**
+         * @param cntr Counter.
+         */
         void updateInitialCounter(long cntr);
     }
 }
