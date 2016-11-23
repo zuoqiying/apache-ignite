@@ -802,9 +802,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          * @param val Update index value.
          */
         @Override public void updateCounter(long val) {
-            if (cacheId == CU.cacheId("cache1") && partId() == 3 && val > 50)
-                log().error(cctx.grid().context().localNodeId().toString() + ", val = " + val, new Throwable());
-
             while (true) {
                 long val0 = cntr.get();
 
