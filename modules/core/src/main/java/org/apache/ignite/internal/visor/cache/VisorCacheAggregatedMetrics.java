@@ -431,7 +431,7 @@ public class VisorCacheAggregatedMetrics implements Serializable {
             minQryTime = Long.MAX_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                minQryTime = Math.min(minQryTime, metric.queryMetrics().minimumTime());
+                minQryTime = Math.min(minQryTime, metric.getQueryMetrics().getMinimumTime());
         }
 
         return minQryTime;
@@ -445,7 +445,7 @@ public class VisorCacheAggregatedMetrics implements Serializable {
             avgQryTime = 0.0d;
 
             for (VisorCacheMetrics metric : metrics.values())
-                avgQryTime += metric.queryMetrics().averageTime();
+                avgQryTime += metric.getQueryMetrics().getAverageTime();
 
             avgQryTime /= metrics.size();
         }
@@ -461,7 +461,7 @@ public class VisorCacheAggregatedMetrics implements Serializable {
             maxQryTime = Long.MIN_VALUE;
 
             for (VisorCacheMetrics metric : metrics.values())
-                maxQryTime = Math.max(maxQryTime, metric.queryMetrics().maximumTime());
+                maxQryTime = Math.max(maxQryTime, metric.getQueryMetrics().getMaximumTime());
         }
 
         return maxQryTime;
@@ -485,7 +485,7 @@ public class VisorCacheAggregatedMetrics implements Serializable {
             execsQry = 0;
 
             for (VisorCacheMetrics metric : metrics.values())
-                execsQry += metric.queryMetrics().executions();
+                execsQry += metric.getQueryMetrics().getExecutions();
         }
 
         return execsQry;
@@ -499,7 +499,7 @@ public class VisorCacheAggregatedMetrics implements Serializable {
             failsQry = 0;
 
             for (VisorCacheMetrics metric : metrics.values())
-                failsQry += metric.queryMetrics().fails();
+                failsQry += metric.getQueryMetrics().getFailures();
         }
 
         return failsQry;

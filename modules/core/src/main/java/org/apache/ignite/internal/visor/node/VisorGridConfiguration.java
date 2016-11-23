@@ -97,21 +97,21 @@ public class VisorGridConfiguration implements Serializable {
         IgniteConfiguration c = ignite.configuration();
 
         basic = new VisorBasicConfiguration(ignite, c);
-        metrics = VisorMetricsConfiguration.from(c);
-        spis = VisorSpisConfiguration.from(c);
-        p2p = VisorPeerToPeerConfiguration.from(c);
-        lifecycle = VisorLifecycleConfiguration.from(c);
+        metrics = new VisorMetricsConfiguration(c);
+        spis = new VisorSpisConfiguration(c);
+        p2p = new VisorPeerToPeerConfiguration(c);
+        lifecycle = new VisorLifecycleConfiguration(c);
         execSvc = new VisorExecutorServiceConfiguration(c);
-        seg = VisorSegmentationConfiguration.from(c);
+        seg = new VisorSegmentationConfiguration(c);
         inclProps = compactArray(c.getIncludeProperties());
         inclEvtTypes = c.getIncludeEventTypes();
-        rest = VisorRestConfiguration.from(c);
+        rest = new VisorRestConfiguration(c);
         userAttrs = c.getUserAttributes();
         igfss = VisorIgfsConfiguration.list(c.getFileSystemConfiguration());
         env = new HashMap<>(System.getenv());
         sysProps = IgniteSystemProperties.snapshot();
         atomic = new VisorAtomicConfiguration(c.getAtomicConfiguration());
-        txCfg = VisorTransactionConfiguration.from(c.getTransactionConfiguration());
+        txCfg = new VisorTransactionConfiguration(c.getTransactionConfiguration());
         memCfg = new VisorMemoryConfiguration(c.getMemoryConfiguration());
     }
 

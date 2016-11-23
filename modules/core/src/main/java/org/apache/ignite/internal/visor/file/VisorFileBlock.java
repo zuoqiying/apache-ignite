@@ -18,13 +18,12 @@
 package org.apache.ignite.internal.visor.file;
 
 import java.io.Serializable;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Represents block of bytes from a file, could be optionally zipped.
  */
-public class VisorFileBlock implements Serializable, LessNamingBean {
+public class VisorFileBlock implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -68,42 +67,42 @@ public class VisorFileBlock implements Serializable, LessNamingBean {
     /**
      * @return File path.
      */
-    public String path() {
+    public String getPath() {
         return path;
     }
 
     /**
      * @return Marker position.
      */
-    public long offset() {
+    public long getOffset() {
         return off;
     }
 
     /**
      * @return File size.
      */
-    public long size() {
+    public long getSize() {
         return size;
     }
 
     /**
      * @return Timestamp of last modification of the file.
      */
-    public long lastModified() {
+    public long getLastModified() {
         return lastModified;
     }
 
     /**
      * @return Whether data was zipped.
      */
-    public boolean zipped() {
+    public boolean isZipped() {
         return zipped;
     }
 
     /**
      * @return Data bytes.
      */
-    public byte[] data() {
+    public byte[] getData() {
         return data;
     }
 

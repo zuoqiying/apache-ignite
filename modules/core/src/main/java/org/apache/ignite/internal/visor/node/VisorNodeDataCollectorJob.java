@@ -24,6 +24,8 @@ import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.FileSystemConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
+import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
 import org.apache.ignite.internal.processors.igfs.IgfsProcessorAdapter;
 import org.apache.ignite.internal.util.ipc.IpcServerEndpoint;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -150,7 +152,9 @@ public class VisorNodeDataCollectorJob extends VisorJob<VisorNodeDataCollectorTa
         try {
             IgniteConfiguration cfg = ignite.configuration();
 
-            for (String cacheName : ignite.context().cache().cacheNames()) {
+            GridCacheProcessor cacheProc = ignite.context().cache();
+
+            for (String cacheName : cacheProc.cacheNames()) {
                 if (proxyCache(cacheName))
                     continue;
 
@@ -158,10 +162,12 @@ public class VisorNodeDataCollectorJob extends VisorJob<VisorNodeDataCollectorTa
                     long start0 = U.currentTimeMillis();
 
                     try {
-                        VisorCache cache = new VisorCache().from(ignite, cacheName, arg.sample());
+                        GridCacheAdapter ca = cacheProc.internalCache(cacheName);
 
-                        if (cache != null)
-                            res.caches().add(cache);
+                        if (ca == null || !ca.context().started())
+                            continue;
+
+                        res.caches().add(new VisorCache(ca, arg.sample()));
                     }
                     catch(IllegalStateException | IllegalArgumentException e) {
                         if (debug && ignite.log() != null)
@@ -206,7 +212,7 @@ public class VisorNodeDataCollectorJob extends VisorJob<VisorNodeDataCollectorTa
                                     ep.getHost(), ep.getPort()));
                     }
 
-                    res.igfss().add(VisorIgfs.from(igfs));
+                    res.igfss().add(new VisorIgfs(igfs));
                 }
                 finally {
                     if (debug)

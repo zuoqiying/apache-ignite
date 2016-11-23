@@ -20,13 +20,12 @@ package org.apache.ignite.internal.visor.igfs;
 import java.io.Serializable;
 import org.apache.ignite.IgniteFileSystem;
 import org.apache.ignite.igfs.IgfsMetrics;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for {@link IgfsMetrics}.
  */
-public class VisorIgfsMetrics implements Serializable, LessNamingBean {
+public class VisorIgfsMetrics implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -73,32 +72,29 @@ public class VisorIgfsMetrics implements Serializable, LessNamingBean {
     private long bytesWrtTm;
 
     /**
+     * Create data transfer object for given IGFS metrics.
+     *
      * @param igfs Source IGFS.
-     * @return Data transfer object for given IGFS metrics.
      */
-    public static VisorIgfsMetrics from(IgniteFileSystem igfs) {
+    public VisorIgfsMetrics(IgniteFileSystem igfs) {
         assert igfs != null;
 
         IgfsMetrics m = igfs.metrics();
 
-        VisorIgfsMetrics metrics = new VisorIgfsMetrics();
-
-        metrics.totalSpaceSz = igfs.configuration().getMaxSpaceSize();
-        metrics.usedSpaceSz = m.localSpaceSize();
-        metrics.foldersCnt = m.directoriesCount();
-        metrics.filesCnt = m.filesCount();
-        metrics.filesOpenedForRd = m.filesOpenedForRead();
-        metrics.filesOpenedForWrt = m.filesOpenedForWrite();
-        metrics.blocksRd = m.blocksReadTotal();
-        metrics.blocksRdRmt = m.blocksReadRemote();
-        metrics.blocksWrt = m.blocksWrittenTotal();
-        metrics.blocksWrtRmt = m.blocksWrittenRemote();
-        metrics.bytesRd = m.bytesRead();
-        metrics.bytesRdTm = m.bytesReadTime();
-        metrics.bytesWrt = m.bytesWritten();
-        metrics.bytesWrtTm = m.bytesWriteTime();
-
-        return metrics;
+        totalSpaceSz = igfs.configuration().getMaxSpaceSize();
+        usedSpaceSz = m.localSpaceSize();
+        foldersCnt = m.directoriesCount();
+        filesCnt = m.filesCount();
+        filesOpenedForRd = m.filesOpenedForRead();
+        filesOpenedForWrt = m.filesOpenedForWrite();
+        blocksRd = m.blocksReadTotal();
+        blocksRdRmt = m.blocksReadRemote();
+        blocksWrt = m.blocksWrittenTotal();
+        blocksWrtRmt = m.blocksWrittenRemote();
+        bytesRd = m.bytesRead();
+        bytesRdTm = m.bytesReadTime();
+        bytesWrt = m.bytesWritten();
+        bytesWrtTm = m.bytesWriteTime();
     }
 
     /**
@@ -146,105 +142,105 @@ public class VisorIgfsMetrics implements Serializable, LessNamingBean {
     /**
      * @return Maximum amount of data that can be stored on local node.
      */
-    public long totalSpaceSize() {
+    public long getTotalSpaceSize() {
         return totalSpaceSz;
     }
 
     /**
      * @return Local used space in bytes on local node.
      */
-    public long usedSpaceSize() {
+    public long getUsedSpaceSize() {
         return usedSpaceSz;
     }
 
     /**
      * @return Local free space in bytes on local node.
      */
-    public long freeSpaceSize() {
+    public long getFreeSpaceSize() {
         return totalSpaceSz - usedSpaceSz;
     }
 
     /**
      * @return Number of directories created in file system.
      */
-    public int foldersCount() {
+    public int getFoldersCount() {
         return foldersCnt;
     }
 
     /**
      * @return Number of files stored in file system.
      */
-    public int filesCount() {
+    public int getFilesCount() {
         return filesCnt;
     }
 
     /**
      * @return Number of files that are currently opened for reading on local node.
      */
-    public int filesOpenedForRead() {
+    public int getFilesOpenedForRead() {
         return filesOpenedForRd;
     }
 
     /**
      * @return Number of files that are currently opened for writing on local node.
      */
-    public int filesOpenedForWrite() {
+    public int getFilesOpenedForWrite() {
         return filesOpenedForWrt;
     }
 
     /**
      * @return Total blocks read, local and remote.
      */
-    public long blocksRead() {
+    public long getBlocksRead() {
         return blocksRd;
     }
 
     /**
      * @return Total remote blocks read.
      */
-    public long blocksReadRemote() {
+    public long getBlocksReadRemote() {
         return blocksRdRmt;
     }
 
     /**
      * @return Total blocks write, local and remote.
      */
-    public long blocksWritten() {
+    public long getBlocksWritten() {
         return blocksWrt;
     }
 
     /**
      * @return Total remote blocks write.
      */
-    public long blocksWrittenRemote() {
+    public long getBlocksWrittenRemote() {
         return blocksWrtRmt;
     }
 
     /**
      * @return Total bytes read.
      */
-    public long bytesRead() {
+    public long getBytesRead() {
         return bytesRd;
     }
 
     /**
      * @return Total bytes read time.
      */
-    public long bytesReadTime() {
+    public long getBytesReadTime() {
         return bytesRdTm;
     }
 
     /**
      * @return Total bytes write.
      */
-    public long bytesWritten() {
+    public long getBytesWritten() {
         return bytesWrt;
     }
 
     /**
      * @return Total bytes write time.
      */
-    public long bytesWriteTime() {
+    public long getBytesWriteTime() {
         return bytesWrtTm;
     }
 

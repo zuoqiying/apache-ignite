@@ -19,14 +19,13 @@ package org.apache.ignite.internal.visor.log;
 
 import java.io.Serializable;
 import java.util.UUID;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Result for log search operation.
  * Contains found line and several lines before and after, plus other info.
  */
-public class VisorLogSearchResult implements Serializable, LessNamingBean {
+public class VisorLogSearchResult implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -89,63 +88,63 @@ public class VisorLogSearchResult implements Serializable, LessNamingBean {
     /**
      * @return Node ID.
      */
-    public UUID nid() {
+    public UUID getNid() {
         return nid;
     }
 
     /**
      * @return File path relative to the search folder.
      */
-    public String filePath() {
+    public String getFilePath() {
         return filePath;
     }
 
     /**
      * @return File size.
      */
-    public long fileSize() {
+    public long getFileSize() {
         return fileSize;
     }
 
     /**
      * @return Timestamp of last modification of the file.
      */
-    public long lastModified() {
+    public long getLastModified() {
         return lastModified;
     }
 
     /**
      * @return Lines of text including found line and several lines before and after.
      */
-    public String[] lines() {
+    public String[] getLines() {
         return lines;
     }
 
     /**
      * @return Line number in the file, 1 based.
      */
-    public int lineNumber() {
+    public int getLineNumber() {
         return lineNum;
     }
 
     /**
      * @return Lines count in the file.
      */
-    public int lineCount() {
+    public int getLineCount() {
         return lineCnt;
     }
 
     /**
      * @return File content encoding.
      */
-    public String encoding() {
+    public String getEncoding() {
         return encoding;
     }
 
     /**
      * @return Found line.
      */
-    public String line() {
+    public String getLine() {
         return lines[lines.length / 2];
     }
 

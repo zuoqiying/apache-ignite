@@ -217,7 +217,7 @@ public class VisorCacheMetrics implements Serializable {
         commitsPerSec = perSecond(m.getAverageTxCommitTime());
         rollbacksPerSec = perSecond(m.getAverageTxRollbackTime());
 
-        qryMetrics = VisorCacheQueryMetrics.from(c.queryMetrics());
+        qryMetrics = new VisorCacheQueryMetrics(c.queryMetrics());
 
         dhtEvictQueueCurrSize = m.getDhtEvictQueueCurrentSize();
         txThreadMapSize = m.getTxThreadMapSize();
@@ -421,7 +421,7 @@ public class VisorCacheMetrics implements Serializable {
     /**
      * @return Gets query metrics for cache.
      */
-    public VisorCacheQueryMetrics queryMetrics() {
+    public VisorCacheQueryMetrics getQueryMetrics() {
         return qryMetrics;
     }
 

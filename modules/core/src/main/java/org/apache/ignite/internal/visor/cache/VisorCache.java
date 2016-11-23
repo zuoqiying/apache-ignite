@@ -23,7 +23,6 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
@@ -92,24 +91,27 @@ public class VisorCache implements Serializable, LessNamingBean {
     private boolean near;
 
     /**
-     * @param ignite Grid.
-     * @param cacheName Cache name.
+     * Create data transfer object for given cache.
+     */
+    public VisorCache() {
+        // No-op.
+    }
+
+    /**
+     * Create data transfer object for given cache.
+     *
+     * @param ca Internal cache.
      * @param sample Sample size.
-     * @return Data transfer object for given cache.
      * @throws IgniteCheckedException If failed to create data transfer object.
      */
-    public VisorCache from(IgniteEx ignite, String cacheName, int sample) throws IgniteCheckedException {
-        assert ignite != null;
+    public VisorCache(GridCacheAdapter ca, int sample) throws IgniteCheckedException {
+        assert ca != null;
 
-        GridCacheAdapter ca = ignite.context().cache().internalCache(cacheName);
+        name = ca.name();
+
 
         // Cache was not started.
-        if (ca == null || !ca.context().started())
-            return null;
-
         GridCacheContext cctx = ca.context();
-
-        name = cacheName;
 
         CacheConfiguration cfg = ca.configuration();
 
@@ -142,23 +144,20 @@ public class VisorCache implements Serializable, LessNamingBean {
         offHeapAllocatedSize = ca.offHeapAllocatedSize();
         offHeapEntriesCnt = ca.offHeapEntriesCount();
         partitions = ca.affinity().partitions();
-        metrics = new VisorCacheMetrics(ignite, cacheName);
+        // TODO: GG-11683 Move to separate thing  metrics = new VisorCacheMetrics(ignite, cacheName);
         near = cctx.isNear();
 
-        estimateMemorySize(ignite, ca, sample);
-
-        return this;
+        estimateMemorySize(ca, sample);
     }
 
     /**
      * Estimate memory size used by cache.
      *
-     * @param ignite Ignite.
      * @param ca Cache adapter.
      * @param sample Sample size.
      * @throws IgniteCheckedException If estimation failed.
      */
-    protected void estimateMemorySize(IgniteEx ignite, GridCacheAdapter ca, int sample) throws IgniteCheckedException {
+    protected void estimateMemorySize(GridCacheAdapter ca, int sample) throws IgniteCheckedException {
         int size = ca.size();
 
         Iterable<GridCacheEntryEx> set = ca.context().isNear()

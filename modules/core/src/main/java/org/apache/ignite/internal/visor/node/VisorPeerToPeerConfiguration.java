@@ -19,16 +19,13 @@ package org.apache.ignite.internal.visor.node;
 
 import java.io.Serializable;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
-
-import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
 
 /**
  * Data transfer object for node P2P configuration properties.
  */
-public class VisorPeerToPeerConfiguration implements Serializable, LessNamingBean {
+public class VisorPeerToPeerConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -39,40 +36,37 @@ public class VisorPeerToPeerConfiguration implements Serializable, LessNamingBea
     private int p2pMissedResCacheSize;
 
     /** List of packages from the system classpath that need to be loaded from task originating node. */
-    private String p2pLocClsPathExcl;
+    private String[] p2pLocClsPathExcl;
 
     /**
+     * Create data transfer object for node P2P configuration properties.
+     *
      * @param c Grid configuration.
-     * @return Data transfer object for node P2P configuration properties.
      */
-    public static VisorPeerToPeerConfiguration from(IgniteConfiguration c) {
-        VisorPeerToPeerConfiguration cfg = new VisorPeerToPeerConfiguration();
-
-        cfg.p2pEnabled = c.isPeerClassLoadingEnabled();
-        cfg.p2pMissedResCacheSize = c.getPeerClassLoadingMissedResourcesCacheSize();
-        cfg.p2pLocClsPathExcl = compactArray(c.getPeerClassLoadingLocalClassPathExclude());
-
-        return cfg;
+    public VisorPeerToPeerConfiguration(IgniteConfiguration c) {
+        p2pEnabled = c.isPeerClassLoadingEnabled();
+        p2pMissedResCacheSize = c.getPeerClassLoadingMissedResourcesCacheSize();
+        p2pLocClsPathExcl = c.getPeerClassLoadingLocalClassPathExclude();
     }
 
     /**
      * @return Whether peer-to-peer class loading is enabled.
      */
-    public boolean p2pEnabled() {
+    public boolean isPeerClassLoadingEnabled() {
         return p2pEnabled;
     }
 
     /**
      * @return Missed resource cache size.
      */
-    public int p2pMissedResponseCacheSize() {
+    public int getPeerClassLoadingMissedResourcesCacheSize() {
         return p2pMissedResCacheSize;
     }
 
     /**
      * @return List of packages from the system classpath that need to be loaded from task originating node.
      */
-    @Nullable public String p2pLocalClassPathExclude() {
+    @Nullable public String[] getPeerClassLoadingLocalClassPathExclude() {
         return p2pLocClsPathExcl;
     }
 

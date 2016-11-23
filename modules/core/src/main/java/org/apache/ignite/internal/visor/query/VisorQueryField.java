@@ -18,14 +18,13 @@
 package org.apache.ignite.internal.visor.query;
 
 import java.io.Serializable;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for query field type description.
  */
-public class VisorQueryField implements Serializable, LessNamingBean {
+public class VisorQueryField implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -59,28 +58,28 @@ public class VisorQueryField implements Serializable, LessNamingBean {
     /**
      * @return Schema name.
      */
-    public String schemaName() {
+    public String getSchemaName() {
         return schemaName;
     }
 
     /**
      * @return Type name.
      */
-    public String typeName() {
+    public String getTypeName() {
         return typeName;
     }
 
     /**
      * @return Field name.
      */
-    public String fieldName() {
+    public String getFieldName() {
         return fieldName;
     }
 
     /**
      * @return Field type name.
      */
-    public String fieldTypeName() {
+    public String getFieldTypeName() {
         return fieldTypeName;
     }
 
@@ -88,7 +87,7 @@ public class VisorQueryField implements Serializable, LessNamingBean {
      * @param schema If {@code true} then add schema name to full name.
      * @return Fully qualified field name with type name and schema name.
      */
-    public String fullName(boolean schema) {
+    public String getFullName(boolean schema) {
         if (!F.isEmpty(typeName)) {
             if (schema && !F.isEmpty(schemaName))
                 return schemaName + "." + typeName + "." + fieldName;

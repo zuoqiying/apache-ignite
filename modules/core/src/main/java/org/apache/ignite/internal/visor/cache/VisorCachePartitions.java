@@ -20,13 +20,12 @@ package org.apache.ignite.internal.visor.cache;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for information about cache partitions.
  */
-public class VisorCachePartitions implements Serializable, LessNamingBean {
+public class VisorCachePartitions implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -69,14 +68,14 @@ public class VisorCachePartitions implements Serializable, LessNamingBean {
     /**
      * @return Get list of primary partitions.
      */
-    public List<VisorCachePartition> primary() {
+    public List<VisorCachePartition> getPrimary() {
         return primary;
     }
 
     /**
      * @return Get list of backup partitions.
      */
-    public List<VisorCachePartition> backup() {
+    public List<VisorCachePartition> getBackup() {
         return backup;
     }
 

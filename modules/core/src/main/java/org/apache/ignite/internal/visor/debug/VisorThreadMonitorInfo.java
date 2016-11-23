@@ -27,46 +27,34 @@ public class VisorThreadMonitorInfo extends VisorThreadLockInfo {
     private static final long serialVersionUID = 0L;
 
     /** Stack depth. */
-    private final Integer stackDepth;
+    private Integer stackDepth;
 
     /** Stack frame. */
-    private final StackTraceElement stackFrame;
+    private StackTraceElement stackFrame;
 
     /**
-     * Create thread monitor info with given parameters.
+     * Create data transfer object for given monitor info.
      *
-     * @param clsName Fully qualified name of the class of the lock object.
-     * @param identityHashCode Identity hash code of the lock object.
-     * @param stackDepth Depth in the stack trace where the object monitor was locked.
-     * @param stackFrame Stack frame that locked the object monitor.
+     * @param mi Monitoring info.
      */
-    public VisorThreadMonitorInfo(String clsName, Integer identityHashCode, Integer stackDepth,
-        StackTraceElement stackFrame) {
-        super(clsName, identityHashCode);
+    public VisorThreadMonitorInfo(MonitorInfo mi) {
+        super(mi);
 
-        this.stackDepth = stackDepth;
-        this.stackFrame = stackFrame;
-    }
-
-    /** Create data transfer object for given monitor info. */
-    public static VisorThreadMonitorInfo from(MonitorInfo mi) {
-        assert mi != null;
-
-        return new VisorThreadMonitorInfo(mi.getClassName(), mi.getIdentityHashCode(), mi.getLockedStackDepth(),
-            mi.getLockedStackFrame());
+        stackDepth = mi.getLockedStackDepth();
+        stackFrame = mi.getLockedStackFrame();
     }
 
     /**
      * @return Stack depth.
      */
-    public Integer stackDepth() {
+    public Integer getStackDepth() {
         return stackDepth;
     }
 
     /**
      * @return Stack frame.
      */
-    public StackTraceElement stackFrame() {
+    public StackTraceElement getStackFrame() {
         return stackFrame;
     }
 }

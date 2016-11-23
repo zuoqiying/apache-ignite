@@ -19,7 +19,6 @@ package org.apache.ignite.internal.visor.node;
 
 import java.io.Serializable;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.plugin.segmentation.SegmentationPolicy;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
 /**
  * Data transfer object for node segmentation configuration properties.
  */
-public class VisorSegmentationConfiguration implements Serializable, LessNamingBean {
+public class VisorSegmentationConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -49,46 +48,43 @@ public class VisorSegmentationConfiguration implements Serializable, LessNamingB
     private boolean passRequired;
 
     /**
+     * Create data transfer object for node segmentation configuration properties.
+     *
      * @param c Grid configuration.
-     * @return Data transfer object for node segmentation configuration properties.
      */
-    public static VisorSegmentationConfiguration from(IgniteConfiguration c) {
-        VisorSegmentationConfiguration cfg = new VisorSegmentationConfiguration();
-
-        cfg.plc = c.getSegmentationPolicy();
-        cfg.resolvers = compactArray(c.getSegmentationResolvers());
-        cfg.checkFreq = c.getSegmentCheckFrequency();
-        cfg.waitOnStart = c.isWaitForSegmentOnStart();
-        cfg.passRequired = c.isAllSegmentationResolversPassRequired();
-
-        return cfg;
+    public VisorSegmentationConfiguration(IgniteConfiguration c) {
+        plc = c.getSegmentationPolicy();
+        resolvers = compactArray(c.getSegmentationResolvers());
+        checkFreq = c.getSegmentCheckFrequency();
+        waitOnStart = c.isWaitForSegmentOnStart();
+        passRequired = c.isAllSegmentationResolversPassRequired();
     }
 
     /**
      * @return Segmentation policy.
      */
-    public SegmentationPolicy policy() {
+    public SegmentationPolicy getPolicy() {
         return plc;
     }
 
     /**
      * @return Segmentation resolvers.
      */
-    @Nullable public String resolvers() {
+    @Nullable public String getResolvers() {
         return resolvers;
     }
 
     /**
      * @return Frequency of network segment check by discovery manager.
      */
-    public long checkFrequency() {
+    public long getCheckFrequency() {
         return checkFreq;
     }
 
     /**
      * @return Whether or not node should wait for correct segment on start.
      */
-    public boolean waitOnStart() {
+    public boolean isWaitOnStart() {
         return waitOnStart;
     }
 

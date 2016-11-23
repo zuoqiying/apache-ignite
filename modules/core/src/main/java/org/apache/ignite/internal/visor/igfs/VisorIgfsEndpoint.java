@@ -18,14 +18,13 @@
 package org.apache.ignite.internal.visor.igfs;
 
 import java.io.Serializable;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * IGFS endpoint descriptor.
  */
-public class VisorIgfsEndpoint implements Serializable, LessNamingBean {
+public class VisorIgfsEndpoint implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -59,35 +58,35 @@ public class VisorIgfsEndpoint implements Serializable, LessNamingBean {
     /**
      * @return IGFS name.
      */
-    @Nullable public String igfsName() {
+    @Nullable public String getIgfsName() {
         return igfsName;
     }
 
     /**
      * @return Grid name.
      */
-    public String gridName() {
+    public String getGridName() {
         return gridName;
     }
 
     /**
      * @return Host address / name.
      */
-    @Nullable public String hostName() {
+    @Nullable public String getHostName() {
         return hostName;
     }
 
     /**
      * @return Port number.
      */
-    public int port() {
+    public int getPort() {
         return port;
     }
 
     /**
      * @return URI Authority
      */
-    public String authority() {
+    public String getAuthority() {
         String addr = hostName + ":" + port;
 
         if (igfsName == null && gridName == null)

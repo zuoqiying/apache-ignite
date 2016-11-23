@@ -19,13 +19,12 @@ package org.apache.ignite.internal.visor.cache;
 
 import java.io.Serializable;
 import org.apache.ignite.cache.query.QueryMetrics;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for cache query metrics.
  */
-public class VisorCacheQueryMetrics implements Serializable, LessNamingBean {
+public class VisorCacheQueryMetrics implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -45,53 +44,49 @@ public class VisorCacheQueryMetrics implements Serializable, LessNamingBean {
     private int fails;
 
     /**
+     * Create data transfer object for given cache metrics.
      * @param m Cache query metrics.
-     * @return Data transfer object for given cache metrics.
      */
-    public static VisorCacheQueryMetrics from(QueryMetrics m) {
-        VisorCacheQueryMetrics qm = new VisorCacheQueryMetrics();
-
-        qm.minTime = m.minimumTime();
-        qm.maxTime = m.maximumTime();
-        qm.avgTime = m.averageTime();
-        qm.execs = m.executions();
-        qm.fails = m.fails();
-
-        return qm;
+    public VisorCacheQueryMetrics(QueryMetrics m) {
+        minTime = m.minimumTime();
+        maxTime = m.maximumTime();
+        avgTime = m.averageTime();
+        execs = m.executions();
+        fails = m.fails();
     }
 
     /**
      * @return Minimum execution time of query.
      */
-    public long minimumTime() {
+    public long getMinimumTime() {
         return minTime;
     }
 
     /**
      * @return Maximum execution time of query.
      */
-    public long maximumTime() {
+    public long getMaximumTime() {
         return maxTime;
     }
 
     /**
      * @return Average execution time of query.
      */
-    public double averageTime() {
+    public double getAverageTime() {
         return avgTime;
     }
 
     /**
      * @return Number of executions.
      */
-    public int executions() {
+    public int getExecutions() {
         return execs;
     }
 
     /**
      * @return Total number of times a query execution failed.
      */
-    public int fails() {
+    public int getFailures() {
         return fails;
     }
 
