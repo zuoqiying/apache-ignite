@@ -47,7 +47,7 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
     public void onPartitionCounterUpdated(int part, long cntr);
 
     /**
-     * Initial counter will be updated on state restore or transition to moving state
+     * Initial counter will be updated on state restore only
      *
      * @param part Partition
      * @param cntr New initial counter
