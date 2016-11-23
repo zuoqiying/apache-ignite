@@ -20,7 +20,6 @@ package org.apache.ignite.internal.visor.cache;
 import java.io.Serializable;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.NearCacheConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.processors.cache.GridCacheUtils;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.evictionPolic
 /**
  * Data transfer object for near cache configuration properties.
  */
-public class VisorCacheNearConfiguration implements Serializable, LessNamingBean {
+public class VisorCacheNearConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -48,50 +47,48 @@ public class VisorCacheNearConfiguration implements Serializable, LessNamingBean
     private Integer nearEvictMaxSize;
 
     /**
+     * Create data transfer object for near cache configuration properties.
+     *
      * @param ccfg Cache configuration.
-     * @return Data transfer object for near cache configuration properties.
+     *
      */
-    public static VisorCacheNearConfiguration from(CacheConfiguration ccfg) {
-        VisorCacheNearConfiguration cfg = new VisorCacheNearConfiguration();
+    public VisorCacheNearConfiguration(CacheConfiguration ccfg) {
+        nearEnabled = GridCacheUtils.isNearEnabled(ccfg);
 
-        cfg.nearEnabled = GridCacheUtils.isNearEnabled(ccfg);
-
-        if (cfg.nearEnabled) {
+        if (nearEnabled) {
             NearCacheConfiguration nccfg = ccfg.getNearConfiguration();
 
-            cfg.nearStartSize = nccfg.getNearStartSize();
-            cfg.nearEvictPlc = compactClass(nccfg.getNearEvictionPolicy());
-            cfg.nearEvictMaxSize = evictionPolicyMaxSize(nccfg.getNearEvictionPolicy());
+            nearStartSize = nccfg.getNearStartSize();
+            nearEvictPlc = compactClass(nccfg.getNearEvictionPolicy());
+            nearEvictMaxSize = evictionPolicyMaxSize(nccfg.getNearEvictionPolicy());
         }
-
-        return cfg;
     }
 
     /**
      * @return {@code true} if near cache enabled.
      */
-    public boolean nearEnabled() {
+    public boolean isNearEnabled() {
         return nearEnabled;
     }
 
     /**
      * @return Near cache start size.
      */
-    public int nearStartSize() {
+    public int getNearStartSize() {
         return nearStartSize;
     }
 
     /**
      * @return Near cache eviction policy.
      */
-    @Nullable public String nearEvictPolicy() {
+    @Nullable public String getNearEvictPolicy() {
         return nearEvictPlc;
     }
 
     /**
      * @return Near cache eviction policy max size.
      */
-    @Nullable public Integer nearEvictMaxSize() {
+    @Nullable public Integer getNearEvictMaxSize() {
         return nearEvictMaxSize;
     }
 

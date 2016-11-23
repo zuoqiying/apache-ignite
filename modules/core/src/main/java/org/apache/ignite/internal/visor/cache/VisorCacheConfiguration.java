@@ -142,7 +142,7 @@ public class VisorCacheConfiguration implements Serializable {
         affinityCfg = new VisorCacheAffinityConfiguration(ccfg);
         rebalanceCfg = new VisorCacheRebalanceConfiguration(ccfg);
         evictCfg = new VisorCacheEvictionConfiguration(ccfg);
-        nearCfg = VisorCacheNearConfiguration.from(ccfg);
+        nearCfg = new VisorCacheNearConfiguration(ccfg);
 
         storeCfg = new VisorCacheStoreConfiguration().from(ignite, ccfg);
 

@@ -872,10 +872,10 @@ object VisorCacheCommand {
         cacheT += ("Synchronous Eviction Timeout", evictCfg.getSynchronizedTimeout)
         cacheT += ("Synchronous Eviction Concurrency Level", evictCfg.getSynchronizedConcurrencyLevel)
 
-        cacheT += ("Near Cache Enabled", bool2Str(nearCfg.nearEnabled()))
-        cacheT += ("Near Start Size", nearCfg.nearStartSize())
-        cacheT += ("Near Eviction Policy", safe(nearCfg.nearEvictPolicy()))
-        cacheT += ("Near Eviction Policy Max Size", safe(nearCfg.nearEvictMaxSize()))
+        cacheT += ("Near Cache Enabled", bool2Str(nearCfg.isNearEnabled))
+        cacheT += ("Near Start Size", nearCfg.getNearStartSize)
+        cacheT += ("Near Eviction Policy", safe(nearCfg.getNearEvictPolicy))
+        cacheT += ("Near Eviction Policy Max Size", safe(nearCfg.getNearEvictMaxSize))
 
         cacheT += ("Default Lock Timeout", cfg.getDefaultLockTimeout)
         cacheT += ("Metadata type count", cfg.getTypeMeta.size())
