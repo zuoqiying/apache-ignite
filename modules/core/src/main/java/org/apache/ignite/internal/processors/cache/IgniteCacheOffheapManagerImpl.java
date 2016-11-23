@@ -84,7 +84,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     protected final ConcurrentMap<Integer, CacheDataStore> partDataStores = new ConcurrentHashMap<>();
 
     /** */
-    protected final CacheDataStore removedStore = new CacheDataStoreImpl(0, -1, null, null, null);
+    protected final CacheDataStore removedStore = new CacheDataStoreImpl(-1, null, null, null);
 
     /** */
     protected PendingEntriesTree pendingEntries;
@@ -682,7 +682,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             rootPage,
             true);
 
-        return new CacheDataStoreImpl(cctx.cacheId(), p, idxName, rowStore, dataTree);
+        return new CacheDataStoreImpl(p, idxName, rowStore, dataTree);
     }
 
     /** {@inheritDoc} */
@@ -740,10 +740,6 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
      */
     protected class CacheDataStoreImpl implements CacheDataStore {
         /** */
-        private final int cacheId;
-
-
-        /** */
         private final int partId;
 
         /** Tree name. */
@@ -770,13 +766,11 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          * @param dataTree Data tree.
          */
         public CacheDataStoreImpl(
-            int cacheId,
             int partId,
             String name,
             CacheDataRowStore rowStore,
             CacheDataTree dataTree
         ) {
-            this.cacheId = cacheId;
             this.partId = partId;
             this.name = name;
             this.rowStore = rowStore;
