@@ -297,6 +297,23 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo)
 
         /**
          * @param {Boolean} demo Is need run command on demo node.
+         * @param {Array.<String>} nids Node ids.
+         * @param {Number} since Metrics since.
+         * @returns {Promise}
+         */
+        queryDetailMetrics(demo, nids, since) {
+            const cmd = new Command(demo, 'exe')
+                .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
+                .addParam('p1', nids)
+                .addParam('p2', 'org.apache.ignite.internal.visor.cache.VisorCacheQueryDetailMetricsCollectorTask')
+                .addParam('p3', 'java.lang.Long')
+                .addParam('p4', since);
+
+            return this.executeRest(cmd);
+        }
+
+        /**
+         * @param {Boolean} demo Is need run command on demo node.
          * @param {String} cacheName Cache name.
          * @returns {Promise}
          */
