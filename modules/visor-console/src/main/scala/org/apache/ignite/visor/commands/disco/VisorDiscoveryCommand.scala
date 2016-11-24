@@ -184,7 +184,7 @@ class VisorDiscoveryCommand extends VisorConsoleCommand {
 
                 evts.take(cnt).foreach {
                     case de: VisorGridDiscoveryEvent =>
-                        t +=(formatDateTime(de.timestamp()), de.name(),
+                        t +=(formatDateTime(de.getTimestamp), de.getName,
                             nodeId8(de.evtNodeId()) + (if (de.isDaemon) "(daemon)" else ""),
                             if (F.isEmpty(de.address())) NA else de.address())
                     case _ =>
@@ -221,7 +221,7 @@ class VisorDiscoveryCommand extends VisorConsoleCommand {
             evts = Seq(root) ++ evts
         }
 
-        evts = evts.sortBy(_.timestamp())
+        evts = evts.sortBy(_.getTimestamp)
 
         if (reverse) evts.reverse else evts
     }

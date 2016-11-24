@@ -64,21 +64,21 @@ public class VisorQueryResultEx extends VisorQueryResult {
     /**
      * @return Response node id.
      */
-    public UUID responseNodeId() {
+    public UUID getResponseNodeId() {
         return resNodeId;
     }
 
     /**
      * @return Query id.
      */
-    public String queryId() {
+    public String getQueryId() {
         return qryId;
     }
 
     /**
      * @return Columns.
      */
-    public Collection<VisorQueryField> columns() {
+    public Collection<VisorQueryField> getColumns() {
         return cols;
     }
 

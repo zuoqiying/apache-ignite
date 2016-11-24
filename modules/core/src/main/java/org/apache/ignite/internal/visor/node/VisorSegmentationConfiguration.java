@@ -45,7 +45,7 @@ public class VisorSegmentationConfiguration implements Serializable {
     private boolean waitOnStart;
 
     /** Whether or not all resolvers should succeed for node to be in correct segment. */
-    private boolean passRequired;
+    private boolean allResolversPassReq;
 
     /**
      * Create data transfer object for node segmentation configuration properties.
@@ -57,7 +57,7 @@ public class VisorSegmentationConfiguration implements Serializable {
         resolvers = compactArray(c.getSegmentationResolvers());
         checkFreq = c.getSegmentCheckFrequency();
         waitOnStart = c.isWaitForSegmentOnStart();
-        passRequired = c.isAllSegmentationResolversPassRequired();
+        allResolversPassReq = c.isAllSegmentationResolversPassRequired();
     }
 
     /**
@@ -91,8 +91,8 @@ public class VisorSegmentationConfiguration implements Serializable {
     /**
      * @return Whether or not all resolvers should succeed for node to be in correct segment.
      */
-    public boolean passRequired() {
-        return passRequired;
+    public boolean isAllSegmentationResolversPassRequired() {
+        return allResolversPassReq;
     }
 
     /** {@inheritDoc} */

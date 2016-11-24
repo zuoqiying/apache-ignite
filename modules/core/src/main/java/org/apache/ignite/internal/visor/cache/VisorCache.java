@@ -23,7 +23,6 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Data transfer object for {@link IgniteCache}.
  */
-public class VisorCache implements Serializable, LessNamingBean {
+public class VisorCache implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -210,7 +209,7 @@ public class VisorCache implements Serializable, LessNamingBean {
     /**
      * @return Cache name.
      */
-    public String name() {
+    public String getName() {
         return name;
     }
 
@@ -219,105 +218,105 @@ public class VisorCache implements Serializable, LessNamingBean {
      *
      * @param name New cache name.
      */
-    public void name(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     /**
      * @return Dynamic deployment ID.
      */
-    public IgniteUuid dynamicDeploymentId() {
+    public IgniteUuid getDynamicDeploymentId() {
         return dynamicDeploymentId;
     }
 
     /**
      * @return Cache mode.
      */
-    public CacheMode mode() {
+    public CacheMode getMode() {
         return mode;
     }
 
     /**
      * @return Cache size in bytes.
      */
-    public long memorySize() {
+    public long getMemorySize() {
         return memorySize;
     }
 
     /**
      * @return Indexes size in bytes.
      */
-    public long indexesSize() {
+    public long getIndexesSize() {
         return indexesSize;
     }
 
     /**
      * @return Number of all entries in cache.
      */
-    public int size() {
+    public int getSize() {
         return size;
     }
 
     /**
      * @return Number of all entries in near cache.
      */
-    public int nearSize() {
+    public int getNearSize() {
         return nearSize;
     }
 
     /**
      * @return Number of all entries in DHT cache.
      */
-    public int dhtSize() {
+    public int getDhtSize() {
         return dhtSize;
     }
 
     /**
      * @return Number of primary entries in cache.
      */
-    public int primarySize() {
+    public int getPrimarySize() {
         return primarySize;
     }
 
     /**
      * @return Memory size allocated in off-heap.
      */
-    public long offHeapAllocatedSize() {
+    public long getOffHeapAllocatedSize() {
         return offHeapAllocatedSize;
     }
 
     /**
      * @return Number of cache entries stored in off-heap memory.
      */
-    public long offHeapEntriesCount() {
+    public long getOffHeapEntriesCount() {
         return offHeapEntriesCnt;
     }
 
     /**
      * @return Number of partitions.
      */
-    public int partitions() {
+    public int getPartitions() {
         return partitions;
     }
 
     /**
      * @return Cache metrics.
      */
-    public VisorCacheMetrics metrics() {
+    public VisorCacheMetrics getMetrics() {
         return metrics;
     }
 
     /**
      * @return Cache partitions states.
      */
-    @Nullable public GridDhtPartitionMap2 partitionMap() {
+    @Nullable public GridDhtPartitionMap2 getPartitionMap() {
         return partitionsMap;
     }
 
     /**
      * @return {@code true} if cache has near cache.
      */
-    public boolean near() {
+    public boolean isNear() {
         return near;
     }
 

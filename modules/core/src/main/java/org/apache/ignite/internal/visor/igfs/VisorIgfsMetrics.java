@@ -73,6 +73,13 @@ public class VisorIgfsMetrics implements Serializable {
 
     /**
      * Create data transfer object for given IGFS metrics.
+     */
+    public VisorIgfsMetrics() {
+        // No-op.
+    }
+
+    /**
+     * Create data transfer object for given IGFS metrics.
      *
      * @param igfs Source IGFS.
      */

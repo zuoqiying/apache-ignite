@@ -190,12 +190,13 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val trn = cfg.getTransaction
 
-        cmnT += ("Transaction Concurrency", trn.defaultTxConcurrency())
-        cmnT += ("Transaction Isolation", trn.defaultTxIsolation())
-        cmnT += ("Transaction Timeout", trn.defaultTxTimeout() + "ms")
-        cmnT += ("Transaction Log Cleanup Delay", trn.pessimisticTxLogLinger() + "ms")
+        cmnT += ("Transaction Concurrency", trn.getDefaultTxConcurrency)
+        cmnT += ("Transaction Isolation", trn.getDefaultTxIsolation)
+        cmnT += ("Transaction Timeout", trn.getDefaultTxTimeout + "ms")
+        cmnT += ("Transaction Log Cleanup Delay", trn.getPessimisticTxLogLinger + "ms")
         cmnT += ("Transaction Log Size", trn.getPessimisticTxLogSize)
-        cmnT += ("Transaction Serializable Enabled", bool2Str(trn.txSerializableEnabled()))
+        cmnT += ("Transaction Manager Factory", trn.getTxManagerFactory)
+        cmnT += ("Transaction Use JTA", bool2Str(trn.isUseJtaSync))
 
         cmnT.render()
 
@@ -227,15 +228,15 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val spisCfg = cfg.getSpis
 
-        spisT += ("Discovery", spiClass(spisCfg.discoverySpi()))
-        spisT += ("Communication", spiClass(spisCfg.communicationSpi()))
-        spisT += ("Event storage", spiClass(spisCfg.eventStorageSpi()))
-        spisT += ("Collision", spiClass(spisCfg.collisionSpi()))
-        spisT += ("Deployment", spiClass(spisCfg.deploymentSpi()))
-        spisT += ("Checkpoints", spisClass(spisCfg.checkpointSpis()))
-        spisT += ("Failovers", spisClass(spisCfg.failoverSpis()))
-        spisT += ("Load balancings", spisClass(spisCfg.loadBalancingSpis()))
-        spisT += ("Indexing", spisClass(spisCfg.indexingSpis()))
+        spisT += ("Discovery", spiClass(spisCfg.getDiscoverySpi))
+        spisT += ("Communication", spiClass(spisCfg.getCommunicationSpi))
+        spisT += ("Event storage", spiClass(spisCfg.getEventStorageSpi))
+        spisT += ("Collision", spiClass(spisCfg.getCollisionSpi))
+        spisT += ("Deployment", spiClass(spisCfg.getDeploymentSpi))
+        spisT += ("Checkpoints", spisClass(spisCfg.getCheckpointSpis))
+        spisT += ("Failovers", spisClass(spisCfg.getFailoverSpis))
+        spisT += ("Load balancings", spisClass(spisCfg.getLoadBalancingSpis))
+        spisT += ("Indexing", spisClass(spisCfg.getIndexingSpis))
 
         spisT.render()
 
@@ -245,9 +246,9 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val p2pCfg = cfg.getP2p
 
-        p2pT += ("Peer class loading enabled", bool2Str(p2pCfg.p2pEnabled()))
-        p2pT += ("Missed resources cache size", p2pCfg.p2pMissedResponseCacheSize())
-        p2pT += ("Peer-to-Peer loaded packages", safe(p2pCfg.p2pLocalClassPathExclude()))
+        p2pT += ("Peer class loading enabled", bool2Str(p2pCfg.isPeerClassLoadingEnabled))
+        p2pT += ("Missed resources cache size", p2pCfg.getPeerClassLoadingMissedResourcesCacheSize)
+        p2pT += ("Peer-to-Peer loaded packages", safe(p2pCfg.getPeerClassLoadingLocalClassPathExclude))
 
         p2pT.render()
 
@@ -255,7 +256,7 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val lifecycleT = VisorTextTable()
 
-        lifecycleT += ("Beans", safe(cfg.getLifecycle.beans()))
+        lifecycleT += ("Beans", safe(cfg.getLifecycle.getBeans))
 
         lifecycleT.render()
 
@@ -281,11 +282,11 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val segmentationCfg = cfg.getSegmentation
 
-        segT += ("Segmentation policy", safe(segmentationCfg.policy()))
-        segT += ("Segmentation resolvers", safe(segmentationCfg.resolvers()))
-        segT += ("Segmentation check frequency", segmentationCfg.checkFrequency())
-        segT += ("Wait for segmentation on start", bool2Str(segmentationCfg.waitOnStart()))
-        segT += ("All resolvers pass required", bool2Str(segmentationCfg.passRequired()))
+        segT += ("Segmentation policy", safe(segmentationCfg.getPolicy))
+        segT += ("Segmentation resolvers", safe(segmentationCfg.getResolvers))
+        segT += ("Segmentation check frequency", segmentationCfg.getCheckFrequency)
+        segT += ("Wait for segmentation on start", bool2Str(segmentationCfg.isWaitOnStart))
+        segT += ("All resolvers pass required", bool2Str(segmentationCfg.isAllSegmentationResolversPassRequired))
 
         segT.render()
 
@@ -305,15 +306,14 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val restCfg = cfg.getRest
 
-        restT += ("REST enabled", bool2Str(restCfg.restEnabled()))
-        restT += ("Rest accessible folders", safe(restCfg.accessibleFolders()))
-        restT += ("Jetty path", safe(restCfg.jettyPath()))
-        restT += ("Jetty host", safe(restCfg.jettyHost()))
-        restT += ("Jetty port", safe(restCfg.jettyPort()))
-        restT += ("Tcp ssl enabled", bool2Str(restCfg.tcpSslEnabled()))
-        restT += ("Tcp ssl context factory", safe(restCfg.tcpSslContextFactory()))
-        restT += ("Tcp host", safe(restCfg.tcpHost()))
-        restT += ("Tcp port", safe(restCfg.tcpPort()))
+        restT += ("REST enabled", bool2Str(restCfg.isRestEnabled))
+        restT += ("Jetty path", safe(restCfg.getJettyPath))
+        restT += ("Jetty host", safe(restCfg.getJettyHost))
+        restT += ("Jetty port", safe(restCfg.getJettyPort))
+        restT += ("Tcp ssl enabled", bool2Str(restCfg.isTcpSslEnabled))
+        restT += ("Tcp ssl context factory", safe(restCfg.getTcpSslContextFactory))
+        restT += ("Tcp host", safe(restCfg.getTcpHost))
+        restT += ("Tcp port", safe(restCfg.getTcpPort))
 
         restT.render()
 

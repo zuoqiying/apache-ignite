@@ -115,7 +115,7 @@ public class VisorNodeDataCollectorTaskResult implements Serializable {
     /**
      * @return All task monitoring state collected from nodes.
      */
-    public Map<UUID, Boolean> getTaskMonitoringEnabled() {
+    public Map<UUID, Boolean> isTaskMonitoringEnabled() {
         return taskMonitoringEnabled;
     }
 

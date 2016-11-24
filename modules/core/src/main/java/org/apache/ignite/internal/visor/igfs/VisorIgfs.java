@@ -42,6 +42,20 @@ public class VisorIgfs implements Serializable {
     private final boolean secondaryFsConfigured;
 
     /**
+     *
+     * @param name
+     * @param mode
+     * @param metrics
+     * @param secondaryFsConfigured
+     */
+    public VisorIgfs(String name, IgfsMode mode, VisorIgfsMetrics metrics, boolean secondaryFsConfigured) {
+        this.name = name;
+        this.mode = mode;
+        this.metrics = metrics;
+        this.secondaryFsConfigured = secondaryFsConfigured;
+    }
+
+    /**
      * Create data transfer object.
      *
      * @param igfs Source IGFS.
