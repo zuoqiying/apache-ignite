@@ -34,6 +34,7 @@ import org.apache.ignite.internal.processors.cache.query.GridCacheTwoStepQuery;
 import org.apache.ignite.internal.processors.query.h2.IgniteH2Indexing;
 import org.apache.ignite.internal.util.typedef.F;
 import org.h2.command.Prepared;
+import org.h2.command.dml.SelectUnion;
 import org.h2.jdbc.JdbcPreparedStatement;
 import org.h2.util.IntArray;
 import org.jetbrains.annotations.Nullable;
@@ -80,10 +81,10 @@ public class GridSqlQuerySplitter {
     private int splitId = -1; // The first one will be 0.
 
     /** */
-    private Set<String> schemas;
+    private Set<String> schemas = new HashSet<>();
 
     /** */
-    private Set<String> tbls;
+    private Set<String> tbls = new HashSet<>();
 
     /** */
     private boolean rdcQrySimple;
@@ -92,7 +93,7 @@ public class GridSqlQuerySplitter {
     private GridCacheSqlQuery rdcSqlQry;
 
     /** */
-    private List<GridCacheSqlQuery> mapSqlQrys;
+    private List<GridCacheSqlQuery> mapSqlQrys = new ArrayList<>();
 
     /** */
     private Object[] params;
@@ -101,7 +102,7 @@ public class GridSqlQuerySplitter {
     private boolean collocatedGrpBy;
 
     /** */
-    private IdentityHashMap<GridSqlAst, GridSqlAlias> uniqueFromAliases;
+    private IdentityHashMap<GridSqlAst, GridSqlAlias> uniqueFromAliases = new IdentityHashMap<>();
 
     /**
      * @param params Query parameters.
@@ -169,20 +170,14 @@ public class GridSqlQuerySplitter {
 
         GridSqlQuerySplitter splitter = new GridSqlQuerySplitter(params, collocatedGrpBy);
 
-        splitter.tbls = new HashSet<>();
-        splitter.schemas = new HashSet<>();
-        splitter.uniqueFromAliases = new IdentityHashMap<>();
-
         // Normalization will generate unique aliases for all the table filters in FROM.
         // Also it will collect all tables and schemas from the query.
         splitter.normalizeQuery(qry);
 
-        splitter.uniqueFromAliases = null; // We do not need this stuff anymore after normalization.
-
         // Here we will have correct normalized AST with optimized join order.
         qry = optimize(h2, stmt.getConnection(), qry, params, enforceJoinOrder);
 
-        // Do the actual query split. The result will be our reduce query.
+        // Do the actual query split. We will update the original query AST, need to be careful.
         splitter.splitQuery(qry);
 
         qry = null; // Do not use it after the split.
@@ -209,17 +204,35 @@ public class GridSqlQuerySplitter {
      * @param qry Optimized and normalized query to split.
      */
     private void splitQuery(GridSqlQuery qry) {
-        // Create a fake parent AST element for the query to allow replacing the query.
+        // Create a fake parent AST element for the query to allow replacing the query in the parent by split.
         GridSqlSubquery fakeQryPrnt = new GridSqlSubquery(qry);
 
         // Fake parent query model. We need it just for convenience because buildQueryModel needs parent model.
-        QueryModel fakeQrym = new QueryModel(null, null, -1);
+        QueryModel fakeQrymPrnt = new QueryModel(null, null, -1);
 
         // Build a simplified query model. We need it because navigation over the original AST is too complex.
-        buildQueryModel(fakeQrym, fakeQryPrnt, 0);
+        buildQueryModel(fakeQrymPrnt, fakeQryPrnt, 0);
 
-        // Split the real query model, that will be the only child of our fake model.
-        splitQueryModel(fakeQrym.get(0));
+        assert fakeQrymPrnt.size() == 1;
+
+        // Get the built query model from the fake parent.
+        QueryModel qrym = fakeQrymPrnt.get(0);
+
+        // Setup the needed information for split.
+        analyzeQueryModel(qrym);
+
+        // If we have child queries to split, then go hard way.
+        if (qrym.needSplitChild) {
+            assert !qrym.needSplit; // We split only the downmost child.
+
+            // All the siblings to selects we are going to split must be also wrapped into subqueries.
+            pushDownQueryModel(null, qrym);
+
+            // Split the query model into multiple map queries and a single reduce query.
+            splitQueryModel(qrym);
+        }
+        else // Just split the top level query.
+            splitQueryModelSimple(qrym);
 
         // Get back the updated query from the fake parent. It will be our reduce query.
         qry = fakeQryPrnt.subquery();
@@ -232,14 +245,111 @@ public class GridSqlQuerySplitter {
     }
 
     /**
-     * @param qrym Query model to split.
+     * @param qrym Query model.
+     */
+    private void pushDownQueryModel(QueryModel prnt, QueryModel qrym) {
+        switch (qrym.type) {
+            case UNION:
+                for (QueryModel child : qrym)
+                    pushDownQueryModel(qrym, child);
+
+                break;
+
+            case SELECT:
+                if (qrym.needSplit) {
+
+                }
+
+                // TODO decide if we need a push down in this select looking at prnt
+
+                break;
+
+            default:
+                throw new IllegalStateException("Type: " + qrym.type);
+        }
+    }
+
+    /**
+     * @param qrym Query model.
      */
     private void splitQueryModel(QueryModel qrym) {
-        // Map query will be direct reference to the original query AST.
-        // Thus all the modifications will be performed on the original AST, so we should be careful when
-        // nullifying or updating things, have to make sure that we will not need them in the original form later.
-        // TODO handle UNION
-        splitSelect(qrym.prnt, qrym.childIdx);
+
+    }
+
+    /**
+     * @param qrym Query model.
+     */
+    private void splitQueryModelSimple(QueryModel qrym) {
+        assert !qrym.needSplitChild && !qrym.needSplit;
+
+        switch (qrym.type) {
+            case SELECT:
+                splitSelect(qrym.prnt, qrym.childIdx);
+
+                break;
+
+            case UNION:
+                for (int i = 0; i < qrym.size(); i++) {
+                    QueryModel child = qrym.get(i);
+
+                    assert child.type == Type.SELECT: child.type;
+
+                    splitQueryModelSimple(child);
+                }
+
+                break;
+
+            default:
+                throw new IllegalStateException("Type: " + qrym.type);
+        }
+    }
+
+    /**
+     * @param qrym Query model.
+     */
+    private void analyzeQueryModel(QueryModel qrym) {
+        if (!qrym.isQuery())
+            return;
+
+        // Process all the children at the beginning: depth first analysis.
+        for (int i = 0; i < qrym.size(); i++) {
+            QueryModel child = qrym.get(i);
+
+            analyzeQueryModel(child);
+
+            // Pull up information about the splitting child.
+            if (child.needSplit || child.needSplitChild)
+                qrym.needSplitChild = true; // We have a child to split.
+        }
+
+        if (qrym.type == Type.SELECT) {
+            // We may need to split the SELECT only if it has no splittable children,
+            // because only the downmost child can be split, the parents will be the part of
+            // the reduce query.
+            if (!qrym.needSplitChild)
+                qrym.needSplit = needSplitSelect(qrym.<GridSqlSelect>ast()); // Only SELECT can have this flag in true.
+        }
+        else if (qrym.type == Type.UNION) {
+            // If it is not a UNION ALL, then we have to split because otherwise we can produce duplicates or
+            // wrong results for UNION DISTINCT, EXCEPT, INTERSECT queries.
+            if (!qrym.needSplitChild && !qrym.unionAll)
+                qrym.needSplitChild = true;
+
+            // If we have to split some child SELECT in this UNION, then we have to enforce split
+            // for all other united selects, because this UNION has to be a part of the reduce query,
+            // thus each SELECT needs to have a reduce part for this UNION, but the whole SELECT can not
+            // be a reduce part (usually).
+            if (qrym.needSplitChild) {
+                for (int i = 0; i < qrym.size(); i++) {
+                    QueryModel child = qrym.get(i);
+
+                    assert child.type == Type.SELECT : child.type;
+
+                    if (!child.needSplitChild && !child.needSplit)
+                        child.needSplit = true;
+                }
+            }
+        }
     }
 
     /**
@@ -247,7 +357,7 @@ public class GridSqlQuerySplitter {
      * @param prnt Parent AST element.
      * @param childIdx Child index.
      */
-    private static void buildQueryModel(QueryModel prntModel, GridSqlAst prnt, int childIdx) {
+    private void buildQueryModel(QueryModel prntModel, GridSqlAst prnt, int childIdx) {
         GridSqlAst child = prnt.child(childIdx);
 
         assert child != null;
@@ -270,6 +380,9 @@ public class GridSqlQuerySplitter {
 
                 prntModel.add(model);
             }
+
+            if (((GridSqlUnion)child).unionType() != SelectUnion.UNION_ALL)
+                model.unionAll = false;
 
             buildQueryModel(model, child, GridSqlUnion.LEFT_CHILD);
             buildQueryModel(model, child, GridSqlUnion.RIGHT_CHILD);
@@ -298,6 +411,28 @@ public class GridSqlQuerySplitter {
                     throw new IllegalStateException("Unknown child type: " + child.getClass());
             }
         }
+    }
+
+    /**
+     * @param select Select to check.
+     * @return {@code true} If we need to split this select.
+     */
+    private boolean needSplitSelect(GridSqlSelect select) {
+        if (select.distinct())
+            return true;
+
+        if (collocatedGrpBy)
+            return false;
+
+        if (select.groupColumns() != null)
+            return true;
+
+        for (int i = 0; i < select.allColumns(); i++) {
+            if (hasAggregates(select.column(i)))
+                return true;
+        }
+
+        return false;
     }
 
     /**
@@ -432,9 +567,6 @@ public class GridSqlQuerySplitter {
 
         setupParameters(map, mapQry, params);
         map.columns(collectColumns(mapExps));
-
-        if (mapSqlQrys == null)
-            mapSqlQrys = new ArrayList<>(8);
 
         mapSqlQrys.add(map);
     }
@@ -1096,7 +1228,7 @@ public class GridSqlQuerySplitter {
      * - UNION  : All the children are united left and right query models.
      * - TABLE and FUNCTION : Never have child models.
      */
-    private static class QueryModel extends ArrayList<QueryModel> {
+    private static final class QueryModel extends ArrayList<QueryModel> {
         /** */
         final Type type;
 
@@ -1105,6 +1237,15 @@ public class GridSqlQuerySplitter {
 
         /** */
         int childIdx;
+
+        /** If it is a SELECT and we need to split it. Makes sense only for type SELECT. */
+        boolean needSplit;
+
+        /** If we have a child SELECT that we should split. */
+        boolean needSplitChild;
+
+        /** If this is UNION ALL. Makes sense only for type UNION.*/
+        boolean unionAll = true;
 
         /**
          * @param type Type.
@@ -1115,6 +1256,20 @@ public class GridSqlQuerySplitter {
             this.type = type;
             this.prnt = prnt;
             this.childIdx = childIdx;
+        }
+
+        /**
+         * @return The actual AST element for this model.
+         */
+        private <X extends GridSqlAst> X ast() {
+            return prnt.child(childIdx);
+        }
+
+        /**
+         * @return {@code true} If this is a SELECT or UNION query model.
+         */
+        private boolean isQuery() {
+            return type == Type.SELECT || type == Type.UNION;
         }
     }
 
