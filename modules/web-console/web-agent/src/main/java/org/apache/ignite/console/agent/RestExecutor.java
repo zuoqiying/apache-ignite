@@ -18,9 +18,7 @@
 package org.apache.ignite.console.agent;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 import java.util.Map;
 import okhttp3.FormBody;
 import okhttp3.HttpUrl;
@@ -29,7 +27,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.console.demo.*;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.log4j.Logger;
 
@@ -42,9 +40,6 @@ public class RestExecutor {
 
     /** */
     private final OkHttpClient httpClient;
-
-    /** Demo node URL. */
-    private String demoUrl;
 
     /** Node URL. */
     private String nodeUrl;
@@ -82,10 +77,12 @@ public class RestExecutor {
 
         final Request.Builder reqBuilder = new Request.Builder();
 
-        if (demo && this.demoUrl == null)
+        String url = demo ? AgentClusterDemo.getDemoUrl() : this.nodeUrl;
+
+        if (url == null)
             return RestResult.fail(404, "Demo node is not started yet.");
 
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(demo ? this.demoUrl : this.nodeUrl)
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(url)
             .newBuilder();
 
         if (path != null)
@@ -127,15 +124,13 @@ public class RestExecutor {
         else
             throw new IOException("Unknown HTTP-method: " + mtd);
 
-        HttpUrl url = urlBuilder.build();
-
-        reqBuilder.url(url);
+        reqBuilder.url(urlBuilder.build());
 
         try (Response resp = httpClient.newCall(reqBuilder.build()).execute()) {
             return RestResult.success(resp.code(), resp.body().string());
         }
         catch (ConnectException e) {
-            log.info("Failed connect to node and execute REST command [url=" + url + "]");
+            log.info("Failed connect to node and execute REST command [url=" + urlBuilder + "]");
 
             return RestResult.fail(404, "Failed connect to node and execute REST command.");
         }

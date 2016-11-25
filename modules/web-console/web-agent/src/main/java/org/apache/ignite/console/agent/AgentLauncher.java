@@ -41,9 +41,10 @@ import org.apache.ignite.console.agent.handlers.DatabaseHandler;
 import org.apache.ignite.console.agent.handlers.RestHandler;
 import org.apache.ignite.console.agent.handlers.TopologyHandler;
 import org.apache.ignite.internal.util.typedef.X;
-import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static io.socket.client.Socket.EVENT_CONNECT;
 import static io.socket.client.Socket.EVENT_CONNECTING;
@@ -57,16 +58,16 @@ import static io.socket.client.Socket.EVENT_RECONNECTING;
  */
 public class AgentLauncher {
     /** */
-    private static final Logger log = Logger.getLogger(AgentLauncher.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AgentLauncher.class);
 
     /** */
-    private static final String EVENT_START_COLLECT_TOPOLOGY = "cluster:start:collect";
+    private static final String EVENT_AGENT_ACK = "ack";
 
     /** */
-    private static final String EVENT_STOP_COLLECT_TOPOLOGY = "cluster:stop:collect";
+    private static final String EVENT_START_COLLECT_TOPOLOGY = "collect:start";
 
     /** */
-    private static final String EVENT_NODE_REST = "node:rest";
+    private static final String EVENT_STOP_COLLECT_TOPOLOGY = "collect:stop";
 
     /** */
     private static final String EVENT_SCHEMA_IMPORT_DRIVERS = "schemaImport:drivers";
@@ -78,10 +79,10 @@ public class AgentLauncher {
     private static final String EVENT_SCHEMA_IMPORT_METADATA = "schemaImport:metadata";
 
     /** */
-    private static final String EVENT_AGENT_WARNING = "agent:warning";
+    private static final String EVENT_NODE_VISOR_TASK = "node:visorTask";
 
     /** */
-    private static final String EVENT_AGENT_CLOSE = "agent:close";
+    private static final String EVENT_NODE_REST = "node:rest";
 
     /** */
     private static final int RECONNECT_INTERVAL = 3000;
@@ -317,30 +318,40 @@ public class AgentLauncher {
                 .on(EVENT_CONNECT, onConnect)
                 .on(EVENT_CONNECT_ERROR, onError)
                 .on(EVENT_RECONNECTING, onConnecting)
-
+                .on(EVENT_ERROR, onError)
+                .on(EVENT_DISCONNECT, onDisconnect)
                 .on(EVENT_START_COLLECT_TOPOLOGY, topHnd.start())
                 .on(EVENT_STOP_COLLECT_TOPOLOGY, topHnd.stop())
-
+                .on(EVENT_NODE_VISOR_TASK, restHnd)
                 .on(EVENT_NODE_REST, restHnd)
-
                 .on(EVENT_SCHEMA_IMPORT_DRIVERS, dbHnd.availableDriversListener())
                 .on(EVENT_SCHEMA_IMPORT_SCHEMAS, dbHnd.schemasListener())
                 .on(EVENT_SCHEMA_IMPORT_METADATA, dbHnd.metadataListener())
-
-                .on(EVENT_ERROR, onError)
-                .on(EVENT_DISCONNECT, onDisconnect)
-                .on(EVENT_AGENT_WARNING, new Emitter.Listener() {
+                .on(EVENT_AGENT_ACK, new Emitter.Listener() {
                     @Override public void call(Object... args) {
-                        log.warn(args[0]);
-                    }
-                })
-                .on(EVENT_AGENT_CLOSE, new Emitter.Listener() {
-                    @Override public void call(Object... args) {
-                        onDisconnect.call(args);
+                        if (args.length != 2) {
+                            log.warn("Incorrect arguments for command: " + Arrays.toString(args));
 
-                        client.off();
+                            return;
+                        }
 
-                        latch.countDown();
+                        String type = String.valueOf(args[0]);
+                        String msg = String.valueOf(args[1]);
+
+                        switch (type) {
+                            case "ERROR":
+                                log.error(msg);
+
+                                break;
+
+                            case "WARN":
+                                log.warn(msg);
+
+                                break;
+
+                            default:
+                                log.debug(msg);
+                        }
                     }
                 });
 

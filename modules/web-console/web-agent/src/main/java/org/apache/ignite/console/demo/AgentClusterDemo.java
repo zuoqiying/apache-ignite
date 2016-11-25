@@ -25,11 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.Ignite;
@@ -42,7 +38,6 @@ import org.apache.ignite.cache.QueryIndexType;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.console.agent.AgentConfiguration;
 import org.apache.ignite.console.demo.model.Car;
 import org.apache.ignite.console.demo.model.Country;
 import org.apache.ignite.console.demo.model.Department;
@@ -81,6 +76,9 @@ public class AgentClusterDemo {
 
     /** */
     private static final AtomicBoolean INIT_LATCH = new AtomicBoolean();
+
+    /** */
+    private static volatile String demoUrl;
 
     /** */
     private static final int NODE_CNT = 3;
@@ -490,7 +488,7 @@ public class AgentClusterDemo {
         populateCacheEmployee(ignite, diff);
         populateCacheCar(ignite);
 
-        ScheduledExecutorService cachePool = newScheduledThreadPool(2, "demo-sql-load-cache-tasks");
+        ScheduledExecutorService cachePool = newScheduledThreadPool(2, "demo-load-cache-tasks");
 
         cachePool.scheduleWithFixedDelay(new Runnable() {
             @Override public void run() {
@@ -575,69 +573,71 @@ public class AgentClusterDemo {
     /**
      * Start ignite node with cacheEmployee and populate it with data.
      */
-    public static boolean testDrive(AgentConfiguration cfg) {
+    private static void tryStart() {
         if (INIT_LATCH.compareAndSet(false, true)) {
             log.info("DEMO: Starting embedded nodes for demo...");
 
-            System.setProperty(IGNITE_ATOMIC_CACHE_DELETE_HISTORY_SIZE, "1");
-            System.setProperty(IGNITE_PERFORMANCE_SUGGESTIONS_DISABLED, "true");
-            System.setProperty(IGNITE_UPDATE_NOTIFIER, "false");
+            final AtomicInteger cnt = new AtomicInteger(-1);
 
-            System.setProperty(IGNITE_JETTY_PORT, "60800");
-            System.setProperty(IGNITE_NO_ASCII, "true");
+            final ScheduledExecutorService execSrv = newScheduledThreadPool(1, "demo-nodes-start");
 
-            try {
-                IgniteEx ignite = (IgniteEx)Ignition.start(igniteConfiguration(0, false));
+            execSrv.scheduleAtFixedRate(new Runnable() {
+                @Override public void run() {
+                    int idx = cnt.incrementAndGet();
 
-                final AtomicInteger cnt = new AtomicInteger(0);
+                    try {
+                        System.setProperty(IGNITE_ATOMIC_CACHE_DELETE_HISTORY_SIZE, "1");
+                        System.setProperty(IGNITE_PERFORMANCE_SUGGESTIONS_DISABLED, "true");
+                        System.setProperty(IGNITE_UPDATE_NOTIFIER, "false");
 
-                final ScheduledExecutorService execSrv = Executors.newSingleThreadScheduledExecutor();
+                        System.setProperty(IGNITE_JETTY_PORT, "60800");
+                        System.setProperty(IGNITE_NO_ASCII, "true");
 
-                execSrv.scheduleAtFixedRate(new Runnable() {
-                    @Override public void run() {
-                        int idx = cnt.incrementAndGet();
+                        IgniteEx ignite = (IgniteEx)Ignition.start(igniteConfiguration(idx, idx == NODE_CNT));
 
-                        try {
-                            Ignition.start(igniteConfiguration(idx, idx == NODE_CNT));
-                        }
-                        catch (Throwable e) {
-                            log.error("DEMO: Failed to start embedded node: " + e.getMessage());
-                        }
-                        finally {
-                            if (idx == NODE_CNT)
+                        if (idx == 0) {
+                            Collection<String> jettyAddrs = ignite.localNode().attribute(ATTR_REST_JETTY_ADDRS);
+
+                            String host = jettyAddrs == null ? null : jettyAddrs.iterator().next();
+
+                            Integer port = ignite.localNode().attribute(ATTR_REST_JETTY_PORT);
+
+                            if (F.isEmpty(host) || port == null) {
+                                log.error("DEMO: Failed to start embedded node with rest!");
+
                                 execSrv.shutdown();
+                            } else {
+                                log.debug("DEMO: Started embedded node for demo purpose");
+
+                                demoUrl = String.format("http://%s:%d", host, port);
+
+                                startLoad(ignite, 20);
+                            }
                         }
                     }
-                }, 10, 10, TimeUnit.SECONDS);
+                    catch (Throwable e) {
+                        log.error("DEMO: Failed to start embedded node: " + e.getMessage());
+                    }
+                    finally {
+                        if (idx == NODE_CNT) {
+                            log.debug("DEMO: All embedded nodes for demo successfully started");
 
-                if (log.isDebugEnabled())
-                    log.debug("DEMO: Started embedded nodes with indexed enabled caches...");
-
-                Collection<String> jettyAddrs = ignite.localNode().attribute(ATTR_REST_JETTY_ADDRS);
-
-                String host = jettyAddrs == null ? null : jettyAddrs.iterator().next();
-
-                Integer port = ignite.localNode().attribute(ATTR_REST_JETTY_PORT);
-
-                if (F.isEmpty(host) || port == null) {
-                    log.error("DEMO: Failed to start embedded node with rest!");
-
-                    return false;
+                            execSrv.shutdown();
+                        }
+                    }
                 }
-
-                cfg.demoNodeUri(String.format("http://%s:%d", host, port));
-
-                log.info("DEMO: Embedded nodes for sql and monitoring demo successfully started");
-
-                startLoad(ignite, 20);
-            }
-            catch (Exception e) {
-                log.error("DEMO: Failed to start embedded node for sql and monitoring demo!", e);
-
-                return false;
-            }
+            }, 0, 10, TimeUnit.SECONDS);
         }
+    }
 
-        return true;
+    /**
+     * Get demo node url.
+     *
+     * @return Demo node url if started or {@code null} otherwise.
+     */
+    public static String getDemoUrl() {
+        tryStart();
+
+        return demoUrl;
     }
 }
