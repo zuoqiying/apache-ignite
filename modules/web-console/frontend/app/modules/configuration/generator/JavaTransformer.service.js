@@ -395,7 +395,7 @@ export default ['JavaTypes', 'igniteEventGroups', 'IgniteConfigurationGenerator'
                         return `${item}L`;
                     case 'java.io.Serializable':
                     case 'java.lang.String':
-                        return `"${item}"`;
+                        return `"${item.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
                     case 'PATH':
                         return `"${item.replace(/\\/g, '\\\\')}"`;
                     case 'java.lang.Class':

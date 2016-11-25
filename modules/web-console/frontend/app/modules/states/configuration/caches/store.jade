@@ -92,13 +92,15 @@ mixin hibernateField(name, model, items, valid, save, newItem)
                                         'Maximum batch size for writeAll and deleteAll operations')
                                 .details-row
                                     +number('Thread count:', pojoStoreFactory + '.maximumPoolSize', '"pojoMaximumPoolSize"', true, 'availableProcessors', '1',
-                                        'Maximum workers thread count. These threads are responsible for load cache')
+                                        'Maximum workers thread count.<br/>\
+                                        These threads are responsible for load cache.')
                                 .details-row
                                     +number('Maximum write attempts:', pojoStoreFactory + '.maximumWriteAttempts', '"pojoMaximumWriteAttempts"', true, '2', '0',
                                         'Maximum write attempts in case of database error')
                                 .details-row
                                     +number('Parallel load threshold:', pojoStoreFactory + '.parallelLoadCacheMinimumThreshold', '"pojoParallelLoadCacheMinimumThreshold"', true, '512', '0',
-                                        'Parallel load cache minimum threshold. If <b>0</b> then load sequentially')
+                                        'Parallel load cache minimum threshold.<br/>\
+                                        If <b>0</b> then load sequentially.')
                                 .details-row
                                     +java-class('Hasher', pojoStoreFactory + '.hasher', '"pojoHasher"', 'true', 'false', 'Hash calculator')
                                 .details-row
