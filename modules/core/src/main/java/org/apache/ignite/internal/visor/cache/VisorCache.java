@@ -23,6 +23,7 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
@@ -103,7 +104,7 @@ public class VisorCache implements Serializable {
      * @param sample Sample size.
      * @throws IgniteCheckedException If failed to create data transfer object.
      */
-    public VisorCache(GridCacheAdapter ca, int sample) throws IgniteCheckedException {
+    public VisorCache(IgniteEx ignite, GridCacheAdapter ca, int sample) throws IgniteCheckedException {
         assert ca != null;
 
         name = ca.name();
@@ -143,7 +144,7 @@ public class VisorCache implements Serializable {
         offHeapAllocatedSize = ca.offHeapAllocatedSize();
         offHeapEntriesCnt = ca.offHeapEntriesCount();
         partitions = ca.affinity().partitions();
-        // TODO: GG-11683 Move to separate thing  metrics = new VisorCacheMetrics(ignite, cacheName);
+        metrics = new VisorCacheMetrics(ignite, ca.name()); // TODO: GG-11683 Move to separate thing
         near = cctx.isNear();
 
         estimateMemorySize(ca, sample);
