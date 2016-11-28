@@ -1440,6 +1440,19 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     private void assignPartitionStates(GridDhtPartitionTopology top) {
         Map<Integer, CounterWithNodes> maxCntrs = new HashMap<>();
 
+        if (top.cacheId() == CU.cacheId("cache1")) {
+            for (Map.Entry<UUID, GridDhtPartitionsAbstractMessage> entry : msgs.entrySet()) {
+                ClusterNode node = cctx.discovery().node(entry.getKey());
+
+                if (node!= null)
+                    System.out.print(node.consistentId());
+
+                Long cache1 = entry.getValue().partitionUpdateCounters(CU.cacheId("cache1")).get(3);
+
+                System.out.println(" - " + cache1);
+            }
+        }
+
         for (Map.Entry<UUID, GridDhtPartitionsAbstractMessage> e : msgs.entrySet()) {
             assert e.getValue().partitionUpdateCounters(top.cacheId()) != null;
 
@@ -1490,6 +1503,16 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             if (maxCntr == 0)
                 continue;
+
+//            if (p == 3) {
+                System.out.print("% owner ( " + p + " ) - ");
+
+                for (UUID node : e.getValue().nodes) {
+                    System.out.print(cctx.discovery().node(node).consistentId() + ", ");
+                }
+
+                System.out.println();
+//            }
 
             updated = top.setOwners(p, e.getValue().nodes, updated);
         }

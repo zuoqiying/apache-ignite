@@ -58,6 +58,7 @@ import org.apache.ignite.internal.util.lang.GridCursor;
 import org.apache.ignite.internal.util.lang.GridIterator;
 import org.apache.ignite.internal.util.lang.IgniteInClosure2X;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteClosure;
@@ -285,6 +286,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         GridDhtLocalPartition part
     ) throws IgniteCheckedException {
         assert expireTime >= 0;
+
+        log().error("% UPDATE key - " + key.value(cctx.cacheObjectContext(), false) + ", value - " + val.value(cctx.cacheObjectContext(), false));
 
         dataStore(part).update(key, partId, val, ver, expireTime);
     }

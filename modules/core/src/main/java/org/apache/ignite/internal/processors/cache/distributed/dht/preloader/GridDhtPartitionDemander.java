@@ -61,6 +61,7 @@ import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.CI1;
 import org.apache.ignite.internal.util.typedef.CI2;
 import org.apache.ignite.internal.util.typedef.T2;
+import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -570,6 +571,18 @@ public class GridDhtPartitionDemander {
             // Preload.
             for (Map.Entry<Integer, CacheEntryInfoCollection> e : supply.infos().entrySet()) {
                 int p = e.getKey();
+
+                if (cctx.cacheId() == CU.cacheId("cache1") ) {
+                    StringBuilder builder = new StringBuilder("% " + p +  "Keys: ");
+                    for (GridCacheEntryInfo info : e.getValue().infos()) {
+                        builder.append((Object) info.key().value(cctx.cacheObjectContext(), false));
+                        builder.append(", ");
+                    }
+
+                    log.error(builder.toString());
+                }
+
+
 
                 if (cctx.affinity().localNode(p, topVer)) {
                     GridDhtLocalPartition part = top.localPartition(p, topVer, true);
@@ -1352,6 +1365,18 @@ public class GridDhtPartitionDemander {
 
                                     try {
                                         Collection<Integer> invalidParts = new GridLeanSet<>();
+
+
+                                        if (cctx.cacheId() == CU.cacheId("cache1")) {
+                                            StringBuilder builder = new StringBuilder("% " + p +  "Keys: ");
+                                            for (GridCacheEntryInfo info : e.getValue().infos()) {
+                                                builder.append((Object) info.key().value(cctx.cacheObjectContext(), false));
+                                                builder.append(", ");
+                                            }
+
+                                            log.error(builder.toString());
+                                        }
+
 
                                         // Loop through all received entries and try to preload them.
                                         for (GridCacheEntryInfo entry : e.getValue().infos()) {

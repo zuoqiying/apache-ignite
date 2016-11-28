@@ -185,6 +185,20 @@ public abstract class PagesList extends DataStructure {
                     for (int i = 0; i < upd.length; i++)
                         tails[i] = new Stripe(upd[i]);
 
+//                    for (int i = 0; i < upd.length; i++) {
+//                        try (Page page = pageMem.page(cacheId, upd[i])) {
+//                            ByteBuffer read = page.getForRead();
+//                            try {
+//                                long id = PageIO.getPageId(read);
+//                                System.out.println("id = " + U.hexLong(upd[i]) + ", fromPageId = " + U.hexLong(id) + ", equal = " + (id == upd[i]));
+//                            }
+//                            finally {
+//                                page.releaseRead();
+//                            }
+//                        }
+//                        tails[i] = new Stripe(upd[i]);
+//                    }
+
                     boolean ok = casBucket(bucket, null, tails);
                     assert ok;
                 }
