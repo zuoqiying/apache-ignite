@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.visor.cache.VisorCache;
 import org.apache.ignite.internal.visor.event.VisorGridEvent;
 import org.apache.ignite.internal.visor.igfs.VisorIgfs;
@@ -34,7 +33,7 @@ import org.apache.ignite.internal.visor.util.VisorExceptionWrapper;
 /**
  * Data collector task result.
  */
-public class VisorNodeDataCollectorTaskResult implements Serializable, LessNamingBean {
+public class VisorNodeDataCollectorTaskResult implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -95,84 +94,84 @@ public class VisorNodeDataCollectorTaskResult implements Serializable, LessNamin
     /**
      * @return Unhandled exceptions from nodes.
      */
-    public Map<UUID, VisorExceptionWrapper> unhandledEx() {
+    public Map<UUID, VisorExceptionWrapper> getUnhandledEx() {
         return unhandledEx;
     }
 
     /**
      * @return Nodes grid names.
      */
-    public Map<UUID, String> gridNames() {
+    public Map<UUID, String> getGridNames() {
         return gridNames;
     }
 
     /**
      * @return Nodes topology versions.
      */
-    public Map<UUID, Long> topologyVersions() {
+    public Map<UUID, Long> getTopologyVersions() {
         return topVersions;
     }
 
     /**
      * @return All task monitoring state collected from nodes.
      */
-    public Map<UUID, Boolean> taskMonitoringEnabled() {
+    public Map<UUID, Boolean> isTaskMonitoringEnabled() {
         return taskMonitoringEnabled;
     }
 
     /**
      * @return All events collected from nodes.
      */
-    public List<VisorGridEvent> events() {
+    public List<VisorGridEvent> getEvents() {
         return evts;
     }
 
     /**
      * @return Exceptions caught during collecting events from nodes.
      */
-    public Map<UUID, VisorExceptionWrapper> eventsEx() {
+    public Map<UUID, VisorExceptionWrapper> getEventsEx() {
         return evtsEx;
     }
 
     /**
      * @return All caches collected from nodes.
      */
-    public Map<UUID, Collection<VisorCache>> caches() {
+    public Map<UUID, Collection<VisorCache>> getCaches() {
         return caches;
     }
 
     /**
      * @return Exceptions caught during collecting caches from nodes.
      */
-    public Map<UUID, VisorExceptionWrapper> cachesEx() {
+    public Map<UUID, VisorExceptionWrapper> getCachesEx() {
         return cachesEx;
     }
 
     /**
      * @return All IGFS collected from nodes.
      */
-    public Map<UUID, Collection<VisorIgfs>> igfss() {
+    public Map<UUID, Collection<VisorIgfs>> getIgfss() {
         return igfss;
     }
 
     /**
      * @return All IGFS endpoints collected from nodes.
      */
-    public Map<UUID, Collection<VisorIgfsEndpoint>> igfsEndpoints() {
+    public Map<UUID, Collection<VisorIgfsEndpoint>> getIgfsEndpoints() {
         return igfsEndpoints;
     }
 
     /**
      * @return Exceptions caught during collecting IGFS from nodes.
      */
-    public Map<UUID, VisorExceptionWrapper> igfssEx() {
+    public Map<UUID, VisorExceptionWrapper> getIgfssEx() {
         return igfssEx;
     }
 
     /**
      * @return Nodes error counts.
      */
-    public Map<UUID, Long> errorCounts() {
+    public Map<UUID, Long> getErrorCounts() {
         return errCnts;
     }
 }

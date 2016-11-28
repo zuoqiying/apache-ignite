@@ -203,8 +203,8 @@ public class VisorIgfsProfilerTask extends VisorOneNodeTask<String, Collection<V
 
                 if (logsDir != null)
                     return parse(logsDir, arg);
-                else
-                    return Collections.emptyList();
+
+                return Collections.emptyList();
             }
             catch (IOException | IllegalArgumentException e) {
                 throw new IgniteException("Failed to parse profiler logs for IGFS: " + arg, e);
@@ -481,12 +481,12 @@ public class VisorIgfsProfilerTask extends VisorOneNodeTask<String, Collection<V
             Map<String, List<VisorIgfsProfilerEntry>> byPath = new HashMap<>();
 
             for (VisorIgfsProfilerEntry entry : entries) {
-                List<VisorIgfsProfilerEntry> grp = byPath.get(entry.path());
+                List<VisorIgfsProfilerEntry> grp = byPath.get(entry.getPath());
 
                 if (grp == null) {
                     grp = new ArrayList<>();
 
-                    byPath.put(entry.path(), grp);
+                    byPath.put(entry.getPath(), grp);
                 }
 
                 grp.add(entry);

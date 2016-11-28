@@ -63,7 +63,7 @@ public class VisorThreadDumpTask extends VisorOneNodeTask<Void, IgniteBiTuple<Vi
             VisorThreadInfo[] visorInfo = new VisorThreadInfo[info.length];
 
             for (int i = 0; i < info.length; i++)
-                visorInfo[i] = VisorThreadInfo.from(info[i]);
+                visorInfo[i] = new VisorThreadInfo(info[i]);
 
             return new IgniteBiTuple<>(visorInfo, mx.findDeadlockedThreads());
         }

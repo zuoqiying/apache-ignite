@@ -19,13 +19,12 @@ package org.apache.ignite.internal.visor.query;
 
 import java.io.Serializable;
 import java.util.List;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Result for cache query tasks.
  */
-public class VisorQueryResult implements Serializable, LessNamingBean {
+public class VisorQueryResult implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -54,21 +53,21 @@ public class VisorQueryResult implements Serializable, LessNamingBean {
     /**
      * @return Rows fetched from query.
      */
-    public List<Object[]> rows() {
+    public List<Object[]> getRows() {
         return rows;
     }
 
     /**
      * @return Whether query has more rows to fetch.
      */
-    public boolean hasMore() {
+    public boolean isHasMore() {
         return hasMore;
     }
 
     /**
      * @return Duration of next page fetching.
      */
-    public long duration() {
+    public long getDuration() {
         return duration;
     }
 

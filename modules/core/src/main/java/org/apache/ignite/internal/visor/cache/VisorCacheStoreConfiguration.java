@@ -22,7 +22,6 @@ import org.apache.ignite.cache.store.CacheStore;
 import org.apache.ignite.cache.store.jdbc.CacheAbstractJdbcStore;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.IgniteEx;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.processors.cache.IgniteCacheProxy;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 /**
  * Data transfer object for cache store configuration properties.
  */
-public class VisorCacheStoreConfiguration implements Serializable, LessNamingBean {
+public class VisorCacheStoreConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -70,11 +69,12 @@ public class VisorCacheStoreConfiguration implements Serializable, LessNamingBea
     private boolean storeKeepBinary;
 
     /**
+     * Create data transfer object for cache store configuration properties.
+     *
      * @param ignite Ignite instance.
      * @param ccfg Cache configuration.
-     * @return Data transfer object for cache store configuration properties.
      */
-    public VisorCacheStoreConfiguration from(IgniteEx ignite, CacheConfiguration ccfg) {
+    public VisorCacheStoreConfiguration(IgniteEx ignite, CacheConfiguration ccfg) {
         IgniteCacheProxy<Object, Object> c = ignite.context().cache().jcache(ccfg.getName());
 
         CacheStore cstore = c != null && c.context().started() ? c.context().store().configuredStore() : null;
@@ -94,91 +94,89 @@ public class VisorCacheStoreConfiguration implements Serializable, LessNamingBea
         flushThreadCnt = ccfg.getWriteBehindFlushThreadCount();
 
         storeKeepBinary = ccfg.isStoreKeepBinary();
-
-        return this;
     }
 
     /**
      * @return {@code true} if cache has store.
      */
-    public boolean enabled() {
+    public boolean isEnabled() {
         return store != null;
     }
 
     /**
      * @return {@code true} if cache has JDBC store.
      */
-    public boolean jdbcStore() {
+    public boolean isJdbcStore() {
         return jdbcStore;
     }
 
     /**
      * @return Cache store class name.
      */
-    @Nullable public String store() {
+    @Nullable public String getStore() {
         return store;
     }
 
     /**
      * @return Cache store factory class name..
      */
-    public String storeFactory() {
+    public String getStoreFactory() {
         return storeFactory;
     }
 
     /**
      * @return Whether cache should operate in read-through mode.
      */
-    public boolean readThrough() {
+    public boolean isReadThrough() {
         return readThrough;
     }
 
     /**
      * @return Whether cache should operate in write-through mode.
      */
-    public boolean writeThrough() {
+    public boolean isWriteThrough() {
         return writeThrough;
     }
 
     /**
      * @return Flag indicating whether write-behind behaviour should be used for the cache store.
      */
-    public boolean writeBehindEnabled() {
+    public boolean isWriteBehindEnabled() {
         return writeBehindEnabled;
     }
 
     /**
      * @return Maximum batch size for write-behind cache store operations.
      */
-    public int batchSize() {
+    public int getBatchSize() {
         return batchSz;
     }
 
     /**
      * @return Frequency with which write-behind cache is flushed to the cache store in milliseconds.
      */
-    public long flushFrequency() {
+    public long getFlushFrequency() {
         return flushFreq;
     }
 
     /**
      * @return Maximum object count in write-behind cache.
      */
-    public int flushSize() {
+    public int getFlushSize() {
         return flushSz;
     }
 
     /**
      * @return Number of threads that will perform cache flushing.
      */
-    public int flushThreadCount() {
+    public int getFlushThreadCount() {
         return flushThreadCnt;
     }
 
     /**
      * @return Keep binary in store flag.
      */
-    public boolean storeKeepBinary() {
+    public boolean isStoreKeepBinary() {
         return storeKeepBinary;
     }
 

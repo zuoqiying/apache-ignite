@@ -18,13 +18,12 @@
 package org.apache.ignite.internal.visor.cache;
 
 import java.io.Serializable;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for information about keys in cache partition.
  */
-public class VisorCachePartition implements Serializable, LessNamingBean {
+public class VisorCachePartition implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -37,50 +36,38 @@ public class VisorCachePartition implements Serializable, LessNamingBean {
     /** */
     private long offheap;
 
-    /** */
-    private long swap;
-
     /**
      * Full constructor.
      *
      * @param part Partition id.
      * @param heap Number of keys in heap.
      * @param offheap Number of keys in offheap.
-     * @param swap Number of keys in swap.
      */
-    public VisorCachePartition(int part, int heap, long offheap, long swap) {
+    public VisorCachePartition(int part, int heap, long offheap) {
         this.part = part;
         this.heap = heap;
         this.offheap = offheap;
-        this.swap = swap;
     }
 
     /**
      * @return Partition id.
      */
-    public int partition() {
+    public int getPartition() {
         return part;
     }
 
     /**
      * @return Number of keys in heap.
      */
-    public int heap() {
+    public int getHeap() {
         return heap;
     }
 
     /**
      * @return Number of keys in offheap.
      */
-    public long offheap() {
+    public long getOffheap() {
         return offheap;
-    }
-
-    /**
-     * @return Number of keys in swap.
-     */
-    public long swap() {
-        return swap;
     }
 
     /** {@inheritDoc} */

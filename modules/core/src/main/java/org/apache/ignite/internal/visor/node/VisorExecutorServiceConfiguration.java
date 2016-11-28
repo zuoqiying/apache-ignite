@@ -20,13 +20,12 @@ package org.apache.ignite.internal.visor.node;
 import java.io.Serializable;
 import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for node executors configuration properties.
  */
-public class VisorExecutorServiceConfiguration implements Serializable, LessNamingBean {
+public class VisorExecutorServiceConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -45,69 +44,77 @@ public class VisorExecutorServiceConfiguration implements Serializable, LessNami
     /** Peer-to-peer pool size. */
     private int p2pPoolSz;
 
+    /** Rebalance thread pool size. */
+    private int rebalanceThreadPoolSize;
+
     /** REST requests pool size. */
     private int restPoolSz;
 
     /**
+     * Create data transfer object for node executors configuration properties.
+     *
      * @param c Grid configuration.
-     * @return Data transfer object for node executors configuration properties.
      */
-    public static VisorExecutorServiceConfiguration from(IgniteConfiguration c) {
-        VisorExecutorServiceConfiguration cfg = new VisorExecutorServiceConfiguration();
-
-        cfg.pubPoolSize = c.getPublicThreadPoolSize();
-        cfg.sysPoolSz = c.getSystemThreadPoolSize();
-        cfg.mgmtPoolSize = c.getManagementThreadPoolSize();
-        cfg.p2pPoolSz = c.getPeerClassLoadingThreadPoolSize();
-        cfg.igfsPoolSize = c.getIgfsThreadPoolSize();
+    public VisorExecutorServiceConfiguration(IgniteConfiguration c) {
+        pubPoolSize = c.getPublicThreadPoolSize();
+        sysPoolSz = c.getSystemThreadPoolSize();
+        mgmtPoolSize = c.getManagementThreadPoolSize();
+        p2pPoolSz = c.getPeerClassLoadingThreadPoolSize();
+        igfsPoolSize = c.getIgfsThreadPoolSize();
+        rebalanceThreadPoolSize = c.getRebalanceThreadPoolSize();
 
         ConnectorConfiguration cc = c.getConnectorConfiguration();
 
         if (cc != null)
-            cfg.restPoolSz = cc.getThreadPoolSize();
-
-        return cfg;
+            restPoolSz = cc.getThreadPoolSize();
     }
 
     /**
      * @return Public pool size.
      */
-    public int publicThreadPoolSize() {
+    public int getPublicThreadPoolSize() {
         return pubPoolSize;
     }
 
     /**
      * @return System pool size.
      */
-    public int systemThreadPoolSize() {
+    public int getSystemThreadPoolSize() {
         return sysPoolSz;
     }
 
     /**
      * @return Management pool size.
      */
-    public int managementThreadPoolSize() {
+    public int getManagementThreadPoolSize() {
         return mgmtPoolSize;
     }
 
     /**
      * @return IGFS pool size.
      */
-    public int igfsThreadPoolSize() {
+    public int getIgfsThreadPoolSize() {
         return igfsPoolSize;
     }
 
     /**
      * @return Peer-to-peer pool size.
      */
-    public int peerClassLoadingThreadPoolSize() {
+    public int getPeerClassLoadingThreadPoolSize() {
         return p2pPoolSz;
+    }
+
+    /**
+     * @return Rebalance thread pool size.
+     */
+    public int getRebalanceThreadPoolSize() {
+        return rebalanceThreadPoolSize;
     }
 
     /**
      * @return REST requests pool size.
      */
-    public int restThreadPoolSize() {
+    public int getRestThreadPoolSize() {
         return restPoolSz;
     }
 

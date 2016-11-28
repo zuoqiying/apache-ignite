@@ -19,13 +19,12 @@ package org.apache.ignite.internal.visor.node;
 
 import java.io.Serializable;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for node metrics configuration properties.
  */
-public class VisorMetricsConfiguration implements Serializable, LessNamingBean {
+public class VisorMetricsConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -39,17 +38,14 @@ public class VisorMetricsConfiguration implements Serializable, LessNamingBean {
     private long logFreq;
 
     /**
+     * Create transfer object for node metrics configuration properties.
+     *
      * @param c Grid configuration.
-     * @return Data transfer object for node metrics configuration properties.
      */
-    public static VisorMetricsConfiguration from(IgniteConfiguration c) {
-        VisorMetricsConfiguration cfg = new VisorMetricsConfiguration();
-
-        cfg.expTime = c.getMetricsExpireTime();
-        cfg.histSize = c.getMetricsHistorySize();
-        cfg.logFreq = c.getMetricsLogFrequency();
-
-        return cfg;
+    public VisorMetricsConfiguration(IgniteConfiguration c) {
+        expTime = c.getMetricsExpireTime();
+        histSize = c.getMetricsHistorySize();
+        logFreq = c.getMetricsLogFrequency();
     }
 
     /**

@@ -19,7 +19,6 @@ package org.apache.ignite.internal.visor.event;
 
 import java.io.Serializable;
 import java.util.UUID;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base class for lightweight counterpart for various {@link org.apache.ignite.events.Event}.
  */
-public class VisorGridEvent implements Serializable, LessNamingBean {
+public class VisorGridEvent implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -77,49 +76,49 @@ public class VisorGridEvent implements Serializable, LessNamingBean {
     /**
      * @return Event type.
      */
-    public int typeId() {
+    public int getTypeId() {
         return typeId;
     }
 
     /**
      * @return Globally unique ID of this event.
      */
-    public IgniteUuid id() {
+    public IgniteUuid getId() {
         return id;
     }
 
     /**
      * @return Name of this event.
      */
-    public String name() {
+    public String getName() {
         return name;
     }
 
     /**
      * @return Node Id where event occurred and was recorded.
      */
-    public UUID nid() {
+    public UUID getNid() {
         return nid;
     }
 
     /**
      * @return Event timestamp.
      */
-    public long timestamp() {
+    public long getTimestamp() {
         return ts;
     }
 
     /**
      * @return Event message.
      */
-    @Nullable public String message() {
+    @Nullable public String getMessage() {
         return msg;
     }
 
     /**
      * @return Shortened version of  result. Suitable for humans to read.
      */
-    public String shortDisplay() {
+    public String getShortDisplay() {
         return shortDisplay;
     }
 

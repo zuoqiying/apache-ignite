@@ -19,12 +19,11 @@ package org.apache.ignite.internal.visor.node;
 
 import java.io.Serializable;
 import org.apache.ignite.configuration.MemoryConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 
 /**
  * Data transfer object for memory configuration.
  */
-public class VisorMemoryConfiguration implements Serializable, LessNamingBean {
+public class VisorMemoryConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -44,37 +43,32 @@ public class VisorMemoryConfiguration implements Serializable, LessNamingBean {
      * Create data transfer object.
      *
      * @param memCfg Memory configuration.
-     * @return Data transfer object.
      */
-    public static VisorMemoryConfiguration from(MemoryConfiguration memCfg) {
-        VisorMemoryConfiguration res = new VisorMemoryConfiguration();
-
-        res.concLvl = memCfg.getConcurrencyLevel();
-        res.fileCacheAllocationPath = memCfg.getFileCacheAllocationPath();
-        res.pageCacheSize = memCfg.getPageCacheSize();
-        res.pageSize = memCfg.getPageSize();
-
-        return res;
+    public VisorMemoryConfiguration(MemoryConfiguration memCfg) {
+        concLvl = memCfg.getConcurrencyLevel();
+        fileCacheAllocationPath = memCfg.getFileCacheAllocationPath();
+        pageCacheSize = memCfg.getPageCacheSize();
+        pageSize = memCfg.getPageSize();
     }
 
     /**
      * @return Concurrency level.
      */
-    public int concurrencyLevel() {
+    public int getConcurrencyLevel() {
         return concLvl;
     }
 
     /**
      * @return File allocation path.
      */
-    public String fileCacheAllocationPath() {
+    public String getFileCacheAllocationPath() {
         return fileCacheAllocationPath;
     }
 
     /**
      * @return Page cache size, in bytes.
      */
-    public long pageCacheSize() {
+    public long getPageCacheSize() {
         return pageCacheSize;
     }
 

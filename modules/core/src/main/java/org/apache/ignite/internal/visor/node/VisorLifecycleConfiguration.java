@@ -19,7 +19,6 @@ package org.apache.ignite.internal.visor.node;
 
 import java.io.Serializable;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +27,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
 /**
  * Data transfer object for node lifecycle configuration properties.
  */
-public class VisorLifecycleConfiguration implements Serializable, LessNamingBean {
+public class VisorLifecycleConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -36,21 +35,18 @@ public class VisorLifecycleConfiguration implements Serializable, LessNamingBean
     private String beans;
 
     /**
+     * Create data transfer object for node lifecycle configuration properties.
+     *
      * @param c Grid configuration.
-     * @return Data transfer object for node lifecycle configuration properties.
      */
-    public static VisorLifecycleConfiguration from(IgniteConfiguration c) {
-        VisorLifecycleConfiguration cfg = new VisorLifecycleConfiguration();
-
-        cfg.beans = compactArray(c.getLifecycleBeans());
-
-        return cfg;
+    public VisorLifecycleConfiguration(IgniteConfiguration c) {
+        beans = compactArray(c.getLifecycleBeans());
     }
 
     /**
      * @return Lifecycle beans.
      */
-    @Nullable public String beans() {
+    @Nullable public String getBeans() {
         return beans;
     }
 

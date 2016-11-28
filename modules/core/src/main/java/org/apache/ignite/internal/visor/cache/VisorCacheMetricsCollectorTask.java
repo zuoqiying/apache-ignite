@@ -55,15 +55,15 @@ public class VisorCacheMetricsCollectorTask extends VisorMultiNodeTask<IgniteBiT
                 Collection<VisorCacheMetrics> cms = res.getData();
 
                 for (VisorCacheMetrics cm : cms) {
-                    VisorCacheAggregatedMetrics am = grpAggrMetrics.get(cm.name());
+                    VisorCacheAggregatedMetrics am = grpAggrMetrics.get(cm.getName());
 
                     if (am == null) {
-                        am = VisorCacheAggregatedMetrics.from(cm);
+                        am = new VisorCacheAggregatedMetrics(cm);
 
-                        grpAggrMetrics.put(cm.name(), am);
+                        grpAggrMetrics.put(cm.getName(), am);
                     }
 
-                    am.metrics().put(res.getNode().id(), cm);
+                    am.getMetrics().put(res.getNode().id(), cm);
                 }
             }
         }
@@ -115,9 +115,9 @@ public class VisorCacheMetricsCollectorTask extends VisorMultiNodeTask<IgniteBiT
                 if (ca.context().started()) {
                     String cacheName = ca.getName();
 
-                    VisorCacheMetrics cm = new VisorCacheMetrics().from(ignite, cacheName);
+                    VisorCacheMetrics cm = new VisorCacheMetrics(ignite, cacheName);
 
-                    if ((allCaches || cacheNames.contains(cacheName)) && (showSysCaches || !cm.system()))
+                    if ((allCaches || cacheNames.contains(cacheName)) && (showSysCaches || !cm.isSystem()))
                         res.add(cm);
                 }
             }

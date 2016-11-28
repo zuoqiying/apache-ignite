@@ -37,8 +37,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @GridInternal
 public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, Long>,
-    Map<UUID, IgniteBiTuple<Long, List<IgniteExceptionRegistry.ExceptionInfo>>>,
-    IgniteBiTuple<Long, List<IgniteExceptionRegistry.ExceptionInfo>>> {
+    Map<UUID, IgniteBiTuple<Long, List<VisorSuppressedError>>>,
+    IgniteBiTuple<Long, List<VisorSuppressedError>>> {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -48,13 +48,13 @@ public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, 
     }
 
     /** {@inheritDoc} */
-    @Nullable @Override protected Map<UUID, IgniteBiTuple<Long, List<IgniteExceptionRegistry.ExceptionInfo>>>
+    @Nullable @Override protected Map<UUID, IgniteBiTuple<Long, List<VisorSuppressedError>>>
         reduce0(List<ComputeJobResult> results) {
-        Map<UUID, IgniteBiTuple<Long, List<IgniteExceptionRegistry.ExceptionInfo>>> taskRes =
+        Map<UUID, IgniteBiTuple<Long, List<VisorSuppressedError>>> taskRes =
             new HashMap<>(results.size());
 
         for (ComputeJobResult res : results) {
-            IgniteBiTuple<Long, List<IgniteExceptionRegistry.ExceptionInfo>> jobRes = res.getData();
+            IgniteBiTuple<Long, List<VisorSuppressedError>> jobRes = res.getData();
 
             taskRes.put(res.getNode().id(), jobRes);
         }
@@ -66,7 +66,7 @@ public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, 
      * Job to collect last errors on nodes.
      */
     private static class VisorNodeSuppressedErrorsJob extends VisorJob<Map<UUID, Long>,
-        IgniteBiTuple<Long, List<IgniteExceptionRegistry.ExceptionInfo>>> {
+        IgniteBiTuple<Long, List<VisorSuppressedError>>> {
         /** */
         private static final long serialVersionUID = 0L;
 
@@ -81,20 +81,20 @@ public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, 
         }
 
         /** {@inheritDoc} */
-        @Override protected IgniteBiTuple<Long, List<IgniteExceptionRegistry.ExceptionInfo>> run(Map<UUID, Long> arg) {
+        @Override protected IgniteBiTuple<Long, List<VisorSuppressedError>> run(Map<UUID, Long> arg) {
             Long lastOrder = arg.get(ignite.localNode().id());
 
             long order = lastOrder != null ? lastOrder : 0;
 
             List<IgniteExceptionRegistry.ExceptionInfo> errors = ignite.context().exceptionRegistry().getErrors(order);
 
-            List<IgniteExceptionRegistry.ExceptionInfo> wrapped = new ArrayList<>(errors.size());
+            List<VisorSuppressedError> wrapped = new ArrayList<>(errors.size());
 
             for (IgniteExceptionRegistry.ExceptionInfo error : errors) {
                 if (error.order() > order)
                     order = error.order();
 
-                wrapped.add(new IgniteExceptionRegistry.ExceptionInfo(error.order(),
+                wrapped.add(new VisorSuppressedError(error.order(),
                     new VisorExceptionWrapper(error.error()),
                     error.message(),
                     error.threadId(),

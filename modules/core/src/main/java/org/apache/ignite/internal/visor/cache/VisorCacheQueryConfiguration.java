@@ -18,14 +18,16 @@
 package org.apache.ignite.internal.visor.cache;
 
 import java.io.Serializable;
+
 import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
-import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.util.typedef.internal.S;
+
+import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClasses;
 
 /**
  * Data transfer object for cache query configuration data.
  */
-public class VisorCacheQueryConfiguration implements Serializable, LessNamingBean {
+public class VisorCacheQueryConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -48,76 +50,64 @@ public class VisorCacheQueryConfiguration implements Serializable, LessNamingBea
     private String sqlSchema;
 
     /**
-     * @param clss Classes to compact.
-     */
-    private static String[] compactClasses(Class<?>[] clss) {
-        if (clss == null)
-            return null;
-
-        int len = clss.length;
-
-        String[] res = new String[len];
-
-        for (int i = 0; i < len; i++)
-            res[i] = U.compact(clss[i].getName());
-
-        return res;
-    }
-
-    /**
+     * Create data transfer object with cache query configuration data.
+     *
      * @param ccfg Cache configuration.
-     * @return Fill data transfer object with cache query configuration data.
      */
-    public VisorCacheQueryConfiguration from(CacheConfiguration ccfg) {
+    public VisorCacheQueryConfiguration(CacheConfiguration ccfg) {
         sqlFuncClss = compactClasses(ccfg.getSqlFunctionClasses());
         longQryWarnTimeout = ccfg.getLongQueryWarningTimeout();
         sqlEscapeAll = ccfg.isSqlEscapeAll();
         indexedTypes = compactClasses(ccfg.getIndexedTypes());
         sqlOnheapRowCacheSize = ccfg.getSqlOnheapRowCacheSize();
         sqlSchema = ccfg.getSqlSchema();
-
-        return this;
     }
 
     /**
      * @return Classes names with SQL functions.
      */
-    public String[] sqlFunctionClasses() {
+    public String[] getSqlFunctionClasses() {
         return sqlFuncClss;
     }
 
     /**
      * @return Timeout in milliseconds after which long query warning will be printed.
      */
-    public long longQueryWarningTimeout() {
+    public long getLongQueryWarningTimeout() {
         return longQryWarnTimeout;
     }
 
     /**
      * @return {@code true} if SQL engine generate SQL statements with escaped names.
      */
-    public boolean sqlEscapeAll() {
+    public boolean isSqlEscapeAll() {
         return sqlEscapeAll;
     }
 
     /**
      * @return Array of key and value classes names to be indexed.
      */
-    public String[] indexedTypes() {
+    public String[] getIndexedTypes() {
         return indexedTypes;
     }
 
     /**
      * @return Number of SQL rows which will be cached onheap to avoid deserialization on each SQL index access.
      */
-    public int sqlOnheapRowCacheSize() {
+    public int getSqlOnheapRowCacheSize() {
         return sqlOnheapRowCacheSize;
     }
 
     /**
      * @return Schema name, which is used by SQL engine for SQL statements generation.
      */
-    public String sqlSchema() {
+    public String getSqlSchema() {
         return sqlSchema;
+    }
+
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorCacheQueryConfiguration.class, this);
     }
 }

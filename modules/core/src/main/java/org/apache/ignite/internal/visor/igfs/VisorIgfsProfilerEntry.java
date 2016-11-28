@@ -20,13 +20,12 @@ package org.apache.ignite.internal.visor.igfs;
 import java.io.Serializable;
 import java.util.Comparator;
 import org.apache.ignite.igfs.IgfsMode;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Visor IGFS profiler information about one file.
  */
-public class VisorIgfsProfilerEntry implements Serializable, LessNamingBean {
+public class VisorIgfsProfilerEntry implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -133,77 +132,77 @@ public class VisorIgfsProfilerEntry implements Serializable, LessNamingBean {
     /**
      * @return Path to file.
      */
-    public String path() {
+    public String getPath() {
         return path;
     }
 
     /**
      * @return Timestamp of last file operation.
      */
-    public long timestamp() {
+    public long getTimestamp() {
         return ts;
     }
 
     /**
      * @return IGFS mode.
      */
-    public IgfsMode mode() {
+    public IgfsMode getMode() {
         return mode;
     }
 
     /**
      * @return File size.
      */
-    public long size() {
+    public long getSize() {
         return size;
     }
 
     /**
      * @return How many bytes were read.
      */
-    public long bytesRead() {
+    public long getBytesRead() {
         return bytesRead;
     }
 
     /**
      * @return How long read take.
      */
-    public long readTime() {
+    public long getReadTime() {
         return readTime;
     }
 
     /**
      * @return User read time.
      */
-    public long userReadTime() {
+    public long getUserReadTime() {
         return userReadTime;
     }
 
     /**
      * @return How many bytes were written.
      */
-    public long bytesWritten() {
+    public long getBytesWritten() {
         return bytesWritten;
     }
 
     /**
      * @return How long write take.
      */
-    public long writeTime() {
+    public long getWriteTime() {
         return writeTime;
     }
 
     /**
      * @return User write read time.
      */
-    public long userWriteTime() {
+    public long getUserWriteTime() {
         return userWriteTime;
     }
 
     /**
      * @return Calculated uniformity.
      */
-    public double uniformity() {
+    public double getUniformity() {
         if (uniformity < 0)
             uniformity = counters.calc();
 
@@ -213,21 +212,21 @@ public class VisorIgfsProfilerEntry implements Serializable, LessNamingBean {
     /**
      * @return Counters for uniformity calculation.
      */
-    public VisorIgfsProfilerUniformityCounters counters() {
+    public VisorIgfsProfilerUniformityCounters getCounters() {
         return counters;
     }
 
     /**
      * @return Read speed in bytes per second or {@code -1} if speed not available.
      */
-    public long readSpeed() {
+    public long getReadSpeed() {
         return readSpeed;
     }
 
     /**
      * @return Write speed in bytes per second or {@code -1} if speed not available.
      */
-    public long writeSpeed() {
+    public long getWriteSpeed() {
         return writeSpeed;
     }
 

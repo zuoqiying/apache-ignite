@@ -30,7 +30,6 @@ import org.apache.ignite.cache.QueryIndex;
 import org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory;
 import org.apache.ignite.cache.store.jdbc.JdbcType;
 import org.apache.ignite.cache.store.jdbc.JdbcTypeField;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiTuple;
@@ -40,7 +39,7 @@ import javax.cache.configuration.Factory;
 /**
  * Data transfer object for {@link CacheTypeMetadata}.
  */
-public class VisorCacheTypeMetadata implements Serializable, LessNamingBean {
+public class VisorCacheTypeMetadata implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -100,7 +99,7 @@ public class VisorCacheTypeMetadata implements Serializable, LessNamingBean {
         // Add query entries.
         if (qryEntities != null)
             for (QueryEntity qryEntity : qryEntities) {
-                VisorCacheTypeMetadata meta = from(qryEntity);
+                VisorCacheTypeMetadata meta = new VisorCacheTypeMetadata(qryEntity);
 
                 metas.add(meta);
 
@@ -166,40 +165,46 @@ public class VisorCacheTypeMetadata implements Serializable, LessNamingBean {
         // Add old deprecated CacheTypeMetadata for compatibility.
         if (types != null)
             for (CacheTypeMetadata type : types)
-                metas.add(from(type));
+                metas.add(new VisorCacheTypeMetadata(type));
 
         return metas;
     }
 
     /**
-     * @param q Actual cache query entities.
-     * @return Data transfer object for given cache type metadata.
+     * Create data transfer object for given cache type metadata.
      */
-    public static VisorCacheTypeMetadata from(QueryEntity q) {
+    public VisorCacheTypeMetadata() {
+        // No-op.
+    }
+
+    /**
+     * Create data transfer object for given cache type metadata.
+     *
+     * @param q Actual cache query entities.
+     */
+    public VisorCacheTypeMetadata(QueryEntity q) {
         assert q != null;
 
-        VisorCacheTypeMetadata metadata = new VisorCacheTypeMetadata();
+        keyType = q.getKeyType();
+        valType = q.getValueType();
 
-        metadata.keyType = q.getKeyType();
-        metadata.valType = q.getValueType();
+        dbSchema = "";
+        dbTbl = "";
 
-        metadata.dbSchema = "";
-        metadata.dbTbl = "";
-
-        metadata.keyFields = Collections.emptyList();
-        metadata.valFields = Collections.emptyList();
+        keyFields = Collections.emptyList();
+        valFields = Collections.emptyList();
 
         LinkedHashMap<String, String> qryFields = q.getFields();
 
-        metadata.qryFlds = new LinkedHashMap<>(qryFields);
+        qryFlds = new LinkedHashMap<>(qryFields);
 
-        metadata.ascFlds = Collections.emptyMap();
-        metadata.descFlds = Collections.emptyMap();
-        metadata.txtFlds = Collections.emptyList();
+        ascFlds = Collections.emptyMap();
+        descFlds = Collections.emptyMap();
+        txtFlds = Collections.emptyList();
 
         Collection<QueryIndex> qryIdxs = q.getIndexes();
 
-        metadata.grps = new LinkedHashMap<>(qryIdxs.size());
+        grps = new LinkedHashMap<>(qryIdxs.size());
 
         for (QueryIndex qryIdx : qryIdxs) {
             LinkedHashMap<String, Boolean> qryIdxFlds = qryIdx.getFields();
@@ -212,47 +217,42 @@ public class VisorCacheTypeMetadata implements Serializable, LessNamingBean {
                 grpFlds.put(fldName, new IgniteBiTuple<>(qryFields.get(fldName), !qryIdxFld.getValue()));
             }
 
-            metadata.grps.put(qryIdx.getName(), grpFlds);
+            grps.put(qryIdx.getName(), grpFlds);
         }
-
-        return metadata;
     }
 
     /**
+     * Create data transfer object for given cache type metadata.
+     *
      * @param m Actual cache type metadata.
-     * @return Data transfer object for given cache type metadata.
      */
-    public static VisorCacheTypeMetadata from(CacheTypeMetadata m) {
+    public VisorCacheTypeMetadata(CacheTypeMetadata m) {
         assert m != null;
 
-        VisorCacheTypeMetadata metadata = new VisorCacheTypeMetadata();
-
-        metadata.dbSchema = m.getDatabaseSchema();
-        metadata.dbTbl = m.getDatabaseTable();
-        metadata.keyType = m.getKeyType();
-        metadata.valType = m.getValueType();
+        dbSchema = m.getDatabaseSchema();
+        dbTbl = m.getDatabaseTable();
+        keyType = m.getKeyType();
+        valType = m.getValueType();
 
         ArrayList<VisorCacheTypeFieldMetadata> fields = new ArrayList<>(m.getKeyFields().size());
 
         for (CacheTypeFieldMetadata field : m.getKeyFields())
-            fields.add(VisorCacheTypeFieldMetadata.from(field));
+            fields.add(new VisorCacheTypeFieldMetadata(field));
 
-        metadata.keyFields = fields;
+        keyFields = fields;
 
         fields = new ArrayList<>(m.getValueFields().size());
 
         for (CacheTypeFieldMetadata field : m.getValueFields())
-            fields.add(VisorCacheTypeFieldMetadata.from(field));
+            fields.add(new VisorCacheTypeFieldMetadata(field));
 
-        metadata.valFields = fields;
+        valFields = fields;
 
-        metadata.qryFlds = convertFieldsMap(m.getQueryFields());
-        metadata.ascFlds = convertFieldsMap(m.getAscendingFields());
-        metadata.descFlds = convertFieldsMap(m.getDescendingFields());
-        metadata.txtFlds = m.getTextFields();
-        metadata.grps = convertGrpsMap(m.getGroups());
-
-        return metadata;
+        qryFlds = convertFieldsMap(m.getQueryFields());
+        ascFlds = convertFieldsMap(m.getAscendingFields());
+        descFlds = convertFieldsMap(m.getDescendingFields());
+        txtFlds = m.getTextFields();
+        grps = convertGrpsMap(m.getGroups());
     }
 
     /**
@@ -299,77 +299,77 @@ public class VisorCacheTypeMetadata implements Serializable, LessNamingBean {
     /**
      * @return Schema name in database.
      */
-    public String dbSchema() {
+    public String getDatabaseSchema() {
         return dbSchema;
     }
 
     /**
      * @return Table name in database.
      */
-    public String dbTbl() {
+    public String getDatabaseTable() {
         return dbTbl;
     }
 
     /**
      * @return Key class used to store key in cache.
      */
-    public String keyType() {
+    public String getKeyType() {
         return keyType;
     }
 
     /**
      * @return Value class used to store value in cache.
      */
-    public String valType() {
+    public String getValueType() {
         return valType;
     }
 
     /**
      * @return Key fields.
      */
-    public Collection<VisorCacheTypeFieldMetadata> keyFields() {
+    public Collection<VisorCacheTypeFieldMetadata> getKeyFields() {
         return keyFields;
     }
 
     /**
      * @return Value fields.
      */
-    public Collection<VisorCacheTypeFieldMetadata> valFields() {
+    public Collection<VisorCacheTypeFieldMetadata> getValueFields() {
         return valFields;
     }
 
     /**
      * @return Fields to be queried, in addition to indexed fields.
      */
-    public Map<String, String> qryFlds() {
+    public Map<String, String> getQueryFields() {
         return qryFlds;
     }
 
     /**
      * @return Fields to index in ascending order.
      */
-    public Map<String, String> ascFlds() {
+    public Map<String, String> getAscFields() {
         return ascFlds;
     }
 
     /**
      * @return Fields to index in descending order.
      */
-    public Map<String, String> descFlds() {
+    public Map<String, String> getDescFields() {
         return descFlds;
     }
 
     /**
      * @return Fields to index as text.
      */
-    public Collection<String> txtFlds() {
+    public Collection<String> getTextFields() {
         return txtFlds;
     }
 
     /**
      * @return Fields to create group indexes for.
      */
-    public Map<String, LinkedHashMap<String, IgniteBiTuple<String, Boolean>>> grps() {
+    public Map<String, LinkedHashMap<String, IgniteBiTuple<String, Boolean>>> getGroups() {
         return grps;
     }
 }

@@ -19,13 +19,12 @@ package org.apache.ignite.internal.visor.cache;
 
 import java.io.Serializable;
 import org.apache.ignite.cache.CacheTypeFieldMetadata;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  * Data transfer object for {@link CacheTypeFieldMetadata}.
  */
-public class VisorCacheTypeFieldMetadata implements Serializable, LessNamingBean {
+public class VisorCacheTypeFieldMetadata implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -40,15 +39,6 @@ public class VisorCacheTypeFieldMetadata implements Serializable, LessNamingBean
 
     /** Corresponding java type. */
     private String javaType;
-
-    /**
-     * @param f Actual field metadata.
-     * @return Data transfer object for given cache field metadata.
-     */
-    public static VisorCacheTypeFieldMetadata from(CacheTypeFieldMetadata f) {
-        return new VisorCacheTypeFieldMetadata(f.getDatabaseName(), f.getDatabaseType(),
-            f.getJavaName(), U.compact(f.getJavaType().getName()));
-    }
 
     /**
      * Empty constructor.
@@ -73,30 +63,40 @@ public class VisorCacheTypeFieldMetadata implements Serializable, LessNamingBean
     }
 
     /**
+     * Create data transfer object for given cache field metadata.
+     *
+     * @param f Actual field metadata.
+     */
+    public VisorCacheTypeFieldMetadata(CacheTypeFieldMetadata f) {
+        this(f.getDatabaseName(), f.getDatabaseType(),
+            f.getJavaName(), U.compact(f.getJavaType().getName()));
+    }
+
+    /**
      * @return Column name in database.
      */
-    public String dbName() {
+    public String getDatabaseName() {
         return dbName;
     }
 
     /**
      * @return Column JDBC type in database.
      */
-    public int dbType() {
+    public int getDatabaseType() {
         return dbType;
     }
 
     /**
      * @return Field name in java object.
      */
-    public String javaName() {
+    public String getJavaName() {
         return javaName;
     }
 
     /**
      * @return Corresponding java type.
      */
-    public String javaType() {
+    public String getJavaType() {
         return javaType;
     }
 }

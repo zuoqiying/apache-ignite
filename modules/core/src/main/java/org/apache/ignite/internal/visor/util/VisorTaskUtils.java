@@ -281,6 +281,26 @@ public class VisorTaskUtils {
     }
 
     /**
+     * Compact classes names.
+
+     * @param clss Classes to compact.
+     * @return Compacted string.
+     */
+    @Nullable public static String[] compactClasses(Class<?>[] clss) {
+        if (clss == null)
+            return null;
+
+        int len = clss.length;
+
+        String[] res = new String[len];
+
+        for (int i = 0; i < len; i++)
+            res[i] = U.compact(clss[i].getName());
+
+        return res;
+    }
+
+    /**
      * Joins array elements to string.
      *
      * @param arr Array.
@@ -632,6 +652,7 @@ public class VisorTaskUtils {
                 raf.seek(pos);
 
                 byte[] buf = new byte[toRead];
+
                 int cntRead = raf.read(buf, 0, toRead);
 
                 if (cntRead != toRead)

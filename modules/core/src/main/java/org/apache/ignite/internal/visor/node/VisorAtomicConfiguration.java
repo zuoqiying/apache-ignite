@@ -20,13 +20,12 @@ package org.apache.ignite.internal.visor.node;
 import java.io.Serializable;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.configuration.AtomicConfiguration;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for configuration of atomic data structures.
  */
-public class VisorAtomicConfiguration implements Serializable, LessNamingBean {
+public class VisorAtomicConfiguration implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -43,36 +42,31 @@ public class VisorAtomicConfiguration implements Serializable, LessNamingBean {
      * Create data transfer object for atomic configuration.
      *
      * @param src Atomic configuration.
-     * @return Data transfer object.
      */
-    public static VisorAtomicConfiguration from(AtomicConfiguration src) {
-        VisorAtomicConfiguration cfg = new VisorAtomicConfiguration();
-
-        cfg.seqReserveSize = src.getAtomicSequenceReserveSize();
-        cfg.cacheMode = src.getCacheMode();
-        cfg.backups = src.getBackups();
-
-        return cfg;
+    public VisorAtomicConfiguration(AtomicConfiguration src) {
+        seqReserveSize = src.getAtomicSequenceReserveSize();
+        cacheMode = src.getCacheMode();
+        backups = src.getBackups();
     }
 
     /**
      * @return Atomic sequence reservation size.
      */
-    public int atomicSequenceReserveSize() {
+    public int getAtomicSequenceReserveSize() {
         return seqReserveSize;
     }
 
     /**
      * @return Cache mode.
      */
-    public CacheMode cacheMode() {
+    public CacheMode getCacheMode() {
         return cacheMode;
     }
 
     /**
      * @return Number of backup nodes.
      */
-    public int backups() {
+    public int getBackups() {
         return backups;
     }
 

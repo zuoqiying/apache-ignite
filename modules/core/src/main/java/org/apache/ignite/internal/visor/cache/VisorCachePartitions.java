@@ -20,13 +20,12 @@ package org.apache.ignite.internal.visor.cache;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.ignite.internal.LessNamingBean;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for information about cache partitions.
  */
-public class VisorCachePartitions implements Serializable, LessNamingBean {
+public class VisorCachePartitions implements Serializable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -50,10 +49,9 @@ public class VisorCachePartitions implements Serializable, LessNamingBean {
      * @param part Partition id.
      * @param heap Number of primary keys in heap.
      * @param offheap Number of primary keys in offheap.
-     * @param swap Number of primary keys in swap.
      */
-    public void addPrimary(int part, int heap, long offheap, long swap) {
-       primary.add(new VisorCachePartition(part, heap, offheap, swap));
+    public void addPrimary(int part, int heap, long offheap) {
+       primary.add(new VisorCachePartition(part, heap, offheap));
     }
 
     /**
@@ -62,23 +60,22 @@ public class VisorCachePartitions implements Serializable, LessNamingBean {
      * @param part Partition id.
      * @param heap Number of backup keys in heap.
      * @param offheap Number of backup keys in offheap.
-     * @param swap Number of backup keys in swap.
      */
-    public void addBackup(int part, int heap, long offheap, long swap) {
-       backup.add(new VisorCachePartition(part, heap, offheap, swap));
+    public void addBackup(int part, int heap, long offheap) {
+       backup.add(new VisorCachePartition(part, heap, offheap));
     }
 
     /**
      * @return Get list of primary partitions.
      */
-    public List<VisorCachePartition> primary() {
+    public List<VisorCachePartition> getPrimary() {
         return primary;
     }
 
     /**
      * @return Get list of backup partitions.
      */
-    public List<VisorCachePartition> backup() {
+    public List<VisorCachePartition> getBackup() {
         return backup;
     }
 
