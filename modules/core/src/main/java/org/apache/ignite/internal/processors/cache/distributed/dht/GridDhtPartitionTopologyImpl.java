@@ -1064,6 +1064,15 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         if (log.isDebugEnabled())
             log.debug("Updating full partition map [exchId=" + exchId + ", parts=" + fullMapString() + ']');
 
+        if (cctx.cacheId() == CU.cacheId("cache1"))
+            log.error("% UPDATE FullMap");
+
+        GridDhtPartitionMap2 map = partMap.get(cctx.localNodeId());
+
+        if (cctx.cacheId() == CU.cacheId("cache1"))
+            for (Map.Entry<Integer, GridDhtPartitionState> entry : map.entrySet())
+                log.error("% PART FULL UPDATE - " + entry.getKey() + ", state = " + entry.getValue());
+
         assert partMap != null;
 
         lock.writeLock().lock();
@@ -1129,6 +1138,9 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                         if (log.isDebugEnabled())
                             log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
                                 mapString(part) + ", newPart=" + mapString(newPart) + ']');
+
+                        if (cctx.cacheId() == CU.cacheId("cache1"))
+                            log.error("% REPLACE FullMap curNode" + (part.nodeId().equals( cctx.localNode().id())) + ", state (2) =" + part.get(2) );
 
                         partMap.put(part.nodeId(), part);
                     }
@@ -1198,6 +1210,9 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                         }
                     }
                     else if (state == MOVING) {
+                        if (cctx.cacheId() == CU.cacheId("cache1"))
+                            log.error("% PART MOVING " + p );
+
                         GridDhtLocalPartition locPart = locParts.get(p);
 
                         assert locPart != null;

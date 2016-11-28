@@ -1531,6 +1531,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                             assignsMap = new HashMap<>();
 
                             for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
+                                log.info("% EXCHANGE_WORKER " + cacheCtx.name());
                                 long delay = cacheCtx.config().getRebalanceDelay();
 
                                 GridDhtPreloaderAssignments assigns = null;

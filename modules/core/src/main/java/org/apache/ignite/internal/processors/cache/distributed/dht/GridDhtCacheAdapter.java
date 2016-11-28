@@ -760,6 +760,8 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
     protected void processNearSingleGetRequest(final UUID nodeId, final GridNearSingleGetRequest req) {
         assert ctx.affinityNode();
 
+        log.error("% Get key! - " +req.key().value(ctx.cacheObjectContext(), false).toString());
+
         final CacheExpiryPolicy expiryPlc = CacheExpiryPolicy.forAccess(req.accessTtl());
 
         IgniteInternalFuture<GridCacheEntryInfo> fut =

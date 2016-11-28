@@ -312,6 +312,7 @@ public class GridDhtPartitionDemander {
             rebalanceFut = fut;
 
             if (assigns.isEmpty()) {
+                log.error("% BINGO - " + assigns.cancelled());
                 fut.doneIfEmpty(assigns.cancelled());
 
                 return null;
