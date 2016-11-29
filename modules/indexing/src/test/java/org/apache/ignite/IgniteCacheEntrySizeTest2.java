@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.ignite.testsuites;
+package org.apache.ignite;
 
-import org.apache.ignite.IgniteException;
-import org.apache.ignite.IgniteInterruptedException;
-import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMemoryMode;
 import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
@@ -52,11 +51,11 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     /** */
     private static final String TEST_CACHE_NAME = "cache";
     /** */
-    private static final long TEST_EMPTY_ENTRIES_NUMBER = 5_000_000;
+    private static final long TEST_EMPTY_ENTRIES_NUMBER = 1_000_000;
     /** */
     private static final long TEST_FULL_ENTRIES_NUMBER = 1_000;
     /** */
-    private static final int ENTRY_ARRAY_SIZE = 2_000_000;
+    private static final int ENTRY_ARRAY_SIZE = 100_000;
     /** */
     private static final Pattern MEM_USED_P = Pattern.compile("Память:\\s*([\\d\\h]+?)\\sКБ");
     /** */
@@ -68,13 +67,13 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     /** */
     private boolean keepNodesRunningAfterTest;
     /** */
-    private long estimatedJvmFootprint = 100L << 20;
+    private long estimatedJvmFootprint = 50L << 20;
     /** */
-    private long estimatedNodeFootprint = 100L << 20;
+    private long estimatedNodeFootprint = 100L << 20; // 45 M on big number of nodes
     /** */
-    private long estimatedEmptyEntryFootprint = 600L;
+    private long estimatedEmptyEntryFootprint = 440L;
     /** */
-    private double estimatedArrayElementFootprint = 1D;
+    private double estimatedArrayElementFootprint = 1.2D;
 
     /** */
     public IgniteCacheEntrySizeTest2() {
@@ -112,10 +111,11 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
         cacheCache.setCacheMode(CacheMode.PARTITIONED);
         cacheCache.setBackups(0);
         cacheCache.setAtomicityMode(CacheAtomicityMode.ATOMIC);
-        //cacheCache.setIndexedTypes(CacheKey.class, CacheValue.class);
+        cacheCache.setIndexedTypes(CacheKey.class, CacheValue.class);
 
         /** ONHEAP_TIERED */
         cacheCache.setMemoryMode(CacheMemoryMode.ONHEAP_TIERED);
+        cacheCache.setOffHeapMaxMemory(0);
 
         /** OFFHEAP_TIERED
          cacheCache.setMemoryMode(CacheMemoryMode.OFFHEAP_TIERED);
@@ -128,8 +128,8 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     /** */
     public static void main(String[] args) {
         try (final IgniteCacheEntrySizeTest2 app = new IgniteCacheEntrySizeTest2()) {
-            app.test01_nodeFootprint();
-            //app.test02_emptyEntryFootprint();
+            //app.test01_nodeFootprint();
+            app.test02_emptyEntryFootprint();
             //app.test03_fullEntryFootprint();
         }
         catch (Exception ex) {
@@ -233,23 +233,94 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
 
         long usedMemoryOnStart = processUsedMemory(), estimatedNodeFootprint = Long.MAX_VALUE;
         printfSummary("Estimated JVM mem used = %d M%n", sizeInMegabytes(usedMemoryOnStart));
-        int nodes = 0;
         try {
+            int nodes = 0;
             while (true) {
                 Ignition.getOrStart(config("testIgniteFootprint-" + nodes));
                 ++nodes;
                 long f = (processUsedMemory() - usedMemoryOnStart) / nodes;
-                if (estimatedNodeFootprint > f) {
+                if (estimatedNodeFootprint > f)
                     estimatedNodeFootprint = f;
-                    printfSummary("Estimated node mem used = %d M%n", sizeInMegabytes(estimatedNodeFootprint));
-                }
+                printfSummary("Estimated node mem used = %d M, minimum = %d M%n",
+                    sizeInMegabytes(f), sizeInMegabytes(estimatedNodeFootprint));
             }
         }
         catch (OutOfMemoryError ex) {
             long usedMemoryOnStop = processUsedMemory();
+            printfSummary("Maximum JVM mem used = %d M%n", sizeInMegabytes(usedMemoryOnStop));
             printfSummary("Estimated JVM mem used = %d M%n", sizeInMegabytes(usedMemoryOnStart));
             printfSummary("Estimated node mem used = %d M%n", sizeInMegabytes(estimatedNodeFootprint));
+            System.exit(1);
         }
+    }
+
+    /** */
+    public void test02_emptyEntryFootprint() throws Exception {
+        printlnSummary();
+        printlnSummary("Test: emptyEntryFootprint");
+
+        testEntryFootprint(TEST_EMPTY_ENTRIES_NUMBER, 0, new IgniteInClosure<Long>() {
+            long estimatedEmptyEntryFootprint = Long.MAX_VALUE;
+
+            @Override public void apply(Long f) {
+                if (estimatedEmptyEntryFootprint > f)
+                    estimatedEmptyEntryFootprint = f;
+                printfSummary("Estimated empty entry mem used = %d, minimum = %d%n",
+                    f, estimatedEmptyEntryFootprint);
+            }
+        });
+    }
+
+    /** */
+    public void test03_fullEntryFootprint() throws Exception {
+        printlnSummary();
+        printlnSummary("Test: fullEntryFootprint");
+
+        testEntryFootprint(TEST_FULL_ENTRIES_NUMBER, ENTRY_ARRAY_SIZE, new IgniteInClosure<Long>() {
+            double estimatedArrayElementFootprint = Double.MAX_VALUE;
+
+            @Override public void apply(Long f) {
+                double d = ((double)(f - estimatedEmptyEntryFootprint)) / ENTRY_ARRAY_SIZE;
+                if (estimatedArrayElementFootprint > d)
+                    estimatedArrayElementFootprint = d;
+                printfSummary("Estimated array element mem used = %.3f, minimum = %.3f%n",
+                    d, estimatedArrayElementFootprint);
+            }
+        });
+    }
+
+    /** */
+    private void testEntryFootprint(long entriesNumber, int arraySize,
+        IgniteInClosure<Long> callback) throws Exception {
+        long count = 0;
+        try {
+            Ignite ignite = Ignition.getOrStart(config("testEntryFootprint"));
+            IgniteCache<CacheKey, CacheValue> cache = ignite.getOrCreateCache(TEST_CACHE_NAME);
+            CacheKey cacheKey = new CacheKey();
+            CacheValue cacheValue = new CacheValue();
+            cacheValue.bytes = new byte[arraySize];
+            for (int j = 0; j < arraySize; ++j)
+                cacheValue.bytes[j] = (byte)j;
+            while (true) {
+                for (long i = 0; i < entriesNumber; ++i, ++count) {
+                    cacheKey.value = count;
+                    cacheValue.value = count;
+//                    cacheValue.value0 = count;
+//                    cacheValue.value1 = 0;
+                    cache.put(cacheKey, cacheValue);
+                }
+                long f = (processUsedMemory() - estimatedNodeFootprint - estimatedJvmFootprint) / count;
+                callback.apply(f);
+            }
+        }
+        catch (OutOfMemoryError ex) {
+            long usedMemoryOnStop = processUsedMemory();
+            long f = (usedMemoryOnStop - estimatedNodeFootprint - estimatedJvmFootprint) / count;
+            printfSummary("Maximum JVM mem used = %d M, entry count = %d%n",
+                sizeInMegabytes(usedMemoryOnStop), count);
+            callback.apply(f);
+        }
+
     }
 
     /** */
@@ -276,8 +347,14 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     private static class CacheValue {
 
         /** */
-        //@QuerySqlField(index = true)
+        @QuerySqlField(index = true)
         public long value;
+//        /** */
+//        @QuerySqlField(index = true)
+//        public long value0;
+//        /** */
+//        @QuerySqlField(index = true)
+//        public long value1;
         /** */
         public byte[] bytes;
     }
