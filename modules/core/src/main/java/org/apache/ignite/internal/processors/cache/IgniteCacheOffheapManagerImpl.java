@@ -287,7 +287,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     ) throws IgniteCheckedException {
         assert expireTime >= 0;
 
-        log().error("% UPDATE key - " + key.value(cctx.cacheObjectContext(), false) + ", value - " + val.value(cctx.cacheObjectContext(), false));
+        log().info("% UPDATE key - " + key.value(cctx.cacheObjectContext(), false) + ", value - " + val.value(cctx.cacheObjectContext(), false));
 
         dataStore(part).update(key, partId, val, ver, expireTime);
     }

@@ -574,7 +574,7 @@ public class GridDhtPartitionDemander {
                 int p = e.getKey();
 
                 if (cctx.cacheId() == CU.cacheId("cache1") ) {
-                    StringBuilder builder = new StringBuilder("% " + p +  "Keys: ");
+                    StringBuilder builder = new StringBuilder("% Part - " + p +  ", Keys[" + e.getValue().infos().size() + "]: ");
                     for (GridCacheEntryInfo info : e.getValue().infos()) {
                         builder.append((Object) info.key().value(cctx.cacheObjectContext(), false));
                         builder.append(", ");

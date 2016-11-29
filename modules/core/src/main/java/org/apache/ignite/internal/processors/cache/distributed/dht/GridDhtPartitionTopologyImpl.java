@@ -1065,7 +1065,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             log.debug("Updating full partition map [exchId=" + exchId + ", parts=" + fullMapString() + ']');
 
         if (cctx.cacheId() == CU.cacheId("cache1"))
-            log.error("% UPDATE FullMap");
+            log.info("% UPDATE FullMap");
 
         GridDhtPartitionMap2 map = partMap.get(cctx.localNodeId());
 
@@ -1124,27 +1124,32 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 lastExchangeId = exchId;
 
             if (node2part != null) {
-                for (GridDhtPartitionMap2 part : node2part.values()) {
-                    GridDhtPartitionMap2 newPart = partMap.get(part.nodeId());
-
-                    // If for some nodes current partition has a newer map,
-                    // then we keep the newer value.
-                    if (newPart != null &&
-                        (newPart.updateSequence() < part.updateSequence() || (
-                            cctx.startTopologyVersion() != null &&
-                                newPart.topologyVersion() != null && // Backward compatibility.
-                                cctx.startTopologyVersion().compareTo(newPart.topologyVersion()) > 0))
-                        ) {
-                        if (log.isDebugEnabled())
-                            log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
-                                mapString(part) + ", newPart=" + mapString(newPart) + ']');
-
-                        if (cctx.cacheId() == CU.cacheId("cache1"))
-                            log.error("% REPLACE FullMap curNode" + (part.nodeId().equals( cctx.localNode().id())) + ", state (2) =" + part.get(2) );
-
-                        partMap.put(part.nodeId(), part);
-                    }
-                }
+//                for (GridDhtPartitionMap2 part : node2part.values()) {
+//                    GridDhtPartitionMap2 newPart = partMap.get(part.nodeId());
+//
+//                    // If for some nodes current partition has a newer map,
+//                    // then we keep the newer value.
+//                    if (newPart != null &&
+//                        (newPart.updateSequence() < part.updateSequence() || (
+//                            cctx.startTopologyVersion() != null &&
+//                                newPart.topologyVersion() != null && // Backward compatibility.
+//                                cctx.startTopologyVersion().compareTo(newPart.topologyVersion()) > 0))
+//                        ) {
+//                        if (log.isDebugEnabled())
+//                            log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
+//                                mapString(part) + ", newPart=" + mapString(newPart) + ']');
+//
+//                        if (cctx.cacheId() == CU.cacheId("cache1") && part.nodeId().equals(cctx.localNode().id())) {
+//                            log.error("% REPLACE start = " + cctx.startTopologyVersion() + ", newPartTopVer = " + newPart.topologyVersion());
+//                            log.error("% REPLACE partSeq = " + part.updateSequence() + ", newPartSeq = " + newPart.updateSequence());
+//
+//                            for (Map.Entry<Integer, GridDhtPartitionState> entry : part.entrySet())
+//                                log.error("% REPLACE FullMap part - " + entry.getKey() + ", state - " + entry.getValue());
+//                        }
+//
+//                        partMap.put(part.nodeId(), part);
+//                    }
+//                }
 
                 for (Iterator<UUID> it = partMap.keySet().iterator(); it.hasNext(); ) {
                     UUID nodeId = it.next();
@@ -1184,10 +1189,17 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             GridDhtPartitionMap2 nodeMap = partMap.get(cctx.localNodeId());
 
+            if (cctx.cacheId() == CU.cacheId("cache1"))
+                log.info("% NODE MAP IS NULL - " + (nodeMap == null));
+
             if (nodeMap != null) {
                 for (Map.Entry<Integer, GridDhtPartitionState> e : nodeMap.entrySet()) {
                     int p = e.getKey();
                     GridDhtPartitionState state = e.getValue();
+
+                    if (cctx.cacheId() == CU.cacheId("cache1"))
+                        log.info("% P = " + p + ", state = " + state);
+
 
                     if (state == OWNING) {
                         GridDhtLocalPartition locPart = locParts.get(p);
@@ -1250,6 +1262,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 cctx.shared().exchange().scheduleResendPartitions();
 
             return changed ? localPartitionMap() : null;
+        }
+        catch (Throwable th) {
+            log.error("% PART FULL ", th);
+            throw th;
         }
         finally {
             lock.writeLock().unlock();
