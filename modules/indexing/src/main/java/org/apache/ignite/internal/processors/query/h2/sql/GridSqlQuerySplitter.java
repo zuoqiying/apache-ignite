@@ -21,6 +21,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -75,7 +77,7 @@ public class GridSqlQuerySplitter {
     private static final String UNIQUE_TABLE_ALIAS_SUFFIX = "__Z";
 
     /** */
-    private int nextTblAliasIdx;
+    private int nextTblAliasId;
 
     /** */
     private int splitId = -1; // The first one will be 0.
@@ -248,24 +250,161 @@ public class GridSqlQuerySplitter {
      * @param qrym Query model.
      */
     private void pushDownQueryModel(QueryModel prnt, QueryModel qrym) {
-        switch (qrym.type) {
-            case UNION:
-                for (QueryModel child : qrym)
-                    pushDownQueryModel(qrym, child);
+        if (qrym.type == Type.UNION) {
+            assert qrym.needSplitChild; // Otherwise we should not get here.
 
-                break;
+            for (QueryModel child : qrym)
+                pushDownQueryModel(qrym, child);
+        }
+        else if (qrym.type == Type.SELECT) {
+            if (qrym.needSplit)
+                assert prnt.type == Type.UNION : prnt.type; // This can only be SELECT in UNION: do nothing.
+            else {
+                assert qrym.needSplitChild; // Otherwise we should not get here.
 
-            case SELECT:
-                if (qrym.needSplit) {
+                int begin = -1;
+                int end = -1;
 
+                // Here we iterate over joined FROM table filters.
+                for (int i = 0; i < qrym.size(); i++) {
+                    QueryModel child = qrym.get(i);
+
+                    if (child.isQuery() && (child.needSplitChild || child.needSplit)) {
+                        // Push down the currently collected chain.
+                        if (begin != -1) {
+                            pushDown(qrym, begin, end);
+
+                            begin = -1;
+                            end = -1;
+                        }
+
+                        if (child.needSplitChild)
+                            pushDownQueryModel(qrym, child);
+                    }
+                    else {
+                        // It is a table or a function or a subquery that we do not need to split or split child.
+                        // We need to find all the joined elements like this in chain to push down.
+                        if (begin == -1)
+                            begin = i;
+
+                        end = i;
+                    }
                 }
 
-                // TODO decide if we need a push down in this select looking at prnt
+                if (begin != -1)
+                    pushDown(qrym, begin, end);
+            }
+        }
+        else
+            throw new IllegalStateException("Type: " + qrym.type);
+    }
 
-                break;
+    private void pushDown(QueryModel qrym, int begin, int end) {
+        if (begin == end && qrym.get(end).isQuery()) {
+            // Simple case when we have a single subquery to push down, just mark it to be splittable.
+            QueryModel child = qrym.get(end);
 
-            default:
-                throw new IllegalStateException("Type: " + qrym.type);
+            if (child.type == Type.SELECT)
+                child.needSplit = true;
+            else if (child.type == Type.UNION) {
+                child.needSplitChild = true;
+
+                // Mark all the selects in the union to be splittable.
+                for (QueryModel s : child)
+                    s.needSplit = true;
+            }
+            else
+                assert false;
+        }
+        else {
+            // Here we have to generate a subquery for all the joined elements and
+            // and mark that subquery as splittable.
+
+            // Also we will need to find inbound and outbound conditions for the
+            // given JOIN chain and leave them outside of the subquery, all simple conditions
+            // must be moved inside of the subquery.
+
+            // The subquery must have ORDER BY for inbound condition to make merge join
+            // on the reduce side work.
+
+            // We have to add respective ORDER BYs to our neighbours as well to be able
+            // to perform merge join.
+
+            // We can not generate merge join if we have more than two participants:
+            // `A join B on A.X = B.Y join C on B.Z = C.W`
+            // because here we have to sort B by Y to merge join with A and on another hand
+            // we have to sort it by Z to merge join with C.
+
+            // To solve this we have to wrap each join into a separate subquery with correct
+            // sorting by outbound condition like:
+            // `(select * from A join B on A.X = B.Y order by B.Z) D join C on D.Z = C.W`
+            // assuming that A is sorted by X, B by Y and C by W.
+
+            // If we have OR inbound condition, then having wrapper subqueries with
+            // sorting makes no sense, we will need to scan anyways. In this case
+            // we can only hope that buffer inside of merge index will be large enough
+            // to accommodate all the results.
+
+            GridSqlSelect select = qrym.ast();
+            GridSqlJoin join = findJoin(qrym, end);
+
+
+        }
+    }
+
+    private void injectOrderBy() {
+        // TODO !!! we need to generate ORDER BY for splitting selects as well to be able to perform merge join.
+    }
+
+    /**
+     * @return New identity hash set.
+     */
+    private static <X> Set<X> newIdentityHashSet() {
+        return Collections.newSetFromMap(new IdentityHashMap<X,Boolean>());
+    }
+
+    /**
+     * @param qrym Query model for the SELECT.
+     * @param idx Index of the child model for which we need to find a respective JOIN element.
+     * @return JOIN.
+     */
+    private static GridSqlJoin findJoin(QueryModel qrym, int idx) {
+        assert qrym.type == Type.SELECT: qrym.type;
+        assert qrym.size() > 1; // It must be at least one join with at least two child tables.
+
+        //     join2
+        //      / \
+        //   join1 \
+        //    / \   \
+        //  T0   T1  T2
+
+        // If we need to find JOIN for T0, it is the same as for T1.
+        if (idx == 0)
+            idx = 1;
+
+        GridSqlJoin join = (GridSqlJoin)qrym.<GridSqlSelect>ast().from();
+
+        for (int i = qrym.size() - 1; i > idx; i--)
+            join = (GridSqlJoin)join.leftTable();
+
+        return join;
+    }
+
+    /**
+     * @param ast AST.
+     * @param tblAlias Table alias for the table filter we need find columns for.
+     * @param cols Resulting collections of columns to fill.
+     */
+    private void collectColumnsForTable(GridSqlAst ast, GridSqlAlias tblAlias, Collection<GridSqlColumn> cols) {
+        if (ast instanceof GridSqlColumn) {
+            GridSqlColumn col = (GridSqlColumn)ast;
+
+            if (col.expressionInFrom() == tblAlias)
+                cols.add(col);
+        }
+        else {
+            for (int i = 0; i < ast.size(); i++)
+                collectColumnsForTable(ast.child(i), tblAlias, cols);
         }
     }
 
@@ -350,6 +489,8 @@ public class GridSqlQuerySplitter {
                 }
             }
         }
+        else
+            throw new IllegalStateException("Type: " + qrym.type);
     }
 
     /**
@@ -701,10 +842,7 @@ public class GridSqlQuerySplitter {
         assert tbl instanceof GridSqlTable || tbl instanceof GridSqlSubquery ||
             tbl instanceof GridSqlFunction: tbl.getClass();
 
-        String uniqueAlias = UNIQUE_TABLE_ALIAS_SUFFIX + nextTblAliasIdx++;
-
-        if (tbl != child) // To make the generated query more readable.
-            uniqueAlias = ((GridSqlAlias)child).alias() + uniqueAlias;
+        String uniqueAlias = uniqueAlias(tbl != child ? ((GridSqlAlias)child).alias() : null);
 
         GridSqlAlias uniqueAliasAst = new GridSqlAlias(uniqueAlias, tbl);
 
@@ -715,6 +853,20 @@ public class GridSqlQuerySplitter {
 
         return uniqueAliasAst;
     }
+
+    /**
+     * @param alias Existing alias.
+     * @return Generated unique alias.
+     */
+    private String uniqueAlias(String alias) {
+        String uniqueAlias = UNIQUE_TABLE_ALIAS_SUFFIX + nextTblAliasId++;
+
+        if (alias != null)
+            uniqueAlias = alias + uniqueAlias;
+
+        return uniqueAlias;
+    }
+
 
     /**
      * @param prnt Parent element.
