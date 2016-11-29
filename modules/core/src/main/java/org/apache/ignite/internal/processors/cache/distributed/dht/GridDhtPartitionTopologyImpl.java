@@ -53,6 +53,7 @@ import org.apache.ignite.internal.util.GridAtomicLong;
 import org.apache.ignite.internal.util.StripedCompositeReadWriteLock;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -113,7 +114,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
     private final GridCacheMapEntryFactory entryFactory;
 
     /** Partition update counter. */
-    private Map<Integer, Long> cntrMap = new HashMap<>();
+    private Map<Integer, T2<Long, Long>> cntrMap = new HashMap<>();
 
     /** */
     private volatile AffinityTopologyVersion rebalancedTopVer = AffinityTopologyVersion.NONE;
@@ -619,7 +620,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 log.debug("Partition map before afterExchange [exchId=" + exchFut.exchangeId() + ", fullMap=" +
                     fullMapString() + ']');
 
-            long updateSeq = this.updateSeq.incrementAndGet();
+            long updateSeq = this.updateSeq.get();
 
             for (int p = 0; p < num; p++) {
                 GridDhtLocalPartition locPart = localPartition(p, topVer, false, false);
@@ -1060,7 +1061,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
     @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
     @Nullable @Override public GridDhtPartitionMap2 update(@Nullable GridDhtPartitionExchangeId exchId,
         GridDhtPartitionFullMap partMap,
-        @Nullable Map<Integer, Long> cntrMap) {
+        @Nullable Map<Integer, T2<Long, Long>> cntrMap) {
         if (log.isDebugEnabled())
             log.debug("Updating full partition map [exchId=" + exchId + ", parts=" + fullMapString() + ']');
 
@@ -1082,10 +1083,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 return null;
 
             if (cntrMap != null) {
-                for (Map.Entry<Integer, Long> e : cntrMap.entrySet()) {
-                    Long cntr = this.cntrMap.get(e.getKey());
+                for (Map.Entry<Integer, T2<Long, Long>> e : cntrMap.entrySet()) {
+                    T2<Long, Long> cntr = this.cntrMap.get(e.getKey());
 
-                    if (cntr == null || cntr < e.getValue())
+                    if (cntr == null || cntr.get2() < e.getValue().get2())
                         this.cntrMap.put(e.getKey(), e.getValue());
                 }
 
@@ -1095,10 +1096,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                     if (part == null)
                         continue;
 
-                    Long cntr = cntrMap.get(part.id());
+                    T2<Long, Long> cntr = cntrMap.get(part.id());
 
                     if (cntr != null)
-                        part.updateCounter(cntr);
+                        part.updateCounter(cntr.get2());
                 }
             }
 
@@ -1124,32 +1125,32 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 lastExchangeId = exchId;
 
             if (node2part != null) {
-//                for (GridDhtPartitionMap2 part : node2part.values()) {
-//                    GridDhtPartitionMap2 newPart = partMap.get(part.nodeId());
-//
-//                    // If for some nodes current partition has a newer map,
-//                    // then we keep the newer value.
-//                    if (newPart != null &&
-//                        (newPart.updateSequence() < part.updateSequence() || (
-//                            cctx.startTopologyVersion() != null &&
-//                                newPart.topologyVersion() != null && // Backward compatibility.
-//                                cctx.startTopologyVersion().compareTo(newPart.topologyVersion()) > 0))
-//                        ) {
-//                        if (log.isDebugEnabled())
-//                            log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
-//                                mapString(part) + ", newPart=" + mapString(newPart) + ']');
-//
-//                        if (cctx.cacheId() == CU.cacheId("cache1") && part.nodeId().equals(cctx.localNode().id())) {
-//                            log.error("% REPLACE start = " + cctx.startTopologyVersion() + ", newPartTopVer = " + newPart.topologyVersion());
-//                            log.error("% REPLACE partSeq = " + part.updateSequence() + ", newPartSeq = " + newPart.updateSequence());
-//
-//                            for (Map.Entry<Integer, GridDhtPartitionState> entry : part.entrySet())
-//                                log.error("% REPLACE FullMap part - " + entry.getKey() + ", state - " + entry.getValue());
-//                        }
-//
-//                        partMap.put(part.nodeId(), part);
-//                    }
-//                }
+                for (GridDhtPartitionMap2 part : node2part.values()) {
+                    GridDhtPartitionMap2 newPart = partMap.get(part.nodeId());
+
+                    // If for some nodes current partition has a newer map,
+                    // then we keep the newer value.
+                    if (newPart != null &&
+                        (newPart.updateSequence() < part.updateSequence() || (
+                            cctx.startTopologyVersion() != null &&
+                                newPart.topologyVersion() != null && // Backward compatibility.
+                                cctx.startTopologyVersion().compareTo(newPart.topologyVersion()) > 0))
+                        ) {
+                        if (log.isDebugEnabled())
+                            log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
+                                mapString(part) + ", newPart=" + mapString(newPart) + ']');
+
+                        if (cctx.cacheId() == CU.cacheId("cache1") && part.nodeId().equals(cctx.localNode().id())) {
+                            log.error("% REPLACE start = " + cctx.startTopologyVersion() + ", newPartTopVer = " + newPart.topologyVersion());
+                            log.error("% REPLACE partSeq = " + part.updateSequence() + ", newPartSeq = " + newPart.updateSequence());
+
+                            for (Map.Entry<Integer, GridDhtPartitionState> entry : part.entrySet())
+                                log.error("% REPLACE FullMap part - " + entry.getKey() + ", state - " + entry.getValue());
+                        }
+
+                        partMap.put(part.nodeId(), part);
+                    }
+                }
 
                 for (Iterator<UUID> it = partMap.keySet().iterator(); it.hasNext(); ) {
                     UUID nodeId = it.next();
@@ -1207,10 +1208,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                         assert locPart != null;
 
                         if (cntrMap != null) {
-                            Long cntr = cntrMap.get(p);
+                            T2<Long, Long> cntr = cntrMap.get(p);
 
-                            if (cntr != null && cntr > locPart.updateCounter())
-                                locPart.updateCounter(cntr);
+                            if (cntr != null && cntr.get2() > locPart.updateCounter())
+                                locPart.updateCounter(cntr.get2());
                         }
 
                         if (locPart.state() != OWNING) {
@@ -1236,10 +1237,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                         }
 
                         if (cntrMap != null) {
-                            Long cntr = cntrMap.get(p);
+                            T2<Long, Long> cntr = cntrMap.get(p);
 
-                            if (cntr != null && cntr > locPart.updateCounter())
-                                locPart.updateCounter(cntr);
+                            if (cntr != null && cntr.get2() > locPart.updateCounter())
+                                locPart.updateCounter(cntr.get2());
                         }
                     }
                 }
@@ -1276,7 +1277,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
     @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
     @Nullable @Override public GridDhtPartitionMap2 update(@Nullable GridDhtPartitionExchangeId exchId,
         GridDhtPartitionMap2 parts,
-        @Nullable Map<Integer, Long> cntrMap) {
+        @Nullable Map<Integer, T2<Long, Long>> cntrMap) {
         if (log.isDebugEnabled())
             log.debug("Updating single partition map [exchId=" + exchId + ", parts=" + mapString(parts) + ']');
 
@@ -1295,10 +1296,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 return null;
 
             if (cntrMap != null) {
-                for (Map.Entry<Integer, Long> e : cntrMap.entrySet()) {
-                    Long cntr = this.cntrMap.get(e.getKey());
+                for (Map.Entry<Integer, T2<Long, Long>> e : cntrMap.entrySet()) {
+                    T2<Long, Long> cntr = this.cntrMap.get(e.getKey());
 
-                    if (cntr == null || cntr < e.getValue())
+                    if (cntr == null || cntr.get2() < e.getValue().get2())
                         this.cntrMap.put(e.getKey(), e.getValue());
                 }
 
@@ -1308,10 +1309,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                     if (part == null)
                         continue;
 
-                    Long cntr = cntrMap.get(part.id());
+                    T2<Long, Long> cntr = cntrMap.get(part.id());
 
-                    if (cntr != null && cntr > part.updateCounter())
-                        part.updateCounter(cntr);
+                    if (cntr != null && cntr.get2() > part.updateCounter())
+                        part.updateCounter(cntr.get2());
                 }
             }
 
@@ -1848,11 +1849,11 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
     }
 
     /** {@inheritDoc} */
-    @Override public Map<Integer, Long> updateCounters() {
+    @Override public Map<Integer, T2<Long, Long>> updateCounters() {
         lock.readLock().lock();
 
         try {
-            Map<Integer, Long> res = new HashMap<>(cntrMap);
+            Map<Integer, T2<Long, Long>> res = new HashMap<>(cntrMap);
 
             for (int i = 0; i < locParts.length(); i++) {
                 GridDhtLocalPartition part = locParts.get(i);
@@ -1860,11 +1861,11 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 if (part == null)
                     continue;
 
-                Long cntr0 = res.get(part.id());
+                T2<Long, Long> cntr0 = res.get(part.id());
                 Long cntr1 = part.initialUpdateCounter();
 
-                if (cntr0 == null || cntr1 > cntr0)
-                    res.put(part.id(), cntr1);
+                if (cntr0 == null || cntr1 > cntr0.get1())
+                    res.put(part.id(), new T2<Long, Long>(cntr1, part.updateCounter()));
             }
 
             return res;

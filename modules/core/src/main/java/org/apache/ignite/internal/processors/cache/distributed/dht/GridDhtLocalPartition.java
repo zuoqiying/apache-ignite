@@ -840,7 +840,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         store.updateCounter(val);
     }
 
-    public void updateInitialCounter(long val) {
+    public void initialUpdateCounter(long val) {
         store.updateInitialCounter(val);
     }
 

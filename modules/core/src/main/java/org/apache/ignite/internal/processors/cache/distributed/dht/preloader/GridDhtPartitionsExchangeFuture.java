@@ -73,6 +73,7 @@ import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.CI1;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -1440,23 +1441,23 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     private void assignPartitionStates(GridDhtPartitionTopology top) {
         Map<Integer, CounterWithNodes> maxCntrs = new HashMap<>();
 
-        if (top.cacheId() == CU.cacheId("cache1")) {
-            for (Map.Entry<UUID, GridDhtPartitionsAbstractMessage> entry : msgs.entrySet()) {
-                ClusterNode node = cctx.discovery().node(entry.getKey());
-
-                if (node!= null)
-                    System.out.print(node.consistentId());
-
-                Long cache1 = entry.getValue().partitionUpdateCounters(CU.cacheId("cache1")).get(3);
-
-                System.out.println(" - " + cache1);
-            }
-        }
+//        if (top.cacheId() == CU.cacheId("cache1")) {
+//            for (Map.Entry<UUID, GridDhtPartitionsAbstractMessage> entry : msgs.entrySet()) {
+//                ClusterNode node = cctx.discovery().node(entry.getKey());
+//
+//                if (node!= null)
+//                    System.out.print(node.consistentId());
+//
+//                Long cache1 = entry.getValue().partitionUpdateCounters(CU.cacheId("cache1")).get(3).get1();
+//
+//                System.out.println(" - " + cache1);
+//            }
+//        }
 
         for (Map.Entry<UUID, GridDhtPartitionsAbstractMessage> e : msgs.entrySet()) {
             assert e.getValue().partitionUpdateCounters(top.cacheId()) != null;
 
-            for (Map.Entry<Integer, Long> e0 : e.getValue().partitionUpdateCounters(top.cacheId()).entrySet()) {
+            for (Map.Entry<Integer, T2<Long, Long>> e0 : e.getValue().partitionUpdateCounters(top.cacheId()).entrySet()) {
                 int p = e0.getKey();
 
                 UUID uuid = e.getKey();
@@ -1466,7 +1467,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 if (state != GridDhtPartitionState.OWNING)
                     continue;
 
-                Long cntr = e0.getValue();
+                Long cntr = e0.getValue().get1();
 
                 if (cntr == null)
                     continue;
@@ -1575,8 +1576,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
             }
 
             if (discoEvt.type() == EVT_NODE_JOINED) {
-                if (cctx.cache().globalState() == CacheState.ACTIVE)
+                if (cctx.cache().globalState() == CacheState.ACTIVE) {
+//                    U.sleep(1000);
                     assignPartitionsStates();
+                }
             }
             else if (discoEvt.type() == EVT_DISCOVERY_CUSTOM_EVT) {
                 assert discoEvt instanceof DiscoveryCustomEvent;
@@ -1588,8 +1591,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                     for (DynamicCacheChangeRequest req : batch.requests()) {
                         if (req.resetLostPartitions())
                             resetLostPartitions();
-                        else if (req.globalStateChange() && req.state() == CacheState.ACTIVE)
+                        else if (req.globalStateChange() && req.state() == CacheState.ACTIVE) {
+//                            U.sleep(1000);
                             assignPartitionsStates();
+                        }
                     }
                 }
             }
@@ -1755,7 +1760,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         for (Map.Entry<Integer, GridDhtPartitionFullMap> entry : msg.partitions().entrySet()) {
             Integer cacheId = entry.getKey();
 
-            Map<Integer, Long> cntrMap = msg.partitionUpdateCounters(cacheId);
+            Map<Integer, T2<Long, Long>> cntrMap = msg.partitionUpdateCounters(cacheId);
 
             GridCacheContext cacheCtx = cctx.cacheContext(cacheId);
 
