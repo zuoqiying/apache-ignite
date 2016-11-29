@@ -18,7 +18,9 @@
 package org.apache.ignite.internal.visor.cache;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlIndexMetadata;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlMetadata;
@@ -46,7 +48,7 @@ public class VisorCacheSqlMetadata implements Serializable {
     private Map<String, Map<String, String>> fields;
 
     /** */
-    private Map<String, Collection<GridCacheSqlIndexMetadata>> indexes;
+    private Map<String, Collection<VisorCacheSqlIndexMetadata>> indexes;
 
     /**
      * Create data transfer object.
@@ -59,7 +61,22 @@ public class VisorCacheSqlMetadata implements Serializable {
         keyClasses = meta.keyClasses();
         valClasses = meta.valClasses();
         fields = meta.fields();
-        indexes = meta.indexes();
+        indexes = new HashMap<>();
+
+        Map<String, Collection<GridCacheSqlIndexMetadata>> src = meta.indexes();
+
+        if (src != null) {
+            for (Map.Entry<String, Collection<GridCacheSqlIndexMetadata>> entry: src.entrySet()) {
+                Collection<GridCacheSqlIndexMetadata> idxs = entry.getValue();
+
+                Collection<VisorCacheSqlIndexMetadata> res = new ArrayList<>(idxs.size());
+
+                for (GridCacheSqlIndexMetadata idx : idxs)
+                    res.add(new VisorCacheSqlIndexMetadata(idx));
+
+                indexes.put(entry.getKey(), res);
+            }
+        }
     }
 
     /**
@@ -100,7 +117,7 @@ public class VisorCacheSqlMetadata implements Serializable {
     /**
      * @return Indexes.
      */
-    public Map<String, Collection<GridCacheSqlIndexMetadata>> getIndexes() {
+    public Map<String, Collection<VisorCacheSqlIndexMetadata>> getIndexes() {
         return indexes;
     }
 }

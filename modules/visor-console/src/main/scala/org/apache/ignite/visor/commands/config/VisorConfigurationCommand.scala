@@ -206,11 +206,11 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val metricsCfg = cfg.getMetrics
 
-        val expTime = metricsCfg.expireTime()
+        val expTime = metricsCfg.getExpireTime
 
         metricsT += ("Metrics expire time", if (expTime != Long.MaxValue) expTime + "ms" else "<never>")
-        metricsT += ("Metrics history size", metricsCfg.historySize())
-        metricsT += ("Metrics log frequency", metricsCfg.loggerFrequency())
+        metricsT += ("Metrics history size", metricsCfg.getHistorySize)
+        metricsT += ("Metrics log frequency", metricsCfg.getLoggerFrequency)
 
         metricsT.render()
 

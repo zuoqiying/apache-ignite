@@ -51,21 +51,21 @@ public class VisorMetricsConfiguration implements Serializable {
     /**
      * @return Metrics expired time.
      */
-    public long expireTime() {
+    public long getExpireTime() {
         return expTime;
     }
 
     /**
      * @return Number of node metrics stored in memory.
      */
-    public int historySize() {
+    public int getHistorySize() {
         return histSize;
     }
 
     /**
      * @return Frequency of metrics log printout.
      */
-    public long loggerFrequency() {
+    public long getLoggerFrequency() {
         return logFreq;
     }
 
