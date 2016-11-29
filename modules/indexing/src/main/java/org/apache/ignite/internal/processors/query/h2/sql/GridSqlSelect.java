@@ -66,7 +66,7 @@ public class GridSqlSelect extends GridSqlQuery {
 
     /** {@inheritDoc} */
     @Override public int size() {
-        return 4 + cols.size(); // + FROM + WHERE +
+        return 4 + cols.size(); // + FROM + WHERE + OFFSET + LIMIT
     }
 
     /** {@inheritDoc} */
