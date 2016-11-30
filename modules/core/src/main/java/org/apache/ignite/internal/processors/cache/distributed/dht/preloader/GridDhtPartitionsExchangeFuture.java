@@ -1309,10 +1309,15 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
             }
             else {
                 // Read.
-                if (plc == READ_ONLY_SAFE || plc == READ_WRITE_SAFE)
+                if (plc == READ_ONLY_SAFE || plc == READ_WRITE_SAFE) {
+                    log.error("% VALIDATE topVer = " + topologyVersion().toString());
+                    GridDiscoveryTopologySnapshot gridDiscoveryTopologySnapshot = topSnapshot.get();
+                    log.error("% VALIDATE topSnap = " +gridDiscoveryTopologySnapshot.toString());
+
                     return new CacheInvalidStateException("Failed to execute cache operation " +
-                        "(all partition owners have left the grid, partition data has been lost) [" +
-                        "cacheName=" + cacheName + ", part=" + part + ", key=" + key + ']');
+                            "(all partition owners have left the grid, partition data has been lost) [" +
+                            "cacheName=" + cacheName + ", part=" + part + ", key=" + key + ']');
+                }
             }
         }
 
@@ -1441,18 +1446,18 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     private void assignPartitionStates(GridDhtPartitionTopology top) {
         Map<Integer, CounterWithNodes> maxCntrs = new HashMap<>();
 
-//        if (top.cacheId() == CU.cacheId("cache1")) {
-//            for (Map.Entry<UUID, GridDhtPartitionsAbstractMessage> entry : msgs.entrySet()) {
-//                ClusterNode node = cctx.discovery().node(entry.getKey());
-//
-//                if (node!= null)
-//                    System.out.print(node.consistentId());
-//
-//                Long cache1 = entry.getValue().partitionUpdateCounters(CU.cacheId("cache1")).get(3).get1();
-//
-//                System.out.println(" - " + cache1);
-//            }
-//        }
+        if (top.cacheId() == CU.cacheId("cache1")) {
+            for (Map.Entry<UUID, GridDhtPartitionsAbstractMessage> entry : msgs.entrySet()) {
+                ClusterNode node = cctx.discovery().node(entry.getKey());
+
+                if (node!= null)
+                    System.out.print(node.consistentId());
+
+                Long cache1 = entry.getValue().partitionUpdateCounters(CU.cacheId("cache1")).get(2).get1();
+
+                System.out.println(" - " + cache1);
+            }
+        }
 
         for (Map.Entry<UUID, GridDhtPartitionsAbstractMessage> e : msgs.entrySet()) {
             assert e.getValue().partitionUpdateCounters(top.cacheId()) != null;
@@ -1577,7 +1582,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             if (discoEvt.type() == EVT_NODE_JOINED) {
                 if (cctx.cache().globalState() == CacheState.ACTIVE) {
-//                    U.sleep(1000);
+                    U.sleep(10000);
                     assignPartitionsStates();
                 }
             }
@@ -1592,7 +1597,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                         if (req.resetLostPartitions())
                             resetLostPartitions();
                         else if (req.globalStateChange() && req.state() == CacheState.ACTIVE) {
-//                            U.sleep(1000);
+                            U.sleep(10000);
                             assignPartitionsStates();
                         }
                     }

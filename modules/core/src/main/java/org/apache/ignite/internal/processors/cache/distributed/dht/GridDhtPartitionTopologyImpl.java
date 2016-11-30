@@ -620,7 +620,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 log.debug("Partition map before afterExchange [exchId=" + exchFut.exchangeId() + ", fullMap=" +
                     fullMapString() + ']');
 
-            long updateSeq = this.updateSeq.get();
+            long updateSeq = this.updateSeq.incrementAndGet();
 
             for (int p = 0; p < num; p++) {
                 GridDhtLocalPartition locPart = localPartition(p, topVer, false, false);
