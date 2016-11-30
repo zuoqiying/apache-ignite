@@ -1243,6 +1243,17 @@ button.form-control {
     .clickable { cursor: pointer; }
 }
 
+
+.theme-line .summary {
+    .actions-note {
+        i {
+            margin-right: 5px;
+        }
+
+        margin: 15px 0;
+    }
+}
+
 .theme-line .popover.summary-project-structure {
     @extend .popover.settings;
 

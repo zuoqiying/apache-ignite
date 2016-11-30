@@ -24,7 +24,10 @@ export default [
     function($root, $scope, $http, LegacyUtils, Messages, Loading, $filter, Resource, JavaTypes, Version, generator, spring, java, docker, pom, propsGenerator, readme, FormUtils) {
         const ctrl = this;
 
-        $scope.ui = { ready: false };
+        $scope.ui = {
+            isSafari: !!(/constructor/i.test(window.HTMLElement) || window.safari),
+            ready: false
+        };
 
         Loading.start('summaryPage');
 
