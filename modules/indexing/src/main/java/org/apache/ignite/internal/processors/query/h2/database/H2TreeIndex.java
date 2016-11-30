@@ -42,6 +42,7 @@ import org.h2.result.SearchRow;
 import org.h2.result.SortOrder;
 import org.h2.table.IndexColumn;
 import org.h2.table.TableFilter;
+import org.h2.value.*;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -137,10 +138,32 @@ public class H2TreeIndex extends GridH2IndexBase {
     @SuppressWarnings("StatementWithEmptyBody")
     @Override public GridH2Row put(GridH2Row row) {
         try {
+            validateRowIndex(row);
+
             return tree.put(row);
         }
         catch (IgniteCheckedException e) {
             throw DbException.convert(e);
+        }
+    }
+
+    private void validateRowIndex(GridH2Row row) throws IgniteCheckedException {
+        if (row == null)
+            return;
+
+        for (int i = 0, len = indexColumns.length; i < len; i++) {
+            int index = columnIds[i];
+
+            Value value = row.getValue(index);
+            IndexColumn idxCol = indexColumns[i];
+
+            int idxColType = idxCol.column.getType();
+            int valueType = value.getType();
+
+            if (idxColType != valueType)
+                throw new IgniteCheckedException("Incorrect type of indexed value [index type=" +
+                    DataType.getTypeClassName(idxColType) + ", value type=" +
+                    DataType.getTypeClassName(valueType) + "]");
         }
     }
 
