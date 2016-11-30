@@ -35,6 +35,9 @@ import java.io.PrintStream;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -57,6 +60,10 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     /** */
     private static final int ENTRY_ARRAY_SIZE = 100_000;
     /** */
+    private static final long MEMORY_LIMIT = 8L << 30;
+    /** */
+    private static final long CACHE_WRITE_TIMEOUT = 5 * 60_000;
+    /** */
     private static final Pattern MEM_USED_P = Pattern.compile("Память:\\s*([\\d\\h]+?)\\sКБ");
     /** */
     private final String lineSeparator = System.getProperty("line.separator");
@@ -65,15 +72,13 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     /** */
     private PrintStream out = System.out;
     /** */
-    private boolean keepNodesRunningAfterTest;
-    /** */
     private long estimatedJvmFootprint = 50L << 20;
     /** */
-    private long estimatedNodeFootprint = 100L << 20; // 45 M on big number of nodes
+    private long estimatedNodeFootprint = 100L << 20; // 50 Mb on big number of nodes
     /** */
-    private long estimatedEmptyEntryFootprint = 440L;
+    private long estimatedEmptyEntryFootprint = 230L;
     /** */
-    private double estimatedArrayElementFootprint = 1.2D;
+    private double estimatedArrayElementFootprint = 1.1D;
 
     /** */
     public IgniteCacheEntrySizeTest2() {
@@ -88,9 +93,9 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     /** */
     private static long getProcessId() {
         String pid = ManagementFactory.getRuntimeMXBean().getName();
-        int index = pid.indexOf('@');
-        if (index > 0)
-            pid = pid.substring(0, index);
+        int i = pid.indexOf('@');
+        if (i > 0)
+            pid = pid.substring(0, i);
         return Long.parseLong(pid);
     }
 
@@ -111,15 +116,10 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
         cacheCache.setCacheMode(CacheMode.PARTITIONED);
         cacheCache.setBackups(0);
         cacheCache.setAtomicityMode(CacheAtomicityMode.ATOMIC);
-        cacheCache.setIndexedTypes(CacheKey.class, CacheValue.class);
+//        cacheCache.setIndexedTypes(CacheKey.class, CacheValue.class);
 
-        /** ONHEAP_TIERED */
-        cacheCache.setMemoryMode(CacheMemoryMode.ONHEAP_TIERED);
-        cacheCache.setOffHeapMaxMemory(0);
-
-        /** OFFHEAP_TIERED
-         cacheCache.setMemoryMode(CacheMemoryMode.OFFHEAP_TIERED);
-         cacheCache.setOffHeapMaxMemory(512L << 20); */
+        cacheCache.setMemoryMode(CacheMemoryMode.OFFHEAP_TIERED);
+        cacheCache.setOffHeapMaxMemory(MEMORY_LIMIT);
 
         cfg.setCacheConfiguration(cacheCache);
         return cfg;
@@ -128,9 +128,9 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     /** */
     public static void main(String[] args) {
         try (final IgniteCacheEntrySizeTest2 app = new IgniteCacheEntrySizeTest2()) {
-            //app.test01_nodeFootprint();
-            app.test02_emptyEntryFootprint();
-            //app.test03_fullEntryFootprint();
+//            app.test01_nodeFootprint();
+//            app.test02_emptyEntryFootprint();
+            app.test03_fullEntryFootprint();
         }
         catch (Exception ex) {
             Logger.getLogger(IgniteCacheEntrySizeTest2.class.getName()).log(Level.SEVERE, null, ex);
@@ -293,34 +293,65 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     private void testEntryFootprint(long entriesNumber, int arraySize,
         IgniteInClosure<Long> callback) throws Exception {
         long count = 0;
+        final Thread th = Thread.currentThread();
+        Ignite ignite = Ignition.getOrStart(config("testEntryFootprint"));
+        IgniteCache<CacheKey, CacheValue> cache = ignite.getOrCreateCache(TEST_CACHE_NAME);
+        CacheKey cacheKey = new CacheKey();
+        CacheValue cacheValue = new CacheValue();
+        cacheValue.bytes = new byte[arraySize];
+        for (int j = 0; j < arraySize; ++j)
+            cacheValue.bytes[j] = (byte)j;
+        final AtomicBoolean writeTimeout = new AtomicBoolean();
         try {
-            Ignite ignite = Ignition.getOrStart(config("testEntryFootprint"));
-            IgniteCache<CacheKey, CacheValue> cache = ignite.getOrCreateCache(TEST_CACHE_NAME);
-            CacheKey cacheKey = new CacheKey();
-            CacheValue cacheValue = new CacheValue();
-            cacheValue.bytes = new byte[arraySize];
-            for (int j = 0; j < arraySize; ++j)
-                cacheValue.bytes[j] = (byte)j;
             while (true) {
+                Timer writeTimeoutTimer = new Timer("writeTimeoutTimer", true);
+                writeTimeoutTimer.schedule(new TimerTask() {
+                    @Override public void run() {
+                        synchronized (IgniteCacheEntrySizeTest2.this) {
+                            writeTimeout.set(true);
+                            th.interrupt();
+                        }
+                    }
+                }, CACHE_WRITE_TIMEOUT);
                 for (long i = 0; i < entriesNumber; ++i, ++count) {
+                    if (writeTimeout.get()) {
+                        updateUsedMemory(count, callback);
+                        throw new RuntimeException("Timeout writing to the cache");
+                    }
                     cacheKey.value = count;
                     cacheValue.value = count;
 //                    cacheValue.value0 = count;
-//                    cacheValue.value1 = 0;
+//                    cacheValue.value1 = String.valueOf(count);
                     cache.put(cacheKey, cacheValue);
                 }
-                long f = (processUsedMemory() - estimatedNodeFootprint - estimatedJvmFootprint) / count;
-                callback.apply(f);
+                writeTimeoutTimer.cancel();
+                updateUsedMemory(count, callback);
             }
         }
-        catch (OutOfMemoryError ex) {
-            long usedMemoryOnStop = processUsedMemory();
-            long f = (usedMemoryOnStop - estimatedNodeFootprint - estimatedJvmFootprint) / count;
-            printfSummary("Maximum JVM mem used = %d M, entry count = %d%n",
-                sizeInMegabytes(usedMemoryOnStop), count);
-            callback.apply(f);
+        catch (Throwable ex) {
+            synchronized (this) {
+                Thread.interrupted();
+                System.err.println(ex);
+                long cacheSize = cache.sizeLong();
+                printfSummary("Entry count = %d, cache size = %d%n", count, cacheSize);
+                try {
+                    updateUsedMemory(count, callback);
+                }
+                catch (Throwable ignore) {
+                }
+            }
+            while (true)
+                Thread.sleep(1000);
         }
 
+    }
+
+    private void updateUsedMemory(long count, IgniteInClosure<Long> callback) {
+        long usedMemory = processUsedMemory();
+        long f = (usedMemory - estimatedNodeFootprint - estimatedJvmFootprint) / count;
+        callback.apply(f);
+        if (usedMemory > MEMORY_LIMIT)
+            throw new RuntimeException("Memory limit was exceeded");
     }
 
     /** */
@@ -347,14 +378,14 @@ public class IgniteCacheEntrySizeTest2 extends GridCommonAbstractTest implements
     private static class CacheValue {
 
         /** */
-        @QuerySqlField(index = true)
+//        @QuerySqlField(index = true)
         public long value;
 //        /** */
 //        @QuerySqlField(index = true)
 //        public long value0;
 //        /** */
 //        @QuerySqlField(index = true)
-//        public long value1;
+//        public String value1;
         /** */
         public byte[] bytes;
     }
