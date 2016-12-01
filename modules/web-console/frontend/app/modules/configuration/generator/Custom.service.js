@@ -15,15 +15,9 @@
  * limitations under the License.
  */
 
-// Events groups.
-import GROUPS from 'app/data/event-types.json';
-
-export default class EventGroups {
-    append(data) {
-        GROUPS.push(data);
-    }
-
-    $get() {
-        return GROUPS;
+// Optional content generation entry point.
+export default class IgniteCustomGenerator {
+    optionalContent(zip, cluster) { // eslint-disable-line no-unused-vars
+        // No-op.
     }
 }

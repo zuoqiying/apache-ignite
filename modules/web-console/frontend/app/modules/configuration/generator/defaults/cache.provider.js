@@ -126,12 +126,12 @@ const DFLT_CACHE = {
     }
 };
 
-export default function() {
-    this.append = (dflts) => {
+export default class CacheDefaults {
+    append(dflts) {
         _.merge(DFLT_CACHE, dflts);
-    };
+    }
 
-    this.$get = [() => {
+    $get() {
         return DFLT_CACHE;
-    }];
+    }
 }

@@ -282,12 +282,12 @@ const DFLT_CLUSTER = {
     }
 };
 
-export default function() {
-    this.append = (dflts) => {
+export default class ClusterDefaults {
+    append(dflts) {
         _.merge(DFLT_CLUSTER, dflts);
-    };
+    }
 
-    this.$get = [() => {
+    $get() {
         return DFLT_CLUSTER;
-    }];
+    }
 }

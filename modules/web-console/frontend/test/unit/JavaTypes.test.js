@@ -21,7 +21,7 @@ import ClusterDflts from '../../app/modules/configuration/generator/defaults/clu
 import CacheDflts from '../../app/modules/configuration/generator/defaults/cache.provider';
 import IgfsDflts from '../../app/modules/configuration/generator/defaults/igfs.provider';
 
-const INSTANCE = new JavaTypes((new ClusterDflts()).$get[0](), (new CacheDflts()).$get[0](), (new IgfsDflts()).$get[0]());
+const INSTANCE = new JavaTypes(new ClusterDflts().$get(), new CacheDflts().$get(), new IgfsDflts().$get());
 
 import { assert } from 'chai';
 

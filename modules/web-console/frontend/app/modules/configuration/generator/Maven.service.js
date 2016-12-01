@@ -23,7 +23,7 @@ import POM_DEPENDENCIES from 'app/data/pom-dependencies.json';
 /**
  * Pom file generation entry point.
  */
-class GeneratorPom {
+export default class IgniteMavenGenerator {
     escapeId(s) {
         if (typeof (s) !== 'string')
             return s;
@@ -229,5 +229,3 @@ class GeneratorPom {
         return sb;
     }
 }
-
-export default ['GeneratorPom', GeneratorPom];

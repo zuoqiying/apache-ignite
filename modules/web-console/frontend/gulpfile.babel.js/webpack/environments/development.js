@@ -20,9 +20,9 @@ import webpack from 'webpack';
 
 import {destDir, rootDir, srcDir} from '../../paths';
 
-const devServerHost = 'localhost';
+const backendPort = 3000;
 const devServerPort = 9000;
-const devServerUrl = `http://${devServerHost}:${devServerPort}/`;
+const devServerUrl = `http://localhost:${devServerPort}/`;
 
 export default () => {
     const plugins = [
@@ -35,7 +35,7 @@ export default () => {
             app: [path.join(srcDir, 'app.js'), 'webpack/hot/only-dev-server']
         },
         output: {
-            publicPath: devServerUrl
+            publicPath: '/'
         },
         context: rootDir,
         debug: true,
@@ -51,17 +51,17 @@ export default () => {
             inline: true,
             proxy: {
                 '/socket.io': {
-                    target: 'http://localhost:3000',
+                    target: `http://localhost:${backendPort}`,
                     changeOrigin: true,
                     ws: true
                 },
                 '/agents': {
-                    target: 'http://localhost:3000',
+                    target: `http://localhost:${backendPort}`,
                     changeOrigin: true,
                     ws: true
                 },
                 '/api/v1/*': {
-                    target: 'http://localhost:3000',
+                    target: `http://localhost:${backendPort}`,
                     changeOrigin: true,
                     pathRewrite: {
                         '^/api/v1': ''
