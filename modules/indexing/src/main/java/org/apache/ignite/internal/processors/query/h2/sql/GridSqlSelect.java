@@ -291,7 +291,7 @@ public class GridSqlSelect extends GridSqlQuery {
      * @param from From element.
      * @return {@code this}.
      */
-    public GridSqlSelect from(GridSqlElement from) {
+    public GridSqlSelect from(GridSqlAst from) {
         this.from = from;
 
         return this;

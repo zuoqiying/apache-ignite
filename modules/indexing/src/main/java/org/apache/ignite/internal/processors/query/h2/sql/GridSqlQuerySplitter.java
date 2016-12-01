@@ -21,7 +21,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -210,10 +209,10 @@ public class GridSqlQuerySplitter {
         GridSqlSubquery fakeQryPrnt = new GridSqlSubquery(qry);
 
         // Fake parent query model. We need it just for convenience because buildQueryModel needs parent model.
-        QueryModel fakeQrymPrnt = new QueryModel(null, null, -1);
+        QueryModel fakeQrymPrnt = new QueryModel(null, null, -1, null);
 
         // Build a simplified query model. We need it because navigation over the original AST is too complex.
-        buildQueryModel(fakeQrymPrnt, fakeQryPrnt, 0);
+        buildQueryModel(fakeQrymPrnt, fakeQryPrnt, 0, null);
 
         assert fakeQrymPrnt.size() == 1;
 
@@ -229,6 +228,8 @@ public class GridSqlQuerySplitter {
 
             // All the siblings to selects we are going to split must be also wrapped into subqueries.
             pushDownQueryModel(null, qrym);
+
+            organizeMergeJoinHierarchy(qrym);
 
             // Split the query model into multiple map queries and a single reduce query.
             splitQueryModel(qrym);
@@ -283,7 +284,7 @@ public class GridSqlQuerySplitter {
                     }
                     else {
                         // It is a table or a function or a subquery that we do not need to split or split child.
-                        // We need to find all the joined elements like this in chain to push down.
+                        // We need to find all the joined elements like this in chain to push them down.
                         if (begin == -1)
                             begin = i;
 
@@ -291,8 +292,11 @@ public class GridSqlQuerySplitter {
                     }
                 }
 
-                if (begin != -1)
+                if (begin != -1) {
+                    assert !(begin == 0 && end == qrym.size() - 1); // We can not push down all the elements in join.
+
                     pushDown(qrym, begin, end);
+                }
             }
         }
         else
@@ -345,10 +349,117 @@ public class GridSqlQuerySplitter {
             // we can only hope that buffer inside of merge index will be large enough
             // to accommodate all the results.
 
+            // Here we have the original select.
             GridSqlSelect select = qrym.ast();
-            GridSqlJoin join = findJoin(qrym, end);
+
+            // 1. Create wrap query where we will push all the needed joined elements, columns and conditions.
+
+            GridSqlSelect wrapSelect = new GridSqlSelect();
+            GridSqlSubquery wrapSubqry = new GridSqlSubquery(wrapSelect);
+            GridSqlAlias wrapAlias = alias(uniqueAlias(null), wrapSubqry);
+            QueryModel wrapQrym = new QueryModel(Type.SELECT, wrapSubqry, 0, wrapAlias);
+
+            wrapQrym.needSplit = true; // We need to split this SELECT.
+
+            // 2.Collect all the needed columns.
+
+            Set<GridSqlAlias> tblAliases = newIdentityHashSet();
+            Set<GridSqlColumn> colsForWrapSelect = newIdentityHashSet();
+
+            for (int i = begin; i <= end; i++)
+                tblAliases.add(qrym.get(i).uniqueAlias);
+
+            for (GridSqlAst col : select.columns(false)) {
+                // TODO
+            }
+
+            // 3. Collect all the inbound and outbound conditions.
 
 
+
+
+            // 4. Push down to a subquery AST all the join AST elements.
+
+            //        join3
+            //        / \
+            //     join2 \
+            //      / \   \
+            //   join1 \   \
+            //    / \   \   \
+            //  T0   T1  T2  T3
+
+            if (end == qrym.size() - 1) {
+                // Here we need to push down chain from `begin` to the last child in the model (T3).
+                assert begin > 0;
+
+                if (begin == end) {
+                    // We have a single T3 to push down, thus it is in join3.
+                    // We can push T3 to the wrap query W and replace T3 with W:
+
+                    //        join3
+                    //        / \
+                    //     join2 \
+                    //      / \   \
+                    //   join1 \   \
+                    //    / \   \   \
+                    //  T0   T1  T2  W
+
+                    //W from =   T3
+
+                    wrapSelect.from(qrym.get(end).uniqueAlias);
+
+                    ((GridSqlJoin)select.from()).rightTable(wrapAlias);
+                }
+                else {
+                    // We have to push down T2 and T3 here.
+                    // Also possibly T1.
+                    // We will add join3 to W,
+                    // replace left branch in join2 with T1,
+                    // create join3 for T0 and W
+                    // and assign it to the original select FROM:
+
+                    //    join4
+                    //     / \
+                    // join   W
+                    //   /
+                    //
+
+                    //W from=   join2
+                    //           / \
+                    //         T1   T2
+
+                    GridSqlJoin join2 = (GridSqlJoin)select.from();
+                    join2.leftTable(qrym.get(begin).uniqueAlias);
+                    wrapSelect.from(join2);
+
+                    GridSqlJoin beginJoin = findJoin(qrym, begin);
+
+                }
+            }
+            else {
+                // Here we need to push down partial chain in the middle from `begin` (possibly 0) to `end`.
+                GridSqlJoin prntJoin = findJoin(qrym, end + 1);
+
+                if (begin == 0) {
+
+                }
+            }
+
+            // 5. Move all the conditions.
+
+
+            // 6. Adjust query models to a new AST structure.
+
+            // Move pushed down child models to the newly created model.
+            for (int i = begin; i <= end; i++)
+                wrapQrym.add(qrym.get(begin));
+
+            // Replace the first child model with the created one.
+            qrym.set(begin, wrapQrym);
+
+            // Drop others.
+            for (int x = begin + 1, i = x; i <= end; i++)
+                qrym.remove(x);
         }
     }
 
@@ -391,28 +502,17 @@ public class GridSqlQuerySplitter {
     }
 
     /**
-     * @param ast AST.
-     * @param tblAlias Table alias for the table filter we need find columns for.
-     * @param cols Resulting collections of columns to fill.
+     * @param qrym Query model.
      */
-    private void collectColumnsForTable(GridSqlAst ast, GridSqlAlias tblAlias, Collection<GridSqlColumn> cols) {
-        if (ast instanceof GridSqlColumn) {
-            GridSqlColumn col = (GridSqlColumn)ast;
-
-            if (col.expressionInFrom() == tblAlias)
-                cols.add(col);
-        }
-        else {
-            for (int i = 0; i < ast.size(); i++)
-                collectColumnsForTable(ast.child(i), tblAlias, cols);
-        }
+    private void organizeMergeJoinHierarchy(QueryModel qrym) {
+        // TODO
     }
 
     /**
      * @param qrym Query model.
      */
     private void splitQueryModel(QueryModel qrym) {
-
+        // TODO
     }
 
     /**
@@ -497,18 +597,19 @@ public class GridSqlQuerySplitter {
      * @param prntModel Parent model.
      * @param prnt Parent AST element.
      * @param childIdx Child index.
+     * @param uniqueAlias Unique parent alias of the current element.
      */
-    private void buildQueryModel(QueryModel prntModel, GridSqlAst prnt, int childIdx) {
+    private void buildQueryModel(QueryModel prntModel, GridSqlAst prnt, int childIdx, GridSqlAlias uniqueAlias) {
         GridSqlAst child = prnt.child(childIdx);
 
         assert child != null;
 
         if (child instanceof GridSqlSelect) {
-            QueryModel model = new QueryModel(Type.SELECT, prnt, childIdx);
+            QueryModel model = new QueryModel(Type.SELECT, prnt, childIdx, uniqueAlias);
 
             prntModel.add(model);
 
-            buildQueryModel(model, child, GridSqlSelect.FROM_CHILD);
+            buildQueryModel(model, child, GridSqlSelect.FROM_CHILD, null);
         }
         else if (child instanceof GridSqlUnion) {
             QueryModel model;
@@ -517,7 +618,7 @@ public class GridSqlQuerySplitter {
             if (prntModel.type == Type.UNION)
                 model = prntModel;
             else {
-                model = new QueryModel(Type.UNION, prnt, childIdx);
+                model = new QueryModel(Type.UNION, prnt, childIdx, uniqueAlias);
 
                 prntModel.add(model);
             }
@@ -525,29 +626,29 @@ public class GridSqlQuerySplitter {
             if (((GridSqlUnion)child).unionType() != SelectUnion.UNION_ALL)
                 model.unionAll = false;
 
-            buildQueryModel(model, child, GridSqlUnion.LEFT_CHILD);
-            buildQueryModel(model, child, GridSqlUnion.RIGHT_CHILD);
+            buildQueryModel(model, child, GridSqlUnion.LEFT_CHILD, null);
+            buildQueryModel(model, child, GridSqlUnion.RIGHT_CHILD, null);
         }
         else {
             // Here we must be in FROM clause of the SELECT.
             assert prntModel.type == Type.SELECT : prntModel.type;
 
             if (child instanceof GridSqlAlias)
-                buildQueryModel(prntModel, child, 0);
+                buildQueryModel(prntModel, child, 0, (GridSqlAlias)child);
             else if (child instanceof GridSqlJoin) {
-                buildQueryModel(prntModel, child, GridSqlJoin.LEFT_TABLE_CHILD);
-                buildQueryModel(prntModel, child, GridSqlJoin.RIGHT_TABLE_CHILD);
+                buildQueryModel(prntModel, child, GridSqlJoin.LEFT_TABLE_CHILD, uniqueAlias);
+                buildQueryModel(prntModel, child, GridSqlJoin.RIGHT_TABLE_CHILD, uniqueAlias);
             }
             else {
                 // Here we must be inside of generated unique alias for FROM clause element.
-                assert prnt instanceof GridSqlAlias: prnt.getClass();
+                assert prnt == uniqueAlias: prnt.getClass();
 
                 if (child instanceof GridSqlTable)
-                    prntModel.add(new QueryModel(Type.TABLE, prnt, childIdx));
+                    prntModel.add(new QueryModel(Type.TABLE, prnt, childIdx, uniqueAlias));
                 else if (child instanceof GridSqlSubquery)
-                    buildQueryModel(prntModel, child, 0);
+                    buildQueryModel(prntModel, child, 0, uniqueAlias);
                 else if (child instanceof GridSqlFunction)
-                    prntModel.add(new QueryModel(Type.FUNCTION, prnt, childIdx));
+                    prntModel.add(new QueryModel(Type.FUNCTION, prnt, childIdx, uniqueAlias));
                 else
                     throw new IllegalStateException("Unknown child type: " + child.getClass());
             }
@@ -1385,6 +1486,9 @@ public class GridSqlQuerySplitter {
         final Type type;
 
         /** */
+        GridSqlAlias uniqueAlias;
+
+        /** */
         GridSqlAst prnt;
 
         /** */
@@ -1403,11 +1507,14 @@ public class GridSqlQuerySplitter {
          * @param type Type.
          * @param prnt Parent element.
          * @param childIdx Child index.
+         * @param uniqueAlias Unique parent alias of the current element.
+         *                    May be {@code null} for selects inside of unions or top level queries.
          */
-        QueryModel(Type type, GridSqlAst prnt, int childIdx) {
+        QueryModel(Type type, GridSqlAst prnt, int childIdx, GridSqlAlias uniqueAlias) {
             this.type = type;
             this.prnt = prnt;
             this.childIdx = childIdx;
+            this.uniqueAlias = uniqueAlias;
         }
 
         /**

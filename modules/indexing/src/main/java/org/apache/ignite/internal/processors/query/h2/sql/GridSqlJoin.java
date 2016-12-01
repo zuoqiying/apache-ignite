@@ -59,24 +59,38 @@ public class GridSqlJoin extends GridSqlElement {
     }
 
     /**
-     * @return Table 1.
+     * @return Left table.
      */
     public GridSqlElement leftTable() {
-        return child(0);
+        return child(LEFT_TABLE_CHILD);
     }
 
     /**
-     * @return Table 2.
+     * @param tbl Right table to set.
+     */
+    public void leftTable(GridSqlElement tbl) {
+        child(LEFT_TABLE_CHILD, tbl);
+    }
+
+    /**
+     * @return Right table.
      */
     public GridSqlElement rightTable() {
-        return child(1);
+        return child(RIGHT_TABLE_CHILD);
+    }
+
+    /**
+     * @param tbl Right table to set.
+     */
+    public void rightTable(GridSqlElement tbl) {
+        child(RIGHT_TABLE_CHILD, tbl);
     }
 
     /**
      * @return {@code JOIN ON} condition.
      */
     public GridSqlElement on() {
-        return child(2);
+        return child(ON_CHILD);
     }
 
     /** {@inheritDoc} */
