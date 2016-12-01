@@ -324,6 +324,28 @@ mixin table-java-package-field(name, model, items, valid, save, newItem)
                 ignite-on-escape=onEscape
             )
 
+//- Mixin for table java package field.
+mixin table-url-field(name, model, items, valid, save, newItem)
+    -var resetOnEnter = newItem ? '(stopblur = true) && (group.add = [{}])' : '(field.edit = false)'
+    -var onEnter = valid + ' && (' + save + '); ' + valid + ' && ' + resetOnEnter + ';'
+
+    -var onEscape = newItem ? 'group.add = []' : 'field.edit = false'
+
+    -var resetOnBlur = newItem ? '!stopblur && (group.add = [])' : 'field.edit = false'
+    -var onBlur = valid + ' && ( ' + save + '); ' + resetOnBlur + ';'
+
+    div(ignite-on-focus-out=onBlur)
+        if block
+            block
+
+        .input-tip
+            +ignite-form-field-url-input(name, model, false, 'true', 'Enter URL')(
+                data-ignite-unique=items
+                data-ignite-form-field-input-autofocus='true'
+
+                ignite-on-enter=onEnter
+                ignite-on-escape=onEscape
+            )
 
 //- Mixin for table address field.
 mixin table-address-field(name, model, items, valid, save, newItem, portRange)

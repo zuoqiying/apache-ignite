@@ -184,6 +184,9 @@ export default class IgniteMavenGenerator {
         this.addDependency(deps, 'org.apache.ignite', 'ignite-indexing', version);
         this.addDependency(deps, 'org.apache.ignite', 'ignite-rest-http', version);
 
+        if (_.get(cluster, 'deploymentSpi.kind') === 'URI')
+            this.addDependency(deps, 'org.apache.ignite', 'ignite-urideploy', version);
+
         let dep = POM_DEPENDENCIES[cluster.discovery.kind];
 
         if (dep)

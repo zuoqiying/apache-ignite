@@ -843,6 +843,46 @@ export default class IgniteConfigurationGenerator {
                    cluster.peerClassLoadingLocalClassPathExclude);
         }
 
+        let deploymentBean = null;
+
+        switch (_.get(cluster, 'deploymentSpi.kind')) {
+            case 'URI':
+                const uriDeployment = cluster.deploymentSpi.URI;
+
+                deploymentBean = new Bean('org.apache.ignite.spi.deployment.uri.UriDeploymentSpi', 'deploymentSpi', uriDeployment);
+
+                const scanners = _.map(uriDeployment.scanners, (scanner) => new EmptyBean(scanner));
+
+                deploymentBean.collectionProperty('uriList', 'uriList', uriDeployment.uriList)
+                    .stringProperty('temporaryDirectoryPath')
+                    .varArgProperty('scanners', 'scanners', scanners,
+                        'org.apache.ignite.spi.deployment.uri.scanners.UriDeploymentScanner')
+                    .emptyBeanProperty('listener')
+                    .boolProperty('checkMd5')
+                    .boolProperty('encodeUri');
+
+                cfg.beanProperty('deploymentSpi', deploymentBean);
+
+                break;
+
+            case 'Local':
+                deploymentBean = new Bean('org.apache.ignite.spi.deployment.local.LocalDeploymentSpi', 'deploymentSpi', cluster.deploymentSpi.Local);
+
+                deploymentBean.emptyBeanProperty('listener');
+
+                cfg.beanProperty('deploymentSpi', deploymentBean);
+
+                break;
+
+            case 'Custom':
+                cfg.emptyBeanProperty('deploymentSpi.Custom.className');
+
+                break;
+
+            default:
+                // No-op.
+        }
+
         return cfg;
     }
 
