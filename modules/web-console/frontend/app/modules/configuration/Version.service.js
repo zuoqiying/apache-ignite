@@ -70,7 +70,7 @@ export default class Version {
         if (res !== 0)
             return res;
 
-        return numberComparator(pa.revTs, pb.maintenance);
+        return numberComparator(pa.revTs, pb.revTs);
     }
 
     /**
