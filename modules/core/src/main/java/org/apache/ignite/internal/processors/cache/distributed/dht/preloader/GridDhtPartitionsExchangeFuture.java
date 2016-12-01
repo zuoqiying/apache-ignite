@@ -203,8 +203,6 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     /** */
     private final ConcurrentMap<UUID, GridDhtPartitionsAbstractMessage> msgs = new ConcurrentHashMap8<>();
 
-    private transient volatile Boolean activateCluster;
-
     /**
      * Dummy future created to trigger reassignments if partition
      * topology changed while preloading.
@@ -399,14 +397,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         evtLatch.countDown();
     }
 
-    public boolean activateCluster() {
-        if (activateCluster == null)
-            activateCluster = getGlobalState() == CacheState.ACTIVE;
-
-        return activateCluster;
-    }
-
-    private CacheState getGlobalState() {
+    public CacheState newClusterState() {
         if (!F.isEmpty(reqs)) {
             for (DynamicCacheChangeRequest req : reqs) {
                 if (req.globalStateChange())
@@ -783,7 +774,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         CacheState curState = cctx.cache().globalState();
 
-        CacheState newState = getGlobalState();
+        CacheState newState = newClusterState();
+
+        if (newState != null && curState != newState)
+            cctx.cache().globalState(CacheState.ACTIVATING);
 
         for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
             if (cacheCtx.isLocal() || stopping(cacheCtx.cacheId()))
@@ -821,8 +815,6 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
             }
         }
 
-        if (newState != null && curState != newState)
-            cctx.cache().globalState(newState);
 
         if (crd.isLocal()) {
             if (remaining.isEmpty())
@@ -1635,6 +1627,13 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 if (!nodes.isEmpty())
                     sendAllPartitions(nodes);
 
+                CacheState newState = newClusterState();
+
+                if (newState != null && cctx.kernalContext().cache().globalState() != newState) {
+                    log.error("% NEWSTATECOR = " + newState);
+                    cctx.cache().globalState(newState);
+                }
+
                 onDone(exchangeId().topologyVersion());
             }
         }
@@ -1750,6 +1749,14 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         }
 
         updatePartitionFullMap(msg);
+
+        CacheState newState = newClusterState();
+
+        if (newState != null && cctx.kernalContext().cache().globalState() != newState) {
+            log.error("% NEWSTATE = " + newState);
+            cctx.cache().globalState(newState);
+
+        }
 
         onDone(exchId.topologyVersion());
     }

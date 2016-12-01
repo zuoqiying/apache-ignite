@@ -490,7 +490,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
         DiscoveryEvent discoEvt = exchFut.discoveryEvent();
 
-        treatAllPartitionAsLocal = exchFut.activateCluster()
+        treatAllPartitionAsLocal = cctx.kernalContext().cache().globalState() == CacheState.ACTIVATING
             || (cctx.kernalContext().cache().globalState() == org.apache.ignite.internal.processors.cache.CacheState.ACTIVE
             && discoEvt.type() == EventType.EVT_NODE_JOINED
             && discoEvt.eventNode().isLocal()
