@@ -45,7 +45,7 @@ include /app/helpers/jade/mixins.jade
                         .group-content(ng-show='#{failoverSpi} && #{failoverSpi}.length > 0' ng-repeat='model in #{failoverSpi} track by $index')
                             hr(ng-if='$index != 0')
                             .settings-row
-                                +dropdown-required('Failover SPI:', 'model.kind', '"failoverKind" + $index', 'true', 'true', 'Choose Failover SPI', '[\
+                                +dropdown-required-autofocus('Failover SPI:', 'model.kind', '"failoverKind" + $index', 'true', 'true', 'Choose Failover SPI', '[\
                                         {value: "JobStealing", label: "Job stealing"},\
                                         {value: "Never", label: "Never"},\
                                         {value: "Always", label: "Always"},\

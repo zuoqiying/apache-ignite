@@ -44,7 +44,7 @@ include /app/helpers/jade/mixins.jade
                         .group-content(ng-show='#{model} && #{model}.length > 0' ng-repeat='model in #{model} track by $index')
                             hr(ng-if='$index != 0')
                             .settings-row
-                                +dropdown-required('Checkpoint SPI:', 'model.kind', '"checkpointKind" + $index', 'true', 'true', 'Choose checkpoint configuration variant', '[\
+                                +dropdown-required-autofocus('Checkpoint SPI:', 'model.kind', '"checkpointKind" + $index', 'true', 'true', 'Choose checkpoint configuration variant', '[\
                                         {value: "FS", label: "File System"},\
                                         {value: "Cache", label: "Cache"},\
                                         {value: "S3", label: "Amazon S3"},\
