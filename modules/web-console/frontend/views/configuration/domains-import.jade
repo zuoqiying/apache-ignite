@@ -163,10 +163,7 @@ mixin td-ellipses-lbl(w, lbl)
                             +ignite-form-field-dropdown('Clusters:', 'ui.generatedCachesClusters', '"generatedCachesClusters"', false, false, true,
                                 'Choose clusters for generated caches', '', 'clusters',
                                 'Choose clusters that will be associated with generated caches'
-                            )(
-                                data-container='.modal-domain-import'
-                                data-ignite-form-field-input-autofocus='true'
-                            )
+                            )(data-container='.modal-domain-import')
             .modal-footer
                 label(ng-hide='importDomain.action == "drivers" || (importDomain.action == "connect" && importDomain.demo)').labelField {{importDomain.info}}
                 a.btn.btn-primary(ng-hide='importDomain.action == "drivers" || importDomain.action == "connect"' ng-click='importDomainPrev()' bs-tooltip='' data-title='{{prevTooltipText()}}' data-placement='bottom') Prev
