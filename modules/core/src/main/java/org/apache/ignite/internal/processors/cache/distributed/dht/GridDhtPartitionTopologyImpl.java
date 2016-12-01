@@ -351,6 +351,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 return;
 
             long updateSeq = this.updateSeq.incrementAndGet();
+            if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - Init Parts() = " + updateSeq);
 
             initPartitions0(exchFut, updateSeq);
 
@@ -533,6 +534,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 log.debug("Partition map beforeExchange [exchId=" + exchId + ", fullMap=" + fullMapString() + ']');
 
             long updateSeq = this.updateSeq.incrementAndGet();
+            if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - Before Exchange() = " + updateSeq);
 
             cntrMap.clear();
 
@@ -621,6 +623,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                     fullMapString() + ']');
 
             long updateSeq = this.updateSeq.incrementAndGet();
+            if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - After Exchange() = " + updateSeq);
 
             for (int p = 0; p < num; p++) {
                 GridDhtLocalPartition locPart = localPartition(p, topVer, false, false);
@@ -781,8 +784,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
                 locParts.set(p, loc = new GridDhtLocalPartition(cctx, p, entryFactory));
 
-                if (updateSeq)
+                if (updateSeq) {
                     this.updateSeq.incrementAndGet();
+                    if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - localPartition() = " + updateSeq);
+                }
 
                 created = true;
 
@@ -1120,6 +1125,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             }
 
             long updateSeq = this.updateSeq.incrementAndGet();
+            if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - update1() = " + updateSeq);
 
             if (exchId != null)
                 lastExchangeId = exchId;
@@ -1342,6 +1348,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             }
 
             long updateSeq = this.updateSeq.incrementAndGet();
+            if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - update2() = " + updateSeq);
 
             node2part = new GridDhtPartitionFullMap(node2part, updateSeq);
 
@@ -1447,6 +1454,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 // Update partition state on all nodes.
                 for (Integer part : lost) {
                     long updSeq = updateSeq.incrementAndGet();
+                    if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - Detect Lost Parts() = " + updSeq);
 
                     GridDhtLocalPartition locPart = localPartition(part, topVer, false);
 
@@ -1495,6 +1503,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         try {
             int parts = cctx.affinity().partitions();
             long updSeq = updateSeq.incrementAndGet();
+            if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - resetLostPartitions() = " + updSeq);
 
             for (int part = 0; part < parts; part++) {
                 Set<UUID> nodeIds = part2node.get(part);
@@ -1599,6 +1608,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
                     if (!updated) {
                         updateSeq.incrementAndGet();
+                        if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - setOwners() = " + updateSeq);
 
                         updated = true;
                     }
@@ -1618,7 +1628,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
      * @return Checks if any of the local partitions need to be evicted.
      */
     private boolean checkEvictions(long updateSeq, List<List<ClusterNode>> aff) {
-        if (cctx.shared().cache().globalState() == CacheState.INACTIVE)
+        if (cctx.shared().cache().globalState() != CacheState.ACTIVE)
             return false;
 
         boolean changed = false;
@@ -1719,6 +1729,8 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                             ", curUpdateSeq=" + this.updateSeq.get() + ", node2part=" + node2part.toFullString() + ']';
 
                         updateSeq = seq + 1;
+
+                        if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - updateLocal() = " + updateSeq);
                     }
                     else
                         updateSeq = seq;
@@ -1766,6 +1778,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
                 node2part = new GridDhtPartitionFullMap(loc.id(), loc.order(), updateSeq.incrementAndGet(),
                     node2part, false);
+                if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - removeNode() = " + updateSeq.get());
             }
             else
                 node2part = new GridDhtPartitionFullMap(node2part, node2part.updateSequence());
@@ -1800,6 +1813,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         try {
             if (part.own()) {
                 updateLocal(part.id(), loc.id(), part.state(), updateSeq.incrementAndGet());
+                if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - After Exchange() = " + updateSeq.get());
 
                 consistencyCheck();
 
@@ -1826,6 +1840,9 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             assert part.state() == EVICTED;
 
             long seq = updateSeq ? this.updateSeq.incrementAndGet() : this.updateSeq.get();
+
+            if (updateSeq)
+                if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - onEvicted() = " + seq);
 
             updateLocal(part.id(), cctx.localNodeId(), part.state(), seq);
 

@@ -1229,7 +1229,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         if (err != null)
             return err;
 
-        if (cctx.shared().cache().globalState() == CacheState.INACTIVE)
+        if (cctx.shared().cache().globalState() != CacheState.ACTIVE)
             return new CacheInvalidStateException("Failed to perform cache operation " +
                 "(cluster is not activated): " + cctx.name());
 
@@ -1581,7 +1581,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
             }
 
             if (discoEvt.type() == EVT_NODE_JOINED) {
-                if (cctx.cache().globalState() == CacheState.ACTIVE) {
+                if (cctx.cache().globalState() != CacheState.INACTIVE) {
                     U.sleep(10000);
                     assignPartitionsStates();
                 }
@@ -1596,7 +1596,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                     for (DynamicCacheChangeRequest req : batch.requests()) {
                         if (req.resetLostPartitions())
                             resetLostPartitions();
-                        else if (req.globalStateChange() && req.state() == CacheState.ACTIVE) {
+                        else if (req.globalStateChange() && req.state() != CacheState.INACTIVE) {
                             U.sleep(10000);
                             assignPartitionsStates();
                         }
