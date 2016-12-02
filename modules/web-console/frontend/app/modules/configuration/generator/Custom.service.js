@@ -15,30 +15,9 @@
  * limitations under the License.
  */
 
-import webpack from 'webpack';
-
-import {destDir, rootDir} from '../../paths';
-
-export default () => {
-    const plugins = [
-        new webpack.optimize.UglifyJsPlugin({
-            path: destDir,
-            minimize: true,
-            warnings: false,
-            sourceMap: false,
-            mangle: true
-        })
-    ];
-
-    return {
-        context: rootDir,
-        bail: true, // Cancel build on error.
-        debug: false,
-        devtool: 'cheap-source-map',
-        output: {
-            publicPath: '/',
-            filename: '[name].[chunkhash].js'
-        },
-        plugins
-    };
-};
+// Optional content generation entry point.
+export default class IgniteCustomGenerator {
+    optionalContent(zip, cluster) { // eslint-disable-line no-unused-vars
+        // No-op.
+    }
+}

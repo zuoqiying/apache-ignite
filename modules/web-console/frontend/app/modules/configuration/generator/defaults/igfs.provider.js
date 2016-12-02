@@ -57,12 +57,12 @@ const DFLT_IGFS = {
     }
 };
 
-export default function() {
-    this.append = (dflts) => {
+export default class IGFSDefaults {
+    append(dflts) {
         _.merge(DFLT_IGFS, dflts);
-    };
+    }
 
-    this.$get = [() => {
+    $get() {
         return DFLT_IGFS;
-    }];
+    }
 }

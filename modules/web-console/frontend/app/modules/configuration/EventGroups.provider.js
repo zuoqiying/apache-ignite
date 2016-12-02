@@ -18,13 +18,12 @@
 // Events groups.
 import GROUPS from 'app/data/event-types.json';
 
-export default ['igniteEventGroups', function() {
-    const groups = GROUPS;
+export default class EventGroups {
+    append(data) {
+        GROUPS.push(data);
+    }
 
-    this.push = (data) => groups.push(data);
-
-    this.$get = [() => {
-        return groups;
-    }];
-}];
-
+    $get() {
+        return GROUPS;
+    }
+}

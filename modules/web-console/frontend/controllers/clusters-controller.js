@@ -31,6 +31,12 @@ export default ['clustersController', [
             cacheKeyConfiguration: [],
             communication: {},
             connector: {},
+            deploymentSpi: {
+                URI: {
+                    uriList: [],
+                    scanners: []
+                }
+            },
             discovery: {
                 Cloud: {
                     regions: [],
@@ -38,6 +44,7 @@ export default ['clustersController', [
                 }
             },
             marshaller: {},
+            peerClassLoadingLocalClassPathExclude: [],
             sslContextFactory: {
                 trustManagers: []
             },
@@ -276,6 +283,16 @@ export default ['clustersController', [
 
                     if (!cluster.eventStorage)
                         cluster.eventStorage = { kind: 'Memory' };
+
+                    if (!cluster.peerClassLoadingLocalClassPathExclude)
+                        cluster.peerClassLoadingLocalClassPathExclude = [];
+
+                    if (!cluster.deploymentSpi) {
+                        cluster.deploymentSpi = {URI: {
+                            uriList: [],
+                            scanners: []
+                        }};
+                    }
                 });
 
                 if ($state.params.linkId)

@@ -1243,6 +1243,17 @@ button.form-control {
     .clickable { cursor: pointer; }
 }
 
+
+.theme-line .summary {
+    .actions-note {
+        i {
+            margin-right: 5px;
+        }
+
+        margin: 15px 0;
+    }
+}
+
 .theme-line .popover.summary-project-structure {
     @extend .popover.settings;
 
@@ -2125,16 +2136,18 @@ html,body,.splash-screen {
 }
 
 .spinner {
-    margin: 0 auto;
+    margin: auto;
     width: 100px;
     text-align: center;
+    padding: 1px;
 
     > div {
+        float: left;
         width: 18px;
         height: 18px;
         margin: 0 5px;
         border-radius: 100%;
-        display: inline-block;
+        display: block;
         -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
         animation: sk-bouncedelay 1.4s infinite ease-in-out both;
         background-color: $brand-primary;
@@ -2149,6 +2162,16 @@ html,body,.splash-screen {
         -webkit-animation-delay: -0.16s;
         animation-delay: -0.16s;
     }
+}
+
+.spinner--white {
+    > div {
+        background-color: white;
+    }
+}
+
+.btn > .spinner {
+    margin: 0 1px 0 15px;
 }
 
 @-webkit-keyframes sk-bouncedelay {
