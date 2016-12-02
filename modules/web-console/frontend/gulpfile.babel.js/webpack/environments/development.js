@@ -22,7 +22,6 @@ import {destDir, rootDir, srcDir} from '../../paths';
 
 const backendPort = 3000;
 const devServerPort = 9000;
-const devServerUrl = `http://localhost:${devServerPort}/`;
 
 export default () => {
     const plugins = [
@@ -31,11 +30,10 @@ export default () => {
 
     return {
         entry: {
-            webpack: `webpack-dev-server/client?${devServerUrl}`,
             app: [path.join(srcDir, 'app.js'), 'webpack/hot/only-dev-server']
         },
         output: {
-            publicPath: '/'
+            publicPath: `http://localhost:${devServerPort}/`
         },
         context: rootDir,
         debug: true,
@@ -44,9 +42,7 @@ export default () => {
         devServer: {
             compress: true,
             historyApiFallback: true,
-            publicPath: '/',
             contentBase: destDir,
-            info: true,
             hot: true,
             inline: true,
             proxy: {
