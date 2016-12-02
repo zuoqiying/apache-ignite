@@ -580,7 +580,7 @@ public class GridDhtPartitionDemander {
                         builder.append(", ");
                     }
 
-                    log.error(builder.toString());
+                    log.info(builder.toString());
                 }
 
 
