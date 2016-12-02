@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.cache.CacheException;
 import org.apache.ignite.IgniteCheckedException;
@@ -303,6 +304,11 @@ public class GridSqlQuerySplitter {
             throw new IllegalStateException("Type: " + qrym.type);
     }
 
+    /**
+     * @param qrym Query model.
+     * @param begin The first child model in range to push down.
+     * @param end The last child model in range to push down.
+     */
     private void pushDown(QueryModel qrym, int begin, int end) {
         if (begin == end && qrym.get(end).isQuery()) {
             // Simple case when we have a single subquery to push down, just mark it to be splittable.
@@ -349,10 +355,7 @@ public class GridSqlQuerySplitter {
             // we can only hope that buffer inside of merge index will be large enough
             // to accommodate all the results.
 
-            // Here we have the original select.
-            GridSqlSelect select = qrym.ast();
-
-            // 1. Create wrap query where we will push all the needed joined elements, columns and conditions.
+            // 1.  Create wrap query where we will push all the needed joined elements, columns and conditions.
 
             GridSqlSelect wrapSelect = new GridSqlSelect();
             GridSqlSubquery wrapSubqry = new GridSqlSubquery(wrapSelect);
@@ -361,26 +364,27 @@ public class GridSqlQuerySplitter {
 
             wrapQrym.needSplit = true; // We need to split this SELECT.
 
-            // 2.Collect all the needed columns.
+            // 2.  Setup all the needed columns.
 
+            GridSqlSelect select = qrym.ast();
             Set<GridSqlAlias> tblAliases = newIdentityHashSet();
-            Set<GridSqlColumn> colsForWrapSelect = newIdentityHashSet();
+            Map<GridSqlColumn,GridSqlAlias> cols = new IdentityHashMap<>();
 
+            // Collect all tables to push down.
             for (int i = begin; i <= end; i++)
                 tblAliases.add(qrym.get(i).uniqueAlias);
 
-            for (GridSqlAst col : select.columns(false)) {
-                // TODO
-            }
+            setupColumnsForPushDown(tblAliases, wrapAlias, select, cols);
 
-            // 3. Collect all the inbound and outbound conditions.
+            // 3.  Move all the simple conditions to wrap query (except inbound and outbound conditions).
 
+            setupWhereConditionsForPushDown(tblAliases, wrapAlias, select, cols);
 
+            // TODO process ON conditions for left joins
 
+            // 4.  Push down to a subquery AST all the join AST elements.
 
-            // 4. Push down to a subquery AST all the join AST elements.
-
-            //        join3
+            //       join3
             //        / \
             //     join2 \
             //      / \   \
@@ -441,14 +445,11 @@ public class GridSqlQuerySplitter {
                 GridSqlJoin prntJoin = findJoin(qrym, end + 1);
 
                 if (begin == 0) {
-
+                    // TODO
                 }
             }
 
-            // 5. Move all the conditions.
-
-
-            // 6. Adjust query models to a new AST structure.
+            // 5.  Adjust query models to a new AST structure.
 
             // Move pushed down child models to the newly created model.
             for (int i = begin; i <= end; i++)
@@ -461,6 +462,123 @@ public class GridSqlQuerySplitter {
             for (int x = begin + 1, i = x; i <= end; i++)
                 qrym.remove(x);
         }
+    }
+
+    /**
+     * @param tblAliases Table aliases for push down.
+     * @param wrapAlias Alias of the wrap query.
+     * @param select The original select.
+     * @param cols Columns with generated aliases.
+     */
+    private void setupColumnsForPushDown(
+        Set<GridSqlAlias> tblAliases,
+        GridSqlAlias wrapAlias,
+        GridSqlSelect select,
+        Map<GridSqlColumn,GridSqlAlias> cols
+    ) {
+        // Process all the columns.
+        for (int i = 0; i < select.allColumns(); i++) {
+            GridSqlAst col = select.column(i);
+
+            if (col instanceof GridSqlColumn) {
+                // If this is a column with no expression and without alias, we need replace it with an alias,
+                // because in the wrapQuery we will generate unique aliases for all the columns to avoid duplicates.
+                col = alias(((GridSqlColumn)col).columnName(), col);
+
+                select.setColumn(i, col);
+            }
+
+            setupColumnForPushDown(col, tblAliases, cols, wrapAlias);
+        }
+
+        GridSqlSelect wrapSelect = wrapAlias.child();
+
+        // Add all the collected columns to the wrapQuery with unique aliases.
+        for (GridSqlAlias col : cols.values())
+            wrapSelect.addColumn(col, true);
+    }
+
+    /**
+     * @param prnt Parent expression.
+     * @param tblAliases Table aliases to push down.
+     * @param cols Columns with generated aliases.
+     * @param wrapAlias Alias of the wrap query.
+     */
+    @SuppressWarnings("SuspiciousMethodCalls")
+    private void setupColumnForPushDown(
+        GridSqlAst prnt,
+        Set<GridSqlAlias> tblAliases,
+        Map<GridSqlColumn,GridSqlAlias> cols,
+        GridSqlAlias wrapAlias
+    ) {
+        // Search for columns in expressions.
+        for (int i = 0; i < prnt.size(); i++) {
+            GridSqlAst child = prnt.child(i);
+
+            if (child instanceof GridSqlColumn) {
+                GridSqlColumn col = (GridSqlColumn)child;
+
+                // It must always be unique table alias.
+                GridSqlAlias tblAlias = (GridSqlAlias)col.expressionInFrom();
+
+                assert tblAlias != null; // The query is normalized.
+
+                if (tblAliases.contains(tblAlias)) {
+                    // Replace the column in parent expression with column named after the generated unique alias.
+                    col = pushDownColumn(cols, col, tblAlias, wrapAlias);
+
+                    prnt.child(i, col);
+                }
+            }
+            else
+                setupColumnForPushDown(child, tblAliases, cols, wrapAlias);
+        }
+    }
+
+    /**
+     * @param cols Columns with generated aliases.
+     * @param col Column.
+     * @param tblAlias Table alias for the given column.
+     * @param wrapAlias Alias of the wrap query.
+     * @return Column for wrap query named after the generated column alias.
+     */
+    private GridSqlColumn pushDownColumn(
+        Map<GridSqlColumn,GridSqlAlias> cols,
+        GridSqlColumn col,
+        GridSqlAlias tblAlias,
+        GridSqlAlias wrapAlias
+    ) {
+        GridSqlAlias colAlias = cols.get(col);
+
+        if (colAlias == null) {
+            // Generate unique column alias by combining column name with table alias.
+            colAlias = alias(tblAlias.alias() + "__" + col.columnName(), col);
+
+            cols.put(col, colAlias);
+        }
+
+        col = column(colAlias.alias());
+        // col.tableAlias(wrapAlias.alias());
+        col.expressionInFrom(wrapAlias);
+
+        return col;
+    }
+
+    /**
+     * @param tblAliases Table aliases for push down.
+     * @param wrapAlias Alias of the wrap query.
+     * @param select The original select.
+     * @param cols Columns with generated aliases.
+     */
+    private void setupWhereConditionsForPushDown(
+        Set<GridSqlAlias> tblAliases,
+        GridSqlAlias wrapAlias,
+        GridSqlSelect select,
+        Map<GridSqlColumn,GridSqlAlias> cols
+    ) {
+        // TODO
+
+
     }
 
     private void injectOrderBy() {
