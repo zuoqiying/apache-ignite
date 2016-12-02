@@ -155,17 +155,29 @@ public class GridDhtPartitionFullMap extends HashMap<UUID, GridDhtPartitionMap2>
             (nodeOrder == o.nodeOrder && nodeId.equals(o.nodeId)): "Inconsistent node order and ID [id1=" + nodeId +
                 ", order1=" + nodeOrder + ", id2=" + o.nodeId + ", order2=" + o.nodeOrder + ']';
 
-        if (nodeId == null && o.nodeId != null)
+        if (nodeId == null && o.nodeId != null) {
             return -1;
-        else if (nodeId != null && o.nodeId == null)
+        } else if (nodeId != null && o.nodeId == null) {
+//            assert false : " COMPARE 1";
             return 1;
-        else if (nodeId == null && o.nodeId == null)
+        } else if (nodeId == null && o.nodeId == null) {
+//            assert false : " COMPARE 2";
+
             return 0;
+        }
 
         int res = Long.compare(nodeOrder, o.nodeOrder);
 
-        if (res == 0)
+        if (res == 0) {
             res = Long.compare(updateSeq, o.updateSeq);
+
+//            if (res >= 0)
+//                assert false : " COMPARE 3";
+        }
+        else {
+//            if (res > 0)
+//                assert false: "COMPARE 4";
+        }
 
         return res;
     }

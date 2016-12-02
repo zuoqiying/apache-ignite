@@ -1096,6 +1096,16 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
             log.debug("Sending full partition map [nodeIds=" + F.viewReadOnly(nodes, F.node2id()) +
                 ", exchId=" + exchId + ", msg=" + m + ']');
 
+        for (Map.Entry<UUID, GridDhtPartitionMap2> cache1 : m.partitions().get(CU.cacheId("cache1")).entrySet()) {
+            ClusterNode node = cctx.discovery().node(cache1.getKey());
+
+            if (node != null)
+
+                for (Map.Entry<Integer, GridDhtPartitionState> entry : cache1.getValue().entrySet())
+                    System.out.println(node.consistentId() + " p - " + entry.getKey() + ", state - " + entry.getValue());
+        }
+
+
         cctx.io().safeSend(nodes, m, SYSTEM_POOL, null);
     }
 
@@ -1493,11 +1503,13 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 maxCntr.nodes.add(cctx.localNodeId());
         }
 
-        boolean updated = false;
+        int entryLeft = maxCntrs.size();
 
         for (Map.Entry<Integer, CounterWithNodes> e : maxCntrs.entrySet()) {
             int p = e.getKey();
             long maxCntr = e.getValue().cnt;
+
+            entryLeft --;
 
             if (maxCntr == 0)
                 continue;
@@ -1512,7 +1524,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 System.out.println();
 //            }
 
-            updated = top.setOwners(p, e.getValue().nodes, updated);
+            top.setOwners(p, e.getValue().nodes, entryLeft == 0);
         }
     }
 
@@ -1574,8 +1586,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             if (discoEvt.type() == EVT_NODE_JOINED) {
                 if (cctx.cache().globalState() != CacheState.INACTIVE) {
-                    U.sleep(10000);
+                    U.sleep(5000);
                     assignPartitionsStates();
+                    U.sleep(5000);
                 }
             }
             else if (discoEvt.type() == EVT_DISCOVERY_CUSTOM_EVT) {
@@ -1589,8 +1602,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                         if (req.resetLostPartitions())
                             resetLostPartitions();
                         else if (req.globalStateChange() && req.state() != CacheState.INACTIVE) {
-                            U.sleep(10000);
+                            U.sleep(5000);
                             assignPartitionsStates();
+                            U.sleep(5000);
                         }
                     }
                 }

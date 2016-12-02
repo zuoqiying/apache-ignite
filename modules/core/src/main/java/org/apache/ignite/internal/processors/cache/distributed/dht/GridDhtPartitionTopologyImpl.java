@@ -1067,215 +1067,244 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
     @Nullable @Override public GridDhtPartitionMap2 update(@Nullable GridDhtPartitionExchangeId exchId,
         GridDhtPartitionFullMap partMap,
         @Nullable Map<Integer, T2<Long, Long>> cntrMap) {
-        if (log.isDebugEnabled())
-            log.debug("Updating full partition map [exchId=" + exchId + ", parts=" + fullMapString() + ']');
-
-        if (cctx.cacheId() == CU.cacheId("cache1"))
-            log.info("% UPDATE FullMap");
-
-        GridDhtPartitionMap2 map = partMap.get(cctx.localNodeId());
-
-        if (cctx.cacheId() == CU.cacheId("cache1"))
-            for (Map.Entry<Integer, GridDhtPartitionState> entry : map.entrySet())
-                log.error("% PART FULL UPDATE - " + entry.getKey() + ", state = " + entry.getValue());
-
-        assert partMap != null;
-
-        lock.writeLock().lock();
-
         try {
-            if (stopping)
-                return null;
-
-            if (cntrMap != null) {
-                for (Map.Entry<Integer, T2<Long, Long>> e : cntrMap.entrySet()) {
-                    T2<Long, Long> cntr = this.cntrMap.get(e.getKey());
-
-                    if (cntr == null || cntr.get2() < e.getValue().get2())
-                        this.cntrMap.put(e.getKey(), e.getValue());
-                }
-
-                for (int i = 0; i < locParts.length(); i++) {
-                    GridDhtLocalPartition part = locParts.get(i);
-
-                    if (part == null)
-                        continue;
-
-                    T2<Long, Long> cntr = cntrMap.get(part.id());
-
-                    if (cntr != null)
-                        part.updateCounter(cntr.get2());
-                }
-            }
-
-            if (exchId != null && lastExchangeId != null && lastExchangeId.compareTo(exchId) >= 0) {
-                if (log.isDebugEnabled())
-                    log.debug("Stale exchange id for full partition map update (will ignore) [lastExchId=" +
-                        lastExchangeId + ", exchId=" + exchId + ']');
-
-                return null;
-            }
-
-            if (node2part != null && node2part.compareTo(partMap) >= 0) {
-                if (log.isDebugEnabled())
-                    log.debug("Stale partition map for full partition map update (will ignore) [lastExchId=" +
-                        lastExchangeId + ", exchId=" + exchId + ", curMap=" + node2part + ", newMap=" + partMap + ']');
-
-                return null;
-            }
-
-            long updateSeq = this.updateSeq.incrementAndGet();
-            if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - update1() = " + updateSeq);
-
-            if (exchId != null)
-                lastExchangeId = exchId;
-
-            if (node2part != null) {
-                for (GridDhtPartitionMap2 part : node2part.values()) {
-                    GridDhtPartitionMap2 newPart = partMap.get(part.nodeId());
-
-                    // If for some nodes current partition has a newer map,
-                    // then we keep the newer value.
-                    if (newPart != null &&
-                        (newPart.updateSequence() < part.updateSequence() || (
-                            cctx.startTopologyVersion() != null &&
-                                newPart.topologyVersion() != null && // Backward compatibility.
-                                cctx.startTopologyVersion().compareTo(newPart.topologyVersion()) > 0))
-                        ) {
-                        if (log.isDebugEnabled())
-                            log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
-                                mapString(part) + ", newPart=" + mapString(newPart) + ']');
-
-                        if (cctx.cacheId() == CU.cacheId("cache1") && part.nodeId().equals(cctx.localNode().id())) {
-                            log.error("% REPLACE start = " + cctx.startTopologyVersion() + ", newPartTopVer = " + newPart.topologyVersion());
-                            log.error("% REPLACE partSeq = " + part.updateSequence() + ", newPartSeq = " + newPart.updateSequence());
-
-                            for (Map.Entry<Integer, GridDhtPartitionState> entry : part.entrySet())
-                                log.error("% REPLACE FullMap part - " + entry.getKey() + ", state - " + entry.getValue());
-                        }
-
-                        partMap.put(part.nodeId(), part);
-                    }
-                }
-
-                for (Iterator<UUID> it = partMap.keySet().iterator(); it.hasNext(); ) {
-                    UUID nodeId = it.next();
-
-                    if (!cctx.discovery().alive(nodeId)) {
-                        if (log.isDebugEnabled())
-                            log.debug("Removing left node from full map update [nodeId=" + nodeId + ", partMap=" +
-                                partMap + ']');
-
-                        it.remove();
-                    }
-                }
-            }
-
-            node2part = partMap;
-
-            Map<Integer, Set<UUID>> p2n = new HashMap<>(cctx.affinity().partitions(), 1.0f);
-
-            for (Map.Entry<UUID, GridDhtPartitionMap2> e : partMap.entrySet()) {
-                for (Integer p : e.getValue().keySet()) {
-                    Set<UUID> ids = p2n.get(p);
-
-                    if (ids == null)
-                        // Initialize HashSet to size 3 in anticipation that there won't be
-                        // more than 3 nodes per partitions.
-                        p2n.put(p, ids = U.newHashSet(3));
-
-                    ids.add(e.getKey());
-                }
-            }
-
-            part2node = p2n;
-
-            boolean changed = false;
-
-            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
-
-            GridDhtPartitionMap2 nodeMap = partMap.get(cctx.localNodeId());
+            if (log.isDebugEnabled())
+                log.debug("Updating full partition map [exchId=" + exchId + ", parts=" + fullMapString() + ']');
 
             if (cctx.cacheId() == CU.cacheId("cache1"))
-                log.info("% NODE MAP IS NULL - " + (nodeMap == null));
+                log.warning("% UPDATE FullMap", new Throwable());
 
-            if (nodeMap != null) {
-                for (Map.Entry<Integer, GridDhtPartitionState> e : nodeMap.entrySet()) {
-                    int p = e.getKey();
-                    GridDhtPartitionState state = e.getValue();
+            GridDhtPartitionMap2 map = partMap.get(cctx.localNodeId());
 
-                    if (cctx.cacheId() == CU.cacheId("cache1"))
-                        log.info("% P = " + p + ", state = " + state);
+            if (cctx.cacheId() == CU.cacheId("cache1"))
+                for (Map.Entry<Integer, GridDhtPartitionState> entry : map.entrySet())
+                    log.info("% PART FULL UPDATE - " + entry.getKey() + ", state = " + entry.getValue());
 
+            assert partMap != null;
 
-                    if (state == OWNING) {
-                        GridDhtLocalPartition locPart = locParts.get(p);
+            lock.writeLock().lock();
 
-                        assert locPart != null;
+            try {
+                if (stopping) {
+                    if (CU.cacheId("cache1") == cctx.cacheId())
+                        log.info("% PART FULL UPDATE STOPPING");
+                    return null;
+                }
 
-                        if (cntrMap != null) {
-                            T2<Long, Long> cntr = cntrMap.get(p);
+                if (cntrMap != null) {
+                    for (Map.Entry<Integer, T2<Long, Long>> e : cntrMap.entrySet()) {
+                        T2<Long, Long> cntr = this.cntrMap.get(e.getKey());
 
-                            if (cntr != null && cntr.get2() > locPart.updateCounter())
-                                locPart.updateCounter(cntr.get2());
-                        }
+                        if (cntr == null || cntr.get2() < e.getValue().get2())
+                            this.cntrMap.put(e.getKey(), e.getValue());
+                    }
 
-                        if (locPart.state() != OWNING) {
-                            boolean success = locPart.own();
+                    for (int i = 0; i < locParts.length(); i++) {
+                        GridDhtLocalPartition part = locParts.get(i);
 
-                            assert success : locPart;
+                        if (part == null)
+                            continue;
 
-                            changed |= success;
+                        T2<Long, Long> cntr = cntrMap.get(part.id());
+
+                        if (cntr != null)
+                            part.updateCounter(cntr.get2());
+                    }
+                }
+
+                if (exchId != null && lastExchangeId != null && lastExchangeId.compareTo(exchId) >= 0) {
+                    if (log.isDebugEnabled())
+                        log.debug("Stale exchange id for full partition map update (will ignore) [lastExchId=" +
+                            lastExchangeId + ", exchId=" + exchId + ']');
+
+                    if (CU.cacheId("cache1") == cctx.cacheId())
+                        log.info("% PART FULL UPDATE STALE");
+
+                    return null;
+                }
+
+                try {
+                    if (node2part != null && node2part.compareTo(partMap) >= 0) {
+                        if (log.isDebugEnabled())
+                            log.debug("Stale partition map for full partition map update (will ignore) [lastExchId=" +
+                                lastExchangeId + ", exchId=" + exchId + ", curMap=" + node2part + ", newMap=" + partMap + ']');
+
+                        if (CU.cacheId("cache1") == cctx.cacheId())
+                            log.info("% PART FULL UPDATE STALE PART");
+
+                        return null;
+                    }
+                }
+                catch (AssertionError e) {
+                    log.error("% PART FULL ASSERT node2.seq = " + node2part.updateSequence()
+                        + ", partMap.seq = " + partMap.updateSequence(), e);
+
+                    return null;
+                }
+
+                long updateSeq = this.updateSeq.incrementAndGet();
+                if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - update1() = " + updateSeq);
+
+                if (exchId != null)
+                    lastExchangeId = exchId;
+
+                if (node2part != null) {
+                    for (GridDhtPartitionMap2 part : node2part.values()) {
+                        GridDhtPartitionMap2 newPart = partMap.get(part.nodeId());
+
+                        // If for some nodes current partition has a newer map,
+                        // then we keep the newer value.
+                        if (newPart != null &&
+                            (newPart.updateSequence() < part.updateSequence() || (
+                                cctx.startTopologyVersion() != null &&
+                                    newPart.topologyVersion() != null && // Backward compatibility.
+                                    cctx.startTopologyVersion().compareTo(newPart.topologyVersion()) > 0))
+                            ) {
+                            if (log.isDebugEnabled())
+                                log.debug("Overriding partition map in full update map [exchId=" + exchId + ", curPart=" +
+                                    mapString(part) + ", newPart=" + mapString(newPart) + ']');
+
+                            if (cctx.cacheId() == CU.cacheId("cache1") && part.nodeId().equals(cctx.localNode().id())) {
+                                log.info("% REPLACE start = " + cctx.startTopologyVersion() + ", newPartTopVer = " + newPart.topologyVersion());
+                                log.info("% REPLACE partSeq = " + part.updateSequence() + ", newPartSeq = " + newPart.updateSequence());
+
+                                for (Map.Entry<Integer, GridDhtPartitionState> entry : part.entrySet())
+                                    log.info("% REPLACE FullMap part - " + entry.getKey() + ", state - " + entry.getValue());
+                            }
+
+                            partMap.put(part.nodeId(), part);
                         }
                     }
-                    else if (state == MOVING) {
-                        if (cctx.cacheId() == CU.cacheId("cache1"))
-                            log.error("% PART MOVING " + p );
 
-                        GridDhtLocalPartition locPart = locParts.get(p);
+                    for (Iterator<UUID> it = partMap.keySet().iterator(); it.hasNext(); ) {
+                        UUID nodeId = it.next();
 
-                        assert locPart != null;
+                        if (!cctx.discovery().alive(nodeId)) {
+                            if (log.isDebugEnabled())
+                                log.debug("Removing left node from full map update [nodeId=" + nodeId + ", partMap=" +
+                                    partMap + ']');
 
-                        if (locPart.state() == OWNING) {
-                            locPart.moving();
-
-                            changed = true;
-                        }
-
-                        if (cntrMap != null) {
-                            T2<Long, Long> cntr = cntrMap.get(p);
-
-                            if (cntr != null && cntr.get2() > locPart.updateCounter())
-                                locPart.updateCounter(cntr.get2());
+                            it.remove();
                         }
                     }
                 }
+
+                node2part = partMap;
+
+                if (cctx.cacheId() == CU.cacheId("cache1"))
+                    log.info("% PART FULL UPDATE SAVING NODE2PART, seq = " + partMap.updateSequence());
+
+                Map<Integer, Set<UUID>> p2n = new HashMap<>(cctx.affinity().partitions(), 1.0f);
+
+                for (Map.Entry<UUID, GridDhtPartitionMap2> e : partMap.entrySet()) {
+                    for (Integer p : e.getValue().keySet()) {
+                        Set<UUID> ids = p2n.get(p);
+
+                        if (ids == null)
+                            // Initialize HashSet to size 3 in anticipation that there won't be
+                            // more than 3 nodes per partitions.
+                            p2n.put(p, ids = U.newHashSet(3));
+
+                        ids.add(e.getKey());
+                    }
+                }
+
+                part2node = p2n;
+
+                boolean changed = false;
+
+                AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
+
+                GridDhtPartitionMap2 nodeMap = partMap.get(cctx.localNodeId());
+
+                if (cctx.cacheId() == CU.cacheId("cache1"))
+                    log.info("% NODE MAP IS NULL - " + (nodeMap == null));
+
+                if (nodeMap != null) {
+                    for (Map.Entry<Integer, GridDhtPartitionState> e : nodeMap.entrySet()) {
+                        int p = e.getKey();
+                        GridDhtPartitionState state = e.getValue();
+
+                        if (cctx.cacheId() == CU.cacheId("cache1"))
+                            log.info("% P = " + p + ", state = " + state);
+
+
+                        if (state == OWNING) {
+                            GridDhtLocalPartition locPart = locParts.get(p);
+
+                            assert locPart != null;
+
+                            if (cntrMap != null) {
+                                T2<Long, Long> cntr = cntrMap.get(p);
+
+                                if (cntr != null && cntr.get2() > locPart.updateCounter())
+                                    locPart.updateCounter(cntr.get2());
+                            }
+
+                            if (locPart.state() != OWNING) {
+                                boolean success = locPart.own();
+
+                                assert success : locPart;
+
+                                changed |= success;
+                            }
+                        }
+                        else if (state == MOVING) {
+                            if (cctx.cacheId() == CU.cacheId("cache1"))
+                                log.error("% PART MOVING " + p );
+
+                            GridDhtLocalPartition locPart = locParts.get(p);
+
+                            assert locPart != null;
+
+                            if (locPart.state() == OWNING) {
+                                locPart.moving();
+
+                                changed = true;
+                            }
+
+                            if (cntrMap != null) {
+                                T2<Long, Long> cntr = cntrMap.get(p);
+
+                                if (cntr != null && cntr.get2() > locPart.updateCounter())
+                                    locPart.updateCounter(cntr.get2());
+                            }
+                        }
+                    }
+                } else {
+                    if (CU.cacheId("cache1") == cctx.cacheId())
+                        log.info("% PART FULL UPDATE NODE MAP NULL");
+                }
+
+                if (!affVer.equals(AffinityTopologyVersion.NONE) && affVer.compareTo(topVer) >= 0) {
+                    List<List<ClusterNode>> aff = cctx.affinity().assignments(topVer);
+
+                    changed |= checkEvictions(updateSeq, aff);
+
+                    updateRebalanceVersion(aff);
+                }
+
+                consistencyCheck();
+
+                if (log.isDebugEnabled())
+                    log.debug("Partition map after full update: " + fullMapString());
+
+                if (changed)
+                    cctx.shared().exchange().scheduleResendPartitions();
+
+                return changed ? localPartitionMap() : null;
             }
-
-            if (!affVer.equals(AffinityTopologyVersion.NONE) && affVer.compareTo(topVer) >= 0) {
-                List<List<ClusterNode>> aff = cctx.affinity().assignments(topVer);
-
-                changed |= checkEvictions(updateSeq, aff);
-
-                updateRebalanceVersion(aff);
+            catch (Throwable th) {
+                log.error("% PART FULL ", th);
+                throw th;
             }
-
-            consistencyCheck();
-
-            if (log.isDebugEnabled())
-                log.debug("Partition map after full update: " + fullMapString());
-
-            if (changed)
-                cctx.shared().exchange().scheduleResendPartitions();
-
-            return changed ? localPartitionMap() : null;
-        }
-        catch (Throwable th) {
-            log.error("% PART FULL ", th);
-            throw th;
+            finally {
+                lock.writeLock().unlock();
+            }
         }
         finally {
-            lock.writeLock().unlock();
+            if (CU.cacheId("cache1") == cctx.cacheId())
+                log.info("% PART FULL UPDATE EXIT");
         }
     }
 
@@ -1586,11 +1615,10 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
     }
 
     /** {@inheritDoc} */
-    @Override public boolean setOwners(int p, Set<UUID> owners, boolean skipUpdSeq) {
+    @Override public void setOwners(int p, Set<UUID> owners, boolean updateSeq) {
         lock.writeLock().lock();
 
         try {
-            boolean updated = skipUpdSeq;
 
             GridDhtLocalPartition locPart = locParts.get(p);
 
@@ -1603,19 +1631,16 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 if (!e.getValue().containsKey(p))
                     continue;
 
-                if (e.getValue().get(p) == OWNING && !owners.contains(e.getKey())) {
+                if (e.getValue().get(p) == OWNING && !owners.contains(e.getKey()))
                     e.getValue().put(p, MOVING);
-
-                    if (!updated) {
-                        updateSeq.incrementAndGet();
-                        if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - setOwners() = " + updateSeq);
-
-                        updated = true;
-                    }
-                }
             }
 
-            return updated;
+            if (updateSeq) {
+                node2part = new GridDhtPartitionFullMap(node2part, this.updateSeq.incrementAndGet());
+
+                if (cctx.cacheId() == CU.cacheId("cache1")) log.info("% SEQ UPDATE - setOwners() = " + this.updateSeq.get());
+            }
+
         }
         finally {
             lock.writeLock().unlock();
