@@ -322,7 +322,7 @@ public class GridSqlSelect extends GridSqlQuery {
      * @param where New where.
      * @return {@code this}.
      */
-    public GridSqlSelect where(GridSqlElement where) {
+    public GridSqlSelect where(GridSqlAst where) {
         this.where = where;
 
         return this;
@@ -332,7 +332,7 @@ public class GridSqlSelect extends GridSqlQuery {
      * @param cond Adds new WHERE condition using AND operator.
      * @return {@code this}.
      */
-    public GridSqlSelect whereAnd(GridSqlElement cond) {
+    public GridSqlSelect whereAnd(GridSqlAst cond) {
         if (cond == null)
             throw new NullPointerException();
 

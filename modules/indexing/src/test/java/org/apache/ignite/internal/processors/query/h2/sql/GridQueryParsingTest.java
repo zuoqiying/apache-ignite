@@ -169,7 +169,7 @@ public class GridQueryParsingTest extends GridCommonAbstractTest {
         checkQuery("select avg(old) from Person, Address where Person.addrId = Address.id " +
             "and lower(Address.street) = lower(?)");
 
-        checkQuery("select name, date from Person");
+        checkQuery("select name, name, date, date d from Person");
         checkQuery("select distinct name, date from Person");
         checkQuery("select * from Person p");
         checkQuery("select * from Person");
