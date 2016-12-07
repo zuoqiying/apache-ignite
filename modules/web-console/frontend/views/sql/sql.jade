@@ -14,6 +14,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
+include /app/helpers/jade/mixins.jade
 include /app/directives/ui-grid-settings/ui-grid-settings.jade
 
 mixin btn-toolbar(btn, click, tip, focusId)
@@ -58,8 +59,13 @@ mixin notebook-rename
         h1.pull-right
             a.dropdown-toggle(data-toggle='dropdown' bs-dropdown='scrollParagraphs' data-placement='bottom-right') Scroll to query
                 span.caret
-            .btn-group(style='margin-top: 2px')
-                +btn-toolbar('fa-plus', 'addParagraph()', 'Add new query')
+            button.btn.btn-default(style='margin-top: 2px' ng-click='addQuery()' ignite-on-click-focus=focusId)
+                i.fa.fa-fw.fa-plus
+                | Add new query
+
+            button.btn.btn-default(style='margin-top: 2px' ng-click='addScan()' ignite-on-click-focus=focusId)
+                i.fa.fa-fw.fa-plus
+                | Add new scan
 
 mixin notebook-error
     h2 Failed to load notebook
@@ -89,38 +95,17 @@ mixin query-settings
         button.btn.btn-default.fa.fa-clock-o.tipLabel(title='Click to show refresh rate dialog' ng-class='{"btn-info": paragraph.rate && paragraph.rate.installed}' bs-popover data-template-url='/sql/paragraph-rate.html' data-placement='left' data-auto-close='1' data-trigger='click') {{rateAsString(paragraph)}}
     label.tipLabel Page size:
         button.btn.btn-default.select-toggle.tipLabel(ng-model='paragraph.pageSize' bs-options='item for item in pageSizes' bs-select bs-tooltip data-placement='bottom-right' data-title='Max number of rows to show in query result as one page')
-    label.margin-left-dflt(title='Fetch first page of results only')
+    label.margin-left-dflt(bs-tooltip data-title='Fetch first page of results only')
         input(type='checkbox' ng-model='paragraph.firstPageOnly')
         span Fetch first page only
-    label.margin-left-dflt(title='Execute query locally on selected node.\nNode selection dialog will be shown before query execution.')
-        input(type='checkbox' ng-model='paragraph.localQry')
-        span Local query
+    label.margin-left-dflt(ng-if='nonCollocatedJoinsAvailable(paragraph)' )
+        input(type='checkbox' ng-model='nonCollocatedJoins')
+        span Allow non collocated joins
 
 mixin query-actions
-    .btn-group(bs-tooltip='' data-title='{{actionTooltip(paragraph, "execute", true)}}' data-placement='bottom')
-        button.btn.btn-primary(ng-disabled='!actionAvailable(paragraph, true)' ng-click='execute(paragraph)') Execute
-        button.btn.btn-primary.dropdown-toggle(
-            ng-disabled='!actionAvailable(paragraph, true)'
-            bs-dropdown=''
-            data-container='body'
-            data-placement='bottom-right'
-        )
-            span.caret
-        ul.dropdown-menu(role='menu')
-            li #[a(href='javascript:void(0)' ng-click='execute(paragraph)') Execute]
-            li #[a(href='javascript:void(0)' ng-if='nonCollocatedJoinsAvailable(paragraph)' ng-click='execute(paragraph, true)') Execute non collocated joins]
-    .btn-group(bs-tooltip='' data-title='{{actionTooltip(paragraph, "execute scan", false)}}' data-placement='bottom')
-        button.btn.btn-primary(ng-disabled='!actionAvailable(paragraph, false)' ng-click='scan(paragraph)') Scan
-        button.btn.btn-primary.dropdown-toggle(
-            ng-disabled='!actionAvailable(paragraph, false)'
-            bs-dropdown=''
-            data-container='body'
-            data-placement='bottom-right'
-        )
-            span.caret
-        ul.dropdown-menu(role='menu')
-            li #[a(href='javascript:void(0)' ng-click='scan(paragraph)') Scan]
-            li #[a(href='javascript:void(0)' ng-click='actionAvailable(paragraph, false) && scanWithFilter(paragraph)') Scan with filter]
+    button.btn.btn-primary(ng-disabled='!actionAvailable(paragraph, true)' ng-click='execute(paragraph)') Execute
+    button.btn.btn-primary(ng-disabled='!actionAvailable(paragraph, true)' ng-click='execute(paragraph, true)') Execute on selected node
+
     a.btn.btn-default(ng-disabled='!actionAvailable(paragraph, true)' ng-click='explain(paragraph)' data-placement='bottom' bs-tooltip='' data-title='{{actionTooltip(paragraph, "explain", true)}}') Explain
 
 mixin query-controls
@@ -137,7 +122,8 @@ mixin table-result
             label.margin-left-dflt Results so far: #[b {{paragraph.rows.length + paragraph.total}}]
             label.margin-left-dflt Duration: #[b {{paragraph.duration | duration}}]
         .col-xs-4
-            +result-toolbar
+            div(ng-if='paragraph.qryType === "query"')
+                +result-toolbar
         .col-xs-4
             .pull-right
                 label(style='margin-right: 10px;')
@@ -166,6 +152,88 @@ mixin chart-result
                 +result-toolbar
         label.margin-top-dflt Charts do not support #[b Explain] and #[b Scan] query
 
+mixin paragraph-scan
+    .panel-heading(bs-collapse-toggle)
+        .row
+            +paragraph-rename
+    .panel-collapse(role='tabpanel' bs-collapse-target)
+        .row.sql-controls
+            .col-sm-4
+                +dropdown-required('Cache:', 'paragraph.cacheName', '"cache"', true, true, 'Choose cache', 'caches')
+            .col-sm-4
+                +text-enabled('Filter:', 'paragraph.filter', '"filter"', true, false, 'Enter filter', '123')
+                    label.btn.btn-default.ignite-form-field__btn(ng-click='paragraph.caseSensitive = !paragraph.caseSensitive')
+                        input(type='checkbox' ng-model='paragraph.caseSensitive')
+                        span(bs-tooltip data-title='Select this checkbox for case sensitive search') Cs
+                    //- label.btn.btn-default.ignite-form-field__btn 
+                        input(type='checkbox')
+                        span Re
+
+            .col-sm-4
+                button.btn.btn-primary.pull-right(ng-disabled='!actionAvailable(paragraph, false)' ng-click='scan(paragraph, true)')
+                    | Scan on selected node
+                button.btn.btn-primary.pull-right(ng-disabled='!actionAvailable(paragraph, false)' ng-click='scan(paragraph)')
+                    | Scan
+
+        .row
+            .col-sm-12.sql-result(ng-if='paragraph.queryExecuted()' ng-switch='paragraph.resultType()')
+                .error(ng-switch-when='error') Error: {{paragraph.errMsg}}
+                .empty(ng-switch-when='empty') Result set is empty
+                .table(ng-switch-when='table')
+                    +table-result
+                .footer.clearfix
+                    a.pull-left(ng-click='showResultQuery(paragraph)') Show query
+
+                    -var nextVisibleCondition = 'paragraph.resultType() != "error" && paragraph.queryId && paragraph.nonRefresh() && (paragraph.table() || paragraph.chart() && !paragraph.scanExplain())'
+
+                    .pull-right(ng-show='#{nextVisibleCondition}' ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)')
+                        i.fa.fa-chevron-circle-right
+                        a Next
+
+mixin paragraph-query
+    .panel-heading(bs-collapse-toggle)
+        .row
+            +paragraph-rename
+    .panel-collapse(role='tabpanel' bs-collapse-target)
+        .col-sm-12
+            .col-xs-8.col-sm-9(style='border-right: 1px solid #eee')
+                .sql-editor(ignite-ace='{onLoad: aceInit(paragraph), theme: "chrome", mode: "sql", require: ["ace/ext/language_tools"],' +
+                'advanced: {enableSnippets: false, enableBasicAutocompletion: true, enableLiveAutocompletion: true}}'
+                ng-model='paragraph.query')
+            .col-xs-4.col-sm-3
+                div(ng-show='caches.length > 0' style='padding: 5px 10px' st-table='displayedCaches' st-safe-src='caches')
+                    lable.labelField.labelFormField Caches:
+                    i.fa.fa-database.tipField(title='Click to show cache types metadata dialog' bs-popover data-template-url='/sql/cache-metadata.html' data-placement='bottom' data-trigger='click' data-container='#{{ paragraph.id }}')
+                    .input-tip
+                        input.form-control(type='text' st-search='label' placeholder='Filter caches...')
+                    table.links
+                        tbody.scrollable-y(style='max-height: 15em; display: block;')
+                            tr(ng-repeat='cache in displayedCaches track by cache.name')
+                                td(style='width: 100%')
+                                    input.labelField(id='cache_{{ [paragraph.id, $index].join("_") }}' type='radio' value='{{cache.name}}' ng-model='paragraph.cacheName')
+                                    label(for='cache_{{ [paragraph.id, $index].join("_") }} ' ng-bind='cache.label')
+                .empty-caches(ng-show='displayedCaches.length == 0 && caches.length != 0')
+                    label Wrong caches filter
+                .empty-caches(ng-show='caches.length == 0')
+                    label No caches
+        .col-sm-12
+            +query-controls
+        .col-sm-12.sql-result(ng-if='paragraph.queryExecuted()' ng-switch='paragraph.resultType()')
+            .error(ng-switch-when='error') Error: {{paragraph.errMsg}}
+            .empty(ng-switch-when='empty') Result set is empty
+            .table(ng-switch-when='table')
+                +table-result
+            .chart(ng-switch-when='chart')
+                +chart-result
+            .footer.clearfix
+                a.pull-left(ng-click='showResultQuery(paragraph)') Show query
+
+                -var nextVisibleCondition = 'paragraph.resultType() != "error" && paragraph.queryId && paragraph.nonRefresh() && (paragraph.table() || paragraph.chart() && !paragraph.scanExplain())'
+
+                .pull-right(ng-show='#{nextVisibleCondition}' ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)')
+                    i.fa.fa-chevron-circle-right
+                    a Next
+
 .row(ng-controller='sqlController')
     .docs-content
         .row(ng-if='notebook' bs-affix style='margin-bottom: 20px;')
@@ -184,46 +252,9 @@ mixin chart-result
         div(ng-if='notebook' ignite-loading='sqlLoading' ignite-loading-text='{{ loadingText }}' ignite-loading-position='top')
             .docs-body.paragraphs
                 .panel-group(bs-collapse ng-model='notebook.expandedParagraphs' data-allow-multiple='true' data-start-collapsed='false')
-                    .panel.panel-default(ng-repeat='paragraph in notebook.paragraphs' id='{{paragraph.id}}')
-                        .panel-heading(bs-collapse-toggle)
-                            .row
-                                +paragraph-rename
-                        .panel-collapse(role='tabpanel' bs-collapse-target)
-                            .col-sm-12
-                                .col-xs-8.col-sm-9(style='border-right: 1px solid #eee')
-                                    .sql-editor(ignite-ace='{onLoad: aceInit(paragraph), theme: "chrome", mode: "sql", require: ["ace/ext/language_tools"],' +
-                                    'advanced: {enableSnippets: false, enableBasicAutocompletion: true, enableLiveAutocompletion: true}}'
-                                    ng-model='paragraph.query')
-                                .col-xs-4.col-sm-3
-                                    div(ng-show='caches.length > 0' style='padding: 5px 10px' st-table='displayedCaches' st-safe-src='caches')
-                                        lable.labelField.labelFormField Caches:
-                                        i.fa.fa-database.tipField(title='Click to show cache types metadata dialog' bs-popover data-template-url='/sql/cache-metadata.html' data-placement='bottom' data-trigger='click' data-container='#{{ paragraph.id }}')
-                                        .input-tip
-                                            input.form-control(type='text' st-search='label' placeholder='Filter caches...')
-                                        table.links
-                                            tbody.scrollable-y(style='max-height: 15em; display: block;')
-                                                tr(ng-repeat='cache in displayedCaches track by cache.name')
-                                                    td(style='width: 100%')
-                                                        input.labelField(id='cache_{{ [paragraph.id, $index].join("_") }}' type='radio' value='{{cache.name}}' ng-model='paragraph.cacheName')
-                                                        label(for='cache_{{ [paragraph.id, $index].join("_") }} ' ng-bind='cache.label')
-                                    .empty-caches(ng-show='displayedCaches.length == 0 && caches.length != 0')
-                                        label Wrong caches filter
-                                    .empty-caches(ng-show='caches.length == 0')
-                                        label No caches
-                            .col-sm-12
-                                +query-controls
-                            .col-sm-12.sql-result(ng-if='paragraph.queryExecuted()' ng-switch='paragraph.resultType()')
-                                .error(ng-switch-when='error') Error: {{paragraph.errMsg}}
-                                .empty(ng-switch-when='empty') Result set is empty
-                                .table(ng-switch-when='table')
-                                    +table-result
-                                .chart(ng-switch-when='chart')
-                                    +chart-result
-                                .footer.clearfix
-                                    a.pull-left(ng-click='showResultQuery(paragraph)') Show query
 
-                                    -var nextVisibleCondition = 'paragraph.resultType() != "error" && paragraph.queryId && paragraph.nonRefresh() && (paragraph.table() || paragraph.chart() && !paragraph.scanExplain())'
-
-                                    .pull-right(ng-show=nextVisibleCondition ng-class='{disabled: paragraph.loading}' ng-click='!paragraph.loading && nextPage(paragraph)')
-                                        i.fa.fa-chevron-circle-right
-                                        a Next
+                    .panel.panel-default(ng-repeat='paragraph in notebook.paragraphs' id='{{paragraph.id}}' ng-form='form_{{paragraph.id}}')
+                        div(ng-if='paragraph.qryType === "scan"')
+                            +paragraph-scan
+                        div(ng-if='paragraph.qryType === "query"')
+                            +paragraph-query

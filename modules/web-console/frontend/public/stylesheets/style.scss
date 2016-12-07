@@ -690,8 +690,17 @@ button.form-control {
         }
 
         label {
-            line-height: 20px !important;
+            line-height: 20px;
             vertical-align: middle;
+        }
+
+        .ignite-form-field {
+            .ignite-form-field__label {
+                width: auto;
+                margin-right: 15px;
+
+                line-height: 28px;
+            }
         }
     }
 
