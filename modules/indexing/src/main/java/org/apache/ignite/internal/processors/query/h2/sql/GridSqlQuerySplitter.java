@@ -50,6 +50,8 @@ import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunction
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.MAX;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.MIN;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.SUM;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlJoin.LEFT_TABLE_CHILD;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlJoin.RIGHT_TABLE_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlPlaceholder.EMPTY;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQuery.LIMIT_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQuery.OFFSET_CHILD;
@@ -376,87 +378,142 @@ public class GridSqlQuerySplitter {
 
             // 2.  Push down columns in SELECT clause.
 
-            pushDownSelectColumns(tblAliases, wrapAlias, select, cols);
+            pushDownSelectColumns(tblAliases, cols, wrapAlias, select);
 
-            // 3.  Move all the simple conditions to wrap query (except inbound and outbound conditions).
+            // 3.  Move all the related conditions to wrap query.
 
             pushDownWhereConditions(tblAliases, cols, wrapAlias, select);
 
             // TODO process ON conditions for left joins
 
-            // 4.  Add all the collected columns to the wrap query.
+            // 4.  Push down to a subquery AST all the JOIN elements.
 
-            for (GridSqlAlias col : cols.values())
-                wrapSelect.addColumn(col, true);
+            if (begin == end) {
+                // Simple case when we have to push down only a single table.
 
-            // 4.  Push down to a subquery AST all the join AST elements.
+                //       join3
+                //        / \
+                //     join2 \
+                //      / \   \
+                //   join1 \   \
+                //    / \   \   \
+                //  T0   T1  T2  T3
+                //           ^^
 
-            //       join3
-            //        / \
-            //     join2 \
-            //      / \   \
-            //   join1 \   \
-            //    / \   \   \
-            //  T0   T1  T2  T3
+                // - Push down T2 to the wrap query W and replace T2 with W:
 
-            if (end == qrym.size() - 1) {
+                //       join3
+                //        / \
+                //     join2 \
+                //      / \   \
+                //   join1 \   \
+                //    / \   \   \
+                //  T0   T1  W   T3
+
+                //  W: T2
+
+                wrapSelect.from(qrym.get(end).uniqueAlias);
+
+                // If it is T0, then we have to replace left branch, otherwise - right.
+                int branch = end == 0 ? LEFT_TABLE_CHILD : RIGHT_TABLE_CHILD;
+                findJoin(qrym, end).child(branch, wrapAlias);
+
+                // TODO push down ON condition in join2
+                // TODO check ON condition in join3
+            }
+            else if (end == qrym.size() - 1) {
                 // Here we need to push down chain from `begin` to the last child in the model (T3).
                 assert begin > 0;
 
-                if (begin == end) {
-                    // We have a single T3 to push down, thus it is in join3.
-                    // We can push T3 to the wrap query W and replace T3 with W:
+                //       join3
+                //        / \
+                //     join2 \
+                //      / \   \
+                //   join1 \   \
+                //    / \   \   \
+                //  T0   T1  T2  T3
+                //           ^----^
 
-                    //        join3
+                // We have to push down T2 and T3.
+                // Also may be T1, but this does not change much the logic.
+
+                // - Add join3 to W,
+                // - replace left branch in join3 with T2,
+                // - replace right branch in join2 with W:
+
+                //     join2
+                //      / \
+                //   join1 \
+                //    / \   \
+                //  T0   T1  W
+
+                //  W:      join3
+                //           / \
+                //         T2   T3
+
+                GridSqlJoin beginJoin = findJoin(qrym, begin);
+                GridSqlJoin endJoin = findJoin(qrym, end);
+
+                wrapSelect.from(endJoin);
+                endJoin.leftTable();
+
+                // TODO check ON condition in join3 (in all pushed down joins)
+                // TODO push down ON condition in join2
+            }
+            else {
+                if (begin == 0) {
+                    //       join3
                     //        / \
                     //     join2 \
                     //      / \   \
                     //   join1 \   \
                     //    / \   \   \
-                    //  T0   T1  T2  W
+                    //  T0   T1  T2  T3
+                    //  ^-----^
 
-                    //W from =   T3
 
-                    wrapSelect.from(qrym.get(end).uniqueAlias);
+                    //     join3
+                    //      / \
+                    //   join2 \
+                    //    / \   \
+                    //   W  T2  T3
 
-                    ((GridSqlJoin)select.from()).rightTable(wrapAlias);
+                    //  W:    join1
+                    //         / \
+                    //       T0   T1
+
+                    // TODO
                 }
                 else {
-                    // We have to push down T2 and T3 here.
-                    // Also possibly T1.
-                    // We will add join3 to W,
-                    // replace left branch in join2 with T1,
-                    // create join3 for T0 and W
-                    // and assign it to the original select FROM:
+                    //       join3
+                    //        / \
+                    //     join2 \
+                    //      / \   \
+                    //   join1 \   \
+                    //    / \   \   \
+                    //  T0   T1  T2  T3
+                    //       ^----^
 
-                    //    join4
-                    //     / \
-                    // join   W
-                    //   /
-                    //
+                    //        join3
+                    //         / \
+                    //      join1 \
+                    //       / \   \
+                    //     T0   W   T3
 
-                    //W from=   join2
+                    //  W:      join2
                     //           / \
                     //         T1   T2
 
-                    GridSqlJoin join2 = (GridSqlJoin)select.from();
-                    join2.leftTable(qrym.get(begin).uniqueAlias);
-                    wrapSelect.from(join2);
-
-                    GridSqlJoin beginJoin = findJoin(qrym, begin);
-
-                }
-            }
-            else {
-                // Here we need to push down partial chain in the middle from `begin` (possibly 0) to `end`.
-                GridSqlJoin prntJoin = findJoin(qrym, end + 1);
-
-                if (begin == 0) {
                     // TODO
                 }
             }
 
-            // 5.  Adjust query models to a new AST structure.
+            // 5.  Add all the collected columns to the wrap query.
+
+            for (GridSqlAlias col : cols.values())
+                wrapSelect.addColumn(col, true);
+
+            // 6.  Adjust query models to a new AST structure.
 
             // Move pushed down child models to the newly created model.
             for (int i = begin; i <= end; i++)
@@ -473,23 +530,23 @@ public class GridSqlQuerySplitter {
 
     /**
      * @param tblAliases Table aliases for push down.
+     * @param cols Columns with generated aliases.
      * @param wrapAlias Alias of the wrap query.
      * @param select The original select.
-     * @param cols Columns with generated aliases.
      */
     private void pushDownSelectColumns(
         Set<GridSqlAlias> tblAliases,
+        Map<String,GridSqlAlias> cols,
         GridSqlAlias wrapAlias,
-        GridSqlSelect select,
-        Map<String,GridSqlAlias> cols
+        GridSqlSelect select
     ) {
-        // Process all the columns.
         for (int i = 0; i < select.allColumns(); i++) {
             GridSqlAst expr = select.column(i);
 
             if (expr instanceof GridSqlColumn) {
                 // If this is a column with no expression and without alias, we need replace it with an alias,
-                // because in the wrapQuery we will generate unique aliases for all the columns to avoid duplicates.
+                // because in the wrapQuery we will generate unique aliases for all the columns to avoid duplicates
+                // and all the columns in the will be replaced.
                 expr = alias(((GridSqlColumn)expr).columnName(), expr);
 
                 select.setColumn(i, expr);
@@ -593,22 +650,32 @@ public class GridSqlQuerySplitter {
 
         GridSqlSelect wrapSelect = wrapAlias.child();
 
-        List<AndCondition> and = new ArrayList<>();
+        List<AndCondition> andConditions = new ArrayList<>();
 
-        collectAndConditions(and, select, GridSqlSelect.WHERE_CHILD);
+        collectAndConditions(andConditions, select, GridSqlSelect.WHERE_CHILD);
 
-        for (int i = 0; i < and.size(); i++) {
-            AndCondition c = and.get(i);
+        for (int i = 0; i < andConditions.size(); i++) {
+            AndCondition c = andConditions.get(i);
             GridSqlAst condition = c.ast();
 
             if (isAllRelatedToTables(tblAliases, condition)) {
-                // Replace the original condition with `true` and move it to the wrap query.
-                c.prnt.child(c.childIdx, TRUE);
-                wrapSelect.whereAnd(condition);
+                if (!isTrue(condition)) {
+                    // Replace the original condition with `true` and move it to the wrap query.
+                    c.prnt.child(c.childIdx, TRUE);
+                    wrapSelect.whereAnd(condition);
+                }
             }
             else
                 pushDownColumnsInExpression(tblAliases, cols, wrapAlias, c.prnt, c.childIdx);
         }
+    }
+
+    /**
+     * @param expr Expression.
+     * @return {@code true} If this expression represents a constant value `TRUE`.
+     */
+    private static boolean isTrue(GridSqlAst expr) {
+        return expr instanceof GridSqlConst && ((GridSqlConst)expr).value() == TRUE.value();
     }
 
     /**
@@ -829,8 +896,8 @@ public class GridSqlQuerySplitter {
             if (child instanceof GridSqlAlias)
                 buildQueryModel(prntModel, child, 0, (GridSqlAlias)child);
             else if (child instanceof GridSqlJoin) {
-                buildQueryModel(prntModel, child, GridSqlJoin.LEFT_TABLE_CHILD, uniqueAlias);
-                buildQueryModel(prntModel, child, GridSqlJoin.RIGHT_TABLE_CHILD, uniqueAlias);
+                buildQueryModel(prntModel, child, LEFT_TABLE_CHILD, uniqueAlias);
+                buildQueryModel(prntModel, child, RIGHT_TABLE_CHILD, uniqueAlias);
             }
             else {
                 // Here we must be inside of generated unique alias for FROM clause element.

@@ -26,7 +26,7 @@ import org.h2.value.ValueBoolean;
  */
 public class GridSqlConst extends GridSqlElement {
     /** */
-    public static final GridSqlElement TRUE = new GridSqlConst(ValueBoolean.get(true))
+    public static final GridSqlConst TRUE = (GridSqlConst)new GridSqlConst(ValueBoolean.get(true))
         .resultType(GridSqlType.BOOLEAN);
 
     /** */
