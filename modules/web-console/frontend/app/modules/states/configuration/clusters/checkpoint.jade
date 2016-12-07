@@ -19,6 +19,7 @@ include /app/helpers/jade/mixins.jade
 -var form = 'checkpoint'
 -var model = 'backupItem.checkpointSpi'
 -var CustomCheckpoint = 'model.kind === "Custom"'
+-var CacheCheckpoint = 'model.kind === "Cache"'
 
 .panel.panel-default(ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click='ui.loadPanel("#{form}")')
@@ -64,9 +65,9 @@ include /app/helpers/jade/mixins.jade
                             div(ng-show='model.kind === "FS"')
                                 include ./checkpoint/fs.jade
 
-                            div(ng-show='model.kind === "Cache"')
+                            div(ng-show=CacheCheckpoint)
                                 .settings-row
-                                    +dropdown-required-empty('Cache:', 'model.Cache.cache', '"checkpointCacheCache"+ $index', 'true', 'true',
+                                    +dropdown-required-empty('Cache:', 'model.Cache.cache', '"checkpointCacheCache"+ $index', 'true', CacheCheckpoint,
                                         'Choose cache', 'No caches configured for current cluster', 'clusterCaches', 'Cache to use for storing checkpoints')
                                 .settings-row
                                     +java-class('Listener:', 'model.Cache.checkpointListener', '"checkpointCacheListener" + $index', 'true', 'false',
