@@ -1168,9 +1168,6 @@ export default class IgniteConfigurationGenerator {
         const kind = _.get(cluster.marshaller, 'kind');
         const settings = _.get(cluster.marshaller, kind);
 
-        if (_.isNil(settings))
-            return cfg;
-
         let bean;
 
         switch (kind) {
