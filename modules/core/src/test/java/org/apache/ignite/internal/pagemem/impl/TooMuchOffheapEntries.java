@@ -18,20 +18,24 @@ package org.apache.ignite.internal.pagemem.impl;
 
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.cache.CacheEntryProcessor;
 import org.apache.ignite.cache.CacheMemoryMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 
+import javax.cache.processor.EntryProcessorException;
+import javax.cache.processor.MutableEntry;
 import java.util.Arrays;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * TooMuchOffheapEntries
@@ -47,10 +51,14 @@ public class TooMuchOffheapEntries {
     private static final String CACHE_NAME = "TooMuchOffheapEntriesCache";
 
     /** Max off-heap memory */
-    private static final long OFF_HEAP_MEMORY = 1L << 30;
+    private static final long OFF_HEAP_MEMORY = 4L << 30;
 
     /** Entries pack size */
     private static final long PACK_SIZE = 1_000_000L;
+
+    private static final AtomicBoolean wasError = new AtomicBoolean();
+
+    private static final byte[] SAMPLE_ARRAY = new byte[100];
 
     /** Create config */
     private static IgniteConfiguration config(String gridName) {
@@ -76,42 +84,50 @@ public class TooMuchOffheapEntries {
         IgniteConfiguration cfg = config(GRID_NAME);
         try (Ignite ignite = Ignition.start(cfg)) {
             IgniteCache<CacheKey, CacheKey> cache = ignite.cache(CACHE_NAME);
-            CompletionService<Void> cs = new ExecutorCompletionService<>(Executors.newCachedThreadPool());
+            CompletionService<Long> cs = new ExecutorCompletionService<>(Executors.newCachedThreadPool());
             System.out.println("Loading the cache");
             int procs = Runtime.getRuntime().availableProcessors();
             long portion = PACK_SIZE / procs;
             long rem = PACK_SIZE % procs;
-            long cnt = 0;
+            long totalCnt = 0;
             while (true) {
+                long start = totalCnt;
                 for (int i = 1; i <= procs; ++i) {
-                    long end = cnt + portion;
+                    long end = start + portion;
                     if (i == procs)
                         end += rem;
-                    cs.submit(new LoadCacheTask(ignite, cnt, end), null);
-                    cnt = end;
+                    cs.submit(new LoadCacheTask(ignite, start, end));
+                    start = end;
                 }
                 long lastSz = 0;
                 for (int i = 0; i < procs; ) {
-                    Future fut = cs.poll(10, TimeUnit.SECONDS);
+                    Future<Long> fut = cs.poll(10, TimeUnit.SECONDS);
                     if (fut == null) {
                         long sz = cache.sizeLong();
-                        if (lastSz == sz)
+                        if (lastSz == sz) {
+                            System.out.println("Timeout waiting load task");
                             System.exit(-1);
-                        System.out.println(sz);
+                        }
+                        System.out.println("Cache size = " + sz);
                         lastSz = sz;
                     }
                     else {
-                        fut.get();
+                        long cnt = fut.get();
+                        totalCnt += cnt;
                         ++i;
                     }
                 }
-                System.out.println(((double)cache.sizeLong()) / PACK_SIZE + " M");
+                if (wasError.get()) {
+                    System.out.println("Total count = " + totalCnt);
+                    System.exit(-2);
+                }
+                System.out.println(((double)totalCnt) / PACK_SIZE + " M");
             }
         }
     }
 
     /** Loads cache with key interval */
-    private static class LoadCacheTask implements Runnable {
+    private static class LoadCacheTask implements Callable<Long> {
 
         /** Ignite instance */
         private final Ignite ignite;
@@ -128,15 +144,40 @@ public class TooMuchOffheapEntries {
             this.end = end;
         }
 
-        /** Loads the cache */
-        @Override public void run() {
-            IgniteDataStreamer<CacheKey, CacheKey> ds = ignite.dataStreamer(CACHE_NAME);
-            CacheKey key = new CacheKey();
-            for (long i = start; i < end; ++i) {
-                key.val = i;
-                ds.addData(key, key);
+        /**
+         * Loads the cache
+         *
+         * @return the number of entries loaded
+         */
+        @Override public Long call() throws Exception {
+            IgniteCache<CacheKey, CacheValue> cache = ignite.cache(CACHE_NAME);
+            long cnt = 0;
+            try {
+                CacheKey key = new CacheKey();
+                final CacheValue val = new CacheValue();
+                CacheEntryProcessor<CacheKey, CacheValue, Object> processor =
+                    new CacheEntryProcessor<CacheKey, CacheValue, Object>() {
+                        @Override
+                        public Object process(MutableEntry<CacheKey, CacheValue> entry,
+                            Object... arguments) throws EntryProcessorException {
+                            entry.setValue(val);
+                            return null;
+                        }
+                    };
+                for (long i = start; i < end; ++i) {
+                    key.val = i;
+                    val.data = SAMPLE_ARRAY;
+                    cache.invoke(key, processor);
+                    key.val = i + 1L;
+                    val.data = null;
+                    cache.invoke(key, processor);
+                    ++cnt;
+                }
             }
-            ds.flush();
+            catch (Throwable ex) {
+                wasError.compareAndSet(false, true);
+            }
+            return cnt;
         }
     }
 
@@ -151,7 +192,13 @@ public class TooMuchOffheapEntries {
         }
 
         @Override public int hashCode() {
-            return Long.hashCode(val);
+            return (int)val;
         }
+    }
+
+    /** Cache value */
+    private static class CacheValue {
+
+        public byte[] data;
     }
 }
