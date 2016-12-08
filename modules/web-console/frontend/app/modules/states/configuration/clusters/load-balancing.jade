@@ -92,13 +92,13 @@ include /app/helpers/jade/mixins.jade
                                         +checkbox('Use average', 'model.Adaptive.loadProbe.ProcessingTime.useAverage', '"loadBalancingAdaptiveJobUseAverage" + $index', 'Use average execution time vs. current')
                                     .details-row(ng-show=loadProbeCustom)
                                         +java-class('Load brobe implementation:', 'model.Adaptive.loadProbe.Custom.className', '"loadBalancingAdaptiveJobUseClass" + $index', 'true', loadProbeCustom,
-                                            'Custom load balancing SPI implementation class name.')
+                                            'Custom load balancing SPI implementation class name.', loadProbeCustom)
                             .settings-row(ng-show='model.kind === "WeightedRandom"')
                                 +number('Node weight:', 'model.WeightedRandom.nodeWeight', '"loadBalancingWRNodeWeight" + $index', 'true', 10, '1', 'Weight of node')
                             .settings-row(ng-show='model.kind === "WeightedRandom"')
                                 +checkbox('Use weights', 'model.WeightedRandom.useWeights', '"loadBalancingWRUseWeights" + $index', 'Node weights should be checked when doing random load balancing')
                             .settings-row(ng-show=loadBalancingCustom)
                                 +java-class('Load balancing SPI implementation:', 'model.Custom.className', '"loadBalancingClass" + $index', 'true', loadBalancingCustom,
-                                    'Custom load balancing SPI implementation class name.')
+                                    'Custom load balancing SPI implementation class name.', loadBalancingCustom)
             .col-sm-6
                 +preview-xml-java(model, 'clusterLoadBalancing')

@@ -63,4 +63,4 @@ include /app/helpers/jade/mixins.jade
 
 .settings-row
     +java-class('Listener:', 'model.FS.checkpointListener', '"checkpointFsListener" + $index', 'true', 'false',
-        'Checkpoint listener implementation class name')
+        'Checkpoint listener implementation class name', 'model.kind === "FS"')

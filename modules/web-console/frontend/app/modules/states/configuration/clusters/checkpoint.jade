@@ -71,7 +71,7 @@ include /app/helpers/jade/mixins.jade
                                         'Choose cache', 'No caches configured for current cluster', 'clusterCaches', 'Cache to use for storing checkpoints')
                                 .settings-row
                                     +java-class('Listener:', 'model.Cache.checkpointListener', '"checkpointCacheListener" + $index', 'true', 'false',
-                                        'Checkpoint listener implementation class name')
+                                        'Checkpoint listener implementation class name', CacheCheckpoint)
 
                             div(ng-show='model.kind === "S3"')
                                 include ./checkpoint/s3.jade
@@ -81,6 +81,6 @@ include /app/helpers/jade/mixins.jade
 
                             .settings-row(ng-show=CustomCheckpoint)
                                 +java-class('Class name:', 'model.Custom.className', '"checkpointCustomClassName" + $index', 'true', CustomCheckpoint,
-                                'Custom CheckpointSpi implementation class')
+                                'Custom CheckpointSpi implementation class', CustomCheckpoint)
             .col-sm-6
                 +preview-xml-java('backupItem', 'clusterCheckpoint', 'caches')

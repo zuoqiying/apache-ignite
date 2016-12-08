@@ -225,12 +225,12 @@ include /app/helpers/jade/mixins.jade
                     .details-row
                         +checkbox('Encode URI', modelDeployment + '.URI.encodeUri', '"DeploymentURIEncodeUri"', 'URI must be encoded before usage')
                     .details-row
-                        +java-class('Listener:', modelDeployment + '.URI.listener', '"DeploymentURIListener"', 'true', 'false', 'Deployment event listener')
+                        +java-class('Listener:', modelDeployment + '.URI.listener', '"DeploymentURIListener"', 'true', 'false', 'Deployment event listener', uriDeployment)
                 .panel-details(ng-show=localDeployment)
                     .details-row
-                        +java-class('Listener:', modelDeployment + '.Local.listener', '"DeploymentLocalListener"', 'true', 'false', 'Deployment event listener')
+                        +java-class('Listener:', modelDeployment + '.Local.listener', '"DeploymentLocalListener"', 'true', 'false', 'Deployment event listener', localDeployment)
                 .panel-details(ng-show=customDeployment)
                     .details-row
-                        +java-class('Class:', modelDeployment + '.Custom.className', '"DeploymentCustom"', 'true', customDeployment, 'DeploymentSpi implementation class')
+                        +java-class('Class:', modelDeployment + '.Custom.className', '"DeploymentCustom"', 'true', customDeployment, 'DeploymentSpi implementation class', customDeployment)
             .col-sm-6
                 +preview-xml-java(model, 'clusterDeployment')

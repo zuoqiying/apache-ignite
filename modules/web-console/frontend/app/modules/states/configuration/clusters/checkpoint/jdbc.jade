@@ -16,6 +16,8 @@
 
 include /app/helpers/jade/mixins.jade
 
+-var jdbcCheckpoint = 'model.kind === "JDBC"'
+
 .settings-row
     +text('Data source bean name:', 'model.JDBC.dataSourceBean', '"checkpointJdbcDataSourceBean" + $index', 'model.kind === "JDBC"', 'Input bean name',
     'Name of the data source bean in Spring context')
@@ -24,7 +26,7 @@ include /app/helpers/jade/mixins.jade
     'Dialect of SQL implemented by a particular RDBMS:', 'Generic JDBC dialect', 'Choose JDBC dialect')
 .settings-row
     +java-class('Listener:', 'model.JDBC.checkpointListener', '"checkpointJdbcListener" + $index', 'true', 'false',
-        'Checkpoint listener implementation class name')
+        'Checkpoint listener implementation class name', jdbcCheckpoint)
 +showHideLink('jdbcExpanded', 'settings')
     .details-row
         +text('User:', 'model.JDBC.user', '"checkpointJdbcUser" + $index', 'false', 'Input user name', 'Checkpoint jdbc user name')
