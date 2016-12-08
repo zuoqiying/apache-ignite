@@ -115,6 +115,7 @@ export default class IgniteSpringTransformer extends AbstractTransformer {
                 case 'long':
                     return `${item}L`;
                 case 'java.lang.String':
+                case 'PATH':
                     return this.escapeXml(item);
                 default:
                     return item;
