@@ -61,9 +61,6 @@ public class AgentLauncher {
     private static final Logger log = LoggerFactory.getLogger(AgentLauncher.class);
 
     /** */
-    private static final String EVENT_AGENT_ACK = "ack";
-
-    /** */
     private static final String EVENT_START_COLLECT_TOPOLOGY = "collect:start";
 
     /** */
@@ -83,6 +80,9 @@ public class AgentLauncher {
 
     /** */
     private static final String EVENT_NODE_REST = "node:rest";
+
+    /** */
+    private static final String EVENT_RESET_TOKENS = "agent:reset:tokens";
 
     /** */
     private static final int RECONNECT_INTERVAL = 3000;
@@ -320,14 +320,18 @@ public class AgentLauncher {
                 .on(EVENT_RECONNECTING, onConnecting)
                 .on(EVENT_ERROR, onError)
                 .on(EVENT_DISCONNECT, onDisconnect)
+
                 .on(EVENT_START_COLLECT_TOPOLOGY, topHnd.start())
                 .on(EVENT_STOP_COLLECT_TOPOLOGY, topHnd.stop())
+
                 .on(EVENT_NODE_VISOR_TASK, restHnd)
                 .on(EVENT_NODE_REST, restHnd)
+
                 .on(EVENT_SCHEMA_IMPORT_DRIVERS, dbHnd.availableDriversListener())
                 .on(EVENT_SCHEMA_IMPORT_SCHEMAS, dbHnd.schemasListener())
                 .on(EVENT_SCHEMA_IMPORT_METADATA, dbHnd.metadataListener())
-                .on(EVENT_AGENT_ACK, new Emitter.Listener() {
+
+                .on(EVENT_RESET_TOKENS, new Emitter.Listener() {
                     @Override public void call(Object... args) {
                         if (args.length != 2) {
                             log.warn("Incorrect arguments for command: " + Arrays.toString(args));
