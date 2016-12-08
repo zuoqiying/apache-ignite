@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * TooMuchOffheapEntries
@@ -43,6 +45,9 @@ public class TooMuchOffheapEntries {
 
     /** Cache name */
     private static final String CACHE_NAME = "TooMuchOffheapEntriesCache";
+
+    /** Max off-heap memory */
+    private static final long OFF_HEAP_MEMORY = 1L << 30;
 
     /** Entries pack size */
     private static final long PACK_SIZE = 1_000_000L;
@@ -60,7 +65,7 @@ public class TooMuchOffheapEntries {
 
         CacheConfiguration ccfg = new CacheConfiguration(CACHE_NAME);
         ccfg.setMemoryMode(CacheMemoryMode.OFFHEAP_TIERED);
-        ccfg.setOffHeapMaxMemory(4L << 30);
+        ccfg.setOffHeapMaxMemory(OFF_HEAP_MEMORY);
 
         cfg.setCacheConfiguration(ccfg);
         return cfg;
@@ -71,12 +76,12 @@ public class TooMuchOffheapEntries {
         IgniteConfiguration cfg = config(GRID_NAME);
         try (Ignite ignite = Ignition.start(cfg)) {
             IgniteCache<CacheKey, CacheKey> cache = ignite.cache(CACHE_NAME);
-            long cnt = 0;
-            CompletionService cs = new ExecutorCompletionService(Executors.newCachedThreadPool());
+            CompletionService<Void> cs = new ExecutorCompletionService<>(Executors.newCachedThreadPool());
             System.out.println("Loading the cache");
             int procs = Runtime.getRuntime().availableProcessors();
             long portion = PACK_SIZE / procs;
             long rem = PACK_SIZE % procs;
+            long cnt = 0;
             while (true) {
                 for (int i = 1; i <= procs; ++i) {
                     long end = cnt + portion;
@@ -85,8 +90,21 @@ public class TooMuchOffheapEntries {
                     cs.submit(new LoadCacheTask(ignite, cnt, end), null);
                     cnt = end;
                 }
-                for (int i = 0; i < procs; ++i)
-                    cs.take().get();
+                long lastSz = 0;
+                for (int i = 0; i < procs; ) {
+                    Future fut = cs.poll(10, TimeUnit.SECONDS);
+                    if (fut == null) {
+                        long sz = cache.sizeLong();
+                        if (lastSz == sz)
+                            System.exit(-1);
+                        System.out.println(sz);
+                        lastSz = sz;
+                    }
+                    else {
+                        fut.get();
+                        ++i;
+                    }
+                }
                 System.out.println(((double)cache.sizeLong()) / PACK_SIZE + " M");
             }
         }
