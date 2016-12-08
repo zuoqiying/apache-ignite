@@ -51,6 +51,7 @@ import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunction
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.MIN;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.SUM;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlJoin.LEFT_TABLE_CHILD;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlJoin.ON_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlJoin.RIGHT_TABLE_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlPlaceholder.EMPTY;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQuery.LIMIT_CHILD;
@@ -278,7 +279,7 @@ public class GridSqlQuerySplitter {
                     if (child.isQuery() && (child.needSplitChild || child.needSplit)) {
                         // Push down the currently collected chain.
                         if (begin != -1) {
-                            pushDown(qrym, begin, end);
+                            pushDownQueryModelRange(qrym, begin, end);
 
                             begin = -1;
                             end = -1;
@@ -300,7 +301,7 @@ public class GridSqlQuerySplitter {
                 if (begin != -1) {
                     assert !(begin == 0 && end == qrym.size() - 1); // We can not push down all the elements in join.
 
-                    pushDown(qrym, begin, end);
+                    pushDownQueryModelRange(qrym, begin, end);
                 }
             }
         }
@@ -313,7 +314,7 @@ public class GridSqlQuerySplitter {
      * @param begin The first child model in range to push down.
      * @param end The last child model in range to push down.
      */
-    private void pushDown(QueryModel qrym, int begin, int end) {
+    private void pushDownQueryModelRange(QueryModel qrym, int begin, int end) {
         if (begin == end && qrym.get(end).isQuery()) {
             // Simple case when we have a single subquery to push down, just mark it to be splittable.
             QueryModel child = qrym.get(end);
@@ -334,31 +335,6 @@ public class GridSqlQuerySplitter {
             // Here we have to generate a subquery for all the joined elements and
             // and mark that subquery as splittable.
 
-            // Also we will need to find inbound and outbound conditions for the
-            // given JOIN chain and leave them outside of the subquery, all simple conditions
-            // must be moved inside of the subquery.
-
-            // The subquery must have ORDER BY for inbound condition to make merge join
-            // on the reduce side work.
-
-            // We have to add respective ORDER BYs to our neighbours as well to be able
-            // to perform merge join.
-
-            // We can not generate merge join if we have more than two participants:
-            // `A join B on A.X = B.Y join C on B.Z = C.W`
-            // because here we have to sort B by Y to merge join with A and on another hand
-            // we have to sort it by Z to merge join with C.
-
-            // To solve this we have to wrap each join into a separate subquery with correct
-            // sorting by outbound condition like:
-            // `(select * from A join B on A.X = B.Y order by B.Z) D join C on D.Z = C.W`
-            // assuming that A is sorted by X, B by Y and C by W.
-
-            // If we have OR inbound condition, then having wrapper subqueries with
-            // sorting makes no sense, we will need to scan anyways. In this case
-            // we can only hope that buffer inside of merge index will be large enough
-            // to accommodate all the results.
-
             // 1.  Create wrap query where we will push all the needed joined elements, columns and conditions.
 
             GridSqlSelect wrapSelect = new GridSqlSelect();
@@ -373,8 +349,13 @@ public class GridSqlQuerySplitter {
             Map<String,GridSqlAlias> cols = new HashMap<>();
 
             // Collect all the tables for push down.
-            for (int i = begin; i <= end; i++)
-                tblAliases.add(qrym.get(i).uniqueAlias);
+            for (int i = begin; i <= end; i++) {
+                GridSqlAlias uniqueTblAlias = qrym.get(i).uniqueAlias;
+
+                assert uniqueTblAlias != null;
+
+                tblAliases.add(uniqueTblAlias);
+            }
 
             // 2.  Push down columns in SELECT clause.
 
@@ -384,129 +365,9 @@ public class GridSqlQuerySplitter {
 
             pushDownWhereConditions(tblAliases, cols, wrapAlias, select);
 
-            // TODO process ON conditions for left joins
+            // 4.  Push down to a subquery all the JOIN elements and process ON conditions.
 
-            // 4.  Push down to a subquery AST all the JOIN elements.
-
-            if (begin == end) {
-                // Simple case when we have to push down only a single table.
-
-                //       join3
-                //        / \
-                //     join2 \
-                //      / \   \
-                //   join1 \   \
-                //    / \   \   \
-                //  T0   T1  T2  T3
-                //           ^^
-
-                // - Push down T2 to the wrap query W and replace T2 with W:
-
-                //       join3
-                //        / \
-                //     join2 \
-                //      / \   \
-                //   join1 \   \
-                //    / \   \   \
-                //  T0   T1  W   T3
-
-                //  W: T2
-
-                wrapSelect.from(qrym.get(end).uniqueAlias);
-
-                // If it is T0, then we have to replace left branch, otherwise - right.
-                int branch = end == 0 ? LEFT_TABLE_CHILD : RIGHT_TABLE_CHILD;
-                findJoin(qrym, end).child(branch, wrapAlias);
-
-                // TODO push down ON condition in join2
-                // TODO check ON condition in join3
-            }
-            else if (end == qrym.size() - 1) {
-                // Here we need to push down chain from `begin` to the last child in the model (T3).
-                assert begin > 0;
-
-                //       join3
-                //        / \
-                //     join2 \
-                //      / \   \
-                //   join1 \   \
-                //    / \   \   \
-                //  T0   T1  T2  T3
-                //           ^----^
-
-                // We have to push down T2 and T3.
-                // Also may be T1, but this does not change much the logic.
-
-                // - Add join3 to W,
-                // - replace left branch in join3 with T2,
-                // - replace right branch in join2 with W:
-
-                //     join2
-                //      / \
-                //   join1 \
-                //    / \   \
-                //  T0   T1  W
-
-                //  W:      join3
-                //           / \
-                //         T2   T3
-
-                GridSqlJoin beginJoin = findJoin(qrym, begin);
-                GridSqlJoin endJoin = findJoin(qrym, end);
-
-                wrapSelect.from(endJoin);
-                endJoin.leftTable();
-
-                // TODO check ON condition in join3 (in all pushed down joins)
-                // TODO push down ON condition in join2
-            }
-            else {
-                if (begin == 0) {
-                    //       join3
-                    //        / \
-                    //     join2 \
-                    //      / \   \
-                    //   join1 \   \
-                    //    / \   \   \
-                    //  T0   T1  T2  T3
-                    //  ^-----^
-
-
-                    //     join3
-                    //      / \
-                    //   join2 \
-                    //    / \   \
-                    //   W  T2  T3
-
-                    //  W:    join1
-                    //         / \
-                    //       T0   T1
-
-                    // TODO
-                }
-                else {
-                    //       join3
-                    //        / \
-                    //     join2 \
-                    //      / \   \
-                    //   join1 \   \
-                    //    / \   \   \
-                    //  T0   T1  T2  T3
-                    //       ^----^
-
-                    //        join3
-                    //         / \
-                    //      join1 \
-                    //       / \   \
-                    //     T0   W   T3
-
-                    //  W:      join2
-                    //           / \
-                    //         T1   T2
-
-                    // TODO
-                }
-            }
+            pushDownJoins(tblAliases, cols, qrym, begin, end, wrapAlias);
 
             // 5.  Add all the collected columns to the wrap query.
 
@@ -525,6 +386,169 @@ public class GridSqlQuerySplitter {
             // Drop others.
             for (int x = begin + 1, i = x; i <= end; i++)
                 qrym.remove(x);
+        }
+    }
+
+    /**
+     * @param tblAliases Table aliases for push down.
+     * @param cols Columns with generated aliases.
+     * @param qrym Query model.
+     * @param begin The first child model in range to push down.
+     * @param end The last child model in range to push down.
+     * @param wrapAlias Alias of the wrap query.
+     */
+    private void pushDownJoins(
+        Set<GridSqlAlias> tblAliases,
+        Map<String,GridSqlAlias> cols,
+        QueryModel qrym,
+        int begin,
+        int end,
+        GridSqlAlias wrapAlias
+    ) {
+        GridSqlSelect wrapSelect = wrapAlias.child();
+
+        final int last = qrym.size() - 1;
+
+        if (begin == end) {
+            //  Simple case when we have to push down only a single table and no joins.
+
+            //       join3
+            //        / \
+            //     join2 \
+            //      / \   \
+            //   join1 \   \
+            //    / \   \   \
+            //  T0   T1  T2  T3
+            //           ^^
+
+            // - Push down T2 to the wrap query W and replace T2 with W:
+
+            //       join3
+            //        / \
+            //     join2 \
+            //      / \   \
+            //   join1 \   \
+            //    / \   \   \
+            //  T0   T1  W   T3
+
+            //  W: T2
+
+            GridSqlJoin endJoin = findJoin(qrym, end);
+
+            wrapSelect.from(qrym.get(end).uniqueAlias);
+            endJoin.child(end == 0 ? LEFT_TABLE_CHILD : RIGHT_TABLE_CHILD, wrapAlias);
+        }
+        else if (end == last) {
+            // Here we need to push down chain from `begin` to the last child in the model (T3).
+            // Thus we have something to split in the beginning and `begin` can not be 0.
+            assert begin > 0;
+
+            //       join3
+            //        / \
+            //     join2 \
+            //      / \   \
+            //   join1 \   \
+            //    / \   \   \
+            //  T0   T1  T2  T3
+            //           ^----^
+
+            // We have to push down T2 and T3.
+            // Also may be T1, but this does not change much the logic.
+
+            // - Add join3 to W,
+            // - replace left branch in join3 with T2,
+            // - replace right branch in join2 with W:
+
+            //     join2
+            //      / \
+            //   join1 \
+            //    / \   \
+            //  T0   T1  W
+
+            //  W:      join3
+            //           / \
+            //         T2   T3
+
+            GridSqlJoin beginJoin = findJoin(qrym, begin);
+            GridSqlJoin afterBeginJoin = findJoin(qrym, begin + 1);
+            GridSqlJoin endJoin = findJoin(qrym, end);
+
+            wrapSelect.from(endJoin);
+            afterBeginJoin.leftTable(beginJoin.rightTable());
+            beginJoin.rightTable(wrapAlias);
+        }
+        else if (begin == 0) {
+            //  From the first model to some middle one.
+
+            //       join3
+            //        / \
+            //     join2 \
+            //      / \   \
+            //   join1 \   \
+            //    / \   \   \
+            //  T0   T1  T2  T3
+            //  ^-----^
+
+
+            //     join3
+            //      / \
+            //   join2 \
+            //    / \   \
+            //   W  T2  T3
+
+            //  W:    join1
+            //         / \
+            //       T0   T1
+
+            GridSqlJoin endJoin = findJoin(qrym, end);
+            GridSqlJoin afterEndJoin = findJoin(qrym, end + 1);
+
+            wrapSelect.from(endJoin);
+            afterEndJoin.leftTable(wrapAlias);
+        }
+        else {
+            //  Push down some middle range.
+
+            //       join3
+            //        / \
+            //     join2 \
+            //      / \   \
+            //   join1 \   \
+            //    / \   \   \
+            //  T0   T1  T2  T3
+            //       ^----^
+
+
+            //        join3
+            //         / \
+            //      join1 \
+            //       / \   \
+            //     T0   W   T3
+
+            //  W:      join2
+            //           / \
+            //         T1   T2
+
+            GridSqlJoin beginJoin = findJoin(qrym, begin);
+            GridSqlJoin afterBeginJoin = findJoin(qrym, begin + 1);
+            GridSqlJoin endJoin = findJoin(qrym, end);
+            GridSqlJoin afterEndJoin = findJoin(qrym, end + 1);
+
+            wrapSelect.from(endJoin);
+            afterEndJoin.leftTable(beginJoin);
+            afterBeginJoin.leftTable(beginJoin.rightTable());
+            beginJoin.rightTable(wrapAlias);
+        }
+
+        // Get the original SELECT.
+        GridSqlSelect select = qrym.ast();
+        GridSqlAst from = select.from();
+
+        // Push down related ON conditions for all the related joins.
+        while (from instanceof GridSqlJoin) {
+            pushDownColumnsInExpression(tblAliases, cols, wrapAlias, from, ON_CHILD);
+
+            from = from.child(LEFT_TABLE_CHILD);
         }
     }
 
@@ -742,6 +766,7 @@ public class GridSqlQuerySplitter {
     private static GridSqlJoin findJoin(QueryModel qrym, int idx) {
         assert qrym.type == Type.SELECT: qrym.type;
         assert qrym.size() > 1; // It must be at least one join with at least two child tables.
+        assert idx < qrym.size(): idx;
 
         //     join2
         //      / \
