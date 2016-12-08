@@ -297,8 +297,10 @@ export default class IgniteConfigurationGenerator {
 
                             break;
                         case 'Custom':
-                            if (_.nonEmpty(policy.Custom.className))
-                                retryPolicyBean = new EmptyBean(policy.Custom.className);
+                            const className = _.get(policy, 'Custom.className');
+
+                            if (_.nonEmpty(className))
+                                retryPolicyBean = new EmptyBean(className);
 
                             break;
                         default:
