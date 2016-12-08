@@ -277,7 +277,7 @@ public class GridSqlQuerySplitter {
                     QueryModel child = qrym.get(i);
 
                     if (child.isQuery() && (child.needSplitChild || child.needSplit)) {
-                        // Push down the currently collected chain.
+                        // Push down the currently collected range.
                         if (begin != -1) {
                             pushDownQueryModelRange(qrym, begin, end);
 
@@ -298,11 +298,14 @@ public class GridSqlQuerySplitter {
                     }
                 }
 
+                // Push down the remaining range.
                 if (begin != -1) {
                     assert !(begin == 0 && end == qrym.size() - 1); // We can not push down all the elements in join.
 
                     pushDownQueryModelRange(qrym, begin, end);
                 }
+
+                // TODO setup sorted merge joins
             }
         }
         else
@@ -315,6 +318,8 @@ public class GridSqlQuerySplitter {
      * @param end The last child model in range to push down.
      */
     private void pushDownQueryModelRange(QueryModel qrym, int begin, int end) {
+        assert end >= begin;
+
         if (begin == end && qrym.get(end).isQuery()) {
             // Simple case when we have a single subquery to push down, just mark it to be splittable.
             QueryModel child = qrym.get(end);
@@ -329,7 +334,7 @@ public class GridSqlQuerySplitter {
                     s.needSplit = true;
             }
             else
-                assert false: child.type;
+                throw new IllegalStateException("Type: " + child.type);
         }
         else {
             // Here we have to generate a subquery for all the joined elements and
@@ -346,16 +351,18 @@ public class GridSqlQuerySplitter {
      * @param needSplit If we will need to split the created subquery model.
      */
     private void doPushDownQueryModelRange(QueryModel qrym, int begin, int end, boolean needSplit) {
-        // 1.  Create wrap query where we will push all the needed joined elements, columns and conditions.
-
+        // Create wrap query where we will push all the needed joined elements, columns and conditions.
         GridSqlSelect wrapSelect = new GridSqlSelect();
         GridSqlSubquery wrapSubqry = new GridSqlSubquery(wrapSelect);
         GridSqlAlias wrapAlias = alias(nextUniqueTableAlias(null), wrapSubqry);
+
         QueryModel wrapQrym = new QueryModel(Type.SELECT, wrapSubqry, 0, wrapAlias);
 
-        wrapQrym.needSplit = needSplit; // We need to split this SELECT.
+        wrapQrym.needSplit = needSplit;
 
+        // Prepare all the prerequisites.
         GridSqlSelect select = qrym.ast();
+
         Set<GridSqlAlias> tblAliases = newIdentityHashSet();
         Map<String,GridSqlAlias> cols = new HashMap<>();
 
@@ -363,30 +370,25 @@ public class GridSqlQuerySplitter {
         for (int i = begin; i <= end; i++) {
             GridSqlAlias uniqueTblAlias = qrym.get(i).uniqueAlias;
 
-            assert uniqueTblAlias != null;
+            assert uniqueTblAlias != null: select.getSQL();
 
             tblAliases.add(uniqueTblAlias);
         }
 
-        // 2.  Push down columns in SELECT clause.
-
+        // Push down columns in SELECT clause.
         pushDownSelectColumns(tblAliases, cols, wrapAlias, select);
 
-        // 3.  Move all the related conditions to wrap query.
-
+        // Move all the related conditions to wrap query.
         pushDownWhereConditions(tblAliases, cols, wrapAlias, select);
 
-        // 4.  Push down to a subquery all the JOIN elements and process ON conditions.
-
+        // Push down to a subquery all the JOIN elements and process ON conditions.
         pushDownJoins(tblAliases, cols, qrym, begin, end, wrapAlias);
 
-        // 5.  Add all the collected columns to the wrap query.
-
+        // Add all the collected columns to the wrap query.
         for (GridSqlAlias col : cols.values())
             wrapSelect.addColumn(col, true);
 
-        // 6.  Adjust query models to a new AST structure.
-
+        // Adjust query models to a new AST structure.
         // Move pushed down child models to the newly created model.
         for (int i = begin; i <= end; i++)
             wrapQrym.add(qrym.get(begin));
