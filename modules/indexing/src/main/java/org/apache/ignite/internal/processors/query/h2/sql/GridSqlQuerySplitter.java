@@ -233,9 +233,7 @@ public class GridSqlQuerySplitter {
             assert !qrym.needSplit; // We split only the downmost child.
 
             // All the siblings to selects we are going to split must be also wrapped into subqueries.
-            pushDownQueryModel(null, qrym);
-
-            organizeMergeJoinHierarchy(qrym);
+            pushDownQueryModel(qrym);
 
             // Split the query model into multiple map queries and a single reduce query.
             splitQueryModel(qrym);
@@ -256,16 +254,17 @@ public class GridSqlQuerySplitter {
     /**
      * @param qrym Query model.
      */
-    private void pushDownQueryModel(QueryModel prnt, QueryModel qrym) {
+    private void pushDownQueryModel(QueryModel qrym) {
         if (qrym.type == Type.UNION) {
             assert qrym.needSplitChild; // Otherwise we should not get here.
 
             for (QueryModel child : qrym)
-                pushDownQueryModel(qrym, child);
+                pushDownQueryModel(child);
         }
         else if (qrym.type == Type.SELECT) {
-            if (qrym.needSplit)
-                assert prnt.type == Type.UNION : prnt.type; // This can only be SELECT in UNION: do nothing.
+            if (qrym.needSplit) {
+                // No-op. This can only be SELECT in UNION.
+            }
             else {
                 assert qrym.needSplitChild; // Otherwise we should not get here.
 
@@ -281,12 +280,17 @@ public class GridSqlQuerySplitter {
                         if (begin != -1) {
                             pushDownQueryModelRange(qrym, begin, end);
 
+                            i = begin + 1; // We've modified qrym by this range push down, need to adjust counter.
+
+                            assert qrym.get(i) == child; // Adjustment check: we have to return to the same point.
+
+                            // Reset range bounds.
                             begin = -1;
                             end = -1;
                         }
 
                         if (child.needSplitChild)
-                            pushDownQueryModel(qrym, child);
+                            pushDownQueryModel(child);
                     }
                     else {
                         // It is a table or a function or a subquery that we do not need to split or split child.
@@ -801,7 +805,7 @@ public class GridSqlQuerySplitter {
     /**
      * @param qrym Query model.
      */
-    private void organizeMergeJoinHierarchy(QueryModel qrym) {
+    private void setupMergeJoinHierarchy(QueryModel qrym) {
         // TODO
     }
 
