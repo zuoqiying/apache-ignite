@@ -329,64 +329,74 @@ public class GridSqlQuerySplitter {
                     s.needSplit = true;
             }
             else
-                assert false;
+                assert false: child.type;
         }
         else {
             // Here we have to generate a subquery for all the joined elements and
             // and mark that subquery as splittable.
-
-            // 1.  Create wrap query where we will push all the needed joined elements, columns and conditions.
-
-            GridSqlSelect wrapSelect = new GridSqlSelect();
-            GridSqlSubquery wrapSubqry = new GridSqlSubquery(wrapSelect);
-            GridSqlAlias wrapAlias = alias(nextUniqueTableAlias(null), wrapSubqry);
-            QueryModel wrapQrym = new QueryModel(Type.SELECT, wrapSubqry, 0, wrapAlias);
-
-            wrapQrym.needSplit = true; // We need to split this SELECT.
-
-            GridSqlSelect select = qrym.ast();
-            Set<GridSqlAlias> tblAliases = newIdentityHashSet();
-            Map<String,GridSqlAlias> cols = new HashMap<>();
-
-            // Collect all the tables for push down.
-            for (int i = begin; i <= end; i++) {
-                GridSqlAlias uniqueTblAlias = qrym.get(i).uniqueAlias;
-
-                assert uniqueTblAlias != null;
-
-                tblAliases.add(uniqueTblAlias);
-            }
-
-            // 2.  Push down columns in SELECT clause.
-
-            pushDownSelectColumns(tblAliases, cols, wrapAlias, select);
-
-            // 3.  Move all the related conditions to wrap query.
-
-            pushDownWhereConditions(tblAliases, cols, wrapAlias, select);
-
-            // 4.  Push down to a subquery all the JOIN elements and process ON conditions.
-
-            pushDownJoins(tblAliases, cols, qrym, begin, end, wrapAlias);
-
-            // 5.  Add all the collected columns to the wrap query.
-
-            for (GridSqlAlias col : cols.values())
-                wrapSelect.addColumn(col, true);
-
-            // 6.  Adjust query models to a new AST structure.
-
-            // Move pushed down child models to the newly created model.
-            for (int i = begin; i <= end; i++)
-                wrapQrym.add(qrym.get(begin));
-
-            // Replace the first child model with the created one.
-            qrym.set(begin, wrapQrym);
-
-            // Drop others.
-            for (int x = begin + 1, i = x; i <= end; i++)
-                qrym.remove(x);
+            doPushDownQueryModelRange(qrym, begin, end, true);
         }
+    }
+
+
+    /**
+     * @param qrym Query model.
+     * @param begin The first child model in range to push down.
+     * @param end The last child model in range to push down.
+     * @param needSplit If we will need to split the created subquery model.
+     */
+    private void doPushDownQueryModelRange(QueryModel qrym, int begin, int end, boolean needSplit) {
+        // 1.  Create wrap query where we will push all the needed joined elements, columns and conditions.
+
+        GridSqlSelect wrapSelect = new GridSqlSelect();
+        GridSqlSubquery wrapSubqry = new GridSqlSubquery(wrapSelect);
+        GridSqlAlias wrapAlias = alias(nextUniqueTableAlias(null), wrapSubqry);
+        QueryModel wrapQrym = new QueryModel(Type.SELECT, wrapSubqry, 0, wrapAlias);
+
+        wrapQrym.needSplit = needSplit; // We need to split this SELECT.
+
+        GridSqlSelect select = qrym.ast();
+        Set<GridSqlAlias> tblAliases = newIdentityHashSet();
+        Map<String,GridSqlAlias> cols = new HashMap<>();
+
+        // Collect all the tables for push down.
+        for (int i = begin; i <= end; i++) {
+            GridSqlAlias uniqueTblAlias = qrym.get(i).uniqueAlias;
+
+            assert uniqueTblAlias != null;
+
+            tblAliases.add(uniqueTblAlias);
+        }
+
+        // 2.  Push down columns in SELECT clause.
+
+        pushDownSelectColumns(tblAliases, cols, wrapAlias, select);
+
+        // 3.  Move all the related conditions to wrap query.
+
+        pushDownWhereConditions(tblAliases, cols, wrapAlias, select);
+
+        // 4.  Push down to a subquery all the JOIN elements and process ON conditions.
+
+        pushDownJoins(tblAliases, cols, qrym, begin, end, wrapAlias);
+
+        // 5.  Add all the collected columns to the wrap query.
+
+        for (GridSqlAlias col : cols.values())
+            wrapSelect.addColumn(col, true);
+
+        // 6.  Adjust query models to a new AST structure.
+
+        // Move pushed down child models to the newly created model.
+        for (int i = begin; i <= end; i++)
+            wrapQrym.add(qrym.get(begin));
+
+        // Replace the first child model with the created one.
+        qrym.set(begin, wrapQrym);
+
+        // Drop others.
+        for (int x = begin + 1, i = x; i <= end; i++)
+            qrym.remove(x);
     }
 
     /**
