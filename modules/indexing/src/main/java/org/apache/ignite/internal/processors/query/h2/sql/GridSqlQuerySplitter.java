@@ -60,6 +60,8 @@ import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlQueryPar
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.FROM_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.WHERE_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlSelect.childIndexForColumn;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlUnion.LEFT_CHILD;
+import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlUnion.RIGHT_CHILD;
 import static org.apache.ignite.internal.processors.query.h2.twostep.GridReduceQueryExecutor.toArray;
 
 /**
@@ -235,6 +237,9 @@ public class GridSqlQuerySplitter {
             // All the siblings to selects we are going to split must be also wrapped into subqueries.
             pushDownQueryModel(qrym);
 
+            // Need to make all the joined subqueries to be ordered by join conditions.
+            setupMergeJoinSorting(qrym);
+
             // Split the query model into multiple map queries and a single reduce query.
             splitQueryModel(qrym);
         }
@@ -262,58 +267,68 @@ public class GridSqlQuerySplitter {
                 pushDownQueryModel(child);
         }
         else if (qrym.type == Type.SELECT) {
-            if (qrym.needSplit) {
-                // No-op. This can only be SELECT in UNION.
-            }
-            else {
+            // If we already need to split, then no need to push down here.
+            if (!qrym.needSplit) {
                 assert qrym.needSplitChild; // Otherwise we should not get here.
 
-                int begin = -1;
-                int end = -1;
-
-                // Here we iterate over joined FROM table filters.
-                for (int i = 0; i < qrym.size(); i++) {
-                    QueryModel child = qrym.get(i);
-
-                    if (child.isQuery() && (child.needSplitChild || child.needSplit)) {
-                        // Push down the currently collected range.
-                        if (begin != -1) {
-                            pushDownQueryModelRange(qrym, begin, end);
-
-                            i = begin + 1; // We've modified qrym by this range push down, need to adjust counter.
-
-                            assert qrym.get(i) == child; // Adjustment check: we have to return to the same point.
-
-                            // Reset range bounds.
-                            begin = -1;
-                            end = -1;
-                        }
-
-                        if (child.needSplitChild)
-                            pushDownQueryModel(child);
-                    }
-                    else {
-                        // It is a table or a function or a subquery that we do not need to split or split child.
-                        // We need to find all the joined elements like this in chain to push them down.
-                        if (begin == -1)
-                            begin = i;
-
-                        end = i;
-                    }
-                }
-
-                // Push down the remaining range.
-                if (begin != -1) {
-                    assert !(begin == 0 && end == qrym.size() - 1); // We can not push down all the elements in join.
-
-                    pushDownQueryModelRange(qrym, begin, end);
-                }
-
-                // TODO setup sorted merge joins
+                pushDownQueryModelSelect(qrym);
             }
         }
         else
             throw new IllegalStateException("Type: " + qrym.type);
+    }
+
+    /**
+     * @param qrym Query model for the SELECT.
+     */
+    private void pushDownQueryModelSelect(QueryModel qrym) {
+        int begin = -1;
+        int end = -1;
+
+        // Here we iterate over joined FROM table filters.
+        for (int i = 0; i < qrym.size(); i++) {
+            QueryModel child = qrym.get(i);
+
+            if (child.isQuery() && (child.needSplitChild || child.needSplit)) {
+                // Push down the currently collected range.
+                if (begin != -1) {
+                    pushDownQueryModelRange(qrym, begin, end);
+
+                    i = begin + 1; // We've modified qrym by this range push down, need to adjust counter.
+
+                    assert qrym.get(i) == child; // Adjustment check: we have to return to the same point.
+
+                    // Reset range bounds.
+                    begin = -1;
+                    end = -1;
+                }
+
+                if (child.needSplitChild)
+                    pushDownQueryModel(child);
+            }
+            else {
+                // It is a table or a function or a subquery that we do not need to split or split child.
+                // We need to find all the joined elements like this in chain to push them down.
+                if (begin == -1)
+                    begin = i;
+
+                end = i;
+            }
+        }
+
+        // Push down the remaining range.
+        if (begin != -1) {
+            assert !(begin == 0 && end == qrym.size() - 1); // We can not push down all the elements in join.
+
+            pushDownQueryModelRange(qrym, begin, end);
+        }
+    }
+
+    /**
+     * @param qrym Query model.
+     */
+    private void setupMergeJoinSorting(QueryModel qrym) {
+       // TODO
     }
 
     /**
@@ -692,7 +707,7 @@ public class GridSqlQuerySplitter {
 
         List<AndCondition> andConditions = new ArrayList<>();
 
-        collectAndConditions(andConditions, select, GridSqlSelect.WHERE_CHILD);
+        collectAndConditions(andConditions, select, WHERE_CHILD);
 
         for (int i = 0; i < andConditions.size(); i++) {
             AndCondition c = andConditions.get(i);
@@ -805,13 +820,6 @@ public class GridSqlQuerySplitter {
     /**
      * @param qrym Query model.
      */
-    private void setupMergeJoinHierarchy(QueryModel qrym) {
-        // TODO
-    }
-
-    /**
-     * @param qrym Query model.
-     */
     private void splitQueryModel(QueryModel qrym) {
         // TODO
     }
@@ -910,7 +918,7 @@ public class GridSqlQuerySplitter {
 
             prntModel.add(model);
 
-            buildQueryModel(model, child, GridSqlSelect.FROM_CHILD, null);
+            buildQueryModel(model, child, FROM_CHILD, null);
         }
         else if (child instanceof GridSqlUnion) {
             QueryModel model;
@@ -927,8 +935,8 @@ public class GridSqlQuerySplitter {
             if (((GridSqlUnion)child).unionType() != SelectUnion.UNION_ALL)
                 model.unionAll = false;
 
-            buildQueryModel(model, child, GridSqlUnion.LEFT_CHILD, null);
-            buildQueryModel(model, child, GridSqlUnion.RIGHT_CHILD, null);
+            buildQueryModel(model, child, LEFT_CHILD, null);
+            buildQueryModel(model, child, RIGHT_CHILD, null);
         }
         else {
             // Here we must be in FROM clause of the SELECT.
