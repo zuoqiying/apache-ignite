@@ -1086,11 +1086,14 @@ public final class IgfsImpl implements IgfsEx {
                 else
                     dirProps = fileProps = new HashMap<>(props);
 
+                // IGNITE-3877:
+                final long blockSize = groupBlockSize();
+
                 if (mode == PROXY) {
                     assert secondaryFs != null;
 
                     OutputStream secondaryStream = secondaryFs.create(path, bufSize, overwrite, replication,
-                        groupBlockSize(), props);
+                        blockSize, props);
 
                     IgfsFileWorkerBatch batch = newBatch(path, secondaryStream);
 
@@ -1102,7 +1105,7 @@ public final class IgfsImpl implements IgfsEx {
 
                 if (mode != PRIMARY)
                     secondaryCtx = new IgfsSecondaryFileSystemCreateContext(secondaryFs, path, overwrite, simpleCreate,
-                        fileProps, (short)replication, groupBlockSize(), bufSize);
+                        fileProps, (short)replication, blockSize, bufSize);
 
                 // Await for async ops completion if in DUAL mode.
                 if (mode != PRIMARY)
@@ -1113,7 +1116,7 @@ public final class IgfsImpl implements IgfsEx {
                     path,
                     dirProps,
                     overwrite,
-                    cfg.getBlockSize(),
+                    (int)blockSize,
                     affKey,
                     evictExclude(path, mode == PRIMARY),
                     fileProps,
