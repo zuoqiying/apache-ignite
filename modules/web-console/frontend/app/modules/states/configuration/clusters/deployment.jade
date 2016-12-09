@@ -175,7 +175,8 @@ include /app/helpers/jade/mixins.jade
                             .group-content-empty(ng-if='!(#{uriListModel}.length) && !group.add.length')
                                 | Not defined
                     .details-row
-                        +text('Temporary directory path:', modelDeployment + '.URI.temporaryDirectoryPath', '"DeploymentURITemporaryDirectoryPath"', 'false', 'Temporary directory path', 'Deployment event listener')
+                        +text('Temporary directory path:', modelDeployment + '.URI.temporaryDirectoryPath', '"DeploymentURITemporaryDirectoryPath"', 'false', 'Temporary directory path',
+                        'Absolute path to temporary directory which will be used by deployment SPI to keep all deployed classes in')
                     .details-row
                         +ignite-form-group()
                             -var uniqueTip = 'Such scanner already configured'
@@ -183,7 +184,7 @@ include /app/helpers/jade/mixins.jade
                             ignite-form-field-label
                                 | Scanner list
                             ignite-form-group-tooltip
-                                | List of URI deployment scanners.
+                                | List of URI deployment scanners
                             ignite-form-group-add(ng-click='(group.add = [{}])')
                                 | Add scanner
 
