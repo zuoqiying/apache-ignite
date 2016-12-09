@@ -56,11 +56,6 @@ export default () => {
                     changeOrigin: true,
                     ws: true
                 },
-                '/agents': {
-                    target: 'http://localhost:3000',
-                    changeOrigin: true,
-                    ws: true
-                },
                 '/api/v1/*': {
                     target: `http://localhost:${backendPort}`,
                     changeOrigin: true,
