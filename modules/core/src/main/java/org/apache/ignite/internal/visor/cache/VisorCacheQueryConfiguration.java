@@ -17,17 +17,21 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClasses;
 
 /**
  * Data transfer object for cache query configuration data.
  */
-public class VisorCacheQueryConfiguration implements Serializable {
+public class VisorCacheQueryConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -48,6 +52,13 @@ public class VisorCacheQueryConfiguration implements Serializable {
 
     /** */
     private String sqlSchema;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheQueryConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object with cache query configuration data.
@@ -105,6 +116,25 @@ public class VisorCacheQueryConfiguration implements Serializable {
         return sqlSchema;
     }
 
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeArray(out, sqlFuncClss);
+        out.writeLong(longQryWarnTimeout);
+        out.writeBoolean(sqlEscapeAll);
+        U.writeArray(out, indexedTypes);
+        out.writeInt(sqlOnheapRowCacheSize);
+        U.writeString(out, sqlSchema);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        sqlFuncClss = (String[]) U.readArray(in);
+        longQryWarnTimeout = in.readLong();
+        sqlEscapeAll = in.readBoolean();
+        indexedTypes = (String[]) U.readArray(in);
+        sqlOnheapRowCacheSize = in.readInt();
+        sqlSchema = U.readString(in);
+    }
 
     /** {@inheritDoc} */
     @Override public String toString() {

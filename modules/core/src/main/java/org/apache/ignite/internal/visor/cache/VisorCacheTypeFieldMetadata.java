@@ -17,14 +17,17 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.cache.CacheTypeFieldMetadata;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for {@link CacheTypeFieldMetadata}.
  */
-public class VisorCacheTypeFieldMetadata implements Serializable {
+public class VisorCacheTypeFieldMetadata extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -98,5 +101,21 @@ public class VisorCacheTypeFieldMetadata implements Serializable {
      */
     public String getJavaType() {
         return javaType;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, dbName);
+        out.writeInt(dbType);
+        U.writeString(out, javaName);
+        U.writeString(out, javaType);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        dbName = U.readString(in);
+        dbType = in.readInt();
+        javaName = U.readString(in);
+        javaType = U.readString(in);
     }
 }

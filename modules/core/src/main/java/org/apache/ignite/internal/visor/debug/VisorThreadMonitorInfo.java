@@ -17,6 +17,9 @@
 
 package org.apache.ignite.internal.visor.debug;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.management.MonitorInfo;
 
 /**
@@ -31,6 +34,13 @@ public class VisorThreadMonitorInfo extends VisorThreadLockInfo {
 
     /** Stack frame. */
     private StackTraceElement stackFrame;
+
+    /**
+     * Default constructor.
+     */
+    public VisorThreadMonitorInfo() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for given monitor info.
@@ -56,5 +66,21 @@ public class VisorThreadMonitorInfo extends VisorThreadLockInfo {
      */
     public StackTraceElement getStackFrame() {
         return stackFrame;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        super.writeExternalData(out);
+
+        out.writeObject(stackDepth);
+        out.writeObject(stackFrame);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternalData(in);
+
+        stackDepth = (Integer)in.readObject();
+        stackFrame = (StackTraceElement)in.readObject();
     }
 }

@@ -17,18 +17,22 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlIndexMetadata;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlMetadata;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for cache SQL metadata.
  */
-public class VisorCacheSqlMetadata implements Serializable {
+public class VisorCacheSqlMetadata extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -49,6 +53,13 @@ public class VisorCacheSqlMetadata implements Serializable {
 
     /** */
     private Map<String, Collection<VisorCacheSqlIndexMetadata>> indexes;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheSqlMetadata() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object.
@@ -119,5 +130,25 @@ public class VisorCacheSqlMetadata implements Serializable {
      */
     public Map<String, Collection<VisorCacheSqlIndexMetadata>> getIndexes() {
         return indexes;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, cacheName);
+        U.writeCollection(out, types);
+        U.writeStringMap(out, keyClasses);
+        U.writeStringMap(out, valClasses);
+        U.writeMap(out, fields);
+        U.writeMap(out, indexes);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        cacheName = U.readString(in);
+        types = U.readCollection(in);
+        keyClasses = U.readStringMap(in);
+        valClasses = U.readStringMap(in);
+        fields = U.readMap(in);
+        indexes = U.readMap(in);
     }
 }

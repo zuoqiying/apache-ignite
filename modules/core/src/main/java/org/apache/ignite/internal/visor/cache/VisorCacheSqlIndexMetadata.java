@@ -17,14 +17,18 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlIndexMetadata;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for cache SQL index metadata.
  */
-public class VisorCacheSqlIndexMetadata implements Serializable {
+public class VisorCacheSqlIndexMetadata extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -39,6 +43,13 @@ public class VisorCacheSqlIndexMetadata implements Serializable {
 
     /** */
     private boolean unique;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheSqlIndexMetadata() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object.
@@ -78,5 +89,21 @@ public class VisorCacheSqlIndexMetadata implements Serializable {
      */
     public boolean isUnique() {
         return unique;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        U.writeCollection(out, fields);
+        U.writeCollection(out, descendings);
+        out.writeBoolean(unique);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        fields = U.readCollection(in);
+        descendings = U.readCollection(in);
+        unique = in.readBoolean();
     }
 }

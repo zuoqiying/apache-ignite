@@ -17,14 +17,17 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.cache.query.QueryMetrics;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for cache query metrics.
  */
-public class VisorCacheQueryMetrics implements Serializable {
+public class VisorCacheQueryMetrics extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -42,6 +45,13 @@ public class VisorCacheQueryMetrics implements Serializable {
 
     /** Total number of times a query execution failed. */
     private int fails;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheQueryMetrics() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for given cache metrics.
@@ -88,6 +98,24 @@ public class VisorCacheQueryMetrics implements Serializable {
      */
     public int getFailures() {
         return fails;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeLong(minTime);
+        out.writeLong(maxTime);
+        out.writeDouble(avgTime);
+        out.writeInt(execs);
+        out.writeInt(fails);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        minTime = in.readLong();
+        maxTime = in.readLong();
+        avgTime = in.readDouble();
+        execs = in.readInt();
+        fails = in.readInt();
     }
 
     /** {@inheritDoc} */

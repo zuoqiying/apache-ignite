@@ -17,8 +17,12 @@
 
 package org.apache.ignite.internal.visor.event;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.UUID;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +34,14 @@ public class VisorGridDeploymentEvent extends VisorGridEvent {
     private static final long serialVersionUID = 0L;
 
     /** Deployment alias. */
-    private final String alias;
+    private String alias;
+
+    /**
+     * Default constructor.
+     */
+    public VisorGridDeploymentEvent() {
+        // No-op.
+    }
 
     /**
      * Create event with given parameters.
@@ -64,6 +75,20 @@ public class VisorGridDeploymentEvent extends VisorGridEvent {
      */
     public String alias() {
         return alias;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        super.writeExternalData(out);
+
+        U.writeString(out, alias);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternalData(in);
+
+        alias = U.readString(in);
     }
 
     /** {@inheritDoc} */

@@ -17,13 +17,17 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.MemoryConfiguration;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for memory configuration.
  */
-public class VisorMemoryConfiguration implements Serializable {
+public class VisorMemoryConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -38,6 +42,13 @@ public class VisorMemoryConfiguration implements Serializable {
 
     /** Page size. */
     private int pageSize;
+
+    /**
+     * Default constructor.
+     */
+    public VisorMemoryConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object.
@@ -77,5 +88,21 @@ public class VisorMemoryConfiguration implements Serializable {
      */
     public int getPageSize() {
         return pageSize;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeInt(concLvl);
+        U.writeString(out, fileCacheAllocationPath);
+        out.writeLong(pageCacheSize);
+        out.writeInt(pageSize);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        concLvl = in.readInt();
+        fileCacheAllocationPath = U.readString(in);
+        pageCacheSize = in.readLong();
+        pageSize = in.readInt();
     }
 }

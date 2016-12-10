@@ -17,11 +17,15 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.NearCacheConfiguration;
 import org.apache.ignite.internal.processors.cache.GridCacheUtils;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
@@ -30,7 +34,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.evictionPolic
 /**
  * Data transfer object for near cache configuration properties.
  */
-public class VisorCacheNearConfiguration implements Serializable {
+public class VisorCacheNearConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -47,10 +51,16 @@ public class VisorCacheNearConfiguration implements Serializable {
     private Integer nearEvictMaxSize;
 
     /**
+     * Default constructor.
+     */
+    public VisorCacheNearConfiguration() {
+        // No-op.
+    }
+
+    /**
      * Create data transfer object for near cache configuration properties.
      *
      * @param ccfg Cache configuration.
-     *
      */
     public VisorCacheNearConfiguration(CacheConfiguration ccfg) {
         nearEnabled = GridCacheUtils.isNearEnabled(ccfg);
@@ -90,6 +100,22 @@ public class VisorCacheNearConfiguration implements Serializable {
      */
     @Nullable public Integer getNearEvictMaxSize() {
         return nearEvictMaxSize;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeBoolean(nearEnabled);
+        out.writeInt(nearStartSize);
+        U.writeString(out, nearEvictPlc);
+        out.writeObject(nearEvictMaxSize);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        nearEnabled = in.readBoolean();
+        nearStartSize = in.readInt();
+        nearEvictPlc = U.readString(in);
+        nearEvictMaxSize = (Integer)in.readObject();
     }
 
     /** {@inheritDoc} */

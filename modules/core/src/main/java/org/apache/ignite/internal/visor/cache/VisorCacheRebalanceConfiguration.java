@@ -17,15 +17,19 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.cache.CacheRebalanceMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for cache rebalance configuration properties.
  */
-public class VisorCacheRebalanceConfiguration implements Serializable {
+public class VisorCacheRebalanceConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -43,6 +47,13 @@ public class VisorCacheRebalanceConfiguration implements Serializable {
 
     /** Rebalance timeout. */
     private long timeout;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheRebalanceConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for rebalance configuration properties.
@@ -89,6 +100,24 @@ public class VisorCacheRebalanceConfiguration implements Serializable {
      */
     public long getTimeout() {
         return timeout;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeEnum(out, mode);
+        out.writeInt(batchSize);
+        out.writeLong(partitionedDelay);
+        out.writeLong(throttle);
+        out.writeLong(timeout);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        mode = CacheRebalanceMode.fromOrdinal(in.readByte());
+        batchSize = in.readInt();
+        partitionedDelay = in.readLong();
+        throttle = in.readLong();
+        timeout = in.readLong();
     }
 
     /** {@inheritDoc} */

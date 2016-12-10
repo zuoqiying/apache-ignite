@@ -17,10 +17,14 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.cache.eviction.EvictionPolicy;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
@@ -29,7 +33,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.evictionPolic
 /**
  * Data transfer object for eviction configuration properties.
  */
-public class VisorCacheEvictionConfiguration implements Serializable {
+public class VisorCacheEvictionConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -56,6 +60,13 @@ public class VisorCacheEvictionConfiguration implements Serializable {
 
     /** Eviction max overflow ratio. */
     private float maxOverflowRatio;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheEvictionConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for eviction configuration properties.
@@ -128,6 +139,30 @@ public class VisorCacheEvictionConfiguration implements Serializable {
      */
     public float getMaxOverflowRatio() {
         return maxOverflowRatio;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, plc);
+        out.writeObject(plcMaxSize);
+        U.writeString(out, filter);
+        out.writeInt(syncConcurrencyLvl);
+        out.writeLong(syncTimeout);
+        out.writeInt(syncKeyBufSize);
+        out.writeBoolean(evictSynchronized);
+        out.writeFloat(maxOverflowRatio);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        plc = U.readString(in);
+        plcMaxSize = (Integer)in.readObject();
+        filter = U.readString(in);
+        syncConcurrencyLvl = in.readInt();
+        syncTimeout = in.readLong();
+        syncKeyBufSize = in.readInt();
+        evictSynchronized = in.readBoolean();
+        maxOverflowRatio = in.readFloat();
     }
 
     /** {@inheritDoc} */

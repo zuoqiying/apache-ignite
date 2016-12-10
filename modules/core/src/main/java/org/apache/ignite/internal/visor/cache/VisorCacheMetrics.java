@@ -17,7 +17,9 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CacheMetrics;
 import org.apache.ignite.cache.CacheMode;
@@ -25,16 +27,18 @@ import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for {@link CacheMetrics}.
  */
-public class VisorCacheMetrics implements Serializable {
-    /** */
-    private static final float MICROSECONDS_IN_SECOND = 1_000_000;
-
+public class VisorCacheMetrics extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
+
+    /** */
+    private static final float MICROSECONDS_IN_SECOND = 1_000_000;
 
     /** Cache name. */
     private String name;
@@ -170,6 +174,13 @@ public class VisorCacheMetrics implements Serializable {
      */
     private static int perSecond(float meanTime) {
         return (meanTime > 0) ? (int)(MICROSECONDS_IN_SECOND / meanTime) : 0;
+    }
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheMetrics() {
+        // No-op.
     }
 
     /**
@@ -542,6 +553,100 @@ public class VisorCacheMetrics implements Serializable {
      */
     public long offHeapEntriesCount() {
         return offHeapEntriesCnt;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        U.writeEnum(out, mode);
+        out.writeBoolean(sys);
+        out.writeInt(size);
+        out.writeInt(keySize);
+        out.writeLong(reads);
+        out.writeFloat(avgReadTime);
+        out.writeLong(writes);
+        out.writeLong(hits);
+        out.writeLong(misses);
+        out.writeLong(txCommits);
+        out.writeFloat(avgTxCommitTime);
+        out.writeLong(txRollbacks);
+        out.writeFloat(avgTxRollbackTime);
+        out.writeLong(puts);
+        out.writeFloat(avgPutTime);
+        out.writeLong(removals);
+        out.writeFloat(avgRemovalTime);
+        out.writeLong(evictions);
+        out.writeInt(readsPerSec);
+        out.writeInt(putsPerSec);
+        out.writeInt(removalsPerSec);
+        out.writeInt(commitsPerSec);
+        out.writeInt(rollbacksPerSec);
+        out.writeInt(dhtEvictQueueCurrSize);
+        out.writeInt(txThreadMapSize);
+        out.writeInt(txXidMapSize);
+        out.writeInt(txCommitQueueSize);
+        out.writeInt(txPrepareQueueSize);
+        out.writeInt(txStartVerCountsSize);
+        out.writeInt(txCommittedVersionsSize);
+        out.writeInt(txRolledbackVersionsSize);
+        out.writeInt(txDhtThreadMapSize);
+        out.writeInt(txDhtXidMapSize);
+        out.writeInt(txDhtCommitQueueSize);
+        out.writeInt(txDhtPrepareQueueSize);
+        out.writeInt(txDhtStartVerCountsSize);
+        out.writeInt(txDhtCommittedVersionsSize);
+        out.writeInt(txDhtRolledbackVersionsSize);
+        out.writeLong(offHeapAllocatedSize);
+        out.writeLong(offHeapEntriesCnt);
+        qryMetrics.writeExternal(out);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        mode = CacheMode.fromOrdinal(in.readByte());
+        sys = in.readBoolean();
+        size = in.readInt();
+        keySize = in.readInt();
+        reads = in.readLong();
+        avgReadTime = in.readFloat();
+        writes = in.readLong();
+        hits = in.readLong();
+        misses = in.readLong();
+        txCommits = in.readLong();
+        avgTxCommitTime = in.readFloat();
+        txRollbacks = in.readLong();
+        avgTxRollbackTime = in.readFloat();
+        puts = in.readLong();
+        avgPutTime = in.readFloat();
+        removals = in.readLong();
+        avgRemovalTime = in.readFloat();
+        evictions = in.readLong();
+        readsPerSec = in.readInt();
+        putsPerSec = in.readInt();
+        removalsPerSec = in.readInt();
+        commitsPerSec = in.readInt();
+        rollbacksPerSec = in.readInt();
+        dhtEvictQueueCurrSize = in.readInt();
+        txThreadMapSize = in.readInt();
+        txXidMapSize = in.readInt();
+        txCommitQueueSize = in.readInt();
+        txPrepareQueueSize = in.readInt();
+        txStartVerCountsSize = in.readInt();
+        txCommittedVersionsSize = in.readInt();
+        txRolledbackVersionsSize = in.readInt();
+        txDhtThreadMapSize = in.readInt();
+        txDhtXidMapSize = in.readInt();
+        txDhtCommitQueueSize = in.readInt();
+        txDhtPrepareQueueSize = in.readInt();
+        txDhtStartVerCountsSize = in.readInt();
+        txDhtCommittedVersionsSize = in.readInt();
+        txDhtRolledbackVersionsSize = in.readInt();
+        offHeapAllocatedSize = in.readLong();
+        offHeapEntriesCnt = in.readLong();
+
+        qryMetrics = new VisorCacheQueryMetrics();
+        qryMetrics.readExternal(in);
     }
 
     /** {@inheritDoc} */

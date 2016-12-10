@@ -17,6 +17,9 @@
 
 package org.apache.ignite.internal.visor.event;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.UUID;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.lang.IgniteUuid;
@@ -30,7 +33,14 @@ public class VisorGridDiscoveryEventV2 extends VisorGridDiscoveryEvent {
     private static final long serialVersionUID = 0L;
 
     /** Topology version. */
-    private final long topVer;
+    private long topVer;
+
+    /**
+     * Default constructor.
+     */
+    public VisorGridDiscoveryEventV2() {
+        // No-op.
+    }
 
     /**
      * Create event with given parameters.
@@ -71,6 +81,20 @@ public class VisorGridDiscoveryEventV2 extends VisorGridDiscoveryEvent {
      **/
     public long topologyVersion() {
         return topVer;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        super.writeExternalData(out);
+
+        out.writeLong(topVer);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternalData(in);
+
+        topVer = in.readLong();
     }
 
     /** {@inheritDoc} */

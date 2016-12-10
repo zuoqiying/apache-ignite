@@ -17,8 +17,12 @@
 
 package org.apache.ignite.internal.visor.event;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.UUID;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,13 +34,20 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
     private static final long serialVersionUID = 0L;
 
     /** Node that caused this event to be generated. */
-    private final UUID evtNodeId;
+    private UUID evtNodeId;
 
     /** Node address that caused this event to be generated. */
-    private final String addr;
+    private String addr;
 
     /** If node that caused this event is daemon. */
-    private final boolean isDaemon;
+    private boolean isDaemon;
+
+    /**
+     * Default constructor.
+     */
+    public VisorGridDiscoveryEvent() {
+        // No-op.
+    }
 
     /**
      * Create event with given parameters.
@@ -90,6 +101,24 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
      */
     public boolean isDaemon() {
         return isDaemon;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        super.writeExternalData(out);
+
+        U.writeUuid(out, evtNodeId);
+        U.writeString(out, addr);
+        out.writeBoolean(isDaemon);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternalData(in);
+
+        evtNodeId = U.readUuid(in);
+        addr = U.readString(in);
+        isDaemon = in.readBoolean();
     }
 
     /** {@inheritDoc} */

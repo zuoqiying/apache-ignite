@@ -17,13 +17,17 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.cache.store.CacheStore;
 import org.apache.ignite.cache.store.jdbc.CacheAbstractJdbcStore;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.IgniteCacheProxy;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
@@ -31,7 +35,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 /**
  * Data transfer object for cache store configuration properties.
  */
-public class VisorCacheStoreConfiguration implements Serializable {
+public class VisorCacheStoreConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -67,6 +71,13 @@ public class VisorCacheStoreConfiguration implements Serializable {
 
     /** Keep binary in store flag. */
     private boolean storeKeepBinary;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheStoreConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for cache store configuration properties.
@@ -178,6 +189,36 @@ public class VisorCacheStoreConfiguration implements Serializable {
      */
     public boolean isStoreKeepBinary() {
         return storeKeepBinary;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeBoolean(jdbcStore);
+        U.writeString(out, store);
+        U.writeString(out, storeFactory);
+        out.writeBoolean(readThrough);
+        out.writeBoolean(writeThrough);
+        out.writeBoolean(writeBehindEnabled);
+        out.writeInt(batchSz);
+        out.writeLong(flushFreq);
+        out.writeInt(flushSz);
+        out.writeInt(flushThreadCnt);
+        out.writeBoolean(storeKeepBinary);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        jdbcStore = in.readBoolean();
+        store = U.readString(in);
+        storeFactory = U.readString(in);
+        readThrough = in.readBoolean();
+        writeThrough = in.readBoolean();
+        writeBehindEnabled = in.readBoolean();
+        batchSz = in.readInt();
+        flushFreq = in.readLong();
+        flushSz = in.readInt();
+        flushThreadCnt = in.readInt();
+        storeKeepBinary = in.readBoolean();
     }
 
     /** {@inheritDoc} */

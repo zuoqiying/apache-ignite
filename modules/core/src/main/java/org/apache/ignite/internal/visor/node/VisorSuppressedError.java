@@ -17,15 +17,19 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.util.VisorExceptionWrapper;
 
 /**
  * Data transfer object for suppressed errors.
  */
-public class VisorSuppressedError implements Serializable {
+public class VisorSuppressedError extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -47,6 +51,13 @@ public class VisorSuppressedError implements Serializable {
 
     /** */
     private String msg;
+
+    /**
+     * Default constructor.
+     */
+    public VisorSuppressedError() {
+        // No-op.
+    }
 
     /**
      * Constructor.
@@ -107,6 +118,26 @@ public class VisorSuppressedError implements Serializable {
      */
     public long getTime() {
         return time;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeLong(order);
+        out.writeObject(error);
+        out.writeLong(threadId);
+        U.writeString(out, threadName);
+        out.writeLong(time);
+        U.writeString(out, msg);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        order = in.readLong();
+        error = (VisorExceptionWrapper)in.readObject();
+        threadId = in.readLong();
+        threadName= U.readString(in);
+        time = in.readLong();
+        msg = U.readString(in);
     }
 
     /** {@inheritDoc} */

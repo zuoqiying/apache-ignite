@@ -17,13 +17,17 @@
 
 package org.apache.ignite.internal.visor.debug;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.management.LockInfo;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for {@link LockInfo}.
  */
-public class VisorThreadLockInfo implements Serializable {
+public class VisorThreadLockInfo extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -36,6 +40,13 @@ public class VisorThreadLockInfo implements Serializable {
      * Identity hash code of the lock object.
      */
     protected Integer identityHashCode;
+
+    /**
+     * Default constructor.
+     */
+    public VisorThreadLockInfo() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for given lock info.
@@ -61,6 +72,18 @@ public class VisorThreadLockInfo implements Serializable {
      */
     public Integer getIdentityHashCode() {
         return identityHashCode;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, clsName);
+        out.writeObject(identityHashCode);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        clsName = U.readString(in);
+        identityHashCode = (Integer)in.readObject();
     }
 
     /** {@inheritDoc} */

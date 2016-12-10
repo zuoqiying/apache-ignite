@@ -17,14 +17,18 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.cache.query.QueryDetailMetrics;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for cache query detail metrics.
  */
-public class VisorCacheQueryDetailMetrics implements Serializable {
+public class VisorCacheQueryDetailMetrics extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -60,6 +64,13 @@ public class VisorCacheQueryDetailMetrics implements Serializable {
 
     /** Sum of execution time of completions time. */
     private long lastStartTime;
+
+    /**
+     * Default constructor
+     */
+    public VisorCacheQueryDetailMetrics() {
+        // No-op.
+    }
 
     /**
      * @param m Cache query metrics.
@@ -158,6 +169,36 @@ public class VisorCacheQueryDetailMetrics implements Serializable {
      */
     public long getLastStartTime() {
         return lastStartTime;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, qryType);
+        U.writeString(out, qry);
+        U.writeString(out, cache);
+        out.writeInt(execs);
+        out.writeInt(completions);
+        out.writeInt(failures);
+        out.writeLong(minTime);
+        out.writeLong(maxTime);
+        out.writeDouble(avgTime);
+        out.writeLong(totalTime);
+        out.writeLong(lastStartTime);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        qryType = U.readString(in);
+        qry = U.readString(in);
+        cache = U.readString(in);
+        execs = in.readInt();
+        completions = in.readInt();
+        failures = in.readInt();
+        minTime = in.readLong();
+        maxTime = in.readLong();
+        avgTime = in.readDouble();
+        totalTime = in.readLong();
+        lastStartTime = in.readLong();
     }
 
     /** {@inheritDoc} */

@@ -17,7 +17,9 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Iterator;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
@@ -31,13 +33,15 @@ import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtCacheA
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionTopology;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearCacheAdapter;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Data transfer object for {@link IgniteCache}.
  */
-public class VisorCache implements Serializable {
+public class VisorCache extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -318,6 +322,54 @@ public class VisorCache implements Serializable {
      */
     public boolean isNear() {
         return near;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        U.writeGridUuid(out, dynamicDeploymentId);
+        U.writeEnum(out, mode);
+        out.writeLong(memorySize);
+        out.writeLong(indexesSize);
+        out.writeInt(size);
+        out.writeInt(nearSize);
+        out.writeInt(dhtSize);
+        out.writeInt(primarySize);
+        out.writeLong(offHeapAllocatedSize);
+        out.writeLong(offHeapEntriesCnt);
+        out.writeInt(partitions);
+        out.writeBoolean(near);
+        metrics.writeExternal(out);
+
+        out.writeBoolean(parts != null);
+
+        if (parts != null)
+            parts.writeExternal(out);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        dynamicDeploymentId = U.readGridUuid(in);
+        mode = CacheMode.fromOrdinal(in.readByte());
+        memorySize = in.readLong();
+        indexesSize = in.readLong();
+        size = in.readInt();
+        nearSize = in.readInt();
+        dhtSize = in.readInt();
+        primarySize = in.readInt();
+        offHeapAllocatedSize = in.readLong();
+        offHeapEntriesCnt = in.readLong();
+        partitions = in.readInt();
+        near = in.readBoolean();
+
+        metrics = new VisorCacheMetrics();
+        metrics.readExternal(in);
+
+        if (in.readBoolean()) {
+            parts = new VisorPartitionMap();
+            parts.readExternal(in);
+        }
     }
 
     /** {@inheritDoc} */

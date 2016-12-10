@@ -17,13 +17,16 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for information about keys in cache partition.
  */
-public class VisorCachePartition implements Serializable {
+public class VisorCachePartition extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -35,6 +38,13 @@ public class VisorCachePartition implements Serializable {
 
     /** */
     private long offheap;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCachePartition() {
+        // No-op.
+    }
 
     /**
      * Full constructor.
@@ -73,5 +83,19 @@ public class VisorCachePartition implements Serializable {
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(VisorCachePartition.class, this);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeInt(part);
+        out.writeInt(heap);
+        out.writeLong(offheap);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        part = in.readInt();
+        heap = in.readInt();
+        offheap = in.readLong();
     }
 }

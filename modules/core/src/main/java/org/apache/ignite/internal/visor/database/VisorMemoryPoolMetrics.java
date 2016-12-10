@@ -17,14 +17,18 @@
 
 package org.apache.ignite.internal.visor.database;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.internal.processors.cache.database.IgniteMemoryPoolMetrics;
 
-import java.io.Serializable;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Create data transfer object for memory pool metrics.
  */
-public class VisorMemoryPoolMetrics implements Serializable {
+public class VisorMemoryPoolMetrics extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -33,6 +37,13 @@ public class VisorMemoryPoolMetrics implements Serializable {
 
     /** Total number of pages available. */
     private long totalPages;
+
+    /**
+     * Default constructor.
+     */
+    public VisorMemoryPoolMetrics() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object.
@@ -56,5 +67,17 @@ public class VisorMemoryPoolMetrics implements Serializable {
      */
     public long getTotalPages() {
         return totalPages;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        out.writeLong(totalPages);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        totalPages = in.readLong();
     }
 }

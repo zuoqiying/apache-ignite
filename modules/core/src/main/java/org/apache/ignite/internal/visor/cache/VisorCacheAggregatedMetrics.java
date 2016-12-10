@@ -17,18 +17,22 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for aggregated cache metrics.
  */
-public class VisorCacheAggregatedMetrics implements Serializable {
+public class VisorCacheAggregatedMetrics extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -42,7 +46,7 @@ public class VisorCacheAggregatedMetrics implements Serializable {
     private boolean sys;
 
     /** Node IDs with cache metrics. */
-    private final Map<UUID, VisorCacheMetrics> metrics = new HashMap<>();
+    private Map<UUID, VisorCacheMetrics> metrics = new HashMap<>();
 
     /** Minimum number of elements in heap. */
     private transient Long minHeapSize;
@@ -510,6 +514,70 @@ public class VisorCacheAggregatedMetrics implements Serializable {
      */
     public Map<UUID, VisorCacheMetrics> getMetrics() {
         return metrics;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        U.writeEnum(out, mode);
+        out.writeBoolean(sys);
+        U.writeMap(out, metrics);
+        out.writeObject(minHeapSize);
+        out.writeObject(avgHeapSize);
+        out.writeObject(maxHeapSize);
+        out.writeObject(minOffHeapSize);
+        out.writeObject(avgOffHeapSize);
+        out.writeObject(maxOffHeapSize);
+        out.writeObject(minHits);
+        out.writeObject(avgHits);
+        out.writeObject(maxHits);
+        out.writeObject(minMisses);
+        out.writeObject(avgMisses);
+        out.writeObject(maxMisses);
+        out.writeObject(minReads);
+        out.writeObject(avgReads);
+        out.writeObject(maxReads);
+        out.writeObject(minWrites);
+        out.writeObject(avgWrites);
+        out.writeObject(maxWrites);
+        out.writeObject(minQryTime);
+        out.writeObject(avgQryTime);
+        out.writeObject(maxQryTime);
+        out.writeObject(totalQryTime);
+        out.writeObject(execsQry);
+        out.writeObject(failsQry);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        mode = CacheMode.fromOrdinal(in.readByte());
+        sys = in.readBoolean();
+        metrics = U.readMap(in);
+        minHeapSize = (Long)in.readObject();
+        avgHeapSize = (Double)in.readObject();
+        maxHeapSize = (Long)in.readObject();
+        minOffHeapSize = (Long)in.readObject();
+        avgOffHeapSize = (Double)in.readObject();
+        maxOffHeapSize = (Long)in.readObject();
+        minHits = (Long)in.readObject();
+        avgHits = (Double)in.readObject();
+        maxHits = (Long)in.readObject();
+        minMisses = (Long)in.readObject();
+        avgMisses = (Double)in.readObject();
+        maxMisses = (Long)in.readObject();
+        minReads = (Long)in.readObject();
+        avgReads = (Double)in.readObject();
+        maxReads = (Long)in.readObject();
+        minWrites = (Long)in.readObject();
+        avgWrites = (Double)in.readObject();
+        maxWrites = (Long)in.readObject();
+        minQryTime = (Long)in.readObject();
+        avgQryTime = (Double)in.readObject();
+        maxQryTime = (Long)in.readObject();
+        totalQryTime = (Long)in.readObject();
+        execsQry = (Integer)in.readObject();
+        failsQry = (Integer)in.readObject();
     }
 
     /** {@inheritDoc} */

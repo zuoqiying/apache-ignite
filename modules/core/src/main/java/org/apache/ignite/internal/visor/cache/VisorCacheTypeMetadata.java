@@ -17,7 +17,9 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +34,7 @@ import org.apache.ignite.cache.store.jdbc.JdbcType;
 import org.apache.ignite.cache.store.jdbc.JdbcTypeField;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.lang.IgniteBiTuple;
 
 import javax.cache.configuration.Factory;
@@ -39,7 +42,7 @@ import javax.cache.configuration.Factory;
 /**
  * Data transfer object for {@link CacheTypeMetadata}.
  */
-public class VisorCacheTypeMetadata implements Serializable {
+public class VisorCacheTypeMetadata extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -371,5 +374,35 @@ public class VisorCacheTypeMetadata implements Serializable {
      */
     public Map<String, LinkedHashMap<String, IgniteBiTuple<String, Boolean>>> getGroups() {
         return grps;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, dbSchema);
+        U.writeString(out, dbTbl);
+        U.writeString(out, keyType);
+        U.writeString(out, valType);
+        U.writeCollection(out, keyFields);
+        U.writeCollection(out, valFields);
+        U.writeStringMap(out, qryFlds);
+        U.writeStringMap(out, ascFlds);
+        U.writeStringMap(out, descFlds);
+        U.writeCollection(out, txtFlds);
+        U.writeMap(out, grps);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        dbSchema = U.readString(in);
+        dbTbl = U.readString(in);
+        keyType = U.readString(in);
+        valType = U.readString(in);
+        keyFields = U.readCollection(in);
+        valFields = U.readCollection(in);
+        qryFlds = U.readStringMap(in);
+        ascFlds = U.readStringMap(in);
+        descFlds = U.readStringMap(in);
+        txtFlds = U.readCollection(in);
+        grps = U.readMap(in);
     }
 }

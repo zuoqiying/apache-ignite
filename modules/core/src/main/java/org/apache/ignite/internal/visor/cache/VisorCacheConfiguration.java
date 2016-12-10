@@ -17,7 +17,9 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import org.apache.ignite.cache.CacheAtomicWriteOrderMode;
 import org.apache.ignite.cache.CacheAtomicityMode;
@@ -26,6 +28,8 @@ import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
@@ -33,7 +37,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 /**
  * Data transfer object for cache configuration properties.
  */
-public class VisorCacheConfiguration implements Serializable {
+public class VisorCacheConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -111,6 +115,13 @@ public class VisorCacheConfiguration implements Serializable {
 
     /** System cache flag. */
     private boolean sys;
+
+    /**
+     * Default constructor.
+     */
+    public VisorCacheConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for cache configuration properties.
@@ -322,6 +333,78 @@ public class VisorCacheConfiguration implements Serializable {
      */
     public boolean isSystem() {
         return sys;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        U.writeEnum(out, mode);
+        U.writeEnum(out, atomicityMode);
+        U.writeEnum(out, atomicWriteOrderMode);
+        out.writeBoolean(eagerTtl);
+        U.writeEnum(out, writeSynchronizationMode);
+        out.writeBoolean(invalidate);
+        out.writeInt(startSize);
+        out.writeLong(offHeapMaxMemory);
+        out.writeInt(maxConcurrentAsyncOps);
+        U.writeString(out, interceptor);
+        out.writeLong(dfltLockTimeout);
+        affinityCfg.writeExternal(out);
+        rebalanceCfg.writeExternal(out);
+        evictCfg.writeExternal(out);
+        nearCfg.writeExternal(out);
+        storeCfg.writeExternal(out);
+        U.writeCollection(out, typeMeta);
+        out.writeBoolean(statisticsEnabled);
+        out.writeBoolean(mgmtEnabled);
+        U.writeString(out, ldrFactory);
+        U.writeString(out, writerFactory);
+        U.writeString(out, expiryPlcFactory);
+        qryCfg.writeExternal(out);
+        out.writeBoolean(sys);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        mode = CacheMode.fromOrdinal(in.readByte());
+        atomicityMode = CacheAtomicityMode.fromOrdinal(in.readByte());
+        atomicWriteOrderMode = CacheAtomicWriteOrderMode.fromOrdinal(in.readByte());
+        eagerTtl = in.readBoolean();
+        writeSynchronizationMode = CacheWriteSynchronizationMode.fromOrdinal(in.readByte());
+        invalidate = in.readBoolean();
+        startSize = in.readInt();
+        offHeapMaxMemory = in.readLong();
+        maxConcurrentAsyncOps = in.readInt();
+        interceptor = U.readString(in);
+        dfltLockTimeout = in.readLong();
+
+        affinityCfg = new VisorCacheAffinityConfiguration();
+        affinityCfg.readExternal(in);
+
+        rebalanceCfg = new VisorCacheRebalanceConfiguration();
+        rebalanceCfg.readExternal(in);
+
+        evictCfg = new VisorCacheEvictionConfiguration();
+        evictCfg.readExternal(in);
+
+        nearCfg = new VisorCacheNearConfiguration();
+        nearCfg.readExternal(in);
+
+        storeCfg = new VisorCacheStoreConfiguration();
+        storeCfg.readExternal(in);
+
+        typeMeta = U.readCollection(in);
+        statisticsEnabled = in.readBoolean();
+        mgmtEnabled = in.readBoolean();
+        ldrFactory = U.readString(in);
+        writerFactory = U.readString(in);
+        expiryPlcFactory = U.readString(in);
+
+        qryCfg = new VisorCacheQueryConfiguration();
+        qryCfg.readExternal(in);
+
+        sys = in.readBoolean();
     }
 
     /** {@inheritDoc} */

@@ -17,8 +17,12 @@
 
 package org.apache.ignite.internal.visor.event;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.UUID;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,16 +34,23 @@ public class VisorGridTaskEvent extends VisorGridEvent {
     private static final long serialVersionUID = 0L;
 
     /** Name of the task that triggered the event. */
-    private final String taskName;
+    private String taskName;
 
     /** Name of task class that triggered the event. */
-    private final String taskClsName;
+    private String taskClsName;
 
     /** Task session ID. */
-    private final IgniteUuid taskSesId;
+    private IgniteUuid taskSesId;
 
     /** Whether task was created for system needs. */
-    private final boolean internal;
+    private boolean internal;
+
+    /**
+     * Default constructor.
+     */
+    public VisorGridTaskEvent() {
+        // No-op.
+    }
 
     /**
      * Create event with given parameters.
@@ -103,6 +114,26 @@ public class VisorGridTaskEvent extends VisorGridEvent {
      */
     public boolean internal() {
         return internal;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        super.writeExternalData(out);
+
+        U.writeString(out, taskName);
+        U.writeString(out, taskClsName);
+        U.writeGridUuid(out, taskSesId);
+        out.writeBoolean(internal);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternalData(in);
+
+        taskName = U.readString(in);
+        taskClsName = U.readString(in);
+        taskSesId = U.readGridUuid(in);
+        internal = in.readBoolean();
     }
 
     /** {@inheritDoc} */

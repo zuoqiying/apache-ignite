@@ -17,20 +17,31 @@
 
 package org.apache.ignite.internal.visor.cache;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Map;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionMap2;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for partitions map.
  */
-public class VisorPartitionMap implements Serializable {
+public class VisorPartitionMap extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** Map of partition states. */
     private Map<Integer, GridDhtPartitionState> parts;
+
+    /**
+     * Default constructor.
+     */
+    public VisorPartitionMap() {
+        // No-op.
+    }
 
     /**
      * @param map Partitions map.
@@ -53,12 +64,21 @@ public class VisorPartitionMap implements Serializable {
         return parts.size();
     }
 
-
     /**
      * @param part Partition.
      * @return Partition state.
      */
     public GridDhtPartitionState get(Integer part) {
         return parts.get(part);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeIntKeyMap(out, parts);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        parts = U.readIntKeyMap(in);
     }
 }
