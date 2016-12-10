@@ -721,6 +721,16 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
         return sb;
     }
 
+    static _collectMapImports(prop) {
+        const imports = [];
+
+        imports.push(prop.ordered ? 'java.util.LinkedHashMap' : 'java.util.HashMap');
+        imports.push(prop.keyClsName);
+        imports.push(prop.valClsName);
+
+        return imports;
+    }
+
     static collectBeanImports(bean) {
         const imports = [bean.clsName];
 
@@ -732,6 +742,11 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                     break;
                 case 'java.lang.Class':
                     imports.push(javaTypes.fullClassName(arg.value));
+
+                    break;
+
+                case 'MAP':
+                    imports.push(...this._collectMapImports(arg));
 
                     break;
                 default:
@@ -792,9 +807,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
                     break;
                 case 'MAP':
-                    imports.push(prop.ordered ? 'java.util.LinkedHashMap' : 'java.util.HashMap');
-                    imports.push(prop.keyClsName);
-                    imports.push(prop.valClsName);
+                    imports.push(...this._collectMapImports(prop));
 
                     break;
                 default:
@@ -888,8 +901,21 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
         const imports = this.collectBeanImports(cfg);
 
-        if (_.nonEmpty(clientNearCaches))
+        const nearCacheBeans = [];
+
+        if (_.nonEmpty(clientNearCaches)) {
             imports.push('org.apache.ignite.configuration.NearCacheConfiguration');
+
+            _.forEach(clientNearCaches, (cache) => {
+                const nearCacheBean = this.generator.cacheNearClient(cache);
+
+                nearCacheBean.cacheName = cache.name;
+
+                imports.push(...this.collectBeanImports(nearCacheBean));
+
+                nearCacheBeans.push(nearCacheBean);
+            });
+        }
 
         if (_.includes(imports, 'oracle.jdbc.pool.OracleDataSource'))
             imports.push('java.sql.SQLException');
@@ -971,14 +997,12 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             sb.emptyLine();
         }
 
-        _.forEach(clientNearCaches, (cache) => {
-            this.commentBlock(sb, `Configuration of near cache for cache: ${cache.name}.`,
+        _.forEach(nearCacheBeans, (nearCacheBean) => {
+            this.commentBlock(sb, `Configuration of near cache for cache: ${nearCacheBean.cacheName}.`,
                 '',
                 '@return Near cache configuration.',
                 '@throws Exception If failed to construct near cache configuration instance.'
             );
-
-            const nearCacheBean = this.generator.cacheNearClient(cache);
 
             sb.startBlock(`public static NearCacheConfiguration ${nearCacheBean.id}() throws Exception {`);
 
