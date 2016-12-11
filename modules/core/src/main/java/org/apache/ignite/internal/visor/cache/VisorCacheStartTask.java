@@ -19,7 +19,8 @@ package org.apache.ignite.internal.visor.cache;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.Serializable;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,8 @@ import org.apache.ignite.configuration.NearCacheConfiguration;
 import org.apache.ignite.internal.processors.task.GridInternal;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorMultiNodeTask;
 import org.apache.ignite.internal.visor.util.VisorTaskUtils;
@@ -66,18 +69,25 @@ public class VisorCacheStartTask extends
      * Cache start arguments.
      */
     @SuppressWarnings("PublicInnerClass")
-    public static class VisorCacheStartArg implements Serializable {
+    public static class VisorCacheStartArg extends VisorDataTransferObject {
         /** */
         private static final long serialVersionUID = 0L;
 
         /** */
-        private final boolean near;
+        private boolean near;
 
         /** */
-        private final String name;
+        private String name;
 
         /** */
-        private final String cfg;
+        private String cfg;
+
+        /**
+         * Default constructor.
+         */
+        public VisorCacheStartArg() {
+            // No-op.
+        }
 
         /**
          * @param near {@code true} if near cache should be started.
@@ -109,6 +119,20 @@ public class VisorCacheStartTask extends
          */
         public String configuration() {
             return cfg;
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+            out.writeBoolean(near);
+            U.writeString(out, name);
+            U.writeString(out, cfg);
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+            near = in.readBoolean();
+            name = U.readString(in);
+            cfg = U.readString(in);
         }
     }
 

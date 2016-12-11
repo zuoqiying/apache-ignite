@@ -17,36 +17,48 @@
 
 package org.apache.ignite.internal.visor.igfs;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.IgniteFileSystem;
 import org.apache.ignite.igfs.IgfsMode;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for {@link IgniteFileSystem}.
  */
-public class VisorIgfs implements Serializable {
+public class VisorIgfs extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** IGFS instance name. */
-    private final String name;
+    private String name;
 
     /** IGFS instance working mode. */
-    private final IgfsMode mode;
+    private IgfsMode mode;
 
     /** IGFS metrics. */
-    private final VisorIgfsMetrics metrics;
+    private VisorIgfsMetrics metrics;
 
     /** Whether IGFS has configured secondary file system. */
-    private final boolean secondaryFsConfigured;
+    private boolean secondaryFsConfigured;
 
     /**
+     * Default constructor.
+     */
+    public VisorIgfs() {
+        // No-op.
+    }
+
+    /**
+     * Create IGFS configuration transfer object.
      *
-     * @param name
-     * @param mode
-     * @param metrics
-     * @param secondaryFsConfigured
+     * @param name IGFS instance name.
+     * @param mode IGFS instance working mode.
+     * @param metrics IGFS metrics.
+     * @param secondaryFsConfigured Whether IGFS has configured secondary file system.
      */
     public VisorIgfs(String name, IgfsMode mode, VisorIgfsMetrics metrics, boolean secondaryFsConfigured) {
         this.name = name;
@@ -95,6 +107,25 @@ public class VisorIgfs implements Serializable {
      */
     public boolean isSecondaryFileSystemConfigured() {
         return secondaryFsConfigured;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        U.writeEnum(out, mode);
+        metrics.writeExternalData(out);
+        out.writeBoolean(secondaryFsConfigured);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        mode = IgfsMode.fromOrdinal(in.readByte());
+
+        metrics = new VisorIgfsMetrics();
+        metrics.readExternalData(in);
+
+        secondaryFsConfigured = in.readBoolean();
     }
 
     /** {@inheritDoc} */

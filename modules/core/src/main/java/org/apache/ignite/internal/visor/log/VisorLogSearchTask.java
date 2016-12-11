@@ -20,7 +20,8 @@ package org.apache.ignite.internal.visor.log;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Serializable;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import org.apache.ignite.internal.util.io.GridReversedLinesFileReader;
 import org.apache.ignite.internal.util.lang.GridTuple3;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorMultiNodeTask;
 import org.apache.ignite.lang.IgniteBiTuple;
@@ -91,21 +93,28 @@ public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchTask.Vi
      * Arguments for {@link VisorLogSearchTask}.
      */
     @SuppressWarnings("PublicInnerClass")
-    public static class VisorLogSearchArg implements Serializable {
+    public static class VisorLogSearchArg extends VisorDataTransferObject {
         /** */
         private static final long serialVersionUID = 0L;
 
         /** Searched string. */
-        private final String searchStr;
+        private String searchStr;
 
         /** Folder. */
-        private final String folder;
+        private String folder;
 
         /** File name search pattern. */
-        private final String filePtrn;
+        private String filePtrn;
 
         /** Max number of results. */
-        private final int limit;
+        private int limit;
+
+        /**
+         * Default constructor.
+         */
+        public VisorLogSearchArg() {
+            // No-op.
+        }
 
         /**
          * @param searchStr Searched string.
@@ -118,6 +127,22 @@ public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchTask.Vi
             this.folder = folder;
             this.filePtrn = filePtrn;
             this.limit = limit;
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+            U.writeString(out, searchStr);
+            U.writeString(out, folder);
+            U.writeString(out, filePtrn);
+            out.writeInt(limit);
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+            searchStr = U.readString(in);
+            folder = U.readString(in);
+            filePtrn = U.readString(in);
+            limit = in.readInt();
         }
 
         /** {@inheritDoc} */

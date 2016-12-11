@@ -17,15 +17,18 @@
 
 package org.apache.ignite.internal.visor.igfs;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.IgniteFileSystem;
 import org.apache.ignite.igfs.IgfsMetrics;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for {@link IgfsMetrics}.
  */
-public class VisorIgfsMetrics implements Serializable {
+public class VisorIgfsMetrics extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -249,6 +252,42 @@ public class VisorIgfsMetrics implements Serializable {
      */
     public long getBytesWriteTime() {
         return bytesWrtTm;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeLong(totalSpaceSz);
+        out.writeLong(usedSpaceSz);
+        out.writeInt(foldersCnt);
+        out.writeInt(filesCnt);
+        out.writeInt(filesOpenedForRd);
+        out.writeInt(filesOpenedForWrt);
+        out.writeLong(blocksRd);
+        out.writeLong(blocksRdRmt);
+        out.writeLong(blocksWrt);
+        out.writeLong(blocksWrtRmt);
+        out.writeLong(bytesRd);
+        out.writeLong(bytesRdTm);
+        out.writeLong(bytesWrt);
+        out.writeLong(bytesWrtTm);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        totalSpaceSz = in.readLong();
+        usedSpaceSz = in.readLong();
+        foldersCnt = in.readInt();
+        filesCnt = in.readInt();
+        filesOpenedForRd = in.readInt();
+        filesOpenedForWrt = in.readInt();
+        blocksRd = in.readLong();
+        blocksRdRmt = in.readLong();
+        blocksWrt = in.readLong();
+        blocksWrtRmt = in.readLong();
+        bytesRd = in.readLong();
+        bytesRdTm = in.readLong();
+        bytesWrt = in.readLong();
+        bytesWrtTm = in.readLong();
     }
 
     /** {@inheritDoc} */

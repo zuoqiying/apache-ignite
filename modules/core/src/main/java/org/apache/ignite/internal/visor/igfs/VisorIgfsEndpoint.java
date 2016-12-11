@@ -17,28 +17,39 @@
 
 package org.apache.ignite.internal.visor.igfs;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * IGFS endpoint descriptor.
  */
-public class VisorIgfsEndpoint implements Serializable {
+public class VisorIgfsEndpoint extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** IGFS name. */
-    private final String igfsName;
+    private String igfsName;
 
     /** Grid name. */
-    private final String gridName;
+    private String gridName;
 
     /** Host address / name. */
-    private final String hostName;
+    private String hostName;
 
     /** Port number. */
-    private final int port;
+    private int port;
+
+    /**
+     * Default constructor.
+     */
+    public VisorIgfsEndpoint() {
+        // No-op.
+    }
 
     /**
      * Create IGFS endpoint descriptor with given parameters.
@@ -97,6 +108,22 @@ public class VisorIgfsEndpoint implements Serializable {
             return igfsName + "@" + addr;
         else
             return igfsName + ":" + gridName + "@" + addr;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, igfsName);
+        U.writeString(out, gridName);
+        U.writeString(out, hostName);
+        out.writeInt(port);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        igfsName = U.readString(in);
+        gridName = U.readString(in);
+        hostName = U.readString(in);
+        port = in.readInt();
     }
 
     /** {@inheritDoc} */

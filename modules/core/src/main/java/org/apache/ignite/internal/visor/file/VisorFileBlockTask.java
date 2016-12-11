@@ -19,13 +19,15 @@ package org.apache.ignite.internal.visor.file;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.NoSuchFileException;
 import org.apache.ignite.internal.processors.task.GridInternal;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorOneNodeTask;
 import org.apache.ignite.lang.IgniteBiTuple;
@@ -50,21 +52,28 @@ public class VisorFileBlockTask extends VisorOneNodeTask<VisorFileBlockTask.Viso
      * Arguments for {@link VisorFileBlockTask}
      */
     @SuppressWarnings("PublicInnerClass")
-    public static class VisorFileBlockArg implements Serializable {
+    public static class VisorFileBlockArg extends VisorDataTransferObject {
         /** */
         private static final long serialVersionUID = 0L;
 
         /** Log file path. */
-        private final String path;
+        private String path;
 
         /** Log file offset. */
-        private final long off;
+        private long off;
 
         /** Block size. */
-        private final int blockSz;
+        private int blockSz;
 
         /** Log file last modified timestamp. */
-        private final long lastModified;
+        private long lastModified;
+
+        /**
+         * Default constructor.
+         */
+        public VisorFileBlockArg() {
+            // No-op.
+        }
 
         /**
          * @param path Log file path.
@@ -77,6 +86,22 @@ public class VisorFileBlockTask extends VisorOneNodeTask<VisorFileBlockTask.Viso
             this.off = off;
             this.blockSz = blockSz;
             this.lastModified = lastModified;
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+            U.writeString(out, path);
+            out.writeLong(off);
+            out.writeInt(blockSz);
+            out.writeLong(lastModified);
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+            path = U.readString(in);
+            off = in.readLong();
+            blockSz = in.readInt();
+            lastModified = in.readLong();
         }
 
         /** {@inheritDoc} */

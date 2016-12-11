@@ -17,12 +17,16 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.UUID;
 import org.apache.ignite.configuration.DeploymentMode;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 import static java.lang.System.getProperty;
@@ -42,7 +46,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 /**
  * Data transfer object for node basic configuration properties.
  */
-public class VisorBasicConfiguration implements Serializable {
+public class VisorBasicConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -108,6 +112,13 @@ public class VisorBasicConfiguration implements Serializable {
 
     /** Whether update checker is enabled. */
     private boolean updateNtf;
+
+    /**
+     * Default constructor.
+     */
+    public VisorBasicConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for node basic configuration properties.
@@ -284,6 +295,56 @@ public class VisorBasicConfiguration implements Serializable {
      */
     public boolean isUpdateNotifier() {
         return updateNtf;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, gridName);
+        U.writeString(out, ggHome);
+        U.writeString(out, locHost);
+        U.writeUuid(out, nodeId);
+        U.writeString(out, marsh);
+        U.writeEnum(out, deployMode);
+        out.writeObject(clientMode);
+        out.writeBoolean(daemon);
+        out.writeBoolean(jmxRemote);
+        out.writeBoolean(restart);
+        out.writeLong(netTimeout);
+        U.writeString(out, log);
+        out.writeLong(discoStartupDelay);
+        U.writeString(out, mBeanSrv);
+        out.writeBoolean(noAscii);
+        out.writeBoolean(noDiscoOrder);
+        out.writeBoolean(noShutdownHook);
+        U.writeString(out, progName);
+        out.writeBoolean(quiet);
+        U.writeString(out, successFile);
+        out.writeBoolean(updateNtf);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        gridName = U.readString(in);
+        ggHome = U.readString(in);
+        locHost = U.readString(in);
+        nodeId = U.readUuid(in);
+        marsh = U.readString(in);
+        deployMode = DeploymentMode.fromOrdinal(in.readByte());
+        clientMode = (Boolean)in.readObject();
+        daemon = in.readBoolean();
+        jmxRemote = in.readBoolean();
+        restart = in.readBoolean();
+        netTimeout = in.readLong();
+        log = U.readString(in);
+        discoStartupDelay = in.readLong();
+        mBeanSrv = U.readString(in);
+        noAscii = in.readBoolean();
+        noDiscoOrder = in.readBoolean();
+        noShutdownHook = in.readBoolean();
+        progName = U.readString(in);
+        quiet = in.readBoolean();
+        successFile = U.readString(in);
+        updateNtf = in.readBoolean();
     }
 
     /** {@inheritDoc} */

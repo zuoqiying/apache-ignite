@@ -17,26 +17,36 @@
 
 package org.apache.ignite.internal.visor;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  * Visor tasks argument.
  */
-public class VisorTaskArgument<A> implements Serializable {
+public class VisorTaskArgument<A> extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** Node IDs task should be mapped to. */
-    private final Collection<UUID> nodes;
+    private Collection<UUID> nodes;
 
     /** Task argument. */
-    private final A arg;
+    private A arg;
 
     /** Debug flag. */
-    private final boolean debug;
+    private boolean debug;
+
+    /**
+     * Default constructor.
+     */
+    public VisorTaskArgument() {
+        // No-op.
+    }
 
     /**
      * Create Visor task argument.
@@ -104,5 +114,19 @@ public class VisorTaskArgument<A> implements Serializable {
      */
     public boolean debug() {
         return debug;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeCollection(out, nodes);
+        out.writeObject(arg);
+        out.writeBoolean(debug);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        nodes = U.readCollection(in);
+        arg = (A)in.readObject();
+        debug = in.readBoolean();
     }
 }

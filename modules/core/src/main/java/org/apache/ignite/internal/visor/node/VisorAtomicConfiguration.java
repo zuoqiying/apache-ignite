@@ -17,15 +17,19 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.configuration.AtomicConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for configuration of atomic data structures.
  */
-public class VisorAtomicConfiguration implements Serializable {
+public class VisorAtomicConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -37,6 +41,13 @@ public class VisorAtomicConfiguration implements Serializable {
 
     /** Number of backups. */
     private int backups;
+
+    /**
+     * Default constructor.
+     */
+    public VisorAtomicConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for atomic configuration.
@@ -68,6 +79,20 @@ public class VisorAtomicConfiguration implements Serializable {
      */
     public int getBackups() {
         return backups;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeInt(seqReserveSize);
+        U.writeEnum(out, cacheMode);
+        out.writeInt(backups);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        seqReserveSize = in.readInt();
+        cacheMode = CacheMode.fromOrdinal(in.readByte());
+        backups = in.readInt();
     }
 
     /** {@inheritDoc} */

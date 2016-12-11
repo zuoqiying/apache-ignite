@@ -17,33 +17,44 @@
 
 package org.apache.ignite.internal.visor.file;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Represents block of bytes from a file, could be optionally zipped.
  */
-public class VisorFileBlock implements Serializable {
+public class VisorFileBlock extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** File path. */
-    private final String path;
+    private String path;
 
     /** Marker position. */
-    private final long off;
+    private long off;
 
     /** File size. */
-    private final long size;
+    private long size;
 
     /** Timestamp of last modification of the file. */
-    private final long lastModified;
+    private long lastModified;
 
     /** Whether data was zipped. */
-    private final boolean zipped;
+    private boolean zipped;
 
     /** Data bytes. */
-    private final byte[] data;
+    private byte[] data;
+
+    /**
+     * Default constructor.
+     */
+    public VisorFileBlock() {
+
+    }
 
     /**
      * Create file block with given parameters.
@@ -104,6 +115,26 @@ public class VisorFileBlock implements Serializable {
      */
     public byte[] getData() {
         return data;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, path);
+        out.writeLong(off);
+        out.writeLong(size);
+        out.writeLong(lastModified);
+        out.writeBoolean(zipped);
+        out.write(data);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        path = U.readString(in);
+        off = in.readLong();
+        size = in.readLong();
+        lastModified = in.readLong();
+        zipped = in.readBoolean();
+        in.read(data);
     }
 
     /** {@inheritDoc} */

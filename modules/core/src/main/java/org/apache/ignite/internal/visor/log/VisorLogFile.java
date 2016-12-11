@@ -18,24 +18,35 @@
 package org.apache.ignite.internal.visor.log;
 
 import java.io.File;
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Visor log file.
  */
-public class VisorLogFile implements Serializable {
+public class VisorLogFile extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** File path. */
-    private final String path;
+    private String path;
 
     /** File size. */
-    private final long size;
+    private long size;
 
     /** File last modified timestamp. */
-    private final long lastModified;
+    private long lastModified;
+
+    /**
+     * Default constructor.
+     */
+    public VisorLogFile() {
+        // No-op.
+    }
 
     /**
      * Create log file for given file.
@@ -78,6 +89,20 @@ public class VisorLogFile implements Serializable {
      */
     public long lastModified() {
         return lastModified;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, path);
+        out.writeLong(size);
+        out.writeLong(lastModified);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        path = U.readString(in);
+        size = in.readLong();
+        lastModified = in.readLong();
     }
 
     /** {@inheritDoc} */
