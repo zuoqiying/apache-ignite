@@ -23,6 +23,7 @@ import org.apache.ignite.cache.CacheEntryProcessor;
 import org.apache.ignite.cache.CacheMemoryMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 
@@ -56,9 +57,11 @@ public class TooMuchOffheapEntries {
     /** Entries pack size */
     private static final long PACK_SIZE = 1_000_000L;
 
+    /** Indicates an error upon LoadCacheTask invocation */
     private static final AtomicBoolean wasError = new AtomicBoolean();
 
-    private static final byte[] SAMPLE_ARRAY = new byte[100];
+    /** Sample CacheValue array */
+    private static final byte[] SAMPLE_ARRAY = new byte[10];
 
     /** Create config */
     private static IgniteConfiguration config(String gridName) {
@@ -71,9 +74,13 @@ public class TooMuchOffheapEntries {
         discoSpi.setIpFinder(ipFinder);
         cfg.setDiscoverySpi(discoSpi);
 
+        MemoryConfiguration mcfg = new MemoryConfiguration();
+        mcfg.setPageCacheSize(OFF_HEAP_MEMORY);
+        cfg.setMemoryConfiguration(mcfg);
+
         CacheConfiguration ccfg = new CacheConfiguration(CACHE_NAME);
+        //ccfg.setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
         ccfg.setMemoryMode(CacheMemoryMode.OFFHEAP_TIERED);
-        ccfg.setOffHeapMaxMemory(OFF_HEAP_MEMORY);
 
         cfg.setCacheConfiguration(ccfg);
         return cfg;
@@ -101,14 +108,14 @@ public class TooMuchOffheapEntries {
                 }
                 long lastSz = 0;
                 for (int i = 0; i < procs; ) {
-                    Future<Long> fut = cs.poll(10, TimeUnit.SECONDS);
+                    Future<Long> fut = cs.poll(15, TimeUnit.SECONDS);
                     if (fut == null) {
                         long sz = cache.sizeLong();
                         if (lastSz == sz) {
                             System.out.println("Timeout waiting load task");
                             System.exit(-1);
                         }
-                        System.out.println("Cache size = " + sz);
+                        System.out.println("Too long loading. Cache size = " + sz);
                         lastSz = sz;
                     }
                     else {
@@ -119,7 +126,7 @@ public class TooMuchOffheapEntries {
                 }
                 if (wasError.get()) {
                     System.out.println("Total count = " + totalCnt);
-                    System.exit(-2);
+                    Thread.sleep(3600_000L);
                 }
                 System.out.println(((double)totalCnt) / PACK_SIZE + " M");
             }
@@ -164,15 +171,17 @@ public class TooMuchOffheapEntries {
                             return null;
                         }
                     };
+//                Transaction tx = ignite.transactions().txStart();
                 for (long i = start; i < end; ++i) {
                     key.val = i;
                     val.data = SAMPLE_ARRAY;
                     cache.invoke(key, processor);
-                    key.val = i + 1L;
-                    val.data = null;
-                    cache.invoke(key, processor);
+//                    key.val = i + 1L;
+//                    val.data = null;
+//                    cache.invoke(key, processor);
                     ++cnt;
                 }
+//                tx.commit();
             }
             catch (Throwable ex) {
                 wasError.compareAndSet(false, true);
@@ -187,10 +196,12 @@ public class TooMuchOffheapEntries {
         /** Key value */
         public long val;
 
+        /** {@inheritDoc} */
         @Override public boolean equals(Object obj) {
             return obj == this || (obj instanceof CacheKey && ((CacheKey)obj).val == val);
         }
 
+        /** {@inheritDoc} */
         @Override public int hashCode() {
             return (int)val;
         }
@@ -199,6 +210,7 @@ public class TooMuchOffheapEntries {
     /** Cache value */
     private static class CacheValue {
 
+        /** Data array */
         public byte[] data;
     }
 }
