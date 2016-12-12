@@ -17,14 +17,18 @@
 
 package org.apache.ignite.internal.visor.query;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for query field type description.
  */
-public class VisorQueryField implements Serializable {
+public class VisorQueryField extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -39,6 +43,13 @@ public class VisorQueryField implements Serializable {
 
     /** Field type name. */
     private String fieldTypeName;
+
+    /**
+     * Default constructor.
+     */
+    public VisorQueryField() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object with given parameters.
@@ -96,6 +107,22 @@ public class VisorQueryField implements Serializable {
         }
 
         return fieldName;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, schemaName);
+        U.writeString(out, typeName);
+        U.writeString(out, fieldName);
+        U.writeString(out, fieldTypeName);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        schemaName = U.readString(in);
+        typeName = U.readString(in);
+        fieldName = U.readString(in);
+        fieldTypeName = U.readString(in);
     }
 
     /** {@inheritDoc} */

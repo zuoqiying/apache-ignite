@@ -17,15 +17,19 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Data transfer object for node P2P configuration properties.
  */
-public class VisorPeerToPeerConfiguration implements Serializable {
+public class VisorPeerToPeerConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -37,6 +41,13 @@ public class VisorPeerToPeerConfiguration implements Serializable {
 
     /** List of packages from the system classpath that need to be loaded from task originating node. */
     private String[] p2pLocClsPathExcl;
+
+    /**
+     * Default constructor.
+     */
+    public VisorPeerToPeerConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for node P2P configuration properties.
@@ -68,6 +79,20 @@ public class VisorPeerToPeerConfiguration implements Serializable {
      */
     @Nullable public String[] getPeerClassLoadingLocalClassPathExclude() {
         return p2pLocClsPathExcl;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeBoolean(p2pEnabled);
+        out.writeInt(p2pMissedResCacheSize);
+        U.writeStringArray(out, p2pLocClsPathExcl);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        p2pEnabled = in.readBoolean();
+        p2pMissedResCacheSize = in.readInt();
+        p2pLocClsPathExcl = U.readStringArray(in);
     }
 
     /** {@inheritDoc} */

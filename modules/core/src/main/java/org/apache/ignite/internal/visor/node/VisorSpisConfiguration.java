@@ -17,7 +17,9 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -25,6 +27,7 @@ import java.util.Map;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.spi.IgniteSpi;
 import org.apache.ignite.spi.IgniteSpiConfiguration;
@@ -35,7 +38,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactObject
 /**
  * Data transfer object for node SPIs configuration properties.
  */
-public class VisorSpisConfiguration implements Serializable {
+public class VisorSpisConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -65,6 +68,13 @@ public class VisorSpisConfiguration implements Serializable {
 
     /** Indexing SPIs. */
     private IgniteBiTuple<String, Map<String, Object>>[] indexingSpis;
+
+    /**
+     * Default constructor.
+     */
+    public VisorSpisConfiguration() {
+        // No-op.
+    }
 
     /**
      * Collects SPI information based on GridSpiConfiguration-annotated methods.
@@ -213,6 +223,32 @@ public class VisorSpisConfiguration implements Serializable {
      */
     public IgniteBiTuple<String, Map<String, Object>>[] getIndexingSpis() {
         return indexingSpis;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeObject(discoSpi);
+        out.writeObject(commSpi);
+        out.writeObject(evtSpi);
+        out.writeObject(colSpi);
+        out.writeObject(deploySpi);
+        out.writeObject(cpSpis);
+        out.writeObject(failSpis);
+        out.writeObject(loadBalancingSpis);
+        out.writeObject(indexingSpis);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        discoSpi = (IgniteBiTuple<String, Map<String, Object>>)in.readObject();
+        commSpi = (IgniteBiTuple<String, Map<String, Object>>)in.readObject();
+        evtSpi = (IgniteBiTuple<String, Map<String, Object>>)in.readObject();
+        colSpi = (IgniteBiTuple<String, Map<String, Object>>)in.readObject();
+        deploySpi = (IgniteBiTuple<String, Map<String, Object>>)in.readObject();
+        cpSpis = (IgniteBiTuple<String, Map<String, Object>>[])in.readObject();
+        failSpis = (IgniteBiTuple<String, Map<String, Object>>[])in.readObject();
+        loadBalancingSpis = (IgniteBiTuple<String, Map<String, Object>>[])in.readObject();
+        indexingSpis = (IgniteBiTuple<String, Map<String, Object>>[])in.readObject();
     }
 
     /** {@inheritDoc} */

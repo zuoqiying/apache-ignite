@@ -165,7 +165,7 @@ public class VisorLogSearchResult extends VisorDataTransferObject {
         U.writeString(out, filePath);
         out.writeLong(fileSize);
         out.writeLong(lastModified);
-        U.writeArray(out, lines);
+        U.writeStringArray(out, lines);
         out.writeInt(lineNum);
         out.writeInt(lineCnt);
         U.writeString(out, encoding);
@@ -177,7 +177,7 @@ public class VisorLogSearchResult extends VisorDataTransferObject {
         filePath = U.readString(in);
         fileSize = in.readLong();
         lastModified = in.readLong();
-        lines = (String[])U.readArray(in);
+        lines = U.readStringArray(in);
         lineNum = in.readInt();
         lineCnt = in.readInt();
         encoding = U.readString(in);

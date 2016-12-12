@@ -17,10 +17,14 @@
 
 package org.apache.ignite.internal.visor.query;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  * Result for cache query tasks.
@@ -30,13 +34,20 @@ public class VisorQueryResultEx extends VisorQueryResult {
     private static final long serialVersionUID = 0L;
 
     /** Node where query executed. */
-    private final UUID resNodeId;
+    private UUID resNodeId;
 
     /** Query ID to store in node local. */
-    private final String qryId;
+    private String qryId;
 
     /** Query columns descriptors. */
-    private final Collection<VisorQueryField> cols;
+    private Collection<VisorQueryField> cols;
+
+    /**
+     * Default constructor.
+     */
+    public VisorQueryResultEx() {
+        // No-op.
+    }
 
     /**
      * @param resNodeId Node where query executed.
@@ -80,6 +91,24 @@ public class VisorQueryResultEx extends VisorQueryResult {
      */
     public Collection<VisorQueryField> getColumns() {
         return cols;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        super.writeExternalData(out);
+
+        U.writeUuid(out, resNodeId);
+        U.writeString(out, qryId);
+        U.writeCollection(out, cols);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternalData(in);
+
+        resNodeId = U.readUuid(in);
+        qryId = U.readString(in);
+        cols = U.readCollection(in);
     }
 
     /** {@inheritDoc} */

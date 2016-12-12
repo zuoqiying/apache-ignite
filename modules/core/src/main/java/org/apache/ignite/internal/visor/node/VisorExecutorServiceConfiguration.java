@@ -17,15 +17,18 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for node executors configuration properties.
  */
-public class VisorExecutorServiceConfiguration implements Serializable {
+public class VisorExecutorServiceConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -49,6 +52,13 @@ public class VisorExecutorServiceConfiguration implements Serializable {
 
     /** REST requests pool size. */
     private int restPoolSz;
+
+    /**
+     * Default constructor.
+     */
+    public VisorExecutorServiceConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for node executors configuration properties.
@@ -116,6 +126,28 @@ public class VisorExecutorServiceConfiguration implements Serializable {
      */
     public int getRestThreadPoolSize() {
         return restPoolSz;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeInt(pubPoolSize);
+        out.writeInt(sysPoolSz);
+        out.writeInt(mgmtPoolSize);
+        out.writeInt(igfsPoolSize);
+        out.writeInt(p2pPoolSz);
+        out.writeInt(rebalanceThreadPoolSize);
+        out.writeInt(restPoolSz);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        pubPoolSize = in.readInt();
+        sysPoolSz = in.readInt();
+        mgmtPoolSize = in.readInt();
+        igfsPoolSize = in.readInt();
+        p2pPoolSz = in.readInt();
+        rebalanceThreadPoolSize = in.readInt();
+        restPoolSz = in.readInt();
     }
 
     /** {@inheritDoc} */

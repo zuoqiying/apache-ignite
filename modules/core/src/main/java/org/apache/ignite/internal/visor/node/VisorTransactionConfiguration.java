@@ -17,9 +17,13 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.TransactionConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
 
@@ -28,7 +32,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 /**
  * Data transfer object for transaction configuration.
  */
-public class VisorTransactionConfiguration implements Serializable {
+public class VisorTransactionConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -49,6 +53,13 @@ public class VisorTransactionConfiguration implements Serializable {
 
     /** Transaction manager factory. */
     private String txMgrFactory;
+
+    /**
+     * Default constructor.
+     */
+    public VisorTransactionConfiguration() {
+        // No-op.
+    }
 
     /**
      * Whether to use JTA {@code javax.transaction.Synchronization}
@@ -124,5 +135,25 @@ public class VisorTransactionConfiguration implements Serializable {
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(VisorTransactionConfiguration.class, this);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeEnum(out, dfltConcurrency);
+        U.writeEnum(out, dfltIsolation);
+        out.writeLong(dfltTimeout);
+        out.writeInt(pessimisticTxLogLinger);
+        out.writeInt(pessimisticTxLogSize);
+        U.writeString(out, txMgrFactory);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        dfltConcurrency = TransactionConcurrency.fromOrdinal(in.readByte());
+        dfltIsolation = TransactionIsolation.fromOrdinal(in.readByte());
+        dfltTimeout = in.readLong();
+        pessimisticTxLogLinger = in.readInt();
+        pessimisticTxLogSize = in.readInt();
+        txMgrFactory = U.readString(in);
     }
 }

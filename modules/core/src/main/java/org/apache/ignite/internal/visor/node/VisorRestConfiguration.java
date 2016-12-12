@@ -17,10 +17,14 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 import static java.lang.System.getProperty;
@@ -32,7 +36,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.intValue;
 /**
  * Create data transfer object for node REST configuration properties.
  */
-public class VisorRestConfiguration implements Serializable {
+public class VisorRestConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -59,6 +63,13 @@ public class VisorRestConfiguration implements Serializable {
 
     /** Context factory for SSL. */
     private String tcpSslCtxFactory;
+
+    /**
+     * Default constructor.
+     */
+    public VisorRestConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for node REST configuration properties.
@@ -137,6 +148,30 @@ public class VisorRestConfiguration implements Serializable {
      */
     @Nullable public String getTcpSslContextFactory() {
         return tcpSslCtxFactory;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeBoolean(restEnabled);
+        out.writeBoolean(tcpSslEnabled);
+        U.writeString(out, jettyPath);
+        U.writeString(out, jettyHost);
+        out.writeObject(jettyPort);
+        U.writeString(out, tcpHost);
+        out.writeObject(tcpPort);
+        U.writeString(out, tcpSslCtxFactory);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        restEnabled = in.readBoolean();
+        tcpSslEnabled = in.readBoolean();
+        jettyPath = U.readString(in);
+        jettyHost = U.readString(in);
+        jettyPort = (Integer)in.readObject();
+        tcpHost = U.readString(in);
+        tcpPort = (Integer)in.readObject();
+        tcpSslCtxFactory = U.readString(in);
     }
 
     /** {@inheritDoc} */

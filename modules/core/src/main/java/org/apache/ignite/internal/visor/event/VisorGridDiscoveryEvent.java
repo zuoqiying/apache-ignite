@@ -42,6 +42,9 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
     /** If node that caused this event is daemon. */
     private boolean isDaemon;
 
+    /** Topology version. */
+    private long topVer;
+
     /**
      * Default constructor.
      */
@@ -62,6 +65,7 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
      * @param evtNodeId Event node id.
      * @param addr Event node address.
      * @param isDaemon If event node is daemon on not.
+     * @param topVer Topology version.
      */
     public VisorGridDiscoveryEvent(
         int typeId,
@@ -73,13 +77,15 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
         String shortDisplay,
         UUID evtNodeId,
         String addr,
-        boolean isDaemon
+        boolean isDaemon,
+        long topVer
     ) {
         super(typeId, id, name, nid, ts, msg, shortDisplay);
 
         this.evtNodeId = evtNodeId;
         this.addr = addr;
         this.isDaemon = isDaemon;
+        this.topVer = topVer;
     }
 
     /**
@@ -103,6 +109,14 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
         return isDaemon;
     }
 
+    /**
+     * @return Topology version or {@code 0} if configured discovery SPI implementation
+     *      does not support versioning.
+     **/
+    public long topologyVersion() {
+        return topVer;
+    }
+
     /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
         super.writeExternalData(out);
@@ -110,6 +124,7 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
         U.writeUuid(out, evtNodeId);
         U.writeString(out, addr);
         out.writeBoolean(isDaemon);
+        out.writeLong(topVer);
     }
 
     /** {@inheritDoc} */
@@ -119,6 +134,7 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
         evtNodeId = U.readUuid(in);
         addr = U.readString(in);
         isDaemon = in.readBoolean();
+        topVer = in.readLong();
     }
 
     /** {@inheritDoc} */

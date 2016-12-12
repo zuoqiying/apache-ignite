@@ -17,29 +17,40 @@
 
 package org.apache.ignite.internal.visor.query;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Arguments for {@link VisorQueryTask}.
  */
-public class VisorQueryArg implements Serializable {
+public class VisorQueryArg extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** Cache name for query. */
-    private final String cacheName;
+    private String cacheName;
 
     /** Query text. */
-    private final String qryTxt;
+    private String qryTxt;
 
     /** Distributed joins enabled flag. */
-    private final boolean distributedJoins;
+    private boolean distributedJoins;
 
     /** Flag whether to execute query locally. */
-    private final boolean loc;
+    private boolean loc;
 
     /** Result batch size. */
-    private final int pageSize;
+    private int pageSize;
+
+    /**
+     * Default constructor.
+     */
+    public VisorQueryArg() {
+        // No-op.
+    }
 
     /**
      * @param cacheName Cache name for query.
@@ -88,5 +99,23 @@ public class VisorQueryArg implements Serializable {
      */
     public int pageSize() {
         return pageSize;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, cacheName);
+        U.writeString(out, qryTxt);
+        out.writeBoolean(distributedJoins);
+        out.writeBoolean(loc);
+        out.writeInt(pageSize);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        cacheName = U.readString(in);
+        qryTxt = U.readString(in);
+        distributedJoins = in.readBoolean();
+        loc = in.readBoolean();
+        pageSize = in.readInt();
     }
 }

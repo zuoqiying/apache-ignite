@@ -62,7 +62,7 @@ import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.SB;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.internal.visor.event.VisorGridDiscoveryEventV2;
+import org.apache.ignite.internal.visor.event.VisorGridDiscoveryEvent;
 import org.apache.ignite.internal.visor.event.VisorGridEvent;
 import org.apache.ignite.internal.visor.event.VisorGridEventsLost;
 import org.apache.ignite.internal.visor.file.VisorFileBlock;
@@ -403,7 +403,7 @@ public class VisorTaskUtils {
             UUID nid, long ts, String msg, String shortDisplay) {
             ClusterNode node = de.eventNode();
 
-            return new VisorGridDiscoveryEventV2(type, id, name, nid, ts, msg, shortDisplay, node.id(),
+            return new VisorGridDiscoveryEvent(type, id, name, nid, ts, msg, shortDisplay, node.id(),
                 F.first(node.addresses()), node.isDaemon(), de.topologyVersion());
         }
     };

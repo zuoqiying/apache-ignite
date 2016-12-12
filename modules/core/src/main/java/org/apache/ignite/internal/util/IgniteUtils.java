@@ -1621,6 +1621,46 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * Writes string array to output stream.
+     *
+     * @param out Output stream.
+     * @param arr Array to write.
+     * @throws IOException If failed.
+     */
+    public static void writeStringArray(ObjectOutput out, String[] arr) throws IOException {
+        int len = arr == null ? 0 : arr.length;
+
+        out.writeInt(len);
+
+        if (arr != null && arr.length > 0)
+            for (String s : arr)
+                writeString(out, s);
+    }
+
+    /**
+     * Reads string array from input stream.
+     *
+     * @param in Input stream.
+     * @return Deserialized array.
+     * @throws IOException If failed.
+     * @throws ClassNotFoundException If class not found.
+     */
+    @Nullable public static String[] readStringArray(ObjectInput in) throws IOException, ClassNotFoundException {
+        int len = in.readInt();
+
+        String[] arr = null;
+
+        if (len > 0) {
+            arr = new String[len];
+
+            for (int i = 0; i < len; i++)
+                arr[i] = readString(in);
+        }
+
+        return arr;
+    }
+
+    /**
      * Reads array from input stream.
      *
      * @param in Input stream.

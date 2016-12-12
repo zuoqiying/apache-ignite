@@ -17,14 +17,17 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for node metrics configuration properties.
  */
-public class VisorMetricsConfiguration implements Serializable {
+public class VisorMetricsConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -36,6 +39,13 @@ public class VisorMetricsConfiguration implements Serializable {
 
     /** Frequency of metrics log printout. */
     private long logFreq;
+
+    /**
+     * Default constructor.
+     */
+    public VisorMetricsConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create transfer object for node metrics configuration properties.
@@ -67,6 +77,20 @@ public class VisorMetricsConfiguration implements Serializable {
      */
     public long getLoggerFrequency() {
         return logFreq;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeLong(expTime);
+        out.writeInt(histSize);
+        out.writeLong(logFreq);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        expTime = in.readLong();
+        histSize = in.readInt();
+        logFreq = in.readLong();
     }
 
     /** {@inheritDoc} */

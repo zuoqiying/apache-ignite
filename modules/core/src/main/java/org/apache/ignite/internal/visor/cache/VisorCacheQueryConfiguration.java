@@ -118,20 +118,20 @@ public class VisorCacheQueryConfiguration extends VisorDataTransferObject {
 
     /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-        U.writeArray(out, sqlFuncClss);
+        U.writeStringArray(out, sqlFuncClss);
         out.writeLong(longQryWarnTimeout);
         out.writeBoolean(sqlEscapeAll);
-        U.writeArray(out, indexedTypes);
+        U.writeStringArray(out, indexedTypes);
         out.writeInt(sqlOnheapRowCacheSize);
         U.writeString(out, sqlSchema);
     }
 
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-        sqlFuncClss = (String[]) U.readArray(in);
+        sqlFuncClss = U.readStringArray(in);
         longQryWarnTimeout = in.readLong();
         sqlEscapeAll = in.readBoolean();
-        indexedTypes = (String[]) U.readArray(in);
+        indexedTypes = U.readStringArray(in);
         sqlOnheapRowCacheSize = in.readInt();
         sqlSchema = U.readString(in);
     }

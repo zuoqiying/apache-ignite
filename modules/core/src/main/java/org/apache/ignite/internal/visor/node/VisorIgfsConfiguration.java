@@ -17,7 +17,9 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +28,8 @@ import org.apache.ignite.configuration.FileSystemConfiguration;
 import org.apache.ignite.igfs.IgfsIpcEndpointConfiguration;
 import org.apache.ignite.igfs.IgfsMode;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
@@ -33,7 +37,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactClass;
 /**
  * Data transfer object for IGFS configuration properties.
  */
-public class VisorIgfsConfiguration implements Serializable {
+public class VisorIgfsConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -113,6 +117,13 @@ public class VisorIgfsConfiguration implements Serializable {
     private long trashPurgeTimeout;
 
     /**
+     * Default constructor.
+     */
+    public VisorIgfsConfiguration() {
+        // No-op.
+    }
+
+    /**
      * Create data transfer object for IGFS configuration properties.
      * @param igfs IGFS configuration.
      */
@@ -155,7 +166,7 @@ public class VisorIgfsConfiguration implements Serializable {
      * @param igfss Igfs configurations.
      * @return igfs configurations properties.
      */
-    public static Iterable<VisorIgfsConfiguration> list(FileSystemConfiguration[] igfss) {
+    public static Collection<VisorIgfsConfiguration> list(FileSystemConfiguration[] igfss) {
         if (igfss == null)
             return Collections.emptyList();
 
@@ -340,6 +351,64 @@ public class VisorIgfsConfiguration implements Serializable {
      */
     public long getTrashPurgeTimeout() {
         return trashPurgeTimeout;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        U.writeString(out, metaCacheName);
+        U.writeString(out, dataCacheName);
+        out.writeInt(blockSize);
+        out.writeInt(prefetchBlocks);
+        out.writeInt(streamBufSize);
+        out.writeInt(perNodeBatchSize);
+        out.writeInt(perNodeParallelBatchCnt);
+        U.writeEnum(out, dfltMode);
+        U.writeMap(out, pathModes);
+        U.writeString(out, dualModePutExecutorSrvc);
+        out.writeBoolean(dualModePutExecutorSrvcShutdown);
+        out.writeLong(dualModeMaxPendingPutsSize);
+        out.writeLong(maxTaskRangeLen);
+        out.writeInt(fragmentizerConcurrentFiles);
+        out.writeFloat(fragmentizerLocWritesRatio);
+        out.writeBoolean(fragmentizerEnabled);
+        out.writeLong(fragmentizerThrottlingBlockLen);
+        out.writeLong(fragmentizerThrottlingDelay);
+        U.writeString(out, ipcEndpointCfg);
+        out.writeBoolean(ipcEndpointEnabled);
+        out.writeLong(maxSpace);
+        out.writeInt(mgmtPort);
+        out.writeInt(seqReadsBeforePrefetch);
+        out.writeLong(trashPurgeTimeout);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        metaCacheName = U.readString(in);
+        dataCacheName = U.readString(in);
+        blockSize = in.readInt();
+        prefetchBlocks = in.readInt();
+        streamBufSize = in.readInt();
+        perNodeBatchSize = in.readInt();
+        perNodeParallelBatchCnt = in.readInt();
+        dfltMode = IgfsMode.fromOrdinal(in.readByte());
+        pathModes = U.readMap(in);
+        dualModePutExecutorSrvc = U.readString(in);
+        dualModePutExecutorSrvcShutdown = in.readBoolean();
+        dualModeMaxPendingPutsSize = in.readLong();
+        maxTaskRangeLen = in.readLong();
+        fragmentizerConcurrentFiles = in.readInt();
+        fragmentizerLocWritesRatio = in.readFloat();
+        fragmentizerEnabled = in.readBoolean();
+        fragmentizerThrottlingBlockLen = in.readLong();
+        fragmentizerThrottlingDelay = in.readLong();
+        ipcEndpointCfg = U.readString(in);
+        ipcEndpointEnabled = in.readBoolean();
+        maxSpace = in.readLong();
+        mgmtPort = in.readInt();
+        seqReadsBeforePrefetch = in.readInt();
+        trashPurgeTimeout = in.readLong();
     }
 
     /** {@inheritDoc} */

@@ -17,7 +17,10 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -25,13 +28,15 @@ import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
 
 /**
  * Data transfer object for node configuration data.
  */
-public class VisorGridConfiguration implements Serializable {
+public class VisorGridConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -69,7 +74,7 @@ public class VisorGridConfiguration implements Serializable {
     private Map<String, ?> userAttrs;
 
     /** Igfss. */
-    private Iterable<VisorIgfsConfiguration> igfss;
+    private Collection<VisorIgfsConfiguration> igfss;
 
     /** Environment. */
     private Map<String, String> env;
@@ -85,6 +90,13 @@ public class VisorGridConfiguration implements Serializable {
 
     /** Database configuration. */
     private VisorMemoryConfiguration memCfg;
+
+    /**
+     * Default constructor.
+     */
+    public VisorGridConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object with node configuration data.
@@ -232,6 +244,48 @@ public class VisorGridConfiguration implements Serializable {
      */
     public VisorMemoryConfiguration getMemoryConfiguration() {
         return memCfg;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        basic.writeExternal(out);
+        metrics.writeExternal(out);
+        spis.writeExternal(out);
+        p2p.writeExternal(out);
+        lifecycle.writeExternal(out);
+        execSvc.writeExternal(out);
+        seg.writeExternal(out);
+        U.writeString(out, inclProps);
+        out.writeObject(inclEvtTypes);
+        rest.writeExternal(out);
+        U.writeMap(out, userAttrs);
+        U.writeCollection(out, igfss);
+        U.writeMap(out, env);
+        out.writeObject(sysProps);
+        atomic.writeExternal(out);
+        txCfg.writeExternal(out);
+        memCfg.writeExternal(out);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        basic.readExternal(in);
+        metrics.readExternal(in);
+        spis.readExternal(in);
+        p2p.readExternal(in);
+        lifecycle.readExternal(in);
+        execSvc.readExternal(in);
+        seg.readExternal(in);
+        inclProps = U.readString(in);
+        inclEvtTypes = (int[])in.readObject();
+        rest.readExternal(in);
+        userAttrs = U.readMap(in);
+        igfss = U.readCollection(in);
+        env = U.readMap(in);
+        sysProps = (Properties)in.readObject();
+        atomic.readExternal(in);
+        txCfg.readExternal(in);
+        memCfg.readExternal(in);
     }
 
     /** {@inheritDoc} */

@@ -17,12 +17,16 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data collector task arguments.
  */
-public class VisorNodeDataCollectorTaskArg implements Serializable {
+public class VisorNodeDataCollectorTaskArg extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -139,5 +143,23 @@ public class VisorNodeDataCollectorTaskArg implements Serializable {
      */
     public void systemCaches(boolean sysCaches) {
         this.sysCaches = sysCaches;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeBoolean(taskMonitoringEnabled);
+        U.writeString(out, evtOrderKey);
+        U.writeString(out, evtThrottleCntrKey);
+        out.writeInt(sample);
+        out.writeBoolean(sysCaches);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        taskMonitoringEnabled = in.readBoolean();
+        evtOrderKey = U.readString(in);
+        evtThrottleCntrKey = U.readString(in);
+        sample = in.readInt();
+        sysCaches = in.readBoolean();
     }
 }

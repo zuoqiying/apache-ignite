@@ -17,13 +17,17 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.cache.VisorCache;
 import org.apache.ignite.internal.visor.event.VisorGridEvent;
 import org.apache.ignite.internal.visor.igfs.VisorIgfs;
@@ -33,45 +37,52 @@ import org.apache.ignite.internal.visor.util.VisorExceptionWrapper;
 /**
  * Data collector task result.
  */
-public class VisorNodeDataCollectorTaskResult implements Serializable {
+public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** Unhandled exceptions from nodes. */
-    private final Map<UUID, VisorExceptionWrapper> unhandledEx = new HashMap<>();
+    private Map<UUID, VisorExceptionWrapper> unhandledEx = new HashMap<>();
 
     /** Nodes grid names. */
-    private final Map<UUID, String> gridNames = new HashMap<>();
+    private Map<UUID, String> gridNames = new HashMap<>();
 
     /** Nodes topology versions. */
-    private final Map<UUID, Long> topVersions = new HashMap<>();
+    private Map<UUID, Long> topVersions = new HashMap<>();
 
     /** All task monitoring state collected from nodes. */
-    private final Map<UUID, Boolean> taskMonitoringEnabled = new HashMap<>();
+    private Map<UUID, Boolean> taskMonitoringEnabled = new HashMap<>();
 
     /** Nodes error counts. */
-    private final Map<UUID, Long> errCnts = new HashMap<>();
+    private Map<UUID, Long> errCnts = new HashMap<>();
 
     /** All events collected from nodes. */
-    private final List<VisorGridEvent> evts = new ArrayList<>();
+    private List<VisorGridEvent> evts = new ArrayList<>();
 
     /** Exceptions caught during collecting events from nodes. */
-    private final Map<UUID, VisorExceptionWrapper> evtsEx = new HashMap<>();
+    private Map<UUID, VisorExceptionWrapper> evtsEx = new HashMap<>();
 
     /** All caches collected from nodes. */
-    private final Map<UUID, Collection<VisorCache>> caches = new HashMap<>();
+    private Map<UUID, Collection<VisorCache>> caches = new HashMap<>();
 
     /** Exceptions caught during collecting caches from nodes. */
-    private final Map<UUID, VisorExceptionWrapper> cachesEx = new HashMap<>();
+    private Map<UUID, VisorExceptionWrapper> cachesEx = new HashMap<>();
 
     /** All IGFS collected from nodes. */
-    private final Map<UUID, Collection<VisorIgfs>> igfss = new HashMap<>();
+    private Map<UUID, Collection<VisorIgfs>> igfss = new HashMap<>();
 
     /** All IGFS endpoints collected from nodes. */
-    private final Map<UUID, Collection<VisorIgfsEndpoint>> igfsEndpoints = new HashMap<>();
+    private Map<UUID, Collection<VisorIgfsEndpoint>> igfsEndpoints = new HashMap<>();
 
     /** Exceptions caught during collecting IGFS from nodes. */
-    private final Map<UUID, VisorExceptionWrapper> igfssEx = new HashMap<>();
+    private Map<UUID, VisorExceptionWrapper> igfssEx = new HashMap<>();
+
+    /**
+     * Default constructor.
+     */
+    public VisorNodeDataCollectorTaskResult() {
+        // No-op.
+    }
 
     /**
      * @return {@code true} If no data was collected.
@@ -173,5 +184,37 @@ public class VisorNodeDataCollectorTaskResult implements Serializable {
      */
     public Map<UUID, Long> getErrorCounts() {
         return errCnts;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeMap(out, unhandledEx);
+        U.writeMap(out, gridNames);
+        U.writeMap(out, topVersions);
+        U.writeMap(out, taskMonitoringEnabled);
+        U.writeMap(out, errCnts);
+        U.writeCollection(out, evts);
+        U.writeMap(out, evtsEx);
+        U.writeMap(out, caches);
+        U.writeMap(out, cachesEx);
+        U.writeMap(out, igfss);
+        U.writeMap(out, igfsEndpoints);
+        U.writeMap(out, igfssEx);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        unhandledEx = U.readMap(in);
+        gridNames = U.readMap(in);
+        topVersions = U.readMap(in);
+        taskMonitoringEnabled = U.readMap(in);
+        errCnts = U.readMap(in);
+        evts = U.readList(in);
+        evtsEx = U.readMap(in);
+        caches = U.readMap(in);
+        cachesEx = U.readMap(in);
+        igfss = U.readMap(in);
+        igfsEndpoints = U.readMap(in);
+        igfssEx = U.readMap(in);
     }
 }

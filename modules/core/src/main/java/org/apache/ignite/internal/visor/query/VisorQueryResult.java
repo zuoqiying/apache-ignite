@@ -17,25 +17,36 @@
 
 package org.apache.ignite.internal.visor.query;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.List;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Result for cache query tasks.
  */
-public class VisorQueryResult implements Serializable {
+public class VisorQueryResult extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** Rows fetched from query. */
-    private final List<Object[]> rows;
+    private List<Object[]> rows;
 
     /** Whether query has more rows to fetch. */
-    private final boolean hasMore;
+    private boolean hasMore;
 
     /** Query duration */
-    private final long duration;
+    private long duration;
+
+    /**
+     * Default constructor.
+     */
+    public VisorQueryResult() {
+        // No-op.
+    }
 
     /**
      * Create task result with given parameters
@@ -69,6 +80,20 @@ public class VisorQueryResult implements Serializable {
      */
     public long getDuration() {
         return duration;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeCollection(out, rows);
+        out.writeBoolean(hasMore);
+        out.writeLong(duration);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        rows = U.readList(in);
+        hasMore = in.readBoolean();
+        duration = in.readLong();
     }
 
     /** {@inheritDoc} */

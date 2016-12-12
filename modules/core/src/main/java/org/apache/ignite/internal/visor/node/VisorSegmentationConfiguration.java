@@ -17,9 +17,13 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.plugin.segmentation.SegmentationPolicy;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +32,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
 /**
  * Data transfer object for node segmentation configuration properties.
  */
-public class VisorSegmentationConfiguration implements Serializable {
+public class VisorSegmentationConfiguration extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -46,6 +50,13 @@ public class VisorSegmentationConfiguration implements Serializable {
 
     /** Whether or not all resolvers should succeed for node to be in correct segment. */
     private boolean allResolversPassReq;
+
+    /**
+     * Default constructor.
+     */
+    public VisorSegmentationConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for node segmentation configuration properties.
@@ -98,5 +109,23 @@ public class VisorSegmentationConfiguration implements Serializable {
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(VisorSegmentationConfiguration.class, this);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeEnum(out, plc);
+        U.writeString(out, resolvers);
+        out.writeLong(checkFreq);
+        out.writeBoolean(waitOnStart);
+        out.writeBoolean(allResolversPassReq);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        plc = SegmentationPolicy.fromOrdinal(in.readByte());
+        resolvers = U.readString(in);
+        checkFreq = in.readLong();
+        waitOnStart = in.readBoolean();
+        allResolversPassReq = in.readBoolean();
     }
 }

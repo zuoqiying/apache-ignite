@@ -17,9 +17,13 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
@@ -27,12 +31,19 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.compactArray;
 /**
  * Data transfer object for node lifecycle configuration properties.
  */
-public class VisorLifecycleConfiguration implements Serializable {
+public class VisorLifecycleConfiguration extends VisorDataTransferObject{
     /** */
     private static final long serialVersionUID = 0L;
 
     /** Lifecycle beans. */
     private String beans;
+
+    /**
+     * Default constructor.
+     */
+    public VisorLifecycleConfiguration() {
+        // No-op.
+    }
 
     /**
      * Create data transfer object for node lifecycle configuration properties.
@@ -48,6 +59,16 @@ public class VisorLifecycleConfiguration implements Serializable {
      */
     @Nullable public String getBeans() {
         return beans;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, beans);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        beans = U.readString(in);
     }
 
     /** {@inheritDoc} */

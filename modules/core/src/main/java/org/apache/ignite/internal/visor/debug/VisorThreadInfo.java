@@ -307,7 +307,7 @@ public class VisorThreadInfo extends VisorDataTransferObject {
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
         U.writeString(out, name);
         out.writeObject(id);
-        U.writeEnum(out, state);
+        U.writeString(out, state.toString());
         out.writeBoolean(lock != null);
 
         if (lock != null)
@@ -331,9 +331,9 @@ public class VisorThreadInfo extends VisorDataTransferObject {
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
         name = U.readString(in);
         id = (Long)in.readObject();
-        // state = Thread.State.fromOrdinal(in.readByte());
-        // TODO Fix read byte to read enum.
-        in.readByte();
+
+        String statePresentation = state.toString();
+        state = Enum.valueOf(Thread.State.class, statePresentation);
 
         if (in.readBoolean()) {
             lock = new VisorThreadLockInfo();

@@ -17,7 +17,9 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +33,8 @@ import org.apache.ignite.events.TaskEvent;
 import org.apache.ignite.internal.processors.task.GridInternal;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorMultiNodeTask;
 import org.apache.ignite.internal.visor.event.VisorGridEvent;
@@ -75,24 +79,31 @@ public class VisorNodeEventsCollectorTask extends VisorMultiNodeTask<VisorNodeEv
      * Argument for task returns events data.
      */
     @SuppressWarnings("PublicInnerClass")
-    public static class VisorNodeEventsCollectorTaskArg implements Serializable {
+    public static class VisorNodeEventsCollectorTaskArg extends VisorDataTransferObject {
         /** */
         private static final long serialVersionUID = 0L;
 
         /** Node local storage key. */
-        private final String keyOrder;
+        private String keyOrder;
 
         /** Arguments for type filter. */
-        private final int[] typeArg;
+        private int[] typeArg;
 
         /** Arguments for time filter. */
-        private final Long timeArg;
+        private Long timeArg;
 
         /** Task or job events with task name contains. */
-        private final String taskName;
+        private String taskName;
 
         /** Task or job events with session. */
-        private final IgniteUuid taskSesId;
+        private IgniteUuid taskSesId;
+
+        /**
+         * Default constructor.
+         */
+        public VisorNodeEventsCollectorTaskArg() {
+            // No-op.
+        }
 
         /**
          * @param keyOrder Arguments for node local storage key.
@@ -171,6 +182,24 @@ public class VisorNodeEventsCollectorTask extends VisorMultiNodeTask<VisorNodeEv
          */
         public IgniteUuid taskSessionId() {
             return taskSesId;
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+            U.writeString(out, keyOrder);
+            out.writeObject(typeArg);
+            out.writeObject(timeArg);
+            U.writeString(out, taskName);
+            U.writeGridUuid(out, taskSesId);
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+            keyOrder = U.readString(in);
+            typeArg = (int[])in.readObject();
+            timeArg = (Long)in.readObject();
+            taskName = U.readString(in);
+            taskSesId = U.readGridUuid(in);
         }
 
         /** {@inheritDoc} */
