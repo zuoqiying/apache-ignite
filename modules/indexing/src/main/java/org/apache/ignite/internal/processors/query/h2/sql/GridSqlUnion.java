@@ -41,16 +41,21 @@ public class GridSqlUnion extends GridSqlQuery {
     private GridSqlQuery left;
 
     /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
     @Override public <E extends GridSqlAst> E child(int childIdx) {
         if (childIdx < LEFT_CHILD)
             return super.child(childIdx);
 
         switch (childIdx) {
             case LEFT_CHILD:
-                return maskNull(left);
+                assert left != null;
+
+                return (E)left;
 
             case RIGHT_CHILD:
-                return maskNull(right);
+                assert right != null;
+
+                return (E)right;
 
             default:
                 throw new IllegalStateException("Child index: " + childIdx);

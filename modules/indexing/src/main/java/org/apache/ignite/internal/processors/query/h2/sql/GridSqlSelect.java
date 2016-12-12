@@ -77,10 +77,10 @@ public class GridSqlSelect extends GridSqlQuery {
 
         switch (childIdx) {
             case FROM_CHILD:
-                return maskNull(from);
+                return maskNull(from, GridSqlPlaceholder.EMPTY);
 
             case WHERE_CHILD:
-                return maskNull(where);
+                return maskNull(where, GridSqlConst.TRUE);
 
             default:
                 return (E)cols.get(childIdx - COLS_CHILD);

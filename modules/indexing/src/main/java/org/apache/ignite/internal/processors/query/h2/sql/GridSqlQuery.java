@@ -135,10 +135,10 @@ public abstract class GridSqlQuery implements GridSqlAst {
     @Override public <E extends GridSqlAst> E child(int childIdx) {
         switch (childIdx) {
             case OFFSET_CHILD:
-                return maskNull(offset);
+                return maskNull(offset, GridSqlPlaceholder.EMPTY);
 
             case LIMIT_CHILD:
-                return maskNull(limit);
+                return maskNull(limit, GridSqlPlaceholder.EMPTY);
 
             default:
                 throw new IllegalStateException("Child index: " + childIdx);
@@ -150,8 +150,8 @@ public abstract class GridSqlQuery implements GridSqlAst {
      * @return Empty placeholder if the element is {@code null}.
      */
     @SuppressWarnings("unchecked")
-    protected static <E extends GridSqlAst> E maskNull(GridSqlAst x) {
-        return (E)(x == null ? GridSqlPlaceholder.EMPTY : x);
+    protected static <E extends GridSqlAst> E maskNull(GridSqlAst x, GridSqlAst dflt) {
+        return (E)(x == null ? dflt : x);
     }
 
     /** {@inheritDoc} */
