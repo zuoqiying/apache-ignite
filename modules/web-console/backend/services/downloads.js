@@ -32,10 +32,10 @@ module.exports = {
  * @param settings
  * @param agentMgr
  * @param errors
- * @returns {AgentsService}
+ * @returns {DownloadsService}
  */
 module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
-    class AgentsService {
+    class DownloadsService {
         /**
          * Get agent archive with user agent configuration.
          *
@@ -79,5 +79,5 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
         }
     }
 
-    return new AgentsService();
+    return new DownloadsService();
 };

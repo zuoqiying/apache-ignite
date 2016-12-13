@@ -131,7 +131,7 @@ module.exports.factory = (_, errors, settings, mongo, spacesService, mailsServic
                 })
                 .then((user) => {
                     if (changed.token && user.token !== changed.token)
-                        agentMgr.tryStopAgents(user);
+                        agentMgr.onTokenReset(user);
 
                     _.extend(user, changed);
 

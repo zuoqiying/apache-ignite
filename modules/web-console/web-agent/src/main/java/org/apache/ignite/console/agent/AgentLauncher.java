@@ -82,7 +82,10 @@ public class AgentLauncher {
     private static final String EVENT_NODE_REST = "node:rest";
 
     /** */
-    private static final String EVENT_RESET_TOKENS = "agent:reset:tokens";
+    private static final String EVENT_RESET_TOKENS = "agent:reset:token";
+
+    /** */
+    private static final String EVENT_LOG_WARNING = "log:warn";
 
     /** */
     private static final int RECONNECT_INTERVAL = 3000;
@@ -147,7 +150,7 @@ public class AgentLauncher {
      */
     private static final Emitter.Listener onDisconnect = new Emitter.Listener() {
         @Override public void call(Object... args) {
-            log.error(String.format("Connection closed: %s.", args));
+            log.error("Connection closed: %s.", args);
         }
     };
 
@@ -321,6 +324,12 @@ public class AgentLauncher {
                 .on(EVENT_ERROR, onError)
                 .on(EVENT_DISCONNECT, onDisconnect)
 
+                .on(EVENT_LOG_WARNING, new Emitter.Listener() {
+                    @Override public void call(Object... args) {
+                        log.warn(String.valueOf(args[0]));
+                    }
+                })
+
                 .on(EVENT_START_COLLECT_TOPOLOGY, topHnd.start())
                 .on(EVENT_STOP_COLLECT_TOPOLOGY, topHnd.stop())
 
@@ -333,28 +342,16 @@ public class AgentLauncher {
 
                 .on(EVENT_RESET_TOKENS, new Emitter.Listener() {
                     @Override public void call(Object... args) {
-                        if (args.length != 2) {
-                            log.warn("Incorrect arguments for command: " + Arrays.toString(args));
+                        String tok = String.valueOf(args[0]);
 
-                            return;
-                        }
+                        log.warn("Security token has been reset: %s", tok);
 
-                        String type = String.valueOf(args[0]);
-                        String msg = String.valueOf(args[1]);
+                        cfg.tokens().remove(tok);
 
-                        switch (type) {
-                            case "ERROR":
-                                log.error(msg);
+                        if (cfg.tokens().isEmpty()) {
+                            client.off();
 
-                                break;
-
-                            case "WARN":
-                                log.warn(msg);
-
-                                break;
-
-                            default:
-                                log.debug(msg);
+                            latch.countDown();
                         }
                     }
                 });

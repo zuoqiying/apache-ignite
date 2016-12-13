@@ -49,7 +49,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
         constructor() {
             /**
              * Connected agents by user id.
-             * @type {Object.<ObjectId, Array.<AgentSocket>>}
+             * @type {Object.<String, Array.<AgentSocket>>}
              */
             this._agentSockets = {};
 
@@ -162,12 +162,13 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                             if (_.isEmpty(accounts))
                                 return cb('Agent is failed to authenticate. Please check agent\'s tokens');
 
-                            const missedTokens = _.difference(tokens, _.map(accounts, 'token'));
+                            const activeTokens = _.map(accounts, 'token');
+                            const missedTokens = _.difference(tokens, activeTokens);
 
                             if (missedTokens.length)
-                                socket.emit('agent:warning', `Failed to authenticate with token(s): ${missedTokens.join(', ')}.`);
+                                socket.emit('agent:warning', `Invalid token(s): ${missedTokens.join(', ')}.`);
 
-                            this.attachAgent(accounts, new AgentSocket(socket));
+                            this.onAgentConnect(activeTokens, new AgentSocket(socket));
 
                             cb();
                         })
@@ -178,79 +179,35 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
         }
 
         /**
-         * Send active browsers new agent count.
-         * @param {mongo.ObjectId} accId Account id.
-         * @param count New agents count.
-         * @private
-         */
-        _sendNewAgentCount(accId, count) {
-            const browserSockets = this._browserSockets[accId];
-
-            _.forEach(browserSockets, (socket) => socket.emit('agent:count', {count}));
-        }
-
-        /**
-         * Link agent with browsers by account.
-         *
-         * @param {Array.<mongo.Account>} accounts
-         * @param {AgentSocket} agentSocket
-         */
-        attachAgent(accounts, agentSocket) {
-            const accIds = _.map(accounts, '_id');
-
-            agentSocket.socket.on('disconnect', () => {
-                _.forEach(accIds, (accId) => {
-                    const agentSockets = this._agentSockets[accId];
-
-                    if (agentSockets && agentSockets.length)
-                        _.pull(agentSockets, agentSocket);
-
-                    this._sendNewAgentCount(accId, agentSockets.length);
-                });
-            });
-
-            _.forEach(accIds, (accId) => {
-                let agentSockets = this._agentSockets[accId];
-
-                if (_.isNil(agentSockets))
-                    this._agentSockets[accId] = agentSockets = [];
-
-                agentSockets.push(agentSocket);
-
-                this._sendNewAgentCount(accId, agentSockets.length);
-            });
-        }
-
-        /**
-         * @param {ObjectId} accId
+         * @param {String} token
          * @returns {Promise.<AgentSocket>}
          */
-        forAccount(accId) {
+        forToken(token) {
             if (!this.io)
                 return Promise.reject(new Error('Agent server not started yet!'));
 
-            const agentSockets = this._agentSockets[accId];
+            const sockets = this._agentSockets[token];
 
-            if (_.isEmpty(agentSockets))
-                return Promise.reject(new Error('Failed to connect to agent'));
+            if (_.isEmpty(sockets))
+                return Promise.reject(new Error('Failed to find connected agent for this token'));
 
-            return Promise.resolve(agentSockets[0]);
+            return Promise.resolve(sockets[0]);
         }
 
         /**
-         * @param {ObjectId} accId
+         * @param {ObjectId} token
          * @param {AgentSocket} browserSocket
          * @returns {int} Connected agent count.
          */
-        connectBrowser(accId, browserSocket) {
-            let browserSockets = this._browserSockets[accId];
+        onBrowserConnect(token, browserSocket) {
+            let browserSockets = this._browserSockets[token];
 
             if (!browserSockets)
-                this._browserSockets[accId] = browserSockets = [];
+                this._browserSockets[token] = browserSockets = [];
 
             browserSockets.push(browserSocket);
 
-            const count = _.get(this._agentSockets[accId], 'length') || 0;
+            const count = _.get(this._agentSockets[token], 'length') || 0;
 
             browserSocket.emit('agent:count', {count});
         }
@@ -258,42 +215,61 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
         /**
          * @param {AgentSocket} browserSocket.
          */
-        disconnectBrowser(browserSocket) {
-            const accId = browserSocket.client.request.user._id;
+        onBrowserDisconnect(browserSocket) {
+            const token = browserSocket.client.request.user.token;
 
-            const browserSockets = this._browserSockets[accId];
+            const browserSockets = this._browserSockets[token];
 
             _.pull(browserSockets, browserSocket);
         }
 
         /**
-         * Try stop agent for account if not used by others.
+         * Link agent with browsers by account.
          *
-         * @param {mongo.<Account>} account
+         * @param {Array.<String>} tokens
+         * @param {AgentSocket} agentSocket
          */
-        tryStopAgents(account) {
+        onAgentConnect(tokens, agentSocket) {
+            const emitAgentCnt = (token, count) => {
+                const sockets = this._browserSockets[token];
+
+                _.forEach(sockets, (socket) => socket.emit('agent:count', {count}));
+            };
+
+            agentSocket.socket.on('disconnect', () => {
+                _.forEach(tokens, (token) => {
+                    const socket = this._agentSockets[token];
+
+                    _.pull(socket, agentSocket);
+
+                    emitAgentCnt(token, socket.length);
+                });
+            });
+
+            _.forEach(tokens, (token) => {
+                let socket = this._agentSockets[token];
+
+                if (_.isNil(socket))
+                    this._agentSockets[token] = socket = [];
+
+                socket.push(agentSocket);
+
+                emitAgentCnt(token, socket.length);
+            });
+        }
+
+        /**
+         * Try stop agent for token if not used by others.
+         *
+         * @param {String} token
+         */
+        onTokenReset(token) {
             if (_.isNil(this.io))
                 return;
 
-            const accId = account._id;
+            const sockets = this._agentSockets[token];
 
-            const agentsForClose = this._agentSockets[accId];
-
-            this._agentSockets[accId] = [];
-
-            const agentsForWarning = _.clone(agentsForClose);
-
-            _.forEach(this._agentSockets, (agentSockets) => _.pullAll(agentsForClose, agentSockets));
-
-            _.pullAll(agentsForWarning, agentsForClose);
-
-            const msg = `Security token has been reset: ${account.token}`;
-
-            _.forEach(agentsForWarning, (socket) => socket._emit('agent:warning', msg));
-
-            _.forEach(agentsForClose, (socket) => socket._emit('agent:close', msg));
-
-            this._sendNewAgentCount(accId, 0);
+            _.forEach(sockets, (socket) => socket._emit('agent:reset:token', token));
         }
     }
 

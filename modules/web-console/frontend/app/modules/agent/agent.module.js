@@ -65,7 +65,7 @@ class IgniteAgentMonitor {
         this._scope.downloadAgent = () => {
             const lnk = document.createElement('a');
 
-            lnk.setAttribute('href', '/api/v1/agent/download/zip');
+            lnk.setAttribute('href', '/api/v1/agent/download/agent');
             lnk.setAttribute('target', '_self');
             lnk.setAttribute('download', null);
             lnk.style.display = 'none';

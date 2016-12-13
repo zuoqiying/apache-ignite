@@ -27,16 +27,16 @@ module.exports = {
 /**
  * @param _
  * @param express
- * @param {AgentsService} agentsService
+ * @param {DownloadsService} downloadsService
  * @returns {Promise}
  */
-module.exports.factory = function(_, express, agentsService) {
+module.exports.factory = function(_, express, downloadsService) {
     return new Promise((resolveFactory) => {
         const router = new express.Router();
 
         /* Get grid topology. */
-        router.get('/download/zip', (req, res) => {
-            agentsService.prepareArchive(req.origin(), req.user.token)
+        router.get('/download/agent', (req, res) => {
+            downloadsService.prepareArchive(req.origin(), req.user.token)
                 .then(({fileName, buffer}) => {
                     // Set the archive name.
                     res.attachment(fileName);
