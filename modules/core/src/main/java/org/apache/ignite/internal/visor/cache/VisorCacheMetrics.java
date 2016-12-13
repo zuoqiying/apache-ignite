@@ -598,7 +598,7 @@ public class VisorCacheMetrics extends VisorDataTransferObject {
         out.writeInt(txDhtRolledbackVersionsSize);
         out.writeLong(offHeapAllocatedSize);
         out.writeLong(offHeapEntriesCnt);
-        qryMetrics.writeExternal(out);
+        out.writeObject(qryMetrics);
     }
 
     /** {@inheritDoc} */
@@ -644,9 +644,7 @@ public class VisorCacheMetrics extends VisorDataTransferObject {
         txDhtRolledbackVersionsSize = in.readInt();
         offHeapAllocatedSize = in.readLong();
         offHeapEntriesCnt = in.readLong();
-
-        qryMetrics = new VisorCacheQueryMetrics();
-        qryMetrics.readExternal(in);
+        qryMetrics = (VisorCacheQueryMetrics)in.readObject();
     }
 
     /** {@inheritDoc} */

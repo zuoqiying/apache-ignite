@@ -70,35 +70,35 @@ public class VisorQueryArg extends VisorDataTransferObject {
     /**
      * @return Cache name.
      */
-    public String cacheName() {
+    public String getCacheName() {
         return cacheName;
     }
 
     /**
      * @return Query txt.
      */
-    public String queryTxt() {
+    public String getQueryText() {
         return qryTxt;
     }
 
     /**
      * @return Distributed joins enabled flag.
      */
-    public boolean distributedJoins() {
+    public boolean isDistributedJoins() {
         return distributedJoins;
     }
 
     /**
      * @return {@code true} if query should be executed locally.
      */
-    public boolean local() {
+    public boolean isLocal() {
         return loc;
     }
 
     /**
      * @return Page size.
      */
-    public int pageSize() {
+    public int getPageSize() {
         return pageSize;
     }
 

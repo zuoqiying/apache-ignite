@@ -99,21 +99,21 @@ public class VisorTaskArgument<A> extends VisorDataTransferObject {
     /**
      * @return Node IDs task should be mapped to.
      */
-    public Collection<UUID> nodes() {
+    public Collection<UUID> getNodes() {
         return nodes;
     }
 
     /**
      * @return Task argument.
      */
-    public A argument() {
+    public A getArgument() {
         return arg;
     }
 
     /**
      * @return Debug flag.
      */
-    public boolean debug() {
+    public boolean isDebug() {
         return debug;
     }
 

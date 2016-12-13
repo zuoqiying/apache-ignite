@@ -142,7 +142,7 @@ public class VisorTaskUtils {
     /** Comparator for log files by last modified date. */
     private static final Comparator<VisorLogFile> LAST_MODIFIED = new Comparator<VisorLogFile>() {
         @Override public int compare(VisorLogFile f1, VisorLogFile f2) {
-            return Long.compare(f2.lastModified(), f1.lastModified());
+            return Long.compare(f2.getLastModified(), f1.getLastModified());
         }
     };
 

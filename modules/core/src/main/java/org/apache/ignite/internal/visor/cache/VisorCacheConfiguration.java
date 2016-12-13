@@ -349,18 +349,18 @@ public class VisorCacheConfiguration extends VisorDataTransferObject {
         out.writeInt(maxConcurrentAsyncOps);
         U.writeString(out, interceptor);
         out.writeLong(dfltLockTimeout);
-        affinityCfg.writeExternal(out);
-        rebalanceCfg.writeExternal(out);
-        evictCfg.writeExternal(out);
-        nearCfg.writeExternal(out);
-        storeCfg.writeExternal(out);
+        out.writeObject(affinityCfg);
+        out.writeObject(rebalanceCfg);
+        out.writeObject(evictCfg);
+        out.writeObject(nearCfg);
+        out.writeObject(storeCfg);
         U.writeCollection(out, typeMeta);
         out.writeBoolean(statisticsEnabled);
         out.writeBoolean(mgmtEnabled);
         U.writeString(out, ldrFactory);
         U.writeString(out, writerFactory);
         U.writeString(out, expiryPlcFactory);
-        qryCfg.writeExternal(out);
+        out.writeObject(qryCfg);
         out.writeBoolean(sys);
     }
 
@@ -378,32 +378,18 @@ public class VisorCacheConfiguration extends VisorDataTransferObject {
         maxConcurrentAsyncOps = in.readInt();
         interceptor = U.readString(in);
         dfltLockTimeout = in.readLong();
-
-        affinityCfg = new VisorCacheAffinityConfiguration();
-        affinityCfg.readExternal(in);
-
-        rebalanceCfg = new VisorCacheRebalanceConfiguration();
-        rebalanceCfg.readExternal(in);
-
-        evictCfg = new VisorCacheEvictionConfiguration();
-        evictCfg.readExternal(in);
-
-        nearCfg = new VisorCacheNearConfiguration();
-        nearCfg.readExternal(in);
-
-        storeCfg = new VisorCacheStoreConfiguration();
-        storeCfg.readExternal(in);
-
+        affinityCfg = (VisorCacheAffinityConfiguration)in.readObject();
+        rebalanceCfg = (VisorCacheRebalanceConfiguration)in.readObject();
+        evictCfg = (VisorCacheEvictionConfiguration)in.readObject();
+        nearCfg = (VisorCacheNearConfiguration)in.readObject();
+        storeCfg = (VisorCacheStoreConfiguration)in.readObject();
         typeMeta = U.readCollection(in);
         statisticsEnabled = in.readBoolean();
         mgmtEnabled = in.readBoolean();
         ldrFactory = U.readString(in);
         writerFactory = U.readString(in);
         expiryPlcFactory = U.readString(in);
-
-        qryCfg = new VisorCacheQueryConfiguration();
-        qryCfg.readExternal(in);
-
+        qryCfg = (VisorCacheQueryConfiguration)in.readObject();
         sys = in.readBoolean();
     }
 

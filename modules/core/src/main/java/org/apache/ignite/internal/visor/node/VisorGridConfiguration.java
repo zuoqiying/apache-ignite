@@ -207,7 +207,7 @@ public class VisorGridConfiguration extends VisorDataTransferObject {
     /**
      * @return Igfss.
      */
-    public Iterable<VisorIgfsConfiguration> getIgfss() {
+    public Collection<VisorIgfsConfiguration> getIgfss() {
         return igfss;
     }
 
@@ -248,44 +248,44 @@ public class VisorGridConfiguration extends VisorDataTransferObject {
 
     /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-        basic.writeExternal(out);
-        metrics.writeExternal(out);
-        spis.writeExternal(out);
-        p2p.writeExternal(out);
-        lifecycle.writeExternal(out);
-        execSvc.writeExternal(out);
-        seg.writeExternal(out);
+        out.writeObject(basic);
+        out.writeObject(metrics);
+        out.writeObject(spis);
+        out.writeObject(p2p);
+        out.writeObject(lifecycle);
+        out.writeObject(execSvc);
+        out.writeObject(seg);
         U.writeString(out, inclProps);
         out.writeObject(inclEvtTypes);
-        rest.writeExternal(out);
+        out.writeObject(rest);
         U.writeMap(out, userAttrs);
         U.writeCollection(out, igfss);
         U.writeMap(out, env);
         out.writeObject(sysProps);
-        atomic.writeExternal(out);
-        txCfg.writeExternal(out);
-        memCfg.writeExternal(out);
+        out.writeObject(atomic);
+        out.writeObject(txCfg);
+        out.writeObject(memCfg);
     }
 
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-        basic.readExternal(in);
-        metrics.readExternal(in);
-        spis.readExternal(in);
-        p2p.readExternal(in);
-        lifecycle.readExternal(in);
-        execSvc.readExternal(in);
-        seg.readExternal(in);
+        basic = (VisorBasicConfiguration)in.readObject();
+        metrics = (VisorMetricsConfiguration)in.readObject();
+        spis = (VisorSpisConfiguration)in.readObject();
+        p2p = (VisorPeerToPeerConfiguration)in.readObject();
+        lifecycle = (VisorLifecycleConfiguration)in.readObject();
+        execSvc = (VisorExecutorServiceConfiguration)in.readObject();
+        seg = (VisorSegmentationConfiguration)in.readObject();
         inclProps = U.readString(in);
         inclEvtTypes = (int[])in.readObject();
-        rest.readExternal(in);
+        rest = (VisorRestConfiguration)in.readObject();
         userAttrs = U.readMap(in);
         igfss = U.readCollection(in);
         env = U.readMap(in);
         sysProps = (Properties)in.readObject();
-        atomic.readExternal(in);
-        txCfg.readExternal(in);
-        memCfg.readExternal(in);
+        atomic = (VisorAtomicConfiguration)in.readObject();
+        txCfg = (VisorTransactionConfiguration)in.readObject();
+        memCfg = (VisorMemoryConfiguration)in.readObject();
     }
 
     /** {@inheritDoc} */

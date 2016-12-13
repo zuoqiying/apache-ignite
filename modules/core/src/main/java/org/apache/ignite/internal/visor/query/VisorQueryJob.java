@@ -87,8 +87,8 @@ public class VisorQueryJob extends VisorJob<VisorQueryArg, IgniteBiTuple<? exten
     private QueryCursor<Cache.Entry<Object, Object>> scan(IgniteCache<Object, Object> c, VisorQueryArg arg,
         IgniteBiPredicate<Object, Object> filter) {
         ScanQuery<Object, Object> qry = new ScanQuery<>(filter);
-        qry.setPageSize(arg.pageSize());
-        qry.setLocal(arg.local());
+        qry.setPageSize(arg.getPageSize());
+        qry.setLocal(arg.isLocal());
 
         return c.withKeepBinary().query(qry);
     }
@@ -108,7 +108,7 @@ public class VisorQueryJob extends VisorJob<VisorQueryArg, IgniteBiTuple<? exten
         try {
             UUID nid = ignite.localNode().id();
 
-            String qryTxt = arg.queryTxt();
+            String qryTxt = arg.getQueryText();
 
             boolean scan = qryTxt == null;
 
@@ -121,7 +121,7 @@ public class VisorQueryJob extends VisorJob<VisorQueryArg, IgniteBiTuple<? exten
             // Generate query ID to store query cursor in node local storage.
             String qryId = (scanAny ? SCAN_QRY_NAME : SQL_QRY_NAME) + "-" + UUID.randomUUID();
 
-            IgniteCache<Object, Object> c = cache(arg.cacheName());
+            IgniteCache<Object, Object> c = cache(arg.getCacheName());
 
             if (scanAny) {
                 long start = U.currentTimeMillis();
@@ -140,7 +140,7 @@ public class VisorQueryJob extends VisorJob<VisorQueryArg, IgniteBiTuple<? exten
 
                 VisorQueryCursor<Cache.Entry<Object, Object>> cur = new VisorQueryCursor<>(near ? near(c) : scan(c, arg, filter));
 
-                List<Object[]> rows = fetchScanQueryRows(cur, arg.pageSize());
+                List<Object[]> rows = fetchScanQueryRows(cur, arg.getPageSize());
 
                 long duration = U.currentTimeMillis() - start; // Scan duration + fetch duration.
 
@@ -158,10 +158,10 @@ public class VisorQueryJob extends VisorJob<VisorQueryArg, IgniteBiTuple<? exten
                     duration));
             }
             else {
-                SqlFieldsQuery qry = new SqlFieldsQuery(arg.queryTxt());
-                qry.setPageSize(arg.pageSize());
-                qry.setLocal(arg.local());
-                qry.setDistributedJoins(arg.distributedJoins());
+                SqlFieldsQuery qry = new SqlFieldsQuery(arg.getQueryText());
+                qry.setPageSize(arg.getPageSize());
+                qry.setLocal(arg.isLocal());
+                qry.setDistributedJoins(arg.isDistributedJoins());
 
                 long start = U.currentTimeMillis();
 
@@ -179,7 +179,7 @@ public class VisorQueryJob extends VisorJob<VisorQueryArg, IgniteBiTuple<? exten
                         names.add(new VisorQueryField(col.schemaName(), col.typeName(),
                             col.fieldName(), col.fieldTypeName()));
 
-                    List<Object[]> rows = fetchSqlQueryRows(cur, arg.pageSize());
+                    List<Object[]> rows = fetchSqlQueryRows(cur, arg.getPageSize());
 
                     long duration = U.currentTimeMillis() - start; // Query duration + fetch duration.
 

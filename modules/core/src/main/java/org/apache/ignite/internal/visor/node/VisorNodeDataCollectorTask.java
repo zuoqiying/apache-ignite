@@ -83,33 +83,33 @@ public class VisorNodeDataCollectorTask extends VisorMultiNodeTask<VisorNodeData
      */
     protected void reduceJobResult(VisorNodeDataCollectorTaskResult taskRes,
         VisorNodeDataCollectorJobResult jobRes, UUID nid) {
-        taskRes.getGridNames().put(nid, jobRes.gridName());
+        taskRes.getGridNames().put(nid, jobRes.getGridName());
 
-        taskRes.getTopologyVersions().put(nid, jobRes.topologyVersion());
+        taskRes.getTopologyVersions().put(nid, jobRes.getTopologyVersion());
 
-        taskRes.isTaskMonitoringEnabled().put(nid, jobRes.taskMonitoringEnabled());
+        taskRes.isTaskMonitoringEnabled().put(nid, jobRes.isTaskMonitoringEnabled());
 
-        taskRes.getErrorCounts().put(nid, jobRes.errorCount());
+        taskRes.getErrorCounts().put(nid, jobRes.getErrorCount());
 
-        if (!jobRes.events().isEmpty())
-            taskRes.getEvents().addAll(jobRes.events());
+        if (!jobRes.getEvents().isEmpty())
+            taskRes.getEvents().addAll(jobRes.getEvents());
 
-        if (jobRes.eventsEx() != null)
-            taskRes.getEventsEx().put(nid, new VisorExceptionWrapper(jobRes.eventsEx()));
+        if (jobRes.getEventsEx() != null)
+            taskRes.getEventsEx().put(nid, new VisorExceptionWrapper(jobRes.getEventsEx()));
 
-        if (!jobRes.caches().isEmpty())
-            taskRes.getCaches().put(nid, jobRes.caches());
+        if (!jobRes.getCaches().isEmpty())
+            taskRes.getCaches().put(nid, jobRes.getCaches());
 
-        if (jobRes.cachesEx() != null)
-            taskRes.getCachesEx().put(nid, new VisorExceptionWrapper(jobRes.cachesEx()));
+        if (jobRes.getCachesEx() != null)
+            taskRes.getCachesEx().put(nid, new VisorExceptionWrapper(jobRes.getCachesEx()));
 
-        if (!jobRes.igfss().isEmpty())
-            taskRes.getIgfss().put(nid, jobRes.igfss());
+        if (!jobRes.getIgfss().isEmpty())
+            taskRes.getIgfss().put(nid, jobRes.getIgfss());
 
-        if (!jobRes.igfsEndpoints().isEmpty())
-            taskRes.getIgfsEndpoints().put(nid, jobRes.igfsEndpoints());
+        if (!jobRes.getIgfsEndpoints().isEmpty())
+            taskRes.getIgfsEndpoints().put(nid, jobRes.getIgfsEndpoints());
 
-        if (jobRes.igfssEx() != null)
-            taskRes.getIgfssEx().put(nid, new VisorExceptionWrapper(jobRes.igfssEx()));
+        if (jobRes.getIgfssEx() != null)
+            taskRes.getIgfssEx().put(nid, new VisorExceptionWrapper(jobRes.getIgfssEx()));
     }
 }

@@ -17,7 +17,6 @@
 
 package org.apache.ignite.internal.visor.log;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -26,87 +25,91 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
- * Visor log file.
+ * Arguments for {@link VisorLogSearchTask}.
  */
-public class VisorLogFile extends VisorDataTransferObject {
+@SuppressWarnings("PublicInnerClass")
+public class VisorLogSearchArg extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
-    /** File path. */
-    private String path;
+    /** Searched string. */
+    private String searchStr;
 
-    /** File size. */
-    private long size;
+    /** Folder. */
+    private String folder;
 
-    /** File last modified timestamp. */
-    private long lastModified;
+    /** File name search pattern. */
+    private String filePtrn;
+
+    /** Max number of results. */
+    private int limit;
 
     /**
      * Default constructor.
      */
-    public VisorLogFile() {
+    public VisorLogSearchArg() {
         // No-op.
     }
 
     /**
-     * Create log file for given file.
-     *
-     * @param file Log file.
+     * @param searchStr Searched string.
+     * @param folder Folder.
+     * @param filePtrn File name search pattern.
+     * @param limit Max number of results.
      */
-    public VisorLogFile(File file) {
-        this(file.getAbsolutePath(), file.length(), file.lastModified());
+    public VisorLogSearchArg(String searchStr, String folder, String filePtrn, int limit) {
+        this.searchStr = searchStr;
+        this.folder = folder;
+        this.filePtrn = filePtrn;
+        this.limit = limit;
     }
 
     /**
-     * Create log file with given parameters.
-     *
-     * @param path File path.
-     * @param size File size.
-     * @param lastModified File last modified date.
+     * @return Searched string.
      */
-    public VisorLogFile(String path, long size, long lastModified) {
-        this.path = path;
-        this.size = size;
-        this.lastModified = lastModified;
+    public String getSearchString() {
+        return searchStr;
     }
 
     /**
-     * @return File path.
+     * @return Folder.
      */
-    public String getPath() {
-        return path;
+    public String getFolder() {
+        return folder;
     }
 
     /**
-     * @return File size.
+     * @return File name search pattern.
      */
-    public long getSize() {
-        return size;
+    public String getFilePattern() {
+        return filePtrn;
     }
 
     /**
-     * @return File last modified timestamp.
+     * @return Max number of results.
      */
-    public long getLastModified() {
-        return lastModified;
+    public int getLimit() {
+        return limit;
     }
 
     /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-        U.writeString(out, path);
-        out.writeLong(size);
-        out.writeLong(lastModified);
+        U.writeString(out, searchStr);
+        U.writeString(out, folder);
+        U.writeString(out, filePtrn);
+        out.writeInt(limit);
     }
 
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-        path = U.readString(in);
-        size = in.readLong();
-        lastModified = in.readLong();
+        searchStr = U.readString(in);
+        folder = U.readString(in);
+        filePtrn = U.readString(in);
+        limit = in.readInt();
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(VisorLogFile.class, this);
+        return S.toString(VisorLogSearchArg.class, this);
     }
 }

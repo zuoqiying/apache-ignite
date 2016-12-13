@@ -20,8 +20,6 @@ package org.apache.ignite.internal.visor.log;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -37,7 +35,6 @@ import org.apache.ignite.internal.util.io.GridReversedLinesFileReader;
 import org.apache.ignite.internal.util.lang.GridTuple3;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorMultiNodeTask;
 import org.apache.ignite.lang.IgniteBiTuple;
@@ -51,7 +48,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.textFile;
  * Search text matching in logs
  */
 @GridInternal
-public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchTask.VisorLogSearchArg,
+public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchArg,
     IgniteBiTuple<Iterable<IgniteBiTuple<Exception, UUID>>, Iterable<VisorLogSearchResult>>,
     Collection<VisorLogSearchResult>> {
     /** */
@@ -87,68 +84,6 @@ public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchTask.Vi
 
         return new IgniteBiTuple<Iterable<IgniteBiTuple<Exception, UUID>>, Iterable<VisorLogSearchResult>>
             (exRes.isEmpty() ? null : exRes, searchRes.isEmpty() ? null : searchRes);
-    }
-
-    /**
-     * Arguments for {@link VisorLogSearchTask}.
-     */
-    @SuppressWarnings("PublicInnerClass")
-    public static class VisorLogSearchArg extends VisorDataTransferObject {
-        /** */
-        private static final long serialVersionUID = 0L;
-
-        /** Searched string. */
-        private String searchStr;
-
-        /** Folder. */
-        private String folder;
-
-        /** File name search pattern. */
-        private String filePtrn;
-
-        /** Max number of results. */
-        private int limit;
-
-        /**
-         * Default constructor.
-         */
-        public VisorLogSearchArg() {
-            // No-op.
-        }
-
-        /**
-         * @param searchStr Searched string.
-         * @param folder Folder.
-         * @param filePtrn File name search pattern.
-         * @param limit Max number of results.
-         */
-        public VisorLogSearchArg(String searchStr, String folder, String filePtrn, int limit) {
-            this.searchStr = searchStr;
-            this.folder = folder;
-            this.filePtrn = filePtrn;
-            this.limit = limit;
-        }
-
-        /** {@inheritDoc} */
-        @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-            U.writeString(out, searchStr);
-            U.writeString(out, folder);
-            U.writeString(out, filePtrn);
-            out.writeInt(limit);
-        }
-
-        /** {@inheritDoc} */
-        @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-            searchStr = U.readString(in);
-            folder = U.readString(in);
-            filePtrn = U.readString(in);
-            limit = in.readInt();
-        }
-
-        /** {@inheritDoc} */
-        @Override public String toString() {
-            return S.toString(VisorLogSearchArg.class, this);
-        }
     }
 
     /**
@@ -241,15 +176,15 @@ public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchTask.Vi
 
         /** {@inheritDoc} */
         @Override protected Collection<VisorLogSearchResult> run(VisorLogSearchArg arg) {
-            URL url = U.resolveIgniteUrl(arg.folder);
+            URL url = U.resolveIgniteUrl(arg.getFolder());
 
             if (url == null)
-                throw new IgniteException(new FileNotFoundException("Log folder not found: " + arg.folder));
+                throw new IgniteException(new FileNotFoundException("Log folder not found: " + arg.getFolder()));
 
             UUID uuid = ignite.localNode().id();
             String nid = uuid.toString().toLowerCase();
 
-            String filePtrn = arg.filePtrn.replace("@nid8", nid.substring(0, 8)).replace("@nid", nid);
+            String filePtrn = arg.getFilePattern().replace("@nid8", nid.substring(0, 8)).replace("@nid", nid);
 
             try {
                 File fld = new File(url.toURI());
@@ -257,22 +192,22 @@ public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchTask.Vi
 
                 List<VisorLogFile> matchingFiles = matchedFiles(fld, filePtrn);
 
-                Collection<VisorLogSearchResult> results = new ArrayList<>(arg.limit);
+                Collection<VisorLogSearchResult> results = new ArrayList<>(arg.getLimit());
 
                 int resCnt = 0;
 
                 for (VisorLogFile logFile : matchingFiles) {
                     try {
-                        File f = new File(logFile.path());
+                        File f = new File(logFile.getPath());
 
                         if (textFile(f, false)) {
                             Charset charset = decode(f);
 
-                            if (resCnt == arg.limit)
+                            if (resCnt == arg.getLimit())
                                 break;
 
                             List<GridTuple3<String[], Integer, Integer>> searched =
-                                searchInFile(f, charset, arg.searchStr, arg.limit - resCnt);
+                                searchInFile(f, charset, arg.getSearchString(), arg.getLimit() - resCnt);
 
                             resCnt += searched.size();
 

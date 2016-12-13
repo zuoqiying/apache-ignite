@@ -254,7 +254,7 @@ public class VisorIgfsProfilerEntry extends VisorDataTransferObject {
         out.writeLong(writeTime);
         out.writeLong(userWriteTime);
         out.writeDouble(uniformity);
-        counters.writeExternal(out);
+        out.writeObject(counters);
         out.writeLong(readSpeed);
         out.writeLong(writeSpeed);
     }
@@ -272,10 +272,7 @@ public class VisorIgfsProfilerEntry extends VisorDataTransferObject {
         writeTime = in.readLong();
         userWriteTime = in.readLong();
         uniformity = in.readDouble();
-
-        counters = new VisorIgfsProfilerUniformityCounters();
-        counters.readExternal(in);
-
+        counters = (VisorIgfsProfilerUniformityCounters)in.readObject();
         readSpeed = in.readLong();
         writeSpeed = in.readLong();
     }

@@ -244,11 +244,7 @@ public class VisorThreadInfo extends VisorDataTransferObject {
         U.writeString(out, name);
         out.writeObject(id);
         U.writeString(out, state.toString());
-        out.writeBoolean(lock != null);
-
-        if (lock != null)
-            lock.writeExternal(out);
-
+        out.writeObject(lock);
         U.writeString(out, lockName);
         out.writeObject(lockOwnerId);
         U.writeString(out, lockOwnerName);
@@ -270,12 +266,7 @@ public class VisorThreadInfo extends VisorDataTransferObject {
 
         String statePresentation = state.toString();
         state = Enum.valueOf(Thread.State.class, statePresentation);
-
-        if (in.readBoolean()) {
-            lock = new VisorThreadLockInfo();
-            lock.readExternal(in);
-        }
-
+        lock = (VisorThreadLockInfo)in.readObject();
         lockName = U.readString(in);
         lockOwnerId = (Long)in.readObject();
         lockOwnerName = U.readString(in);

@@ -19,8 +19,6 @@ package org.apache.ignite.internal.visor.cache;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +31,6 @@ import org.apache.ignite.configuration.NearCacheConfiguration;
 import org.apache.ignite.internal.processors.task.GridInternal;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
-import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorMultiNodeTask;
 import org.apache.ignite.internal.visor.util.VisorTaskUtils;
@@ -44,8 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * Task that start cache or near cache with specified configuration.
  */
 @GridInternal
-public class VisorCacheStartTask extends
-    VisorMultiNodeTask<VisorCacheStartTask.VisorCacheStartArg, Map<UUID, IgniteException>, Void> {
+public class VisorCacheStartTask extends VisorMultiNodeTask<VisorCacheStartArg, Map<UUID, IgniteException>, Void> {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -63,77 +58,6 @@ public class VisorCacheStartTask extends
                 map.put(res.getNode().id(), res.getException());
 
         return map;
-    }
-
-    /**
-     * Cache start arguments.
-     */
-    @SuppressWarnings("PublicInnerClass")
-    public static class VisorCacheStartArg extends VisorDataTransferObject {
-        /** */
-        private static final long serialVersionUID = 0L;
-
-        /** */
-        private boolean near;
-
-        /** */
-        private String name;
-
-        /** */
-        private String cfg;
-
-        /**
-         * Default constructor.
-         */
-        public VisorCacheStartArg() {
-            // No-op.
-        }
-
-        /**
-         * @param near {@code true} if near cache should be started.
-         * @param name Name for near cache.
-         * @param cfg Cache XML configuration.
-         */
-        public VisorCacheStartArg(boolean near, String name, String cfg) {
-            this.near = near;
-            this.name = name;
-            this.cfg = cfg;
-        }
-
-        /**
-         * @return {@code true} if near cache should be started.
-         */
-        public boolean near() {
-            return near;
-        }
-
-        /**
-         * @return Name for near cache.
-         */
-        public String name() {
-            return name;
-        }
-
-        /**
-         * @return Cache XML configuration.
-         */
-        public String configuration() {
-            return cfg;
-        }
-
-        /** {@inheritDoc} */
-        @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-            out.writeBoolean(near);
-            U.writeString(out, name);
-            U.writeString(out, cfg);
-        }
-
-        /** {@inheritDoc} */
-        @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-            near = in.readBoolean();
-            name = U.readString(in);
-            cfg = U.readString(in);
-        }
     }
 
     /**
@@ -155,15 +79,15 @@ public class VisorCacheStartTask extends
 
         /** {@inheritDoc} */
         @Override protected Void run(VisorCacheStartArg arg) throws IgniteException {
-            String cfg = arg.configuration();
+            String cfg = arg.getConfiguration();
 
             assert !F.isEmpty(cfg);
 
             try (ByteArrayInputStream bais = new ByteArrayInputStream(cfg.getBytes())) {
-                if (arg.near) {
+                if (arg.isNear()) {
                     NearCacheConfiguration nearCfg = Ignition.loadSpringBean(bais, "nearCacheConfiguration");
 
-                    ignite.getOrCreateNearCache(VisorTaskUtils.unescapeName(arg.name()), nearCfg);
+                    ignite.getOrCreateNearCache(VisorTaskUtils.unescapeName(arg.getName()), nearCfg);
                 }
                 else {
                     CacheConfiguration cacheCfg = Ignition.loadSpringBean(bais, "cacheConfiguration");

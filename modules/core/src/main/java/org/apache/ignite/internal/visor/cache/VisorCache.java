@@ -339,12 +339,8 @@ public class VisorCache extends VisorDataTransferObject {
         out.writeLong(offHeapEntriesCnt);
         out.writeInt(partitions);
         out.writeBoolean(near);
-        metrics.writeExternal(out);
-
-        out.writeBoolean(parts != null);
-
-        if (parts != null)
-            parts.writeExternal(out);
+        out.writeObject(metrics);
+        out.writeObject(parts);
     }
 
     /** {@inheritDoc} */
@@ -362,14 +358,8 @@ public class VisorCache extends VisorDataTransferObject {
         offHeapEntriesCnt = in.readLong();
         partitions = in.readInt();
         near = in.readBoolean();
-
-        metrics = new VisorCacheMetrics();
-        metrics.readExternal(in);
-
-        if (in.readBoolean()) {
-            parts = new VisorPartitionMap();
-            parts.readExternal(in);
-        }
+        metrics = (VisorCacheMetrics)in.readObject();
+        parts = (VisorPartitionMap)in.readObject();
     }
 
     /** {@inheritDoc} */

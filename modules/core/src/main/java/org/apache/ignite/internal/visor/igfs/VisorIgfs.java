@@ -113,7 +113,7 @@ public class VisorIgfs extends VisorDataTransferObject {
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
         U.writeString(out, name);
         U.writeEnum(out, mode);
-        metrics.writeExternal(out);
+        out.writeObject(metrics);
         out.writeBoolean(secondaryFsConfigured);
     }
 
@@ -121,10 +121,7 @@ public class VisorIgfs extends VisorDataTransferObject {
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
         name = U.readString(in);
         mode = IgfsMode.fromOrdinal(in.readByte());
-
-        metrics = new VisorIgfsMetrics();
-        metrics.readExternal(in);
-
+        metrics = (VisorIgfsMetrics)in.readObject();
         secondaryFsConfigured = in.readBoolean();
     }
 

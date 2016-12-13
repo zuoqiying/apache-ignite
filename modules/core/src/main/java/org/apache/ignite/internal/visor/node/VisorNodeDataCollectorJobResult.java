@@ -80,126 +80,126 @@ public class VisorNodeDataCollectorJobResult extends VisorDataTransferObject {
     /**
      * @return Grid name.
      */
-    public String gridName() {
+    public String getGridName() {
         return gridName;
     }
 
     /**
      * @param gridName New grid name value.
      */
-    public void gridName(String gridName) {
+    public void setGridName(String gridName) {
         this.gridName = gridName;
     }
 
     /**
      * @return Current topology version.
      */
-    public long topologyVersion() {
+    public long getTopologyVersion() {
         return topVer;
     }
 
     /**
      * @param topVer New topology version value.
      */
-    public void topologyVersion(long topVer) {
+    public void setTopologyVersion(long topVer) {
         this.topVer = topVer;
     }
 
     /**
      * @return Current task monitoring state.
      */
-    public boolean taskMonitoringEnabled() {
+    public boolean isTaskMonitoringEnabled() {
         return taskMonitoringEnabled;
     }
 
     /**
      * @param taskMonitoringEnabled New value of task monitoring state.
      */
-    public void taskMonitoringEnabled(boolean taskMonitoringEnabled) {
+    public void setTaskMonitoringEnabled(boolean taskMonitoringEnabled) {
         this.taskMonitoringEnabled = taskMonitoringEnabled;
     }
 
     /**
      * @return Collection of collected events.
      */
-    public Collection<VisorGridEvent> events() {
+    public Collection<VisorGridEvent> getEvents() {
         return evts;
     }
 
     /**
      * @return Exception caught during collecting events.
      */
-    public Throwable eventsEx() {
+    public Throwable getEventsEx() {
         return evtsEx;
     }
 
     /**
      * @param evtsEx Exception caught during collecting events.
      */
-    public void eventsEx(Throwable evtsEx) {
+    public void setEventsEx(Throwable evtsEx) {
         this.evtsEx = evtsEx;
     }
 
     /**
      * @return Collected cache metrics.
      */
-    public Collection<VisorCache> caches() {
+    public Collection<VisorCache> getCaches() {
         return caches;
     }
 
     /**
      * @return Exception caught during collecting caches metrics.
      */
-    public Throwable cachesEx() {
+    public Throwable getCachesEx() {
         return cachesEx;
     }
 
     /**
      * @param cachesEx Exception caught during collecting caches metrics.
      */
-    public void cachesEx(Throwable cachesEx) {
+    public void setCachesEx(Throwable cachesEx) {
         this.cachesEx = cachesEx;
     }
 
     /**
      * @return Collected IGFSs metrics.
      */
-    public Collection<VisorIgfs> igfss() {
+    public Collection<VisorIgfs> getIgfss() {
         return igfss;
     }
 
     /**
      * @return Collected IGFSs endpoints.
      */
-    public Collection<VisorIgfsEndpoint> igfsEndpoints() {
+    public Collection<VisorIgfsEndpoint> getIgfsEndpoints() {
         return igfsEndpoints;
     }
 
     /**
      * @return Exception caught during collecting IGFSs metrics.
      */
-    public Throwable igfssEx() {
+    public Throwable getIgfssEx() {
         return igfssEx;
     }
 
     /**
      * @param igfssEx Exception caught during collecting IGFSs metrics.
      */
-    public void igfssEx(Throwable igfssEx) {
+    public void setIgfssEx(Throwable igfssEx) {
         this.igfssEx = igfssEx;
     }
 
     /**
      * @return Errors count.
      */
-    public long errorCount() {
+    public long getErrorCount() {
         return errCnt;
     }
 
     /**
      * @param errCnt Errors count.
      */
-    public void errorCount(long errCnt) {
+    public void setErrorCount(long errCnt) {
         this.errCnt = errCnt;
     }
 

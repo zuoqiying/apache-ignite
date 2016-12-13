@@ -79,70 +79,70 @@ public class VisorNodeDataCollectorTaskArg extends VisorDataTransferObject {
     /**
      * @return {@code true} if Visor should collect information about tasks.
      */
-    public boolean taskMonitoringEnabled() {
+    public boolean isTaskMonitoringEnabled() {
         return taskMonitoringEnabled;
     }
 
     /**
      * @param taskMonitoringEnabled If {@code true} then Visor should collect information about tasks.
      */
-    public void taskMonitoringEnabled(boolean taskMonitoringEnabled) {
+    public void setTaskMonitoringEnabled(boolean taskMonitoringEnabled) {
         this.taskMonitoringEnabled = taskMonitoringEnabled;
     }
 
     /**
      * @return Key for store and read last event order number.
      */
-    public String eventsOrderKey() {
+    public String getEventsOrderKey() {
         return evtOrderKey;
     }
 
     /**
      * @param evtOrderKey Key for store and read last event order number.
      */
-    public void eventsOrderKey(String evtOrderKey) {
+    public void setEventsOrderKey(String evtOrderKey) {
         this.evtOrderKey = evtOrderKey;
     }
 
     /**
      * @return Key for store and read events throttle counter.
      */
-    public String eventsThrottleCounterKey() {
+    public String getEventsThrottleCounterKey() {
         return evtThrottleCntrKey;
     }
 
     /**
      * @param evtThrottleCntrKey Key for store and read events throttle counter.
      */
-    public void eventsThrottleCounterKey(String evtThrottleCntrKey) {
+    public void setEventsThrottleCounterKey(String evtThrottleCntrKey) {
         this.evtThrottleCntrKey = evtThrottleCntrKey;
     }
 
     /**
      * @return Number of items to evaluate cache size.
      */
-    public int sample() {
+    public int getSample() {
         return sample;
     }
 
     /**
      * @param sample Number of items to evaluate cache size.
      */
-    public void sample(int sample) {
+    public void setSample(int sample) {
         this.sample = sample;
     }
 
     /**
      * @return {@code true} if Visor should collect metrics for system caches.
      */
-    public boolean systemCaches() {
+    public boolean getSystemCaches() {
         return sysCaches;
     }
 
     /**
      * @param sysCaches {@code true} if Visor should collect metrics for system caches.
      */
-    public void systemCaches(boolean sysCaches) {
+    public void setSystemCaches(boolean sysCaches) {
         this.sysCaches = sysCaches;
     }
 
