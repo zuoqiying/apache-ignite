@@ -29,7 +29,7 @@ import org.apache.ignite.visor.visor._
 import java.lang.System._
 import java.util.UUID
 
-import org.apache.ignite.internal.visor.node.{VisorGridConfiguration, VisorNodeConfigurationCollectorTask}
+import org.apache.ignite.internal.visor.node.{VisorSpiDescription, VisorGridConfiguration, VisorNodeConfigurationCollectorTask}
 import org.apache.ignite.internal.visor.util.VisorTaskUtils._
 
 import scala.collection.JavaConversions._
@@ -218,11 +218,11 @@ class VisorConfigurationCommand extends VisorConsoleCommand {
 
         val spisT = VisorTextTable()
 
-        def spiClass(spi: IgniteBiTuple[String, java.util.Map[String, AnyRef]]) = {
-            if (spi != null) spi.get2().getOrElse("Class Name", NA) else NA
+        def spiClass(spi: VisorSpiDescription) = {
+            if (spi != null) spi.getFieldDescriptions.getOrElse("Class Name", NA) else NA
         }
 
-        def spisClass(spis: Array[IgniteBiTuple[String, java.util.Map[String, AnyRef]]]) = {
+        def spisClass(spis: Array[VisorSpiDescription]) = {
             spis.map(spiClass).mkString("[", ", ", "]")
         }
 

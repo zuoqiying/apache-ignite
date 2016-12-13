@@ -43,7 +43,7 @@ import java.util.concurrent._
 import java.util.{Collection => JavaCollection, HashSet => JavaHashSet, _}
 
 import org.apache.ignite.internal.visor.cache._
-import org.apache.ignite.internal.visor.node.VisorNodeEventsCollectorTask.VisorNodeEventsCollectorTaskArg
+import org.apache.ignite.internal.visor.node.VisorNodeEventsCollectorTaskArg
 import org.apache.ignite.internal.visor.node._
 import org.apache.ignite.internal.visor.util.VisorEventMapper
 import org.apache.ignite.internal.visor.util.VisorTaskUtils._

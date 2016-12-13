@@ -74,9 +74,8 @@ public class VisorCacheQueryDetailMetrics extends VisorDataTransferObject {
 
     /**
      * @param m Cache query metrics.
-     * @return Data transfer object for given cache metrics.
      */
-    public VisorCacheQueryDetailMetrics from(QueryDetailMetrics m) {
+    public VisorCacheQueryDetailMetrics(QueryDetailMetrics m) {
         qryType = m.queryType();
         qry = m.query();
         cache = m.cache();
@@ -90,8 +89,6 @@ public class VisorCacheQueryDetailMetrics extends VisorDataTransferObject {
         avgTime = m.averageTime();
         totalTime = m.totalTime();
         lastStartTime = m.lastStartTime();
-
-        return this;
     }
 
     /**

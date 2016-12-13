@@ -28,7 +28,7 @@ import java.util.UUID
 
 import org.apache.ignite.internal.visor.event.VisorGridEvent
 import org.apache.ignite.internal.visor.node.VisorNodeEventsCollectorTask
-import org.apache.ignite.internal.visor.node.VisorNodeEventsCollectorTask.VisorNodeEventsCollectorTaskArg
+import org.apache.ignite.internal.visor.node.VisorNodeEventsCollectorTaskArg
 
 import scala.collection.JavaConversions._
 import scala.collection.immutable._

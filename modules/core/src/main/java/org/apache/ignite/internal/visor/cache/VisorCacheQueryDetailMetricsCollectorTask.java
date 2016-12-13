@@ -71,8 +71,8 @@ public class VisorCacheQueryDetailMetricsCollectorTask extends VisorMultiNodeTas
 
         Collection<VisorCacheQueryDetailMetrics> res = new ArrayList<>(aggMetrics.size());
 
-        for (GridCacheQueryDetailMetricsAdapter m : aggMetrics)
-            res.add(new VisorCacheQueryDetailMetrics().from(m));
+        for (GridCacheQueryDetailMetricsAdapter m: aggMetrics)
+            res.add(new VisorCacheQueryDetailMetrics(m));
 
         return res;
     }
