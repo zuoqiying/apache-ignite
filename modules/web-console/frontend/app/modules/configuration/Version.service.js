@@ -22,7 +22,7 @@ const VERSION_MATCHER = /(\d+)\.(\d+)\.(\d+)([-.]([^0123456789][^-]+)(-SNAPSHOT)
 
 const numberComparator = (a, b) => a > b ? 1 : a < b ? -1 : 0;
 
-export default class Version {
+export default class IgniteVersion {
     /**
      * Tries to parse product version from it's string representation.
      *

@@ -21,17 +21,17 @@ import StringBuilder from './StringBuilder';
 
 import ConfigurationGenerator from './ConfigurationGenerator';
 
-import ClusterDefaults from './defaults/cluster.provider';
-import CacheDefaults from './defaults/cache.provider';
-import IGFSDefaults from './defaults/igfs.provider';
+import ClusterDefaults from './defaults/Cluster.service';
+import CacheDefaults from './defaults/Cache.service';
+import IGFSDefaults from './defaults/IGFS.service';
 
 import JavaTypes from '../../../services/JavaTypes.service';
 
 const generator = new ConfigurationGenerator();
 
-const clusterDflts = new ClusterDefaults().$get();
-const cacheDflts = new CacheDefaults().$get();
-const igfsDflts = new IGFSDefaults().$get();
+const clusterDflts = new ClusterDefaults();
+const cacheDflts = new CacheDefaults();
+const igfsDflts = new IGFSDefaults();
 
 const javaTypes = new JavaTypes(clusterDflts, cacheDflts, igfsDflts);
 

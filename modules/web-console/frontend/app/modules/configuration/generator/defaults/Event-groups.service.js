@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
+import _ from 'lodash';
+
 // Events groups.
-import GROUPS from 'app/data/event-types.json';
+import EVENT_GROUPS from 'app/data/event-groups.json';
 
-export default class EventGroups {
-    append(data) {
-        GROUPS.push(data);
-    }
-
-    $get() {
-        return GROUPS;
+export default class IgniteEventGroups {
+    constructor() {
+        return _.clone(EVENT_GROUPS);
     }
 }

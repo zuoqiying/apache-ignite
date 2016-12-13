@@ -23,8 +23,13 @@ export default ['$q', function($q) {
         const worker = new Worker();
 
         worker.postMessage({ cluster, data });
+
         worker.onmessage = (e) => {
             defer.resolve(e.data);
+        };
+
+        worker.onerror = (err) => {
+            defer.reject(err);
         };
 
         return defer.promise;

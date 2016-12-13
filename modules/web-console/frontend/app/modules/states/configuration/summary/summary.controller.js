@@ -306,10 +306,10 @@ export default [
 
             return new SummaryZipper({ cluster, data: ctrl.data || {}, IgniteDemoMode: $root.IgniteDemoMode })
                 .then((data) => {
-                    $scope.isPrepareDownloading = false;
-
                     saver.saveAs(data, escapeFileName(cluster.name) + '-project.zip');
-                });
+                })
+                .catch((err) => Messages.showError('Failed to generate project files. ' + err.message))
+                .then(() => $scope.isPrepareDownloading = false);
         };
 
         /**
