@@ -23,6 +23,7 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
@@ -128,5 +129,10 @@ public class VisorTaskArgument<A> extends VisorDataTransferObject {
         nodes = U.readCollection(in);
         arg = (A)in.readObject();
         debug = in.readBoolean();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorTaskArgument.class, this);
     }
 }

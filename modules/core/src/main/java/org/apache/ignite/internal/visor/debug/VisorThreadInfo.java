@@ -240,6 +240,57 @@ public class VisorThreadInfo extends VisorDataTransferObject {
     }
 
     /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, name);
+        out.writeObject(id);
+        U.writeString(out, state.toString());
+        out.writeBoolean(lock != null);
+
+        if (lock != null)
+            lock.writeExternal(out);
+
+        U.writeString(out, lockName);
+        out.writeObject(lockOwnerId);
+        U.writeString(out, lockOwnerName);
+        out.writeObject(inNative);
+        out.writeObject(suspended);
+        out.writeObject(waitedCnt);
+        out.writeObject(waitedTime);
+        out.writeObject(blockedCnt);
+        out.writeObject(blockedTime);
+        U.writeArray(out, stackTrace);
+        U.writeArray(out, locks);
+        U.writeArray(out, lockedMonitors);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        name = U.readString(in);
+        id = (Long)in.readObject();
+
+        String statePresentation = state.toString();
+        state = Enum.valueOf(Thread.State.class, statePresentation);
+
+        if (in.readBoolean()) {
+            lock = new VisorThreadLockInfo();
+            lock.readExternal(in);
+        }
+
+        lockName = U.readString(in);
+        lockOwnerId = (Long)in.readObject();
+        lockOwnerName = U.readString(in);
+        inNative = (Boolean)in.readObject();
+        suspended = (Boolean)in.readObject();
+        waitedCnt = (Long)in.readObject();
+        waitedTime = (Long)in.readObject();
+        blockedCnt = (Long)in.readObject();
+        blockedTime = (Long)in.readObject();
+        stackTrace = (StackTraceElement[])U.readArray(in);
+        locks = (VisorThreadLockInfo[])U.readArray(in);
+        lockedMonitors = (VisorThreadMonitorInfo[])U.readArray(in);
+    }
+
+    /** {@inheritDoc} */
     @Override public String toString() {
         StringBuilder sb = new StringBuilder("\"" + name + "\"" + " Id=" + id + " " + state);
 
@@ -301,56 +352,5 @@ public class VisorThreadInfo extends VisorDataTransferObject {
         sb.append('\n');
 
         return sb.toString();
-    }
-
-    /** {@inheritDoc} */
-    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-        U.writeString(out, name);
-        out.writeObject(id);
-        U.writeString(out, state.toString());
-        out.writeBoolean(lock != null);
-
-        if (lock != null)
-            lock.writeExternal(out);
-
-        U.writeString(out, lockName);
-        out.writeObject(lockOwnerId);
-        U.writeString(out, lockOwnerName);
-        out.writeObject(inNative);
-        out.writeObject(suspended);
-        out.writeObject(waitedCnt);
-        out.writeObject(waitedTime);
-        out.writeObject(blockedCnt);
-        out.writeObject(blockedTime);
-        U.writeArray(out, stackTrace);
-        U.writeArray(out, locks);
-        U.writeArray(out, lockedMonitors);
-    }
-
-    /** {@inheritDoc} */
-    @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-        name = U.readString(in);
-        id = (Long)in.readObject();
-
-        String statePresentation = state.toString();
-        state = Enum.valueOf(Thread.State.class, statePresentation);
-
-        if (in.readBoolean()) {
-            lock = new VisorThreadLockInfo();
-            lock.readExternal(in);
-        }
-
-        lockName = U.readString(in);
-        lockOwnerId = (Long)in.readObject();
-        lockOwnerName = U.readString(in);
-        inNative = (Boolean)in.readObject();
-        suspended = (Boolean)in.readObject();
-        waitedCnt = (Long)in.readObject();
-        waitedTime = (Long)in.readObject();
-        blockedCnt = (Long)in.readObject();
-        blockedTime = (Long)in.readObject();
-        stackTrace = (StackTraceElement[])U.readArray(in);
-        locks = (VisorThreadLockInfo[])U.readArray(in);
-        lockedMonitors = (VisorThreadMonitorInfo[])U.readArray(in);
     }
 }

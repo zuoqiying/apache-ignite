@@ -23,6 +23,7 @@ import java.io.ObjectOutput;
 import java.util.Map;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionMap2;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -80,5 +81,10 @@ public class VisorPartitionMap extends VisorDataTransferObject {
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
         parts = U.readIntKeyMap(in);
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorPartitionMap.class, this);
     }
 }

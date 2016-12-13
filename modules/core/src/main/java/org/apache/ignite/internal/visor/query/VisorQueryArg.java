@@ -20,6 +20,7 @@ package org.apache.ignite.internal.visor.query;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -117,5 +118,10 @@ public class VisorQueryArg extends VisorDataTransferObject {
         distributedJoins = in.readBoolean();
         loc = in.readBoolean();
         pageSize = in.readInt();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorQueryArg.class, this);
     }
 }

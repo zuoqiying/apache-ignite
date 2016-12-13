@@ -22,6 +22,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -222,5 +223,10 @@ public class VisorIgfsProfilerUniformityCounters extends VisorDataTransferObject
         fileSize = in.readLong();
         blockSize = in.readLong();
         counters = (ArrayList<Integer>)U.readIntList(in);
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorIgfsProfilerUniformityCounters.class, this);
     }
 }

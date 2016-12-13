@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.cache.VisorCache;
@@ -216,5 +217,10 @@ public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
         igfss = U.readMap(in);
         igfsEndpoints = U.readMap(in);
         igfssEx = U.readMap(in);
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorNodeDataCollectorTaskResult.class, this);
     }
 }

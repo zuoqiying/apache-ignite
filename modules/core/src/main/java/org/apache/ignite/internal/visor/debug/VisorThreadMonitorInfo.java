@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.management.MonitorInfo;
+import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
  * Data transfer object for {@link MonitorInfo}.
@@ -82,5 +83,10 @@ public class VisorThreadMonitorInfo extends VisorThreadLockInfo {
 
         stackDepth = (Integer)in.readObject();
         stackFrame = (StackTraceElement)in.readObject();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorThreadMonitorInfo.class, this);
     }
 }

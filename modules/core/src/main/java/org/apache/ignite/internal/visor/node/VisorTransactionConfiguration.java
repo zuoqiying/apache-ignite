@@ -133,11 +133,6 @@ public class VisorTransactionConfiguration extends VisorDataTransferObject {
     }
 
     /** {@inheritDoc} */
-    @Override public String toString() {
-        return S.toString(VisorTransactionConfiguration.class, this);
-    }
-
-    /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
         U.writeEnum(out, dfltConcurrency);
         U.writeEnum(out, dfltIsolation);
@@ -155,5 +150,10 @@ public class VisorTransactionConfiguration extends VisorDataTransferObject {
         pessimisticTxLogLinger = in.readInt();
         pessimisticTxLogSize = in.readInt();
         txMgrFactory = U.readString(in);
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorTransactionConfiguration.class, this);
     }
 }

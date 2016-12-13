@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import org.apache.ignite.configuration.MemoryConfiguration;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -104,5 +105,10 @@ public class VisorMemoryConfiguration extends VisorDataTransferObject {
         fileCacheAllocationPath = U.readString(in);
         pageCacheSize = in.readLong();
         pageSize = in.readInt();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorMemoryConfiguration.class, this);
     }
 }

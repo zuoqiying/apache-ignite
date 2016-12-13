@@ -32,7 +32,7 @@ import org.apache.ignite.cache.QueryIndex;
 import org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory;
 import org.apache.ignite.cache.store.jdbc.JdbcType;
 import org.apache.ignite.cache.store.jdbc.JdbcTypeField;
-import org.apache.ignite.internal.util.tostring.GridToStringInclude;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.lang.IgniteBiTuple;
@@ -59,31 +59,24 @@ public class VisorCacheTypeMetadata extends VisorDataTransferObject {
     private String valType;
 
     /** Key fields. */
-    @GridToStringInclude
     private Collection<VisorCacheTypeFieldMetadata> keyFields;
 
     /** Value fields. */
-    @GridToStringInclude
     private Collection<VisorCacheTypeFieldMetadata> valFields;
 
     /** Fields to be queried, in addition to indexed fields. */
-    @GridToStringInclude
     private Map<String, String> qryFlds;
 
     /** Fields to index in ascending order. */
-    @GridToStringInclude
     private Map<String, String> ascFlds;
 
     /** Fields to index in descending order. */
-    @GridToStringInclude
     private Map<String, String> descFlds;
 
     /** Fields to index as text. */
-    @GridToStringInclude
     private Collection<String> txtFlds;
 
     /** Fields to create group indexes for. */
-    @GridToStringInclude
     private Map<String, LinkedHashMap<String, IgniteBiTuple<String, Boolean>>> grps;
 
     /**
@@ -404,5 +397,10 @@ public class VisorCacheTypeMetadata extends VisorDataTransferObject {
         descFlds = U.readStringMap(in);
         txtFlds = U.readCollection(in);
         grps = U.readMap(in);
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorCacheTypeMetadata.class, this);
     }
 }

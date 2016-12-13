@@ -107,11 +107,6 @@ public class VisorSegmentationConfiguration extends VisorDataTransferObject {
     }
 
     /** {@inheritDoc} */
-    @Override public String toString() {
-        return S.toString(VisorSegmentationConfiguration.class, this);
-    }
-
-    /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
         U.writeEnum(out, plc);
         U.writeString(out, resolvers);
@@ -127,5 +122,10 @@ public class VisorSegmentationConfiguration extends VisorDataTransferObject {
         checkFreq = in.readLong();
         waitOnStart = in.readBoolean();
         allResolversPassReq = in.readBoolean();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorSegmentationConfiguration.class, this);
     }
 }

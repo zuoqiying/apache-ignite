@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlIndexMetadata;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlMetadata;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -150,5 +151,10 @@ public class VisorCacheSqlMetadata extends VisorDataTransferObject {
         valClasses = U.readStringMap(in);
         fields = U.readMap(in);
         indexes = U.readMap(in);
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorCacheSqlMetadata.class, this);
     }
 }

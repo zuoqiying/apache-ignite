@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import org.apache.ignite.cache.CacheTypeFieldMetadata;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -117,5 +118,10 @@ public class VisorCacheTypeFieldMetadata extends VisorDataTransferObject {
         dbType = in.readInt();
         javaName = U.readString(in);
         javaType = U.readString(in);
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorCacheTypeFieldMetadata.class, this);
     }
 }

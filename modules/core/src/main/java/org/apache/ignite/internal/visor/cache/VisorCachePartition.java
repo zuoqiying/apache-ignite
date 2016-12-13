@@ -81,11 +81,6 @@ public class VisorCachePartition extends VisorDataTransferObject {
     }
 
     /** {@inheritDoc} */
-    @Override public String toString() {
-        return S.toString(VisorCachePartition.class, this);
-    }
-
-    /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
         out.writeInt(part);
         out.writeInt(heap);
@@ -97,5 +92,10 @@ public class VisorCachePartition extends VisorDataTransferObject {
         part = in.readInt();
         heap = in.readInt();
         offheap = in.readLong();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorCachePartition.class, this);
     }
 }

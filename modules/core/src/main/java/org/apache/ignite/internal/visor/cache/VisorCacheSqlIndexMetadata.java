@@ -22,6 +22,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import org.apache.ignite.internal.processors.cache.query.GridCacheSqlIndexMetadata;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -105,5 +106,10 @@ public class VisorCacheSqlIndexMetadata extends VisorDataTransferObject {
         fields = U.readCollection(in);
         descendings = U.readCollection(in);
         unique = in.readBoolean();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorCacheSqlIndexMetadata.class, this);
     }
 }

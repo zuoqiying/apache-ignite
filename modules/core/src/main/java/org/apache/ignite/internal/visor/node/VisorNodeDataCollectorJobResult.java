@@ -22,6 +22,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 import org.apache.ignite.internal.visor.cache.VisorCache;
@@ -230,5 +231,10 @@ public class VisorNodeDataCollectorJobResult extends VisorDataTransferObject {
         igfsEndpoints = U.readCollection(in);
         igfssEx = (Throwable)in.readObject();
         errCnt = in.readLong();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorNodeDataCollectorJobResult.class, this);
     }
 }

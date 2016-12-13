@@ -22,6 +22,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import org.apache.ignite.internal.processors.cache.database.IgniteMemoryPoolMetrics;
 
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -79,5 +80,10 @@ public class VisorMemoryPoolMetrics extends VisorDataTransferObject {
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
         name = U.readString(in);
         totalPages = in.readLong();
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(VisorMemoryPoolMetrics.class, this);
     }
 }
