@@ -38,17 +38,6 @@ const properties = new PropertiesGenerator();
 const java = new JavaTransformer[0]();
 const spring = new SpringTransformer[0]();
 
-import ClusterDefaults from 'app/modules/configuration/generator/defaults/cluster.provider';
-import CacheDefaults from 'app/modules/configuration/generator/defaults/cache.provider';
-import IGFSDefaults from 'app/modules/configuration/generator/defaults/igfs.provider';
-
-import JavaTypes from 'app/services/JavaTypes.service';
-
-const clusterDflts = ClusterDefaults.$get();
-const cacheDflts = CacheDefaults.$get();
-const igfsDflts = IGFSDefaults.$get();
-
-const javaTypes = new JavaTypes(clusterDflts, cacheDflts, igfsDflts);
 const generator = new ConfigurationGenerator[0]();
 
 const escapeFileName = (name) => name.replace(/[\\\/*\"\[\],\.:;|=<>?]/g, '-').replace(/ /g, '_');
@@ -120,7 +109,7 @@ onmessage = function(e) {
         data.pojos = java.pojos(cluster.caches);
 
     for (const pojo of data.pojos) {
-        if (pojo.keyClass && javaTypes.nonBuiltInClass(pojo.keyType))
+        if (pojo.keyClass)
             zip.file(`${srcPath}/${pojo.keyType.replace(/\./g, '/')}.java`, pojo.keyClass);
 
         zip.file(`${srcPath}/${pojo.valueType.replace(/\./g, '/')}.java`, pojo.valueClass);

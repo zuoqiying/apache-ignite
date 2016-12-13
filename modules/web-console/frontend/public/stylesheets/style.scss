@@ -690,8 +690,17 @@ button.form-control {
         }
 
         label {
-            line-height: 20px !important;
+            line-height: 20px;
             vertical-align: middle;
+        }
+
+        .ignite-form-field {
+            .ignite-form-field__label {
+                width: auto;
+                margin-right: 15px;
+
+                line-height: 28px;
+            }
         }
     }
 
@@ -2136,18 +2145,16 @@ html,body,.splash-screen {
 }
 
 .spinner {
-    margin: auto;
+    margin: 0 auto;
     width: 100px;
     text-align: center;
-    padding: 1px;
 
     > div {
-        float: left;
         width: 18px;
         height: 18px;
         margin: 0 5px;
         border-radius: 100%;
-        display: block;
+        display: inline-block;
         -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
         animation: sk-bouncedelay 1.4s infinite ease-in-out both;
         background-color: $brand-primary;
@@ -2162,16 +2169,6 @@ html,body,.splash-screen {
         -webkit-animation-delay: -0.16s;
         animation-delay: -0.16s;
     }
-}
-
-.spinner--white {
-    > div {
-        background-color: white;
-    }
-}
-
-.btn > .spinner {
-    margin: 0 1px 0 15px;
 }
 
 @-webkit-keyframes sk-bouncedelay {

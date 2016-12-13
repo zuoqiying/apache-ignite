@@ -20,26 +20,7 @@ import _ from 'lodash';
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
-import IgniteConfigurationGenerator from './ConfigurationGenerator';
-import IgniteEventGroups from '../EventGroups.provider';
-
-import IgniteClusterDefaults from './defaults/cluster.provider';
-import IgniteCacheDefaults from './defaults/cache.provider';
-import IgniteIGFSDefaults from './defaults/igfs.provider';
-
-import JavaTypes from '../../../services/JavaTypes.service';
-
-const eventGroups = new IgniteEventGroups().$get();
-
-const clusterDflts = new IgniteClusterDefaults().$get();
-const cacheDflts = new IgniteCacheDefaults().$get();
-const igfsDflts = new IgniteIGFSDefaults().$get();
-
-const javaTypes = new JavaTypes(clusterDflts, cacheDflts, igfsDflts);
-
 export default class IgniteSpringTransformer extends AbstractTransformer {
-    static generator = IgniteConfigurationGenerator;
-
     static escapeXml(str) {
         return str.replace(/&/g, '&amp;')
             .replace(/"/g, '&quot;')
@@ -111,10 +92,11 @@ export default class IgniteSpringTransformer extends AbstractTransformer {
                 case 'PROPERTY_INT':
                     return `\${${item}}`;
                 case 'java.lang.Class':
-                    return javaTypes.fullClassName(item);
+                    return this.javaTypes.fullClassName(item);
                 case 'long':
                     return `${item}L`;
                 case 'java.lang.String':
+                case 'PATH':
                     return this.escapeXml(item);
                 default:
                     return item;
@@ -123,7 +105,7 @@ export default class IgniteSpringTransformer extends AbstractTransformer {
     }
 
     static _isBean(clsName) {
-        return javaTypes.nonBuiltInClass(clsName) && javaTypes.nonEnum(clsName) && _.includes(clsName, '.');
+        return this.javaTypes.nonBuiltInClass(clsName) && this.javaTypes.nonEnum(clsName) && _.includes(clsName, '.');
     }
 
     static _setCollection(sb, prop) {
@@ -201,7 +183,7 @@ export default class IgniteSpringTransformer extends AbstractTransformer {
                     sb.startBlock(`<property name="${prop.name}">`);
 
                     if (prop.eventTypes.length === 1) {
-                        const evtGrp = _.find(eventGroups, {value: _.head(prop.eventTypes)});
+                        const evtGrp = _.find(this.eventGroups, {value: _.head(prop.eventTypes)});
 
                         evtGrp && sb.append(`<util:constant static-field="${evtGrp.class}.${evtGrp.value}"/>`);
                     }
@@ -211,7 +193,7 @@ export default class IgniteSpringTransformer extends AbstractTransformer {
                         _.forEach(prop.eventTypes, (item, ix) => {
                             ix > 0 && sb.emptyLine();
 
-                            const evtGrp = _.find(eventGroups, {value: item});
+                            const evtGrp = _.find(this.eventGroups, {value: item});
 
                             if (evtGrp) {
                                 sb.append(`<!-- EventType.${item} -->`);
@@ -322,7 +304,7 @@ export default class IgniteSpringTransformer extends AbstractTransformer {
         }
 
         _.forEach(clientNearCaches, (cache) => {
-            this.commentBlock(sb, 'Configuration of near cache for cache "' + cache.name + '"');
+            this.commentBlock(sb, `Configuration of near cache for cache "${cache.name}"`);
 
             this.appendBean(sb, this.generator.cacheNearClient(cache), true);
 

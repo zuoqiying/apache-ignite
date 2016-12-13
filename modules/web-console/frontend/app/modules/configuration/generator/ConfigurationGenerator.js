@@ -19,15 +19,15 @@ import DFLT_DIALECTS from 'app/data/dialects.json';
 
 import { EmptyBean, Bean } from './Beans';
 
-import IgniteClusterDefaults from './defaults/cluster.provider';
-import IgniteCacheDefaults from './defaults/cache.provider';
-import IgniteIGFSDefaults from './defaults/igfs.provider';
+import IgniteClusterDefaults from './defaults/Cluster.service';
+import IgniteCacheDefaults from './defaults/Cache.service';
+import IgniteIGFSDefaults from './defaults/IGFS.service';
 
 import JavaTypes from '../../../services/JavaTypes.service';
 
-const clusterDflts = new IgniteClusterDefaults().$get();
-const cacheDflts = new IgniteCacheDefaults().$get();
-const igfsDflts = new IgniteIGFSDefaults().$get();
+const clusterDflts = new IgniteClusterDefaults();
+const cacheDflts = new IgniteCacheDefaults();
+const igfsDflts = new IgniteIGFSDefaults();
 
 const javaTypes = new JavaTypes(clusterDflts, cacheDflts, igfsDflts);
 
@@ -297,8 +297,10 @@ export default class IgniteConfigurationGenerator {
 
                             break;
                         case 'Custom':
-                            if (_.nonEmpty(policy.Custom.className))
-                                retryPolicyBean = new EmptyBean(policy.Custom.className);
+                            const className = _.get(policy, 'Custom.className');
+
+                            if (_.nonEmpty(className))
+                                retryPolicyBean = new EmptyBean(className);
 
                             break;
                         default:
@@ -1167,9 +1169,6 @@ export default class IgniteConfigurationGenerator {
     static clusterMarshaller(cluster, cfg = this.igniteConfigurationBean(cluster)) {
         const kind = _.get(cluster.marshaller, 'kind');
         const settings = _.get(cluster.marshaller, kind);
-
-        if (_.isNil(settings))
-            return cfg;
 
         let bean;
 

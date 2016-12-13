@@ -175,7 +175,8 @@ include /app/helpers/jade/mixins.jade
                             .group-content-empty(ng-if='!(#{uriListModel}.length) && !group.add.length')
                                 | Not defined
                     .details-row
-                        +text('Temporary directory path:', modelDeployment + '.URI.temporaryDirectoryPath', '"DeploymentURITemporaryDirectoryPath"', 'false', 'Temporary directory path', 'Deployment event listener')
+                        +text('Temporary directory path:', modelDeployment + '.URI.temporaryDirectoryPath', '"DeploymentURITemporaryDirectoryPath"', 'false', 'Temporary directory path',
+                        'Absolute path to temporary directory which will be used by deployment SPI to keep all deployed classes in')
                     .details-row
                         +ignite-form-group()
                             -var uniqueTip = 'Such scanner already configured'
@@ -183,7 +184,7 @@ include /app/helpers/jade/mixins.jade
                             ignite-form-field-label
                                 | Scanner list
                             ignite-form-group-tooltip
-                                | List of URI deployment scanners.
+                                | List of URI deployment scanners
                             ignite-form-group-add(ng-click='(group.add = [{}])')
                                 | Add scanner
 
@@ -225,12 +226,12 @@ include /app/helpers/jade/mixins.jade
                     .details-row
                         +checkbox('Encode URI', modelDeployment + '.URI.encodeUri', '"DeploymentURIEncodeUri"', 'URI must be encoded before usage')
                     .details-row
-                        +java-class('Listener:', modelDeployment + '.URI.listener', '"DeploymentURIListener"', 'true', 'false', 'Deployment event listener')
+                        +java-class('Listener:', modelDeployment + '.URI.listener', '"DeploymentURIListener"', 'true', 'false', 'Deployment event listener', uriDeployment)
                 .panel-details(ng-show=localDeployment)
                     .details-row
-                        +java-class('Listener:', modelDeployment + '.Local.listener', '"DeploymentLocalListener"', 'true', 'false', 'Deployment event listener')
+                        +java-class('Listener:', modelDeployment + '.Local.listener', '"DeploymentLocalListener"', 'true', 'false', 'Deployment event listener', localDeployment)
                 .panel-details(ng-show=customDeployment)
                     .details-row
-                        +java-class('Class:', modelDeployment + '.Custom.className', '"DeploymentCustom"', 'true', customDeployment, 'DeploymentSpi implementation class')
+                        +java-class('Class:', modelDeployment + '.Custom.className', '"DeploymentCustom"', 'true', customDeployment, 'DeploymentSpi implementation class', customDeployment)
             .col-sm-6
                 +preview-xml-java(model, 'clusterDeployment')

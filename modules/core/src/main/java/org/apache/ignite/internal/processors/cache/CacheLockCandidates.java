@@ -15,15 +15,28 @@
  * limitations under the License.
  */
 
-// Events groups.
-import GROUPS from 'app/data/event-types.json';
+package org.apache.ignite.internal.processors.cache;
 
-export default class EventGroups {
-    append(data) {
-        GROUPS.push(data);
-    }
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 
-    $get() {
-        return GROUPS;
-    }
+/**
+ *
+ */
+public interface CacheLockCandidates {
+    /**
+     * @param idx Candidate index.
+     * @return Candidate.
+     */
+    public GridCacheMvccCandidate candidate(int idx);
+
+    /**
+     * @return Number of candidates.
+     */
+    public int size();
+
+    /**
+     * @param ver Candidate version.
+     * @return {@code True} if contains candidate with given version.
+     */
+    public boolean hasCandidate(GridCacheVersion ver);
 }

@@ -18,15 +18,6 @@
 import AbstractTransformer from './AbstractTransformer';
 import StringBuilder from './StringBuilder';
 
-import IgniteConfigurationGenerator from './ConfigurationGenerator';
-import IgniteEventGroups from '../EventGroups.provider';
-
-import IgniteClusterDefaults from './defaults/cluster.provider';
-import IgniteCacheDefaults from './defaults/cache.provider';
-import IgniteIGFSDefaults from './defaults/igfs.provider';
-
-import JavaTypes from '../../../services/JavaTypes.service';
-
 const STORE_FACTORY = ['org.apache.ignite.cache.store.jdbc.CacheJdbcPojoStoreFactory'];
 
 // Descriptors for generation of demo data.
@@ -167,7 +158,7 @@ const PREDEFINED_QUERIES = [
 ];
 
 // Var name generator function.
-const beenNameSeed = () => {
+const beanNameSeed = () => {
     let idx = '';
     const names = [];
 
@@ -183,21 +174,12 @@ const beenNameSeed = () => {
     };
 };
 
-const eventGroups = new IgniteEventGroups().$get();
-
-const clusterDflts = new IgniteClusterDefaults().$get();
-const cacheDflts = new IgniteCacheDefaults().$get();
-const igfsDflts = new IgniteIGFSDefaults().$get();
-
-const javaTypes = new JavaTypes(clusterDflts, cacheDflts, igfsDflts);
-
 export default class IgniteJavaTransformer extends AbstractTransformer {
-    static generator = IgniteConfigurationGenerator;
-
     // Mapping for objects to method call.
     static METHOD_MAPPING = {
         'org.apache.ignite.configuration.CacheConfiguration': {
-            id: (ccfg) => javaTypes.toJavaName('cache', ccfg.findProperty('name').value),
+            prefix: 'cache',
+            name: 'name',
             args: '',
             generator: (sb, id, ccfg) => {
                 const cacheName = ccfg.findProperty('name').value;
@@ -226,7 +208,8 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             }
         },
         'org.apache.ignite.cache.store.jdbc.JdbcType': {
-            id: (type) => javaTypes.toJavaName('jdbcType', javaTypes.shortClassName(type.findProperty('valueType').value)),
+            prefix: 'jdbcType',
+            name: 'valueType',
             args: 'ccfg.getName()',
             generator: (sb, name, jdbcType) => {
                 const javadoc = [
@@ -278,7 +261,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
      * @param {Bean} bean
      */
     static _newBean(bean) {
-        const shortClsName = javaTypes.shortClassName(bean.clsName);
+        const shortClsName = this.javaTypes.shortClassName(bean.clsName);
 
         if (_.isEmpty(bean.arguments))
             return `new ${shortClsName}()`;
@@ -338,7 +321,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             }
         });
 
-        const clsName = javaTypes.shortClassName(bean.clsName);
+        const clsName = this.javaTypes.shortClassName(bean.clsName);
 
         sb.append(`${this.varInit(clsName, id, vars)} = ${this._newBean(bean)};`);
 
@@ -357,7 +340,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
      * @private
      */
     static constructStoreFactory(sb, bean, vars, limitLines = false) {
-        const shortClsName = javaTypes.shortClassName(bean.clsName);
+        const shortClsName = this.javaTypes.shortClassName(bean.clsName);
 
         if (_.includes(vars, bean.id))
             sb.append(`${bean.id} = ${this._newBean(bean)};`);
@@ -390,7 +373,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
     }
 
     static _isBean(clsName) {
-        return javaTypes.nonBuiltInClass(clsName) && javaTypes.nonEnum(clsName) && _.includes(clsName, '.');
+        return this.javaTypes.nonBuiltInClass(clsName) && this.javaTypes.nonEnum(clsName) && _.includes(clsName, '.');
     }
 
     static _toObject(clsName, val) {
@@ -415,7 +398,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                 case 'PATH':
                     return `"${item.replace(/\\/g, '\\\\')}"`;
                 case 'java.lang.Class':
-                    return `${javaTypes.shortClassName(item)}.class`;
+                    return `${this.javaTypes.shortClassName(item)}.class`;
                 case 'java.util.UUID':
                     return `UUID.fromString("${item}")`;
                 case 'PROPERTY':
@@ -432,12 +415,16 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                         return this._newBean(item);
                     }
 
-                    if (javaTypes.nonEnum(clsName))
+                    if (this.javaTypes.nonEnum(clsName))
                         return item;
 
-                    return `${javaTypes.shortClassName(clsName)}.${item}`;
+                    return `${this.javaTypes.shortClassName(clsName)}.${item}`;
             }
         });
+    }
+
+    static _mapperId(mapper) {
+        return (item) => this.javaTypes.toJavaName(mapper.prefix, item.findProperty(mapper.name).value);
     }
 
     static _constructBeans(sb, type, items, vars, limitLines) {
@@ -445,12 +432,12 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             // Construct objects inline for preview or simple objects.
             const mapper = this.METHOD_MAPPING[type];
 
-            const nextId = mapper ? mapper.id : beenNameSeed();
+            const nextId = mapper ? this._mapperId(mapper) : beanNameSeed();
 
             // Prepare objects refs.
             return _.map(items, (item) => {
                 if (limitLines && mapper)
-                    return mapper.id(item) + (limitLines ? `(${mapper.args})` : '');
+                    return nextId(item) + (limitLines ? `(${mapper.args})` : '');
 
                 if (item.isComplex()) {
                     const id = nextId(item);
@@ -509,7 +496,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
     static _setArray(sb, parentId, arrProp, vars, limitLines) {
         const refs = this._constructBeans(sb, arrProp.typeClsName, arrProp.items, vars, limitLines);
 
-        const arrType = javaTypes.shortClassName(arrProp.typeClsName);
+        const arrType = this.javaTypes.shortClassName(arrProp.typeClsName);
 
         // Set refs to property.
         sb.startBlock(`${parentId}.set${_.upperFirst(arrProp.name)}(new ${arrType}[] {`);
@@ -522,8 +509,8 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
     }
 
     static _constructMap(sb, map, vars = []) {
-        const keyClsName = javaTypes.shortClassName(map.keyClsName);
-        const valClsName = javaTypes.shortClassName(map.valClsName);
+        const keyClsName = this.javaTypes.shortClassName(map.keyClsName);
+        const valClsName = this.javaTypes.shortClassName(map.valClsName);
 
         const mapClsName = map.ordered ? 'LinkedHashMap' : 'HashMap';
 
@@ -635,8 +622,8 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                             this._setProperty(sb, id, prop.name, `Arrays.asList(${items})`);
                     }
                     else {
-                        const colTypeClsName = javaTypes.shortClassName(prop.typeClsName);
-                        const implClsName = javaTypes.shortClassName(prop.implClsName);
+                        const colTypeClsName = this.javaTypes.shortClassName(prop.typeClsName);
+                        const implClsName = this.javaTypes.shortClassName(prop.implClsName);
 
                         sb.append(`${this.varInit(`${implClsName}<${colTypeClsName}>`, prop.id, vars)} = new ${implClsName}<>();`);
 
@@ -721,6 +708,16 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
         return sb;
     }
 
+    static _collectMapImports(prop) {
+        const imports = [];
+
+        imports.push(prop.ordered ? 'java.util.LinkedHashMap' : 'java.util.HashMap');
+        imports.push(prop.keyClsName);
+        imports.push(prop.valClsName);
+
+        return imports;
+    }
+
     static collectBeanImports(bean) {
         const imports = [bean.clsName];
 
@@ -731,7 +728,12 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
                     break;
                 case 'java.lang.Class':
-                    imports.push(javaTypes.fullClassName(arg.value));
+                    imports.push(this.javaTypes.fullClassName(arg.value));
+
+                    break;
+
+                case 'MAP':
+                    imports.push(...this._collectMapImports(arg));
 
                     break;
                 default:
@@ -792,13 +794,11 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
                     break;
                 case 'MAP':
-                    imports.push(prop.ordered ? 'java.util.LinkedHashMap' : 'java.util.HashMap');
-                    imports.push(prop.keyClsName);
-                    imports.push(prop.valClsName);
+                    imports.push(...this._collectMapImports(prop));
 
                     break;
                 default:
-                    if (!javaTypes.nonEnum(prop.clsName))
+                    if (!this.javaTypes.nonEnum(prop.clsName))
                         imports.push(prop.clsName);
             }
         });
@@ -821,7 +821,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             switch (prop.clsName) {
                 case 'EVENT_TYPES':
                     _.forEach(prop.eventTypes, (value) => {
-                        const evtGrp = _.find(eventGroups, {value});
+                        const evtGrp = _.find(this.eventGroups, {value});
 
                         imports.push(`${evtGrp.class}.${evtGrp.value}`);
                     });
@@ -850,14 +850,16 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                     break;
                 case 'ARRAY':
                     if (this._isBean(prop.typeClsName)) {
-                        const mapping = this.METHOD_MAPPING[prop.typeClsName];
+                        const mapper = this.METHOD_MAPPING[prop.typeClsName];
+
+                        const mapperId = mapper ? this._mapperId(mapper) : null;
 
                         _.reduce(prop.items, (acc, item) => {
-                            if (mapping) {
-                                acc[mapping.id(item)] = item;
+                            if (mapperId)
+                                acc[mapperId(item)] = item;
 
-                                _.merge(acc, this.collectBeansWithMapping(item));
-                            }
+                            _.merge(acc, this.collectBeansWithMapping(item));
+
                             return acc;
                         }, beans);
                     }
@@ -888,8 +890,21 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
         const imports = this.collectBeanImports(cfg);
 
-        if (_.nonEmpty(clientNearCaches))
+        const nearCacheBeans = [];
+
+        if (_.nonEmpty(clientNearCaches)) {
             imports.push('org.apache.ignite.configuration.NearCacheConfiguration');
+
+            _.forEach(clientNearCaches, (cache) => {
+                const nearCacheBean = this.generator.cacheNearClient(cache);
+
+                nearCacheBean.cacheName = cache.name;
+
+                imports.push(...this.collectBeanImports(nearCacheBean));
+
+                nearCacheBeans.push(nearCacheBean);
+            });
+        }
 
         if (_.includes(imports, 'oracle.jdbc.pool.OracleDataSource'))
             imports.push('java.sql.SQLException');
@@ -938,7 +953,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             sb.startBlock('public static class DataSources {');
 
             _.forEach(dataSources, (ds, idx) => {
-                const dsClsName = javaTypes.shortClassName(ds.clsName);
+                const dsClsName = this.javaTypes.shortClassName(ds.clsName);
 
                 if (idx !== 0)
                     sb.emptyLine();
@@ -971,14 +986,12 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             sb.emptyLine();
         }
 
-        _.forEach(clientNearCaches, (cache) => {
-            this.commentBlock(sb, `Configuration of near cache for cache: ${cache.name}.`,
+        _.forEach(nearCacheBeans, (nearCacheBean) => {
+            this.commentBlock(sb, `Configuration of near cache for cache: ${nearCacheBean.cacheName}.`,
                 '',
                 '@return Near cache configuration.',
                 '@throws Exception If failed to construct near cache configuration instance.'
             );
-
-            const nearCacheBean = this.generator.cacheNearClient(cache);
 
             sb.startBlock(`public static NearCacheConfiguration ${nearCacheBean.id}() throws Exception {`);
 
@@ -1048,7 +1061,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
         const imports = ['java.io.Serializable'];
 
-        _.forEach(fields, (field) => imports.push(javaTypes.fullClassName(field.javaFieldType)));
+        _.forEach(fields, (field) => imports.push(this.javaTypes.fullClassName(field.javaFieldType)));
 
         _.forEach(this._prepareImports(imports), (cls) => sb.append(`import ${cls};`));
 
@@ -1066,7 +1079,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
         // Generate fields declaration.
         _.forEach(fields, (field) => {
             const fldName = field.javaFieldName;
-            const fldType = javaTypes.shortClassName(field.javaFieldType);
+            const fldType = this.javaTypes.shortClassName(field.javaFieldType);
 
             sb.append(`/** Value for ${fldName}. */`);
             sb.append(`private ${fldType} ${fldName};`);
@@ -1086,7 +1099,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             this.commentBlock(sb, 'Full constructor.');
 
             const arg = (field) => {
-                const fldType = javaTypes.shortClassName(field.javaFieldType);
+                const fldType = this.javaTypes.shortClassName(field.javaFieldType);
 
                 return `${fldType} ${field.javaFieldName}`;
             };
@@ -1106,7 +1119,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
         // Generate getters and setters methods.
         _.forEach(fields, (field) => {
-            const fldType = javaTypes.shortClassName(field.javaFieldType);
+            const fldType = this.javaTypes.shortClassName(field.javaFieldType);
             const fldName = field.javaFieldName;
 
             this.commentBlock(sb,
@@ -1114,7 +1127,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                 '',
                 `@return Value for ${fldName}.`
             );
-            sb.startBlock(`public ${fldType} ${javaTypes.toJavaName('get', fldName)}() {`);
+            sb.startBlock(`public ${fldType} ${this.javaTypes.toJavaName('get', fldName)}() {`);
             sb.append('return ' + fldName + ';');
             sb.endBlock('}');
 
@@ -1125,7 +1138,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                 '',
                 `@param ${fldName} New value for ${fldName}.`
             );
-            sb.startBlock(`public void ${javaTypes.toJavaName('set', fldName)}(${fldType} ${fldName}) {`);
+            sb.startBlock(`public void ${this.javaTypes.toJavaName('set', fldName)}(${fldType} ${fldName}) {`);
             sb.append(`this.${fldName} = ${fldName};`);
             sb.endBlock('}');
 
@@ -1163,7 +1176,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
                     break;
                 default:
-                    if (javaTypes.isJavaPrimitive(javaType))
+                    if (this.javaTypes.isPrimitive(javaType))
                         sb.startBlock('if (' + javaName + ' != that.' + javaName + ')');
                     else
                         sb.startBlock('if (' + javaName + ' != null ? !' + javaName + '.equals(that.' + javaName + ') : that.' + javaName + ' != null)');
@@ -1270,13 +1283,14 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                 if (domain.generatePojo && !_.find(pojos, {valueType: domain.valueType}) &&
                     // Skip domain models without value fields.
                     _.nonEmpty(domain.valueFields)) {
-                    const pojo = {};
+                    const pojo = {
+                        keyType: domain.keyType,
+                        valueType: domain.valueType
+                    };
 
                     // Key class generation only if key is not build in java class.
-                    if (_.nonNil(domain.keyFields) && domain.keyFields.length > 0) {
-                        pojo.keyType = domain.keyType;
+                    if (this.javaTypes.nonBuiltInClass(domain.keyType) && _.nonEmpty(domain.keyFields))
                         pojo.keyClass = this.pojo(domain.keyType, domain.keyFields, addConstructor);
-                    }
 
                     const valueFields = _.clone(domain.valueFields);
 
@@ -1287,7 +1301,6 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                         });
                     }
 
-                    pojo.valueType = domain.valueType;
                     pojo.valueClass = this.pojo(domain.valueType, valueFields, addConstructor);
 
                     pojos.push(pojo);
@@ -1582,7 +1595,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
         if (factoryCls) {
             imports.push(factoryCls);
 
-            shortFactoryCls = javaTypes.shortClassName(factoryCls);
+            shortFactoryCls = this.javaTypes.shortClassName(factoryCls);
         }
 
         sb.append(`package ${pkg};`)
@@ -1638,7 +1651,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                 if (idx === 0)
                     sb.append('// Demo of near cache creation on client node.');
 
-                const nearCacheMtd = javaTypes.toJavaName('nearConfiguration', cache.name);
+                const nearCacheMtd = this.javaTypes.toJavaName('nearConfiguration', cache.name);
 
                 sb.append(`ignite.getOrCreateCache(${shortFactoryCls}.${cache.name}(), ${shortFactoryCls}.${nearCacheMtd}());`);
             });

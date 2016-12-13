@@ -49,6 +49,9 @@ class Paragraph {
     constructor($animate, $timeout, paragraph) {
         const self = this;
 
+        self.qryType = paragraph.qryType || 'query';
+        self.filter = '';
+
         self.id = 'paragraph-' + paragraphId++;
 
         _.assign(this, paragraph);
@@ -182,8 +185,8 @@ class Paragraph {
 }
 
 // Controller for SQL notebook screen.
-export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$filter', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteScanFilterInput', 'IgniteNodes', 'uiGridExporterConstants', 'IgniteVersion',
-    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $filter, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, ScanFilterInput, Nodes, uiGridExporterConstants, Version) {
+export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$filter', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteNodes', 'uiGridExporterConstants', 'IgniteVersion',
+    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $filter, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, Nodes, uiGridExporterConstants, Version) {
         let stopTopology = null;
 
         const _tryStopRefresh = function(paragraph) {
@@ -817,6 +820,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                             if (_.isNil(item)) {
                                 cache.label = maskCacheName(cache.name);
+                                cache.value = cache.label;
 
                                 cache.nodes = [];
 
@@ -885,7 +889,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     (paragraph) => new Paragraph($animate, $timeout, paragraph));
 
                 if (_.isEmpty($scope.notebook.paragraphs))
-                    $scope.addParagraph();
+                    $scope.addQuery();
                 else
                     $scope.rebuildScrollParagraphs();
             })
@@ -936,7 +940,21 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 paragraph.edit = false;
         };
 
-        $scope.addParagraph = function() {
+        $scope.addParagraph = (paragraph, sz) => {
+
+            if ($scope.caches && $scope.caches.length > 0)
+                paragraph.cacheName = $scope.caches[0].name;
+
+            $scope.notebook.paragraphs.push(paragraph);
+
+            $scope.notebook.expandedParagraphs.push(sz);
+
+            $scope.rebuildScrollParagraphs();
+
+            $location.hash(paragraph.id);
+        };
+
+        $scope.addQuery = function() {
             const sz = $scope.notebook.paragraphs.length;
 
             const paragraph = new Paragraph($animate, $timeout, {
@@ -949,25 +967,37 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     value: 1,
                     unit: 60000,
                     installed: false
-                }
+                },
+                qryType: 'query'
             });
 
-            if ($scope.caches && $scope.caches.length > 0)
-                paragraph.cacheName = $scope.caches[0].name;
-
-            $scope.notebook.paragraphs.push(paragraph);
-
-            $scope.notebook.expandedParagraphs.push(sz);
-
-            $scope.rebuildScrollParagraphs();
-
-            $location.hash(paragraph.id);
+            $scope.addParagraph(paragraph, sz);
 
             $timeout(() => {
                 $anchorScroll();
 
                 paragraph.ace.focus();
             });
+        };
+
+        $scope.addScan = function() {
+            const sz = $scope.notebook.paragraphs.length;
+
+            const paragraph = new Paragraph($animate, $timeout, {
+                name: 'Scan' + (sz === 0 ? '' : sz),
+                query: '',
+                pageSize: $scope.pageSizes[0],
+                timeLineSpan: $scope.timeLineSpans[0],
+                result: 'none',
+                rate: {
+                    value: 1,
+                    unit: 60000,
+                    installed: false
+                },
+                qryType: 'scan'
+            });
+
+            $scope.addParagraph(paragraph, sz);
         };
 
         function _saveChartSettings(paragraph) {
@@ -1010,7 +1040,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         $scope.removeParagraph = function(paragraph) {
-            Confirm.confirm('Are you sure you want to remove: "' + paragraph.name + '"?')
+            Confirm.confirm('Are you sure you want to remove query: "' + paragraph.name + '"?')
                 .then(function() {
                     $scope.stopRefresh(paragraph);
 
@@ -1315,8 +1345,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             return false;
         };
 
-        $scope.execute = (paragraph, nonCollocatedJoins = false) => {
-            const local = !!paragraph.localQry;
+        $scope.execute = (paragraph, local = false) => {
+            const nonCollocatedJoins = paragraph.nonCollocatedJoins | false;
 
             $scope.actionAvailable(paragraph, true) && _chooseNode(paragraph.cacheName, local)
                 .then((nid) => {
@@ -1403,8 +1433,10 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then(() => paragraph.ace.focus());
         };
 
-        $scope.scan = (paragraph, query = null) => {
-            const local = !!paragraph.localQry;
+        $scope.scan = (paragraph, local = false) => {
+            const {filter, caseSensitive} = paragraph;
+            const prefix = caseSensitive ? SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE : SCAN_CACHE_WITH_FILTER;
+            const query = `${prefix}${filter}`;
 
             $scope.actionAvailable(paragraph, false) && _chooseNode(paragraph.cacheName, local)
                 .then((nid) => {
@@ -1443,8 +1475,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             paragraph.errMsg = err.message;
 
                             _showLoading(paragraph, false);
-                        })
-                        .then(() => paragraph.ace.focus());
+                        });
                 });
         };
 

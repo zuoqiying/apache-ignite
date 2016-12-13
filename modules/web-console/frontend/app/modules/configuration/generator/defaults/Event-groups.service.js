@@ -15,37 +15,13 @@
  * limitations under the License.
  */
 
-export default class ScanFilter {
-    static $inject = ['$rootScope', '$q', '$modal'];
+import _ from 'lodash';
 
-    constructor($root, $q, $modal) {
-        this.deferred = null;
-        this.$q = $q;
+// Events groups.
+import EVENT_GROUPS from 'app/data/event-groups.json';
 
-        const scope = $root.$new();
-
-        scope.ui = {};
-
-        scope.ok = () => {
-            this.deferred.resolve({filter: scope.ui.filter, caseSensitive: !!scope.ui.caseSensitive});
-
-            this.modal.hide();
-        };
-
-        scope.$hide = () => {
-            this.modal.hide();
-
-            this.deferred.reject();
-        };
-
-        this.modal = $modal({templateUrl: '/scan-filter-input.html', scope, placement: 'center', show: false});
-    }
-
-    open() {
-        this.deferred = this.$q.defer();
-
-        this.modal.$promise.then(this.modal.show);
-
-        return this.deferred.promise;
+export default class IgniteEventGroups {
+    constructor() {
+        return _.clone(EVENT_GROUPS);
     }
 }

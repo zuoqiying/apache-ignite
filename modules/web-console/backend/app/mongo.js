@@ -860,7 +860,8 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             rate: {
                 value: Number,
                 unit: Number
-            }
+            },
+            qryType: String
         }]
     });
 

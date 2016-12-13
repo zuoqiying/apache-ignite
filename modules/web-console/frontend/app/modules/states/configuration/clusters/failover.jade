@@ -68,6 +68,6 @@ include /app/helpers/jade/mixins.jade
                                     'Maximum number of attempts to execute a failed job on another node')
                             .settings-row(ng-show=failoverCustom)
                                 +java-class('SPI implementation', 'model.Custom.class', '"failoverSpiClass" + $index', 'true', failoverCustom,
-                                    'Custom FailoverSpi implementation class name.')
+                                    'Custom FailoverSpi implementation class name.', failoverCustom)
             .col-sm-6
                 +preview-xml-java(model, 'clusterFailover')
