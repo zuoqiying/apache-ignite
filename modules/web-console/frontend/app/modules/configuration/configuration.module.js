@@ -22,7 +22,7 @@ import igniteSidebar from './Sidebar.provider';
 import IgniteVersion from './Version.service';
 
 import IgniteClusterDefaults from './generator/defaults/Cluster.service';
-import IgniteClusterPlatformDefaults from './generator/defaults/cluster.platform.provider';
+import IgniteClusterPlatformDefaults from './generator/defaults/Cluster.platform.service';
 import IgniteCacheDefaults from './generator/defaults/Cache.service';
 import IgniteCachePlatformDefaults from './generator/defaults/Cache.platform.service';
 import IgniteIGFSDefaults from './generator/defaults/IGFS.service';
