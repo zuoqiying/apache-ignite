@@ -20,6 +20,8 @@ package org.apache.ignite.internal.visor.log;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -46,7 +48,7 @@ public class VisorLogSearchResult extends VisorDataTransferObject {
     private long lastModified;
 
     /** Lines of text including found line and several lines before and after. */
-    private String[] lines;
+    private List<String> lines;
 
     /** Line number in the file, 1 based. */
     private int lineNum;
@@ -90,7 +92,7 @@ public class VisorLogSearchResult extends VisorDataTransferObject {
         this.filePath = filePath;
         this.fileSize = fileSize;
         this.lastModified = lastModified;
-        this.lines = lines;
+        this.lines = Arrays.asList(lines);
         this.lineNum = lineNum;
         this.lineCnt = lineCnt;
         this.encoding = encoding;
@@ -127,7 +129,7 @@ public class VisorLogSearchResult extends VisorDataTransferObject {
     /**
      * @return Lines of text including found line and several lines before and after.
      */
-    public String[] getLines() {
+    public List<String> getLines() {
         return lines;
     }
 
@@ -156,7 +158,7 @@ public class VisorLogSearchResult extends VisorDataTransferObject {
      * @return Found line.
      */
     public String getLine() {
-        return lines[lines.length / 2];
+        return lines.get(lines.size() / 2);
     }
 
     /** {@inheritDoc} */
@@ -165,7 +167,7 @@ public class VisorLogSearchResult extends VisorDataTransferObject {
         U.writeString(out, filePath);
         out.writeLong(fileSize);
         out.writeLong(lastModified);
-        U.writeStringArray(out, lines);
+        U.writeCollection(out, lines);
         out.writeInt(lineNum);
         out.writeInt(lineCnt);
         U.writeString(out, encoding);
@@ -177,7 +179,7 @@ public class VisorLogSearchResult extends VisorDataTransferObject {
         filePath = U.readString(in);
         fileSize = in.readLong();
         lastModified = in.readLong();
-        lines = U.readStringArray(in);
+        lines = U.readList(in);
         lineNum = in.readInt();
         lineCnt = in.readInt();
         encoding = U.readString(in);

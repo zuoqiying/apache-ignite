@@ -121,6 +121,13 @@ public class VisorCacheAggregatedMetrics extends VisorDataTransferObject {
     private transient Integer failsQry;
 
     /**
+     * Default constructor.
+     */
+    public VisorCacheAggregatedMetrics() {
+        // No-op.
+    }
+
+    /**
      * Create data transfer object for aggregated cache metrics.
      *
      * @param cm Source cache metrics.

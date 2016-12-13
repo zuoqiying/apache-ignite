@@ -20,7 +20,8 @@ package org.apache.ignite.internal.visor.cache;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
+import java.util.Collection;
+import java.util.List;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -36,7 +37,7 @@ public class VisorCacheQueryConfiguration extends VisorDataTransferObject {
     private static final long serialVersionUID = 0L;
 
     /** */
-    private String[] sqlFuncClss;
+    private Collection<String> sqlFuncClss;
 
     /** */
     private long longQryWarnTimeout;
@@ -45,7 +46,7 @@ public class VisorCacheQueryConfiguration extends VisorDataTransferObject {
     private boolean sqlEscapeAll;
 
     /** */
-    private String[] indexedTypes;
+    private List<String> indexedTypes;
 
     /** */
     private int sqlOnheapRowCacheSize;
@@ -77,7 +78,7 @@ public class VisorCacheQueryConfiguration extends VisorDataTransferObject {
     /**
      * @return Classes names with SQL functions.
      */
-    public String[] getSqlFunctionClasses() {
+    public Collection<String> getSqlFunctionClasses() {
         return sqlFuncClss;
     }
 
@@ -98,7 +99,7 @@ public class VisorCacheQueryConfiguration extends VisorDataTransferObject {
     /**
      * @return Array of key and value classes names to be indexed.
      */
-    public String[] getIndexedTypes() {
+    public List<String> getIndexedTypes() {
         return indexedTypes;
     }
 
@@ -118,20 +119,20 @@ public class VisorCacheQueryConfiguration extends VisorDataTransferObject {
 
     /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-        U.writeStringArray(out, sqlFuncClss);
+        U.writeCollection(out, sqlFuncClss);
         out.writeLong(longQryWarnTimeout);
         out.writeBoolean(sqlEscapeAll);
-        U.writeStringArray(out, indexedTypes);
+        U.writeCollection(out, indexedTypes);
         out.writeInt(sqlOnheapRowCacheSize);
         U.writeString(out, sqlSchema);
     }
 
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-        sqlFuncClss = U.readStringArray(in);
+        sqlFuncClss = U.readCollection(in);
         longQryWarnTimeout = in.readLong();
         sqlEscapeAll = in.readBoolean();
-        indexedTypes = U.readStringArray(in);
+        indexedTypes = U.readList(in);
         sqlOnheapRowCacheSize = in.readInt();
         sqlSchema = U.readString(in);
     }

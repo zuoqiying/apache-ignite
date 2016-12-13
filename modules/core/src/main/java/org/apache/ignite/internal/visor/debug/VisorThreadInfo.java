@@ -21,6 +21,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.management.ThreadInfo;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
@@ -74,13 +78,13 @@ public class VisorThreadInfo extends VisorDataTransferObject {
     private Long blockedTime;
 
     /** Stack trace. */
-    private StackTraceElement[] stackTrace;
+    private List<StackTraceElement> stackTrace;
 
     /** Locks info. */
-    private VisorThreadLockInfo[] locks;
+    private Collection<VisorThreadLockInfo> locks;
 
     /** Locked monitors. */
-    private VisorThreadMonitorInfo[] lockedMonitors;
+    private Collection<VisorThreadMonitorInfo> lockedMonitors;
 
     /**
      * Default constructor.
@@ -110,21 +114,21 @@ public class VisorThreadInfo extends VisorDataTransferObject {
         waitedTime = ti.getWaitedTime();
         blockedCnt = ti.getBlockedCount();
         blockedTime = ti.getBlockedTime();
-        stackTrace = ti.getStackTrace();
+        stackTrace = Arrays.asList(ti.getStackTrace());
 
         locks = ti.getLockedSynchronizers() != null ?
-            new VisorThreadLockInfo[ti.getLockedSynchronizers().length] : null;
+            new ArrayList<VisorThreadLockInfo>(ti.getLockedSynchronizers().length) : null;
 
         if (ti.getLockedSynchronizers() != null)
             for (int i = 0; i < ti.getLockedSynchronizers().length; i++)
-                locks[i] = new VisorThreadLockInfo(ti.getLockedSynchronizers()[i]);
+                locks.add(new VisorThreadLockInfo(ti.getLockedSynchronizers()[i]));
 
         lockedMonitors = ti.getLockedMonitors() != null ?
-            new VisorThreadMonitorInfo[ti.getLockedMonitors().length] : null;
+            new ArrayList<VisorThreadMonitorInfo>(ti.getLockedMonitors().length) : null;
 
         if (ti.getLockedMonitors() != null)
             for (int i = 0; i < ti.getLockedMonitors().length; i++)
-                lockedMonitors[i] = new VisorThreadMonitorInfo(ti.getLockedMonitors()[i]);
+                lockedMonitors.add(new VisorThreadMonitorInfo(ti.getLockedMonitors()[i]));
     }
 
     /**
@@ -221,21 +225,21 @@ public class VisorThreadInfo extends VisorDataTransferObject {
     /**
      * @return Stack trace.
      */
-    public StackTraceElement[] getStackTrace() {
+    public List<StackTraceElement> getStackTrace() {
         return stackTrace;
     }
 
     /**
      * @return Locks info.
      */
-    public VisorThreadLockInfo[] getLocks() {
+    public Collection<VisorThreadLockInfo> getLocks() {
         return locks;
     }
 
     /**
      * @return Locked monitors.
      */
-    public VisorThreadMonitorInfo[] getLockedMonitors() {
+    public Collection<VisorThreadMonitorInfo> getLockedMonitors() {
         return lockedMonitors;
     }
 
@@ -254,9 +258,9 @@ public class VisorThreadInfo extends VisorDataTransferObject {
         out.writeObject(waitedTime);
         out.writeObject(blockedCnt);
         out.writeObject(blockedTime);
-        U.writeArray(out, stackTrace);
-        U.writeArray(out, locks);
-        U.writeArray(out, lockedMonitors);
+        U.writeCollection(out, stackTrace);
+        U.writeCollection(out, locks);
+        U.writeCollection(out, lockedMonitors);
     }
 
     /** {@inheritDoc} */
@@ -264,8 +268,11 @@ public class VisorThreadInfo extends VisorDataTransferObject {
         name = U.readString(in);
         id = (Long)in.readObject();
 
-        String statePresentation = state.toString();
-        state = Enum.valueOf(Thread.State.class, statePresentation);
+        String statePresentation = U.readString(in);
+
+        if (statePresentation != null)
+            state = Enum.valueOf(Thread.State.class, statePresentation);
+
         lock = (VisorThreadLockInfo)in.readObject();
         lockName = U.readString(in);
         lockOwnerId = (Long)in.readObject();
@@ -276,9 +283,9 @@ public class VisorThreadInfo extends VisorDataTransferObject {
         waitedTime = (Long)in.readObject();
         blockedCnt = (Long)in.readObject();
         blockedTime = (Long)in.readObject();
-        stackTrace = (StackTraceElement[])U.readArray(in);
-        locks = (VisorThreadLockInfo[])U.readArray(in);
-        lockedMonitors = (VisorThreadMonitorInfo[])U.readArray(in);
+        stackTrace = U.readList(in);
+        locks = U.readCollection(in);
+        lockedMonitors = U.readCollection(in);
     }
 
     /** {@inheritDoc} */
@@ -299,10 +306,10 @@ public class VisorThreadInfo extends VisorDataTransferObject {
 
         sb.append('\n');
 
-        int maxFrames = Math.min(stackTrace.length, MAX_FRAMES);
+        int maxFrames = Math.min(stackTrace.size(), MAX_FRAMES);
 
         for (int i = 0; i < maxFrames; i++) {
-            StackTraceElement ste = stackTrace[i];
+            StackTraceElement ste = stackTrace.get(i);
 
             sb.append("\tat ").append(ste.toString()).append('\n');
 
@@ -330,11 +337,11 @@ public class VisorThreadInfo extends VisorDataTransferObject {
             }
         }
 
-        if (maxFrames < stackTrace.length)
+        if (maxFrames < stackTrace.size())
             sb.append("\t...").append('\n');
 
-        if (locks.length > 0) {
-            sb.append("\n\tNumber of locked synchronizers = ").append(locks.length).append('\n');
+        if (locks.size() > 0) {
+            sb.append("\n\tNumber of locked synchronizers = ").append(locks.size()).append('\n');
 
             for (VisorThreadLockInfo li : locks)
                 sb.append("\t- ").append(li).append('\n');

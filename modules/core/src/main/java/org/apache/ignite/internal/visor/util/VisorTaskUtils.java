@@ -286,16 +286,16 @@ public class VisorTaskUtils {
      * @param clss Classes to compact.
      * @return Compacted string.
      */
-    @Nullable public static String[] compactClasses(Class<?>[] clss) {
+    @Nullable public static List<String> compactClasses(Class<?>[] clss) {
         if (clss == null)
             return null;
 
         int len = clss.length;
 
-        String[] res = new String[len];
+        List<String> res = new ArrayList<>(len);
 
-        for (int i = 0; i < len; i++)
-            res[i] = U.compact(clss[i].getName());
+        for (Class<?> cls: clss)
+            res.add(U.compact(cls.getName()));
 
         return res;
     }

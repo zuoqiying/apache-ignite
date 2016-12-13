@@ -30,6 +30,13 @@ public class VisorGridEventsLost extends VisorGridEvent {
     private static final long serialVersionUID = 0L;
 
     /**
+     * Default constructor.
+     */
+    public VisorGridEventsLost() {
+        // No-op.
+    }
+
+    /**
      * Create event with given parameters.
      *
      * @param nid Node where events were lost.

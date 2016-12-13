@@ -20,6 +20,8 @@ package org.apache.ignite.internal.visor.node;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Collection;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -40,7 +42,7 @@ public class VisorPeerToPeerConfiguration extends VisorDataTransferObject {
     private int p2pMissedResCacheSize;
 
     /** List of packages from the system classpath that need to be loaded from task originating node. */
-    private String[] p2pLocClsPathExcl;
+    private Collection<String> p2pLocClsPathExcl;
 
     /**
      * Default constructor.
@@ -57,7 +59,7 @@ public class VisorPeerToPeerConfiguration extends VisorDataTransferObject {
     public VisorPeerToPeerConfiguration(IgniteConfiguration c) {
         p2pEnabled = c.isPeerClassLoadingEnabled();
         p2pMissedResCacheSize = c.getPeerClassLoadingMissedResourcesCacheSize();
-        p2pLocClsPathExcl = c.getPeerClassLoadingLocalClassPathExclude();
+        p2pLocClsPathExcl = Arrays.asList(c.getPeerClassLoadingLocalClassPathExclude());
     }
 
     /**
@@ -77,7 +79,7 @@ public class VisorPeerToPeerConfiguration extends VisorDataTransferObject {
     /**
      * @return List of packages from the system classpath that need to be loaded from task originating node.
      */
-    @Nullable public String[] getPeerClassLoadingLocalClassPathExclude() {
+    @Nullable public Collection<String> getPeerClassLoadingLocalClassPathExclude() {
         return p2pLocClsPathExcl;
     }
 
@@ -85,14 +87,14 @@ public class VisorPeerToPeerConfiguration extends VisorDataTransferObject {
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
         out.writeBoolean(p2pEnabled);
         out.writeInt(p2pMissedResCacheSize);
-        U.writeStringArray(out, p2pLocClsPathExcl);
+        U.writeCollection(out, p2pLocClsPathExcl);
     }
 
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
         p2pEnabled = in.readBoolean();
         p2pMissedResCacheSize = in.readInt();
-        p2pLocClsPathExcl = U.readStringArray(in);
+        p2pLocClsPathExcl = U.readCollection(in);
     }
 
     /** {@inheritDoc} */
