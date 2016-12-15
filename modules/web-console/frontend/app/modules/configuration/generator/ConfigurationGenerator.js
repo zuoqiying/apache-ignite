@@ -1480,6 +1480,7 @@ export default class IgniteConfigurationGenerator {
             .intProperty('sqlOnheapRowCacheSize')
             .intProperty('longQueryWarningTimeout')
             .arrayProperty('indexedTypes', 'indexedTypes', indexedTypes, 'java.lang.Class')
+            .intProperty('queryDetailMetricsSize')
             .arrayProperty('sqlFunctionClasses', 'sqlFunctionClasses', cache.sqlFunctionClasses, 'java.lang.Class')
             .intProperty('snapshotableIndex')
             .intProperty('sqlEscapeAll');
