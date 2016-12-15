@@ -143,7 +143,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             /**
              * @type {socketIo.Server}
              */
-            this.io = socketio(srv);
+            this.io = socketio(srv, {path: '/agents'});
 
             this.io.on('connection', (socket) => {
                 socket.on('agent:auth', ({ver, bt, tokens}, cb) => {
@@ -166,7 +166,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                             const missedTokens = _.difference(tokens, activeTokens);
 
                             if (missedTokens.length)
-                                socket.emit('agent:warning', `Invalid token(s): ${missedTokens.join(', ')}.`);
+                                socket.emit('log:warn', `Invalid token(s): ${missedTokens.join(', ')}.`);
 
                             this.onAgentConnect(activeTokens, new AgentSocket(socket));
 
@@ -182,16 +182,21 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
          * @param {String} token
          * @returns {Promise.<AgentSocket>}
          */
-        forToken(token) {
+        forToken(token, demo) {
             if (!this.io)
                 return Promise.reject(new Error('Agent server not started yet!'));
 
-            const sockets = this._agentSockets[token];
+            const agentSockets = this._agentSockets[token];
 
-            if (_.isEmpty(sockets))
+            const socket = demo ? _.find(agentSockets, 'demoCluster') : 0;
+
+            if (_.isNil(socket))
                 return Promise.reject(new Error('Failed to find connected agent for this token'));
 
-            return Promise.resolve(sockets[0]);
+            if (demo)
+                return Promise.resolve(_.find(agentSockets, 'demoCluster'));
+
+            return Promise.resolve(socket);
         }
 
         /**
@@ -202,14 +207,24 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
         onBrowserConnect(token, browserSocket) {
             let browserSockets = this._browserSockets[token];
 
-            if (!browserSockets)
+            if (_.isNil(browserSockets))
                 this._browserSockets[token] = browserSockets = [];
 
             browserSockets.push(browserSocket);
 
-            const count = _.get(this._agentSockets[token], 'length') || 0;
+            const agentSockets = this._agentSockets[token];
 
-            browserSocket.emit('agent:count', {count});
+            const cnt = _.size(agentSockets);
+
+            browserSocket.emit('agent:count', cnt);
+
+            // If user start demo and agents was connected before.
+            if (cnt > 0) {
+                const demo = browserSocket.request._query.IgniteDemoMode === 'true';
+
+                if (demo && !_.find(agentSockets, 'demoCluster'))
+                    _.head(agentSockets).startCollectTopology(true);
+            }
         }
 
         /**
@@ -230,31 +245,36 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
          * @param {AgentSocket} agentSocket
          */
         onAgentConnect(tokens, agentSocket) {
-            const emitAgentCnt = (token, count) => {
+            const emitAgentCnt = (token, cnt) => {
                 const sockets = this._browserSockets[token];
 
-                _.forEach(sockets, (socket) => socket.emit('agent:count', {count}));
+                _.forEach(sockets, (socket) => socket.emit('agent:count', cnt));
             };
 
             agentSocket.socket.on('disconnect', () => {
                 _.forEach(tokens, (token) => {
-                    const socket = this._agentSockets[token];
+                    const agentSockets = this._agentSockets[token];
 
-                    _.pull(socket, agentSocket);
+                    _.pull(agentSockets, agentSocket);
 
-                    emitAgentCnt(token, socket.length);
+                    emitAgentCnt(token, agentSockets.length);
                 });
             });
 
             _.forEach(tokens, (token) => {
-                let socket = this._agentSockets[token];
+                const agentSockets = this._agentSockets[token];
 
-                if (_.isNil(socket))
-                    this._agentSockets[token] = socket = [];
+                if (_.isNil(agentSockets)) {
+                    this._agentSockets[token] = [agentSocket];
 
-                socket.push(agentSocket);
+                    // If first agent join after user start demo.
+                    if (_.find(this._browserSockets, (socket) => socket.request._query.IgniteDemoMode === 'true'))
+                        agentSockets.startCollectTopology(true);
+                }
+                else
+                    agentSockets.push(agentSocket);
 
-                emitAgentCnt(token, socket.length);
+                emitAgentCnt(token, agentSockets.length);
             });
         }
 

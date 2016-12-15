@@ -40,6 +40,7 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.ignite.console.agent.handlers.DatabaseHandler;
 import org.apache.ignite.console.agent.handlers.RestHandler;
 import org.apache.ignite.console.agent.handlers.TopologyHandler;
+import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.internal.util.typedef.X;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,10 +62,10 @@ public class AgentLauncher {
     private static final Logger log = LoggerFactory.getLogger(AgentLauncher.class);
 
     /** */
-    private static final String EVENT_START_COLLECT_TOPOLOGY = "collect:start";
+    private static final String EVENT_START_COLLECT_TOPOLOGY = "start:collect:topology";
 
     /** */
-    private static final String EVENT_STOP_COLLECT_TOPOLOGY = "collect:stop";
+    private static final String EVENT_STOP_COLLECT_TOPOLOGY = "stop:collect:topology";
 
     /** */
     private static final String EVENT_SCHEMA_IMPORT_DRIVERS = "schemaImport:drivers";
@@ -151,6 +152,24 @@ public class AgentLauncher {
     private static final Emitter.Listener onDisconnect = new Emitter.Listener() {
         @Override public void call(Object... args) {
             log.error("Connection closed: %s.", args);
+        }
+    };
+
+    /**
+     * On token reset listener.
+     */
+    private static final Emitter.Listener onLogWarning = new Emitter.Listener() {
+        @Override public void call(Object... args) {
+            log.warn(String.valueOf(args[0]));
+        }
+    };
+
+    /**
+     * On demo start request.
+     */
+    private static final Emitter.Listener onDemoStart = new Emitter.Listener() {
+        @Override public void call(Object... args) {
+            log.warn(String.valueOf(args[0]));
         }
     };
 
@@ -323,23 +342,9 @@ public class AgentLauncher {
                 .on(EVENT_RECONNECTING, onConnecting)
                 .on(EVENT_ERROR, onError)
                 .on(EVENT_DISCONNECT, onDisconnect)
-
-                .on(EVENT_LOG_WARNING, new Emitter.Listener() {
-                    @Override public void call(Object... args) {
-                        log.warn(String.valueOf(args[0]));
-                    }
-                })
-
+                .on(EVENT_LOG_WARNING, onLogWarning)
                 .on(EVENT_START_COLLECT_TOPOLOGY, topHnd.start())
                 .on(EVENT_STOP_COLLECT_TOPOLOGY, topHnd.stop())
-
-                .on(EVENT_NODE_VISOR_TASK, restHnd)
-                .on(EVENT_NODE_REST, restHnd)
-
-                .on(EVENT_SCHEMA_IMPORT_DRIVERS, dbHnd.availableDriversListener())
-                .on(EVENT_SCHEMA_IMPORT_SCHEMAS, dbHnd.schemasListener())
-                .on(EVENT_SCHEMA_IMPORT_METADATA, dbHnd.metadataListener())
-
                 .on(EVENT_RESET_TOKENS, new Emitter.Listener() {
                     @Override public void call(Object... args) {
                         String tok = String.valueOf(args[0]);
@@ -354,7 +359,12 @@ public class AgentLauncher {
                             latch.countDown();
                         }
                     }
-                });
+                })
+                .on(EVENT_SCHEMA_IMPORT_DRIVERS, dbHnd.availableDriversListener())
+                .on(EVENT_SCHEMA_IMPORT_SCHEMAS, dbHnd.schemasListener())
+                .on(EVENT_SCHEMA_IMPORT_METADATA, dbHnd.metadataListener())
+                .on(EVENT_NODE_VISOR_TASK, restHnd)
+                .on(EVENT_NODE_REST, restHnd);
 
             client.connect();
 

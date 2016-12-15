@@ -35,7 +35,7 @@ module.exports.factory = function(_, express, downloadsService) {
         const router = new express.Router();
 
         /* Get grid topology. */
-        router.get('/download/agent', (req, res) => {
+        router.get('/downloads/agent', (req, res) => {
             downloadsService.prepareArchive(req.origin(), req.user.token)
                 .then(({fileName, buffer}) => {
                     // Set the archive name.

@@ -29,18 +29,20 @@ module.exports = {
     inject: ['require(lodash)', 'require(express)', 'errors', 'settings', 'mongo', 'services/spaces', 'agent-manager']
 };
 
-module.exports.factory = (_, express, errors, settings, mongo, spacesService, AgentManager) => {
+/**
+ *
+ * @param _
+ * @param express
+ * @param errors
+ * @param settings
+ * @param mongo
+ * @param spacesService
+ * @param {AgentManager} agentMgr
+ * @return {Promise}
+ */
+module.exports.factory = (_, express, errors, settings, mongo, spacesService, agentMgr) => {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
-
-        /**
-         * Reset demo configuration.
-         */
-        router.post('/start', (req, res) => {
-            AgentManager.forAccount(req.user._id)
-                .then((agentSocket) => {
-                });
-        });
 
         /**
          * Reset demo configuration.

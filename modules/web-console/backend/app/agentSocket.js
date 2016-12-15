@@ -96,6 +96,13 @@ module.exports.factory = function(_) {
              * @type {socketIo.Socket}
              */
             this.socket = socket;
+
+            /**
+             * Flag that indicate if demo cluster is running on agent.
+             *
+             * @type {boolean}
+             */
+            this.demoCluster = false;
         }
 
         /**
@@ -133,6 +140,16 @@ module.exports.factory = function(_) {
                     resolve(res);
                 })
             );
+        }
+
+        startCollectTopology(demo, timeout) {
+            return this.emitEvent('start:collect:topology', demo, timeout)
+                .then(() => this.demoCluster = true);
+        }
+
+        stopCollectTopology(demo) {
+            return this.emitEvent('stop:collect:topology', demo)
+                .then(() => this.demoCluster = true);
         }
 
         /**

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.console.agent;
+package org.apache.ignite.console.agent.rest;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -47,7 +47,7 @@ public class RestExecutor {
     /**
      * Default constructor.
      */
-    RestExecutor(String nodeUrl) {
+    public RestExecutor(String nodeUrl) {
         this.nodeUrl = nodeUrl;
 
         httpClient = new OkHttpClient.Builder().build();
@@ -56,7 +56,7 @@ public class RestExecutor {
     /**
      * Stop HTTP client.
      */
-    void stop() {
+    public void stop() {
         if (httpClient != null)
             httpClient.dispatcher().executorService().shutdown();
     }

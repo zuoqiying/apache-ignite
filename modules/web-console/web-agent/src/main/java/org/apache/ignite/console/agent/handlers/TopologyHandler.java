@@ -24,9 +24,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import org.apache.ignite.console.agent.AgentConfiguration;
-import org.apache.ignite.console.agent.RestExecutor;
-import org.apache.ignite.console.agent.RestResult;
+import org.apache.ignite.console.agent.rest.RestExecutor;
+import org.apache.ignite.console.agent.rest.RestResult;
+import org.apache.ignite.console.demo.AgentClusterDemo;
+import org.apache.ignite.console.demo.AgentMetadataDemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,7 @@ public class TopologyHandler {
                         try {
                             RestResult top = restExecutor.topology(demo);
 
-                            client.emit(EVENT_TOPOLOGY, top);
+                            client.emit(EVENT_TOPOLOGY, demo, top);
                         }
                         catch (IOException e) {
                             log.info("Failed to collect topology");

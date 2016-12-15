@@ -18,10 +18,7 @@
 package org.apache.ignite.console.agent.handlers;
 
 import java.util.Map;
-import org.apache.ignite.console.agent.AgentConfiguration;
-import org.apache.ignite.console.agent.RestExecutor;
-import org.apache.ignite.console.agent.RestResult;
-import org.apache.ignite.console.demo.AgentClusterDemo;
+import org.apache.ignite.console.agent.rest.RestExecutor;
 
 /**
  * API to translate REST requests to Ignite cluster.
