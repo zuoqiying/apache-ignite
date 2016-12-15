@@ -709,11 +709,19 @@ button.form-control {
         }
 
         .ignite-form-field {
+            margin-right: 10px;
+
             .ignite-form-field__label {
+                float: left;
                 width: auto;
                 margin-right: 5px;
-
                 line-height: 28px;
+            }
+
+            .ignite-form-field__label + div {
+                display: block;
+                float: none;
+                width: auto;
             }
         }
 
@@ -731,6 +739,10 @@ button.form-control {
                     margin-left: 5px;
                 }
             }
+        }
+
+        .col-sm-3 + .tipLabel {
+            margin-left: 0;
         }
     }
 
