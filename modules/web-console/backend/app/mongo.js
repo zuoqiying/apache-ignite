@@ -861,6 +861,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             result: {type: String, enum: ['none', 'table', 'bar', 'pie', 'line', 'area']},
             pageSize: Number,
             timeLineSpan: String,
+            limit: Number,
             hideSystemColumns: Boolean,
             cacheName: String,
             chartsOptions: {barChart: {stacked: Boolean}, areaChart: {style: String}},

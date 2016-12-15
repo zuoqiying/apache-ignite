@@ -49,10 +49,10 @@ class Paragraph {
     constructor($animate, $timeout, paragraph) {
         const self = this;
 
-        self.qryType = paragraph.qryType || 'query';
-        self.filter = '';
-
         self.id = 'paragraph-' + paragraphId++;
+        self.qryType = paragraph.qryType || 'query';
+        self.limit = 1000;
+        self.filter = '';
 
         _.assign(this, paragraph);
 
@@ -80,27 +80,28 @@ class Paragraph {
             enableColumnMenus: false,
             flatEntityAccess: true,
             fastWatch: true,
+            categories: [],
             rebuildColumns() {
                 if (_.isNil(this.api))
                     return;
 
-                this.categories = [];
-                this.columnDefs = _.reduce(self.meta, (cols, col, idx) => {
-                    if (self.columnFilter(col)) {
-                        cols.push({
-                            displayName: col.fieldName,
-                            headerTooltip: _fullColName(col),
-                            field: idx.toString(),
-                            minWidth: 50,
-                            cellClass: 'cell-left'
-                        });
+                this.categories.length = 0;
 
-                        this.categories.push({
-                            name: col.fieldName,
-                            visible: true,
-                            selectable: true
-                        });
-                    }
+                this.columnDefs = _.reduce(self.meta, (cols, col, idx) => {
+                    cols.push({
+                        displayName: col.fieldName,
+                        headerTooltip: _fullColName(col),
+                        field: idx.toString(),
+                        minWidth: 50,
+                        cellClass: 'cell-left',
+                        visible: self.columnFilter(col)
+                    });
+
+                    this.categories.push({
+                        name: col.fieldName,
+                        visible: self.columnFilter(col),
+                        selectable: true
+                    });
 
                     return cols;
                 }, []);
@@ -209,6 +210,13 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         $scope.caches = [];
 
         $scope.pageSizes = [50, 100, 200, 400, 800, 1000];
+        $scope.limit = [
+            {label: 'Unlimited', value: 0},
+            {label: '100', value: 100},
+            {label: '500', value: 500},
+            {label: '1000', value: 1000},
+            {label: '10000', value: 10000}
+        ];
 
         $scope.timeLineSpans = ['1', '5', '10', '15', '30'];
 
@@ -960,7 +968,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             const paragraph = new Paragraph($animate, $timeout, {
                 name: 'Query' + (sz === 0 ? '' : sz),
                 query: '',
-                pageSize: $scope.pageSizes[0],
+                pageSize: $scope.pageSizes[1],
+                limit: $scope.limit[0],
                 timeLineSpan: $scope.timeLineSpans[0],
                 result: 'none',
                 rate: {
@@ -986,7 +995,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             const paragraph = new Paragraph($animate, $timeout, {
                 name: 'Scan' + (sz === 0 ? '' : sz),
                 query: '',
-                pageSize: $scope.pageSizes[0],
+                pageSize: $scope.pageSizes[1],
                 timeLineSpan: $scope.timeLineSpans[0],
                 result: 'none',
                 rate: {
@@ -1360,16 +1369,16 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     return _closeOldQuery(paragraph)
                         .then(() => {
                             const args = paragraph.queryArgs = {
-                                cacheName: paragraph.cacheName,
-                                pageSize: paragraph.pageSize,
-                                query: paragraph.query,
-                                firstPageOnly: paragraph.firstPageOnly,
-                                nonCollocatedJoins,
                                 type: 'QUERY',
+                                cacheName: paragraph.cacheName,
+                                query: paragraph.query,
+                                pageSize: paragraph.pageSize,
+                                limit: paragraph.limit,
+                                nonCollocatedJoins,
                                 localNid: local ? nid : null
                             };
 
-                            const qry = args.firstPageOnly ? addLimit(args.query, args.pageSize) : paragraph.query;
+                            const qry = args.limit ? addLimit(args.query, args.limit) : paragraph.query;
 
                             return agentMonitor.query(nid, args.cacheName, qry, nonCollocatedJoins, local, args.pageSize);
                         })
@@ -1416,10 +1425,10 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then(() => _chooseNode(paragraph.cacheName, false))
                 .then((nid) => {
                     const args = paragraph.queryArgs = {
+                        type: 'EXPLAIN',
                         cacheName: paragraph.cacheName,
-                        pageSize: paragraph.pageSize,
                         query: 'EXPLAIN ' + paragraph.query,
-                        type: 'EXPLAIN'
+                        pageSize: paragraph.pageSize
                     };
 
                     return agentMonitor.query(nid, args.cacheName, args.query, false, false, args.pageSize);
@@ -1450,44 +1459,22 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     _closeOldQuery(paragraph)
                         .then(() => {
                             const args = paragraph.queryArgs = {
-                                cacheName: paragraph.cacheName,
-                                pageSize: paragraph.pageSize,
-                                firstPageOnly: paragraph.firstPageOnly,
-                                query,
                                 type: 'SCAN',
+                                cacheName: paragraph.cacheName,
+                                query,
+                                filter,
+                                pageSize: paragraph.pageSize,
                                 localNid: local ? nid : null
                             };
 
                             return agentMonitor.query(nid, args.cacheName, query, false, local, args.pageSize);
                         })
-                        .then((res) => {
-                            if (paragraph.firstPageOnly) {
-                                res.hasMore = false;
-
-                                _processQueryResult(paragraph, true, res);
-
-                                _closeOldQuery(paragraph);
-                            }
-                            else
-                                _processQueryResult(paragraph, true, res);
-                        })
+                        .then((res) => _processQueryResult(paragraph, true, res))
                         .catch((err) => {
                             paragraph.errMsg = err.message;
 
                             _showLoading(paragraph, false);
                         });
-                });
-        };
-
-        $scope.scanWithFilter = (paragraph) => {
-            if (!$scope.actionAvailable(paragraph, false))
-                return;
-
-            ScanFilterInput.open()
-                .then(({filter, caseSensitive}) => {
-                    const prefix = caseSensitive ? SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE : SCAN_CACHE_WITH_FILTER;
-
-                    $scope.scan(paragraph, `${prefix}${filter}`);
                 });
         };
 
@@ -1545,22 +1532,20 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then(() => paragraph.ace.focus());
         };
 
-        const _export = (fileName, columnFilter, meta, rows) => {
+        const _export = (fileName, columnDefs, meta, rows) => {
             let csvContent = '';
 
             const cols = [];
             const excludedCols = [];
 
-            if (meta) {
-                _.forEach(meta, (col, idx) => {
-                    if (columnFilter(col))
-                        cols.push(_fullColName(col));
-                    else
-                        excludedCols.push(idx);
-                });
+            _.forEach(meta, (col, idx) => {
+                if (columnDefs[idx].visible)
+                    cols.push(_fullColName(col));
+                else
+                    excludedCols.push(idx);
+            });
 
-                csvContent += cols.join(';') + '\n';
-            }
+            csvContent += cols.join(';') + '\n';
 
             _.forEach(rows, (row) => {
                 cols.length = 0;
@@ -1574,8 +1559,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                     });
                 }
                 else {
-                    _.forEach(meta, (col) => {
-                        if (columnFilter(col)) {
+                    _.forEach(columnDefs, (col) => {
+                        if (col.visible) {
                             const elem = row[col.fieldName];
 
                             cols.push(_.isUndefined(elem) ? '' : JSON.stringify(elem));
@@ -1590,7 +1575,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         $scope.exportCsv = function(paragraph) {
-            _export(paragraph.name + '.csv', paragraph.columnFilter, paragraph.meta, paragraph.rows);
+            _export(paragraph.name + '.csv', paragraph.gridOptions.columnDefs, paragraph.meta, paragraph.rows);
 
             // paragraph.gridOptions.api.exporter.csvExport(uiGridExporterConstants.ALL, uiGridExporterConstants.VISIBLE);
         };
@@ -1604,7 +1589,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             return Promise.resolve(args.localNid || _chooseNode(args.cacheName, false))
                 .then((nid) => agentMonitor.queryGetAll(nid, args.cacheName, args.query, !!args.nonCollocatedJoins, !!args.localNid))
-                .then((res) => _export(paragraph.name + '-all.csv', paragraph.columnFilter, res.columns, res.rows))
+                .then((res) => _export(paragraph.name + '-all.csv', paragraph.gridOptions.columnDefs, res.columns, res.rows))
                 .catch(Messages.showError)
                 .then(() => paragraph.ace.focus());
         };

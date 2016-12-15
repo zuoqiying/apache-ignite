@@ -601,6 +601,10 @@ button.form-control {
 .theme-line .notebook-header {
     border-color: $gray-lighter;
 
+    button:last-child {
+        margin-right: 0;
+    }
+
     h1 {
         padding: 0;
         margin: 0;
@@ -637,7 +641,7 @@ button.form-control {
 }
 
 .theme-line .paragraphs {
-    .panel-group .panel + .panel {
+    .panel-group .panel-paragraph + .panel-paragraph {
         margin-top: 30px;
     }
 
@@ -679,9 +683,15 @@ button.form-control {
         line-height: 55px;
     }
 
-    .sql-controls {
+    .panel-collapse {
         border-top: 1px solid $ignite-border-color;
+    }
 
+    .sql-controls {
+        position: relative;
+        top: -1px;
+        border-top: 1px solid #ddd;
+    
         padding: 10px 10px;
 
         input[type="checkbox"] {
@@ -690,16 +700,36 @@ button.form-control {
         }
 
         label {
-            line-height: 20px;
+            line-height: 28px;
             vertical-align: middle;
+        }
+
+        .btn {
+            line-height: 20px;
         }
 
         .ignite-form-field {
             .ignite-form-field__label {
                 width: auto;
-                margin-right: 15px;
+                margin-right: 5px;
 
                 line-height: 28px;
+            }
+        }
+
+        .tipLabel .btn {
+            float: right;
+        }
+
+        .pull-right {
+            margin-left: 10px;
+
+            .ignite-form-field {
+                margin-right: -24px;
+
+                label { 
+                    margin-left: 5px;
+                }
             }
         }
     }
@@ -1713,6 +1743,7 @@ th[st-sort] {
 }
 
 .chart-settings-link {
+    margin-top: -2px;
     padding-left: 10px;
     line-height: $input-height;
 
