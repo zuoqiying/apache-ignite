@@ -717,7 +717,7 @@ export default ['clustersController', [
         function save(item) {
             $http.post('/api/v1/configuration/clusters/save', item)
                 .then(({data}) => {
-                    const _id = data._id;
+                    const _id = data;
 
                     item.label = _clusterLbl(item);
 
