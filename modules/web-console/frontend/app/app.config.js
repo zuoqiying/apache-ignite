@@ -33,6 +33,10 @@ igniteConsoleCfg.config(['$compileProvider', ($compileProvider) => {
     $compileProvider.preAssignBindingsEnabled(true);
 }]);
 
+igniteConsoleCfg.config(['$qProvider', ($qProvider) => {
+    $qProvider.errorOnUnhandledRejections(false);
+}]);
+
 // Configure AngularJS animation: do not animate fa-spin.
 igniteConsoleCfg.config(['$animateProvider', ($animateProvider) => {
     $animateProvider.classNameFilter(/^((?!(fa-spin)).)*$/);
