@@ -1653,7 +1653,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
                 const nearCacheMtd = this.javaTypes.toJavaName('nearConfiguration', cache.name);
 
-                sb.append(`ignite.getOrCreateCache(${shortFactoryCls}.${cache.name}(), ${shortFactoryCls}.${nearCacheMtd}());`);
+                sb.append(`ignite.getOrCreateCache(${shortFactoryCls}.${this.javaTypes.toJavaName('cache', cache.name)}(), ${shortFactoryCls}.${nearCacheMtd}());`);
             });
         }
         else

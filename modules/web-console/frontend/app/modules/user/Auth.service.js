@@ -20,8 +20,8 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteErro
         return {
             forgotPassword(userInfo) {
                 $http.post('/api/v1/password/forgot', userInfo)
-                    .success(() => $state.go('password.send'))
-                    .error((err) => ErrorPopover.show('forgot_email', Messages.errorMessage(null, err)));
+                    .then(() => $state.go('password.send'))
+                    .cacth(({data}) => ErrorPopover.show('forgot_email', Messages.errorMessage(null, data)));
             },
             auth(action, userInfo) {
                 $http.post('/api/v1/' + action, userInfo)
@@ -45,12 +45,12 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteErro
             },
             logout() {
                 $http.post('/api/v1/logout')
-                    .success(() => {
+                    .then(() => {
                         User.clean();
 
                         $window.open($state.href('signin'), '_self');
                     })
-                    .error(Messages.showError);
+                    .catch(({data}) => Messages.showError(data));
             }
         };
     }]];
