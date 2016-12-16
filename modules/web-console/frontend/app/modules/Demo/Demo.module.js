@@ -42,10 +42,10 @@ angular
             controller: ['$state', '$http', 'IgniteMessages', ($state, $http, Messages) => {
                 $http.post('/api/v1/demo/reset')
                     .then(() => $state.go('base.configuration.clusters'))
-                    .catch(({data}) => {
+                    .catch((res) => {
                         $state.go('base.configuration.clusters');
 
-                        Messages.showError(data);
+                        Messages.showError(res);
                     });
             }],
             metaTags: {}

@@ -23,8 +23,8 @@ export default ['adminController', [
 
         const _reloadUsers = () => {
             $http.post('/api/v1/admin/list')
-                .success((users) => {
-                    $scope.users = users;
+                .then(({data}) => {
+                    $scope.users = data;
 
                     _.forEach($scope.users, (user) => {
                         user.userName = user.firstName + ' ' + user.lastName;
@@ -33,14 +33,13 @@ export default ['adminController', [
                             (user.company || '') + ' ' + (user.countryCode || '');
                     });
                 })
-                .error(Messages.showError);
+                .catch(Messages.showError);
         };
 
         _reloadUsers();
 
         $scope.becomeUser = function(user) {
             $http.get('/api/v1/admin/become', { params: {viewedUserId: user._id}})
-                .catch(({data}) => Promise.reject(data))
                 .then(() => User.load())
                 .then((becomeUser) => {
                     $rootScope.$broadcast('user', becomeUser);
@@ -52,22 +51,22 @@ export default ['adminController', [
         };
 
         $scope.removeUser = (user) => {
-            Confirm.confirm('Are you sure you want to remove user: "' + user.userName + '"?')
+            Confirm.confirm(`Are you sure you want to remove user: "${user.userName}"?`)
                 .then(() => {
                     $http.post('/api/v1/admin/remove', {userId: user._id})
-                        .success(() => {
+                        .then(() => {
                             const i = _.findIndex($scope.users, (u) => u._id === user._id);
 
                             if (i >= 0)
                                 $scope.users.splice(i, 1);
 
-                            Messages.showInfo('User has been removed: "' + user.userName + '"');
+                            Messages.showInfo(`User has been removed: "${user.userName}"`);
                         })
-                        .error((err, status) => {
+                        .catch(({data, status}) => {
                             if (status === 503)
-                                Messages.showInfo(err);
+                                Messages.showInfo(data);
                             else
-                                Messages.showError(Messages.errorMessage('Failed to remove user: ', err));
+                                Messages.showError(Messages.errorMessage('Failed to remove user: ', data));
                         });
                 });
         };
@@ -79,13 +78,13 @@ export default ['adminController', [
             user.adminChanging = true;
 
             $http.post('/api/v1/admin/save', {userId: user._id, adminFlag: !user.admin})
-                .success(() => {
+                .then(() => {
                     user.admin = !user.admin;
 
                     Messages.showInfo('Admin right was successfully toggled for user: "' + user.userName + '"');
                 })
-                .error((err) => {
-                    Messages.showError(Messages.errorMessage('Failed to toggle admin right for user: ', err));
+                .catch((res) => {
+                    Messages.showError(Messages.errorMessage('Failed to toggle admin right for user: ', res));
                 })
                 .finally(() => user.adminChanging = false);
         };

@@ -24,6 +24,9 @@ export default ['IgniteMessages', ['$alert', ($alert) => {
         prefix = prefix || '';
 
         if (err) {
+            if (err.hasOwnProperty('data'))
+                err = err.data;
+
             if (err.hasOwnProperty('message'))
                 return prefix + err.message;
 
