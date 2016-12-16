@@ -79,7 +79,7 @@ export default class IgniteVersion {
      */
     productVersion() {
         return {
-            ignite: '1.7.0'
+            ignite: '1.8.0'
         };
     }
 
