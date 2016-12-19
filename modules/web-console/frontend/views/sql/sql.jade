@@ -193,7 +193,7 @@ mixin paragraph-scan
                 +table-result-body
             .footer.clearfix()
                 .pull-left
-                    | Showing results for scan of #[b{{ paragraph.queryArgs.cacheName }}]
+                    | Showing results for scan of #[b{{ paragraph.queryArgs.cacheName | defaultName }}]
                     span(ng-if='paragraph.queryArgs.filter') &nbsp; with filter: #[b {{ paragraph.queryArgs.filter }}]
                     span(ng-if='paragraph.queryArgs.localNid') &nbsp; on node: #[b {{ paragraph.queryArgs.localNid | limitTo:8 }}]
 
