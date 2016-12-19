@@ -781,9 +781,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 if (!_.includes($scope.notebook.expandedParagraphs, idx))
                     $scope.notebook.expandedParagraphs.push(idx);
 
-                setTimeout(function() {
-                    $scope.notebook.paragraphs[idx].ace.focus();
-                });
+                if ($scope.notebook.paragraphs[idx].ace)
+                    setTimeout(() => $scope.notebook.paragraphs[idx].ace.focus());
             }
 
             $location.hash(id);
@@ -1590,7 +1589,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then((nid) => agentMonitor.queryGetAll(nid, args.cacheName, args.query, !!args.nonCollocatedJoins, !!args.localNid))
                 .then((res) => _export(paragraph.name + '-all.csv', paragraph.gridOptions.columnDefs, res.columns, res.rows))
                 .catch(Messages.showError)
-                .then(() => paragraph.ace.focus());
+                .then(() => paragraph.ace && paragraph.ace.focus());
         };
 
         // $scope.exportPdfAll = function(paragraph) {
@@ -1668,7 +1667,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             paragraph.ace.insert(node.name);
 
             setTimeout(function() {
-                paragraph.ace.focus();
+                paragraph.ace.focus ();
             }, 1);
         };
 
