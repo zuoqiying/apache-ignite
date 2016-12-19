@@ -827,8 +827,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             let item = _.find(cachesAcc, {name: cache.name});
 
                             if (_.isNil(item)) {
-                                cache.label = maskCacheName(cache.name);
-                                cache.value = cache.label;
+                                cache.label = maskCacheName(cache.name, true);
+                                cache.value = cache.name;
 
                                 cache.nodes = [];
 
@@ -851,11 +851,11 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                         return;
 
                     // Reset to first cache in case of stopped selected.
-                    const cacheNames = _.map($scope.caches, (cache) => cache.name);
+                    const cacheNames = _.map($scope.caches, (cache) => cache.value);
 
                     _.forEach($scope.notebook.paragraphs, (paragraph) => {
                         if (!_.includes(cacheNames, paragraph.cacheName))
-                            paragraph.cacheName = _.head(cacheNames);
+                            paragraph.cacheName = _.head(cacheNames).value;
                     });
                 })
                 .then(() => agentMonitor.checkModal())
@@ -949,9 +949,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         $scope.addParagraph = (paragraph, sz) => {
-
             if ($scope.caches && $scope.caches.length > 0)
-                paragraph.cacheName = $scope.caches[0].name;
+                paragraph.cacheName = _.head($scope.caches).value;
 
             $scope.notebook.paragraphs.push(paragraph);
 
@@ -969,7 +968,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 name: 'Query' + (sz === 0 ? '' : sz),
                 query: '',
                 pageSize: $scope.pageSizes[1],
-                limit: $scope.limit[0],
+                limit: $scope.limit[0].value,
                 timeLineSpan: $scope.timeLineSpans[0],
                 result: 'none',
                 rate: {
@@ -1596,10 +1595,10 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
         // $scope.exportPdfAll = function(paragraph) {
         //    $http.post('/api/v1/agent/query/getAll', {query: paragraph.query, cacheName: paragraph.cacheName})
-        //        .success(function(item) {
-        //            _export(paragraph.name + '-all.csv', item.meta, item.rows);
+        //    .then(({data}) {
+        //        _export(paragraph.name + '-all.csv', data.meta, data.rows);
         //    })
-        //    .error(Messages.showError);
+        //    .catch(Messages.showError);
         // };
 
         $scope.rateAsString = function(paragraph) {

@@ -88,7 +88,7 @@ export default ['profileController', [
 
                     $root.$broadcast('user', $scope.user);
                 })
-                .catch((res) => Messages.showError(Messages.errorMessage('Failed to save profile: ', res)));
+                .catch((res) => Messages.showError('Failed to save profile: ', res));
         };
     }
 ]];

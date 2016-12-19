@@ -66,7 +66,7 @@ export default ['adminController', [
                             if (status === 503)
                                 Messages.showInfo(data);
                             else
-                                Messages.showError(Messages.errorMessage('Failed to remove user: ', data));
+                                Messages.showError('Failed to remove user: ', data);
                         });
                 });
         };
@@ -81,10 +81,10 @@ export default ['adminController', [
                 .then(() => {
                     user.admin = !user.admin;
 
-                    Messages.showInfo('Admin right was successfully toggled for user: "' + user.userName + '"');
+                    Messages.showInfo(`Admin right was successfully toggled for user: "${user.userName}"`);
                 })
                 .catch((res) => {
-                    Messages.showError(Messages.errorMessage('Failed to toggle admin right for user: ', res));
+                    Messages.showError('Failed to toggle admin right for user: ', res);
                 })
                 .finally(() => user.adminChanging = false);
         };

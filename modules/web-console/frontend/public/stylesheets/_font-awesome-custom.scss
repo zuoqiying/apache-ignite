@@ -55,3 +55,17 @@ $fa-font-path: '~font-awesome/fonts';
 
   cursor: default;
 }
+
+.icon-danger {
+  @extend .fa;
+  @extend .fa-exclamation-triangle;
+
+  cursor: default;
+}
+
+.icon-success {
+  @extend .fa;
+  @extend .fa-check-circle-o;
+
+  cursor: default;
+}
