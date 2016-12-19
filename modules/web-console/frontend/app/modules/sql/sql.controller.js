@@ -1528,7 +1528,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     _showLoading(paragraph, false);
                 })
-                .then(() => paragraph.ace.focus());
+                .then(() => paragraph.ace && paragraph.ace.focus());
         };
 
         const _export = (fileName, columnDefs, meta, rows) => {
