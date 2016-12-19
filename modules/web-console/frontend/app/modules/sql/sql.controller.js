@@ -779,7 +779,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             if (idx >= 0) {
                 if (!_.includes($scope.notebook.expandedParagraphs, idx))
-                    $scope.notebook.expandedParagraphs.push(idx);
+                    $scope.notebook.expandedParagraphs = $scope.notebook.expandedParagraphs.concat([idx]);
 
                 if ($scope.notebook.paragraphs[idx].ace)
                     setTimeout(() => $scope.notebook.paragraphs[idx].ace.focus());

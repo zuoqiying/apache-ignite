@@ -512,7 +512,8 @@ export default class IgniteConfigurationGenerator {
                         case 'Custom':
                             const className = _.get(spi.S3.awsCredentials, 'Custom.className');
 
-                            credentialsBean = new Bean(className, 'awsCredentials', {});
+                            if (className)
+                                credentialsBean = new Bean(className, 'awsCredentials', {});
 
                             break;
 
