@@ -1666,9 +1666,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         $scope.dblclickMetadata = function(paragraph, node) {
             paragraph.ace.insert(node.name);
 
-            setTimeout(function() {
-                paragraph.ace.focus ();
-            }, 1);
+            setTimeout(() => paragraph.ace.focus(), 1);
         };
 
         $scope.importMetadata = function() {
