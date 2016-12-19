@@ -263,7 +263,7 @@ export default class IgniteConfigurationGenerator {
                             break;
                         case 'BoundedExponentialBackoff':
                             retryPolicyBean = new Bean('org.apache.curator.retry.BoundedExponentialBackoffRetry',
-                                null, policy.BoundedExponentialBackoffRetry, dflt.BoundedExponentialBackoffRetry)
+                                null, policy.BoundedExponentialBackoff, dflt.BoundedExponentialBackoffRetry)
                                 .intConstructorArgument('baseSleepTimeMs')
                                 .intConstructorArgument('maxSleepTimeMs')
                                 .intConstructorArgument('maxRetries');
