@@ -29,10 +29,6 @@ import alertTemplateUrl from '../views/templates/alert.jade';
 
 const igniteConsoleCfg = angular.module('ignite-console.config', ['ngAnimate', 'mgcrea.ngStrap']);
 
-igniteConsoleCfg.config(['$compileProvider', ($compileProvider) => {
-    $compileProvider.preAssignBindingsEnabled(true);
-}]);
-
 // Configure AngularJS animation: do not animate fa-spin.
 igniteConsoleCfg.config(['$animateProvider', ($animateProvider) => {
     $animateProvider.classNameFilter(/^((?!(fa-spin)).)*$/);

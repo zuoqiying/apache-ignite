@@ -222,11 +222,11 @@ include /app/helpers/jade/mixins.jade
                             .group-content-empty(ng-if='!(#{scannerModel}.length) && !group.add.length')
                                 | Not defined
                     .details-row
+                        +java-class('Listener:', modelDeployment + '.URI.listener', '"DeploymentURIListener"', 'true', 'false', 'Deployment event listener', uriDeployment)
+                    .details-row
                         +checkbox('Check MD5', modelDeployment + '.URI.checkMd5', '"DeploymentURICheckMd5"', 'Exclude files with same md5s from deployment')
                     .details-row
                         +checkbox('Encode URI', modelDeployment + '.URI.encodeUri', '"DeploymentURIEncodeUri"', 'URI must be encoded before usage')
-                    .details-row
-                        +java-class('Listener:', modelDeployment + '.URI.listener', '"DeploymentURIListener"', 'true', 'false', 'Deployment event listener', uriDeployment)
                 .panel-details(ng-show=localDeployment)
                     .details-row
                         +java-class('Listener:', modelDeployment + '.Local.listener', '"DeploymentLocalListener"', 'true', 'false', 'Deployment event listener', localDeployment)

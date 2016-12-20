@@ -227,7 +227,7 @@ ul.navbar-nav, .sidebar-nav {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
-        
+
         &:hover,
         &:focus {
             text-decoration: none;
@@ -615,7 +615,7 @@ button.form-control {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            margin-top: 5px;
+            height: 24px;
         }
 
         .btn-group {
@@ -691,7 +691,7 @@ button.form-control {
         position: relative;
         top: -1px;
         border-top: 1px solid #ddd;
-    
+
         padding: 10px 10px;
 
         input[type="checkbox"] {
@@ -735,7 +735,7 @@ button.form-control {
             .ignite-form-field {
                 margin-right: -24px;
 
-                label { 
+                label {
                     margin-left: 5px;
                 }
             }
@@ -2054,6 +2054,10 @@ treecontrol.tree-classic {
         margin-right: 0
     }
 
+    .ui-grid-cell-actions {
+        line-height: 28px;
+    }
+
     .no-rows {
         .center-container {
             background: white;
@@ -2287,5 +2291,24 @@ html,body,.splash-screen {
     &.ng-animate {
         -webkit-animation: none 0s;
         animation: none 0s;
+    }
+}
+
+.admin-page {
+    .panel-heading {
+        border-bottom: 0;
+        padding-bottom: 0;
+
+        i {
+            margin-right: 10px;
+        }
+
+        label {
+            line-height: 24px;
+        }
+    }
+
+    .ui-grid-filter-select {
+        width: calc(100% - 10px);
     }
 }

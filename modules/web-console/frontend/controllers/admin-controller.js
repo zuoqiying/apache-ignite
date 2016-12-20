@@ -15,32 +15,144 @@
  * limitations under the License.
  */
 
+const CLUSTER_HEADER_TEMPLATE = '<div class="ui-grid-cell-contents" bs-tooltip data-title="{{ col.headerTooltip(col) }}" data-placement="top"><i class="fa fa-sitemap"></div>';
+const MODEL_HEADER_TEMPLATE = '<div class="ui-grid-cell-contents" bs-tooltip data-title="{{ col.headerTooltip(col) }}" data-placement="top"><i class="fa fa-object-group"></div>';
+const CACHE_HEADER_TEMPLATE = '<div class="ui-grid-cell-contents" bs-tooltip data-title="{{ col.headerTooltip(col) }}" data-placement="top"><i class="fa fa-database"></div>';
+const IGFS_HEADER_TEMPLATE = '<div class="ui-grid-cell-contents" bs-tooltip data-title="{{ col.headerTooltip(col) }}" data-placement="top"><i class="fa fa-folder-o"></div>';
+
+const ACTIONS_TEMPLATE = `
+<div class='text-center ui-grid-cell-actions'>
+    <a class='btn btn-default dropdown-toggle' bs-dropdown='' ng-show='row.entity._id != $root.user._id' data-placement='bottom-right'>
+        <i class='fa fa-gear'></i>&nbsp;
+        <span class='caret'></span>
+    </a>
+    <ul class='dropdown-menu' role='menu'>
+        <li>
+            <a ng-click='becomeUser(row.entity)'>Become this user</a>
+        </li>
+        <li>
+            <a ng-click='toggleAdmin(row.entity)' ng-if='row.entity.admin && row.entity._id !== $root.user._id'>Revoke admin</a>
+            <a ng-click='toggleAdmin(row.entity)' ng-if='!row.entity.admin && row.entity._id !== $root.user._id'>Grant admin</a>
+        </li>
+        <li>
+            <a ng-click='removeUser(row.entity)'>Remove user</a>
+        </li>
+</div>`;
+
+const EMAIL_TEMPLATE = '<div class="ui-grid-cell-contents"><a ng-href="mailto:{{ COL_FIELD }}">{{ COL_FIELD }}</a></div>';
+
 // Controller for Admin screen.
 export default ['adminController', [
-    '$rootScope', '$scope', '$http', '$q', '$state', 'IgniteMessages', 'IgniteConfirm', 'User', 'IgniteNotebookData', 'IgniteCountries',
-    ($rootScope, $scope, $http, $q, $state, Messages, Confirm, User, Notebook, Countries) => {
+    '$rootScope', '$scope', '$http', '$q', '$state', '$filter', 'uiGridConstants', 'IgniteMessages', 'IgniteConfirm', 'User', 'IgniteNotebookData', 'IgniteCountries',
+    ($rootScope, $scope, $http, $q, $state, $filter, uiGridConstants, Messages, Confirm, User, Notebook, Countries) => {
         $scope.users = null;
+
+        const companySelectOptions = [];
+        const countrySelectOptions = [];
+
+        const COLUMNS_DEFS = [
+            {displayName: 'User', field: 'userName', minWidth: 65, enableFiltering: true},
+            {displayName: 'Email', field: 'email', cellTemplate: EMAIL_TEMPLATE, minWidth: 35, enableFiltering: true},
+            {displayName: 'Company', field: 'company', minWidth: 160, filter: {
+                selectOptions: companySelectOptions, type: uiGridConstants.filter.SELECT }
+            },
+            {displayName: 'Country', field: 'countryCode', minWidth: 80, filter: {
+                selectOptions: countrySelectOptions, type: uiGridConstants.filter.SELECT }
+            },
+            {displayName: 'Last login', field: 'lastLogin', cellFilter: 'date:"medium"', headerTooltip: 'Test', minWidth: 175, width: 175, enableFiltering: false, sort: { direction: 'desc', priority: 0 }},
+            {displayName: 'Clusters count', headerCellTemplate: CLUSTER_HEADER_TEMPLATE, field: '_clusters', type: 'number', headerTooltip: 'Clusters count', minWidth: 50, width: 50, enableFiltering: false},
+            {displayName: 'Models count', headerCellTemplate: MODEL_HEADER_TEMPLATE, field: '_models', type: 'number', headerTooltip: 'Models count', minWidth: 50, width: 50, enableFiltering: false},
+            {displayName: 'Caches count', headerCellTemplate: CACHE_HEADER_TEMPLATE, field: '_caches', type: 'number', headerTooltip: 'Caches count', minWidth: 50, width: 50, enableFiltering: false},
+            {displayName: 'IGFS count', headerCellTemplate: IGFS_HEADER_TEMPLATE, field: '_igfs', type: 'number', headerTooltip: 'IGFS count', minWidth: 50, width: 50, enableFiltering: false},
+            {displayName: 'Actions', cellTemplate: ACTIONS_TEMPLATE, field: 'test', minWidth: 80, width: 80, enableFiltering: false, enableSorting: false}
+        ];
+
+        const ctrl = $scope.ctrl = {};
+
+        ctrl.gridOptions = {
+            data: [],
+            columnVirtualizationThreshold: 30,
+            columnDefs: COLUMNS_DEFS,
+            categories: [
+                {name: 'User', visible: true, selectable: true},
+                {name: 'Email', visible: true, selectable: true},
+                {name: 'Company', visible: true, selectable: true},
+                {name: 'Country', visible: true, selectable: true},
+                {name: 'Last login', visible: true, selectable: true},
+
+                {name: 'Clusters count', visible: true, selectable: true},
+                {name: 'Models count', visible: true, selectable: true},
+                {name: 'Caches count', visible: true, selectable: true},
+                {name: 'IGFS count', visible: true, selectable: true},
+                {name: 'Actions', visible: true, selectable: true}
+            ],
+            enableFiltering: true,
+            enableRowSelection: false,
+            enableRowHeaderSelection: false,
+            enableColumnMenus: false,
+            multiSelect: false,
+            modifierKeysToMultiSelect: true,
+            noUnselect: true,
+            flatEntityAccess: true,
+            fastWatch: true,
+            onRegisterApi: (api) => {
+                ctrl.gridApi = api;
+            }
+        };
+
+        /**
+         * Set grid height.
+         *
+         * @param {Number} rows Rows count.
+         * @private
+         */
+        const adjustHeight = (rows) => {
+            const height = Math.min(rows, 20) * 30 + 75;
+
+            // Remove header height.
+            ctrl.gridApi.grid.element.css('height', height + 'px');
+
+            ctrl.gridApi.core.handleWindowResize();
+        };
 
         const _reloadUsers = () => {
             $http.post('/api/v1/admin/list')
-                .success((users) => {
-                    $scope.users = users;
+                .then(({ data }) => {
+                    $scope.users = data;
+
+                    companySelectOptions.length = 0;
+                    countrySelectOptions.length = 0;
+
+                    const _companySelectOptions = new Map();
+                    const _countrySelectOptions = new Map();
 
                     _.forEach($scope.users, (user) => {
                         user.userName = user.firstName + ' ' + user.lastName;
                         user.countryCode = Countries.getByName(user.country).code;
-                        user.label = user.userName + ' ' + user.email + ' ' +
-                            (user.company || '') + ' ' + (user.countryCode || '');
+
+                        user._clusters = user.counters.clusters;
+                        user._models = user.counters.models;
+                        user._caches = user.counters.caches;
+                        user._igfs = user.counters.igfs;
+
+                        _companySelectOptions.set(user.company, { label: user.company, value: user.company });
+                        _countrySelectOptions.set(user.countryCode, { label: user.countryCode, value: user.countryCode });
                     });
+
+                    companySelectOptions.push(..._companySelectOptions.values());
+                    countrySelectOptions.push(..._countrySelectOptions.values());
+
+                    $scope.ctrl.gridOptions.data = data;
+
+                    adjustHeight(data.length);
                 })
-                .error(Messages.showError);
+                .catch(Messages.showError);
         };
 
         _reloadUsers();
 
         $scope.becomeUser = function(user) {
             $http.get('/api/v1/admin/become', { params: {viewedUserId: user._id}})
-                .catch(({data}) => Promise.reject(data))
                 .then(() => User.load())
                 .then((becomeUser) => {
                     $rootScope.$broadcast('user', becomeUser);
@@ -52,22 +164,22 @@ export default ['adminController', [
         };
 
         $scope.removeUser = (user) => {
-            Confirm.confirm('Are you sure you want to remove user: "' + user.userName + '"?')
+            Confirm.confirm(`Are you sure you want to remove user: "${user.userName}"?`)
                 .then(() => {
                     $http.post('/api/v1/admin/remove', {userId: user._id})
-                        .success(() => {
+                        .then(() => {
                             const i = _.findIndex($scope.users, (u) => u._id === user._id);
 
                             if (i >= 0)
                                 $scope.users.splice(i, 1);
 
-                            Messages.showInfo('User has been removed: "' + user.userName + '"');
+                            Messages.showInfo(`User has been removed: "${user.userName}"`);
                         })
-                        .error((err, status) => {
+                        .catch(({data, status}) => {
                             if (status === 503)
-                                Messages.showInfo(err);
+                                Messages.showInfo(data);
                             else
-                                Messages.showError(Messages.errorMessage('Failed to remove user: ', err));
+                                Messages.showError('Failed to remove user: ', data);
                         });
                 });
         };
@@ -79,15 +191,34 @@ export default ['adminController', [
             user.adminChanging = true;
 
             $http.post('/api/v1/admin/save', {userId: user._id, adminFlag: !user.admin})
-                .success(() => {
+                .then(() => {
                     user.admin = !user.admin;
 
-                    Messages.showInfo('Admin right was successfully toggled for user: "' + user.userName + '"');
+                    Messages.showInfo(`Admin right was successfully toggled for user: "${user.userName}"`);
                 })
-                .error((err) => {
-                    Messages.showError(Messages.errorMessage('Failed to toggle admin right for user: ', err));
+                .catch((res) => {
+                    Messages.showError('Failed to toggle admin right for user: ', res);
                 })
                 .finally(() => user.adminChanging = false);
         };
+
+        const _enableColumns = (categories, visible) => {
+            _.forEach(categories, (cat) => {
+                cat.visible = visible;
+
+                _.forEach(ctrl.gridOptions.columnDefs, (col) => {
+                    if (col.displayName === cat.name)
+                        col.visible = visible;
+                });
+            });
+
+            ctrl.gridApi.grid.refresh();
+        };
+
+        const _selectableColumns = () => _.filter(ctrl.gridOptions.categories, (cat) => cat.selectable);
+
+        ctrl.toggleColumns = (category, visible) => _enableColumns([category], visible);
+        ctrl.selectAllColumns = () => _enableColumns(_selectableColumns(), true);
+        ctrl.clearAllColumns = () => _enableColumns(_selectableColumns(), false);
     }
 ]];

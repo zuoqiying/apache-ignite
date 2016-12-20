@@ -328,7 +328,7 @@ export default [
             const dialects = $scope.dialects;
 
             if (dialects.Oracle)
-                window.open('http://www.oracle.com/technetwork/apps-tech/jdbc-112010-090769.html');
+                window.open('http://www.oracle.com/technetwork/database/features/jdbc/default-2280470.html');
 
             if (dialects.DB2)
                 window.open('http://www-01.ibm.com/support/docview.wss?uid=swg21363866');

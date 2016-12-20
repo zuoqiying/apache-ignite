@@ -224,7 +224,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
         $scope.modes = LegacyUtils.mkOptions(['PARTITIONED', 'REPLICATED', 'LOCAL']);
 
-        $scope.loadingText = $root.IgniteDemoMode ? 'Demo grid is starting. Please wait...' : 'Loading notebook screen...';
+        $scope.loadingText = $root.IgniteDemoMode ? 'Demo grid is starting. Please wait...' : 'Loading query notebook screen...';
 
         $scope.timeUnit = [
             {value: 1000, label: 'seconds', short: 's'},
@@ -779,11 +779,10 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             if (idx >= 0) {
                 if (!_.includes($scope.notebook.expandedParagraphs, idx))
-                    $scope.notebook.expandedParagraphs.push(idx);
+                    $scope.notebook.expandedParagraphs = $scope.notebook.expandedParagraphs.concat([idx]);
 
-                setTimeout(function() {
-                    $scope.notebook.paragraphs[idx].ace.focus();
-                });
+                if ($scope.notebook.paragraphs[idx].ace)
+                    setTimeout(() => $scope.notebook.paragraphs[idx].ace.focus());
             }
 
             $location.hash(id);
@@ -827,8 +826,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             let item = _.find(cachesAcc, {name: cache.name});
 
                             if (_.isNil(item)) {
-                                cache.label = maskCacheName(cache.name);
-                                cache.value = cache.label;
+                                cache.label = maskCacheName(cache.name, true);
+                                cache.value = cache.name;
 
                                 cache.nodes = [];
 
@@ -851,7 +850,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                         return;
 
                     // Reset to first cache in case of stopped selected.
-                    const cacheNames = _.map($scope.caches, (cache) => cache.name);
+                    const cacheNames = _.map($scope.caches, (cache) => cache.value);
 
                     _.forEach($scope.notebook.paragraphs, (paragraph) => {
                         if (!_.includes(cacheNames, paragraph.cacheName))
@@ -949,9 +948,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         $scope.addParagraph = (paragraph, sz) => {
-
             if ($scope.caches && $scope.caches.length > 0)
-                paragraph.cacheName = $scope.caches[0].name;
+                paragraph.cacheName = _.head($scope.caches).value;
 
             $scope.notebook.paragraphs.push(paragraph);
 
@@ -969,7 +967,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 name: 'Query' + (sz === 0 ? '' : sz),
                 query: '',
                 pageSize: $scope.pageSizes[1],
-                limit: $scope.limit[0],
+                limit: $scope.limit[0].value,
                 timeLineSpan: $scope.timeLineSpans[0],
                 result: 'none',
                 rate: {
@@ -1529,7 +1527,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     _showLoading(paragraph, false);
                 })
-                .then(() => paragraph.ace.focus());
+                .then(() => paragraph.ace && paragraph.ace.focus());
         };
 
         const _export = (fileName, columnDefs, meta, rows) => {
@@ -1591,15 +1589,15 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then((nid) => agentMonitor.queryGetAll(nid, args.cacheName, args.query, !!args.nonCollocatedJoins, !!args.localNid))
                 .then((res) => _export(paragraph.name + '-all.csv', paragraph.gridOptions.columnDefs, res.columns, res.rows))
                 .catch(Messages.showError)
-                .then(() => paragraph.ace.focus());
+                .then(() => paragraph.ace && paragraph.ace.focus());
         };
 
         // $scope.exportPdfAll = function(paragraph) {
         //    $http.post('/api/v1/agent/query/getAll', {query: paragraph.query, cacheName: paragraph.cacheName})
-        //        .success(function(item) {
-        //            _export(paragraph.name + '-all.csv', item.meta, item.rows);
+        //    .then(({data}) {
+        //        _export(paragraph.name + '-all.csv', data.meta, data.rows);
         //    })
-        //    .error(Messages.showError);
+        //    .catch(Messages.showError);
         // };
 
         $scope.rateAsString = function(paragraph) {
@@ -1668,9 +1666,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         $scope.dblclickMetadata = function(paragraph, node) {
             paragraph.ace.insert(node.name);
 
-            setTimeout(function() {
-                paragraph.ace.focus();
-            }, 1);
+            setTimeout(() => paragraph.ace.focus(), 1);
         };
 
         $scope.importMetadata = function() {

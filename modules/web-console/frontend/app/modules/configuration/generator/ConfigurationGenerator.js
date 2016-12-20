@@ -263,7 +263,7 @@ export default class IgniteConfigurationGenerator {
                             break;
                         case 'BoundedExponentialBackoff':
                             retryPolicyBean = new Bean('org.apache.curator.retry.BoundedExponentialBackoffRetry',
-                                null, policy.BoundedExponentialBackoffRetry, dflt.BoundedExponentialBackoffRetry)
+                                null, policy.BoundedExponentialBackoff, dflt.BoundedExponentialBackoffRetry)
                                 .intConstructorArgument('baseSleepTimeMs')
                                 .intConstructorArgument('maxSleepTimeMs')
                                 .intConstructorArgument('maxRetries');
@@ -512,7 +512,8 @@ export default class IgniteConfigurationGenerator {
                         case 'Custom':
                             const className = _.get(spi.S3.awsCredentials, 'Custom.className');
 
-                            credentialsBean = new Bean(className, 'awsCredentials', {});
+                            if (className)
+                                credentialsBean = new Bean(className, 'awsCredentials', {});
 
                             break;
 

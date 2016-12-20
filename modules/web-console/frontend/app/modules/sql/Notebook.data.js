@@ -51,7 +51,7 @@ const DEMO_NOTEBOOK = {
         },
         {
             name: 'Query with aggregates',
-            cacheName: 'CarCache',
+            cacheName: 'ParkingCache',
             pageSize: 100,
             limit: 0,
             query: [
