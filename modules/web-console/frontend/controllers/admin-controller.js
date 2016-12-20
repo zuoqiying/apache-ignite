@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-const CLUSTER_HEADER_TEMPLATE = '<div class="ui-grid-cell-contents" bs-tooltip data-title="{{ col.headerTooltip(col) }}" data-placement="top"><i class="fa fa-sitemap"></div>';
-const MODEL_HEADER_TEMPLATE = '<div class="ui-grid-cell-contents" bs-tooltip data-title="{{ col.headerTooltip(col) }}" data-placement="top"><i class="fa fa-object-group"></div>';
-const CACHE_HEADER_TEMPLATE = '<div class="ui-grid-cell-contents" bs-tooltip data-title="{{ col.headerTooltip(col) }}" data-placement="top"><i class="fa fa-database"></div>';
-const IGFS_HEADER_TEMPLATE = '<div class="ui-grid-cell-contents" bs-tooltip data-title="{{ col.headerTooltip(col) }}" data-placement="top"><i class="fa fa-folder-o"></div>';
+const ICON_SORT = '<span ui-grid-one-bind-id-grid="col.uid + \'-sortdir-text\'" ui-grid-visible="col.sort.direction" aria-label="Sort Descending"><i ng-class="{ \'ui-grid-icon-up-dir\': col.sort.direction == asc, \'ui-grid-icon-down-dir\': col.sort.direction == desc, \'ui-grid-icon-blank\': !col.sort.direction }" title="" aria-hidden="true"></i></span>';
+
+const CLUSTER_HEADER_TEMPLATE = `<div class='ui-grid-cell-contents' bs-tooltip data-title='{{ col.headerTooltip(col) }}' data-placement='top'><i class='fa fa-sitemap'></i>${ICON_SORT}</div>`;
+const MODEL_HEADER_TEMPLATE = `<div class='ui-grid-cell-contents' bs-tooltip data-title='{{ col.headerTooltip(col) }}' data-placement='top'><i class='fa fa-object-group'></i>${ICON_SORT}</div>`;
+const CACHE_HEADER_TEMPLATE = `<div class='ui-grid-cell-contents' bs-tooltip data-title='{{ col.headerTooltip(col) }}' data-placement='top'><i class='fa fa-database'></i>${ICON_SORT}</div>`;
+const IGFS_HEADER_TEMPLATE = `<div class='ui-grid-cell-contents' bs-tooltip data-title='{{ col.headerTooltip(col) }}' data-placement='top'><i class='fa fa-folder-o'></i>${ICON_SORT}</div>`;
 
 const ACTIONS_TEMPLATE = `
 <div class='text-center ui-grid-cell-actions'>
@@ -51,15 +53,15 @@ export default ['adminController', [
         const countrySelectOptions = [];
 
         const COLUMNS_DEFS = [
-            {displayName: 'User', field: 'userName', minWidth: 65, enableFiltering: true},
-            {displayName: 'Email', field: 'email', cellTemplate: EMAIL_TEMPLATE, minWidth: 35, enableFiltering: true},
+            {displayName: 'User', field: 'userName', minWidth: 65, enableFiltering: true, filter: { placeholder: 'Filter by name...' }},
+            {displayName: 'Email', field: 'email', cellTemplate: EMAIL_TEMPLATE, minWidth: 160, enableFiltering: true, filter: { placeholder: 'Filter by email...' }},
             {displayName: 'Company', field: 'company', minWidth: 160, filter: {
                 selectOptions: companySelectOptions, type: uiGridConstants.filter.SELECT }
             },
             {displayName: 'Country', field: 'countryCode', minWidth: 80, filter: {
                 selectOptions: countrySelectOptions, type: uiGridConstants.filter.SELECT }
             },
-            {displayName: 'Last login', field: 'lastLogin', cellFilter: 'date:"medium"', headerTooltip: 'Test', minWidth: 175, width: 175, enableFiltering: false, sort: { direction: 'desc', priority: 0 }},
+            {displayName: 'Last login', field: 'lastLogin', cellFilter: 'date:"medium"', minWidth: 175, width: 175, enableFiltering: false, sort: { direction: 'desc', priority: 0 }},
             {displayName: 'Clusters count', headerCellTemplate: CLUSTER_HEADER_TEMPLATE, field: '_clusters', type: 'number', headerTooltip: 'Clusters count', minWidth: 50, width: 50, enableFiltering: false},
             {displayName: 'Models count', headerCellTemplate: MODEL_HEADER_TEMPLATE, field: '_models', type: 'number', headerTooltip: 'Models count', minWidth: 50, width: 50, enableFiltering: false},
             {displayName: 'Caches count', headerCellTemplate: CACHE_HEADER_TEMPLATE, field: '_caches', type: 'number', headerTooltip: 'Caches count', minWidth: 50, width: 50, enableFiltering: false},

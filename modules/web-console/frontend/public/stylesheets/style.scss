@@ -2299,13 +2299,20 @@ html,body,.splash-screen {
         border-bottom: 0;
         padding-bottom: 0;
 
+        cursor: default;
+
         i {
             margin-right: 10px;
         }
 
         label {
+            cursor: default;
             line-height: 24px;
         }
+    }
+
+    .ui-grid-header-cell input {
+      font-weight: normal;
     }
 
     .ui-grid-filter-select {
