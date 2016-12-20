@@ -2309,6 +2309,14 @@ html,body,.splash-screen {
             cursor: default;
             line-height: 24px;
         }
+
+        sub {
+            bottom: 0;
+        }
+    }
+
+    .ui-grid-header-cell input {
+      font-weight: normal;
     }
 
     .ui-grid-header-cell input {

@@ -24,20 +24,20 @@ const IGFS_HEADER_TEMPLATE = `<div class='ui-grid-cell-contents' bs-tooltip data
 
 const ACTIONS_TEMPLATE = `
 <div class='text-center ui-grid-cell-actions'>
-    <a class='btn btn-default dropdown-toggle' bs-dropdown='' ng-show='row.entity._id != $root.user._id' data-placement='bottom-right'>
+    <a class='btn btn-default dropdown-toggle' bs-dropdown='' ng-show='row.entity._id != $root.user._id' data-placement='bottom-right' data-container='.panel'>
         <i class='fa fa-gear'></i>&nbsp;
         <span class='caret'></span>
     </a>
     <ul class='dropdown-menu' role='menu'>
         <li>
-            <a ng-click='becomeUser(row.entity)'>Become this user</a>
+            <a ng-click='grid.api.becomeUser(row.entity)'>Become this user</a>
         </li>
         <li>
-            <a ng-click='toggleAdmin(row.entity)' ng-if='row.entity.admin && row.entity._id !== $root.user._id'>Revoke admin</a>
-            <a ng-click='toggleAdmin(row.entity)' ng-if='!row.entity.admin && row.entity._id !== $root.user._id'>Grant admin</a>
+            <a ng-click='grid.api.toggleAdmin(row.entity)' ng-if='row.entity.admin && row.entity._id !== $root.user._id'>Revoke admin</a>
+            <a ng-click='grid.api.toggleAdmin(row.entity)' ng-if='!row.entity.admin && row.entity._id !== $root.user._id'>Grant admin</a>
         </li>
         <li>
-            <a ng-click='removeUser(row.entity)'>Remove user</a>
+            <a ng-click='grid.api.removeUser(row.entity)'>Remove user</a>
         </li>
 </div>`;
 
@@ -71,6 +71,58 @@ export default ['adminController', [
 
         const ctrl = $scope.ctrl = {};
 
+        const becomeUser = function(user) {
+            $http.get('/api/v1/admin/become', { params: {viewedUserId: user._id}})
+                .then(() => User.load())
+                .then((_becomeUser) => {
+                    $rootScope.$broadcast('user', _becomeUser);
+
+                    $state.go('base.configuration.clusters');
+                })
+                .then(() => Notebook.load())
+                .catch(Messages.showError);
+        };
+
+        const removeUser = (user) => {
+            Confirm.confirm(`Are you sure you want to remove user: "${user.userName}"?`)
+                .then(() => {
+                    $http.post('/api/v1/admin/remove', {userId: user._id})
+                        .then(() => {
+                            const i = _.findIndex($scope.users, (u) => u._id === user._id);
+
+                            if (i >= 0)
+                                $scope.users.splice(i, 1);
+
+                            Messages.showInfo(`User has been removed: "${user.userName}"`);
+                        })
+                        .catch(({data, status}) => {
+                            if (status === 503)
+                                Messages.showInfo(data);
+                            else
+                                Messages.showError('Failed to remove user: ', data);
+                        });
+                });
+        };
+
+        const toggleAdmin = (user) => {
+            if (user.adminChanging)
+                return;
+
+            user.adminChanging = true;
+
+            $http.post('/api/v1/admin/save', {userId: user._id, adminFlag: !user.admin})
+                .then(() => {
+                    user.admin = !user.admin;
+
+                    Messages.showInfo(`Admin right was successfully toggled for user: "${user.userName}"`);
+                })
+                .catch((res) => {
+                    Messages.showError('Failed to toggle admin right for user: ', res);
+                })
+                .finally(() => user.adminChanging = false);
+        };
+
+
         ctrl.gridOptions = {
             data: [],
             columnVirtualizationThreshold: 30,
@@ -99,6 +151,10 @@ export default ['adminController', [
             fastWatch: true,
             onRegisterApi: (api) => {
                 ctrl.gridApi = api;
+
+                api.becomeUser = becomeUser;
+                api.removeUser = removeUser;
+                api.toggleAdmin = toggleAdmin;
             }
         };
 
@@ -141,8 +197,8 @@ export default ['adminController', [
                         _countrySelectOptions.set(user.countryCode, { label: user.countryCode, value: user.countryCode });
                     });
 
-                    companySelectOptions.push(..._companySelectOptions.values());
-                    countrySelectOptions.push(..._countrySelectOptions.values());
+                    companySelectOptions.push(..._.sortBy([..._companySelectOptions.values()], 'label'));
+                    countrySelectOptions.push(..._.sortBy([..._countrySelectOptions.values()], 'label'));
 
                     $scope.ctrl.gridOptions.data = data;
 
@@ -152,57 +208,6 @@ export default ['adminController', [
         };
 
         _reloadUsers();
-
-        $scope.becomeUser = function(user) {
-            $http.get('/api/v1/admin/become', { params: {viewedUserId: user._id}})
-                .then(() => User.load())
-                .then((becomeUser) => {
-                    $rootScope.$broadcast('user', becomeUser);
-
-                    $state.go('base.configuration.clusters');
-                })
-                .then(() => Notebook.load())
-                .catch(Messages.showError);
-        };
-
-        $scope.removeUser = (user) => {
-            Confirm.confirm(`Are you sure you want to remove user: "${user.userName}"?`)
-                .then(() => {
-                    $http.post('/api/v1/admin/remove', {userId: user._id})
-                        .then(() => {
-                            const i = _.findIndex($scope.users, (u) => u._id === user._id);
-
-                            if (i >= 0)
-                                $scope.users.splice(i, 1);
-
-                            Messages.showInfo(`User has been removed: "${user.userName}"`);
-                        })
-                        .catch(({data, status}) => {
-                            if (status === 503)
-                                Messages.showInfo(data);
-                            else
-                                Messages.showError('Failed to remove user: ', data);
-                        });
-                });
-        };
-
-        $scope.toggleAdmin = (user) => {
-            if (user.adminChanging)
-                return;
-
-            user.adminChanging = true;
-
-            $http.post('/api/v1/admin/save', {userId: user._id, adminFlag: !user.admin})
-                .then(() => {
-                    user.admin = !user.admin;
-
-                    Messages.showInfo(`Admin right was successfully toggled for user: "${user.userName}"`);
-                })
-                .catch((res) => {
-                    Messages.showError('Failed to toggle admin right for user: ', res);
-                })
-                .finally(() => user.adminChanging = false);
-        };
 
         const _enableColumns = (categories, visible) => {
             _.forEach(categories, (cat) => {
