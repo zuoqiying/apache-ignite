@@ -53,6 +53,7 @@ export default ['adminController', [
         const countrySelectOptions = [];
 
         const COLUMNS_DEFS = [
+            {displayName: 'Actions', cellTemplate: ACTIONS_TEMPLATE, field: 'test', minWidth: 80, width: 80, enableFiltering: false, enableSorting: false},
             {displayName: 'User', field: 'userName', minWidth: 65, enableFiltering: true, filter: { placeholder: 'Filter by name...' }},
             {displayName: 'Email', field: 'email', cellTemplate: EMAIL_TEMPLATE, minWidth: 160, enableFiltering: true, filter: { placeholder: 'Filter by email...' }},
             {displayName: 'Company', field: 'company', minWidth: 160, filter: {
@@ -65,8 +66,7 @@ export default ['adminController', [
             {displayName: 'Clusters count', headerCellTemplate: CLUSTER_HEADER_TEMPLATE, field: '_clusters', type: 'number', headerTooltip: 'Clusters count', minWidth: 50, width: 50, enableFiltering: false},
             {displayName: 'Models count', headerCellTemplate: MODEL_HEADER_TEMPLATE, field: '_models', type: 'number', headerTooltip: 'Models count', minWidth: 50, width: 50, enableFiltering: false},
             {displayName: 'Caches count', headerCellTemplate: CACHE_HEADER_TEMPLATE, field: '_caches', type: 'number', headerTooltip: 'Caches count', minWidth: 50, width: 50, enableFiltering: false},
-            {displayName: 'IGFS count', headerCellTemplate: IGFS_HEADER_TEMPLATE, field: '_igfs', type: 'number', headerTooltip: 'IGFS count', minWidth: 50, width: 50, enableFiltering: false},
-            {displayName: 'Actions', cellTemplate: ACTIONS_TEMPLATE, field: 'test', minWidth: 80, width: 80, enableFiltering: false, enableSorting: false}
+            {displayName: 'IGFS count', headerCellTemplate: IGFS_HEADER_TEMPLATE, field: '_igfs', type: 'number', headerTooltip: 'IGFS count', minWidth: 50, width: 50, enableFiltering: false}
         ];
 
         const ctrl = $scope.ctrl = {};
@@ -128,6 +128,7 @@ export default ['adminController', [
             columnVirtualizationThreshold: 30,
             columnDefs: COLUMNS_DEFS,
             categories: [
+                {name: 'Actions', visible: true, selectable: true},
                 {name: 'User', visible: true, selectable: true},
                 {name: 'Email', visible: true, selectable: true},
                 {name: 'Company', visible: true, selectable: true},
@@ -137,8 +138,7 @@ export default ['adminController', [
                 {name: 'Clusters count', visible: true, selectable: true},
                 {name: 'Models count', visible: true, selectable: true},
                 {name: 'Caches count', visible: true, selectable: true},
-                {name: 'IGFS count', visible: true, selectable: true},
-                {name: 'Actions', visible: true, selectable: true}
+                {name: 'IGFS count', visible: true, selectable: true}
             ],
             enableFiltering: true,
             enableRowSelection: false,
@@ -173,6 +173,13 @@ export default ['adminController', [
             ctrl.gridApi.core.handleWindowResize();
         };
 
+        const usersToFilterOptions = (column) => {
+            return _.sortBy(
+                _.map(_.groupBy($scope.users, column), (arr, value) =>
+                    ({ label: `${value} (${arr.length})`, value })
+                ), 'value');
+        };
+
         const _reloadUsers = () => {
             $http.post('/api/v1/admin/list')
                 .then(({ data }) => {
@@ -180,9 +187,6 @@ export default ['adminController', [
 
                     companySelectOptions.length = 0;
                     countrySelectOptions.length = 0;
-
-                    const _companySelectOptions = new Map();
-                    const _countrySelectOptions = new Map();
 
                     _.forEach($scope.users, (user) => {
                         user.userName = user.firstName + ' ' + user.lastName;
@@ -192,13 +196,10 @@ export default ['adminController', [
                         user._models = user.counters.models;
                         user._caches = user.counters.caches;
                         user._igfs = user.counters.igfs;
-
-                        _companySelectOptions.set(user.company, { label: user.company, value: user.company });
-                        _countrySelectOptions.set(user.countryCode, { label: user.countryCode, value: user.countryCode });
                     });
 
-                    companySelectOptions.push(..._.sortBy([..._companySelectOptions.values()], 'label'));
-                    countrySelectOptions.push(..._.sortBy([..._countrySelectOptions.values()], 'label'));
+                    companySelectOptions.push(...usersToFilterOptions('company'));
+                    countrySelectOptions.push(...usersToFilterOptions('countryCode'));
 
                     $scope.ctrl.gridOptions.data = data;
 
