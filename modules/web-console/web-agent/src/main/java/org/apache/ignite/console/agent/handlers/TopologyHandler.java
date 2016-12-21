@@ -17,6 +17,7 @@
 
 package org.apache.ignite.console.agent.handlers;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 import java.io.IOException;
@@ -71,8 +72,8 @@ public class TopologyHandler {
     public Emitter.Listener start() {
         return new Emitter.Listener() {
             @Override public void call(Object... args) {
-                final boolean demo = args.length > 0 && boolean.class.equals(args[0].getClass()) && (boolean)args[0];
-                long timeout = args.length >= 2  && long.class.equals(args[1].getClass()) ? (long)args[1] : DFLT_TIMEOUT;
+                final boolean demo = args.length > 0 && args[0] instanceof Boolean && (boolean)args[0];
+                final long timeout = args.length >= 2  && args[0] instanceof Long ? (long)args[1] : DFLT_TIMEOUT;
 
                 refreshTask = pool.scheduleWithFixedDelay(new Runnable() {
                     @Override public void run() {

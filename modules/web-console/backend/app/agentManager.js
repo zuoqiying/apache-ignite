@@ -180,21 +180,34 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
         /**
          * @param {String} token
+         */
+        forToken(token) {
+            if (!this.io)
+                return Promise.reject(new Error('Agent server not started yet!'));
+
+            const socket = _.head(this._agentSockets[token]);
+
+            if (_.isNil(socket))
+                return Promise.reject(new Error('Failed to find connected agent for this token'));
+
+            return Promise.resolve(socket);
+        }
+
+        /**
+         * @param {String} token
+         * @param {String} clusterId
          * @returns {Promise.<AgentSocket>}
          */
-        forToken(token, demo) {
+        forCluster(token, clusterId) {
             if (!this.io)
                 return Promise.reject(new Error('Agent server not started yet!'));
 
             const agentSockets = this._agentSockets[token];
 
-            const socket = demo ? _.find(agentSockets, 'demoCluster') : 0;
+            const socket = _.find(agentSockets, ({activeClusterIds}) => _.includes(activeClusterIds, clusterId));
 
             if (_.isNil(socket))
                 return Promise.reject(new Error('Failed to find connected agent for this token'));
-
-            if (demo)
-                return Promise.resolve(_.find(agentSockets, 'demoCluster'));
 
             return Promise.resolve(socket);
         }
@@ -214,15 +227,15 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
             const agentSockets = this._agentSockets[token];
 
-            const cnt = _.size(agentSockets);
+            const count = _.size(agentSockets);
 
-            browserSocket.emit('agent:count', cnt);
+            browserSocket.emit('agent:count', {count});
 
             // If user start demo and agents was connected before.
-            if (cnt > 0) {
+            if (count > 0) {
                 const demo = browserSocket.request._query.IgniteDemoMode === 'true';
 
-                if (demo && !_.find(agentSockets, 'demoCluster'))
+                if (demo && !_.find(agentSockets, ({activeClusterIds}) => _.includes(activeClusterIds, 'DEMO')))
                     _.head(agentSockets).startCollectTopology(true);
             }
         }

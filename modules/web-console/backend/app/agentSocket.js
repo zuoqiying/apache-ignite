@@ -97,12 +97,9 @@ module.exports.factory = function(_) {
              */
             this.socket = socket;
 
-            /**
-             * Flag that indicate if demo cluster is running on agent.
-             *
-             * @type {boolean}
-             */
-            this.demoCluster = false;
+            this.clusterIds = ['DEMO', 'CLUSTER'];
+
+            this.activeClusterIds = [];
         }
 
         /**
@@ -143,13 +140,11 @@ module.exports.factory = function(_) {
         }
 
         startCollectTopology(demo, timeout) {
-            return this.emitEvent('start:collect:topology', demo, timeout)
-                .then(() => this.demoCluster = true);
+            return this.emitEvent('start:collect:topology', demo, timeout);
         }
 
         stopCollectTopology(demo) {
-            return this.emitEvent('stop:collect:topology', demo)
-                .then(() => this.demoCluster = true);
+            return this.emitEvent('stop:collect:topology', demo);
         }
 
         /**

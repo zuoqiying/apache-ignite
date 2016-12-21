@@ -46,6 +46,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import static io.socket.client.Socket.EVENT_CONNECT;
 import static io.socket.client.Socket.EVENT_CONNECTING;
@@ -90,6 +91,14 @@ public class AgentLauncher {
 
     /** */
     private static final int RECONNECT_INTERVAL = 3000;
+
+    static {
+        // Optionally remove existing handlers attached to j.u.l root logger
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+
+        // Add SLF4JBridgeHandler to j.u.l's root logger
+        SLF4JBridgeHandler.install();
+    }
 
     /**
      * Create a trust manager that trusts all certificates It is not using a particular keyStore
@@ -151,7 +160,7 @@ public class AgentLauncher {
      */
     private static final Emitter.Listener onDisconnect = new Emitter.Listener() {
         @Override public void call(Object... args) {
-            log.error("Connection closed: %s.", args);
+            log.error("Connection closed: {}", args);
         }
     };
 
