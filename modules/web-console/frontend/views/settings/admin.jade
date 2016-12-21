@@ -45,7 +45,7 @@ mixin grid-settings()
                             label Total users: 
                                 strong {{ users.length }}&nbsp;&nbsp;&nbsp;
                             label Showing users: 
-                                strong {{ ctrl.gridApi.grid.getVisibleRows().length }}&nbsp;
+                                strong {{ ctrl.gridApi.grid.getVisibleRows().length }}
                                 sub(ng-show='users.length === ctrl.gridApi.grid.getVisibleRows().length') all
                         .panel-collapse
                             .grid(ui-grid='ctrl.gridOptions' ui-grid-resize-columns ui-grid-selection ui-grid-pinning)

@@ -1353,7 +1353,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         $scope.execute = (paragraph, local = false) => {
-            const nonCollocatedJoins = paragraph.nonCollocatedJoins | false;
+            const nonCollocatedJoins = !!paragraph.nonCollocatedJoins;
 
             $scope.actionAvailable(paragraph, true) && _chooseNode(paragraph.cacheName, local)
                 .then((nid) => {
