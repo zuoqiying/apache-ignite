@@ -57,10 +57,10 @@ export default ['adminController', [
             {displayName: 'User', field: 'userName', minWidth: 65, enableFiltering: true, filter: { placeholder: 'Filter by name...' }},
             {displayName: 'Email', field: 'email', cellTemplate: EMAIL_TEMPLATE, minWidth: 160, enableFiltering: true, filter: { placeholder: 'Filter by email...' }},
             {displayName: 'Company', field: 'company', minWidth: 160, filter: {
-                selectOptions: companySelectOptions, type: uiGridConstants.filter.SELECT }
+                selectOptions: companySelectOptions, type: uiGridConstants.filter.SELECT, condition: uiGridConstants.filter.EXACT }
             },
             {displayName: 'Country', field: 'countryCode', minWidth: 80, filter: {
-                selectOptions: countrySelectOptions, type: uiGridConstants.filter.SELECT }
+                selectOptions: countrySelectOptions, type: uiGridConstants.filter.SELECT, condition: uiGridConstants.filter.EXACT }
             },
             {displayName: 'Last login', field: 'lastLogin', cellFilter: 'date:"medium"', minWidth: 175, width: 175, enableFiltering: false, sort: { direction: 'desc', priority: 0 }},
             {displayName: 'Clusters count', headerCellTemplate: CLUSTER_HEADER_TEMPLATE, field: '_clusters', type: 'number', headerTooltip: 'Clusters count', minWidth: 50, width: 50, enableFiltering: false},
