@@ -439,17 +439,17 @@ mixin table-save-button(valid, save, newItem)
     )
 
 //- Mixin for table remove button.
-mixin table-remove-conditional-button(items, show, tip)
+mixin table-remove-conditional-button(items, show, tip, row)
     i.tipField.fa.fa-remove(
         ng-hide='!#{show} || field.edit'
         bs-tooltip
         data-title=tip
-        ng-click='#{items}.splice(#{items}.indexOf(model), 1)'
+        ng-click='#{items}.splice(#{items}.indexOf(#{row}), 1)'
     )
 
 //- Mixin for table remove button.
 mixin table-remove-button(items, tip)
-    +table-remove-conditional-button(items, 'true', tip)
+    +table-remove-conditional-button(items, 'true', tip, 'model')
 
 //- Mixin for cache mode.
 mixin cacheMode(lbl, model, name, placeholder)
