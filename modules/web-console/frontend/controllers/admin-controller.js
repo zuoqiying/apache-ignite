@@ -175,8 +175,8 @@ export default ['adminController', [
 
         const usersToFilterOptions = (column) => {
             return _.sortBy(
-                _.map(_.groupBy($scope.users, column), (arr, value) =>
-                    ({ label: `${value} (${arr.length})`, value })
+                _.map(_.groupBy($scope.users, (usr) => usr[column].toUpperCase()), (arr, value) =>
+                    ({ label: `${_.head(arr)[column]} (${arr.length})`, value })
                 ), 'value');
         };
 
