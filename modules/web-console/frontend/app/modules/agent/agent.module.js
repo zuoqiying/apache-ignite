@@ -215,21 +215,33 @@ class IgniteAgentMonitor {
     }
 
     /**
-     *
-     * @param {Object} preset
+     * @param {Object} driverPath
+     * @param {Object} driverClass
+     * @param {Object} url
+     * @param {Object} user
+     * @param {Object} password
      * @returns {Promise}
      */
-    schemas(preset) {
-        return this._emit('schemaImport:schemas', preset);
+    schemas({driverPath, driverClass, url, user, password}) {
+        const info = {user, password};
+
+        return this._emit('schemaImport:schemas', {driverPath, driverClass, url, info});
     }
 
     /**
-     *
-     * @param {Object} preset
-     * @returns {Promise}
+     * @param {Object} driverPath
+     * @param {Object} driverClass
+     * @param {Object} url
+     * @param {Object} user
+     * @param {Object} password
+     * @param {Object} schemas
+     * @param {Object} tablesOnly
+     * @returns {Promise} Promise on list of tables (see org.apache.ignite.schema.parser.DbTable java class)
      */
-    tables(preset) {
-        return this._emit('schemaImport:tables', preset);
+    tables({driverPath, driverClass, url, user, password, schemas, tablesOnly}) {
+        const info = {user, password};
+
+        return this._emit('schemaImport:tables', {driverPath, driverClass, url, info, schemas, tablesOnly});
     }
 
     /**

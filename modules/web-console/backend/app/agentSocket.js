@@ -194,37 +194,6 @@ module.exports.factory = function(_) {
         }
 
         /**
-         * @param {String} driverPath
-         * @param {String} driverClass
-         * @param {String} url
-         * @param {Object} info
-         * @returns {Promise} Promise on list of tables (see org.apache.ignite.schema.parser.DbTable java class)
-         */
-        metadataSchemas(driverPath, driverClass, url, info) {
-            return this.emitEvent('schemaImport:schemas', {driverPath, driverClass, url, info});
-        }
-
-        /**
-         * @param {String} driverPath
-         * @param {String} driverClass
-         * @param {String} url
-         * @param {Object} info
-         * @param {Array} schemas
-         * @param {Boolean} tablesOnly
-         * @returns {Promise} Promise on list of tables (see org.apache.ignite.schema.parser.DbTable java class)
-         */
-        metadataTables(driverPath, driverClass, url, info, schemas, tablesOnly) {
-            return this.emitEvent('schemaImport:metadata', {driverPath, driverClass, url, info, schemas, tablesOnly});
-        }
-
-        /**
-         * @returns {Promise} Promise on list of jars from driver folder.
-         */
-        availableDrivers() {
-            return this.emitEvent('schemaImport:drivers');
-        }
-
-        /**
          *
          * @param {Boolean} demo Is need run command on demo node.
          * @param {Boolean} attr Get attributes, if this parameter has value true. Default value: true.
