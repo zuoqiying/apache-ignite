@@ -197,6 +197,12 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
                     type: String,
                     enum: ['Generic', 'Oracle', 'DB2', 'SQLServer', 'MySQL', 'PostgreSQL', 'H2']
                 },
+                batchSize: Number,
+                maximumPoolSize: Number,
+                maximumWriteAttempts: Number,
+                parallelLoadCacheMinimumThreshold: Number,
+                hasher: String,
+                transformer: String,
                 sqlEscapeAll: Boolean
             },
             CacheJdbcBlobStoreFactory: {
@@ -855,7 +861,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             result: {type: String, enum: ['none', 'table', 'bar', 'pie', 'line', 'area']},
             pageSize: Number,
             timeLineSpan: String,
-            limit: Number,
+            maxPages: Number,
             hideSystemColumns: Boolean,
             cacheName: String,
             chartsOptions: {barChart: {stacked: Boolean}, areaChart: {style: String}},

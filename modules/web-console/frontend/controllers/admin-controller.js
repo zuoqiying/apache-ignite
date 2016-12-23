@@ -74,11 +74,7 @@ export default ['adminController', [
         const becomeUser = function(user) {
             $http.get('/api/v1/admin/become', { params: {viewedUserId: user._id}})
                 .then(() => User.load())
-                .then((_becomeUser) => {
-                    $rootScope.$broadcast('user', _becomeUser);
-
-                    $state.go('base.configuration.clusters');
-                })
+                .then(() => $state.go('base.configuration.clusters'))
                 .then(() => Notebook.load())
                 .catch(Messages.showError);
         };
@@ -175,9 +171,15 @@ export default ['adminController', [
 
         const usersToFilterOptions = (column) => {
             return _.sortBy(
-                _.map(_.groupBy($scope.users, (usr) => usr[column].toUpperCase()), (arr, value) =>
-                    ({ label: `${_.head(arr)[column]} (${arr.length})`, value })
-                ), 'value');
+                _.map(
+                    _.groupBy($scope.users, (usr) => {
+                        const fld = usr[column];
+
+                        return _.isNil(fld) ? fld : fld.toUpperCase();
+                    }),
+                    (arr, value) => ({label: `${_.head(arr)[column] || 'Not set'} (${arr.length})`, value})
+                ),
+                'value');
         };
 
         const _reloadUsers = () => {

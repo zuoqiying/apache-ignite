@@ -51,7 +51,7 @@ class Paragraph {
 
         self.id = 'paragraph-' + paragraphId++;
         self.qryType = paragraph.qryType || 'query';
-        self.limit = 1000;
+        self.maxPages = 0;
         self.filter = '';
 
         _.assign(this, paragraph);
@@ -210,12 +210,14 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         $scope.caches = [];
 
         $scope.pageSizes = [50, 100, 200, 400, 800, 1000];
-        $scope.limit = [
+        $scope.maxPages = [
             {label: 'Unlimited', value: 0},
-            {label: '100', value: 100},
-            {label: '500', value: 500},
-            {label: '1000', value: 1000},
-            {label: '10000', value: 10000}
+            {label: '1', value: 1},
+            {label: '5', value: 5},
+            {label: '10', value: 10},
+            {label: '20', value: 20},
+            {label: '50', value: 50},
+            {label: '100', value: 100}
         ];
 
         $scope.timeLineSpans = ['1', '5', '10', '15', '30'];
@@ -967,7 +969,6 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 name: 'Query' + (sz === 0 ? '' : sz),
                 query: '',
                 pageSize: $scope.pageSizes[1],
-                limit: $scope.limit[0].value,
                 timeLineSpan: $scope.timeLineSpans[0],
                 result: 'none',
                 rate: {
@@ -1371,12 +1372,12 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                                 cacheName: paragraph.cacheName,
                                 query: paragraph.query,
                                 pageSize: paragraph.pageSize,
-                                limit: paragraph.limit,
+                                maxPages: paragraph.maxPages,
                                 nonCollocatedJoins,
                                 localNid: local ? nid : null
                             };
 
-                            const qry = args.limit ? addLimit(args.query, args.limit) : paragraph.query;
+                            const qry = args.maxPages ? addLimit(args.query, args.pageSize * args.maxPages) : paragraph.query;
 
                             return agentMonitor.query(nid, args.cacheName, qry, nonCollocatedJoins, local, args.pageSize);
                         })
