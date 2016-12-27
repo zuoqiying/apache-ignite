@@ -83,6 +83,7 @@ import org.apache.ignite.internal.processors.session.GridTaskSessionProcessor;
 import org.apache.ignite.internal.processors.task.GridTaskProcessor;
 import org.apache.ignite.internal.processors.timeout.GridTimeoutProcessor;
 import org.apache.ignite.internal.util.IgniteExceptionRegistry;
+import org.apache.ignite.internal.util.StripedExecutor;
 import org.apache.ignite.internal.util.spring.IgniteSpringHelper;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
@@ -300,6 +301,10 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
 
     /** */
     @GridToStringExclude
+    protected StripedExecutor stripedExecSvc;
+
+    /** */
+    @GridToStringExclude
     private ExecutorService p2pExecSvc;
 
     /** */
@@ -317,6 +322,10 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
     /** */
     @GridToStringExclude
     protected ExecutorService affExecSvc;
+
+    /** */
+    @GridToStringExclude
+    protected ExecutorService idxExecSvc;
 
     /** */
     @GridToStringExclude
@@ -377,11 +386,13 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
      * @param marshCachePool Marshaller cache pool.
      * @param execSvc Public executor service.
      * @param sysExecSvc System executor service.
+     * @param stripedExecSvc Striped executor.
      * @param p2pExecSvc P2P executor service.
      * @param mgmtExecSvc Management executor service.
      * @param igfsExecSvc IGFS executor service.
      * @param restExecSvc REST executor service.
      * @param affExecSvc Affinity executor service.
+     * @param idxExecSvc Indexing executor service.
      * @param plugins Plugin providers.
      * @throws IgniteCheckedException In case of error.
      */
@@ -395,13 +406,16 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
         ExecutorService marshCachePool,
         ExecutorService execSvc,
         ExecutorService sysExecSvc,
+        StripedExecutor stripedExecSvc,
         ExecutorService p2pExecSvc,
         ExecutorService mgmtExecSvc,
         ExecutorService igfsExecSvc,
         ExecutorService restExecSvc,
         ExecutorService affExecSvc,
+        @Nullable ExecutorService idxExecSvc,
         IgniteStripedThreadPoolExecutor callbackExecSvc,
-        List<PluginProvider> plugins) throws IgniteCheckedException {
+        List<PluginProvider> plugins
+    ) throws IgniteCheckedException {
         assert grid != null;
         assert cfg != null;
         assert gw != null;
@@ -413,11 +427,13 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
         this.marshCachePool = marshCachePool;
         this.execSvc = execSvc;
         this.sysExecSvc = sysExecSvc;
+        this.stripedExecSvc = stripedExecSvc;
         this.p2pExecSvc = p2pExecSvc;
         this.mgmtExecSvc = mgmtExecSvc;
         this.igfsExecSvc = igfsExecSvc;
         this.restExecSvc = restExecSvc;
         this.affExecSvc = affExecSvc;
+        this.idxExecSvc = idxExecSvc;
         this.callbackExecSvc = callbackExecSvc;
 
         String workDir = U.workDirectory(cfg.getWorkDirectory(), cfg.getIgniteHome());
@@ -941,6 +957,11 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
     }
 
     /** {@inheritDoc} */
+    @Override public StripedExecutor getStripedExecutorService() {
+        return stripedExecSvc;
+    }
+
+    /** {@inheritDoc} */
     @Override public ExecutorService getManagementExecutorService() {
         return mgmtExecSvc;
     }
@@ -963,6 +984,11 @@ public class GridKernalContextImpl implements GridKernalContext, Externalizable 
     /** {@inheritDoc} */
     @Override public ExecutorService getAffinityExecutorService() {
         return affExecSvc;
+    }
+
+    /** {@inheritDoc} */
+    @Override @Nullable public ExecutorService getIndexingExecutorService() {
+        return idxExecSvc;
     }
 
     /** {@inheritDoc} */
