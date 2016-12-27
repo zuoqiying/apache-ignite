@@ -48,7 +48,7 @@ public abstract class HadoopAbstractSelfTest extends GridCommonAbstractTest {
     private static TcpDiscoveryIpFinder IP_FINDER = new TcpDiscoveryVmIpFinder(true);
 
     /** REST port. */
-    protected static final int REST_PORT = 11212;
+    protected static final int REST_PORT = ConnectorConfiguration.DFLT_TCP_PORT;
 
     /** IGFS name. */
     protected static final String igfsName = null;
@@ -83,7 +83,9 @@ public abstract class HadoopAbstractSelfTest extends GridCommonAbstractTest {
     private static String initCp;
 
     /** {@inheritDoc} */
-    @Override protected void beforeTestsStarted() throws Exception {
+    @Override protected final void beforeTestsStarted() throws Exception {
+        HadoopFileSystemsUtils.clearFileSystemCache();
+
         // Add surefire classpath to regular classpath.
         initCp = System.getProperty("java.class.path");
 
@@ -93,6 +95,15 @@ public abstract class HadoopAbstractSelfTest extends GridCommonAbstractTest {
             System.setProperty("java.class.path", initCp + File.pathSeparatorChar + surefireCp);
 
         super.beforeTestsStarted();
+
+        beforeTestsStarted0();
+    }
+
+    /**
+     * Performs additional initialization in the beginning of test class execution.
+     */
+    protected void beforeTestsStarted0() throws Exception {
+        // noop
     }
 
     /** {@inheritDoc} */
@@ -185,7 +196,7 @@ public abstract class HadoopAbstractSelfTest extends GridCommonAbstractTest {
     /**
      * @return IGFS data cache configuration.
      */
-    private CacheConfiguration dataCacheConfiguration() {
+    protected CacheConfiguration dataCacheConfiguration() {
         CacheConfiguration cfg = new CacheConfiguration();
 
         cfg.setName(igfsDataCacheName);
