@@ -41,7 +41,6 @@ import static org.apache.ignite.internal.processors.cache.GridCacheUtils.isIgfsC
 import static org.apache.ignite.internal.processors.cache.GridCacheUtils.isSystemCache;
 import static org.apache.ignite.internal.visor.compute.VisorComputeMonitoringHolder.COMPUTE_MONITORING_HOLDER_KEY;
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.EVT_MAPPER;
-import static org.apache.ignite.internal.visor.util.VisorTaskUtils.EVT_MAPPER_V2;
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.VISOR_TASK_EVTS;
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.checkExplicitTaskMonitoring;
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.collectEvents;
@@ -74,7 +73,7 @@ public class VisorNodeDataCollectorJob extends VisorJob<VisorNodeDataCollectorTa
      */
     protected void events0(VisorNodeDataCollectorJobResult res, String evtOrderKey, String evtThrottleCntrKey,
         final boolean all) {
-        res.getEvents().addAll(collectEvents(ignite, evtOrderKey, evtThrottleCntrKey, all, EVT_MAPPER_V2));
+        res.getEvents().addAll(collectEvents(ignite, evtOrderKey, evtThrottleCntrKey, all, EVT_MAPPER));
     }
 
     /**

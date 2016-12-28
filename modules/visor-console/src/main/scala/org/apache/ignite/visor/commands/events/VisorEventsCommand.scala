@@ -424,7 +424,8 @@ object VisorEventsCommand {
                 "   di Discovery events.",
                 "   jo Job execution events.",
                 "   ta Task execution events.",
-                "   ca Cache events."
+                "   ca Cache events.",
+                "   cr Cache rebalance events."
             ),
             "-t=<num>s|m|h|d" -> List(
                 "Defines time frame for querying events:",

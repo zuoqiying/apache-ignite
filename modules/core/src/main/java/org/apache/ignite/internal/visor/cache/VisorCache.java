@@ -24,6 +24,7 @@ import java.util.Iterator;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.CachePeekMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
@@ -42,6 +43,10 @@ import org.jetbrains.annotations.Nullable;
  * Data transfer object for {@link IgniteCache}.
  */
 public class VisorCache extends VisorDataTransferObject {
+    /** */
+    private static final CachePeekMode[] PEEK_NO_NEAR =
+        new CachePeekMode[] {CachePeekMode.PRIMARY, CachePeekMode.BACKUP};
+
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -64,22 +69,19 @@ public class VisorCache extends VisorDataTransferObject {
     private long indexesSize;
 
     /** Number of all entries in cache. */
-    private int size;
+    private long size;
 
     /** Number of all entries in near cache. */
     private int nearSize;
 
-    /** Number of all entries in DHT cache. */
-    private int dhtSize;
-
     /** Number of primary entries in cache. */
-    private int primarySize;
+    private long primarySize;
 
-    /** Memory size allocated in off-heap. */
-    private long offHeapAllocatedSize;
+    /** Number of backup entries in cache. */
+    private long backupSize;
 
-    /** Number of cache entries stored in off-heap memory. */
-    private long offHeapEntriesCnt;
+    /** Number of cache entries stored in heap memory. */
+    private long onHeapEntriesCnt;
 
     /** Number of partitions. */
     private int partitions;
@@ -139,13 +141,12 @@ public class VisorCache extends VisorDataTransferObject {
             }
         }
 
-        size = ca.size();
-        nearSize = ca.nearSize();
         dynamicDeploymentId = cctx.dynamicDeploymentId();
-        dhtSize = size - nearSize;
-        primarySize = ca.primarySize();
-        offHeapAllocatedSize = ca.offHeapAllocatedSize();
-        offHeapEntriesCnt = ca.offHeapEntriesCount();
+        size = ca.localSizeLong(PEEK_NO_NEAR);
+        primarySize = ca.primarySizeLong();
+        backupSize = size - primarySize; // This is backup size.
+        nearSize = ca.nearSize();
+        onHeapEntriesCnt = 0; // TODO GG-11148 Need to rename on ON-heap entries count, see
         partitions = ca.affinity().partitions();
         metrics = new VisorCacheMetrics(ignite, ca.name()); // TODO: GG-11683 Move to separate thing
         near = cctx.isNear();
@@ -160,7 +161,8 @@ public class VisorCache extends VisorDataTransferObject {
      * @param sample Sample size.
      * @throws IgniteCheckedException If estimation failed.
      */
-    protected void estimateMemorySize(GridCacheAdapter ca, int sample) throws IgniteCheckedException {
+    protected void estimateMemorySize(IgniteEx ignite, GridCacheAdapter ca, int sample) throws IgniteCheckedException {
+        /* TODO Fix after GG-11739 implemented.
         int size = ca.size();
 
         Iterable<GridCacheEntryEx> set = ca.context().isNear()
@@ -185,6 +187,8 @@ public class VisorCache extends VisorDataTransferObject {
             memSz = (long)((double)memSz / cnt * size);
 
         memorySize = memSz;
+        */
+        memorySize = 0;
     }
 
     /**
@@ -199,10 +203,9 @@ public class VisorCache extends VisorDataTransferObject {
         c.indexesSize = indexesSize;
         c.size = size;
         c.nearSize = nearSize;
-        c.dhtSize = dhtSize;
+        c.backupSize = backupSize;
         c.primarySize = primarySize;
-        c.offHeapAllocatedSize = offHeapAllocatedSize;
-        c.offHeapEntriesCnt = offHeapEntriesCnt;
+        c.onHeapEntriesCnt = onHeapEntriesCnt;
         c.partitions = partitions;
         c.metrics = metrics;
         c.near = near;
@@ -257,7 +260,7 @@ public class VisorCache extends VisorDataTransferObject {
     /**
      * @return Number of all entries in cache.
      */
-    public int getSize() {
+    public long getSize() {
         return size;
     }
 
@@ -269,31 +272,24 @@ public class VisorCache extends VisorDataTransferObject {
     }
 
     /**
-     * @return Number of all entries in DHT cache.
+     * @return Number of backup entries in cache.
      */
-    public int getDhtSize() {
-        return dhtSize;
+    public long backupSize() {
+        return backupSize;
     }
 
     /**
      * @return Number of primary entries in cache.
      */
-    public int getPrimarySize() {
+    public long getPrimarySize() {
         return primarySize;
     }
 
     /**
-     * @return Memory size allocated in off-heap.
+     * @return Number of cache entries stored in heap memory.
      */
-    public long getOffHeapAllocatedSize() {
-        return offHeapAllocatedSize;
-    }
-
-    /**
-     * @return Number of cache entries stored in off-heap memory.
-     */
-    public long getOffHeapEntriesCount() {
-        return offHeapEntriesCnt;
+    public long getOnHeapEntriesCount() {
+        return onHeapEntriesCnt;
     }
 
     /**

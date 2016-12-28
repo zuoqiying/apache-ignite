@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
@@ -55,7 +54,6 @@ import org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicyMBean;
 import org.apache.ignite.cache.eviction.lru.LruEvictionPolicyMBean;
 import org.apache.ignite.cache.eviction.random.RandomEvictionPolicyMBean;
 import org.apache.ignite.cluster.ClusterNode;
-import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.events.Event;
 import org.apache.ignite.internal.processors.igfs.IgfsEx;
 import org.apache.ignite.internal.util.typedef.F;
@@ -69,7 +67,6 @@ import org.apache.ignite.internal.visor.file.VisorFileBlock;
 import org.apache.ignite.internal.visor.log.VisorLogFile;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgnitePredicate;
-import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
 import static java.lang.System.getProperty;
@@ -270,6 +267,19 @@ public class VisorTaskUtils {
     /**
      * Compact class names.
      *
+     * @param cls Class object for compact.
+     * @return Compacted string.
+     */
+    @Nullable public static String compactClass(Class cls) {
+        if (cls == null)
+            return null;
+
+        return U.compact(cls.getName());
+    }
+
+    /**
+     * Compact class names.
+     *
      * @param obj Object for compact.
      * @return Compacted string.
      */
@@ -277,7 +287,7 @@ public class VisorTaskUtils {
         if (obj == null)
             return null;
 
-        return U.compact(obj.getClass().getName());
+        return compactClass(obj.getClass());
     }
 
     /**
@@ -396,17 +406,6 @@ public class VisorTaskUtils {
 
     /** Mapper from grid event to Visor data transfer object. */
     public static final VisorEventMapper EVT_MAPPER = new VisorEventMapper();
-
-    /** Mapper from grid event to Visor data transfer object. */
-    public static final VisorEventMapper EVT_MAPPER_V2 = new VisorEventMapper() {
-        @Override protected VisorGridEvent discoveryEvent(DiscoveryEvent de, int type, IgniteUuid id, String name,
-            UUID nid, long ts, String msg, String shortDisplay) {
-            ClusterNode node = de.eventNode();
-
-            return new VisorGridDiscoveryEvent(type, id, name, nid, ts, msg, shortDisplay, node.id(),
-                F.first(node.addresses()), node.isDaemon(), de.topologyVersion());
-        }
-    };
 
     /**
      * Grabs local events and detects if events was lost since last poll.
@@ -881,8 +880,6 @@ public class VisorTaskUtils {
         if (cmdFilePath == null || !cmdFilePath.exists())
             throw new FileNotFoundException(String.format("File not found: %s", cmdFile));
 
-        String ignite = cmdFilePath.getCanonicalPath();
-
         File nodesCfgPath = U.resolveIgnitePath(cfgPath);
 
         if (nodesCfgPath == null || !nodesCfgPath.exists())
@@ -895,6 +892,8 @@ public class VisorTaskUtils {
         List<Process> run = new ArrayList<>();
 
         try {
+            String igniteCmd = cmdFilePath.getCanonicalPath();
+
             for (int i = 0; i < nodesToStart; i++) {
                 if (U.isMacOs()) {
                     Map<String, String> macEnv = new HashMap<>(System.getenv());
@@ -923,9 +922,9 @@ public class VisorTaskUtils {
                                     entry.getKey(), val.replace('\n', ' ').replace("'", "\'")));
                     }
 
-                    run.add(openInConsole(envs.toString(), ignite, quitePar, nodeCfg));
+                    run.add(openInConsole(envs.toString(), igniteCmd, quitePar, nodeCfg));
                 } else
-                    run.add(openInConsole(null, envVars, ignite, quitePar, nodeCfg));
+                    run.add(openInConsole(null, envVars, igniteCmd, quitePar, nodeCfg));
             }
 
             return run;

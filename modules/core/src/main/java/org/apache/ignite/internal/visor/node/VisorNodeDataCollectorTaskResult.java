@@ -42,6 +42,9 @@ public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
+    /** Grid active flag. */
+    private boolean active;
+
     /** Unhandled exceptions from nodes. */
     private Map<UUID, VisorExceptionWrapper> unhandledEx = new HashMap<>();
 
@@ -101,6 +104,20 @@ public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
             igfss.isEmpty() &&
             igfsEndpoints.isEmpty() &&
             igfssEx.isEmpty();
+    }
+
+    /**
+     * @return {@code True} if grid is active.
+     */
+    public boolean active() {
+        return active;
+    }
+
+    /**
+     * @param active active New value of grid active flag.
+     */
+    public void active(boolean active) {
+        this.active = active;
     }
 
     /**

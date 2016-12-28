@@ -1516,7 +1516,7 @@ public abstract class JettyRestProcessorAbstractSelfTest extends AbstractRestPro
 
         jsonTaskResult(ret);
 
-        /** Spring XML to start cache via Visor task. */
+        // Spring XML to start cache via Visor task.
         final String START_CACHE =
             "<beans xmlns=\"http://www.springframework.org/schema/beans\"\n" +
                     "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
