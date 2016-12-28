@@ -713,6 +713,21 @@ public abstract class GridH2IndexBase extends BaseIndex {
     }
 
     /**
+     * @param arr Array.
+     * @param off Offset.
+     * @param cmp Comparator.
+     */
+    public static <Z> void bubbleUp(Z[] arr, int off, Comparator<Z> cmp) {
+        // TODO Optimize: use binary search if the range in array is big.
+        for (int i = off, last = arr.length - 1; i < last; i++) {
+            if (cmp.compare(arr[i], arr[i + 1]) <= 0)
+                break;
+
+            U.swap(arr, i, i + 1);
+        }
+    }
+
+    /**
      * @param msg Message.
      * @return Row.
      */
@@ -877,12 +892,7 @@ public abstract class GridH2IndexBase extends BaseIndex {
             }
 
             // Bubble up current min stream with respect to fetched row to achieve correct sort order of streams.
-            for (int i = off, last = streams.length - 1; i < last; i++) {
-                if (compareRows(streams[i].get(rangeId), streams[i + 1].get(rangeId)) <= 0)
-                    break;
-
-                U.swap(streams, i, i + 1);
-            }
+            bubbleUp(streams, off, this);
 
             return true;
         }
