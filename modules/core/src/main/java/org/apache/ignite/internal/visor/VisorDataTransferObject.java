@@ -38,7 +38,7 @@ abstract public class VisorDataTransferObject implements Externalizable {
      * @param out Output object to write data content.
      * @throws IOException
      */
-    abstract protected void writeExternalData(ObjectOutput out) throws IOException;
+    protected abstract void writeExternalData(ObjectOutput out) throws IOException;
 
     /** {@inheritDoc} */
     @Override public void writeExternal(ObjectOutput out) throws IOException {
@@ -54,7 +54,7 @@ abstract public class VisorDataTransferObject implements Externalizable {
      * @throws IOException
      * @throws ClassNotFoundException
      */
-    abstract protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException;
+    protected abstract void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException;
 
     /** {@inheritDoc} */
     @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {

@@ -20,7 +20,6 @@ package org.apache.ignite.internal.visor.cache;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Iterator;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cache.CacheMode;
@@ -29,7 +28,6 @@ import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
-import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtCacheAdapter;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionTopology;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearCacheAdapter;
@@ -151,7 +149,7 @@ public class VisorCache extends VisorDataTransferObject {
         metrics = new VisorCacheMetrics(ignite, ca.name()); // TODO: GG-11683 Move to separate thing
         near = cctx.isNear();
 
-        estimateMemorySize(ca, sample);
+        estimateMemorySize(ignite, ca, sample);
     }
 
     /**
@@ -274,7 +272,7 @@ public class VisorCache extends VisorDataTransferObject {
     /**
      * @return Number of backup entries in cache.
      */
-    public long backupSize() {
+    public long getBackupSize() {
         return backupSize;
     }
 
@@ -327,12 +325,11 @@ public class VisorCache extends VisorDataTransferObject {
         U.writeEnum(out, mode);
         out.writeLong(memorySize);
         out.writeLong(indexesSize);
-        out.writeInt(size);
+        out.writeLong(size);
         out.writeInt(nearSize);
-        out.writeInt(dhtSize);
-        out.writeInt(primarySize);
-        out.writeLong(offHeapAllocatedSize);
-        out.writeLong(offHeapEntriesCnt);
+        out.writeLong(primarySize);
+        out.writeLong(backupSize);
+        out.writeLong(onHeapEntriesCnt);
         out.writeInt(partitions);
         out.writeBoolean(near);
         out.writeObject(metrics);
@@ -348,10 +345,9 @@ public class VisorCache extends VisorDataTransferObject {
         indexesSize = in.readLong();
         size = in.readInt();
         nearSize = in.readInt();
-        dhtSize = in.readInt();
-        primarySize = in.readInt();
-        offHeapAllocatedSize = in.readLong();
-        offHeapEntriesCnt = in.readLong();
+        primarySize = in.readLong();
+        backupSize = in.readLong();
+        onHeapEntriesCnt = in.readLong();
         partitions = in.readInt();
         near = in.readBoolean();
         metrics = (VisorCacheMetrics)in.readObject();
