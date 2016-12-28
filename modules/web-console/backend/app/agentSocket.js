@@ -85,7 +85,7 @@ module.exports.factory = function(_) {
     /**
      * Connected agent descriptor.
      */
-    return class AgentSocket {
+    class AgentSocket {
         /**
          * @param {socketIo.Socket} socket - AgentSocket socket for interaction.
          */
@@ -97,9 +97,9 @@ module.exports.factory = function(_) {
              */
             this.socket = socket;
 
-            this.clusterIds = ['DEMO', 'CLUSTER'];
+            this.clusterIds = [];
 
-            this.activeClusterIds = [];
+            this.broadcastedClusterIds = new Map();
         }
 
         /**
@@ -139,8 +139,12 @@ module.exports.factory = function(_) {
             );
         }
 
-        startCollectTopology(demo, timeout) {
-            return this.emitEvent('start:collect:topology', demo, timeout);
+        startDemo(timeout) {
+            return this.emitEvent('demo:broadcast:start', timeout);
+        }
+
+        startCollectTopology(timeout) {
+            return this.emitEvent('start:collect:topology', timeout);
         }
 
         stopCollectTopology(demo) {
@@ -271,4 +275,6 @@ module.exports.factory = function(_) {
                 `${nid}=${queryId}`);
         }
     };
+
+    return AgentSocket;
 };

@@ -23,20 +23,20 @@
  * Module interaction with browsers.
  */
 module.exports = {
-    implements: 'browser-manager',
-    inject: ['require(lodash)', 'require(socket.io)', 'configure', 'agent-manager']
+    implements: 'browsers-server',
+    inject: ['require(lodash)', 'require(socket.io)', 'configure', 'agents-server']
 };
 
 module.exports.factory = (_, socketio, configure, agentMgr) => {
     const _errorToJson = (err) => {
         return {
-            message: err.message || err,
-            code: err.code || 1
+            code: err.code || 1,
+            message: err.message || err
         };
     };
 
-    return {
-        attach: (server) => {
+    class BrowsersServer {
+        attach(server) {
             const io = socketio(server);
 
             configure.socketio(io);
@@ -48,9 +48,9 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
 
                 const clusterId = () => demo ? 'DEMO' : 'CLUSTER';
 
-                const schemaImport = (event) => {
+                const resendToAgent = (event) => {
                     return (...args) => {
-                        const cb = _.tail(args);
+                        const cb = _.last(args);
 
                         return agentMgr.forToken(currentToken())
                             .then((agent) => agent.emitEvent(event, ..._.dropRight(args)))
@@ -60,44 +60,22 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 };
 
                 // Return available drivers to browser.
-                socket.on('schemaImport:drivers', schemaImport('schemaImport:drivers'));
+                socket.on('schemaImport:drivers', resendToAgent('schemaImport:drivers'));
                 // Return schemas from database to browser.
-                socket.on('schemaImport:schemas', schemaImport('schemaImport:schemas'));
+                socket.on('schemaImport:schemas', resendToAgent('schemaImport:schemas'));
                 // Return tables from database to browser.
-                socket.on('schemaImport:tables', schemaImport('schemaImport:tables'));
+                socket.on('schemaImport:tables', resendToAgent('schemaImport:tables'));
 
-                // // Return available drivers to browser
-                // socket.on('schemaImport:drivers', (cb) => {
-                //     agentMgr.forToken(currentToken())
-                //         .then((agent) => agent.availableDrivers())
-                //         .then((drivers) => cb(null, drivers))
-                //         .catch((err) => cb(_errorToJson(err)));
-                // });
+                // const resendToCluster = (event) => {
+                //     return (...args) => {
+                //         const cb = _.last(args);
                 //
-                // // Return schemas from database to browser.
-                // socket.on('schemaImport:schemas', (preset, cb) => {
-                //     agentMgr.forToken(currentToken())
-                //         .then((agent) => {
-                //             const jdbcInfo = {user: preset.user, password: preset.password};
-                //
-                //             return agent.metadataSchemas(preset.jdbcDriverJar, preset.jdbcDriverClass, preset.jdbcUrl, jdbcInfo);
-                //         })
-                //         .then((schemas) => cb(null, schemas))
-                //         .catch((err) => cb(_errorToJson(err)));
-                // });
-                //
-                // // Return tables from database to browser.
-                // socket.on('schemaImport:tables', (preset, cb) => {
-                //     agentMgr.forToken(currentToken())
-                //         .then((agent) => {
-                //             const jdbcInfo = {user: preset.user, password: preset.password};
-                //
-                //             return agent.metadataTables(preset.jdbcDriverJar, preset.jdbcDriverClass, preset.jdbcUrl, jdbcInfo,
-                //                 preset.schemas, preset.tablesOnly);
-                //         })
-                //         .then((tables) => cb(null, tables))
-                //         .catch((err) => cb(_errorToJson(err)));
-                // });
+                //         return agentMgr.forCluster(currentToken(), clusterId())
+                //             .then((agent) => agent.emitEvent(event, ..._.dropRight(args)))
+                //             .then((res) => cb(null, res))
+                //             .catch((err) => cb(_errorToJson(err)));
+                //     };
+                // };
 
                 // Return topology command result from grid to browser.
                 socket.on('node:topology', (attr, mtr, cb) => {
@@ -479,5 +457,7 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
             // Handle browser disconnect event.
             io.sockets.on('disconnect', agentMgr.onBrowserDisconnect);
         }
-    };
+    }
+
+    return new BrowsersServer();
 };

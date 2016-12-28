@@ -38,8 +38,9 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import org.apache.ignite.console.agent.handlers.DatabaseHandler;
+import org.apache.ignite.console.agent.handlers.DemoHandler;
 import org.apache.ignite.console.agent.handlers.RestHandler;
-import org.apache.ignite.console.agent.handlers.TopologyHandler;
+import org.apache.ignite.console.agent.handlers.ClusterHandler;
 import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.internal.util.typedef.X;
 import org.json.JSONException;
@@ -49,11 +50,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import static io.socket.client.Socket.EVENT_CONNECT;
-import static io.socket.client.Socket.EVENT_CONNECTING;
 import static io.socket.client.Socket.EVENT_CONNECT_ERROR;
 import static io.socket.client.Socket.EVENT_DISCONNECT;
 import static io.socket.client.Socket.EVENT_ERROR;
-import static io.socket.client.Socket.EVENT_RECONNECTING;
 
 /**
  * Control Center Agent launcher.
@@ -63,10 +62,19 @@ public class AgentLauncher {
     private static final Logger log = LoggerFactory.getLogger(AgentLauncher.class);
 
     /** */
-    private static final String EVENT_START_COLLECT_TOPOLOGY = "start:collect:topology";
+    private static final String EVENT_CLUSTER_BROADCAST_START = "cluster:broadcast:start";
 
     /** */
-    private static final String EVENT_STOP_COLLECT_TOPOLOGY = "stop:collect:topology";
+    private static final String EVENT_CLUSTER_BROADCAST_STOP = "cluster:broadcast:stop";
+
+    /** */
+    private static final String EVENT_CLUSTER_DISCONNECTED = "cluster:disconnected";
+
+    /** */
+    private static final String EVENT_DEMO_BROADCAST_START = "demo:broadcast:start";
+
+    /** */
+    private static final String EVENT_DEMO_BROADCAST_STOP = "demo:broadcast:stop";
 
     /** */
     private static final String EVENT_SCHEMA_IMPORT_DRIVERS = "schemaImport:drivers";
@@ -283,13 +291,8 @@ public class AgentLauncher {
         final RestExecutor restExecutor = new RestExecutor(cfg.nodeUri());
 
         try {
-            Emitter.Listener onConnecting = new Emitter.Listener() {
-                @Override public void call(Object... args) {
-                    log.info("Connecting to: " + cfg.serverUri());
-                }
-            };
-
-            final TopologyHandler topHnd = new TopologyHandler(client, restExecutor);
+            final ClusterHandler clusterHnd = new ClusterHandler(client, restExecutor);
+            final DemoHandler demoHnd = new DemoHandler(client, restExecutor);
 
             Emitter.Listener onConnect = new Emitter.Listener() {
                 @Override public void call(Object... args) {
@@ -327,7 +330,7 @@ public class AgentLauncher {
 
                                 log.info("Authentication success.");
 
-                                topHnd.start().call();
+                                clusterHnd.watch();
                             }
                         });
                     }
@@ -344,16 +347,18 @@ public class AgentLauncher {
 
             final CountDownLatch latch = new CountDownLatch(1);
 
+            log.info("Connecting to: {}", cfg.serverUri());
+
             client
-                .on(EVENT_CONNECTING, onConnecting)
                 .on(EVENT_CONNECT, onConnect)
                 .on(EVENT_CONNECT_ERROR, onError)
-                .on(EVENT_RECONNECTING, onConnecting)
                 .on(EVENT_ERROR, onError)
                 .on(EVENT_DISCONNECT, onDisconnect)
                 .on(EVENT_LOG_WARNING, onLogWarning)
-                .on(EVENT_START_COLLECT_TOPOLOGY, topHnd.start())
-                .on(EVENT_STOP_COLLECT_TOPOLOGY, topHnd.stop())
+                .on(EVENT_CLUSTER_BROADCAST_START, clusterHnd.start())
+                .on(EVENT_CLUSTER_BROADCAST_STOP, clusterHnd.stop())
+                .on(EVENT_DEMO_BROADCAST_START, demoHnd.start())
+                .on(EVENT_DEMO_BROADCAST_STOP, demoHnd.stop())
                 .on(EVENT_RESET_TOKENS, new Emitter.Listener() {
                     @Override public void call(Object... args) {
                         String tok = String.valueOf(args[0]);

@@ -21,7 +21,7 @@
 
 module.exports = {
     implements: 'services/users',
-    inject: ['require(lodash)', 'errors', 'settings', 'mongo', 'services/spaces', 'services/mails', 'agent-manager']
+    inject: ['require(lodash)', 'errors', 'settings', 'mongo', 'services/spaces', 'services/mails', 'agents-server']
 };
 
 /**
@@ -31,7 +31,7 @@ module.exports = {
  * @param settings
  * @param {SpacesService} spacesService
  * @param {MailsService} mailsService
- * @param {AgentManager} agentMgr
+ * @param {AgentsServer} agentMgr
  * @returns {UsersService}
  */
 module.exports.factory = (_, errors, settings, mongo, spacesService, mailsService, agentMgr) => {

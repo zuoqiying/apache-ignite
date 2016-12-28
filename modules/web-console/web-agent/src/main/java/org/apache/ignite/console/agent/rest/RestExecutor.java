@@ -61,26 +61,14 @@ public class RestExecutor {
             httpClient.dispatcher().executorService().shutdown();
     }
 
-    /**
-     * @param demo Is demo node request.
-     * @param path Path segment.
-     * @param params Params.
-     * @param mtd Method.
-     * @param headers Headers.
-     * @param body Body.
-     */
-    public RestResult execute(boolean demo, String path, Map<String, Object> params,
+    private RestResult sendRequest(boolean demo, String path, Map<String, Object> params,
         String mtd, Map<String, Object> headers, String body) throws IOException {
-        if (log.isDebugEnabled())
-            log.debug("Start execute REST command [method=" + mtd + ", uri=/" + (path == null ? "" : path) +
-                ", parameters=" + params + "]");
-
         final Request.Builder reqBuilder = new Request.Builder();
 
         String url = demo ? AgentClusterDemo.getDemoUrl() : this.nodeUrl;
 
         if (url == null)
-            return RestResult.fail(404, "Demo node is not started yet.");
+            throw new IllegalStateException("Demo node is not started yet.");
 
         HttpUrl.Builder urlBuilder = HttpUrl.parse(url)
             .newBuilder();
@@ -122,7 +110,7 @@ public class RestExecutor {
             }
         }
         else
-            throw new IOException("Unknown HTTP-method: " + mtd);
+            throw new IllegalArgumentException("Unknown HTTP-method: " + mtd);
 
         reqBuilder.url(urlBuilder.build());
 
@@ -130,22 +118,44 @@ public class RestExecutor {
             return RestResult.success(resp.code(), resp.body().string());
         }
         catch (ConnectException e) {
-            log.info("Failed connect to node and execute REST command [url=" + urlBuilder + "]");
+            throw new ConnectException("Failed connect to node and execute REST command [url=" + urlBuilder + "]");
+        }
+    }
 
-            return RestResult.fail(404, "Failed connect to node and execute REST command.");
+    /**
+     * @param demo Is demo node request.
+     * @param path Path segment.
+     * @param params Params.
+     * @param mtd Method.
+     * @param headers Headers.
+     * @param body Body.
+     */
+    public RestResult execute(boolean demo, String path, Map<String, Object> params,
+        String mtd, Map<String, Object> headers, String body) throws IOException {
+        log.debug("Start execute REST command [method=" + mtd + ", uri=/" + (path == null ? "" : path) +
+                ", parameters=" + params + "]");
+
+        try {
+            return sendRequest(demo, path, params, mtd, headers, body);
+        }
+        catch (Exception e) {
+            log.info("Failed to execute REST command [method=" + mtd + ", uri=/" + (path == null ? "" : path) +
+                ", parameters=" + params + "]", e);
+
+            return RestResult.fail(404, e.getMessage());
         }
     }
 
     /**
      * @param demo Is demo node request.
      */
-    public RestResult topology(boolean demo) throws IOException {
+    public RestResult topology(boolean demo, boolean full) throws IOException {
         Map<String, Object> params = U.newLinkedHashMap(3);
 
         params.put("cmd", "top");
-        params.put("attr", false);
-        params.put("mtr", false);
+        params.put("attr", full);
+        params.put("mtr", full);
 
-        return execute(demo, "ignite", params, "GET", null, null);
+        return sendRequest(demo, "ignite", params, "GET", null, null);
     }
 }

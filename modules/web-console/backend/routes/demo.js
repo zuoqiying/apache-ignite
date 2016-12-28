@@ -26,7 +26,7 @@ const igfss = require('./demo/igfss.json');
 
 module.exports = {
     implements: 'routes/demo',
-    inject: ['require(lodash)', 'require(express)', 'errors', 'settings', 'mongo', 'services/spaces', 'agent-manager']
+    inject: ['require(lodash)', 'require(express)', 'errors', 'settings', 'mongo', 'services/spaces', 'agents-server']
 };
 
 /**
@@ -37,7 +37,7 @@ module.exports = {
  * @param settings
  * @param mongo
  * @param spacesService
- * @param {AgentManager} agentMgr
+ * @param {AgentsServer} agentMgr
  * @return {Promise}
  */
 module.exports.factory = (_, express, errors, settings, mongo, spacesService, agentMgr) => {

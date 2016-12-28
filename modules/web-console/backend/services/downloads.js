@@ -21,7 +21,7 @@
 
 module.exports = {
     implements: 'services/agents',
-    inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'settings', 'agent-manager', 'errors']
+    inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'settings', 'agents-server', 'errors']
 };
 
 /**

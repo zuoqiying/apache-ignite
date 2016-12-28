@@ -75,13 +75,18 @@ public class AgentClusterDemo {
     private static final Logger log = LoggerFactory.getLogger(AgentClusterDemo.class);
 
     /** */
-    private static final AtomicBoolean INIT_LATCH = new AtomicBoolean();
+    private static final AtomicBoolean initGuard = new AtomicBoolean();
+
+    /** */
+    private static final CountDownLatch initLatch = new CountDownLatch(1);
 
     /** */
     private static volatile String demoUrl;
 
     /** */
     private static final int NODE_CNT = 3;
+
+    private static ScheduledExecutorService cachePool;
 
     /** */
     private static final String COUNTRY_CACHE_NAME = "CountryCache";
@@ -488,7 +493,10 @@ public class AgentClusterDemo {
         populateCacheEmployee(ignite, diff);
         populateCacheCar(ignite);
 
-        ScheduledExecutorService cachePool = newScheduledThreadPool(2, "demo-load-cache-tasks");
+        if (cachePool != null)
+            cachePool.shutdownNow();
+
+        cachePool = newScheduledThreadPool(2, "demo-load-cache-tasks");
 
         cachePool.scheduleWithFixedDelay(new Runnable() {
             @Override public void run() {
@@ -573,8 +581,8 @@ public class AgentClusterDemo {
     /**
      * Start ignite node with cacheEmployee and populate it with data.
      */
-    private static void tryStart() {
-        if (INIT_LATCH.compareAndSet(false, true)) {
+    public static CountDownLatch tryStart() {
+        if (initGuard.compareAndSet(false, true)) {
             log.info("DEMO: Starting embedded nodes for demo...");
 
             final AtomicInteger cnt = new AtomicInteger(-1);
@@ -612,6 +620,8 @@ public class AgentClusterDemo {
                                 demoUrl = String.format("http://%s:%d", host, port);
 
                                 startLoad(ignite, 20);
+
+                                initLatch.countDown();
                             }
                         }
                     }
@@ -628,6 +638,21 @@ public class AgentClusterDemo {
                 }
             }, 0, 10, TimeUnit.SECONDS);
         }
+
+        return initLatch;
+    }
+
+    /**
+     * Stop ignite node with cacheEmployee and populate it with data.
+     */
+    public static void stop() {
+        if (cachePool != null) {
+            cachePool.shutdownNow();
+
+            cachePool = null;
+        }
+
+        Ignition.stopAll(true);
     }
 
     /**

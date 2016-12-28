@@ -23,7 +23,7 @@
  * Module interaction with agents.
  */
 module.exports = {
-    implements: 'agent-manager',
+    implements: 'agents-server',
     inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'require(socket.io)', 'settings', 'mongo', 'agent-socket']
 };
 
@@ -35,14 +35,14 @@ module.exports = {
  * @param socketio
  * @param settings
  * @param mongo
- * @param AgentSocket
- * @returns {AgentManager}
+ * @param {AgentSocket} AgentSocket
+ * @returns {AgentsServer}
  */
 module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo, AgentSocket) {
     /**
      * Connected agents manager.
      */
-    class AgentManager {
+    class AgentsServer {
         /**
          * @constructor
          */
@@ -58,21 +58,13 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
              * @type {Object.<ObjectId, Array.<Socket>>}
              */
             this._browserSockets = {};
-
-            /**
-             * Supported agents distribution.
-             * @type {Object.<String, String>}
-             */
-            this.supportedAgents = {};
-
-            this.collectSupportedAgents()
-                .then((agentDescs) => this.supportedAgents = agentDescs);
         }
 
         /**
          * Collect supported agents list.
+         * @private
          */
-        collectSupportedAgents() {
+        _collectSupportedAgents() {
             const jarFilter = (file) => path.extname(file) === '.jar';
 
             const agentArchives = fs.readdirSync(settings.agent.dists)
@@ -134,48 +126,96 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
         }
 
         /**
+         * Link agent with browsers by account.
+         *
+         * @param {Array.<String>} tokens
+         * @param {AgentSocket} agentSocket
+         *
+         * @private
+         */
+        _onAgentConnect(tokens, agentSocket) {
+            const emitAgentCnt = (token, cnt) => {
+                const sockets = this._browserSockets[token];
+
+                _.forEach(sockets, (socket) => socket.emit('agent:count', cnt));
+            };
+
+            agentSocket.socket.on('disconnect', () => {
+                _.forEach(tokens, (token) => {
+                    const agentSockets = this._agentSockets[token];
+
+                    _.pull(agentSockets, agentSocket);
+
+                    emitAgentCnt(token, agentSockets.length);
+                });
+            });
+
+            _.forEach(tokens, (token) => {
+                const agentSockets = this._agentSockets[token];
+
+                if (_.isNil(agentSockets)) {
+                    this._agentSockets[token] = [agentSocket];
+
+                    // If first agent join after user start demo.
+                    if (_.find(this._browserSockets[token], (socket) => socket.request._query.IgniteDemoMode === 'true'))
+                        agentSockets.startDemo();
+                }
+                else
+                    agentSockets.push(agentSocket);
+
+                emitAgentCnt(token, this._agentSockets[token].length);
+            });
+        }
+
+        /**
          * @param {http.Server|https.Server} srv Server instance that we want to attach agent handler.
          */
         attach(srv) {
             if (this.io)
                 throw 'Agent server already started!';
 
-            /**
-             * @type {socketIo.Server}
-             */
-            this.io = socketio(srv, {path: '/agents'});
+            this._collectSupportedAgents()
+                .then((supportedAgents) => {
+                    this.io = socketio(srv, {path: '/agents'});
 
-            this.io.on('connection', (socket) => {
-                socket.on('agent:auth', ({ver, bt, tokens}, cb) => {
-                    if (_.isEmpty(tokens))
-                        return cb('Tokens not set. Please reload agent archive or check settings');
+                    this.io.on('connection', (ioSocket) => {
+                        const socket = new AgentSocket(ioSocket);
 
-                    if (!_.isEmpty(this.supportedAgents)) {
-                        const btDistr = _.get(this.supportedAgents, `${ver}.buildTime`);
+                        socket.on('agent:auth', ({ver, bt, tokens}, cb) => {
+                            if (_.isEmpty(tokens))
+                                return cb('Tokens not set. Please reload agent archive or check settings');
 
-                        if (_.isEmpty(btDistr) || btDistr < bt)
-                            return cb('You are using an older version of the agent. Please reload agent archive');
-                    }
+                            if (!_.isEmpty(supportedAgents)) {
+                                const btDistr = _.get(supportedAgents, `${ver}.buildTime`);
 
-                    return mongo.Account.find({token: {$in: tokens}}, '_id token').lean().exec()
-                        .then((accounts) => {
-                            if (_.isEmpty(accounts))
-                                return cb('Agent is failed to authenticate. Please check agent\'s tokens');
+                                if (_.isEmpty(btDistr) || btDistr < bt)
+                                    return cb('You are using an older version of the agent. Please reload agent');
+                            }
 
-                            const activeTokens = _.map(accounts, 'token');
-                            const missedTokens = _.difference(tokens, activeTokens);
+                            return mongo.Account.find({token: {$in: tokens}}, '_id token').lean().exec()
+                                .then((accounts) => {
+                                    if (_.isEmpty(accounts))
+                                        return cb('Agent is failed to authenticate. Please check agent\'s tokens');
 
-                            if (missedTokens.length)
-                                socket.emit('log:warn', `Invalid token(s): ${missedTokens.join(', ')}.`);
+                                    const activeTokens = _.map(accounts, 'token');
+                                    const missedTokens = _.difference(tokens, activeTokens);
 
-                            this.onAgentConnect(activeTokens, new AgentSocket(socket));
+                                    if (missedTokens.length)
+                                        socket.emit('log:warn', `Invalid token(s): ${missedTokens.join(', ')}.`);
 
-                            cb();
-                        })
-                        // TODO IGNITE-1379 send error to web master.
-                        .catch(() => cb('Agent is failed to authenticate. Please check agent\'s tokens'));
+                                    this._onAgentConnect(activeTokens, socket);
+
+                                    cb();
+                                })
+                                // TODO IGNITE-1379 send error to web master.
+                                .catch(() => cb('Agent is failed to authenticate. Please check agent\'s tokens'));
+                        });
+
+                        socket.on('demo:topology', (top) => {
+
+                        });
+                    });
                 });
-            });
         }
 
         /**
@@ -236,7 +276,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                 const demo = browserSocket.request._query.IgniteDemoMode === 'true';
 
                 if (demo && !_.find(agentSockets, ({activeClusterIds}) => _.includes(activeClusterIds, 'DEMO')))
-                    _.head(agentSockets).startCollectTopology(true);
+                    _.head(agentSockets).startDemo();
             }
         }
 
@@ -251,45 +291,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             _.pull(browserSockets, browserSocket);
         }
 
-        /**
-         * Link agent with browsers by account.
-         *
-         * @param {Array.<String>} tokens
-         * @param {AgentSocket} agentSocket
-         */
-        onAgentConnect(tokens, agentSocket) {
-            const emitAgentCnt = (token, cnt) => {
-                const sockets = this._browserSockets[token];
 
-                _.forEach(sockets, (socket) => socket.emit('agent:count', cnt));
-            };
-
-            agentSocket.socket.on('disconnect', () => {
-                _.forEach(tokens, (token) => {
-                    const agentSockets = this._agentSockets[token];
-
-                    _.pull(agentSockets, agentSocket);
-
-                    emitAgentCnt(token, agentSockets.length);
-                });
-            });
-
-            _.forEach(tokens, (token) => {
-                const agentSockets = this._agentSockets[token];
-
-                if (_.isNil(agentSockets)) {
-                    this._agentSockets[token] = [agentSocket];
-
-                    // If first agent join after user start demo.
-                    if (_.find(this._browserSockets, (socket) => socket.request._query.IgniteDemoMode === 'true'))
-                        agentSockets.startCollectTopology(true);
-                }
-                else
-                    agentSockets.push(agentSocket);
-
-                emitAgentCnt(token, agentSockets.length);
-            });
-        }
 
         /**
          * Try stop agent for token if not used by others.
@@ -306,5 +308,5 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
         }
     }
 
-    return new AgentManager();
+    return new AgentsServer();
 };

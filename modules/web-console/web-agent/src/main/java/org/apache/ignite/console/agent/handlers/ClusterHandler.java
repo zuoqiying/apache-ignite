@@ -17,7 +17,6 @@
 
 package org.apache.ignite.console.agent.handlers;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 import java.io.IOException;
@@ -27,23 +26,33 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.console.agent.rest.RestResult;
-import org.apache.ignite.console.demo.AgentClusterDemo;
-import org.apache.ignite.console.demo.AgentMetadataDemo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
  */
-public class TopologyHandler {
+public class ClusterHandler {
     /** */
-    private static final String EVENT_TOPOLOGY = "cluster:topology";
+    private static final String EVENT_CLUSTER_CONNECTED = "cluster:connected";
+
+    /** */
+    private static final String EVENT_CLUSTER_TOPOLOGY = "cluster:topology";
+
+    private enum State {
+        CONNECTED,
+        BROADCAST,
+        DISCONNECTED
+    }
+
+    private static State state = State.DISCONNECTED;
+
 
     /** Default timeout. */
-    private static final long DFLT_TIMEOUT = 5000L;
+    private static final long DFLT_TIMEOUT = 3000L;
 
     /** */
-    private static final Logger log = LoggerFactory.getLogger(TopologyHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(ClusterHandler.class);
 
     /** */
     private static final ScheduledExecutorService pool = Executors.newScheduledThreadPool(1);
@@ -61,29 +70,58 @@ public class TopologyHandler {
      * @param client Client.
      * @param restExecutor Client.
      */
-    public TopologyHandler(Socket client, RestExecutor restExecutor) {
+    public ClusterHandler(Socket client, RestExecutor restExecutor) {
         this.client = client;
         this.restExecutor = restExecutor;
     }
 
     /**
-     * Listener for start topology send.
+     *
+     */
+    public void watch() {
+        refreshTask = pool.scheduleWithFixedDelay(new Runnable() {
+            @Override public void run() {
+                try {
+                    RestResult top = restExecutor.topology(false, state == State.DISCONNECTED);
+
+                    if (state == State.DISCONNECTED) {
+                        state = State.CONNECTED;
+
+                        log.info("Connection to cluster successfully established");
+
+                        client.emit(EVENT_CLUSTER_CONNECTED, top);
+                    }
+                }
+                catch (IOException e) {
+                    log.debug("Failed to execute topology command on cluster", e);
+                }
+            }
+        }, 0L, DFLT_TIMEOUT, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Start broadcast topology to server-side.
      */
     public Emitter.Listener start() {
         return new Emitter.Listener() {
             @Override public void call(Object... args) {
-                final boolean demo = args.length > 0 && args[0] instanceof Boolean && (boolean)args[0];
-                final long timeout = args.length >= 2  && args[0] instanceof Long ? (long)args[1] : DFLT_TIMEOUT;
+                refreshTask.cancel(true);
+
+                state = State.BROADCAST;
+
+                final long timeout = args.length > 1  && args[1] instanceof Long ? (long)args[1] : DFLT_TIMEOUT;
 
                 refreshTask = pool.scheduleWithFixedDelay(new Runnable() {
                     @Override public void run() {
                         try {
-                            RestResult top = restExecutor.topology(demo);
+                            RestResult top = restExecutor.topology(false, true);
 
-                            client.emit(EVENT_TOPOLOGY, demo, top);
+                            client.emit(EVENT_CLUSTER_TOPOLOGY, top);
                         }
                         catch (IOException e) {
-                            log.info("Failed to collect topology");
+                            log.info("Lost connection to the cluster", e);
+
+                            stop();
                         }
                     }
                 }, 0L, timeout, TimeUnit.MILLISECONDS);
@@ -92,12 +130,16 @@ public class TopologyHandler {
     }
 
     /**
-     * Listener for stop topology send.
+     * Stop broadcast topology to server-side.
      */
     public Emitter.Listener stop() {
         return new Emitter.Listener() {
             @Override public void call(Object... args) {
                 refreshTask.cancel(true);
+
+                state = State.DISCONNECTED;
+
+                watch();
             }
         };
     }
