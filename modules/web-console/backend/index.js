@@ -32,7 +32,8 @@ try {
     fs.accessSync(igniteModulesInjector, fs.F_OK);
 
     injector = require(igniteModulesInjector);
-} catch (ignore) {
+}
+catch (ignore) {
     injector = require(path.join(__dirname, './injector'));
 }
 
@@ -71,35 +72,33 @@ const _onListening = (addr) => {
     console.log('Start listening on ' + bind);
 };
 
-Promise.all([injector('settings'), injector('app'), injector('agent-manager'), injector('browser-manager')])
-    .then(([settings, app, agentMgr, browserMgr]) => {
-        // Start rest server.
-        const server = settings.server.SSLOptions
-            ? https.createServer(settings.server.SSLOptions) : http.createServer();
+/**
+ * @param settings
+ * @param {ApiServer} apiSrv
+ * @param {AgentsServer} agentsSrv
+ * @param {BrowsersServer} browsersSrv
+ */
+const init = ([settings, apiSrv, agentsSrv, browsersSrv]) => {
+    // Start rest server.
+    const srv = settings.server.SSLOptions ? https.createServer(settings.server.SSLOptions) : http.createServer();
 
-        server.listen(settings.server.port);
-        server.on('error', _onError.bind(null, settings.server.port));
-        server.on('listening', _onListening.bind(null, server.address()));
+    srv.listen(settings.server.port);
 
-        app.listen(server);
+    srv.on('error', _onError.bind(null, settings.server.port));
+    srv.on('listening', _onListening.bind(null, srv.address()));
 
-        agentMgr.attach(server);
-        browserMgr.attach(server);
+    apiSrv.attach(srv);
+    agentsSrv.attach(srv);
+    browsersSrv.attach(srv);
 
-        // Start legacy agent server.
-        const agentServer = settings.agent.SSLOptions
-            ? https.createServer(settings.agent.SSLOptions) : http.createServer();
+    // Used for automated test.
+    if (process.send)
+        process.send('running');
+};
 
-        agentServer.listen(settings.agent.port);
-        agentServer.on('error', _onError.bind(null, settings.agent.port));
-        agentServer.on('listening', _onListening.bind(null, agentServer.address()));
-
-        agentMgr.attachLegacy(agentServer);
-
-        // Used for automated test.
-        if (process.send)
-            process.send('running');
-    }).catch((err) => {
+Promise.all([injector('settings'), injector('api-server'), injector('agents-server'), injector('browsers-server')])
+    .then(init)
+    .catch((err) => {
         console.error(err);
 
         process.exit(1);

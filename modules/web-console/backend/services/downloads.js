@@ -21,7 +21,7 @@
 
 module.exports = {
     implements: 'services/agents',
-    inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'settings', 'agent-manager', 'errors']
+    inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'settings', 'agents-server', 'errors']
 };
 
 /**
@@ -32,16 +32,16 @@ module.exports = {
  * @param settings
  * @param agentMgr
  * @param errors
- * @returns {AgentsService}
+ * @returns {DownloadsService}
  */
 module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
-    class AgentsService {
+    class DownloadsService {
         /**
          * Get agent archive with user agent configuration.
          *
          * @returns {*} - readable stream for further piping. (http://stuk.github.io/jszip/documentation/api_jszip/generate_node_stream.html)
          */
-        static getArchive(host, token) {
+        prepareArchive(host, token) {
             const latest = agentMgr.supportedAgents.latest;
 
             if (_.isEmpty(latest))
@@ -62,13 +62,13 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
                         .then((zip) => {
                             const prop = [];
 
-                            prop.push('tokens=' + token);
+                            prop.push(`tokens=${token}`);
                             prop.push(`server-uri=${host}`);
                             prop.push('#Uncomment following options if needed:');
                             prop.push('#node-uri=http://localhost:8080');
                             prop.push('#driver-folder=./jdbc-drivers');
 
-                            zip.file(folder + '/default.properties', prop.join('\n'));
+                            zip.file(`${folder}/default.properties`, prop.join('\n'));
 
                             return zip.generateAsync({type: 'nodebuffer', platform: 'UNIX'})
                                 .then((buffer) => resolve({filePath, fileName, buffer}));
@@ -79,5 +79,5 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
         }
     }
 
-    return AgentsService;
+    return new DownloadsService();
 };

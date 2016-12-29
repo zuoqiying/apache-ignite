@@ -26,6 +26,9 @@ import io.socket.emitter.Emitter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -33,6 +36,9 @@ import org.json.JSONObject;
  * Base class for web socket handlers.
  */
 abstract class AbstractHandler implements Emitter.Listener {
+    /** */
+    private static final ExecutorService pool = Executors.newCachedThreadPool();
+
     /** JSON object mapper. */
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -44,6 +50,19 @@ abstract class AbstractHandler implements Emitter.Listener {
 
         mapper.registerModule(module);
     }
+
+    /** */
+    final Logger log = Logger.getLogger(this.getClass().getName());
+
+    /** */
+    private final Ack noopCb = new Ack() {
+        @Override public void call(Object... args) {
+            if (args != null && args.length > 0 && args[0] instanceof Throwable)
+                log.error("Failed to execute request on agent.", (Throwable) args[0]);
+            else
+                log.info("Request on agent successfully executed " + Arrays.toString(args));
+        }
+    };
 
     /**
      * @param obj Object.
@@ -59,45 +78,37 @@ abstract class AbstractHandler implements Emitter.Listener {
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
     @Override public final void call(Object... args) {
-        Ack cb = null;
+        boolean hasCb = args != null && args.length > 0 && args[args.length - 1] instanceof Ack;
+
+        final Ack cb = hasCb ? (Ack)args[args.length - 1] : noopCb;
+
+        if (hasCb)
+            args = Arrays.copyOf(args, args.length - 1);
 
         try {
+            final Map<String, Object> params;
+
             if (args == null || args.length == 0)
-                throw new IllegalArgumentException("Missing arguments.");
+                params = Collections.emptyMap();
+            else if (args.length == 1)
+                params = mapper.convertValue(args[0], Map.class);
+            else
+                throw new IllegalArgumentException("Wrong arguments count, must be <= 1: " + Arrays.toString(args));
 
-            if (args.length > 2)
-                throw new IllegalArgumentException("Wrong arguments count, must be <= 2: " + Arrays.toString(args));
+            pool.submit(new Runnable() {
+                @Override public void run() {
+                    try {
+                        Object res = execute(params);
 
-            JSONObject lsnrArgs = null;
-
-            if (args.length == 1) {
-                if (args[0] instanceof JSONObject)
-                    lsnrArgs = (JSONObject)args[0];
-                else if (args[0] instanceof Ack)
-                    cb = (Ack)args[0];
-                else
-                    throw new IllegalArgumentException("Wrong type of argument, must be JSONObject or Ack: " + args[0]);
-            }
-            else {
-                if (args[0] != null && !(args[0] instanceof JSONObject))
-                    throw new IllegalArgumentException("Wrong type of argument, must be JSONObject: " + args[0]);
-
-                if (!(args[1] instanceof Ack))
-                    throw new IllegalArgumentException("Wrong type of argument, must be Ack: " + args[1]);
-
-                lsnrArgs = (JSONObject)args[0];
-
-                cb = (Ack)args[1];
-            }
-
-            Object res = execute(lsnrArgs == null ? Collections.emptyMap() : mapper.convertValue(lsnrArgs, Map.class));
-
-            if (cb != null)
-                cb.call(null, toJSON(res));
+                        cb.call(null, toJSON(res));
+                    } catch (Exception e) {
+                        cb.call(e, null);
+                    }
+                }
+            });
         }
         catch (Exception e) {
-            if (cb != null)
-                cb.call(e, null);
+            cb.call(e, null);
         }
     }
 

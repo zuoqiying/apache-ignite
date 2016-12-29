@@ -18,6 +18,7 @@
 package org.apache.ignite.console.agent.handlers;
 
 import io.socket.emitter.Emitter;
+import io.socket.utf8.UTF8;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -38,6 +39,7 @@ import org.apache.ignite.schema.parser.DbMetadataReader;
 import org.apache.ignite.schema.parser.DbTable;
 import org.apache.log4j.Logger;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.ignite.console.agent.AgentUtils.resolvePath;
 
 /**
@@ -255,7 +257,7 @@ public class DatabaseHandler {
                         URL url = new URL("jar", null,
                             "file:" + (win ? "/" : "") + file.getPath() + "!/META-INF/services/java.sql.Driver");
 
-                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), UTF_8))) {
                             String jdbcDriverCls = reader.readLine();
 
                             res.add(new JdbcDriver(file.getName(), jdbcDriverCls));

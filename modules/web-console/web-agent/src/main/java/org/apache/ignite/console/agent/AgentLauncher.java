@@ -38,28 +38,43 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import org.apache.ignite.console.agent.handlers.DatabaseHandler;
+import org.apache.ignite.console.agent.handlers.DemoHandler;
 import org.apache.ignite.console.agent.handlers.RestHandler;
+import org.apache.ignite.console.agent.handlers.ClusterHandler;
+import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.internal.util.typedef.X;
-import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import static io.socket.client.Socket.EVENT_CONNECT;
-import static io.socket.client.Socket.EVENT_CONNECTING;
 import static io.socket.client.Socket.EVENT_CONNECT_ERROR;
 import static io.socket.client.Socket.EVENT_DISCONNECT;
 import static io.socket.client.Socket.EVENT_ERROR;
-import static io.socket.client.Socket.EVENT_RECONNECTING;
 
 /**
  * Control Center Agent launcher.
  */
 public class AgentLauncher {
     /** */
-    private static final Logger log = Logger.getLogger(AgentLauncher.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AgentLauncher.class);
 
     /** */
-    private static final String EVENT_NODE_REST = "node:rest";
+    private static final String EVENT_CLUSTER_BROADCAST_START = "cluster:broadcast:start";
+
+    /** */
+    private static final String EVENT_CLUSTER_BROADCAST_STOP = "cluster:broadcast:stop";
+
+    /** */
+    private static final String EVENT_CLUSTER_DISCONNECTED = "cluster:disconnected";
+
+    /** */
+    private static final String EVENT_DEMO_BROADCAST_START = "demo:broadcast:start";
+
+    /** */
+    private static final String EVENT_DEMO_BROADCAST_STOP = "demo:broadcast:stop";
 
     /** */
     private static final String EVENT_SCHEMA_IMPORT_DRIVERS = "schemaImport:drivers";
@@ -71,13 +86,27 @@ public class AgentLauncher {
     private static final String EVENT_SCHEMA_IMPORT_METADATA = "schemaImport:metadata";
 
     /** */
-    private static final String EVENT_AGENT_WARNING = "agent:warning";
+    private static final String EVENT_NODE_VISOR_TASK = "node:visorTask";
 
     /** */
-    private static final String EVENT_AGENT_CLOSE = "agent:close";
+    private static final String EVENT_NODE_REST = "node:rest";
+
+    /** */
+    private static final String EVENT_RESET_TOKENS = "agent:reset:token";
+
+    /** */
+    private static final String EVENT_LOG_WARNING = "log:warn";
 
     /** */
     private static final int RECONNECT_INTERVAL = 3000;
+
+    static {
+        // Optionally remove existing handlers attached to j.u.l root logger
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+
+        // Add SLF4JBridgeHandler to j.u.l's root logger
+        SLF4JBridgeHandler.install();
+    }
 
     /**
      * Create a trust manager that trusts all certificates It is not using a particular keyStore
@@ -139,7 +168,25 @@ public class AgentLauncher {
      */
     private static final Emitter.Listener onDisconnect = new Emitter.Listener() {
         @Override public void call(Object... args) {
-            log.error(String.format("Connection closed: %s.", args));
+            log.error("Connection closed: {}", args);
+        }
+    };
+
+    /**
+     * On token reset listener.
+     */
+    private static final Emitter.Listener onLogWarning = new Emitter.Listener() {
+        @Override public void call(Object... args) {
+            log.warn(String.valueOf(args[0]));
+        }
+    };
+
+    /**
+     * On demo start request.
+     */
+    private static final Emitter.Listener onDemoStart = new Emitter.Listener() {
+        @Override public void call(Object... args) {
+            log.warn(String.valueOf(args[0]));
         }
     };
 
@@ -216,127 +263,131 @@ public class AgentLauncher {
 
             System.out.print("Enter security tokens separated by comma: ");
 
-            cfg.tokens(Arrays.asList(System.console().readLine().trim().split(",")));
+            String tokens = System.console().readLine();
+
+            if (tokens != null)
+                cfg.tokens(Arrays.asList(tokens.trim().split(",")));
         }
 
-        final RestHandler restHnd = new RestHandler(cfg);
+        URI uri = URI.create(cfg.serverUri());
+
+        IO.Options opts = new IO.Options();
+
+        opts.path = "/agents";
+
+        opts.reconnectionDelay = RECONNECT_INTERVAL;
+
+        // Workaround for use self-signed certificate
+        if (Boolean.getBoolean("trust.all")) {
+            SSLContext ctx = SSLContext.getInstance("TLS");
+
+            // Create an SSLContext that uses our TrustManager
+            ctx.init(null, getTrustManagers(), null);
+
+            opts.sslContext = ctx;
+        }
+
+        final Socket client = IO.socket(uri, opts);
+        final RestExecutor restExecutor = new RestExecutor(cfg.nodeUri());
 
         try {
-            restHnd.start();
+            final ClusterHandler clusterHnd = new ClusterHandler(client, restExecutor);
+            final DemoHandler demoHnd = new DemoHandler(client, restExecutor);
 
-            URI uri = URI.create(cfg.serverUri());
+            Emitter.Listener onConnect = new Emitter.Listener() {
+                @Override public void call(Object... args) {
+                    log.info("Connection established.");
 
-            IO.Options opts = new IO.Options();
+                    JSONObject authMsg = new JSONObject();
 
-            opts.path = "/agents";
+                    try {
+                        authMsg.put("tokens", cfg.tokens());
 
-            opts.reconnectionDelay = RECONNECT_INTERVAL;
+                        String clsName = AgentLauncher.class.getSimpleName() + ".class";
 
-            // Workaround for use self-signed certificate
-            if (Boolean.getBoolean("trust.all")) {
-                SSLContext ctx = SSLContext.getInstance("TLS");
+                        String clsPath = AgentLauncher.class.getResource(clsName).toString();
 
-                // Create an SSLContext that uses our TrustManager
-                ctx.init(null, getTrustManagers(), null);
+                        if (clsPath.startsWith("jar")) {
+                            String manifestPath = clsPath.substring(0, clsPath.lastIndexOf('!') + 1) +
+                                "/META-INF/MANIFEST.MF";
 
-                opts.sslContext = ctx;
-            }
+                            Manifest manifest = new Manifest(new URL(manifestPath).openStream());
 
-            final Socket client = IO.socket(uri, opts);
+                            Attributes attr = manifest.getMainAttributes();
 
-            try {
-                Emitter.Listener onConnecting = new Emitter.Listener() {
-                    @Override public void call(Object... args) {
-                        log.info("Connecting to: " + cfg.serverUri());
-                    }
-                };
+                            authMsg.put("ver", attr.getValue("Implementation-Version"));
+                            authMsg.put("bt", attr.getValue("Build-Time"));
+                        }
 
-                Emitter.Listener onConnect = new Emitter.Listener() {
-                    @Override public void call(Object... args) {
-                        log.info("Connection established.");
+                        client.emit("agent:auth", authMsg, new Ack() {
+                            @Override public void call(Object... args) {
+                                // Authentication failed if response contains args.
+                                if (args != null && args.length > 0) {
+                                    onDisconnect.call(args);
 
-                        JSONObject authMsg = new JSONObject();
-
-                        try {
-                            authMsg.put("tokens", cfg.tokens());
-
-                            String clsName = AgentLauncher.class.getSimpleName() + ".class";
-
-                            String clsPath = AgentLauncher.class.getResource(clsName).toString();
-
-                            if (clsPath.startsWith("jar")) {
-                                String manifestPath = clsPath.substring(0, clsPath.lastIndexOf('!') + 1) +
-                                    "/META-INF/MANIFEST.MF";
-
-                                Manifest manifest = new Manifest(new URL(manifestPath).openStream());
-
-                                Attributes attr = manifest.getMainAttributes();
-
-                                authMsg.put("ver", attr.getValue("Implementation-Version"));
-                                authMsg.put("bt", attr.getValue("Build-Time"));
-                            }
-
-                            client.emit("agent:auth", authMsg, new Ack() {
-                                @Override public void call(Object... args) {
-                                    // Authentication failed if response contains args.
-                                    if (args != null && args.length > 0) {
-                                        onDisconnect.call(args);
-
-                                        System.exit(1);
-                                    }
-
-                                    log.info("Authentication success.");
+                                    System.exit(1);
                                 }
-                            });
-                        }
-                        catch (JSONException | IOException e) {
-                            log.error("Failed to construct authentication message", e);
 
-                            client.close();
-                        }
+                                log.info("Authentication success.");
+
+                                clusterHnd.watch();
+                            }
+                        });
                     }
-                };
+                    catch (JSONException | IOException e) {
+                        log.error("Failed to construct authentication message", e);
 
-                DatabaseHandler dbHnd = new DatabaseHandler(cfg);
+                        client.close();
+                    }
+                }
+            };
 
-                final CountDownLatch latch = new CountDownLatch(1);
+            DatabaseHandler dbHnd = new DatabaseHandler(cfg);
+            RestHandler restHnd = new RestHandler(restExecutor);
 
-                client
-                    .on(EVENT_CONNECTING, onConnecting)
-                    .on(EVENT_CONNECT, onConnect)
-                    .on(EVENT_CONNECT_ERROR, onError)
-                    .on(EVENT_RECONNECTING, onConnecting)
-                    .on(EVENT_NODE_REST, restHnd)
-                    .on(EVENT_SCHEMA_IMPORT_DRIVERS, dbHnd.availableDriversListener())
-                    .on(EVENT_SCHEMA_IMPORT_SCHEMAS, dbHnd.schemasListener())
-                    .on(EVENT_SCHEMA_IMPORT_METADATA, dbHnd.metadataListener())
-                    .on(EVENT_ERROR, onError)
-                    .on(EVENT_DISCONNECT, onDisconnect)
-                    .on(EVENT_AGENT_WARNING, new Emitter.Listener() {
-                        @Override public void call(Object... args) {
-                            log.warn(args[0]);
-                        }
-                    })
-                    .on(EVENT_AGENT_CLOSE, new Emitter.Listener() {
-                        @Override public void call(Object... args) {
-                            onDisconnect.call(args);
+            final CountDownLatch latch = new CountDownLatch(1);
 
+            log.info("Connecting to: {}", cfg.serverUri());
+
+            client
+                .on(EVENT_CONNECT, onConnect)
+                .on(EVENT_CONNECT_ERROR, onError)
+                .on(EVENT_ERROR, onError)
+                .on(EVENT_DISCONNECT, onDisconnect)
+                .on(EVENT_LOG_WARNING, onLogWarning)
+                .on(EVENT_CLUSTER_BROADCAST_START, clusterHnd.start())
+                .on(EVENT_CLUSTER_BROADCAST_STOP, clusterHnd.stop())
+                .on(EVENT_DEMO_BROADCAST_START, demoHnd.start())
+                .on(EVENT_DEMO_BROADCAST_STOP, demoHnd.stop())
+                .on(EVENT_RESET_TOKENS, new Emitter.Listener() {
+                    @Override public void call(Object... args) {
+                        String tok = String.valueOf(args[0]);
+
+                        log.warn("Security token has been reset: %s", tok);
+
+                        cfg.tokens().remove(tok);
+
+                        if (cfg.tokens().isEmpty()) {
                             client.off();
 
                             latch.countDown();
                         }
-                    });
+                    }
+                })
+                .on(EVENT_SCHEMA_IMPORT_DRIVERS, dbHnd.availableDriversListener())
+                .on(EVENT_SCHEMA_IMPORT_SCHEMAS, dbHnd.schemasListener())
+                .on(EVENT_SCHEMA_IMPORT_METADATA, dbHnd.metadataListener())
+                .on(EVENT_NODE_VISOR_TASK, restHnd)
+                .on(EVENT_NODE_REST, restHnd);
 
-                client.connect();
+            client.connect();
 
-                latch.await();
-            }
-            finally {
-                client.close();
-            }
+            latch.await();
         }
         finally {
-            restHnd.stop();
+            restExecutor.stop();
+
+            client.close();
         }
     }
 }

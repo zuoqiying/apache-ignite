@@ -25,11 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.Ignite;
@@ -42,7 +38,6 @@ import org.apache.ignite.cache.QueryIndexType;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.console.agent.AgentConfiguration;
 import org.apache.ignite.console.demo.model.Car;
 import org.apache.ignite.console.demo.model.Country;
 import org.apache.ignite.console.demo.model.Department;
@@ -50,13 +45,14 @@ import org.apache.ignite.console.demo.model.Employee;
 import org.apache.ignite.console.demo.model.Parking;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.typedef.F;
-import org.apache.ignite.logger.log4j.Log4JLogger;
+import org.apache.ignite.logger.slf4j.Slf4jLogger;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.spi.swapspace.file.FileSwapSpaceSpi;
 import org.apache.ignite.transactions.Transaction;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.ignite.IgniteSystemProperties.IGNITE_ATOMIC_CACHE_DELETE_HISTORY_SIZE;
 import static org.apache.ignite.IgniteSystemProperties.IGNITE_PERFORMANCE_SUGGESTIONS_DISABLED;
@@ -76,13 +72,21 @@ import static org.apache.ignite.transactions.TransactionIsolation.REPEATABLE_REA
  */
 public class AgentClusterDemo {
     /** */
-    private static final Logger log = Logger.getLogger(AgentClusterDemo.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AgentClusterDemo.class);
 
     /** */
-    private static final AtomicBoolean initLatch = new AtomicBoolean();
+    private static final AtomicBoolean initGuard = new AtomicBoolean();
+
+    /** */
+    private static final CountDownLatch initLatch = new CountDownLatch(1);
+
+    /** */
+    private static volatile String demoUrl;
 
     /** */
     private static final int NODE_CNT = 3;
+
+    private static ScheduledExecutorService cachePool;
 
     /** */
     private static final String COUNTRY_CACHE_NAME = "CountryCache";
@@ -104,7 +108,7 @@ public class AgentClusterDemo {
         DEPARTMENT_CACHE_NAME, EMPLOYEE_CACHE_NAME, PARKING_CACHE_NAME, CAR_CACHE_NAME));
 
     /** */
-    private static final Random rnd = new Random();
+    private static final Random RND = new Random();
 
     /** Countries count. */
     private static final int CNTR_CNT = 10;
@@ -356,7 +360,7 @@ public class AgentClusterDemo {
         commSpi.setLocalPort(60800);
 
         cfg.setCommunicationSpi(commSpi);
-        cfg.setGridLogger(new Log4JLogger(log));
+        cfg.setGridLogger(new Slf4jLogger(log));
         cfg.setMetricsLogFrequency(0);
         cfg.getConnectorConfiguration().setPort(60700);
 
@@ -406,19 +410,19 @@ public class AgentClusterDemo {
         IgniteCache<Integer, Employee> cacheEmployee = ignite.cache(EMPLOYEE_CACHE_NAME);
 
         for (int i = 0, n = 1; i < DEP_CNT; i++, n++) {
-            cacheDepartment.put(i, new Department(n, rnd.nextInt(CNTR_CNT), "Department #" + n));
+            cacheDepartment.put(i, new Department(n, RND.nextInt(CNTR_CNT), "Department #" + n));
 
-            double r = rnd.nextDouble();
+            double r = RND.nextDouble();
 
-            cacheEmployee.put(i, new Employee(i, rnd.nextInt(DEP_CNT), null, "First name manager #" + n,
+            cacheEmployee.put(i, new Employee(i, RND.nextInt(DEP_CNT), null, "First name manager #" + n,
                 "Last name manager #" + n, "Email manager #" + n, "Phone number manager #" + n,
                 new java.sql.Date((long)(r * range)), "Job manager #" + n, 1000 + round(r * 4000, 2)));
         }
 
         for (int i = 0, n = 1; i < EMPL_CNT; i++, n++) {
-            Integer depId = rnd.nextInt(DEP_CNT);
+            Integer depId = RND.nextInt(DEP_CNT);
 
-            double r = rnd.nextDouble();
+            double r = RND.nextDouble();
 
             cacheEmployee.put(i, new Employee(i, depId, depId, "First name employee #" + n,
                 "Last name employee #" + n, "Email employee #" + n, "Phone number employee #" + n,
@@ -444,7 +448,7 @@ public class AgentClusterDemo {
         IgniteCache<Integer, Car> cacheCar = ignite.cache(CAR_CACHE_NAME);
 
         for (int i = 0, n = 1; i < CAR_CNT; i++, n++)
-            cacheCar.put(i, new Car(i, rnd.nextInt(PARK_CNT), "Car #" + n));
+            cacheCar.put(i, new Car(i, RND.nextInt(PARK_CNT), "Car #" + n));
 
         if (log.isDebugEnabled())
             log.debug("DEMO: Finished cars population.");
@@ -489,7 +493,10 @@ public class AgentClusterDemo {
         populateCacheEmployee(ignite, diff);
         populateCacheCar(ignite);
 
-        ScheduledExecutorService cachePool = newScheduledThreadPool(2, "demo-sql-load-cache-tasks");
+        if (cachePool != null)
+            cachePool.shutdownNow();
+
+        cachePool = newScheduledThreadPool(2, "demo-load-cache-tasks");
 
         cachePool.scheduleWithFixedDelay(new Runnable() {
             @Override public void run() {
@@ -500,13 +507,13 @@ public class AgentClusterDemo {
 
                             if (otherCache != null) {
                                 for (int i = 0, n = 1; i < cnt; i++, n++) {
-                                    Integer key = rnd.nextInt(1000);
+                                    Integer key = RND.nextInt(1000);
 
                                     String val = otherCache.get(key);
 
                                     if (val == null)
                                         otherCache.put(key, "other-" + key);
-                                    else if (rnd.nextInt(100) < 30)
+                                    else if (RND.nextInt(100) < 30)
                                         otherCache.remove(key);
                                 }
                             }
@@ -518,23 +525,23 @@ public class AgentClusterDemo {
                     if (cacheEmployee != null)
                         try(Transaction tx = ignite.transactions().txStart(PESSIMISTIC, REPEATABLE_READ)) {
                             for (int i = 0, n = 1; i < cnt; i++, n++) {
-                                Integer id = rnd.nextInt(EMPL_CNT);
+                                Integer id = RND.nextInt(EMPL_CNT);
 
-                                Integer depId = rnd.nextInt(DEP_CNT);
+                                Integer depId = RND.nextInt(DEP_CNT);
 
-                                double r = rnd.nextDouble();
+                                double r = RND.nextDouble();
 
                                 cacheEmployee.put(id, new Employee(id, depId, depId, "First name employee #" + n,
                                     "Last name employee #" + n, "Email employee #" + n, "Phone number employee #" + n,
                                     new java.sql.Date((long)(r * diff)), "Job employee #" + n, 500 + round(r * 2000, 2)));
 
-                                if (rnd.nextBoolean())
-                                    cacheEmployee.remove(rnd.nextInt(EMPL_CNT));
+                                if (RND.nextBoolean())
+                                    cacheEmployee.remove(RND.nextInt(EMPL_CNT));
 
-                                cacheEmployee.get(rnd.nextInt(EMPL_CNT));
+                                cacheEmployee.get(RND.nextInt(EMPL_CNT));
                             }
 
-                            if (rnd.nextInt(100) > 20)
+                            if (RND.nextInt(100) > 20)
                                 tx.commit();
                         }
                 }
@@ -552,12 +559,12 @@ public class AgentClusterDemo {
 
                     if (cache != null)
                         for (int i = 0; i < cnt; i++) {
-                            Integer carId = rnd.nextInt(CAR_CNT);
+                            Integer carId = RND.nextInt(CAR_CNT);
 
-                            cache.put(carId, new Car(carId, rnd.nextInt(PARK_CNT), "Car #" + (i + 1)));
+                            cache.put(carId, new Car(carId, RND.nextInt(PARK_CNT), "Car #" + (i + 1)));
 
-                            if (rnd.nextBoolean())
-                                cache.remove(rnd.nextInt(CAR_CNT));
+                            if (RND.nextBoolean())
+                                cache.remove(RND.nextInt(CAR_CNT));
                         }
                 }
                 catch (IllegalStateException ignored) {
@@ -574,69 +581,88 @@ public class AgentClusterDemo {
     /**
      * Start ignite node with cacheEmployee and populate it with data.
      */
-    public static boolean testDrive(AgentConfiguration acfg) {
-        if (initLatch.compareAndSet(false, true)) {
+    public static CountDownLatch tryStart() {
+        if (initGuard.compareAndSet(false, true)) {
             log.info("DEMO: Starting embedded nodes for demo...");
 
-            System.setProperty(IGNITE_ATOMIC_CACHE_DELETE_HISTORY_SIZE, "1");
-            System.setProperty(IGNITE_PERFORMANCE_SUGGESTIONS_DISABLED, "true");
-            System.setProperty(IGNITE_UPDATE_NOTIFIER, "false");
+            final AtomicInteger cnt = new AtomicInteger(-1);
 
-            System.setProperty(IGNITE_JETTY_PORT, "60800");
-            System.setProperty(IGNITE_NO_ASCII, "true");
+            final ScheduledExecutorService execSrv = newScheduledThreadPool(1, "demo-nodes-start");
 
-            try {
-                IgniteEx ignite = (IgniteEx)Ignition.start(igniteConfiguration(0, false));
+            execSrv.scheduleAtFixedRate(new Runnable() {
+                @Override public void run() {
+                    int idx = cnt.incrementAndGet();
 
-                final AtomicInteger cnt = new AtomicInteger(0);
+                    try {
+                        System.setProperty(IGNITE_ATOMIC_CACHE_DELETE_HISTORY_SIZE, "1");
+                        System.setProperty(IGNITE_PERFORMANCE_SUGGESTIONS_DISABLED, "true");
+                        System.setProperty(IGNITE_UPDATE_NOTIFIER, "false");
 
-                final ScheduledExecutorService execSrv = Executors.newSingleThreadScheduledExecutor();
+                        System.setProperty(IGNITE_JETTY_PORT, "60800");
+                        System.setProperty(IGNITE_NO_ASCII, "true");
 
-                execSrv.scheduleAtFixedRate(new Runnable() {
-                    @Override public void run() {
-                        int idx = cnt.incrementAndGet();
+                        IgniteEx ignite = (IgniteEx)Ignition.start(igniteConfiguration(idx, idx == NODE_CNT));
 
-                        try {
-                            Ignition.start(igniteConfiguration(idx, idx == NODE_CNT));
-                        }
-                        catch (Throwable e) {
-                            log.error("DEMO: Failed to start embedded node: " + e.getMessage());
-                        }
-                        finally {
-                            if (idx == NODE_CNT)
+                        if (idx == 0) {
+                            Collection<String> jettyAddrs = ignite.localNode().attribute(ATTR_REST_JETTY_ADDRS);
+
+                            String host = jettyAddrs == null ? null : jettyAddrs.iterator().next();
+
+                            Integer port = ignite.localNode().attribute(ATTR_REST_JETTY_PORT);
+
+                            if (F.isEmpty(host) || port == null) {
+                                log.error("DEMO: Failed to start embedded node with rest!");
+
                                 execSrv.shutdown();
+                            } else {
+                                log.debug("DEMO: Started embedded node for demo purpose");
+
+                                demoUrl = String.format("http://%s:%d", host, port);
+
+                                startLoad(ignite, 20);
+
+                                initLatch.countDown();
+                            }
                         }
                     }
-                }, 10, 10, TimeUnit.SECONDS);
+                    catch (Throwable e) {
+                        log.error("DEMO: Failed to start embedded node: " + e.getMessage());
+                    }
+                    finally {
+                        if (idx == NODE_CNT) {
+                            log.debug("DEMO: All embedded nodes for demo successfully started");
 
-                if (log.isDebugEnabled())
-                    log.debug("DEMO: Started embedded nodes with indexed enabled caches...");
-
-                Collection<String> jettyAddrs = ignite.localNode().attribute(ATTR_REST_JETTY_ADDRS);
-
-                String host = jettyAddrs == null ? null : jettyAddrs.iterator().next();
-
-                Integer port = ignite.localNode().attribute(ATTR_REST_JETTY_PORT);
-
-                if (F.isEmpty(host) || port == null) {
-                    log.error("DEMO: Failed to start embedded node with rest!");
-
-                    return false;
+                            execSrv.shutdown();
+                        }
+                    }
                 }
-
-                acfg.demoNodeUri(String.format("http://%s:%d", host, port));
-
-                log.info("DEMO: Embedded nodes for sql and monitoring demo successfully started");
-
-                startLoad(ignite, 20);
-            }
-            catch (Exception e) {
-                log.error("DEMO: Failed to start embedded node for sql and monitoring demo!", e);
-
-                return false;
-            }
+            }, 0, 10, TimeUnit.SECONDS);
         }
 
-        return true;
+        return initLatch;
+    }
+
+    /**
+     * Stop ignite node with cacheEmployee and populate it with data.
+     */
+    public static void stop() {
+        if (cachePool != null) {
+            cachePool.shutdownNow();
+
+            cachePool = null;
+        }
+
+        Ignition.stopAll(true);
+    }
+
+    /**
+     * Get demo node url.
+     *
+     * @return Demo node url if started or {@code null} otherwise.
+     */
+    public static String getDemoUrl() {
+        tryStart();
+
+        return demoUrl;
     }
 }
