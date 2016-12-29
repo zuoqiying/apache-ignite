@@ -98,7 +98,7 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
     /**
      * @return Node address that caused this event to be generated.
      */
-    public String address() {
+    public String getAddress() {
         return addr;
     }
 
@@ -113,7 +113,7 @@ public class VisorGridDiscoveryEvent extends VisorGridEvent {
      * @return Topology version or {@code 0} if configured discovery SPI implementation
      *      does not support versioning.
      **/
-    public long topologyVersion() {
+    public long getTopologyVersion() {
         return topVer;
     }
 

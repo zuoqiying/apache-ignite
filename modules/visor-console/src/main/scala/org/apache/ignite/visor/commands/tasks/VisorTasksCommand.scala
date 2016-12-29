@@ -541,9 +541,9 @@ class VisorTasksCommand extends VisorConsoleCommand {
 
         evts.foreach {
             case te: VisorGridTaskEvent =>
-                val displayedTaskName = taskSimpleName(te.taskName(), te.taskClassName())
+                val displayedTaskName = taskSimpleName(te.getTaskName(), te.getTaskClassName())
 
-                val s = getSession(te.taskSessionId(), displayedTaskName)
+                val s = getSession(te.getTaskSessionId(), displayedTaskName)
                 val t = getTask(displayedTaskName)
 
                 t.execs = t.execs + s
@@ -570,8 +570,8 @@ class VisorTasksCommand extends VisorConsoleCommand {
                 }
 
             case je: VisorGridJobEvent =>
-                val displayedTaskName = taskSimpleName(je.taskName(), je.taskClassName())
-                val s = getSession(je.taskSessionId(), displayedTaskName)
+                val displayedTaskName = taskSimpleName(je.getTaskName(), je.getTaskClassName())
+                val s = getSession(je.getTaskSessionId(), displayedTaskName)
                 val t = getTask(displayedTaskName)
 
                 t.execs = t.execs + s

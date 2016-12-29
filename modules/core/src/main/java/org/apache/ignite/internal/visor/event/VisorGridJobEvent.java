@@ -91,28 +91,28 @@ public class VisorGridJobEvent extends VisorGridEvent {
     /**
      * @return Name of the task that triggered the event.
      */
-    public String taskName() {
+    public String getTaskName() {
         return taskName;
     }
 
     /**
      * @return Name of task class that triggered the event.
      */
-    public String taskClassName() {
+    public String getTaskClassName() {
         return taskClsName;
     }
 
     /**
      * @return Task session ID of the task that triggered the event.
      */
-    public IgniteUuid taskSessionId() {
+    public IgniteUuid getTaskSessionId() {
         return taskSesId;
     }
 
     /**
      * @return Job ID.
      */
-    public IgniteUuid jobId() {
+    public IgniteUuid getJobId() {
         return jobId;
     }
 

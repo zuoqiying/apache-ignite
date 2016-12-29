@@ -186,7 +186,7 @@ class VisorDiscoveryCommand extends VisorConsoleCommand {
                     case de: VisorGridDiscoveryEvent =>
                         t +=(formatDateTime(de.getTimestamp), de.getName,
                             nodeId8(de.evtNodeId()) + (if (de.isDaemon) "(daemon)" else ""),
-                            if (F.isEmpty(de.address())) NA else de.address())
+                            if (F.isEmpty(de.getAddress())) NA else de.getAddress())
                     case _ =>
                 }
 

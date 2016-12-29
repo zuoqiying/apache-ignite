@@ -73,7 +73,7 @@ public class VisorGridDeploymentEvent extends VisorGridEvent {
     /**
      * @return Deployment alias.
      */
-    public String alias() {
+    public String getAlias() {
         return alias;
     }
 

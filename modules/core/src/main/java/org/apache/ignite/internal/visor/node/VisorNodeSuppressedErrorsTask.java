@@ -37,8 +37,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @GridInternal
 public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, Long>,
-    Map<UUID, IgniteBiTuple<Long, List<VisorSuppressedError>>>,
-    IgniteBiTuple<Long, List<VisorSuppressedError>>> {
+    Map<UUID, VisorNodeSuppressedErrors>, VisorNodeSuppressedErrors> {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -48,13 +47,13 @@ public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, 
     }
 
     /** {@inheritDoc} */
-    @Nullable @Override protected Map<UUID, IgniteBiTuple<Long, List<VisorSuppressedError>>>
+    @Nullable @Override protected Map<UUID, VisorNodeSuppressedErrors>
         reduce0(List<ComputeJobResult> results) {
-        Map<UUID, IgniteBiTuple<Long, List<VisorSuppressedError>>> taskRes =
+        Map<UUID, VisorNodeSuppressedErrors> taskRes =
             new HashMap<>(results.size());
 
         for (ComputeJobResult res : results) {
-            IgniteBiTuple<Long, List<VisorSuppressedError>> jobRes = res.getData();
+            VisorNodeSuppressedErrors jobRes = res.getData();
 
             taskRes.put(res.getNode().id(), jobRes);
         }
@@ -65,8 +64,7 @@ public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, 
     /**
      * Job to collect last errors on nodes.
      */
-    private static class VisorNodeSuppressedErrorsJob extends VisorJob<Map<UUID, Long>,
-        IgniteBiTuple<Long, List<VisorSuppressedError>>> {
+    private static class VisorNodeSuppressedErrorsJob extends VisorJob<Map<UUID, Long>, VisorNodeSuppressedErrors> {
         /** */
         private static final long serialVersionUID = 0L;
 
@@ -81,7 +79,7 @@ public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, 
         }
 
         /** {@inheritDoc} */
-        @Override protected IgniteBiTuple<Long, List<VisorSuppressedError>> run(Map<UUID, Long> arg) {
+        @Override protected VisorNodeSuppressedErrors run(Map<UUID, Long> arg) {
             Long lastOrder = arg.get(ignite.localNode().id());
 
             long order = lastOrder != null ? lastOrder : 0;
@@ -102,7 +100,7 @@ public class VisorNodeSuppressedErrorsTask extends VisorMultiNodeTask<Map<UUID, 
                     error.time()));
             }
 
-            return new IgniteBiTuple<>(order, wrapped);
+            return new VisorNodeSuppressedErrors(order, wrapped);
         }
 
         /** {@inheritDoc} */

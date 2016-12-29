@@ -31,13 +31,10 @@ public class VisorCachePartition extends VisorDataTransferObject {
     private static final long serialVersionUID = 0L;
 
     /** */
-    private int part;
+    private int partId;
 
     /** */
-    private int heap;
-
-    /** */
-    private long offheap;
+    private long cnt;
 
     /**
      * Default constructor.
@@ -49,49 +46,38 @@ public class VisorCachePartition extends VisorDataTransferObject {
     /**
      * Full constructor.
      *
-     * @param part Partition id.
-     * @param heap Number of keys in heap.
-     * @param offheap Number of keys in offheap.
+     * @param partId Partition id.
+     * @param cnt Number of keys in partition.
      */
-    public VisorCachePartition(int part, int heap, long offheap) {
-        this.part = part;
-        this.heap = heap;
-        this.offheap = offheap;
+    public VisorCachePartition(int partId, long cnt) {
+        this.partId = partId;
+        this.cnt = cnt;
     }
 
     /**
      * @return Partition id.
      */
-    public int getPartition() {
-        return part;
+    public int getPartitionId() {
+        return partId;
     }
 
     /**
-     * @return Number of keys in heap.
+     * @return Number of keys in partition.
      */
-    public int getHeap() {
-        return heap;
-    }
-
-    /**
-     * @return Number of keys in offheap.
-     */
-    public long getOffheap() {
-        return offheap;
+    public long getCount() {
+        return cnt;
     }
 
     /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-        out.writeInt(part);
-        out.writeInt(heap);
-        out.writeLong(offheap);
+        out.writeInt(partId);
+        out.writeLong(cnt);
     }
 
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-        part = in.readInt();
-        heap = in.readInt();
-        offheap = in.readLong();
+        partId = in.readInt();
+        cnt = in.readLong();
     }
 
     /** {@inheritDoc} */

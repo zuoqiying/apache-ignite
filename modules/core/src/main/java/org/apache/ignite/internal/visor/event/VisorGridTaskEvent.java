@@ -91,28 +91,28 @@ public class VisorGridTaskEvent extends VisorGridEvent {
     /**
      * @return Name of the task that triggered the event.
      */
-    public String taskName() {
+    public String getTaskName() {
         return taskName;
     }
 
     /**
      * @return Name of task class that triggered the event.
      */
-    public String taskClassName() {
+    public String getTaskClassName() {
         return taskClsName;
     }
 
     /**
      * @return Task session ID.
      */
-    public IgniteUuid taskSessionId() {
+    public IgniteUuid getTaskSessionId() {
         return taskSesId;
     }
 
     /**
      * @return Whether task was created for system needs.
      */
-    public boolean internal() {
+    public boolean isInternal() {
         return internal;
     }
 

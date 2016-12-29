@@ -15,86 +15,75 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.visor.cache;
+package org.apache.ignite.internal.visor.node;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
- * Data transfer object for information about cache partitions.
+ * Create data transfer object for node's suppressed errors.
  */
-public class VisorCachePartitions extends VisorDataTransferObject {
+public class VisorNodeSuppressedErrors extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
-    /** */
-    private List<VisorCachePartition> primary;
+    /** Order number of last suppressed error. */
+    private Long order;
 
-    /** */
-    private List<VisorCachePartition> backup;
+    /** List of suppressed errors. */
+    private List<VisorSuppressedError> errors;
 
     /**
      * Default constructor.
      */
-    public VisorCachePartitions() {
-        primary = new ArrayList<>();
-        backup = new ArrayList<>();
+    public VisorNodeSuppressedErrors() {
+        // No-op.
     }
 
     /**
-     * Add primary partition descriptor.
+     * Create data transfer object for node's suppressed errors.
      *
-     * @param partId Partition id.
-     * @param cnt Number of primary keys in partition.
+     * @param order Order number of last suppressed error.
+     * @param errors List of suppressed errors.
      */
-    public void addPrimary(int partId, long cnt) {
-       primary.add(new VisorCachePartition(partId, cnt));
+    public VisorNodeSuppressedErrors(Long order, List<VisorSuppressedError> errors) {
+        this.order = order;
+        this.errors = errors;
     }
 
     /**
-     * Add backup partition descriptor.
-     *
-     * @param partId Partition id.
-     * @param cnt Number of backup keys in partition.
+     * @return Order number of last suppressed error.
      */
-    public void addBackup(int partId, long cnt) {
-       backup.add(new VisorCachePartition(partId, cnt));
+    public Long getOrder() {
+        return order;
     }
 
     /**
-     * @return Get list of primary partitions.
+     * @return List of suppressed errors.
      */
-    public List<VisorCachePartition> getPrimary() {
-        return primary;
-    }
-
-    /**
-     * @return Get list of backup partitions.
-     */
-    public List<VisorCachePartition> getBackup() {
-        return backup;
+    public List<VisorSuppressedError> getErrors() {
+        return errors;
     }
 
     /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
-        U.writeCollection(out, primary);
-        U.writeCollection(out, backup);
+        out.writeLong(order);
+        U.writeCollection(out, errors);
     }
 
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
-        primary = U.readList(in);
-        backup = U.readList(in);
+        order = in.readLong();
+        errors = U.readList(in);
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(VisorCachePartitions.class, this);
+        return S.toString(VisorNodeSuppressedErrors.class, this);
     }
 }
