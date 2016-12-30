@@ -36,13 +36,13 @@ import org.jetbrains.annotations.Nullable;
  * Task that collect cache metrics from all nodes.
  */
 @GridInternal
-public class VisorCacheMetricsCollectorTask extends VisorMultiNodeTask<IgniteBiTuple<Boolean, Collection<String>>,
+public class VisorCacheMetricsCollectorTask extends VisorMultiNodeTask<VisorCacheMetricsCollectorTaskArg,
     Iterable<VisorCacheAggregatedMetrics>, Collection<VisorCacheMetrics>> {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** {@inheritDoc} */
-    @Override protected VisorCacheMetricsCollectorJob job(IgniteBiTuple<Boolean, Collection<String>> arg) {
+    @Override protected VisorCacheMetricsCollectorJob job(VisorCacheMetricsCollectorTaskArg arg) {
         return new VisorCacheMetricsCollectorJob(arg, debug);
     }
 
@@ -76,7 +76,7 @@ public class VisorCacheMetricsCollectorTask extends VisorMultiNodeTask<IgniteBiT
      * Job that collect cache metrics from node.
      */
     private static class VisorCacheMetricsCollectorJob
-        extends VisorJob<IgniteBiTuple<Boolean, Collection<String>>, Collection<VisorCacheMetrics>> {
+        extends VisorJob<VisorCacheMetricsCollectorTaskArg, Collection<VisorCacheMetrics>> {
 
         /** */
         private static final long serialVersionUID = 0L;
@@ -87,19 +87,17 @@ public class VisorCacheMetricsCollectorTask extends VisorMultiNodeTask<IgniteBiT
          * @param arg Whether to collect metrics for all caches or for specified cache name only.
          * @param debug Debug flag.
          */
-        private VisorCacheMetricsCollectorJob(IgniteBiTuple<Boolean, Collection<String>> arg, boolean debug) {
+        private VisorCacheMetricsCollectorJob(VisorCacheMetricsCollectorTaskArg arg, boolean debug) {
             super(arg, debug);
         }
 
         /** {@inheritDoc} */
-        @Override protected Collection<VisorCacheMetrics> run(final IgniteBiTuple<Boolean, Collection<String>> arg) {
+        @Override protected Collection<VisorCacheMetrics> run(final VisorCacheMetricsCollectorTaskArg arg) {
             assert arg != null;
 
-            Boolean showSysCaches = arg.get1();
+            Boolean showSysCaches = arg.isShowSystemCaches();
 
-            assert showSysCaches != null;
-
-            Collection<String> cacheNames = arg.get2();
+            Collection<String> cacheNames = arg.getCacheNames();
 
             assert cacheNames != null;
 

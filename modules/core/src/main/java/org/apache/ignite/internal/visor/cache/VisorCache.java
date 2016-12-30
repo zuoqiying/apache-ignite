@@ -343,7 +343,7 @@ public class VisorCache extends VisorDataTransferObject {
         mode = CacheMode.fromOrdinal(in.readByte());
         memorySize = in.readLong();
         indexesSize = in.readLong();
-        size = in.readInt();
+        size = in.readLong();
         nearSize = in.readInt();
         primarySize = in.readLong();
         backupSize = in.readLong();

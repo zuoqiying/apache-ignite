@@ -511,7 +511,7 @@ class VisorCacheCommand {
         try {
             val caches: JavaCollection[String] = name.fold(Collections.emptyList[String]())(Collections.singletonList)
 
-            val arg = new IgniteBiTuple(JavaBoolean.valueOf(systemCaches), caches)
+            val arg = new VisorCacheMetricsCollectorTaskArg(systemCaches, caches)
 
             node match {
                 case Some(n) => executeOne(n.id(), classOf[VisorCacheMetricsCollectorTask], arg).toList

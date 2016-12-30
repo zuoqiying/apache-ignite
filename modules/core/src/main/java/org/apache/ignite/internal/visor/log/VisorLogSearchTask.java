@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.compute.ComputeJobResult;
@@ -37,7 +38,6 @@ import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorMultiNodeTask;
-import org.apache.ignite.lang.IgniteBiTuple;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.visor.util.VisorTaskUtils.decode;
@@ -49,7 +49,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.textFile;
  */
 @GridInternal
 public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchArg,
-    IgniteBiTuple<Iterable<IgniteBiTuple<Exception, UUID>>, Iterable<VisorLogSearchResult>>,
+    VisorLogSearchTaskResult,
     Collection<VisorLogSearchResult>> {
     /** */
     private static final long serialVersionUID = 0L;
@@ -66,15 +66,14 @@ public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchArg,
     }
 
     /** {@inheritDoc} */
-    @Nullable @Override protected IgniteBiTuple<Iterable<IgniteBiTuple<Exception, UUID>>,
-        Iterable<VisorLogSearchResult>> reduce0(List<ComputeJobResult> results) {
+    @Nullable @Override protected VisorLogSearchTaskResult reduce0(List<ComputeJobResult> results) {
         Collection<VisorLogSearchResult> searchRes = new ArrayList<>();
-        Collection<IgniteBiTuple<Exception, UUID>> exRes = new ArrayList<>();
+        Map<Exception, UUID> exRes = U.newHashMap(0);
 
         // Separate successfully executed results and exceptions.
         for (ComputeJobResult result : results) {
             if (result.getException() != null)
-                exRes.add(new IgniteBiTuple<Exception, UUID>(result.getException(), result.getNode().id()));
+                exRes.put(result.getException(), result.getNode().id());
             else if (result.getData() != null) {
                 Collection<VisorLogSearchResult> data = result.getData();
 
@@ -82,8 +81,7 @@ public class VisorLogSearchTask extends VisorMultiNodeTask<VisorLogSearchArg,
             }
         }
 
-        return new IgniteBiTuple<Iterable<IgniteBiTuple<Exception, UUID>>, Iterable<VisorLogSearchResult>>
-            (exRes.isEmpty() ? null : exRes, searchRes.isEmpty() ? null : searchRes);
+        return new VisorLogSearchTaskResult(exRes.isEmpty() ? null : exRes, searchRes.isEmpty() ? null : searchRes);
     }
 
     /**

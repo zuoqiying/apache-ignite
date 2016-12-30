@@ -26,7 +26,6 @@ import org.apache.ignite.internal.processors.task.GridInternal;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorMultiNodeTask;
-import org.apache.ignite.lang.IgniteBiTuple;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.visor.compute.VisorComputeMonitoringHolder.COMPUTE_MONITORING_HOLDER_KEY;
@@ -38,7 +37,7 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.checkExplicit
  */
 @GridInternal
 public class VisorComputeToggleMonitoringTask extends
-    VisorMultiNodeTask<IgniteBiTuple<String, Boolean>, Boolean, Boolean> {
+    VisorMultiNodeTask<VisorComputeToggleMonitoringTaskArg, Boolean, Boolean> {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -54,14 +53,14 @@ public class VisorComputeToggleMonitoringTask extends
     }
 
     /** {@inheritDoc} */
-    @Override protected VisorComputeToggleMonitoringJob job(IgniteBiTuple<String, Boolean> arg) {
+    @Override protected VisorComputeToggleMonitoringJob job(VisorComputeToggleMonitoringTaskArg arg) {
         return new VisorComputeToggleMonitoringJob(arg, debug);
     }
 
     /**
      * Job to toggle task monitoring on node.
      */
-    private static class VisorComputeToggleMonitoringJob extends VisorJob<IgniteBiTuple<String, Boolean>, Boolean> {
+    private static class VisorComputeToggleMonitoringJob extends VisorJob<VisorComputeToggleMonitoringTaskArg, Boolean> {
         /** */
         private static final long serialVersionUID = 0L;
 
@@ -69,12 +68,12 @@ public class VisorComputeToggleMonitoringTask extends
          * @param arg Visor ID key and monitoring state flag.
          * @param debug Debug flag.
          */
-        private VisorComputeToggleMonitoringJob(IgniteBiTuple<String, Boolean> arg, boolean debug) {
+        private VisorComputeToggleMonitoringJob(VisorComputeToggleMonitoringTaskArg arg, boolean debug) {
             super(arg, debug);
         }
 
         /** {@inheritDoc} */
-        @Override protected Boolean run(IgniteBiTuple<String, Boolean> arg) {
+        @Override protected Boolean run(VisorComputeToggleMonitoringTaskArg arg) {
             if (checkExplicitTaskMonitoring(ignite))
                 return true;
             else {
@@ -91,9 +90,9 @@ public class VisorComputeToggleMonitoringTask extends
                     holder = holderOld == null ? holderNew : holderOld;
                 }
 
-                String visorKey = arg.get1();
+                String visorKey = arg.getVisorKey();
 
-                boolean state = arg.get2();
+                boolean state = arg.isEnabled();
 
                 // Set task monitoring state.
                 if (state)
