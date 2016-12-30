@@ -302,6 +302,7 @@ public class AgentLauncher {
 
                     try {
                         authMsg.put("tokens", cfg.tokens());
+                        authMsg.put("disableDemo", cfg.disableDemo());
 
                         String clsName = AgentLauncher.class.getSimpleName() + ".class";
 

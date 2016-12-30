@@ -129,22 +129,24 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
          * Link agent with browsers by account.
          *
          * @param {Array.<String>} tokens
-         * @param {AgentSocket} agentSocket
+         * @param {AgentSocket} ioSocket
          *
          * @private
          */
-        _onAgentConnect(tokens, agentSocket) {
+        _attachAgent(ioSocket, tokens) {
+            const sock = new AgentSocket(ioSocket, tokens);
+
             const emitAgentCnt = (token, cnt) => {
                 const sockets = this._browserSockets[token];
 
                 _.forEach(sockets, (socket) => socket.emit('agent:count', cnt));
             };
 
-            agentSocket.socket.on('disconnect', () => {
+            ioSocket.on('disconnect', () => {
                 _.forEach(tokens, (token) => {
                     const agentSockets = this._agentSockets[token];
 
-                    _.pull(agentSockets, agentSocket);
+                    _.pull(agentSockets, ioSocket);
 
                     emitAgentCnt(token, agentSockets.length);
                 });
@@ -154,17 +156,27 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                 const agentSockets = this._agentSockets[token];
 
                 if (_.isNil(agentSockets)) {
-                    this._agentSockets[token] = [agentSocket];
+                    this._agentSockets[token] = [ioSocket];
 
                     // If first agent join after user start demo.
                     if (_.find(this._browserSockets[token], (socket) => socket.request._query.IgniteDemoMode === 'true'))
                         agentSockets.startDemo();
                 }
                 else
-                    agentSockets.push(agentSocket);
+                    agentSockets.push(ioSocket);
 
                 emitAgentCnt(token, this._agentSockets[token].length);
             });
+
+            ioSocket.on('demo:topology', (top) => {
+
+            });
+
+            ioSocket.on('cluster:topology', (top) => {
+
+            });
+
+
         }
 
         /**
@@ -179,9 +191,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                     this.io = socketio(srv, {path: '/agents'});
 
                     this.io.on('connection', (ioSocket) => {
-                        const socket = new AgentSocket(ioSocket);
-
-                        socket.on('agent:auth', ({ver, bt, tokens}, cb) => {
+                        ioSocket.on('agent:auth', ({ver, bt, tokens, disableDemo}, cb) => {
                             if (_.isEmpty(tokens))
                                 return cb('Tokens not set. Please reload agent archive or check settings');
 
@@ -201,18 +211,14 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                                     const missedTokens = _.difference(tokens, activeTokens);
 
                                     if (missedTokens.length)
-                                        socket.emit('log:warn', `Invalid token(s): ${missedTokens.join(', ')}.`);
+                                        ioSocket.emit('log:warn', `Invalid token(s): ${missedTokens.join(', ')}.`);
 
-                                    this._onAgentConnect(activeTokens, socket);
+                                    this._attachAgent(ioSocket, activeTokens);
 
                                     cb();
                                 })
                                 // TODO IGNITE-1379 send error to web master.
                                 .catch(() => cb('Agent is failed to authenticate. Please check agent\'s tokens'));
-                        });
-
-                        socket.on('demo:topology', (top) => {
-
                         });
                     });
                 });

@@ -50,8 +50,8 @@ public class AgentConfiguration {
     /** */
     @Parameter(names = {"-s", "--server-uri"},
         description = "URI for connect to Ignite Console via web-socket protocol" +
-        "           " +
-        "      Default value: " + DFLT_SERVER_URI)
+            "           " +
+            "      Default value: " + DFLT_SERVER_URI)
     private String srvUri;
 
     /** */
@@ -76,7 +76,13 @@ public class AgentConfiguration {
     private String driversFolder;
 
     /** */
-    @Parameter(names = { "-h", "--help" }, help = true, description = "Print this help message")
+    @Parameter(names = {"-dd", "--disable-demo"}, description = "Disable demo mode on this agent " +
+        "                             " +
+        "      Default value: false")
+    private Boolean disableDemo;
+
+    /** */
+    @Parameter(names = {"-h", "--help"}, help = true, description = "Print this help message")
     private Boolean help;
 
     /**
@@ -157,6 +163,20 @@ public class AgentConfiguration {
     }
 
     /**
+     * @return Disable demo mode.
+     */
+    public Boolean disableDemo() {
+        return disableDemo;
+    }
+
+    /**
+     * @param disableDemo Disable demo mode.
+     */
+    public void disableDemo(Boolean disableDemo) {
+        this.disableDemo = disableDemo;
+    }
+
+    /**
      * @return {@code true} If agent options usage should be printed.
      */
     public Boolean help() {
@@ -215,6 +235,9 @@ public class AgentConfiguration {
 
         if (driversFolder == null)
             driversFolder(cmd.driversFolder());
+
+        if (disableDemo == null)
+            driversFolder(cmd.driversFolder());
     }
 
     /** {@inheritDoc} */
@@ -258,6 +281,7 @@ public class AgentConfiguration {
         }
 
         sb.append("Path to JDBC drivers folder   : ").append(drvFld);
+        sb.append("Demo mode                     : ").append(disableDemo ? "Enabled" : "Disabled");
 
         return sb.toString();
     }

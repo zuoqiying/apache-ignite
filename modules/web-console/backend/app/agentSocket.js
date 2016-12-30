@@ -28,60 +28,60 @@ module.exports = {
 };
 
 /**
+ * Helper class to contract REST command.
+ */
+class Command {
+    /**
+     * @param {Boolean} demo Is need run command on demo node.
+     * @param {String} name Command name.
+     */
+    constructor(demo, name) {
+        this._demo = demo;
+
+        /**
+         * Command name.
+         * @type {String}
+         */
+        this._name = name;
+
+        /**
+         * Command parameters.
+         * @type {Array.<Object.<String, String>>}
+         */
+        this._params = [];
+
+        this._paramsLastIdx = 0;
+    }
+
+    /**
+     * Add parameter to command.
+     * @param {Object} value Parameter value.
+     * @returns {Command}
+     */
+    addParam(value) {
+        this._params.push({key: `p${this._paramsLastIdx++}`, value});
+
+        return this;
+    }
+
+    /**
+     * Add parameter to command.
+     * @param {String} key Parameter key.
+     * @param {Object} value Parameter value.
+     * @returns {Command}
+     */
+    addNamedParam(key, value) {
+        this._params.push({key, value});
+
+        return this;
+    }
+}
+
+/**
  * @param _
  * @returns {AgentSocket}
  */
 module.exports.factory = function(_) {
-    /**
-     * Helper class to contract REST command.
-     */
-    class Command {
-        /**
-         * @param {Boolean} demo Is need run command on demo node.
-         * @param {String} name Command name.
-         */
-        constructor(demo, name) {
-            this._demo = demo;
-
-            /**
-             * Command name.
-             * @type {String}
-             */
-            this._name = name;
-
-            /**
-             * Command parameters.
-             * @type {Array.<Object.<String, String>>}
-             */
-            this._params = [];
-
-            this._paramsLastIdx = 0;
-        }
-
-        /**
-         * Add parameter to command.
-         * @param {Object} value Parameter value.
-         * @returns {Command}
-         */
-        addParam(value) {
-            this._params.push({key: `p${this._paramsLastIdx++}`, value});
-
-            return this;
-        }
-
-        /**
-         * Add parameter to command.
-         * @param {String} key Parameter key.
-         * @param {Object} value Parameter value.
-         * @returns {Command}
-         */
-        addNamedParam(key, value) {
-            this._params.push({key, value});
-
-            return this;
-        }
-    }
-
     /**
      * Connected agent descriptor.
      */
@@ -96,10 +96,6 @@ module.exports.factory = function(_) {
              * @type {socketIo.Socket}
              */
             this.socket = socket;
-
-            this.clusterIds = [];
-
-            this.broadcastedClusterIds = new Map();
         }
 
         /**
@@ -137,6 +133,10 @@ module.exports.factory = function(_) {
                     resolve(res);
                 })
             );
+        }
+
+        warn(message) {
+            return this.emitEvent('log:warn', message);
         }
 
         startDemo(timeout) {
@@ -274,7 +274,7 @@ module.exports.factory = function(_) {
                 'java.util.Map', 'java.util.UUID', 'java.util.Set',
                 `${nid}=${queryId}`);
         }
-    };
+    }
 
     return AgentSocket;
 };
