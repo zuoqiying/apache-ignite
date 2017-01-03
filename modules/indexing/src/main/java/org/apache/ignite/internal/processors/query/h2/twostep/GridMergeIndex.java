@@ -154,7 +154,7 @@ public abstract class GridMergeIndex extends BaseIndex {
     /**
      * Fails index if any source node is left.
      */
-    protected final void checkSourceNodesAlive() {
+    private void checkSourceNodesAlive() {
         for (UUID nodeId : sources()) {
             if (!ctx.discovery().alive(nodeId)) {
                 fail(nodeId, null);
@@ -479,7 +479,7 @@ public abstract class GridMergeIndex extends BaseIndex {
      * @param evictedBlock Evicted block.
      */
     private void onBlockEvict(List<Row> evictedBlock) {
-        assert !evictedBlock.isEmpty();
+        assert evictedBlock.size() == PREFETCH_SIZE;
 
         lastEvictedRow = evictedBlock.get(evictedBlock.size() - 1);
     }
@@ -573,7 +573,7 @@ public abstract class GridMergeIndex extends BaseIndex {
          */
         private void fetchRows() {
             for (;;) {
-                // Take the last block and set the position after last.
+                // Take the current last block and set the position after last.
                 rows = fetched.lastBlock();
                 cur = rows.size();
 
@@ -583,7 +583,7 @@ public abstract class GridMergeIndex extends BaseIndex {
 
                     // Evict block if we've fetched too many rows.
                     if (fetched.size() == MAX_FETCH_SIZE) {
-                        onBlockEvict(fetched.evictBlock());
+                        onBlockEvict(fetched.evictFirstBlock());
 
                         assert fetched.size() < MAX_FETCH_SIZE;
                     }
@@ -592,7 +592,7 @@ public abstract class GridMergeIndex extends BaseIndex {
                     if (!haveBounds())
                         break;
 
-                    // When the last block changed, it means that we've filled the block.
+                    // When the last block changed, it means that we've filled the current last block.
                     // We have fetched the needed number of rows for binary search.
                     if (fetched.lastBlock() != rows)
                         break;
@@ -736,7 +736,7 @@ public abstract class GridMergeIndex extends BaseIndex {
         /**
          * @return Evicted block.
          */
-        private List<Z> evictBlock() {
+        private List<Z> evictFirstBlock() {
             // Remove head block.
             List<Z> res = blocks.remove(0);
 
