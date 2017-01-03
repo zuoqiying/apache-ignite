@@ -463,7 +463,7 @@ public abstract class GridMergeIndex extends BaseIndex {
 
         // Optimistically compare with the last row as a first step.
         if (checkLast) {
-            int res = cmp.compare(rows.get(rows.size() - 1), searchRow);
+            int res = cmp.compare(last(rows), searchRow);
 
             assert res != 0; // Comparators must never return 0 here.
 
@@ -484,7 +484,16 @@ public abstract class GridMergeIndex extends BaseIndex {
     private void onBlockEvict(List<Row> evictedBlock) {
         assert evictedBlock.size() == PREFETCH_SIZE;
 
-        lastEvictedRow = evictedBlock.get(evictedBlock.size() - 1);
+        // Remember the last row (it will be max row) from the evicted block.
+        lastEvictedRow = requireNonNull(last(evictedBlock));
+    }
+
+    /**
+     * @param l List.
+     * @return Last element.
+     */
+    private static <Z> Z last(List<Z> l) {
+        return l.get(l.size() - 1);
     }
 
     /**
@@ -517,7 +526,7 @@ public abstract class GridMergeIndex extends BaseIndex {
         public FetchingCursor(SearchRow first, SearchRow last, Iterator<Row> stream) {
             assert stream != null;
 
-            // Initially we will use all the fetched rows.
+            // Initially we will use all the fetched rows, after we will switch to the last block.
             rows = fetched;
 
             this.stream = stream;
@@ -527,7 +536,7 @@ public abstract class GridMergeIndex extends BaseIndex {
             if (haveBounds() && !rows.isEmpty())
                 cur = findBounds();
 
-            cur--; // Set before first.
+            cur--; // Set current position before the first row.
         }
 
         /**
@@ -597,8 +606,11 @@ public abstract class GridMergeIndex extends BaseIndex {
 
                     // When the last block changed, it means that we've filled the current last block.
                     // We have fetched the needed number of rows for binary search.
-                    if (fetched.lastBlock() != rows)
+                    if (fetched.lastBlock() != rows) {
+                        assert fetched.lastBlock().isEmpty(); // The last row must be added to the previous block.
+
                         break;
+                    }
                 }
 
                 if (cur == rows.size())
@@ -715,25 +727,10 @@ public abstract class GridMergeIndex extends BaseIndex {
         }
 
         /**
-         * @return Number of blocks.
-         */
-        private int blocks() {
-            return blocks.size();
-        }
-
-        /**
-         * @param blockIdx Block index.
-         * @return Block.
-         */
-        private List<Z> block(int blockIdx) {
-            return blocks.get(blockIdx);
-        }
-
-        /**
          * @return Last block.
          */
         private List<Z> lastBlock() {
-            return block(blocks() - 1);
+            return last(blocks);
         }
 
         /**
