@@ -471,8 +471,11 @@ public abstract class GridMergeIndex extends BaseIndex {
                 return rows.size(); // The search row is greater than the last row.
         }
 
-        // Comparators never return 0, thus the result of binarySearch is always negative.
-        return -Collections.binarySearch(rows, searchRow, cmp) - 1;
+        int res = Collections.binarySearch(rows, searchRow, cmp);
+
+        assert res < 0: res; // Comparator must never return 0.
+
+        return -res - 1;
     }
 
     /**
