@@ -103,6 +103,13 @@ public enum HadoopJobProperty {
     SHUFFLE_MSG_SIZE("ignite.shuffle.message.size"),
 
     /**
+     * Whether shuffle messages must reside in offheap or not.
+     * <p>
+     * Defaults to {@code false}.
+     */
+    SHUFFLE_MSG_OFFHEAP("ignite.shuffle.message.offheap"),
+
+    /**
      * Whether to stripe mapper output for remote reducers.
      * <p>
      * Defaults to {@code false}.
