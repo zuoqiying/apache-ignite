@@ -24,7 +24,6 @@ import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorOneNodeTask;
-import org.apache.ignite.lang.IgniteBiTuple;
 
 /**
  * Creates thread dump.

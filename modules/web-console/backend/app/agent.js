@@ -236,21 +236,12 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo)
                 .addParam('p1', nid)
                 .addParam('p2', 'org.apache.ignite.internal.visor.query.VisorQueryTask');
 
-            if (nonCollocatedJoins) {
-                cmd.addParam('p3', 'org.apache.ignite.internal.visor.query.VisorQueryArgV2')
-                    .addParam('p4', cacheName)
-                    .addParam('p5', query)
-                    .addParam('p6', true)
-                    .addParam('p7', local)
-                    .addParam('p8', pageSize);
-            }
-            else {
-                cmd.addParam('p3', 'org.apache.ignite.internal.visor.query.VisorQueryArg')
-                    .addParam('p4', cacheName)
-                    .addParam('p5', query)
-                    .addParam('p6', local)
-                    .addParam('p7', pageSize);
-            }
+            cmd.addParam('p3', 'org.apache.ignite.internal.visor.query.VisorQueryArg')
+                .addParam('p4', cacheName)
+                .addParam('p5', query)
+                .addParam('p6', nonCollocatedJoins)
+                .addParam('p7', local)
+                .addParam('p8', pageSize);
 
             return this.executeRest(cmd);
         }
