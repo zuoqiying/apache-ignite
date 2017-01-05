@@ -27,18 +27,20 @@ angular
     $stateProvider
         .state('demo', {
             abstract: true,
+            url: '/demo',
             template: '<ui-view></ui-view>'
         })
         .state('demo.resume', {
-            url: '/demo',
+            url: '/resume',
             controller: ['$state', ($state) => {
                 $state.go('base.configuration.clusters');
             }],
             metaTags: {
+                title: 'Demo resume'
             }
         })
         .state('demo.reset', {
-            url: '/demo/reset',
+            url: '/reset',
             controller: ['$state', '$http', 'IgniteMessages', ($state, $http, Messages) => {
                 $http.post('/api/v1/demo/reset')
                     .then(() => $state.go('base.configuration.clusters'))
@@ -48,7 +50,9 @@ angular
                         Messages.showError(res);
                     });
             }],
-            metaTags: {}
+            metaTags: {
+                title: 'Demo reset'
+            }
         });
 }])
 .provider('Demo', ['$stateProvider', '$httpProvider', 'igniteSocketFactoryProvider', function($state, $http, socketFactory) {

@@ -24,20 +24,23 @@ const IGFS_HEADER_TEMPLATE = `<div class='ui-grid-cell-contents' bs-tooltip data
 
 const ACTIONS_TEMPLATE = `
 <div class='text-center ui-grid-cell-actions'>
-    <a class='btn btn-default dropdown-toggle' bs-dropdown='' ng-show='row.entity._id != $root.user._id' data-placement='bottom-right' data-container='.panel'>
+    <a class='btn btn-default dropdown-toggle' bs-dropdown='' data-placement='bottom-right' data-container='.panel'>
         <i class='fa fa-gear'></i>&nbsp;
         <span class='caret'></span>
     </a>
     <ul class='dropdown-menu' role='menu'>
-        <li>
+        <li ng-show='row.entity._id != $root.user._id'>
             <a ng-click='grid.api.becomeUser(row.entity)'>Become this user</a>
         </li>
-        <li>
+        <li ng-show='row.entity._id != $root.user._id'>
             <a ng-click='grid.api.toggleAdmin(row.entity)' ng-if='row.entity.admin && row.entity._id !== $root.user._id'>Revoke admin</a>
             <a ng-click='grid.api.toggleAdmin(row.entity)' ng-if='!row.entity.admin && row.entity._id !== $root.user._id'>Grant admin</a>
         </li>
-        <li>
+        <li ng-show='row.entity._id != $root.user._id'>
             <a ng-click='grid.api.removeUser(row.entity)'>Remove user</a>
+        </li>
+        <li>
+            <a ng-click='grid.api.showStatistics(row.entity)'>Statistics</a>
         </li>
 </div>`;
 
@@ -45,8 +48,8 @@ const EMAIL_TEMPLATE = '<div class="ui-grid-cell-contents"><a ng-href="mailto:{{
 
 // Controller for Admin screen.
 export default ['adminController', [
-    '$rootScope', '$scope', '$http', '$q', '$state', '$filter', 'uiGridConstants', 'IgniteMessages', 'IgniteConfirm', 'User', 'IgniteNotebookData', 'IgniteCountries',
-    ($rootScope, $scope, $http, $q, $state, $filter, uiGridConstants, Messages, Confirm, User, Notebook, Countries) => {
+    '$rootScope', '$scope', '$http', '$q', '$state', '$filter', 'uiGridConstants', 'IgniteMessages', 'IgniteConfirm', 'User', 'IgniteNotebookData', 'IgniteCountries', 'IgniteStatisticsUserDialog',
+    ($rootScope, $scope, $http, $q, $state, $filter, uiGridConstants, Messages, Confirm, User, Notebook, Countries, StatisticsUserDialog) => {
         $scope.users = null;
 
         const companySelectOptions = [];
@@ -62,7 +65,8 @@ export default ['adminController', [
             {displayName: 'Country', field: 'countryCode', minWidth: 80, filter: {
                 selectOptions: countrySelectOptions, type: uiGridConstants.filter.SELECT, condition: uiGridConstants.filter.EXACT }
             },
-            {displayName: 'Last login', field: 'lastLogin', cellFilter: 'date:"medium"', minWidth: 175, width: 175, enableFiltering: false, sort: { direction: 'desc', priority: 0 }},
+            {displayName: 'Last login', field: 'lastLogin', cellFilter: 'date:"medium"', minWidth: 175, width: 175, enableFiltering: false, visible: false},
+            {displayName: 'Last activity', field: 'lastActivity', cellFilter: 'date:"medium"', minWidth: 175, width: 175, enableFiltering: false, sort: { direction: 'desc', priority: 0 }},
             {displayName: 'Clusters count', headerCellTemplate: CLUSTER_HEADER_TEMPLATE, field: '_clusters', type: 'number', headerTooltip: 'Clusters count', minWidth: 50, width: 50, enableFiltering: false},
             {displayName: 'Models count', headerCellTemplate: MODEL_HEADER_TEMPLATE, field: '_models', type: 'number', headerTooltip: 'Models count', minWidth: 50, width: 50, enableFiltering: false},
             {displayName: 'Caches count', headerCellTemplate: CACHE_HEADER_TEMPLATE, field: '_caches', type: 'number', headerTooltip: 'Caches count', minWidth: 50, width: 50, enableFiltering: false},
@@ -118,6 +122,9 @@ export default ['adminController', [
                 .finally(() => user.adminChanging = false);
         };
 
+        const showStatistics = (user) => {
+            return new StatisticsUserDialog({ user });
+        };
 
         ctrl.gridOptions = {
             data: [],
@@ -129,7 +136,8 @@ export default ['adminController', [
                 {name: 'Email', visible: true, selectable: true},
                 {name: 'Company', visible: true, selectable: true},
                 {name: 'Country', visible: true, selectable: true},
-                {name: 'Last login', visible: true, selectable: true},
+                {name: 'Last login', visible: false, selectable: true},
+                {name: 'Last activity', visible: true, selectable: true},
 
                 {name: 'Clusters count', visible: true, selectable: true},
                 {name: 'Models count', visible: true, selectable: true},
@@ -151,6 +159,7 @@ export default ['adminController', [
                 api.becomeUser = becomeUser;
                 api.removeUser = removeUser;
                 api.toggleAdmin = toggleAdmin;
+                api.showStatistics = showStatistics;
             }
         };
 

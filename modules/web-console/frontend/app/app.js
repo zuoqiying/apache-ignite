@@ -25,10 +25,11 @@ import './decorator/select';
 import './decorator/tooltip';
 
 import './modules/form/form.module';
-import './modules/agent/agent.module.js';
+import './modules/agent/agent.module';
 import './modules/sql/sql.module';
 import './modules/nodes/nodes.module';
-import './modules/Demo/Demo.module.js';
+import './modules/demo/Demo.module';
+import './modules/statistics/statistics.module';
 
 import './modules/states/signin.state';
 import './modules/states/logout.state';
@@ -159,6 +160,7 @@ angular
     'ignite-console.configuration',
     'ignite-console.getting-started',
     'ignite-console.loading',
+    'ignite-console.statistics',
     // Ignite configuration module.
     'ignite-console.config',
     // Ignite modules.

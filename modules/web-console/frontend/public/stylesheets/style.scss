@@ -2327,3 +2327,19 @@ html,body,.splash-screen {
         width: calc(100% - 10px);
     }
 }
+
+.statistics-page {
+    .panel-collapse {
+        margin-top: -1px;
+    }
+
+    .grid .ui-grid-cell {
+        .ui-grid-cell-contents {
+            text-align: left;
+        }
+
+        &:last-child .ui-grid-cell-contents {
+            text-align: center;
+        }
+    }
+}
