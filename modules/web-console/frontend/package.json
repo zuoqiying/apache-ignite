@@ -45,7 +45,7 @@
     "angular-strap": "~2.3.8",
     "angular-touch": "~1.5.9",
     "angular-tree-control": "~0.2.26",
-    "angular-ui-grid": "~3.2.9",
+    "angular-ui-grid": "~4.0.0",
     "angular-ui-router": "~0.3.1",
     "bootstrap-sass": "~3.3.6",
     "brace": "~0.8.0",
