@@ -45,7 +45,8 @@ import static org.apache.ignite.internal.visor.util.VisorTaskUtils.escapeName;
  * Task that collect keys distribution in partitions.
  */
 @GridInternal
-public class VisorCachePartitionsTask extends VisorMultiNodeTask<String, Map<UUID, VisorCachePartitions>, VisorCachePartitions> {
+public class VisorCachePartitionsTask extends VisorMultiNodeTask<String,
+    Map<UUID, VisorCachePartitions>, VisorCachePartitions> {
     /** */
     private static final long serialVersionUID = 0L;
 

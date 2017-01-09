@@ -35,8 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * Task to run gc on nodes.
  */
 @GridInternal
-public class VisorNodeGcTask extends VisorMultiNodeTask<Void, Map<UUID, IgniteBiTuple<Long, Long>>,
-    IgniteBiTuple<Long, Long>> {
+public class VisorNodeGcTask extends VisorMultiNodeTask<Void, Map<UUID, VisorNodeGcTaskResult>, VisorNodeGcTaskResult> {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -46,11 +45,11 @@ public class VisorNodeGcTask extends VisorMultiNodeTask<Void, Map<UUID, IgniteBi
     }
 
     /** {@inheritDoc} */
-    @Nullable @Override protected Map<UUID, IgniteBiTuple<Long, Long>> reduce0(List<ComputeJobResult> results) {
-        Map<UUID, IgniteBiTuple<Long, Long>> total = new HashMap<>();
+    @Nullable @Override protected Map<UUID, VisorNodeGcTaskResult> reduce0(List<ComputeJobResult> results) {
+        Map<UUID, VisorNodeGcTaskResult> total = new HashMap<>();
 
         for (ComputeJobResult res : results) {
-            IgniteBiTuple<Long, Long> jobRes = res.getData();
+            VisorNodeGcTaskResult jobRes = res.getData();
 
             total.put(res.getNode().id(), jobRes);
         }
@@ -59,7 +58,7 @@ public class VisorNodeGcTask extends VisorMultiNodeTask<Void, Map<UUID, IgniteBi
     }
 
     /** Job that perform GC on node. */
-    private static class VisorNodeGcJob extends VisorJob<Void, IgniteBiTuple<Long, Long>> {
+    private static class VisorNodeGcJob extends VisorJob<Void, VisorNodeGcTaskResult> {
         /** */
         private static final long serialVersionUID = 0L;
 
@@ -74,14 +73,14 @@ public class VisorNodeGcTask extends VisorMultiNodeTask<Void, Map<UUID, IgniteBi
         }
 
         /** {@inheritDoc} */
-        @Override protected IgniteBiTuple<Long, Long> run(Void arg) {
+        @Override protected VisorNodeGcTaskResult run(Void arg) {
             ClusterNode locNode = ignite.localNode();
 
             long before = freeHeap(locNode);
 
             System.gc();
 
-            return new IgniteBiTuple<>(before, freeHeap(locNode));
+            return new VisorNodeGcTaskResult(before, freeHeap(locNode));
         }
 
         /**
