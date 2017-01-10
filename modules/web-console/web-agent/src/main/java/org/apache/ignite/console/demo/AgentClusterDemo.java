@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteServices;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.QueryEntity;
@@ -48,6 +49,10 @@ import org.apache.ignite.console.demo.model.Country;
 import org.apache.ignite.console.demo.model.Department;
 import org.apache.ignite.console.demo.model.Employee;
 import org.apache.ignite.console.demo.model.Parking;
+import org.apache.ignite.console.demo.service.DemoServiceAllNodes;
+import org.apache.ignite.console.demo.service.DemoServiceClusterSingleton;
+import org.apache.ignite.console.demo.service.DemoServiceKeyAffinity;
+import org.apache.ignite.console.demo.service.DemoServiceNodeSingleton;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.logger.log4j.Log4JLogger;
@@ -608,6 +613,14 @@ public class AgentClusterDemo {
                         }
                     }
                 }, 10, 10, TimeUnit.SECONDS);
+
+                IgniteServices services = ignite.services();
+
+                services.deployMultiple("Demo service: All nodes", new DemoServiceAllNodes(), 7, 3);
+                services.deployNodeSingleton("Demo service: Node singleton", new DemoServiceNodeSingleton());
+                services.deployClusterSingleton("Demo service: Cluster singleton", new DemoServiceClusterSingleton());
+                services.deployKeyAffinitySingleton("Demo service: Key affinity singleton",
+                    new DemoServiceKeyAffinity(), CAR_CACHE_NAME, "id");
 
                 if (log.isDebugEnabled())
                     log.debug("DEMO: Started embedded nodes with indexed enabled caches...");
