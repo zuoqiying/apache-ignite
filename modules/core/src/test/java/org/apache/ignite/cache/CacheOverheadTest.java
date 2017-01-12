@@ -205,7 +205,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
             overheads.add(cacheOverhead(i));
 
         for (int i = 2; i < GRID_COUNT; ++i)
-            printf("Nodes: %d Used memory = %01.3f M\n", i + 1, sizeInMegabytes(overheads.get(i - 2)));
+            printf("Nodes: %d, overhead = %01.3f M\n", i + 1, sizeInMegabytes(overheads.get(i - 2)));
     }
 
 
@@ -247,7 +247,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
 
         double overhead = (double)(memWithCaches - memWithoutCaches) / cacheCnt;
 
-        printf("+++ Nodes: %d Used memory = %01.3f M\n", gridCount, sizeInMegabytes(overhead));
+        printf("+++ Nodes: %d, overhead = %01.3f M\n", gridCount, sizeInMegabytes(overhead));
 
         stopAllGrids();
 
