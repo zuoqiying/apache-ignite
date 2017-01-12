@@ -133,6 +133,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
 
                 c.setName(cacheName(gridName, i));
                 c.setBackups(3);
+                c.setCacheMode(CacheMode.REPLICATED);
 //                c.setNodeFilter(new CacheNodeFilter(gridName));
 
                 RendezvousAffinityFunction aff = new RendezvousAffinityFunction();
@@ -280,7 +281,9 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
         /** */
         private final String gridName;
 
-        /** */
+        /**
+         * @param gridName Grid name.
+         */
         public CacheNodeFilter(String gridName) {
             this.gridName = gridName;
         }
