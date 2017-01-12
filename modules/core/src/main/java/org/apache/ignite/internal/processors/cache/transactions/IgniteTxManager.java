@@ -171,18 +171,16 @@ public class IgniteTxManager extends GridCacheSharedManagerAdapter {
     private IgniteTxHandler txHnd;
 
     /** Committed local transactions. */
-    private final GridBoundedConcurrentOrderedMap<GridCacheVersion, Boolean> completedVersSorted =
-        new GridBoundedConcurrentOrderedMap<>(
-            Integer.getInteger(IGNITE_MAX_COMPLETED_TX_COUNT, DFLT_MAX_COMPLETED_TX_CNT));
+    private GridBoundedConcurrentOrderedMap<GridCacheVersion, Boolean> completedVersSorted;
 
     /** Committed local transactions. */
-    private final ConcurrentLinkedHashMap<GridCacheVersion, Object> completedVersHashMap =
-        new ConcurrentLinkedHashMap<>(
-            Integer.getInteger(IGNITE_MAX_COMPLETED_TX_COUNT, DFLT_MAX_COMPLETED_TX_CNT),
-            0.75f,
-            Runtime.getRuntime().availableProcessors() * 2,
-            Integer.getInteger(IGNITE_MAX_COMPLETED_TX_COUNT, DFLT_MAX_COMPLETED_TX_CNT),
-            PER_SEGMENT_Q);
+    private ConcurrentLinkedHashMap<GridCacheVersion, Object> completedVersHashMap ;
+//        new ConcurrentLinkedHashMap<>(
+//            Integer.getInteger(IGNITE_MAX_COMPLETED_TX_COUNT, DFLT_MAX_COMPLETED_TX_CNT),
+//            0.75f,
+//            Runtime.getRuntime().availableProcessors() * 2,
+//            Integer.getInteger(IGNITE_MAX_COMPLETED_TX_COUNT, DFLT_MAX_COMPLETED_TX_CNT),
+//            PER_SEGMENT_Q);
 
     /** Pending one phase commit ack requests sender. */
     private GridDeferredAckMessageSender deferredAckMessageSender;

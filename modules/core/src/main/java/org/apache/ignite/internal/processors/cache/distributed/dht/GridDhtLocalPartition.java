@@ -116,7 +116,10 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
     private final ReentrantLock lock = new ReentrantLock();
 
     /** Remove queue. */
-    private final GridCircularBuffer<T2<KeyCacheObject, GridCacheVersion>> rmvQueue;
+    private final AtomicReference<GridCircularBuffer<T2<KeyCacheObject, GridCacheVersion>>> rmvQueue;
+
+    /** Delete queue size. */
+    private final int delQueueSize;
 
     /** Group reservations. */
     private final CopyOnWriteArrayList<GridDhtPartitionsReservation> reservations = new CopyOnWriteArrayList<>();
@@ -156,10 +159,13 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
 
         map = new GridCacheConcurrentMapImpl(cctx, entryFactory, cctx.config().getStartSize() / cctx.affinity().partitions());
 
-        int delQueueSize = CU.isSystemCache(cctx.name()) ? 100 :
+        int delQueueSize0 = CU.isSystemCache(cctx.name()) ? 100 :
             Math.max(MAX_DELETE_QUEUE_SIZE / cctx.affinity().partitions(), 20);
 
-        rmvQueue = new GridCircularBuffer<>(U.ceilPow2(delQueueSize));
+        delQueueSize = U.ceilPow2(delQueueSize0);
+
+        rmvQueue = new AtomicReference<>();
+        removeQueue();
 
         try {
             store = cctx.offheap().createCacheDataStore(id);
@@ -381,7 +387,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
      */
     public void onDeferredDelete(KeyCacheObject key, GridCacheVersion ver) throws IgniteCheckedException {
         try {
-            T2<KeyCacheObject, GridCacheVersion> evicted = rmvQueue.add(new T2<>(key, ver));
+            T2<KeyCacheObject, GridCacheVersion> evicted = removeQueue().add(new T2<>(key, ver));
 
             if (evicted != null)
                 cctx.dht().removeVersionedEntry(evicted.get1(), evicted.get2());
@@ -943,11 +949,32 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
      *
      */
     private void clearDeferredDeletes() {
-        rmvQueue.forEach(new CI1<T2<KeyCacheObject, GridCacheVersion>>() {
+        if (rmvQueue.get() == null)
+            return;
+
+        removeQueue().forEach(new CI1<T2<KeyCacheObject, GridCacheVersion>>() {
             @Override public void apply(T2<KeyCacheObject, GridCacheVersion> t) {
                 cctx.dht().removeVersionedEntry(t.get1(), t.get2());
             }
         });
+    }
+
+    /**
+     * Lazy initialization of the remove queue.
+     *
+     * @return Remove queue.
+     */
+    public GridCircularBuffer<T2<KeyCacheObject, GridCacheVersion>> removeQueue() {
+        GridCircularBuffer<T2<KeyCacheObject, GridCacheVersion>> rmq  = rmvQueue.get();
+
+        if (rmq == null) {
+            rmq = new GridCircularBuffer<>(U.ceilPow2(delQueueSize));
+
+            if (!rmvQueue.compareAndSet(null, rmq))
+                return rmvQueue.get();
+        }
+
+        return rmq;
     }
 
     /** {@inheritDoc} */
