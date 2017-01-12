@@ -46,6 +46,7 @@ import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtCacheA
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtLocalPartition;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState;
 import org.apache.ignite.lang.IgnitePredicate;
+import org.apache.ignite.lang.IgniteRunnable;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 /**
@@ -58,7 +59,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
     private static final long PAGE_CACHE_SIZE = 100L << 20; // Mb
 
     /** Number of started grids (at the most) */
-    private static final int GRID_COUNT = 10;
+    private static final int GRID_COUNT = 2;
 
     /** Number of caches started on every node */
     private static final int CACHE_COUNT = 10;
@@ -89,6 +90,11 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
 
     @Override protected long getTestTimeout() {
         return 3600_000L;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected boolean isRemoteJvm(String gridName) {
+        return getTestGridIndex(gridName) >= GRID_COUNT ;
     }
 
     /** */
@@ -147,7 +153,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
         Thread.sleep(1000);
         long usedMemory1 = usedMemory();
         int gridCnt = gridCount + 1;
-        double cacheOverhead = ((double)(usedMemory1 - emptyGridMemoryUsed[gridCnt])) / cacheCnt / (gridCount + 1);
+        double cacheOverhead = ((double)(usedMemory1 - emptyGridMemoryUsed[gridCnt])) / cacheCnt / gridCnt;
         printf("Grid count = %d, cache overhead = %01.3f M%n",
             gridCnt, sizeInMegabytes(cacheOverhead));
     }
@@ -271,12 +277,24 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
             logLocalPartitions(0);
         }
 
+        IgniteEx remoteNode = startGrid(GRID_COUNT);
+
         summary.flush();
         out.print(summaryStr.getBuffer());
 
         while(true) {
             Thread.sleep(10_000);
-            printCacheOverhead(GRID_COUNT - 1);
+            remoteNode.compute().run(new IgniteRunnable() {
+                @Override public void run() {
+                    try {
+                        printCacheOverhead(0);
+                    }
+                    catch (InterruptedException e) {
+                        // swallow.
+                    }
+                }
+            });
+//            printCacheOverhead(GRID_COUNT - 1);
         }
 
 //        stopAllGrids();
