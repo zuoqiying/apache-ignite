@@ -115,6 +115,16 @@ public class GridCacheSqlQuery implements Message, GridCacheQueryMarshallable {
     }
 
     /**
+     * @param qry Query.
+     * @return {@code this}.
+     */
+    public GridCacheSqlQuery query(String qry) {
+        this.qry = qry;
+
+        return this;
+    }
+
+    /**
      * @return Parameters.
      */
     public Object[] parameters() {

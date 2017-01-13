@@ -245,14 +245,15 @@ public abstract class GridH2IndexBase extends BaseIndex {
      * @param filter Current filter.
      * @return Multiplier.
      */
-    public int getDistributedMultiplier(Session ses, TableFilter[] filters, int filter) {
+    public final int getDistributedMultiplier(Session ses, TableFilter[] filters, int filter) {
         GridH2QueryContext qctx = GridH2QueryContext.get();
 
-        // We do complex optimizations with respect to distributed joins only on prepare stage
-        // because on run stage reordering of joined tables by Optimizer is explicitly disabled
-        // and thus multiplier will be always the same, so it will not affect choice of index.
+        // We do optimizations with respect to distributed joins only on PREPARE stage only.
+        // Notice that we check for isJoinBatchEnabled, because we can do multiple different
+        // optimization passes on PREPARE stage.
         // Query expressions can not be distributed as well.
-        if (qctx == null || qctx.type() != PREPARE || !qctx.distributedJoins() || ses.isPreparingQueryExpression())
+        if (qctx == null || qctx.type() != PREPARE || !qctx.distributedJoins() ||
+            !ses.isJoinBatchEnabled() || ses.isPreparingQueryExpression())
             return GridH2CollocationModel.MULTIPLIER_COLLOCATED;
 
         // We have to clear this cache because normally sub-query plan cost does not depend on anything

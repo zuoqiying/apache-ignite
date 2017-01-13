@@ -37,12 +37,14 @@ import org.apache.ignite.internal.processors.cache.query.GridCacheTwoStepQuery;
 import org.apache.ignite.internal.processors.query.h2.IgniteH2Indexing;
 import org.apache.ignite.internal.util.typedef.F;
 import org.h2.command.Prepared;
+import org.h2.command.dml.Query;
 import org.h2.command.dml.SelectUnion;
 import org.h2.jdbc.JdbcPreparedStatement;
 import org.h2.util.IntArray;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.processors.query.h2.IgniteH2Indexing.setupConnection;
+import static org.apache.ignite.internal.processors.query.h2.opt.GridH2CollocationModel.isCollocated;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlConst.TRUE;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.AVG;
 import static org.apache.ignite.internal.processors.query.h2.sql.GridSqlFunctionType.CAST;
@@ -161,8 +163,8 @@ public class GridSqlQuerySplitter {
     public static GridCacheTwoStepQuery split(
         JdbcPreparedStatement stmt,
         Object[] params,
-        final boolean collocatedGrpBy,
-        final boolean distributedJoins,
+        boolean collocatedGrpBy,
+        boolean distributedJoins,
         boolean enforceJoinOrder,
         IgniteH2Indexing h2
     ) throws SQLException, IgniteCheckedException {
@@ -171,7 +173,7 @@ public class GridSqlQuerySplitter {
 
         // Here we will just do initial query parsing. Do not use optimized
         // subqueries because we do not have unique FROM aliases yet.
-        GridSqlQuery qry = parse(stmt, /*useOptimizedSubqry*/false);
+        GridSqlQuery qry = parse(prepared(stmt), false);
 
         final boolean explain = qry.explain();
 
@@ -183,14 +185,39 @@ public class GridSqlQuerySplitter {
         // Also it will collect all tables and schemas from the query.
         splitter.normalizeQuery(qry);
 
+        Connection conn = stmt.getConnection();
+
         // Here we will have correct normalized AST with optimized join order.
-        qry = optimize(h2, stmt.getConnection(), qry, params, enforceJoinOrder);
+        // The distributedJoins parameter is ignored because it is not relevant for
+        // the REDUCE query optimization.
+        qry = parse(optimize(h2, conn, qry.getSQL(), params, false, enforceJoinOrder),
+            true);
 
         // Do the actual query split. We will update the original query AST, need to be careful.
         splitter.splitQuery(qry);
 
         assert !F.isEmpty(splitter.mapSqlQrys): "map"; // We must have at least one map query.
         assert splitter.rdcSqlQry != null: "rdc"; // We must have a reduce query.
+
+        // If we have distributed joins, then we have to optimize all MAP side queries
+        // to have a correct join order with respect to batched joins and check if we need
+        // distributed joins at all.
+        // TODO Also we need to have a list of table aliases to filter by primary or explicit partitions.
+        if (distributedJoins) {
+            boolean allColocated = true;
+
+            for (GridCacheSqlQuery mapSqlQry : splitter.mapSqlQrys) {
+                Prepared prepared = optimize(h2, conn, mapSqlQry.query(), params, true, enforceJoinOrder);
+
+                allColocated &= isCollocated((Query)prepared);
+
+                mapSqlQry.query(parse(prepared, true).getSQL());
+            }
+
+            // We do not need distributed joins if all MAP queries are colocated.
+            if (allColocated)
+                distributedJoins = false;
+        }
 
         // Setup resulting two step query and return it.
         GridCacheTwoStepQuery twoStepQry = new GridCacheTwoStepQuery(splitter.schemas, splitter.tbls);
@@ -1309,13 +1336,11 @@ public class GridSqlQuerySplitter {
     }
 
     /**
-     * @param stmt Statement.
+     * @param prepared Prepared command.
      * @param useOptimizedSubqry Use optimized subqueries order for table filters.
      * @return Parsed SQL query AST.
      */
-    private static GridSqlQuery parse(PreparedStatement stmt, boolean useOptimizedSubqry) {
-        Prepared prepared = prepared(stmt);
-
+    private static GridSqlQuery parse(Prepared prepared, boolean useOptimizedSubqry) {
         return new GridSqlQueryParser(useOptimizedSubqry).parse(prepared);
     }
 
@@ -1325,31 +1350,25 @@ public class GridSqlQuerySplitter {
      * @param qry Parsed query.
      * @param params Query parameters.
      * @param enforceJoinOrder Enforce join order.
-     * @return Optimized query AST.
+     * @return Optimized prepared command.
      * @throws SQLException If failed.
      * @throws IgniteCheckedException If failed.
      */
-    private static GridSqlQuery optimize(
+    private static Prepared optimize(
         IgniteH2Indexing h2,
         Connection c,
-        GridSqlQuery qry,
+        String qry,
         Object[] params,
+        boolean distributedJoins,
         boolean enforceJoinOrder
     ) throws SQLException, IgniteCheckedException {
-        // Here we will optimize the query like if it was just a usual local query to have
-        // correct plan for reduce step.
-        // We disrespect distributedJoins flag here, because it will make sense only
-        // for each separate map query (some of them can be colocated, others may be not).
-        setupConnection(c, /*distributedJoins*/false, enforceJoinOrder);
+        setupConnection(c, distributedJoins, enforceJoinOrder);
 
-        try (PreparedStatement s = c.prepareStatement(qry.getSQL())) {
+        try (PreparedStatement s = c.prepareStatement(qry)) {
             h2.bindParameters(s, F.asList(params));
 
-            // Here we need to have correct optimized join order in our AST.
-            qry = parse(s, /*useOptimizedSubqry*/true);
+            return prepared(s);
         }
-
-        return qry;
     }
 
     /**
