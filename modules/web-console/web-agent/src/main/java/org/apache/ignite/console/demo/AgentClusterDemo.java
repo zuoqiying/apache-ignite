@@ -29,9 +29,9 @@ import org.apache.ignite.IgniteServices;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.console.agent.AgentConfiguration;
-import org.apache.ignite.console.demo.service.DemoCacheLoadService;
-import org.apache.ignite.console.demo.service.DemoCacheRandomLoadService;
-import org.apache.ignite.console.demo.service.DemoServiceAllNodes;
+import org.apache.ignite.console.demo.service.DemoCachesLoadService;
+import org.apache.ignite.console.demo.service.DemoRandomCacheLoadService;
+import org.apache.ignite.console.demo.service.DemoServiceMultipleInstances;
 import org.apache.ignite.console.demo.service.DemoServiceClusterSingleton;
 import org.apache.ignite.console.demo.service.DemoServiceKeyAffinity;
 import org.apache.ignite.console.demo.service.DemoServiceNodeSingleton;
@@ -118,8 +118,8 @@ public class AgentClusterDemo {
      * @param cnt - maximum count read/write key
      */
     private static void startLoad(final Ignite ignite, final int cnt) {
-        ignite.services().deployClusterSingleton("Cache populate/load service", new DemoCacheLoadService(cnt));
-        ignite.services().deployNodeSingleton("Cache random load service", new DemoCacheRandomLoadService(cnt));
+        ignite.services().deployClusterSingleton("Demo caches load service", new DemoCachesLoadService(cnt));
+        ignite.services().deployNodeSingleton("RandomCache load service", new DemoRandomCacheLoadService(cnt));
     }
 
     /**
@@ -162,11 +162,11 @@ public class AgentClusterDemo {
 
                 IgniteServices services = ignite.services();
 
-                services.deployMultiple("Demo service: All nodes", new DemoServiceAllNodes(), 7, 3);
+                services.deployMultiple("Demo service: Multiple instances", new DemoServiceMultipleInstances(), 7, 3);
                 services.deployNodeSingleton("Demo service: Node singleton", new DemoServiceNodeSingleton());
                 services.deployClusterSingleton("Demo service: Cluster singleton", new DemoServiceClusterSingleton());
                 services.deployKeyAffinitySingleton("Demo service: Key affinity singleton",
-                    new DemoServiceKeyAffinity(), DemoCacheLoadService.CAR_CACHE_NAME, "id");
+                    new DemoServiceKeyAffinity(), DemoCachesLoadService.CAR_CACHE_NAME, "id");
 
                 if (log.isDebugEnabled())
                     log.debug("DEMO: Started embedded nodes with indexed enabled caches...");

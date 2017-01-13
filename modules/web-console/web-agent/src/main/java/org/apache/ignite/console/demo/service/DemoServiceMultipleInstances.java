@@ -23,7 +23,7 @@ import org.apache.ignite.services.ServiceContext;
 /**
  * Demo service to provide on all nodes.
  */
-public class DemoServiceAllNodes implements Service {
+public class DemoServiceMultipleInstances implements Service {
     /** {@inheritDoc} */
     @Override public void cancel(ServiceContext ctx) {
         // No-op.
