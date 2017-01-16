@@ -46,7 +46,7 @@ import org.apache.ignite.transactions.Transaction;
 public class DPLEntityIdManagerTest extends GridCommonAbstractTest {
 
     /** Total size of the page cache */
-    private static final long PAGE_CACHE_SIZE = 100L << 20; // Mb
+    private static final long PAGE_CACHE_SIZE = 200L << 20; // Mb
 
     private static final int GRID_COUNT = 4;
 
@@ -64,7 +64,7 @@ public class DPLEntityIdManagerTest extends GridCommonAbstractTest {
         IgniteConfiguration cfg = super.getConfiguration(gridName);
 
         // Wrong setting
-        cfg.setLateAffinityAssignment(true);
+        cfg.setLateAffinityAssignment(false);
 
         // MemoryConfiguration
         MemoryConfiguration mcfg = new MemoryConfiguration();
@@ -95,10 +95,10 @@ public class DPLEntityIdManagerTest extends GridCommonAbstractTest {
             startGrid(i);
         Random rnd = new Random();
         while (true) {
-            Thread.sleep(60_000);
+            Thread.sleep(5_000);
             int i = rnd.nextInt(GRID_COUNT);
             stopGrid(i);
-            Thread.sleep(60_000);
+            Thread.sleep(5_000);
             startGrid(i);
         }
     }
