@@ -42,8 +42,14 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
     /** Total size of the page cache */
     private static final long PAGE_CACHE_SIZE = 100L << 20; // Mb
 
-    /** Number of started grids (at the most) */
-    private static final int GRID_COUNT = 10;
+    /** Number of started grids (minimum) */
+    private static final int MIN_GRID_COUNT = 4;
+
+    /** Number of started grids (maximum) */
+    private static final int MAX_GRID_COUNT = 10;
+
+    /** Index of the remote JVM starting grid */
+    private static final int REMOTE_GRID_IDX = 1;
 
     /** Number of caches started on every node */
     private static final int CACHE_COUNT = 10;
@@ -59,12 +65,6 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
     /** Cache count to start */
     private int cacheCnt;
 
-    /** Cache count to start */
-    private int remoteNodeIdx;
-
-    /** Start grid index */
-    private int gridIdx;
-
     /** {@inheritDoc} */
     @Override protected long getTestTimeout() {
         return 3600_000L;
@@ -72,7 +72,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
 
     /** {@inheritDoc} */
     @Override protected boolean isRemoteJvm(String gridName) {
-        return getTestGridIndex(gridName) == remoteNodeIdx;
+        return getTestGridIndex(gridName) == REMOTE_GRID_IDX;
     }
 
     /** */
@@ -83,22 +83,6 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
     /** */
     private void printf(String format, Object... args) {
         out.printf(format, args);
-    }
-
-    /** {@inheritDoc} */
-    @Override protected void beforeTestsStarted() throws Exception {
-        super.beforeTestsStarted();
-    }
-
-    /** {@inheritDoc} */
-    @Override protected void afterTestsStopped() throws Exception {
-        super.afterTestsStopped();
-    }
-
-    /** {@inheritDoc} */
-    @Override protected IgniteEx startGrid(int gridIdx) throws Exception {
-        this.gridIdx = gridIdx;
-        return super.startGrid(gridIdx);
     }
 
     /** */
@@ -122,7 +106,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
         cfg.setMemoryConfiguration(mcfg);
 
         // Start caches only on the first grid
-        if (gridIdx == 0) {
+        if (getTestGridIndex(gridName) == 0) {
             // CacheConfiguration
             CacheConfiguration[] ccfg = new CacheConfiguration[cacheCnt];
 
@@ -130,7 +114,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
                 CacheConfiguration c = new CacheConfiguration();
 
                 c.setName(cacheName(gridName, i));
-                c.setBackups(3);
+//                c.setBackups(3);
                 c.setCacheMode(CacheMode.REPLICATED);
 //                c.setNodeFilter(new CacheNodeFilter(gridName));
 
@@ -187,7 +171,10 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
 
             Thread.sleep(100);
 
-            return runtime.totalMemory() - runtime.freeMemory();
+            long usedMem = runtime.totalMemory() - runtime.freeMemory();
+
+            printf("Runtime used memory = %01.3f M\n", sizeInMegabytes(usedMem));
+            return usedMem;
         }
         catch (InterruptedException ex) {
             throw new IgniteInterruptedException(ex);
@@ -200,14 +187,12 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
     public void testCacheOverhead() throws Exception {
         List<Double> overheads = new ArrayList<>();
 
-        for (int i = 2; i < GRID_COUNT; ++i)
+        for (int i = MIN_GRID_COUNT; i <= MAX_GRID_COUNT; ++i)
             overheads.add(cacheOverhead(i));
 
-        for (int i = 2; i < GRID_COUNT; ++i)
-            printf("Nodes: %d, overhead = %01.3f M\n", i + 1, sizeInMegabytes(overheads.get(i - 2)));
+        for (int i = MIN_GRID_COUNT; i <= MAX_GRID_COUNT; ++i)
+            printf("Nodes: %d, overhead = %01.3f M\n", i, sizeInMegabytes(overheads.get(i - MIN_GRID_COUNT)));
     }
-
-
 
     /**
      * @param gridCount Count nodes in the grid.
@@ -218,12 +203,10 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
     private double cacheOverhead(int gridCount) throws Exception {
         cacheCnt = 0;
 
-        remoteNodeIdx = gridCount;
-
         for (int i = 0; i < gridCount; ++i)
             startGrid(i);
 
-        IgniteProcessProxy remoteNode = (IgniteProcessProxy)startGrid(gridCount);
+        IgniteProcessProxy remoteNode = (IgniteProcessProxy)grid(REMOTE_GRID_IDX);
 
         Thread.sleep(10_000);
 
@@ -236,9 +219,7 @@ public class CacheOverheadTest extends GridCommonAbstractTest {
         for (int i = 0; i < gridCount; ++i)
             startGridWithCaches(i);
 
-        awaitPartitionMapExchange();
-
-        remoteNode = (IgniteProcessProxy)startGrid(gridCount);
+        remoteNode = (IgniteProcessProxy)grid(REMOTE_GRID_IDX);
 
         Thread.sleep(10_000);
 
