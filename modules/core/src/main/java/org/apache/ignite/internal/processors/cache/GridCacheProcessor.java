@@ -109,6 +109,7 @@ import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.lang.IgniteOutClosureX;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.F;
+import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -3478,6 +3479,27 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         }
 
         return null;
+    }
+
+    /**
+     * @param cacheNames Cache names.
+     * @return Pair of existing and absence cache collections.
+     */
+    public T2<Collection<String>, Collection<String>> filterAbsenceCaches(Collection<String> cacheNames) {
+
+        List<String> presentCacheNames = new ArrayList<>(cacheNames.size());
+        List<String> absentCacheNames = new ArrayList<>();
+
+        for (String cacheName : cacheNames) {
+            int cacheId = CU.cacheId(cacheName);
+
+            if (cacheDescriptor(cacheId) != null)
+                presentCacheNames.add(cacheName);
+            else
+                absentCacheNames.add(cacheName);
+        }
+
+        return new T2<>(Collections.unmodifiableList(presentCacheNames), Collections.unmodifiableList(absentCacheNames));
     }
 
     /**
