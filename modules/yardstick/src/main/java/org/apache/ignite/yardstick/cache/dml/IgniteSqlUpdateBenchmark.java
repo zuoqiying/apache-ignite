@@ -17,12 +17,10 @@
 
 package org.apache.ignite.yardstick.cache.dml;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.yardstick.cache.IgniteCacheAbstractBenchmark;
 import org.apache.ignite.yardstick.cache.model.Person1;
@@ -37,31 +35,15 @@ public class IgniteSqlUpdateBenchmark extends IgniteCacheAbstractBenchmark<Integ
     @Override public void setUp(final BenchmarkConfiguration cfg) throws Exception {
         super.setUp(cfg);
 
-        final AtomicInteger i = new AtomicInteger();
+        try (IgniteDataStreamer<Integer, Object> ds = ignite().dataStreamer(cache().getName())) {
+            int k = 0;
 
-        Collection<Thread> setupThreads = new ArrayList<>(cfg.threads());
-
-        for (int j = 0; j < cfg.threads(); j++) {
-            Thread t = new Thread() {
-                /** {@inheritDoc} */
-                @Override public void run() {
-                    int k;
-
-                    while ((k = i.getAndIncrement()) < args.range()) {
-                        cache().put(k, new Person1(k));
-                        if (++k % 100000 == 0)
-                            BenchmarkUtils.println(cfg, "UPDATE setUp: have successfully put " + k + " items");
-                    }
-                }
-            };
-
-            setupThreads.add(t);
-
-            t.start();
+            while (k < args.range()) {
+                ds.addData(k, new Person1(k));
+                if (++k % 100000 == 0)
+                    BenchmarkUtils.println(cfg, "UPDATE setUp: have successfully put " + k + " items");
+            }
         }
-
-        for (Thread t : setupThreads)
-            t.join();
     }
 
     /** {@inheritDoc} */
