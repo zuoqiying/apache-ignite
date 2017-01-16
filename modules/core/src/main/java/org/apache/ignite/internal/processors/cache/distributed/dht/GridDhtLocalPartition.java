@@ -577,6 +577,10 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
                 if (log.isDebugEnabled())
                     log.debug("Owned partition: " + this);
 
+                if (ord == RENTING.ordinal()) {
+                    // TODO : rebuild index.
+                }
+
                 // No need to keep history any more.
                 evictHist = null;
 
