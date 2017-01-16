@@ -17,9 +17,11 @@
 package org.apache.ignite.loadtest;
 
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.cache.eviction.EvictionPolicy;
@@ -30,6 +32,7 @@ import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.resources.IgniteInstanceResource;
+import org.apache.ignite.resources.LoggerResource;
 import org.apache.ignite.services.Service;
 import org.apache.ignite.services.ServiceContext;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
@@ -102,17 +105,27 @@ public class DPLEntityIdManagerTest extends GridCommonAbstractTest {
 
     private static class DPLserivce implements Service {
 
+        private final AtomicBoolean running = new AtomicBoolean(true);
+        private final CountDownLatch exited = new CountDownLatch(1);
+
         @IgniteInstanceResource
         public Ignite ignite;
 
-        private DPLEntityIdManager idManager;
+        @LoggerResource
+        public IgniteLogger logger;
 
-        private final AtomicBoolean running = new AtomicBoolean();
+        private DPLEntityIdManager idManager;
 
         /** {@inheritDoc} */
         @Override public void cancel(ServiceContext ctx) {
-            running.set(false);
-            idManager.destroySequence();
+            if (!running.compareAndSet(true, false))
+                return;
+            try {
+                exited.await();
+            }
+            catch (InterruptedException ignore) {
+            }
+//            idManager.destroySequence();
         }
 
         /** {@inheritDoc} */
@@ -122,21 +135,25 @@ public class DPLEntityIdManagerTest extends GridCommonAbstractTest {
 
         /** {@inheritDoc} */
         @Override public void execute(ServiceContext ctx) throws Exception {
-            IgniteCache<Long, Long> cache = ignite.cache(CACHE_NAME);
-            running.set(true);
-            while (running.get()) {
-                Transaction tx = ignite.transactions().txStart();
-                try {
-                    for (int i = 0; i < CACHE_PACK_SIZE; ++i) {
-                        long id = idManager.nextValue();
-                        cache.put(id, id);
+            try {
+                IgniteCache<Long, Long> cache = ignite.cache(CACHE_NAME);
+                while (running.get()) {
+                    Transaction tx = ignite.transactions().txStart();
+                    try {
+                        for (int i = 0; i < CACHE_PACK_SIZE; ++i) {
+                            long id = idManager.nextValue();
+                            cache.put(id, id);
+                        }
+                        tx.commit();
                     }
-                    tx.commit();
+                    catch (Exception ex) {
+                        logger.error("DPLservice error", ex);
+                        tx.rollback();
+                    }
                 }
-                catch (Exception ex) {
-                    tx.rollback();
-                    throw ex;
-                }
+            }
+            finally {
+                exited.countDown();
             }
         }
     }
