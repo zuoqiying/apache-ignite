@@ -70,8 +70,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 /**
  * Partition topology.
  */
-@GridToStringExclude
-class GridDhtPartitionTopologyImpl implements GridDhtPartitionTopology {
+@GridToStringExclude class GridDhtPartitionTopologyImpl implements GridDhtPartitionTopology {
     /** If true, then check consistency. */
     private static final boolean CONSISTENCY_CHECK = false;
 
@@ -196,6 +195,9 @@ class GridDhtPartitionTopologyImpl implements GridDhtPartitionTopology {
      * @throws IgniteCheckedException If failed.
      */
     private boolean waitForRent() throws IgniteCheckedException {
+        if (1 == 1)
+            return false;
+
         final long longOpDumpTimeout =
             IgniteSystemProperties.getLong(IgniteSystemProperties.IGNITE_LONG_OPERATIONS_DUMP_TIMEOUT, 60_000);
 
@@ -667,6 +669,10 @@ class GridDhtPartitionTopologyImpl implements GridDhtPartitionTopology {
                         else
                             updateSeq = updateLocal(p, locPart.state(), updateSeq);
                     }
+                    else if (state == RENTING) {
+                        // TODO : re-own?
+                        System.out.println("???");
+                    }
                 }
                 else {
                     if (locPart != null) {
@@ -773,8 +779,12 @@ class GridDhtPartitionTopologyImpl implements GridDhtPartitionTopology {
                         "(often may be caused by inconsistent 'key.hashCode()' implementation) " +
                         "[part=" + p + ", topVer=" + topVer + ", this.topVer=" + this.topVer + ']');
             }
-            else if (loc != null && state == RENTING && cctx.allowFastEviction())
-                throw new GridDhtInvalidPartitionException(p, "Adding entry to partition that is concurrently evicted.");
+            else if (loc != null && state == RENTING) {
+                loc.own();
+
+                if (updateSeq)
+                    this.updateSeq.incrementAndGet();
+            }
 
             if (loc == null) {
                 if (!treatAllPartAsLoc && !belongs)

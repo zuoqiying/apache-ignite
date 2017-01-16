@@ -544,7 +544,7 @@ public class GridDhtPartitionDemander {
                     if (partCntrs == null)
                         partCntrs = new HashMap<>(parts.size(), 1.0f);
 
-                    GridDhtLocalPartition p = cctx.topology().localPartition(part, old.topologyVersion(), false);
+                    GridDhtLocalPartition p = cctx.topology().localPartition(part, old.topologyVersion(), true);
 
                     partCntrs.put(part, p.initialUpdateCounter());
                 }
