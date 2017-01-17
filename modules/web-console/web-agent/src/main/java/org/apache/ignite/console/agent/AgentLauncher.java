@@ -142,12 +142,20 @@ public class AgentLauncher {
                 if (ignore != null && "407".equals(ignore.getMessage())) {
                     log.error("Failed to establish connection to server, due to proxy requires authentication.");
 
-                    final String userName = readLine("Enter proxy user name: ");
-                    final char[] pwd = readPassword("Enter proxy password: ");
+                    String userName = System.getProperty("https.proxyUsername", System.getProperty("http.proxyUsername"));
+
+                    if (userName == null || userName.trim().isEmpty())
+                        userName = readLine("Enter proxy user name: ");
+                    else
+                        System.out.println("Read username from system properties: " + userName);
+
+                    char[] pwd = readPassword("Enter proxy password: ");
+
+                    final PasswordAuthentication pwdAuth = new PasswordAuthentication(userName, pwd);
 
                     Authenticator.setDefault(new Authenticator() {
                         @Override protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(userName, pwd);
+                            return pwdAuth;
                         }
                     });
 
@@ -276,6 +284,25 @@ public class AgentLauncher {
             restHnd.start();
 
             URI uri = URI.create(cfg.serverUri());
+
+            // Create proxy authenticator using passed properties.
+            switch (uri.getScheme()) {
+                case "http":
+                case "https":
+                    final String username = System.getProperty(uri.getScheme() + ".proxyUsername");
+                    final char[] pwd = System.getProperty(uri.getScheme() +  ".proxyPassword", "").toCharArray();
+
+                    Authenticator.setDefault(new Authenticator() {
+                        @Override protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(username, pwd);
+                        }
+                    });
+
+                    break;
+
+                default:
+                    // No-op.
+            }
 
             IO.Options opts = new IO.Options();
 
