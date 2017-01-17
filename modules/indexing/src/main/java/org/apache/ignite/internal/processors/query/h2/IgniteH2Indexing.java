@@ -1189,43 +1189,44 @@ public class IgniteH2Indexing implements GridQueryIndexing {
             GridH2QueryContext.set(new GridH2QueryContext(locNodeId, locNodeId, 0, PREPARE)
                 .distributedJoins(distributedJoins));
 
-            PreparedStatement stmt;
+            PreparedStatement stmt = null;
 
             boolean cachesCreated = false;
 
             try {
-                while (true) {
-                    try {
-                        // Do not cache this statement because the whole two step query object will be cached later on.
-                        stmt = prepareStatement(c, sqlQry, false);
+                try {
+                    while (true) {
+                        try {
+                            // Do not cache this statement because the whole two step query object will be cached later on.
+                            stmt = prepareStatement(c, sqlQry, false);
 
-                        break;
-                    }
-                    catch (SQLException e) {
-                        if (!cachesCreated && e.getErrorCode() == ErrorCode.SCHEMA_NOT_FOUND_1) {
-                            try {
-                                ctx.cache().createMissingCaches();
-                            }
-                            catch (IgniteCheckedException e1) {
-                                throw new CacheException("Failed to create missing caches.", e);
-                            }
-
-                            cachesCreated = true;
+                            break;
                         }
-                        else
-                            throw new CacheException("Failed to parse query: " + sqlQry, e);
+                        catch (SQLException e) {
+                            if (!cachesCreated && e.getErrorCode() == ErrorCode.SCHEMA_NOT_FOUND_1) {
+                                try {
+                                    ctx.cache().createMissingCaches();
+                                }
+                                catch (IgniteCheckedException e1) {
+                                    throw new CacheException("Failed to create missing caches.", e);
+                                }
+
+                                cachesCreated = true;
+                            }
+                            else
+                                throw new CacheException("Failed to parse query: " + sqlQry, e);
+                        }
                     }
+
+                    bindParameters(stmt, F.asList(qry.getArgs()));
+
+                    twoStepQry = GridSqlQuerySplitter.split((JdbcPreparedStatement)stmt, qry.getArgs(), grpByCollocated,
+                        distributedJoins, enforceJoinOrder, this);
+
                 }
-            }
-            finally {
-                GridH2QueryContext.clearThreadLocal();
-            }
-
-            try {
-                bindParameters(stmt, F.asList(qry.getArgs()));
-
-                twoStepQry = GridSqlQuerySplitter.split((JdbcPreparedStatement)stmt, qry.getArgs(), grpByCollocated,
-                    distributedJoins, enforceJoinOrder, this);
+                finally {
+                    GridH2QueryContext.clearThreadLocal();
+                }
 
                 List<Integer> caches;
                 List<Integer> extraCaches = null;
