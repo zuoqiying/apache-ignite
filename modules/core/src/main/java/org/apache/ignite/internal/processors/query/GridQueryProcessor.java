@@ -51,6 +51,7 @@ import org.apache.ignite.binary.BinaryObjectBuilder;
 import org.apache.ignite.binary.BinaryType;
 import org.apache.ignite.binary.Binarylizable;
 import org.apache.ignite.cache.CacheTypeMetadata;
+import org.apache.ignite.cache.CacheTypeFieldMetadata;
 import org.apache.ignite.cache.QueryEntity;
 import org.apache.ignite.cache.QueryIndex;
 import org.apache.ignite.cache.QueryIndexType;
@@ -1442,6 +1443,14 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         if (aliases == null)
             aliases = Collections.emptyMap();
 
+        HashMap<String,String> fieldsDbNames = new HashMap<String,String>();
+        for (CacheTypeFieldMetadata field : meta.getKeyFields()) {
+            fieldsDbNames.put(field.getDatabaseName().toUpperCase(), field.getDatabaseName());
+        }
+        for (CacheTypeFieldMetadata field : meta.getValueFields()) {
+            fieldsDbNames.put(field.getDatabaseName().toUpperCase(), field.getDatabaseName());
+        }
+
         for (Map.Entry<String, Class<?>> entry : meta.getAscendingFields().entrySet()) {
             BinaryProperty prop = buildBinaryProperty(entry.getKey(), entry.getValue(), aliases, null);
 
@@ -1485,7 +1494,8 @@ public class GridQueryProcessor extends GridProcessorAdapter {
                 int order = 0;
 
                 for (Map.Entry<String, IgniteBiTuple<Class<?>, Boolean>> idxField : idxFields.entrySet()) {
-                    BinaryProperty prop = buildBinaryProperty(idxField.getKey(), idxField.getValue().get1(), aliases,
+                    String idxFieldName = fieldsDbNames.get(idxField.getKey().toUpperCase());
+                    BinaryProperty prop = buildBinaryProperty(idxFieldName, idxField.getValue().get1(), aliases,
                         null);
 
                     d.addProperty(prop, false);
@@ -1500,7 +1510,8 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         }
 
         for (Map.Entry<String, Class<?>> entry : meta.getQueryFields().entrySet()) {
-            BinaryProperty prop = buildBinaryProperty(entry.getKey(), entry.getValue(), aliases, null);
+            String fieldName = fieldsDbNames.get(entry.getKey().toUpperCase());
+            BinaryProperty prop = buildBinaryProperty(fieldName, entry.getValue(), aliases, null);
 
             if (!d.props.containsKey(prop.name()))
                 d.addProperty(prop, false);
