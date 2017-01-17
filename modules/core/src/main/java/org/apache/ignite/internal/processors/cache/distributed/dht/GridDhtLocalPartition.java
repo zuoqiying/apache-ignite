@@ -245,7 +245,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
      * @return {@code True} if partition is empty.
      */
     public boolean isEmpty() {
-        if (cctx.allowFastEviction())
+        if (cctx.allowAtomicEviction())
             return map.size() == 0;
 
         return size() == 0 && map.size() == 0;
@@ -906,7 +906,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         while (it.hasNext()) {
             GridDhtCacheEntry cached = null;
 
-            if (state() != RENTING)
+            if (state() != RENTING || cctx.kernalContext().isStopping())
                 return;
 
             cctx.shared().database().checkpointReadLock();
@@ -958,12 +958,12 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
             }
         }
 
-        if (!cctx.allowFastEviction()) {
+        if (!cctx.allowAtomicEviction()) {
             try {
                 GridIterator<CacheDataRow> it0 = cctx.offheap().iterator(id);
 
                 while (it0.hasNext()) {
-                    if (state() != RENTING)
+                    if (state() != RENTING || cctx.kernalContext().isStopping())
                         return;
 
                     cctx.shared().database().checkpointReadLock();

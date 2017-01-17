@@ -79,7 +79,7 @@ public class GridDhtDetachedCacheEntry extends GridDistributedCacheEntry {
     }
 
     /** {@inheritDoc} */
-    @Override protected void removeValue() throws IgniteCheckedException {
+    @Override protected void removeValue(boolean evict) throws IgniteCheckedException {
         // No-op for detached entries, index is updated on primary or backup nodes.
     }
 

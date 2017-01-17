@@ -1957,7 +1957,11 @@ public class GridCacheContext<K, V> implements Externalizable {
      * @return {@code True} if fast eviction is allowed.
      */
     public boolean allowFastEviction() {
-        return shared().database().persistenceEnabled() && !GridQueryProcessor.isEnabled(cacheCfg);
+        return shared().database().persistenceEnabled();
+    }
+
+    public boolean allowAtomicEviction() {
+        return allowFastEviction() && !GridQueryProcessor.isEnabled(config());
     }
 
     /**

@@ -759,7 +759,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
         GridDhtPartitionState state = loc != null ? loc.state() : null;
 
-        if (loc != null && state != EVICTED && (state != RENTING || !cctx.allowFastEviction()))
+        if (loc != null && state != EVICTED && (state != RENTING || !cctx.allowAtomicEviction()))
             return loc;
 
         if (!create)
@@ -784,7 +784,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                         "(often may be caused by inconsistent 'key.hashCode()' implementation) " +
                         "[part=" + p + ", topVer=" + topVer + ", this.topVer=" + this.topVer + ']');
             }
-            else if (loc != null && state == RENTING && cctx.allowFastEviction())
+            else if (loc != null && state == RENTING && cctx.allowAtomicEviction())
                 throw new GridDhtInvalidPartitionException(p, "Adding entry to partition that is concurrently evicted.");
 
             if (loc == null) {

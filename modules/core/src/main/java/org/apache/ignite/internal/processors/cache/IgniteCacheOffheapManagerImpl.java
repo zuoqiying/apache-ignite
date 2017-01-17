@@ -332,9 +332,10 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     @Override public void remove(
         KeyCacheObject key,
         int partId,
-        GridDhtLocalPartition part
+        GridDhtLocalPartition part,
+        boolean evict
     ) throws IgniteCheckedException {
-        dataStore(part).remove(key, partId);
+        dataStore(part).remove(key, partId, evict);
     }
 
     /** {@inheritDoc} */
@@ -928,39 +929,60 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         }
 
         /** {@inheritDoc} */
-        @Override public void remove(KeyCacheObject key, int partId) throws IgniteCheckedException {
+        @Override public void remove(KeyCacheObject key, int partId, boolean evict) throws IgniteCheckedException {
+            if (evict && cctx.allowAtomicEviction())
+                return;
+
             if (!busyLock.enterBusy())
                 throw new NodeStoppingException("Operation has been cancelled (node is stopping).");
 
             try {
-                DataRow dataRow = dataTree.remove(new KeySearchRow(key.hashCode(), key, 0));
+                if (evict && cctx.allowFastEviction()) {
+                    assert indexingEnabled;
 
-                CacheObject val = null;
-                GridCacheVersion ver = null;
+                    DataRow dataRow = dataTree.findOne(new KeySearchRow(key.hashCode(), key, 0));
 
-                if (dataRow != null) {
+                    if (dataRow == null)
+                        return;
+
                     assert dataRow.link() != 0 : dataRow;
 
-                    if (pendingEntries != null && dataRow.expireTime() != 0)
-                        pendingEntries.remove(new PendingRow(dataRow.expireTime(), dataRow.link()));
-
-                    storageSize.decrementAndGet();
-
-                    val = dataRow.value();
-
-                    ver = dataRow.version();
-                }
-
-                if (indexingEnabled) {
                     GridCacheQueryManager qryMgr = cctx.queries();
 
                     assert qryMgr.enabled();
 
-                    qryMgr.remove(key, partId, val, ver);
+                    qryMgr.remove(key, partId, dataRow.value(), dataRow.version());
                 }
+                else {
+                    DataRow dataRow = dataTree.remove(new KeySearchRow(key.hashCode(), key, 0));
 
-                if (dataRow != null)
-                    rowStore.removeRow(dataRow.link());
+                    CacheObject val = null;
+                    GridCacheVersion ver = null;
+
+                    if (dataRow != null) {
+                        assert dataRow.link() != 0 : dataRow;
+
+                        if (pendingEntries != null && dataRow.expireTime() != 0)
+                            pendingEntries.remove(new PendingRow(dataRow.expireTime(), dataRow.link()));
+
+                        storageSize.decrementAndGet();
+
+                        val = dataRow.value();
+
+                        ver = dataRow.version();
+                    }
+
+                    if (indexingEnabled) {
+                        GridCacheQueryManager qryMgr = cctx.queries();
+
+                        assert qryMgr.enabled();
+
+                        qryMgr.remove(key, partId, val, ver);
+                    }
+
+                    if (dataRow != null)
+                        rowStore.removeRow(dataRow.link());
+                }
             }
             finally {
                 busyLock.leaveBusy();

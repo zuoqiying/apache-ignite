@@ -128,12 +128,14 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      * @param key Key.
      * @param partId Partition number.
      * @param part Partition.
+     * @param evict True if remove is called as part of partition eviction.
      * @throws IgniteCheckedException If failed.
      */
     public void remove(
         KeyCacheObject key,
         int partId,
-        GridDhtLocalPartition part
+        GridDhtLocalPartition part,
+        boolean evict
     ) throws IgniteCheckedException;
 
     /**
@@ -310,9 +312,10 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
         /**
          * @param key Key.
          * @param partId Partition number.
+         * @param evict True if r
          * @throws IgniteCheckedException If failed.
          */
-        public void remove(KeyCacheObject key, int partId) throws IgniteCheckedException;
+        public void remove(KeyCacheObject key, int partId, boolean evict) throws IgniteCheckedException;
 
         /**
          * @param key Key.

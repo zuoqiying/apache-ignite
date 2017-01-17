@@ -74,7 +74,7 @@ import static org.apache.ignite.events.EventType.EVT_NODE_JOINED;
 import static org.apache.ignite.events.EventType.EVT_NODE_LEFT;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.AFFINITY_POOL;
 import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState.MOVING;
-import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState.EVICTED;
+import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState.RENTING;
 import static org.apache.ignite.internal.util.GridConcurrentFactory.newMap;
 
 /**
@@ -789,7 +789,7 @@ public class GridDhtPreloader extends GridCachePreloaderAdapter {
                                 try {
                                     part.tryEvict();
 
-                                    if (part.state() != EVICTED)
+                                    if (part.state() == RENTING)
                                         partsToEvict.push(part);
                                 }
                                 catch (Throwable ex) {

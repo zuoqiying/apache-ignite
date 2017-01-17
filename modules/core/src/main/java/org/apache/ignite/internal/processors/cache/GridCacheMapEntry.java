@@ -3628,12 +3628,22 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
     /**
      * Removes value from offheap.
      *
+     * @param evict True if called as part of partition eviction.
      * @throws IgniteCheckedException If failed.
      */
-    protected void removeValue() throws IgniteCheckedException {
+    protected void removeValue(boolean evict) throws IgniteCheckedException {
         assert Thread.holdsLock(this);
 
-        cctx.offheap().remove(key, partition(), localPartition());
+        cctx.offheap().remove(key, partition(), localPartition(), evict);
+    }
+
+    /**
+     * Removes value from offheap.
+     *
+     * @throws IgniteCheckedException If failed.
+     */
+    protected final void removeValue() throws IgniteCheckedException {
+        removeValue(false);
     }
 
     /** {@inheritDoc} */
