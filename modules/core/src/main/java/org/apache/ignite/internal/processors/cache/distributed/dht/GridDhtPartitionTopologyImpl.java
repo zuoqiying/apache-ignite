@@ -732,6 +732,11 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 }
             }
         }
+        else if (loc.state() == RENTING) {
+            // TODO: re-own
+
+            loc.own();
+        }
 
         return loc;
     }
@@ -779,12 +784,8 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                         "(often may be caused by inconsistent 'key.hashCode()' implementation) " +
                         "[part=" + p + ", topVer=" + topVer + ", this.topVer=" + this.topVer + ']');
             }
-            else if (loc != null && state == RENTING) {
-                loc.own();
-
-                if (updateSeq)
-                    this.updateSeq.incrementAndGet();
-            }
+            else if (loc != null && state == RENTING && cctx.allowFastEviction())
+                throw new GridDhtInvalidPartitionException(p, "Adding entry to partition that is concurrently evicted.");
 
             if (loc == null) {
                 if (!treatAllPartAsLoc && !belongs)

@@ -49,6 +49,7 @@ import org.apache.ignite.internal.processors.cache.extras.GridCacheEntryExtras;
 import org.apache.ignite.internal.processors.cache.extras.GridCacheMvccEntryExtras;
 import org.apache.ignite.internal.processors.cache.extras.GridCacheObsoleteEntryExtras;
 import org.apache.ignite.internal.processors.cache.extras.GridCacheTtlEntryExtras;
+import org.apache.ignite.internal.processors.cache.query.GridCacheQueryManager;
 import org.apache.ignite.internal.processors.cache.query.continuous.CacheContinuousQueryListener;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxEntry;
@@ -60,6 +61,7 @@ import org.apache.ignite.internal.processors.cache.version.GridCacheVersionConfl
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionEx;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionedEntryEx;
 import org.apache.ignite.internal.processors.dr.GridDrType;
+import org.apache.ignite.internal.processors.query.GridQueryProcessor;
 import org.apache.ignite.internal.util.lang.GridClosureException;
 import org.apache.ignite.internal.util.lang.GridMetadataAwareAdapter;
 import org.apache.ignite.internal.util.lang.GridTuple;
@@ -474,7 +476,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
      * @throws IgniteCheckedException If failed.
      */
     @SuppressWarnings({"RedundantTypeArguments"})
-    @Nullable protected Object readThrough(@Nullable IgniteInternalTx tx, KeyCacheObject key, boolean reload, UUID subjId,
+    @Nullable protected Object readThrough(@Nullable IgniteInternalTx tx, KeyCacheObject key, boolean reload,
+        UUID subjId,
         String taskName) throws IgniteCheckedException {
         return cctx.store().load(tx, key);
     }
@@ -1292,7 +1295,7 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
             if (readThrough && needVal && old == null &&
                 (cctx.readThrough() && (op == GridCacheOperation.TRANSFORM || cctx.loadPreviousValue()))) {
-                    old0 = readThrough(null, key, false, subjId, taskName);
+                old0 = readThrough(null, key, false, subjId, taskName);
 
                 old = cctx.toCacheObject(old0);
 
@@ -2071,7 +2074,7 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 if (!hadVal) {
                     boolean new0 = isNew();
 
-                    assert deletedUnlocked() || new0 || isInternal(): "Invalid entry [entry=" + this + ", locNodeId=" +
+                    assert deletedUnlocked() || new0 || isInternal() : "Invalid entry [entry=" + this + ", locNodeId=" +
                         cctx.localNodeId() + ']';
 
                     if (!new0 && !isInternal())
@@ -2278,7 +2281,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
      * @param cpy Copy flag.
      * @return Cache object value.
      */
-    @Nullable private Object value(@Nullable Object val, @Nullable CacheObject cacheObj, boolean keepBinary, boolean cpy) {
+    @Nullable private Object value(@Nullable Object val, @Nullable CacheObject cacheObj, boolean keepBinary,
+        boolean cpy) {
         if (val != null)
             return val;
 
@@ -2360,7 +2364,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
      * @param topVer Topology version.
      * @throws IgniteCheckedException In case of exception.
      */
-    private void drReplicate(GridDrType drType, @Nullable CacheObject val, GridCacheVersion ver, AffinityTopologyVersion topVer)
+    private void drReplicate(GridDrType drType, @Nullable CacheObject val, GridCacheVersion ver,
+        AffinityTopologyVersion topVer)
         throws IgniteCheckedException {
         if (cctx.isDrEnabled() && drType != DR_NONE && !isInternal())
             cctx.dr().replicate(key, val, rawTtl(), rawExpireTime(), ver.conflictVersion(), drType, topVer);
@@ -2678,7 +2683,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
      * @param ttl Time to live.
      * @param ver Update version.
      */
-    protected final void update(@Nullable CacheObject val, long expireTime, long ttl, GridCacheVersion ver, boolean addTracked) {
+    protected final void update(@Nullable CacheObject val, long expireTime, long ttl, GridCacheVersion ver,
+        boolean addTracked) {
         assert ver != null;
         assert Thread.holdsLock(this);
         assert ttl != CU.TTL_ZERO && ttl != CU.TTL_NOT_CHANGED && ttl >= 0 : ttl;
@@ -3594,7 +3600,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
      * @param expireTime Expire time.
      * @param updCntr Update counter.
      */
-    protected void logUpdate(GridCacheOperation op, CacheObject val, GridCacheVersion writeVer, long expireTime, long updCntr)
+    protected void logUpdate(GridCacheOperation op, CacheObject val, GridCacheVersion writeVer, long expireTime,
+        long updCntr)
         throws IgniteCheckedException {
         // We log individual updates only in ATOMIC cache.
         assert cctx.atomic();
@@ -3673,7 +3680,7 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
             if (detached())
                 return rawGet();
 
-            for (;;) {
+            for (; ; ) {
                 GridCacheEntryEx e = cctx.cache().peekEx(key);
 
                 if (e == null)
