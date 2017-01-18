@@ -148,7 +148,6 @@ public class DPLEntityIdManagerTest extends GridCommonAbstractTest {
                     }
                     catch (Exception ex) {
                         logger.error("DPLservice error", ex);
-                        tx.rollback();
                     }
                 }
             }
