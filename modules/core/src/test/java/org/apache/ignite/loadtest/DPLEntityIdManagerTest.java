@@ -138,8 +138,7 @@ public class DPLEntityIdManagerTest extends GridCommonAbstractTest {
             try {
                 IgniteCache<Long, Long> cache = ignite.cache(CACHE_NAME);
                 while (running.get()) {
-                    Transaction tx = ignite.transactions().txStart();
-                    try {
+                    try (Transaction tx = ignite.transactions().txStart()) {
                         for (int i = 0; i < CACHE_PACK_SIZE; ++i) {
                             long id = idManager.nextValue();
                             cache.put(id, id);
