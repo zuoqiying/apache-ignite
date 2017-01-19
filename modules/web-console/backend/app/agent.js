@@ -601,16 +601,16 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo)
          * Cancel service with specified name.
          * @param {Boolean} demo Is need run command on demo node.
          * @param {String} nid Node ID.
-         * @param {String} service Service to cancel.
+         * @param {String} name Name of service to cancel.
          * @returns {Promise}
          */
-        serviceCancel(demo, nid, service) {
+        serviceCancel(demo, nid, name) {
             const cmd = new Command(demo, 'exe')
                 .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
                 .addParam('p1', nid)
                 .addParam('p2', 'org.apache.ignite.internal.visor.service.VisorCancelServiceTask')
                 .addParam('p3', 'java.lang.String')
-                .addParam('p4', service);
+                .addParam('p4', name);
 
             return this.executeRest(cmd);
         }

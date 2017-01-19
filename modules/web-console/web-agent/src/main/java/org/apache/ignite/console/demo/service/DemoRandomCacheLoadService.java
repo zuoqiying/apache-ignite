@@ -28,17 +28,18 @@ import org.apache.ignite.console.demo.AgentDemoUtils;
 import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.services.Service;
 import org.apache.ignite.services.ServiceContext;
+import org.apache.log4j.Logger;
 
 /**
  * Demo service. Create cache and populate it by random int pairs.
  */
-public class DemoCacheRandomLoadService implements Service {
+public class DemoRandomCacheLoadService implements Service {
     /** Ignite instance. */
     @IgniteInstanceResource
     private Ignite ignite;
 
     /** Thread pool to execute cache load operations. */
-    ScheduledExecutorService cachePool;
+    private ScheduledExecutorService cachePool;
 
     /** */
     public static final String RANDOM_CACHE_NAME = "RandomCache";
@@ -55,7 +56,7 @@ public class DemoCacheRandomLoadService implements Service {
     /**
      * @param cnt Maximum count read/write key.
      */
-    public DemoCacheRandomLoadService(int cnt) {
+    public DemoRandomCacheLoadService(int cnt) {
         this.cnt = cnt;
     }
 
@@ -78,7 +79,7 @@ public class DemoCacheRandomLoadService implements Service {
             @Override public void run() {
                 try {
                     for (String cacheName : ignite.cacheNames()) {
-                        if (!DemoCacheLoadService.DEMO_CACHES.contains(cacheName)) {
+                        if (!DemoCachesLoadService.DEMO_CACHES.contains(cacheName)) {
                             IgniteCache<Integer, Integer> cache = ignite.cache(cacheName);
 
                             if (cache != null) {

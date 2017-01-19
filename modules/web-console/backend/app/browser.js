@@ -469,9 +469,9 @@ module.exports.factory = (_, socketio, agentMgr, configure) => {
                 });
 
                 // Collect service information from grid.
-                socket.on('service:cancel', (nid, service, cb) => {
+                socket.on('service:cancel', (nid, name, cb) => {
                     agentMgr.findAgent(accountId())
-                        .then((agent) => agent.serviceCancel(demo, nid, service))
+                        .then((agent) => agent.serviceCancel(demo, nid, name))
                         .then((data) => {
                             if (data.finished)
                                 return cb(null, data.result);

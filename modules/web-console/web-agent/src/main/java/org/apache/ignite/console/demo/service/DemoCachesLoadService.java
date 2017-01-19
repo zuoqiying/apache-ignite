@@ -44,7 +44,6 @@ import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.services.Service;
 import org.apache.ignite.services.ServiceContext;
 import org.apache.ignite.transactions.Transaction;
-import org.apache.log4j.Logger;
 
 import static org.apache.ignite.transactions.TransactionConcurrency.PESSIMISTIC;
 import static org.apache.ignite.transactions.TransactionIsolation.REPEATABLE_READ;
@@ -52,34 +51,31 @@ import static org.apache.ignite.transactions.TransactionIsolation.REPEATABLE_REA
 /**
  * Demo service. Create and populate caches. Run demo load on caches.
  */
-public class DemoCacheLoadService implements Service {
+public class DemoCachesLoadService implements Service {
     /** Ignite instance. */
     @IgniteInstanceResource
     private Ignite ignite;
 
-    /** */
-    private static final Logger log = Logger.getLogger(DemoCacheLoadService.class.getName());
-
     /** Thread pool to execute cache load operations. */
-    ScheduledExecutorService cachePool;
+    private ScheduledExecutorService cachePool;
 
     /** */
-    public static final String COUNTRY_CACHE_NAME = "CountryCache";
+    private static final String COUNTRY_CACHE_NAME = "CountryCache";
 
     /** */
-    public static final String DEPARTMENT_CACHE_NAME = "DepartmentCache";
+    private static final String DEPARTMENT_CACHE_NAME = "DepartmentCache";
 
     /** */
-    public static final String EMPLOYEE_CACHE_NAME = "EmployeeCache";
+    private static final String EMPLOYEE_CACHE_NAME = "EmployeeCache";
 
     /** */
-    public static final String PARKING_CACHE_NAME = "ParkingCache";
+    private static final String PARKING_CACHE_NAME = "ParkingCache";
 
     /** */
     public static final String CAR_CACHE_NAME = "CarCache";
 
     /** */
-    public static final Set<String> DEMO_CACHES = new HashSet<>(Arrays.asList(COUNTRY_CACHE_NAME,
+    static final Set<String> DEMO_CACHES = new HashSet<>(Arrays.asList(COUNTRY_CACHE_NAME,
         DEPARTMENT_CACHE_NAME, EMPLOYEE_CACHE_NAME, PARKING_CACHE_NAME, CAR_CACHE_NAME));
 
     /** Countries count. */
@@ -109,7 +105,7 @@ public class DemoCacheLoadService implements Service {
     /**
      * @param cnt Maximum count read/write key.
      */
-    public DemoCacheLoadService(int cnt) {
+    public DemoCachesLoadService(int cnt) {
         this.cnt = cnt;
 
         range = new java.util.Date().getTime();
@@ -221,7 +217,7 @@ public class DemoCacheLoadService implements Service {
      * Configure cacheCountry.
      */
     private static <K, V> CacheConfiguration<K, V> cacheCountry() {
-        CacheConfiguration<K, V> ccfg = cacheConfiguration(DemoCacheLoadService.COUNTRY_CACHE_NAME);
+        CacheConfiguration<K, V> ccfg = cacheConfiguration(COUNTRY_CACHE_NAME);
 
         // Configure cacheCountry types.
         Collection<QueryEntity> qryEntities = new ArrayList<>();
@@ -252,7 +248,7 @@ public class DemoCacheLoadService implements Service {
      * Configure cacheEmployee.
      */
     private static <K, V> CacheConfiguration<K, V> cacheDepartment() {
-        CacheConfiguration<K, V> ccfg = cacheConfiguration(DemoCacheLoadService.DEPARTMENT_CACHE_NAME);
+        CacheConfiguration<K, V> ccfg = cacheConfiguration(DEPARTMENT_CACHE_NAME);
 
         // Configure cacheDepartment types.
         Collection<QueryEntity> qryEntities = new ArrayList<>();
@@ -283,7 +279,7 @@ public class DemoCacheLoadService implements Service {
      * Configure cacheEmployee.
      */
     private static <K, V> CacheConfiguration<K, V> cacheEmployee() {
-        CacheConfiguration<K, V> ccfg = cacheConfiguration(DemoCacheLoadService.EMPLOYEE_CACHE_NAME);
+        CacheConfiguration<K, V> ccfg = cacheConfiguration(EMPLOYEE_CACHE_NAME);
 
         ccfg.setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
         ccfg.setBackups(1);
@@ -343,7 +339,7 @@ public class DemoCacheLoadService implements Service {
      * Configure cacheEmployee.
      */
     private static <K, V> CacheConfiguration<K, V> cacheParking() {
-        CacheConfiguration<K, V> ccfg = cacheConfiguration(DemoCacheLoadService.PARKING_CACHE_NAME);
+        CacheConfiguration<K, V> ccfg = cacheConfiguration(PARKING_CACHE_NAME);
 
         // Configure cacheParking types.
         Collection<QueryEntity> qryEntities = new ArrayList<>();
@@ -374,7 +370,7 @@ public class DemoCacheLoadService implements Service {
      * Configure cacheEmployee.
      */
     private static <K, V> CacheConfiguration<K, V> cacheCar() {
-        CacheConfiguration<K, V> ccfg = cacheConfiguration(DemoCacheLoadService.CAR_CACHE_NAME);
+        CacheConfiguration<K, V> ccfg = cacheConfiguration(CAR_CACHE_NAME);
 
         // Configure cacheCar types.
         Collection<QueryEntity> qryEntities = new ArrayList<>();
