@@ -5837,7 +5837,7 @@ public abstract class GridCacheAbstractFullApiSelfTest extends GridCacheAbstract
                 ctx = ctx.near().dht().context();
 
             for (String key : keys) {
-                if (ctx.affinity().localNode(key, ctx.discovery().topologyVersionEx())) {
+                if (ctx.affinity().keyLocalNode(key, ctx.discovery().topologyVersionEx())) {
                     GridCacheEntryEx e = ctx.cache().entryEx(key);
 
                     assert e != null : "Entry is null [idx=" + idx + ", key=" + key + ", ctx=" + ctx + ']';
@@ -5874,7 +5874,7 @@ public abstract class GridCacheAbstractFullApiSelfTest extends GridCacheAbstract
             int size = 0;
 
             for (String key : map.keySet())
-                if (ctx.affinity().localNode(key, ctx.discovery().topologyVersionEx()))
+                if (ctx.affinity().keyLocalNode(key, ctx.discovery().topologyVersionEx()))
                     size++;
 
             assertEquals("Incorrect key size on cache #" + idx, size, ignite.cache(ctx.name()).localSize(ALL));
@@ -6117,7 +6117,7 @@ public abstract class GridCacheAbstractFullApiSelfTest extends GridCacheAbstract
             int size = 0;
 
             for (String key : keys)
-                if (ctx.affinity().localNode(key, ctx.discovery().topologyVersionEx()))
+                if (ctx.affinity().keyLocalNode(key, ctx.discovery().topologyVersionEx()))
                     size++;
 
             assertEquals("Incorrect key size on cache #" + idx, size, ignite.cache(null).localSize(ALL));
