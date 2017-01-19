@@ -140,11 +140,11 @@ class VisorCacheScanCommand {
             try
                 executeRandom(groupForDataNode(node, cacheName),
                     classOf[VisorQueryTask], new VisorQueryArg(cacheName, null, false, false, pageSize)) match {
-                    case x if x.get1() != null =>
-                        error(x.get1())
+                    case x if x.getError != null =>
+                        error(x.getError)
 
                         return
-                    case x => x.get2()
+                    case x => x.getResult
                 }
             catch {
                 case e: ClusterGroupEmptyException =>
@@ -184,7 +184,7 @@ class VisorCacheScanCommand {
                 case "y" | "Y" =>
                     try {
                         nextPage = executeOne(firstPage.getResponseNodeId, classOf[VisorQueryNextPageTask],
-                            new IgniteBiTuple[String, Integer](firstPage.getQueryId, pageSize))
+                            new VisorQueryNextPageTaskArg(firstPage.getQueryId, pageSize))
 
                         render()
                     }

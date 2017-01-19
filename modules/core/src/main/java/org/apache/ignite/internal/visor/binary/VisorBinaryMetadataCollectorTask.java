@@ -15,56 +15,56 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.visor.cache;
+package org.apache.ignite.internal.visor.binary;
 
-import java.util.UUID;
-import org.apache.ignite.IgniteException;
-import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.IgniteBinary;
+import org.apache.ignite.internal.binary.BinaryMarshaller;
 import org.apache.ignite.internal.processors.task.GridInternal;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.visor.VisorJob;
 import org.apache.ignite.internal.visor.VisorOneNodeTask;
-import org.apache.ignite.lang.IgniteBiTuple;
-import org.jetbrains.annotations.Nullable;
+import org.apache.ignite.marshaller.Marshaller;
 
 /**
- * Task that will find affinity node for key.
+ * Task that collects binary metadata.
  */
 @GridInternal
-public class VisorCacheAffinityNodeTask extends VisorOneNodeTask<VisorCacheAffinityNodeTaskArg, UUID> {
+public class VisorBinaryMetadataCollectorTask extends VisorOneNodeTask<Long, VisorBinaryMetadataCollectorTaskResult> {
     /** */
     private static final long serialVersionUID = 0L;
 
     /** {@inheritDoc} */
-    @Override protected VisorCacheAffinityNodeJob job(VisorCacheAffinityNodeTaskArg arg) {
-        return new VisorCacheAffinityNodeJob(arg, debug);
+    @Override protected VisorPortableCollectMetadataJob job(Long lastUpdate) {
+        return new VisorPortableCollectMetadataJob(lastUpdate, debug);
     }
 
-    /** Job that will find affinity node for key. */
-    private static class VisorCacheAffinityNodeJob extends VisorJob<VisorCacheAffinityNodeTaskArg, UUID> {
+    /** Job that collect portables metadata on node. */
+    private static class VisorPortableCollectMetadataJob extends VisorJob<Long, VisorBinaryMetadataCollectorTaskResult> {
         /** */
         private static final long serialVersionUID = 0L;
 
         /**
-         * @param arg Cache name and key to find affinity node.
+         * Create job with given argument.
+         *
+         * @param lastUpdate Time data was collected last time.
          * @param debug Debug flag.
          */
-        private VisorCacheAffinityNodeJob(VisorCacheAffinityNodeTaskArg arg, boolean debug) {
-            super(arg, debug);
+        private VisorPortableCollectMetadataJob(Long lastUpdate, boolean debug) {
+            super(lastUpdate, debug);
         }
 
         /** {@inheritDoc} */
-        @Override protected UUID run(@Nullable VisorCacheAffinityNodeTaskArg arg) throws IgniteException {
-            assert arg != null;
+        @Override protected VisorBinaryMetadataCollectorTaskResult run(Long lastUpdate) {
+            Marshaller marsh =  ignite.configuration().getMarshaller();
 
-            ClusterNode node = ignite.affinity(arg.getCacheName()).mapKeyToNode(arg.getKey());
+            IgniteBinary binary = marsh == null || marsh instanceof BinaryMarshaller ? ignite.binary() : null;
 
-            return node != null ? node.id() : null;
+            return new VisorBinaryMetadataCollectorTaskResult(0L, VisorBinaryMetadata.list(binary));
         }
 
         /** {@inheritDoc} */
         @Override public String toString() {
-            return S.toString(VisorCacheAffinityNodeJob.class, this);
+            return S.toString(VisorPortableCollectMetadataJob.class, this);
         }
     }
 }

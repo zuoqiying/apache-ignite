@@ -35,7 +35,7 @@ import org.apache.ignite.resources.JobContextResource;
  * Task that clears specified caches on specified node.
  */
 @GridInternal
-public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<Integer, Integer>> {
+public class VisorCacheClearTask extends VisorOneNodeTask<String, VisorCacheClearTaskResult> {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -47,7 +47,7 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
     /**
      * Job that clear specified caches.
      */
-    private static class VisorCacheClearJob extends VisorJob<String, IgniteBiTuple<Integer, Integer>> {
+    private static class VisorCacheClearJob extends VisorJob<String, VisorCacheClearTaskResult> {
         /** */
         private static final long serialVersionUID = 0L;
 
@@ -55,10 +55,10 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
         private final String cacheName;
 
         /** */
-        private final IgniteInClosure<IgniteFuture<Integer>> lsnr;
+        private final IgniteInClosure<IgniteFuture<Long>> lsnr;
 
         /** */
-        private IgniteFuture<Integer>[] futs;
+        private IgniteFuture<Long>[] futs;
 
         /** */
         @JobContextResource
@@ -75,11 +75,11 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
 
             this.cacheName = cacheName;
 
-            lsnr = new IgniteInClosure<IgniteFuture<Integer>>() {
+            lsnr = new IgniteInClosure<IgniteFuture<Long>>() {
                 /** */
                 private static final long serialVersionUID = 0L;
 
-                @Override public void apply(IgniteFuture<Integer> f) {
+                @Override public void apply(IgniteFuture<Long> f) {
                     assert futs[0].isDone();
                     assert futs[1] == null || futs[1].isDone();
                     assert futs[2] == null || futs[2].isDone();
@@ -94,12 +94,12 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
          * @param idx Index.
          * @return {@code true} If subJob was not completed and this job should be suspended.
          */
-        private boolean callAsync(IgniteCallable<Integer> subJob, int idx) {
+        private boolean callAsync(IgniteCallable<Long> subJob, int idx) {
             IgniteCompute compute = ignite.compute(ignite.cluster().forCacheNodes(cacheName)).withAsync();
 
             compute.call(subJob);
 
-            IgniteFuture<Integer> fut = compute.future();
+            IgniteFuture<Long> fut = compute.future();
 
             futs[idx] = fut;
 
@@ -114,7 +114,7 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
         }
 
         /** {@inheritDoc} */
-        @Override protected IgniteBiTuple<Integer, Integer> run(final String cacheName) {
+        @Override protected VisorCacheClearTaskResult run(final String cacheName) {
             if (futs == null)
                 futs = new IgniteFuture[3];
 
@@ -133,7 +133,7 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
 
             assert futs[0].isDone() && futs[1].isDone() && futs[2].isDone();
 
-            return new IgniteBiTuple<>(futs[0].get(), futs[2].get());
+            return new VisorCacheClearTaskResult(futs[0].get(), futs[2].get());
         }
 
         /** {@inheritDoc} */
@@ -146,7 +146,7 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
      * Callable to get cache size.
      */
     @GridInternal
-    private static class VisorCacheSizeCallable implements IgniteCallable<Integer> {
+    private static class VisorCacheSizeCallable implements IgniteCallable<Long> {
         /** */
         private static final long serialVersionUID = 0L;
 
@@ -161,8 +161,8 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
         }
 
         /** {@inheritDoc} */
-        @Override public Integer call() throws Exception {
-            return cache.size(CachePeekMode.PRIMARY);
+        @Override public Long call() throws Exception {
+            return cache.sizeLong(CachePeekMode.PRIMARY);
         }
     }
 
@@ -170,7 +170,7 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
      * Callable to clear cache.
      */
     @GridInternal
-    private static class VisorCacheClearCallable implements IgniteCallable<Integer> {
+    private static class VisorCacheClearCallable implements IgniteCallable<Long> {
         /** */
         private static final long serialVersionUID = 0L;
 
@@ -185,10 +185,10 @@ public class VisorCacheClearTask extends VisorOneNodeTask<String, IgniteBiTuple<
         }
 
         /** {@inheritDoc} */
-        @Override public Integer call() throws Exception {
+        @Override public Long call() throws Exception {
             cache.clear();
 
-            return 0;
+            return 0L;
         }
     }
 }
