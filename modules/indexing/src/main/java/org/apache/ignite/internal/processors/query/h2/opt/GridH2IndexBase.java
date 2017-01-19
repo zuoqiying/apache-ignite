@@ -375,7 +375,8 @@ public abstract class GridH2IndexBase extends BaseIndex {
         if (affCol != null) {
             affColId = affCol.column.getColumnId();
             int[] masks = filter.getMasks();
-            ucast = masks != null && masks[affColId] == IndexCondition.EQUALITY;
+            ucast = masks != null && (masks[affColId] == IndexCondition.EQUALITY ||
+                masks[KEY_COL] == IndexCondition.EQUALITY);
         }
         else {
             affColId = -1;
