@@ -18,14 +18,19 @@
 package org.apache.ignite.console.agent;
 
 import com.beust.jcommander.Parameter;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -45,7 +50,7 @@ public class AgentConfiguration {
     /** */
     @Parameter(names = {"-t", "--tokens"},
         description = "User's tokens separated by comma used to connect to Ignite Console.")
-    private List<String> tokens;
+    private Set<String> tokens;
 
     /** */
     @Parameter(names = {"-s", "--server-uri"},
@@ -88,14 +93,14 @@ public class AgentConfiguration {
     /**
      * @return Tokens.
      */
-    public List<String> tokens() {
+    public Set<String> tokens() {
         return tokens;
     }
 
     /**
      * @param tokens Tokens.
      */
-    public void tokens(List<String> tokens) {
+    public void tokens(Set<String> tokens) {
         this.tokens = tokens;
     }
 
@@ -166,7 +171,7 @@ public class AgentConfiguration {
      * @return Disable demo mode.
      */
     public Boolean disableDemo() {
-        return disableDemo;
+        return disableDemo != null ? disableDemo : Boolean.FALSE;
     }
 
     /**
@@ -195,8 +200,13 @@ public class AgentConfiguration {
 
         String val = (String)props.remove("tokens");
 
-        if (val != null)
-            tokens(Arrays.asList(val.split(",")));
+        if (val != null) {
+            String[] vals = val.split(",");
+
+            tokens = U.newHashSet(vals.length);
+
+            Collections.addAll(tokens, vals);
+        }
 
         val = (String)props.remove("server-uri");
 
@@ -237,7 +247,7 @@ public class AgentConfiguration {
             driversFolder(cmd.driversFolder());
 
         if (disableDemo == null)
-            driversFolder(cmd.driversFolder());
+            disableDemo(cmd.disableDemo());
     }
 
     /** {@inheritDoc} */
@@ -280,8 +290,8 @@ public class AgentConfiguration {
                 drvFld = new File(agentHome, "jdbc-drivers").getPath();
         }
 
-        sb.append("Path to JDBC drivers folder   : ").append(drvFld);
-        sb.append("Demo mode                     : ").append(disableDemo ? "Enabled" : "Disabled");
+        sb.append("Path to JDBC drivers folder   : ").append(drvFld).append('\n');
+        sb.append("Demo mode                     : ").append(disableDemo() ? "disabled" : "enabled");
 
         return sb.toString();
     }

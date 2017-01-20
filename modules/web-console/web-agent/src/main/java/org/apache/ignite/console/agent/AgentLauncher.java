@@ -30,6 +30,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -43,6 +44,7 @@ import org.apache.ignite.console.agent.handlers.RestHandler;
 import org.apache.ignite.console.agent.handlers.ClusterHandler;
 import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.internal.util.typedef.X;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -322,16 +324,24 @@ public class AgentLauncher {
 
                         client.emit("agent:auth", authMsg, new Ack() {
                             @Override public void call(Object... args) {
-                                // Authentication failed if response contains args.
-                                if (args != null && args.length > 0) {
-                                    onDisconnect.call(args);
+                                if (args != null && args.length == 1 && args[0] instanceof String[]) {
+                                    String[] activeTokens = (String[])args[0];
 
-                                    System.exit(1);
+                                    if (activeTokens.length > 0) {
+//                                        cfg.tokens().removeAll(activeTokens);
+
+                                        log.info("Authentication success.");
+
+                                        clusterHnd.watch();
+
+                                        return;
+                                    }
                                 }
 
-                                log.info("Authentication success.");
+                                // Authentication failed.
+                                onDisconnect.call(args);
 
-                                clusterHnd.watch();
+                                System.exit(1);
                             }
                         });
                     }

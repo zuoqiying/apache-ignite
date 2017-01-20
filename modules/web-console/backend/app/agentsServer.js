@@ -155,28 +155,24 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             _.forEach(tokens, (token) => {
                 const agentSockets = this._agentSockets[token];
 
-                if (_.isNil(agentSockets)) {
+                if (_.isEmpty(agentSockets)) {
                     this._agentSockets[token] = [ioSocket];
 
+                    const browserSockets = _.filter(this._browserSockets[token],
+                        (socket) => socket.request._query.IgniteDemoMode === 'true');
+
                     // If first agent join after user start demo.
-                    if (_.find(this._browserSockets[token], (socket) => socket.request._query.IgniteDemoMode === 'true'))
-                        agentSockets.startDemo();
+                    sock.listenDemo(token, browserSockets);
                 }
                 else
                     agentSockets.push(ioSocket);
 
                 emitAgentCnt(token, this._agentSockets[token].length);
             });
-
-            ioSocket.on('demo:topology', (top) => {
-
-            });
-
-            ioSocket.on('cluster:topology', (top) => {
-
-            });
-
-
+            //
+            // ioSocket.on('cluster:topology', (top) => {
+            //
+            // });
         }
 
         /**
@@ -204,21 +200,21 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
                             return mongo.Account.find({token: {$in: tokens}}, '_id token').lean().exec()
                                 .then((accounts) => {
-                                    if (_.isEmpty(accounts))
-                                        return cb('Agent is failed to authenticate. Please check agent\'s tokens');
-
                                     const activeTokens = _.map(accounts, 'token');
-                                    const missedTokens = _.difference(tokens, activeTokens);
 
-                                    if (missedTokens.length)
-                                        ioSocket.emit('log:warn', `Invalid token(s): ${missedTokens.join(', ')}.`);
+                                    cb(activeTokens);
 
-                                    this._attachAgent(ioSocket, activeTokens);
+                                    if (!_.isEmpty(activeTokens))
+                                        this._attachAgent(ioSocket, activeTokens);
 
-                                    cb();
+                                    // return cb('Agent is failed to authenticate. Please check agent\'s tokens');
+                                    //
+                                    // if (missedTokens.length)
+                                    //     ioSocket.emit('log:warn', `Invalid token(s): ${missedTokens.join(', ')}.`);
+                                    //'Agent is failed to authenticate. Please check agent\'s tokens'
                                 })
                                 // TODO IGNITE-1379 send error to web master.
-                                .catch(() => cb('Agent is failed to authenticate. Please check agent\'s tokens'));
+                                .catch(() => cb());
                         });
                     });
                 });

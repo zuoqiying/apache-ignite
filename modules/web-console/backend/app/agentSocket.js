@@ -96,6 +96,11 @@ module.exports.factory = function(_) {
              * @type {socketIo.Socket}
              */
             this.socket = socket;
+
+            this._demo = {
+                tokens: [],
+                browserSockets: []
+            };
         }
 
         /**
@@ -135,12 +140,24 @@ module.exports.factory = function(_) {
             );
         }
 
-        warn(message) {
-            return this.emitEvent('log:warn', message);
-        }
+        /**
+         *
+         * @param {String} token
+         * @param {Array.<Socket>} browserSockets
+         */
+        listenDemo(token, browserSockets) {
+            this._demo.tokens.push(token);
 
-        startDemo(timeout) {
-            return this.emitEvent('demo:broadcast:start', timeout);
+            if (this._demo.browserSockets.length === 0 && browserSockets.length) {
+                this.emitEvent('demo:broadcast:start')
+                    .then(() => this.socket.on('demo:topology', (top) => {
+                        console.log(top);
+
+                        // TODO send to tab>">s
+                    }));
+            }
+
+            this._demo.browserSockets.push(...browserSockets);
         }
 
         startCollectTopology(timeout) {
