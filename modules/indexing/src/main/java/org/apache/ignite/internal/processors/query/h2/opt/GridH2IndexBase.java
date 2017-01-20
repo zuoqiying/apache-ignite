@@ -369,18 +369,17 @@ public abstract class GridH2IndexBase extends BaseIndex {
 
         IndexColumn affCol = getTable().getAffinityKeyColumn();
 
-        int affColId;
-        boolean ucast;
+        int affColId = -1;
+        boolean ucast = false;
 
         if (affCol != null) {
             affColId = affCol.column.getColumnId();
             int[] masks = filter.getMasks();
-            ucast = masks != null && (masks[affColId] == IndexCondition.EQUALITY ||
-                masks[KEY_COL] == IndexCondition.EQUALITY);
-        }
-        else {
-            affColId = -1;
-            ucast = false;
+
+            if (masks != null) {
+                ucast = (masks[affColId] & IndexCondition.EQUALITY) != 0 ||
+                    (masks[KEY_COL] & IndexCondition.EQUALITY) != 0;
+            }
         }
 
         GridCacheContext<?,?> cctx = getTable().rowDescriptor().context();
