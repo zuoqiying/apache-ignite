@@ -18,19 +18,14 @@
 package org.apache.ignite.console.agent;
 
 import com.beust.jcommander.Parameter;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
-import org.apache.ignite.internal.util.typedef.internal.U;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -50,7 +45,7 @@ public class AgentConfiguration {
     /** */
     @Parameter(names = {"-t", "--tokens"},
         description = "User's tokens separated by comma used to connect to Ignite Console.")
-    private Set<String> tokens;
+    private List<String> tokens;
 
     /** */
     @Parameter(names = {"-s", "--server-uri"},
@@ -93,14 +88,14 @@ public class AgentConfiguration {
     /**
      * @return Tokens.
      */
-    public Set<String> tokens() {
+    public List<String> tokens() {
         return tokens;
     }
 
     /**
      * @param tokens Tokens.
      */
-    public void tokens(Set<String> tokens) {
+    public void tokens(List<String> tokens) {
         this.tokens = tokens;
     }
 
@@ -200,13 +195,8 @@ public class AgentConfiguration {
 
         String val = (String)props.remove("tokens");
 
-        if (val != null) {
-            String[] vals = val.split(",");
-
-            tokens = U.newHashSet(vals.length);
-
-            Collections.addAll(tokens, vals);
-        }
+        if (val != null)
+            tokens(Arrays.asList(val.split(",")));
 
         val = (String)props.remove("server-uri");
 

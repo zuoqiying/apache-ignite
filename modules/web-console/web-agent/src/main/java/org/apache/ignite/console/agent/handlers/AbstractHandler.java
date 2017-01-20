@@ -17,10 +17,6 @@
 
 package org.apache.ignite.console.agent.handlers;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
 import io.socket.client.Ack;
 import io.socket.emitter.Emitter;
 import java.util.Arrays;
@@ -29,8 +25,11 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.log4j.Logger;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
+import static org.apache.ignite.console.agent.AgentUtils.removeCallback;
+import static org.apache.ignite.console.agent.AgentUtils.fromJSON;
+import static org.apache.ignite.console.agent.AgentUtils.safeCallback;
+import static org.apache.ignite.console.agent.AgentUtils.toJSON;
 
 /**
  * Base class for web socket handlers.
@@ -39,51 +38,15 @@ abstract class AbstractHandler implements Emitter.Listener {
     /** */
     private static final ExecutorService pool = Executors.newCachedThreadPool();
 
-    /** JSON object mapper. */
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    static {
-        JsonOrgModule module = new JsonOrgModule();
-
-        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
-        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-
-        mapper.registerModule(module);
-    }
-
     /** */
     final Logger log = Logger.getLogger(this.getClass().getName());
-
-    /** */
-    private final Ack noopCb = new Ack() {
-        @Override public void call(Object... args) {
-            if (args != null && args.length > 0 && args[0] instanceof Throwable)
-                log.error("Failed to execute request on agent.", (Throwable) args[0]);
-            else
-                log.info("Request on agent successfully executed " + Arrays.toString(args));
-        }
-    };
-
-    /**
-     * @param obj Object.
-     * @return {@link JSONObject} or {@link JSONArray}.
-     */
-    private Object toJSON(Object obj) {
-        if (obj instanceof Iterable)
-            return mapper.convertValue(obj, JSONArray.class);
-
-        return mapper.convertValue(obj, JSONObject.class);
-    }
 
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
     @Override public final void call(Object... args) {
-        boolean hasCb = args != null && args.length > 0 && args[args.length - 1] instanceof Ack;
+        final Ack cb = safeCallback(args);
 
-        final Ack cb = hasCb ? (Ack)args[args.length - 1] : noopCb;
-
-        if (hasCb)
-            args = Arrays.copyOf(args, args.length - 1);
+        args = removeCallback(args);
 
         try {
             final Map<String, Object> params;
@@ -91,7 +54,7 @@ abstract class AbstractHandler implements Emitter.Listener {
             if (args == null || args.length == 0)
                 params = Collections.emptyMap();
             else if (args.length == 1)
-                params = mapper.convertValue(args[0], Map.class);
+                params = fromJSON(args[0], Map.class);
             else
                 throw new IllegalArgumentException("Wrong arguments count, must be <= 1: " + Arrays.toString(args));
 

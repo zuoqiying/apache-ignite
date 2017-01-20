@@ -30,7 +30,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -38,13 +41,12 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import org.apache.ignite.console.agent.handlers.ClusterHandler;
 import org.apache.ignite.console.agent.handlers.DatabaseHandler;
 import org.apache.ignite.console.agent.handlers.DemoHandler;
 import org.apache.ignite.console.agent.handlers.RestHandler;
-import org.apache.ignite.console.agent.handlers.ClusterHandler;
 import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.internal.util.typedef.X;
-import org.apache.ignite.internal.util.typedef.internal.U;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -55,6 +57,8 @@ import static io.socket.client.Socket.EVENT_CONNECT;
 import static io.socket.client.Socket.EVENT_CONNECT_ERROR;
 import static io.socket.client.Socket.EVENT_DISCONNECT;
 import static io.socket.client.Socket.EVENT_ERROR;
+import static org.apache.ignite.console.agent.AgentUtils.fromJSON;
+import static org.apache.ignite.console.agent.AgentUtils.toJSON;
 
 /**
  * Control Center Agent launcher.
@@ -303,7 +307,7 @@ public class AgentLauncher {
                     JSONObject authMsg = new JSONObject();
 
                     try {
-                        authMsg.put("tokens", cfg.tokens());
+                        authMsg.put("tokens", toJSON(cfg.tokens()));
                         authMsg.put("disableDemo", cfg.disableDemo());
 
                         String clsName = AgentLauncher.class.getSimpleName() + ".class";
@@ -324,11 +328,23 @@ public class AgentLauncher {
 
                         client.emit("agent:auth", authMsg, new Ack() {
                             @Override public void call(Object... args) {
-                                if (args != null && args.length == 1 && args[0] instanceof String[]) {
-                                    String[] activeTokens = (String[])args[0];
+                                if (args != null && args.length == 1) {
+                                    List<String> activeTokens = fromJSON(args[0], List.class);
 
-                                    if (activeTokens.length > 0) {
-//                                        cfg.tokens().removeAll(activeTokens);
+                                    if (activeTokens.size() > 0) {
+                                        Collection<String> missedTokens = cfg.tokens();
+
+                                        cfg.tokens(activeTokens);
+
+                                        missedTokens.removeAll(activeTokens);
+
+                                        if (missedTokens.size() > 0) {
+                                            String tokens = missedTokens.toString();
+
+                                            tokens = tokens.substring(1, tokens.length() - 1);
+
+                                            log.warn("Failed to authenticate with token(s): {}", tokens);
+                                        }
 
                                         log.info("Authentication success.");
 
@@ -338,8 +354,7 @@ public class AgentLauncher {
                                     }
                                 }
 
-                                // Authentication failed.
-                                onDisconnect.call(args);
+                                log.error("Failed to authenticate agent. Please check agent\'s tokens");
 
                                 System.exit(1);
                             }

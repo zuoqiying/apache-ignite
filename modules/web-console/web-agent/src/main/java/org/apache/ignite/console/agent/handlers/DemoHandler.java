@@ -17,6 +17,7 @@
 
 package org.apache.ignite.console.agent.handlers;
 
+import io.socket.client.Ack;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 import java.io.IOException;
@@ -33,6 +34,8 @@ import org.apache.ignite.internal.IgniteInterruptedCheckedException;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.ignite.console.agent.AgentUtils.safeCallback;
 
 /**
  *
@@ -73,7 +76,9 @@ public class DemoHandler {
      */
     public Emitter.Listener start() {
         return new Emitter.Listener() {
-            @Override public void call(Object... args) {
+            @Override public void call(final Object... args) {
+                final Ack demoStartCb = safeCallback(args);
+
                 final long timeout = args.length > 1  && args[1] instanceof Long ? (long)args[1] : DFLT_TIMEOUT;
 
                 if (refreshTask != null)
@@ -81,25 +86,33 @@ public class DemoHandler {
 
                 final CountDownLatch latch = AgentClusterDemo.tryStart();
 
-                refreshTask = pool.scheduleWithFixedDelay(new Runnable() {
+                pool.schedule(new Runnable() {
                     @Override public void run() {
                         try {
                             U.await(latch);
 
-                            RestResult top = restExecutor.topology(true, true);
+                            demoStartCb.call();
 
-                            client.emit(EVENT_DEMO_TOPOLOGY, top);
-                        }
-                        catch (IgniteInterruptedCheckedException ignore) {
-                            // No-op.
-                        }
-                        catch (IOException e) {
-                            log.info("Lost connection to the demo cluster", e);
+                            refreshTask = pool.scheduleWithFixedDelay(new Runnable() {
+                                @Override public void run() {
+                                    try {
+                                        RestResult top = restExecutor.topology(true, true);
 
-                            stop();
+                                        client.emit(EVENT_DEMO_TOPOLOGY, top);
+                                    }
+                                    catch (IOException e) {
+                                        log.info("Lost connection to the demo cluster", e);
+
+                                        stop();
+                                    }
+                                }
+                            }, 0L, timeout, TimeUnit.MILLISECONDS);
+                        }
+                        catch (Exception e) {
+                            demoStartCb.call(e);
                         }
                     }
-                }, 0L, timeout, TimeUnit.MILLISECONDS);
+                }, 0, TimeUnit.MILLISECONDS);
             }
         };
     }

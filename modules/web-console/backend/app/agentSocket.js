@@ -146,18 +146,21 @@ module.exports.factory = function(_) {
          * @param {Array.<Socket>} browserSockets
          */
         listenDemo(token, browserSockets) {
-            this._demo.tokens.push(token);
+            this.emitEvent('demo:broadcast:start')
+                .then(() => {
+                    this._demo.tokens.push(token);
+                    this._demo.browserSockets.push(...browserSockets);
 
-            if (this._demo.browserSockets.length === 0 && browserSockets.length) {
-                this.emitEvent('demo:broadcast:start')
-                    .then(() => this.socket.on('demo:topology', (top) => {
+                    this.socket.on('demo:topology', (top) => {
                         console.log(top);
 
                         // TODO send to tab>">s
-                    }));
-            }
+                    });
+                });
+        }
 
-            this._demo.browserSockets.push(...browserSockets);
+        demoStarted(token) {
+            return _.includes(this._demo.tokens, token);
         }
 
         startCollectTopology(timeout) {
