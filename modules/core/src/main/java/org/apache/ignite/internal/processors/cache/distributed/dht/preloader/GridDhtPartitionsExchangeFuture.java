@@ -833,17 +833,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                     assert node != null;
 
-                    IgniteInternalFuture fut;
-                    switch (snapshotMsg.snapshotOperation().type()) {
-                        case CREATE:
-                            fut = cctx.database().startLocalSnapshotCreation(snapshotMsg, node);
-                            break;
-//                        case RESTORE:
-//                            fut = cctx.database().startLo
-                        default:
-                            throw new AssertionError("Operation is not supported!");
-                    }
-
+                    IgniteInternalFuture fut = cctx.database().startLocalSnapshotOperation(snapshotMsg, node);
 
                     if (fut != null)
                         fut.get();

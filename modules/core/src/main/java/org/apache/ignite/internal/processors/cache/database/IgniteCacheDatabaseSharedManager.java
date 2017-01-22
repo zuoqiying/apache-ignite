@@ -29,6 +29,7 @@ import org.apache.ignite.internal.mem.DirectMemoryProvider;
 import org.apache.ignite.internal.mem.file.MappedFileMemoryProvider;
 import org.apache.ignite.internal.mem.unsafe.UnsafeMemoryProvider;
 import org.apache.ignite.internal.pagemem.PageMemory;
+import org.apache.ignite.internal.pagemem.snapshot.SnapshotOperation;
 import org.apache.ignite.internal.pagemem.snapshot.StartSnapshotOperationAckDiscoveryMessage;
 import org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
@@ -174,8 +175,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     /**
      *
      */
-    @Nullable public IgniteInternalFuture wakeupForSnapshotOperation(long snapshotId, UUID snapshotNodeId,
-                                                                     Collection<String> cacheNames) {
+    @Nullable public IgniteInternalFuture wakeupForSnapshotOperation(UUID snapshotNodeId, SnapshotOperation snapshotOperation) {
         return null;
     }
 
@@ -206,13 +206,8 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
      * @return Snapshot creation init future or {@code null} if snapshot is not available.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable public IgniteInternalFuture startLocalSnapshotCreation(StartSnapshotOperationAckDiscoveryMessage snapshotMsg,
-        ClusterNode initiator)
-        throws IgniteCheckedException {
-        return null;
-    }
-
-    @Nullable public IgniteInternalFuture startLocalSnapshotRestore(StartSnapshotOperationAckDiscoveryMessage snapshotMsg, ClusterNode initiator)
+    @Nullable public IgniteInternalFuture startLocalSnapshotOperation(StartSnapshotOperationAckDiscoveryMessage snapshotMsg,
+                                                                      ClusterNode initiator)
         throws IgniteCheckedException {
         return null;
     }

@@ -28,21 +28,21 @@ public class SnapshotOperation implements Serializable {
     private static final long serialVersionUID = 0L;
 
     /** */
-    public final SnapshotOperationType type;
+    private final SnapshotOperationType type;
 
     /**
      * Snapshot ID (the timestamp of snapshot creation).
      */
-    public final long snapshotId;
+    private final long snapshotId;
 
     /** */
-    public final Set<String> cacheNames;
+    private final Set<String> cacheNames;
 
     /** Message. */
-    public final String msg;
+    private final String msg;
 
     /** Additional parameter. */
-    public final Object extraParam;
+    private final Object extraParam;
 
     /**
      * @param type Type.
