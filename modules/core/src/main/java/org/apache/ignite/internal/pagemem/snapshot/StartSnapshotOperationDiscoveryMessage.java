@@ -29,9 +29,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Message indicating that a snapshot has been started.
  */
-public class StartFullSnapshotDiscoveryMessage implements DiscoveryCustomMessage {
+public class StartSnapshotOperationDiscoveryMessage implements DiscoveryCustomMessage {
     /** */
     private static final long serialVersionUID = 0L;
+
+    private final SnapshotOperationType type;
 
     /** Message. */
     private final String msg;
@@ -58,11 +60,16 @@ public class StartFullSnapshotDiscoveryMessage implements DiscoveryCustomMessage
     private Map<Integer, Long> lastFullSnapshotIdForCache = new HashMap<>();
 
     /**
+     * @param type
      * @param cacheNames Cache names.
      * @param msg message to log
      */
-    public StartFullSnapshotDiscoveryMessage(long globalSnapshotId, Collection<String> cacheNames, UUID initiatorId,
-        boolean fullSnapshot, String msg) {
+    public StartSnapshotOperationDiscoveryMessage(
+            SnapshotOperationType type, long globalSnapshotId,
+            Collection<String> cacheNames, UUID initiatorId,
+            boolean fullSnapshot, String msg
+    ) {
+        this.type = type;
         this.globalSnapshotId = globalSnapshotId;
         this.cacheNames = cacheNames;
         this.initiatorId = initiatorId;
@@ -113,6 +120,13 @@ public class StartFullSnapshotDiscoveryMessage implements DiscoveryCustomMessage
     }
 
     /**
+     *
+     */
+    public SnapshotOperationType type() {
+        return type;
+    }
+
+    /**
      * @return Cache names.
      */
     public Collection<String> cacheNames() {
@@ -143,7 +157,7 @@ public class StartFullSnapshotDiscoveryMessage implements DiscoveryCustomMessage
 
     /** {@inheritDoc} */
     @Nullable @Override public DiscoveryCustomMessage ackMessage() {
-        return new StartFullSnapshotAckDiscoveryMessage(globalSnapshotId, fullSnapshot, lastFullSnapshotIdForCache, cacheNames, err, initiatorId, msg);
+        return new StartSnapshotOperationAckDiscoveryMessage(type, globalSnapshotId, fullSnapshot, lastFullSnapshotIdForCache, cacheNames, err, initiatorId, msg);
     }
 
     /** {@inheritDoc} */

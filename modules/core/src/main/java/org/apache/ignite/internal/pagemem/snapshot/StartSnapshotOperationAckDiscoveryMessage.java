@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Message indicating that a snapshot has been started.
  */
-public class StartFullSnapshotAckDiscoveryMessage implements DiscoveryCustomMessage {
+public class StartSnapshotOperationAckDiscoveryMessage implements DiscoveryCustomMessage {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -50,6 +50,9 @@ public class StartFullSnapshotAckDiscoveryMessage implements DiscoveryCustomMess
     /** */
     private UUID initiatorNodeId;
 
+    /** */
+    private final SnapshotOperationType type;
+
     /** Full snapshot. */
     private boolean fullSnapshot;
 
@@ -57,14 +60,18 @@ public class StartFullSnapshotAckDiscoveryMessage implements DiscoveryCustomMess
     private Map<Integer, Long> lastFullSnapshotIdForCache;
 
     /**
+     * @param type
      * @param globalSnapshotId Snapshot ID.
-     * @param err Error.
      * @param cacheNames Cache names.
+     * @param err Error.
      */
-    public StartFullSnapshotAckDiscoveryMessage(long globalSnapshotId, boolean fullSnapshot,
-        Map<Integer, Long> lastFullSnapshotIdForCache,
-        Collection<String> cacheNames, Exception err,
-        UUID initiatorNodeId, String msg) {
+    public StartSnapshotOperationAckDiscoveryMessage(
+            SnapshotOperationType type, long globalSnapshotId, boolean fullSnapshot,
+            Map<Integer, Long> lastFullSnapshotIdForCache,
+            Collection<String> cacheNames, Exception err,
+            UUID initiatorNodeId, String msg
+    ) {
+        this.type = type;
         this.globalSnapshotId = globalSnapshotId;
         this.fullSnapshot = fullSnapshot;
         this.lastFullSnapshotIdForCache = lastFullSnapshotIdForCache;
@@ -72,6 +79,13 @@ public class StartFullSnapshotAckDiscoveryMessage implements DiscoveryCustomMess
         this.cacheNames = cacheNames;
         this.initiatorNodeId = initiatorNodeId;
         this.msg = msg;
+    }
+
+    /**
+     *
+     */
+    public SnapshotOperationType type() {
+        return type;
     }
 
     /**

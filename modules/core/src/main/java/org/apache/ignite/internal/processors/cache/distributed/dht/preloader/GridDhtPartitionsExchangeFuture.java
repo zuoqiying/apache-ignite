@@ -48,7 +48,7 @@ import org.apache.ignite.internal.cluster.ClusterTopologyCheckedException;
 import org.apache.ignite.internal.events.DiscoveryCustomEvent;
 import org.apache.ignite.internal.managers.discovery.DiscoveryCustomMessage;
 import org.apache.ignite.internal.managers.discovery.GridDiscoveryTopologySnapshot;
-import org.apache.ignite.internal.pagemem.snapshot.StartFullSnapshotAckDiscoveryMessage;
+import org.apache.ignite.internal.pagemem.snapshot.StartSnapshotOperationAckDiscoveryMessage;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.affinity.GridAffinityAssignmentCache;
 import org.apache.ignite.internal.processors.cache.CacheAffinityChangeMessage;
@@ -510,7 +510,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
                     exchange = onCacheChangeRequest(crdNode);
                 }
-                else if (msg instanceof StartFullSnapshotAckDiscoveryMessage)
+                else if (msg instanceof StartSnapshotOperationAckDiscoveryMessage)
                     exchange = CU.clientNode(discoEvt.eventNode()) ?
                         onClientNodeEvent(crdNode) :
                         onServerNodeEvent(crdNode);
@@ -825,15 +825,23 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         if (discoEvt.type() == EVT_DISCOVERY_CUSTOM_EVT) {
             DiscoveryCustomMessage customMessage = ((DiscoveryCustomEvent)discoEvt).customMessage();
 
-            if (customMessage instanceof StartFullSnapshotAckDiscoveryMessage) {
-                StartFullSnapshotAckDiscoveryMessage backupMsg = (StartFullSnapshotAckDiscoveryMessage)customMessage;
+            if (customMessage instanceof StartSnapshotOperationAckDiscoveryMessage) {
+                StartSnapshotOperationAckDiscoveryMessage snapshotMsg = (StartSnapshotOperationAckDiscoveryMessage)customMessage;
 
                 if (!cctx.localNode().isClient() && !cctx.localNode().isDaemon()) {
-                    ClusterNode node = cctx.discovery().node(backupMsg.initiatorNodeId());
+                    ClusterNode node = cctx.discovery().node(snapshotMsg.initiatorNodeId());
 
                     assert node != null;
 
-                    IgniteInternalFuture fut = cctx.database().startLocalSnapshotCreation(backupMsg, node, backupMsg.message());
+                    IgniteInternalFuture fut;
+                    switch (snapshotMsg.type()) {
+                        case CREATE:
+                            fut = cctx.database().startLocalSnapshotCreation(snapshotMsg, node, snapshotMsg.message());
+                            break;
+                        default:
+                            throw new AssertionError("Operation is not supported!");
+                    }
+
 
                     if (fut != null)
                         fut.get();
