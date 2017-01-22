@@ -174,8 +174,8 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     /**
      *
      */
-    @Nullable public IgniteInternalFuture wakeupForSnapshot(long snapshotId, UUID snapshotNodeId,
-        Collection<String> cacheNames) {
+    @Nullable public IgniteInternalFuture wakeupForSnapshotOperation(long snapshotId, UUID snapshotNodeId,
+                                                                     Collection<String> cacheNames) {
         return null;
     }
 
@@ -203,12 +203,16 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     /**
      * @param snapshotMsg Snapshot message.
      * @param initiator Initiator node.
-     * @param msg message to log
      * @return Snapshot creation init future or {@code null} if snapshot is not available.
      * @throws IgniteCheckedException If failed.
      */
     @Nullable public IgniteInternalFuture startLocalSnapshotCreation(StartSnapshotOperationAckDiscoveryMessage snapshotMsg,
-        ClusterNode initiator, String msg)
+        ClusterNode initiator)
+        throws IgniteCheckedException {
+        return null;
+    }
+
+    @Nullable public IgniteInternalFuture startLocalSnapshotRestore(StartSnapshotOperationAckDiscoveryMessage snapshotMsg, ClusterNode initiator)
         throws IgniteCheckedException {
         return null;
     }

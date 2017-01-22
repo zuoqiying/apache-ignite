@@ -33,19 +33,11 @@ public class StartSnapshotOperationDiscoveryMessage implements DiscoveryCustomMe
     /** */
     private static final long serialVersionUID = 0L;
 
-    private final SnapshotOperationType type;
-
-    /** Message. */
-    private final String msg;
+    /** Snapshot operation. */
+    private SnapshotOperation snapshotOperation;
 
     /** Custom message ID. */
     private IgniteUuid id = IgniteUuid.randomUuid();
-
-    /** Snapshot ID. */
-    private long globalSnapshotId;
-
-    /** */
-    private Collection<String> cacheNames;
 
     /** */
     private UUID initiatorId;
@@ -53,28 +45,10 @@ public class StartSnapshotOperationDiscoveryMessage implements DiscoveryCustomMe
     /** Error. */
     private Exception err;
 
-    /** Full snapshot. */
-    private boolean fullSnapshot;
-
-    /** Last full snapshot id for cache. */
-    private Map<Integer, Long> lastFullSnapshotIdForCache = new HashMap<>();
-
-    /**
-     * @param type
-     * @param cacheNames Cache names.
-     * @param msg message to log
-     */
-    public StartSnapshotOperationDiscoveryMessage(
-            SnapshotOperationType type, long globalSnapshotId,
-            Collection<String> cacheNames, UUID initiatorId,
-            boolean fullSnapshot, String msg
-    ) {
-        this.type = type;
-        this.globalSnapshotId = globalSnapshotId;
-        this.cacheNames = cacheNames;
+    /** */
+    public StartSnapshotOperationDiscoveryMessage(UUID initiatorId, SnapshotOperation snapshotOperation) {
         this.initiatorId = initiatorId;
-        this.fullSnapshot = fullSnapshot;
-        this.msg = msg;
+        this.snapshotOperation = snapshotOperation;
     }
 
     /**
@@ -113,62 +87,26 @@ public class StartSnapshotOperationDiscoveryMessage implements DiscoveryCustomMe
     }
 
     /**
-     * @return Backup ID.
+     *
      */
-    public long globalSnapshotId() {
-        return globalSnapshotId;
+    public SnapshotOperation snapshotOperation() {
+        return snapshotOperation;
     }
 
     /**
      *
      */
-    public SnapshotOperationType type() {
-        return type;
-    }
-
-    /**
-     * @return Cache names.
-     */
-    public Collection<String> cacheNames() {
-        return cacheNames;
-    }
-
-    /**
-     *
-     */
-    public boolean fullSnapshot() {
-        return fullSnapshot;
-    }
-
-    /**
-     * @param cacheId Cache id.
-     */
-    public Long lastFullSnapshotId(int cacheId) {
-        return lastFullSnapshotIdForCache.get(cacheId);
-    }
-
-    /**
-     * @param cacheId Cache id.
-     * @param id Id.
-     */
-    public void lastFullSnapshotId(int cacheId, long id) {
-        lastFullSnapshotIdForCache.put(cacheId, id);
+    public void snapshotOperation(SnapshotOperation snapshotOperation) {
+        this.snapshotOperation = snapshotOperation;
     }
 
     /** {@inheritDoc} */
     @Nullable @Override public DiscoveryCustomMessage ackMessage() {
-        return new StartSnapshotOperationAckDiscoveryMessage(type, globalSnapshotId, fullSnapshot, lastFullSnapshotIdForCache, cacheNames, err, initiatorId, msg);
+        return new StartSnapshotOperationAckDiscoveryMessage(snapshotOperation, err, initiatorId);
     }
 
     /** {@inheritDoc} */
     @Override public boolean isMutable() {
         return true;
-    }
-
-    /**
-     * @param full full snapshot.
-     */
-    public void fullSnapshot(boolean full) {
-        fullSnapshot = full;
     }
 }

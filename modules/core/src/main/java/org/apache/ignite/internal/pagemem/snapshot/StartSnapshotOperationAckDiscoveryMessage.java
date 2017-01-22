@@ -32,72 +32,41 @@ public class StartSnapshotOperationAckDiscoveryMessage implements DiscoveryCusto
     /** */
     private static final long serialVersionUID = 0L;
 
-    /** Message. */
-    private final String msg;
+    /** Snapshot operation. */
+    private final SnapshotOperation snapshotOperation;
 
     /** Custom message ID. */
     private IgniteUuid id = IgniteUuid.randomUuid();
 
     /** */
-    private long globalSnapshotId;
-
-    /** */
     private Exception err;
-
-    /** */
-    private Collection<String> cacheNames;
 
     /** */
     private UUID initiatorNodeId;
 
-    /** */
-    private final SnapshotOperationType type;
-
-    /** Full snapshot. */
-    private boolean fullSnapshot;
-
-    /** Last full snapshot id for cache. */
-    private Map<Integer, Long> lastFullSnapshotIdForCache;
-
     /**
-     * @param type
-     * @param globalSnapshotId Snapshot ID.
-     * @param cacheNames Cache names.
      * @param err Error.
      */
     public StartSnapshotOperationAckDiscoveryMessage(
-            SnapshotOperationType type, long globalSnapshotId, boolean fullSnapshot,
-            Map<Integer, Long> lastFullSnapshotIdForCache,
-            Collection<String> cacheNames, Exception err,
-            UUID initiatorNodeId, String msg
+            SnapshotOperation snapshotOperation,
+            Exception err,
+            UUID initiatorNodeId
     ) {
-        this.type = type;
-        this.globalSnapshotId = globalSnapshotId;
-        this.fullSnapshot = fullSnapshot;
-        this.lastFullSnapshotIdForCache = lastFullSnapshotIdForCache;
+        this.snapshotOperation = snapshotOperation;
         this.err = err;
-        this.cacheNames = cacheNames;
         this.initiatorNodeId = initiatorNodeId;
-        this.msg = msg;
-    }
-
-    /**
-     *
-     */
-    public SnapshotOperationType type() {
-        return type;
-    }
-
-    /**
-     * @return Cache names.
-     */
-    public Collection<String> cacheNames() {
-        return cacheNames;
     }
 
     /** {@inheritDoc} */
     @Override public IgniteUuid id() {
         return id;
+    }
+
+    /**
+     *
+     */
+    public SnapshotOperation snapshotOperation() {
+        return snapshotOperation;
     }
 
     /**
@@ -119,34 +88,6 @@ public class StartSnapshotOperationAckDiscoveryMessage implements DiscoveryCusto
      */
     public boolean hasError() {
         return err != null;
-    }
-
-    /**
-     * @return Snapshot ID.
-     */
-    public long globalSnapshotId() {
-        return globalSnapshotId;
-    }
-
-    /**
-     *
-     */
-    public boolean fullSnapshot() {
-        return fullSnapshot;
-    }
-
-    /**
-     *
-     */
-    public String message() {
-        return msg;
-    }
-
-    /**
-     * @param cacheId Cache id.
-     */
-    @Nullable public Long lastFullSnapshotId(int cacheId) {
-        return lastFullSnapshotIdForCache.get(cacheId);
     }
 
     /** {@inheritDoc} */
