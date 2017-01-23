@@ -33,6 +33,7 @@ import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
+import org.apache.ignite.internal.NodeStoppingException;
 import org.apache.ignite.internal.pagemem.wal.record.delta.PartitionMetaStateRecord;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.CacheEntryPredicate;
@@ -110,7 +111,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
     private final long createTime = U.currentTimeMillis();
 
     /** Eviction history. */
-    private volatile Map<KeyCacheObject, GridCacheVersion> evictHist = new HashMap<>();
+    private final Map<KeyCacheObject, GridCacheVersion> evictHist = new HashMap<>();
 
     /** Lock. */
     private final ReentrantLock lock = new ReentrantLock();
@@ -354,8 +355,11 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
 
     /** {@inheritDoc} */
     @Override public GridCacheMapEntry putEntryIfObsoleteOrAbsent(
-        AffinityTopologyVersion topVer, KeyCacheObject key,
-        @Nullable CacheObject val, boolean create, boolean touch) {
+        AffinityTopologyVersion topVer,
+        KeyCacheObject key,
+        @Nullable CacheObject val,
+        boolean create,
+        boolean touch) {
         return map.putEntryIfObsoleteOrAbsent(topVer, key, val, create, touch);
     }
 
@@ -374,7 +378,12 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         map.removeEntry(entry);
 
         // Attempt to evict.
-        tryEvict();
+        try {
+            tryEvict();
+        }
+        catch (NodeStoppingException ignore) {
+            // No-op.
+        }
     }
 
     /**
@@ -451,17 +460,11 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         if (state() != MOVING)
             return false;
 
-        Map<KeyCacheObject, GridCacheVersion> evictHist0 = evictHist;
+        GridCacheVersion ver0 = evictHist.get(key);
 
-        if (evictHist0 != null) {
-            GridCacheVersion ver0 = evictHist0.get(key);
-
-            // Permit preloading if version in history
-            // is missing or less than passed in.
-            return ver0 == null || ver0.isLess(ver);
-        }
-
-        return false;
+        // Permit preloading if version in history
+        // is missing or less than passed in.
+        return ver0 == null || ver0.isLess(ver);
     }
 
     /**
@@ -498,7 +501,12 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
                 if ((reservations & 0xFFFF) == 0 && shouldBeRenting)
                     rent(true);
 
-                tryEvict();
+                try {
+                    tryEvict();
+                }
+                catch (NodeStoppingException ignore) {
+                    // No-op.
+                }
 
                 break;
             }
@@ -532,7 +540,8 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
 
                 return update;
             }
-        } else
+        }
+        else
             return state.compareAndSet(reservations, (reservations & 0xFFFF) | ((long)toState.ordinal() << 32));
     }
 
@@ -558,7 +567,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
                     log.debug("Owned partition: " + this);
 
                 // No need to keep history any more.
-                evictHist = null;
+                evictHist.clear();
 
                 return true;
             }
@@ -602,7 +611,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
                     log.debug("Marked partition as LOST: " + this);
 
                 // No need to keep history any more.
-                evictHist = null;
+                evictHist.clear();
 
                 return true;
             }
@@ -691,7 +700,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
      *
      */
     private void clearEvicting() {
-       boolean free = false;
+       boolean free;
 
         while (true) {
             int cnt = evictGuard.get();
@@ -750,9 +759,9 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
     }
 
     /**
-     *
+     * @throws NodeStoppingException If node is stopping.
      */
-    public void tryEvict() {
+    public void tryEvict() throws NodeStoppingException {
         long reservations = state.get();
 
         int ord = (int)(reservations >> 32);
@@ -795,7 +804,12 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
      *
      */
     void onUnlock() {
-        tryEvict();
+        try {
+            tryEvict();
+        }
+        catch (NodeStoppingException ignore) {
+            // No-op.
+        }
     }
 
     /**
@@ -831,7 +845,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
     /**
      * @return Initial update counter.
      */
-    public long initialUpdateCounter() {
+    public Long initialUpdateCounter() {
         return store.initialUpdateCounter();
     }
 
@@ -848,8 +862,10 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
 
     /**
      * Clears values for this partition.
+     *
+     * @throws NodeStoppingException If node stopping.
      */
-    public void clearAll() {
+    public void clearAll() throws NodeStoppingException {
         GridCacheVersion clearVer = cctx.versions().next();
 
         boolean rec = cctx.events().isRecordable(EVT_CACHE_REBALANCE_OBJECT_UNLOADED);
@@ -893,6 +909,14 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
                 assert isEmpty() && state() == EVICTED : "Invalid error [e=" + e + ", part=" + this + ']';
 
                 break; // Partition is already concurrently cleared and evicted.
+            }
+            catch (NodeStoppingException e) {
+                if (log.isDebugEnabled())
+                    log.debug("Failed to clear cache entry for evicted partition: " + cached.partition());
+
+                rent.onDone(e);
+
+                throw e;
             }
             catch (IgniteCheckedException e) {
                 U.error(log, "Failed to clear cache entry for evicted partition: " + cached, e);
@@ -942,6 +966,14 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
                         cctx.shared().database().checkpointReadUnlock();
                     }
                 }
+            }
+            catch (NodeStoppingException e) {
+                if (log.isDebugEnabled())
+                    log.debug("Failed to get iterator for evicted partition: " + id);
+
+                rent.onDone(e);
+
+                throw e;
             }
             catch (IgniteCheckedException e) {
                 U.error(log, "Failed to get iterator for evicted partition: " + id, e);

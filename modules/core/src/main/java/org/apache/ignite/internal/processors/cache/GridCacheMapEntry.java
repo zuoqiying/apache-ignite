@@ -205,38 +205,7 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
     protected void value(@Nullable CacheObject val) {
         assert Thread.holdsLock(this);
 
-        // In case we deal with IGFS cache, count updated data
-        if (cctx.cache().isIgfsDataCache() &&
-            cctx.kernalContext().igfsHelper().isIgfsBlockKey(keyValue(false))) {
-            int newSize = valueLength0(val, null);
-            int oldSize = valueLength0(this.val, null);
-
-            int delta = newSize - oldSize;
-
-            if (delta != 0 && !cctx.isNear())
-                cctx.cache().onIgfsDataSizeChanged(delta);
-        }
-
         this.val = val;
-    }
-
-    /**
-     * Isolated method to get length of IGFS block.
-     *
-     * @param val Value.
-     * @param valBytes Value bytes.
-     * @return Length of value.
-     */
-    private int valueLength0(@Nullable CacheObject val, @Nullable IgniteBiTuple<byte[], Byte> valBytes) {
-        byte[] bytes = val != null ? (byte[])val.value(cctx.cacheObjectContext(), false) : null;
-
-        if (bytes != null)
-            return bytes.length;
-
-        if (valBytes == null)
-            return 0;
-
-        return valBytes.get1().length - (((valBytes.get2() == CacheObject.TYPE_BYTE_ARR) ? 0 : 6));
     }
 
     /** {@inheritDoc} */
@@ -347,8 +316,6 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
     @Nullable @Override public GridCacheEntryInfo info() {
         GridCacheEntryInfo info = null;
 
-        long time = U.currentTimeMillis();
-
         synchronized (this) {
             if (!obsolete()) {
                 info = new GridCacheEntryInfo();
@@ -358,7 +325,7 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
                 long expireTime = expireTimeExtras();
 
-                boolean expired = expireTime != 0 && expireTime <= time;
+                boolean expired = expireTime != 0 && expireTime <= U.currentTimeMillis();
 
                 info.ttl(ttlExtras());
                 info.expireTime(expireTime);
@@ -575,9 +542,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 val = this.val;
 
                 if (val == null) {
-                    if (isStartVersion()) {
+                    if (isStartVersion())
                         val = unswap(true, false);
-                    }
                 }
 
                 if (val != null) {
@@ -3125,34 +3091,44 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
         if (curVer == null || curVer.equals(ver)) {
             if (val != this.val) {
-                        GridCacheMvcc mvcc = mvccExtras();
+                GridCacheMvcc mvcc = mvccExtras();
 
-                        if (mvcc != null && !mvcc.isEmpty())
-                            return null;
+                if (mvcc != null && !mvcc.isEmpty())
+                    return null;
 
-                        if (newVer == null)
-                            newVer = cctx.versions().next();
+                if (newVer == null)
+                    newVer = cctx.versions().next();
 
-                        long ttl = ttlExtras();
+                long ttl;
+                long expTime;
 
-                        long expTime = CU.toExpireTime(ttl);
+                if (loadExpiryPlc != null) {
+                    IgniteBiTuple<Long, Long> initTtlAndExpireTime = initialTtlAndExpireTime(loadExpiryPlc);
 
-                        // Detach value before index update.
-                        val = cctx.kernalContext().cacheObjects().prepareForCache(val, cctx);
-
-                        if (val != null) {
-                            storeValue(val, expTime, newVer);
-
-                            if (deletedUnlocked())
-                                deletedUnlocked(false);
-                        }
-
-                        // Version does not change for load ops.
-                        update(val, expTime, ttl, newVer, true);
-
-                        return newVer;
-                    }
+                    ttl = initTtlAndExpireTime.get1();
+                    expTime = initTtlAndExpireTime.get2();
                 }
+                else {
+                    ttl = ttlExtras();
+                    expTime = expireTimeExtras();
+                }
+
+                // Detach value before index update.
+                val = cctx.kernalContext().cacheObjects().prepareForCache(val, cctx);
+
+                if (val != null) {
+                    storeValue(val, expTime, newVer);
+
+                    if (deletedUnlocked())
+                        deletedUnlocked(false);
+                }
+
+                // Version does not change for load ops.
+                update(val, expTime, ttl, newVer, true);
+
+                return newVer;
+            }
+        }
 
         return null;
     }
@@ -3723,6 +3699,10 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                     if (obsoleteVersionExtras() != null)
                         return true;
 
+                    // TODO GG-11241: need keep removed entries in heap map, otherwise removes can be lost.
+                    if (cctx.deferredDelete() && deletedUnlocked())
+                        return false;
+
                     if (!hasReaders() && markObsolete0(obsoleteVer, false, null)) {
                         // Nullify value after swap.
                         value(null);
@@ -3758,6 +3738,10 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                         if (!v.equals(ver))
                             // Version has changed since entry passed the filter. Do it again.
                             continue;
+
+                        // TODO GG-11241: need keep removed entries in heap map, otherwise removes can be lost.
+                        if (cctx.deferredDelete() && deletedUnlocked())
+                            return false;
 
                         if (!hasReaders() && markObsolete0(obsoleteVer, false, null)) {
                             // Nullify value after swap.

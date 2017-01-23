@@ -246,7 +246,9 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
             return;
         }
 
-        Throwable err = cctx.topology().topologyVersionFuture().validateCache(cctx, recovery, true, null, keys);
+        GridDhtTopologyFuture topFut = cctx.shared().exchange().lastFinishedFuture();
+
+        Throwable err = topFut != null ? topFut.validateCache(cctx, recovery, true, null, keys) : null;
 
         if (err != null) {
             onDone(err);
@@ -752,7 +754,8 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
 
                 topFut.listen(new CIX1<IgniteInternalFuture<AffinityTopologyVersion>>() {
                     @SuppressWarnings("unchecked")
-                    @Override public void applyx(IgniteInternalFuture<AffinityTopologyVersion> fut) throws IgniteCheckedException {
+                    @Override public void applyx(
+                        IgniteInternalFuture<AffinityTopologyVersion> fut) throws IgniteCheckedException {
                         AffinityTopologyVersion topVer = fut.get();
 
                         // This will append new futures to compound list.

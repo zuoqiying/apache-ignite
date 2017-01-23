@@ -163,7 +163,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     private final Map<String, GridCacheAdapter> stoppedCaches = new ConcurrentHashMap<>();
 
     /** Map of proxies. */
-    private final Map<String, IgniteCacheProxy<?, ?>> jCacheProxies;
+    private final ConcurrentMap<String, IgniteCacheProxy<?, ?>> jCacheProxies;
 
     /** Caches stop sequence. */
     private final Deque<String> stopSeq;
@@ -679,8 +679,11 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         boolean template = cfg.getName() != null && cfg.getName().endsWith("*");
 
-        DynamicCacheDescriptor desc = new DynamicCacheDescriptor(
-            ctx, cfg, cacheType, template, IgniteUuid.randomUuid());
+        DynamicCacheDescriptor desc = new DynamicCacheDescriptor(ctx,
+            cfg,
+            cacheType,
+            template,
+            IgniteUuid.randomUuid());
 
         desc.locallyConfigured(true);
         desc.staticallyConfigured(true);
@@ -712,8 +715,11 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         }
 
         if (cfg.getName() == null) { // Use cache configuration with null name as template.
-            DynamicCacheDescriptor desc0 = new DynamicCacheDescriptor(
-                ctx, cfg, cacheType, true, IgniteUuid.randomUuid());
+            DynamicCacheDescriptor desc0 = new DynamicCacheDescriptor(ctx,
+                cfg,
+                cacheType,
+                true,
+                IgniteUuid.randomUuid());
 
             desc0.locallyConfigured(true);
             desc0.staticallyConfigured(true);
@@ -749,11 +755,11 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         try {
             checkConsistency();
 
-            boolean currentStatus = ctx.state().active();
+            boolean currStatus = ctx.state().active();
 
-            //if we start as inactive node, and join to active cluster, we must registrate all caches which
-            //was receive on join
-            if (!ctx.isDaemon() && currentStatus && !activeOnStart) {
+            // If we start as inactive node, and join to active cluster, we must register all caches
+            // which were received on join.
+            if (!ctx.isDaemon() && currStatus && !activeOnStart) {
                 List<CacheConfiguration> tmpCacheCfg = new ArrayList<>();
 
                 for (CacheConfiguration conf : ctx.config().getCacheConfiguration()) {
@@ -780,13 +786,13 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                     ctx.config().setCacheConfiguration(newCacheCfg);
                 }
 
-                activeOnStart = currentStatus;
+                activeOnStart = currStatus;
             }
 
             if (activeOnStart && !ctx.clientNode() && !ctx.isDaemon())
                 sharedCtx.database().lock();
 
-            //must start database before start first cache
+            // Must start database before start first cache.
             sharedCtx.database().onKernalStart(false);
 
             // Start dynamic caches received from collect discovery data.
@@ -1396,7 +1402,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         GridCacheAffinityManager affMgr = new GridCacheAffinityManager();
         GridCacheEventManager evtMgr = new GridCacheEventManager();
-        CacheEvictionManager evictMgr = nearEnabled ? new GridCacheEvictionManager() : new CacheOfheapEvictionManager();
+        CacheEvictionManager evictMgr = nearEnabled ? new GridCacheEvictionManager() : new CacheOffheapEvictionManager();
         GridCacheQueryManager qryMgr = queryManager(cfg);
         CacheContinuousQueryManager contQryMgr = new CacheContinuousQueryManager();
         CacheDataStructuresManager dataStructuresMgr = new CacheDataStructuresManager();
@@ -1409,7 +1415,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         storeMgr.initialize(cfgStore, sesHolders);
 
-        boolean affNode = CU.affinityNode(ctx.discovery().localNode(), cfg.getNodeFilter());
+        boolean affNode = cfg.getCacheMode() == LOCAL || CU.affinityNode(ctx.discovery().localNode(), cfg.getNodeFilter());
 
         GridCacheContext<?, ?> cacheCtx = new GridCacheContext(
             ctx,
@@ -1534,7 +1540,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
              * 7. GridCacheTtlManager.
              * ===============================================
              */
-            evictMgr = new CacheOfheapEvictionManager();
+            evictMgr = new CacheOffheapEvictionManager();
             evtMgr = new GridCacheEventManager();
             pluginMgr = new CachePluginManager(ctx, cfg);
             drMgr = pluginMgr.createComponent(GridCacheDrManager.class);
@@ -1801,13 +1807,16 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         ClusterNode locNode = ctx.discovery().localNode();
 
+        IgniteCacheProxy<?, ?> proxy = jCacheProxies.get(maskNull(cfg.getName()));
+
         boolean affNodeStart = !clientStartOnly && CU.affinityNode(locNode, nodeFilter);
         boolean clientNodeStart = locNode.id().equals(initiatingNodeId);
+        boolean proxyRestart = proxy != null && proxy.isRestarting() && !caches.containsKey(maskNull(cfg.getName()));
 
         if (sharedCtx.cacheContext(CU.cacheId(cfg.getName())) != null)
             return;
 
-        if (affNodeStart || clientNodeStart || CU.isSystemCache(cfg.getName())) {
+        if (affNodeStart || clientNodeStart || proxyRestart || CU.isSystemCache(cfg.getName())) {
             if (clientNodeStart && !affNodeStart) {
                 if (nearCfg != null)
                     ccfg.setNearConfiguration(nearCfg);
@@ -1832,6 +1841,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             startCache(cache);
 
             onKernalStart(cache);
+
+            if (proxyRestart)
+                proxy.onRestarted(cacheCtx, cache);
         }
     }
 
@@ -1846,8 +1858,12 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             IgniteCacheProxy<?, ?> proxy = jCacheProxies.get(maskNull(req.cacheName()));
 
             if (proxy != null) {
-                if (req.stop())
+                if (req.stop()) {
+                    if (req.restart())
+                        proxy.restart();
+
                     proxy.gate().stopped();
+                }
                 else
                     proxy.closeProxy();
             }
@@ -1860,8 +1876,17 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     private void stopGateway(DynamicCacheChangeRequest req) {
         assert req.stop() : req;
 
+        IgniteCacheProxy<?, ?> proxy;
+
         // Break the proxy before exchange future is done.
-        IgniteCacheProxy<?, ?> proxy = jCacheProxies.remove(maskNull(req.cacheName()));
+        if (req.restart()) {
+            proxy = jCacheProxies.get(maskNull(req.cacheName()));
+
+            if (proxy != null)
+                proxy.restart();
+        }
+        else
+            proxy = jCacheProxies.remove(maskNull(req.cacheName()));
 
         if (proxy != null)
             proxy.gate().onStopped();
@@ -1911,7 +1936,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
                 String masked = maskNull(cacheCtx.name());
 
-                jCacheProxies.put(masked, new IgniteCacheProxy(cache.context(), cache, null, false));
+                jCacheProxies.putIfAbsent(masked, new IgniteCacheProxy(cache.context(), cache, null, false));
             }
         }
 
@@ -1932,9 +1957,12 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                             GridCacheAdapter<?, ?> cache = caches.get(masked);
 
                             if (cache != null)
-                                jCacheProxies.put(masked, new IgniteCacheProxy(cache.context(), cache, null, false));
+                                jCacheProxies.putIfAbsent(masked, new IgniteCacheProxy(cache.context(), cache, null, false));
                         }
                         else {
+                            if (req.restart())
+                                proxy.restart();
+
                             proxy.context().gate().onStopped();
 
                             prepareCacheStop(req);
@@ -2036,7 +2064,11 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                 if (desc == null)
                     continue;
 
-                DynamicCacheChangeRequest req = new DynamicCacheChangeRequest(UUID.randomUUID(), cache.name(), null);
+                // RequestId must be null because on different node will be different byte [] and
+                // we get duplicate discovery data, for more details see
+                // TcpDiscoveryNodeAddedMessage#addDiscoveryData.
+                DynamicCacheChangeRequest req = new DynamicCacheChangeRequest(
+                    null, cache.name(), null);
 
                 req.startCacheConfiguration(desc.cacheConfiguration());
 
@@ -2062,7 +2094,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             for (DynamicCacheDescriptor desc : registeredCaches.values()) {
                 DynamicCacheChangeRequest req = new DynamicCacheChangeRequest(
-                    UUID.randomUUID(), desc.cacheConfiguration().getName(), null);
+                    null, desc.cacheConfiguration().getName(), null);
 
                 req.startCacheConfiguration(desc.cacheConfiguration());
 
@@ -2077,7 +2109,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             for (DynamicCacheDescriptor desc : registeredTemplates.values()) {
                 DynamicCacheChangeRequest req = new DynamicCacheChangeRequest(
-                    UUID.randomUUID(), desc.cacheConfiguration().getName(), null);
+                    null, desc.cacheConfiguration().getName(), null);
 
                 req.startCacheConfiguration(desc.cacheConfiguration());
 
@@ -2501,7 +2533,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
      * @param checkThreadTx If {@code true} checks that current thread does not have active transactions.
      * @return Future that will be completed when cache is destroyed.
      */
-    public IgniteInternalFuture<?> dynamicDestroyCache(String cacheName, boolean checkThreadTx) {
+    public IgniteInternalFuture<?> dynamicDestroyCache(String cacheName, boolean checkThreadTx, boolean restart) {
         if (checkThreadTx)
             checkEmptyTransactions();
 
@@ -2509,6 +2541,8 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         t.stop(true);
         t.destroy(true);
+
+        t.restart(restart);
 
         return F.first(initiateCacheChanges(F.asList(t), false));
     }
@@ -2518,7 +2552,8 @@ public class GridCacheProcessor extends GridProcessorAdapter {
      * @param checkThreadTx If {@code true} checks that current thread does not have active transactions.
      * @return Future that will be completed when cache is destroyed.
      */
-    public IgniteInternalFuture<?> dynamicDestroyCaches(Collection<String> cacheNames, boolean checkThreadTx) {
+    public IgniteInternalFuture<?> dynamicDestroyCaches(Collection<String> cacheNames, boolean checkThreadTx,
+        boolean restart) {
         if (checkThreadTx)
             checkEmptyTransactions();
 
@@ -2528,6 +2563,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             DynamicCacheChangeRequest t = new DynamicCacheChangeRequest(UUID.randomUUID(), cacheName, ctx.localNodeId());
 
             t.stop(true);
+            t.destroy(true);
+
+            t.restart(restart);
 
             reqs.add(t);
         }
@@ -2933,10 +2971,23 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                                 req.clientStartOnly(true);
                         }
                     }
+
+                    if (needExchange) {
+                        if (newTopVer == null) {
+                            newTopVer = new AffinityTopologyVersion(topVer.topologyVersion(),
+                                topVer.minorTopologyVersion() + 1);
+                        }
+
+                        desc.clientCacheStartVersion(newTopVer);
+                    }
                 }
 
-                if (!needExchange && desc != null)
-                    req.cacheFutureTopologyVersion(desc.startTopologyVersion());
+                if (!needExchange && desc != null) {
+                    if (desc.clientCacheStartVersion() != null)
+                        req.cacheFutureTopologyVersion(desc.clientCacheStartVersion());
+                    else
+                        req.cacheFutureTopologyVersion(desc.startTopologyVersion());
+                }
             }
             else if (req.globalStateChange() || req.resetLostPartitions())
                 needExchange = true;

@@ -35,7 +35,7 @@ public class DynamicCacheChangeRequest implements Serializable {
     private static final long serialVersionUID = 0L;
 
     /** */
-    private UUID requestId;
+    private UUID reqId;
 
     /** Start ID. */
     private IgniteUuid deploymentId;
@@ -61,6 +61,9 @@ public class DynamicCacheChangeRequest implements Serializable {
 
     /** Stop flag. */
     private boolean stop;
+
+    /** Restart flag. */
+    private boolean restart;
 
     /** Destroy. */
     private boolean destroy;
@@ -95,8 +98,8 @@ public class DynamicCacheChangeRequest implements Serializable {
      * @param cacheName Cache stop name.
      * @param initiatingNodeId Initiating node ID.
      */
-    public DynamicCacheChangeRequest(UUID requestId, String cacheName, UUID initiatingNodeId) {
-        this.requestId = requestId;
+    public DynamicCacheChangeRequest(UUID reqId, String cacheName, UUID initiatingNodeId) {
+        this.reqId = reqId;
         this.cacheName = cacheName;
         this.initiatingNodeId = initiatingNodeId;
     }
@@ -105,7 +108,7 @@ public class DynamicCacheChangeRequest implements Serializable {
      * @return Request ID.
      */
     public UUID requestId() {
-        return requestId;
+        return reqId;
     }
 
     /**
@@ -232,6 +235,20 @@ public class DynamicCacheChangeRequest implements Serializable {
      */
     public void stop(boolean stop) {
         this.stop = stop;
+    }
+
+    /**
+     * @return {@code True} if this is a restart request.
+     */
+    public boolean restart() {
+        return restart;
+    }
+
+    /**
+     * @param restart New restart flag.
+     */
+    public void restart(boolean restart) {
+        this.restart = restart;
     }
 
     /**

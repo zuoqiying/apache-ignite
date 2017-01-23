@@ -48,6 +48,7 @@ import org.apache.ignite.internal.processors.cache.CacheLazyEntry;
 import org.apache.ignite.internal.processors.cache.CacheMetricsImpl;
 import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.CacheOperationContext;
+import org.apache.ignite.internal.processors.cache.CacheStoppedException;
 import org.apache.ignite.internal.processors.cache.CacheStorePartialUpdateException;
 import org.apache.ignite.internal.processors.cache.GridCacheConcurrentMap;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
@@ -1819,8 +1820,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                 try {
                     if (top.stopping()) {
-                        res.addFailedKeys(req.keys(), new IgniteCheckedException("Failed to perform cache operation " +
-                            "(cache is stopped): " + name()));
+                        res.addFailedKeys(req.keys(), new CacheStoppedException(name()));
 
                         completionCb.apply(req, res);
 
@@ -3272,36 +3272,36 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                             long ttl = req.ttl(i);
                             long expireTime = req.conflictExpireTime(i);
 
-                        GridCacheUpdateAtomicResult updRes = entry.innerUpdate(
-                            ver,
-                            nodeId,
-                            nodeId,
-                            op,
-                            op == TRANSFORM ? entryProcessor : val,
-                            op == TRANSFORM ? req.invokeArguments() : null,
-                            /*write-through*/(ctx.store().isLocal() && !ctx.shared().localStorePrimaryOnly())
-                                && writeThrough() && !req.skipStore(),
-                            /*read-through*/false,
-                            /*retval*/false,
-                            req.keepBinary(),
-                            /*expiry policy*/null,
-                            /*event*/true,
-                            /*metrics*/true,
-                            /*primary*/false,
-                            /*check version*/!req.forceTransformBackups(),
-                            req.topologyVersion(),
-                            CU.empty0(),
-                            replicate ? DR_BACKUP : DR_NONE,
-                            ttl,
-                            expireTime,
-                            req.conflictVersion(i),
-                            false,
-                            intercept,
-                            req.subjectId(),
-                            taskName,
-                            prevVal,
-                            updateIdx,
-                            null);
+                            GridCacheUpdateAtomicResult updRes = entry.innerUpdate(
+                                ver,
+                                nodeId,
+                                nodeId,
+                                op,
+                                op == TRANSFORM ? entryProcessor : val,
+                                op == TRANSFORM ? req.invokeArguments() : null,
+                                /*write-through*/(ctx.store().isLocal() && !ctx.shared().localStorePrimaryOnly())
+                                    && writeThrough() && !req.skipStore(),
+                                /*read-through*/false,
+                                /*retval*/false,
+                                req.keepBinary(),
+                                /*expiry policy*/null,
+                                /*event*/true,
+                                /*metrics*/true,
+                                /*primary*/false,
+                                /*check version*/!req.forceTransformBackups(),
+                                req.topologyVersion(),
+                                CU.empty0(),
+                                replicate ? DR_BACKUP : DR_NONE,
+                                ttl,
+                                expireTime,
+                                req.conflictVersion(i),
+                                false,
+                                intercept,
+                                req.subjectId(),
+                                taskName,
+                                prevVal,
+                                updateIdx,
+                                null);
 
                             if (updRes.removeVersion() != null)
                                 ctx.onDeferredDelete(entry, updRes.removeVersion());
