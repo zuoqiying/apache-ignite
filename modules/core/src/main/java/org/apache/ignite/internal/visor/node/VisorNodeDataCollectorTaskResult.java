@@ -206,6 +206,7 @@ public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
 
     /** {@inheritDoc} */
     @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeBoolean(active);
         U.writeMap(out, unhandledEx);
         U.writeMap(out, gridNames);
         U.writeMap(out, topVersions);
@@ -222,6 +223,7 @@ public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
 
     /** {@inheritDoc} */
     @Override protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        active = in.readBoolean();
         unhandledEx = U.readMap(in);
         gridNames = U.readMap(in);
         topVersions = U.readMap(in);
