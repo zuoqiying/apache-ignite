@@ -26,16 +26,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import org.apache.ignite.Ignition;
 import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.console.agent.rest.RestResult;
 import org.apache.ignite.console.demo.AgentClusterDemo;
-import org.apache.ignite.internal.IgniteInterruptedCheckedException;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.apache.ignite.console.agent.AgentUtils.safeCallback;
+import static org.apache.ignite.console.agent.AgentUtils.toJSON;
 
 /**
  *
@@ -98,7 +97,7 @@ public class DemoHandler {
                                     try {
                                         RestResult top = restExecutor.topology(true, true);
 
-                                        client.emit(EVENT_DEMO_TOPOLOGY, top);
+                                        client.emit(EVENT_DEMO_TOPOLOGY, toJSON(top));
                                     }
                                     catch (IOException e) {
                                         log.info("Lost connection to the demo cluster", e);

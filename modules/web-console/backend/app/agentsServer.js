@@ -221,6 +221,8 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
                     _.pull(agentSockets, sock);
 
+                    // TODO reconnect to different agents.
+
                     this.emitAgentCnt(token, agentSockets.length);
                 });
             });
@@ -242,7 +244,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
                 this.emitAgentCnt(token, agentSockets.length);
             });
-            //
+
             // ioSocket.on('cluster:topology', (top) => {
             //
             // });
