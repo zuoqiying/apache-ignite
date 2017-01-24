@@ -1679,7 +1679,7 @@ public class IgniteH2Indexing implements GridQueryIndexing {
 
         assert tbl.tbl != null;
 
-        assert tbl.tbl.rebuildFromHashInProgress();
+        assert tbl.tbl.rebuildFromHashInProgress() : tbl.fullTableName();
 
         H2PkHashIndex hashIdx = tbl.pkHashIdx;
 
