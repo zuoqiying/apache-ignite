@@ -13,27 +13,27 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package org.apache.ignite.internal.visor;
-
-import java.util.List;
-import org.apache.ignite.compute.ComputeJobResult;
-import org.jetbrains.annotations.Nullable;
+package org.apache.ignite.internal.processors.database;
 
 /**
- * Base class for Visor tasks intended to query data from a single node.
+ *
  */
-public abstract class VisorOneNodeTask<A, R> extends VisorMultiNodeTask<A, R, R> {
+public class IgniteDbClientNearCachePutGetTest extends IgniteDbPutGetAbstractTest {
     /** {@inheritDoc} */
-    @Nullable @Override protected R reduce0(List<ComputeJobResult> results) {
-        assert results.size() == 1;
+    @Override protected int gridCount() {
+        return 1;
+    }
 
-        ComputeJobResult res = results.get(0);
+    /** {@inheritDoc} */
+    @Override protected boolean indexingEnabled() {
+        return false;
+    }
 
-        if (res.getException() == null)
-            return res.getData();
-
-        throw res.getException();
+    /** {@inheritDoc} */
+    @Override protected boolean withClientNearCache() {
+        return true;
     }
 }
