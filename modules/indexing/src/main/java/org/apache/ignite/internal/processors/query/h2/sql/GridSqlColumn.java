@@ -27,7 +27,7 @@ import org.h2.table.Column;
  */
 public class GridSqlColumn extends GridSqlElement {
     /** */
-    private GridSqlElement from;
+    private GridSqlAst from;
 
     /** */
     private String schema;
@@ -48,7 +48,7 @@ public class GridSqlColumn extends GridSqlElement {
      * @param tblAlias Table alias.
      * @param colName Column name.
      */
-    public GridSqlColumn(Column col, GridSqlElement from, String schema, String tblAlias, String colName) {
+    public GridSqlColumn(Column col, GridSqlAst from, String schema, String tblAlias, String colName) {
         super(Collections.<GridSqlAst>emptyList());
 
         assert !F.isEmpty(colName): colName;
@@ -105,7 +105,7 @@ public class GridSqlColumn extends GridSqlElement {
     /**
      * @return Expression in from.
      */
-    public GridSqlElement expressionInFrom() {
+    public GridSqlAst expressionInFrom() {
         return from;
     }
 

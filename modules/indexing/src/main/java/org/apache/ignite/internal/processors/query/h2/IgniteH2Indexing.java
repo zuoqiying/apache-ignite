@@ -200,6 +200,9 @@ public class IgniteH2Indexing implements GridQueryIndexing {
         ";ROW_FACTORY=\"" + GridH2RowFactory.class.getName() + "\"" +
         ";DEFAULT_TABLE_ENGINE=" + GridH2DefaultTableEngine.class.getName();
 
+        // Uncomment this setting to get debug output from H2 to sysout.
+//        ";TRACE_LEVEL_SYSTEM_OUT=3";
+
     /** */
     private static final int PREPARED_STMT_CACHE_SIZE = 256;
 

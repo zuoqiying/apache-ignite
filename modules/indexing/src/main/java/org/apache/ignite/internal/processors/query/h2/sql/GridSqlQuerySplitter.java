@@ -204,18 +204,18 @@ public class GridSqlQuerySplitter {
         // distributed joins at all.
         // TODO Also we need to have a list of table aliases to filter by primary or explicit partitions.
         if (distributedJoins) {
-            boolean allColocated = true;
+            boolean allCollocated = true;
 
             for (GridCacheSqlQuery mapSqlQry : splitter.mapSqlQrys) {
                 Prepared prepared = optimize(h2, conn, mapSqlQry.query(), params, true, enforceJoinOrder);
 
-                allColocated &= isCollocated((Query)prepared);
+                allCollocated &= isCollocated((Query)prepared);
 
                 mapSqlQry.query(parse(prepared, true).getSQL());
             }
 
             // We do not need distributed joins if all MAP queries are colocated.
-            if (allColocated)
+            if (allCollocated)
                 distributedJoins = false;
         }
 

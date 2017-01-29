@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.cache.CacheException;
 import org.apache.ignite.IgniteException;
 import org.h2.command.Command;
@@ -52,7 +53,6 @@ import org.h2.expression.Parameter;
 import org.h2.expression.Subquery;
 import org.h2.expression.TableFunction;
 import org.h2.expression.ValueExpression;
-import org.h2.index.Index;
 import org.h2.index.ViewIndex;
 import org.h2.jdbc.JdbcPreparedStatement;
 import org.h2.result.SortOrder;
@@ -236,14 +236,21 @@ public class GridSqlQueryParser {
     private final IdentityHashMap<Object, Object> h2ObjToGridObj = new IdentityHashMap<>();
 
     /** */
-    private boolean useOptimizedSubqry;
+    private final Map<String, Integer> optimizedTableFilterOrder;
+
+    /**
+     * We have a counter instead of a simple flag, because
+     * a flag can be reset earlier than needed in case of
+     * deep subquery expression nesting.
+     */
+    private int parsingSubQryExpression;
 
     /**
      * @param useOptimizedSubqry If we have to find correct order for table filters in FROM clause.
      *                           Relies on uniqueness of table filter aliases.
      */
     public GridSqlQueryParser(boolean useOptimizedSubqry) {
-        this.useOptimizedSubqry = useOptimizedSubqry;
+        optimizedTableFilterOrder = useOptimizedSubqry ? new HashMap<String, Integer>() : null;
     }
 
     /**
@@ -256,6 +263,18 @@ public class GridSqlQueryParser {
         assert cmd instanceof CommandContainer;
 
         return PREPARED.get(cmd);
+    }
+
+    /**
+     * @param qry Query expression to parse.
+     * @return Subquery AST.
+     */
+    private GridSqlSubquery parseQueryExpression(Query qry) {
+        parsingSubQryExpression++;
+        GridSqlQuery subQry = parseQuery(qry);
+        parsingSubQryExpression--;
+
+        return new GridSqlSubquery(subQry);
     }
 
     /**
@@ -272,15 +291,7 @@ public class GridSqlQueryParser {
             else if (tbl instanceof TableView) {
                 Query qry = VIEW_QUERY.get((TableView)tbl);
 
-                Query idxQry = null;
-
-                if (useOptimizedSubqry) {
-                    Index idx = filter.getIndex();
-
-                    idxQry = idx instanceof ViewIndex ? ((ViewIndex)idx).getQuery() : null;
-                }
-
-                res = new GridSqlSubquery(parseQuery(qry, idxQry));
+                res = new GridSqlSubquery(parseQuery(qry));
             }
             else if (tbl instanceof FunctionTable)
                 res = parseExpression(FUNC_EXPR.get((FunctionTable)tbl), false);
@@ -307,7 +318,7 @@ public class GridSqlQueryParser {
     /**
      * @param select Select.
      */
-    private GridSqlSelect parseSelect(Select select, @Nullable Select optimizedQry) {
+    private GridSqlSelect parseSelect(Select select) {
         GridSqlSelect res = (GridSqlSelect)h2ObjToGridObj.get(select);
 
         if (res != null)
@@ -322,49 +333,38 @@ public class GridSqlQueryParser {
         Expression where = CONDITION.get(select);
         res.where(parseExpression(where, false));
 
-        GridSqlElement from = null;
+        ArrayList<TableFilter> tableFilters = new ArrayList<>();
 
-        HashMap<String, TableFilter> tableFilters = null;
-
-        // Build map of original table filters, which we later will place in optimized order.
-        if (optimizedQry != null) {
-            tableFilters = new HashMap<>();
-
-            TableFilter filter = select.getTopTableFilter();
-
-            while (filter != null) {
-                if (tableFilters.put(filter.getTableAlias(), filter) != null)
-                    throw new IllegalStateException("Non unique table filter alias found: " + select);
-
-                filter = filter.getJoin();
-            }
-        }
-
-        // Use join order from the optimized query if it is available.
-        TableFilter filter = optimizedQry != null ?
-            optimizedQry.getTopTableFilter():
-            select.getTopTableFilter();
+        TableFilter filter = select.getTopTableFilter();
 
         do {
             assert0(filter != null, select);
             assert0(filter.getNestedJoin() == null, select);
 
-            final TableFilter join = filter.getJoin(); // Keep optimized join order.
+            // Can use optimized join order only if we are not inside of an expression.
+            if (parsingSubQryExpression == 0 && optimizedTableFilterOrder != null) {
+                String tblAlias = filter.getTableAlias();
+                int idx = optimizedTableFilterOrder.get(tblAlias);
 
-            if (optimizedQry != null)  // Replace optimized table filter with the original one.
-                filter = tableFilters.get(filter.getTableAlias());
+                setElementAt(tableFilters, idx, filter);
+            }
+            else
+                tableFilters.add(filter);
 
-            assert0(filter != null, select);
-            assert0(filter.getNestedJoin() == null, select);
-
-            GridSqlElement gridFilter = parseTable(filter);
-
-            from = from == null ? gridFilter : new GridSqlJoin(from, gridFilter, filter.isJoinOuter(),
-                parseExpression(filter.getJoinCondition(), false));
-
-            filter = join;
+            filter = filter.getJoin();
         }
         while (filter != null);
+
+        // Build FROM clause from correctly ordered table filters.
+        GridSqlElement from = null;
+
+        for (int i = 0; i < tableFilters.size(); i++) {
+            TableFilter f = tableFilters.get(i);
+            GridSqlElement gridFilter = parseTable(f);
+
+            from = from == null ? gridFilter : new GridSqlJoin(from, gridFilter, f.isJoinOuter(),
+                parseExpression(f.getJoinCondition(), false));
+        }
 
         res.from(from);
 
@@ -389,6 +389,20 @@ public class GridSqlQueryParser {
         res.offset(parseExpression(select.getOffset(), false));
 
         return res;
+    }
+
+    /**
+     * @param list List.
+     * @param idx Index.
+     * @param x Element.
+     */
+    private static <Z> void setElementAt(List<Z> list, int idx, Z x) {
+        while (list.size() <= idx)
+            list.add(null);
+
+        assert0(list.get(idx) == null, "Element already set: " + idx);
+
+        list.set(idx, x);
     }
 
     /**
@@ -432,8 +446,12 @@ public class GridSqlQueryParser {
      * @return Parsed AST.
      */
     public final GridSqlQuery parse(Prepared stmt) {
-        if (stmt instanceof Query)
+        if (stmt instanceof Query) {
+            if (optimizedTableFilterOrder != null)
+                collectOptimizedTableFiltersOrder((Query)stmt);
+
             return parseQuery((Query)stmt);
+        }
 
         // TODO all other statement types must go here
 
@@ -448,28 +466,20 @@ public class GridSqlQueryParser {
      * @return Parsed query AST.
      */
     private GridSqlQuery parseQuery(Query qry) {
-        return parseQuery(qry, null);
-    }
-
-    /**
-     * @param qry Query.
-     * @param optimizedQry Optional optimized query.
-     * @return Parsed query AST.
-     */
-    private GridSqlQuery parseQuery(Query qry, @Nullable Query optimizedQry) {
         if (qry instanceof Select)
-            return parseSelect((Select)qry, (Select)optimizedQry);
+            return parseSelect((Select)qry);
 
         if (qry instanceof SelectUnion)
-            return parseUnion((SelectUnion)qry, (SelectUnion)optimizedQry);
+            return parseUnion((SelectUnion)qry);
 
         throw new IllegalStateException("Must be a query: " + qry);
     }
 
     /**
      * @param union Select.
+     * @return Parsed AST.
      */
-    private GridSqlUnion parseUnion(SelectUnion union, SelectUnion optimizedQry) {
+    private GridSqlUnion parseUnion(SelectUnion union) {
         GridSqlUnion res = (GridSqlUnion)h2ObjToGridObj.get(union);
 
         if (res != null)
@@ -477,8 +487,8 @@ public class GridSqlQueryParser {
 
         res = new GridSqlUnion();
 
-        res.right(parseQuery(union.getRight(), optimizedQry == null ? null : optimizedQry.getRight()));
-        res.left(parseQuery(union.getLeft(), optimizedQry == null ? null : optimizedQry.getLeft()));
+        res.right(parseQuery(union.getRight()));
+        res.left(parseQuery(union.getLeft()));
 
         res.unionType(union.getUnionType());
 
@@ -513,6 +523,44 @@ public class GridSqlQueryParser {
         }
 
         return res;
+    }
+
+    /**
+     * @param qry Query.
+     */
+    private void collectOptimizedTableFiltersOrder(Query qry) {
+        if (qry instanceof SelectUnion) {
+            collectOptimizedTableFiltersOrder(((SelectUnion)qry).getLeft());
+            collectOptimizedTableFiltersOrder(((SelectUnion)qry).getRight());
+        }
+        else {
+            Select select = (Select)qry;
+
+            TableFilter filter = select.getTopTableFilter();
+
+            int i = 0;
+
+            do {
+                assert0(filter != null, select);
+                assert0(filter.getNestedJoin() == null, select);
+
+                // Here all the table filters must have generated unique aliases,
+                // thus we can store them in the same map for all the subqueries.
+                optimizedTableFilterOrder.put(filter.getTableAlias(), i++);
+
+                Table tbl = filter.getTable();
+
+                // Go down and collect inside of optimized subqueries.
+                if (tbl instanceof TableView) {
+                    ViewIndex viewIdx = (ViewIndex)filter.getIndex();
+
+                    collectOptimizedTableFiltersOrder(viewIdx.getQuery());
+                }
+
+                filter = filter.getJoin();
+            }
+            while (filter != null);
+        }
     }
 
     /**
@@ -591,9 +639,7 @@ public class GridSqlQueryParser {
         if (expression instanceof Subquery) {
             Query qry = ((Subquery)expression).getQuery();
 
-            assert0(qry instanceof Select, expression);
-
-            return new GridSqlSubquery(parseQuery(qry));
+            return parseQueryExpression(qry);
         }
 
         if (expression instanceof ConditionIn) {
@@ -635,9 +681,7 @@ public class GridSqlQueryParser {
 
             Query qry = QUERY.get((ConditionInSelect)expression);
 
-            assert0(qry instanceof Select, qry);
-
-            res.addChild(new GridSqlSubquery(parseQuery(qry)));
+            res.addChild(parseQueryExpression(qry));
 
             return res;
         }
