@@ -89,7 +89,7 @@ module.exports.factory = function(_) {
         /**
          * @param {socketIo.Socket} socket - AgentSocket socket for interaction.
          */
-        constructor(socket) {
+        constructor(socket, disableDemo) {
             /**
              * AgentSocket socket for interaction.
              *
@@ -98,6 +98,7 @@ module.exports.factory = function(_) {
             this.socket = socket;
 
             this._demo = {
+                enabled: disableDemo,
                 tokens: [],
                 browserSockets: []
             };

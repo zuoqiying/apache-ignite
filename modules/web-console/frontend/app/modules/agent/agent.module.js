@@ -22,19 +22,17 @@ const maskNull = (val) => _.isEmpty(val) ? 'null' : val;
 
 class IgniteAgentMonitor {
     constructor(socketFactory, $root, $q, $state, $modal, Messages) {
-        this._scope = $root.$new();
+        this._modalScope = $root.$new();
 
         $root.$watch('user', () => {
-            this._scope.user = $root.user;
+            this._modalScope.user = $root.user;
         });
 
-        $root.$on('$stateChangeStart', () => {
-            this.stopWatch();
-        });
+        $root.$on('$stateChangeStart', this.stopWatch);
 
         // Pre-fetch modal dialogs.
         this._downloadAgentModal = $modal({
-            scope: this._scope,
+            scope: this._modalScope,
             templateUrl: '/templates/agent-download.html',
             show: false,
             backdrop: 'static',
@@ -55,14 +53,14 @@ class IgniteAgentMonitor {
         /**
          * Close dialog and go by specified link.
          */
-        this._scope.back = () => {
+        this._modalScope.back = () => {
             this.stopWatch();
 
-            if (this._scope.backState)
-                this._scope.$$postDigest(() => $state.go(this._scope.backState));
+            if (this._modalScope.backState)
+                this._modalScope.$$postDigest(() => $state.go(this._modalScope.backState));
         };
 
-        this._scope.downloadAgent = () => {
+        this._modalScope.downloadAgent = () => {
             const lnk = document.createElement('a');
 
             lnk.setAttribute('href', '/api/v1/agent/downloads/agent');
@@ -77,8 +75,8 @@ class IgniteAgentMonitor {
             document.body.removeChild(lnk);
         };
 
-        this._scope.hasAgents = null;
-        this._scope.showModal = false;
+        this._modalScope.hasAgents = null;
+        this._modalScope.showModal = false;
 
         /**
          * @type {Socket}
@@ -96,9 +94,9 @@ class IgniteAgentMonitor {
      * @private
      */
     checkModal() {
-        if (this._scope.showModal && !this._scope.hasAgents)
+        if (this._modalScope.showModal && !this._modalScope.hasAgents)
             this._downloadAgentModal.$promise.then(this._downloadAgentModal.show);
-        else if ((this._scope.hasAgents || !this._scope.showModal) && this._downloadAgentModal.$isShown)
+        else if ((this._modalScope.hasAgents || !this._modalScope.showModal) && this._downloadAgentModal.$isShown)
             this._downloadAgentModal.hide();
     }
 
@@ -106,12 +104,12 @@ class IgniteAgentMonitor {
      * @returns {Promise}
      */
     awaitAgent() {
-        if (this._scope.hasAgents)
+        if (this._modalScope.hasAgents)
             return this._$q.when();
 
         const latch = this._$q.defer();
 
-        const offConnected = this._scope.$on('agent:watch', (event, state) => {
+        const offConnected = this._modalScope.$on('agent:watch', (event, state) => {
             if (state !== 'DISCONNECTED')
                 offConnected();
 
@@ -132,22 +130,22 @@ class IgniteAgentMonitor {
         this._socket = this._socketFactory();
 
         const disconnectFn = () => {
-            this._scope.hasAgents = false;
+            this._modalScope.hasAgents = false;
 
             this.checkModal();
 
-            this._scope.$broadcast('agent:watch', 'DISCONNECTED');
+            this._modalScope.$broadcast('agent:watch', 'DISCONNECTED');
         };
 
         this._socket.on('connect_error', disconnectFn);
         this._socket.on('disconnect', disconnectFn);
 
         this._socket.on('agent:count', ({count}) => {
-            this._scope.hasAgents = count > 0;
+            this._modalScope.hasAgents = count > 0;
 
             this.checkModal();
 
-            this._scope.$broadcast('agent:watch', this._scope.hasAgents ? 'CONNECTED' : 'DISCONNECTED');
+            this._modalScope.$broadcast('agent:watch', this._modalScope.hasAgents ? 'CONNECTED' : 'DISCONNECTED');
         });
     }
 
@@ -156,23 +154,33 @@ class IgniteAgentMonitor {
      * @returns {Promise}
      */
     startWatch(back) {
-        this._scope.backState = back.state;
-        this._scope.backText = back.text;
+        this._modalScope.backState = back.state;
+        this._modalScope.backText = back.text;
 
-        this._scope.agentGoal = back.goal;
+        this._modalScope.agentGoal = back.goal;
 
         if (back.onDisconnect) {
-            this._scope.offDisconnect = this._scope.$on('agent:watch', (e, state) =>
+            this._modalScope.offDisconnect = this._modalScope.$on('agent:watch', (e, state) =>
                 state === 'DISCONNECTED' && back.onDisconnect());
         }
 
-        this._scope.showModal = true;
+        this._modalScope.showModal = true;
 
         // Remove blinking on init.
-        if (this._scope.hasAgents !== null)
+        if (this._modalScope.hasAgents !== null)
             this.checkModal();
 
         return this.awaitAgent();
+    }
+
+    stopWatch() {
+        this._modalScope.showModal = false;
+
+        this.checkModal();
+
+        this._modalScope.offDisconnect && this._modalScope.offDisconnect();
+
+        this._modalScope.$broadcast('agent:watch', 'STOPPED');
     }
 
     /**
@@ -248,7 +256,7 @@ class IgniteAgentMonitor {
      * @param {Object} err
      */
     showNodeError(err) {
-        if (this._scope.showModal) {
+        if (this._modalScope.showModal) {
             this._downloadAgentModal.$promise.then(this._downloadAgentModal.show);
 
             this.Messages.showError(err);
@@ -333,16 +341,6 @@ class IgniteAgentMonitor {
      */
     metadata(cacheName) {
         return this._rest('node:cache:metadata', maskNull(cacheName));
-    }
-
-    stopWatch() {
-        this._scope.showModal = false;
-
-        this.checkModal();
-
-        this._scope.offDisconnect && this._scope.offDisconnect();
-
-        this._scope.$broadcast('agent:watch', 'STOPPED');
     }
 }
 

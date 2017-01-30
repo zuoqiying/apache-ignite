@@ -198,10 +198,17 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             return Promise.resolve(socket);
         }
 
-        emitAgentCnt(token, count) {
-            const sockets = this._browserSockets[token];
+        /**
+         * @param {String} token
+         * @param {Array.<AgentSocket>} agentSockets
+         */
+        sendAgentsCount(token, agentSockets) {
+            const browserSockets = this._browserSockets[token];
 
-            _.forEach(sockets, (socket) => socket.emit('agent:count', {count}));
+            const count = _.size(agentSockets);
+            const demo = !!_.find(agentSockets, (sock) => sock.demo.enabled);
+
+            _.forEach(browserSockets, (socket) => socket.emit('agent:count', {count, demo}));
         }
 
         /**
@@ -223,7 +230,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
                     // TODO reconnect to different agents.
 
-                    this.emitAgentCnt(token, agentSockets.length);
+                    this.sendAgentsCount(token, agentSockets);
                 });
             });
 
@@ -242,7 +249,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                 else
                     agentSockets.push(sock);
 
-                this.emitAgentCnt(token, agentSockets.length);
+                this.sendAgentsCount(token, agentSockets);
             });
 
             // ioSocket.on('cluster:topology', (top) => {
@@ -265,14 +272,12 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
             const agentSockets = this._agentSockets[token];
 
-            const cnt = _.size(agentSockets);
-
-            this.emitAgentCnt(token, cnt);
+            this.sendAgentsCount(token, agentSockets);
 
             // If user start demo and agents was connected before.
             const demo = browserSocket.request._query.IgniteDemoMode === 'true';
 
-            if (demo && cnt > 0 && !_.find(agentSockets, (agent) => agent.demoStarted(token)))
+            if (demo && _.size(agentSockets) > 0 && !_.find(agentSockets, (agent) => agent.demoStarted(token)))
                 _.head(agentSockets).listenDemo(token, [browserSocket]);
         }
 
