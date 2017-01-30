@@ -30,11 +30,11 @@ module.exports = {
  * @param path
  * @param JSZip
  * @param settings
- * @param agentMgr
+ * @param agentSrv
  * @param errors
  * @returns {DownloadsService}
  */
-module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
+module.exports.factory = (_, fs, path, JSZip, settings, agentSrv, errors) => {
     class DownloadsService {
         /**
          * Get agent archive with user agent configuration.
@@ -42,15 +42,12 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentMgr, errors) => {
          * @returns {*} - readable stream for further piping. (http://stuk.github.io/jszip/documentation/api_jszip/generate_node_stream.html)
          */
         prepareArchive(host, token) {
-            const latest = agentMgr.supportedAgents.latest;
-
-            if (_.isEmpty(latest))
+            if (_.isEmpty(agentSrv.currentAgent))
                 throw new errors.MissingResourceException('Missing agent zip on server. Please ask webmaster to upload agent zip!');
 
-            const filePath = latest.filePath;
-            const fileName = latest.fileName;
+            const {filePath, fileName} = agentSrv.currentAgent;
 
-            const folder = path.basename(latest.fileName, '.zip');
+            const folder = path.basename(fileName, '.zip');
 
             // Read a zip file.
             return new Promise((resolve, reject) => {

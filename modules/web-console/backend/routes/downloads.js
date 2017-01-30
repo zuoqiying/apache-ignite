@@ -20,7 +20,7 @@
 // Fire me up!
 
 module.exports = {
-    implements: 'routes/agents',
+    implements: 'routes/downloads',
     inject: ['require(lodash)', 'require(express)', 'services/agents']
 };
 
@@ -35,7 +35,7 @@ module.exports.factory = function(_, express, downloadsService) {
         const router = new express.Router();
 
         /* Get grid topology. */
-        router.get('/downloads/agent', (req, res) => {
+        router.get('/agent', (req, res) => {
             downloadsService.prepareArchive(req.origin(), req.user.token)
                 .then(({fileName, buffer}) => {
                     // Set the archive name.

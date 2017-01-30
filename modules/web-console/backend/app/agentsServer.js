@@ -58,6 +58,12 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
              * @type {Object.<ObjectId, Array.<Socket>>}
              */
             this._browserSockets = {};
+
+            /**
+             * Connected browsers by user id.
+             * @type {Object.<ObjectId, Array.<Socket>>}
+             */
+            this._browserSockets = {};
         }
 
         /**
@@ -119,7 +125,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
                     // Latest version of agent distribution.
                     if (latestVer)
-                        agentDescs.latest = agentDescs[latestVer];
+                        agentDescs.current = agentDescs[latestVer];
 
                     return agentDescs;
                 });
@@ -134,6 +140,8 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
             this._collectSupportedAgents()
                 .then((supportedAgents) => {
+                    this.currentAgent = _.get(supportedAgents, 'current');
+
                     this.io = socketio(srv, {path: '/agents'});
 
                     this.io.on('connection', (ioSocket) => {
