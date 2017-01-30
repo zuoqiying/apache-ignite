@@ -20,5 +20,7 @@ ACLOCAL_AMFLAGS =-I m4
 SUBDIRS = \
     putget-example \
     odbc-example \
+    query-example \
+	continuous-query-example \
     include
 

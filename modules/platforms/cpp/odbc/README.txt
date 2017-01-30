@@ -44,6 +44,8 @@ ODBC driver you should perfrom the following steps:
    can check it using "ldd" command like this (assuming ODBC driver is located
    under /usr/local/lib):
    $ ldd /usr/local/lib/libignite-odbc.so.
+   If there is unresolved links to other libraries you may want to add
+   directories with these libraries to the LD_LIBRARY_PATH.
    
 2. Edit file $IGNITE_HOME/platforms/cpp/odbc/install/ignite-odbc-install.ini
    and ensure that "Driver" parameter of the "Apache Ignite" section points
@@ -56,25 +58,31 @@ ODBC driver you should perfrom the following steps:
 Installing ODBC driver on Windows
 =======================================
 
-For 32-bit Windows you should use 32-bit version of the driver while for the
-64-bit Windows you can use 64-bit driver as well as 32-bit.
+Note, that for 32-bit Windows you should use 32-bit version of the driver
+while for the 64-bit Windows you can use both 64-bit and 32-bit versions of the
+driver. You may want to use 32-bit driver on 64-bit system for 32-bit
+applications.
 
-To install driver on Windows you should first choose a directory on your
-filesystem where your driver or drivers will be located. Once you have
-choosen the place you should put your driver there and ensure that all driver
-dependencies can be resolved i.e. they can be found either in the %PATH% or
-in the same directory as the driver.
+There are two ways to install ODBC driver currently. The first one is to use
+32-bit or 64-bit installer. This is the most simple way and you are recommended
+to stick to it by default.
+
+However there is also another way to install driver manually using scripts. If
+you choose this method you should first choose a directory on your filesystem
+where your driver or drivers will be located. Once you have choosen the place
+you should put your driver there and ensure that all driver dependencies can be
+resolved i.e. they can be found either in the %PATH% or in the same directory
+as the driver.
 
 After that you should use one of the install scripts from the directory 
-%IGNITE_HOME%/platforms/cpp/odbc/install:
+%IGNITE_HOME%/platforms/cpp/odbc/install. Note that most likely you will
+need OS administrator privileges to execute these scripts.
 
 For the 32-bit Windows you should use file install_x86.cmd like that:
 $ install_x86 <absolute_path_to_32_bit_driver>
 
 For the 64-bit Windows you should use file install_amd64.cmd like that:
 $ install_amd64 <absolute_path_to_64_bit_driver> [<absolute_path_to_32_bit_driver>]
-
-Most likely you will need OS administrator privileges to execute these scripts.
 
 Thats it. Your driver/drivers are installed.
 

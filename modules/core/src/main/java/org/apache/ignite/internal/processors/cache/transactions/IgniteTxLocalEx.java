@@ -20,6 +20,7 @@ package org.apache.ignite.internal.processors.cache.transactions;
 import java.util.Collection;
 import java.util.Map;
 import javax.cache.Cache;
+import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.internal.IgniteInternalFuture;
@@ -46,11 +47,6 @@ public interface IgniteTxLocalEx extends IgniteInternalTx {
      * @return Commit error.
      */
     @Nullable public Throwable commitError();
-
-    /**
-     * @param e Commit error.
-     */
-    public void commitError(Throwable e);
 
     /**
      * @throws IgniteCheckedException If commit failed.
@@ -186,6 +182,7 @@ public interface IgniteTxLocalEx extends IgniteInternalTx {
      * @param skipVals Skip values flag.
      * @param needVer If {@code true} version is required for loaded values.
      * @param c Closure to be applied for loaded values.
+     * @param expiryPlc Expiry policy.
      * @return Future with {@code True} value if loading took place.
      */
     public IgniteInternalFuture<Void> loadMissing(
@@ -197,5 +194,6 @@ public interface IgniteTxLocalEx extends IgniteInternalTx {
         boolean skipVals,
         boolean needVer,
         boolean keepBinary,
+        final ExpiryPolicy expiryPlc,
         GridInClosure3<KeyCacheObject, Object, GridCacheVersion> c);
 }

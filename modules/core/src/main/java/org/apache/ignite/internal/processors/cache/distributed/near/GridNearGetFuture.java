@@ -62,8 +62,6 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
-import static org.apache.ignite.transactions.TransactionIsolation.READ_COMMITTED;
-
 /**
  *
  */
@@ -376,6 +374,7 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                     topVer,
                     subjId,
                     taskName == null ? 0 : taskName.hashCode(),
+                    expiryPlc != null ? expiryPlc.forCreate() : -1L,
                     expiryPlc != null ? expiryPlc.forAccess() : -1L,
                     skipVals,
                     cctx.deploymentEnabled());
@@ -463,8 +462,6 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                             tx,
                             /*swap*/false,
                             /*read-through*/false,
-                            /*fail-fast*/true,
-                            /*unmarshal*/true,
                             /*metrics*/true,
                             /*events*/!skipVals,
                             /*temporary*/false,
@@ -605,8 +602,6 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                             tx,
                             /*swap*/true,
                             /*read-through*/false,
-                            /*fail-fast*/true,
-                            /*unmarshal*/true,
                             /*update-metrics*/false,
                             /*events*/!nearRead && !skipVals,
                             /*temporary*/false,
@@ -640,7 +635,7 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
             catch (GridCacheEntryRemovedException ignored) {
                 // Retry.
             }
-            catch (GridDhtInvalidPartitionException e) {
+            catch (GridDhtInvalidPartitionException ignored) {
                 return false;
             }
             catch (IgniteCheckedException e) {
@@ -649,7 +644,9 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
                 return false;
             }
             finally {
-                if (dhtEntry != null && (tx == null || (!tx.implicit() && tx.isolation() == READ_COMMITTED)))
+                if (dhtEntry != null)
+                    // Near cache is enabled, so near entry will be enlisted in the transaction.
+                    // Always touch DHT entry in this case.
                     dht.context().evicts().touch(dhtEntry, topVer);
             }
         }

@@ -45,9 +45,8 @@ public class IgniteBenchmarkArguments {
     private String cfg = "config/ignite-localhost-config.xml";
 
     /** */
-    @Parameter(names = {"-qf", "--queriesFile"}, description = "File with the list of SQL queries " +
-        "predefined for the load test")
-    private String qFile = null;
+    @Parameter(names = {"-ltqf", "--loadTestQueriesFile"}, description = "File with predefined SQL queries")
+    private String loadTestQueriesFile = null;
 
     /** */
     @Parameter(names = {"-sm", "--syncMode"}, description = "Synchronization mode")
@@ -102,6 +101,10 @@ public class IgniteBenchmarkArguments {
     public int preloadAmount = 500_000;
 
     /** */
+    @Parameter(names = {"-plfreq", "--preloadLogFrequency"}, description = "Interval between printing logs")
+    public long preloadLogsInterval = 30_000;
+
+    /** */
     @Parameter(names = {"-j", "--jobs"}, description = "Number of jobs for compute benchmarks")
     private int jobs = 10;
 
@@ -154,14 +157,14 @@ public class IgniteBenchmarkArguments {
     private boolean printPartStats;
 
     /** */
-    @Parameter(names = "--allow-operation", description = "List of allowed load test cache operations")
-    private List<String> allowedOperations = new ArrayList<>();
+    @Parameter(names = {"-ltops", "--allowedLoadTestOperations"}, variableArity = true, description = "List of enabled load test operations")
+    private List<String> allowedLoadTestOps = new ArrayList<>();
 
     /**
-     * @return List of cache operations.
+     * @return List of enabled load test operations.
      */
-    public List<String> allowOperations() {
-        return allowedOperations;
+    public List<String> allowedLoadTestOps() {
+        return allowedLoadTestOps;
     }
 
     /**
@@ -291,6 +294,13 @@ public class IgniteBenchmarkArguments {
     }
 
     /**
+     * @return Preload log printing interval in seconds.
+     */
+     public long preloadLogsInterval() {
+         return preloadLogsInterval;
+     }
+
+    /**
      * @return Configuration file.
      */
     public String configuration() {
@@ -298,10 +308,10 @@ public class IgniteBenchmarkArguments {
     }
 
     /**
-     * @return File contains SQL queries.
+     * @return File with predefined SQL queries.
      */
-    public String queriesFile() {
-        return qFile;
+    public String loadTestQueriesFile() {
+        return loadTestQueriesFile;
     }
 
     /**

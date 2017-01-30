@@ -26,6 +26,8 @@
 #include "ignite/date.h"
 #include "ignite/timestamp.h"
 
+#include "ignite/binary/binary_type.h"
+
 namespace ignite
 {
     namespace impl
@@ -34,6 +36,7 @@ namespace ignite
         {
             class InteropInputStream;
             class InteropOutputStream;
+            class InteropMemory;
         }
 
         namespace binary
@@ -51,6 +54,26 @@ namespace ignite
                  * @return Value.
                  */
                 static int8_t ReadInt8(interop::InteropInputStream* stream);
+
+                /**
+                 * Utility method to read signed 8-bit integer from memory.
+                 * @throw IgniteError if there is not enough memory.
+                 *
+                 * @param mem Memory.
+                 * @param pos Position in memory.
+                 * @return Value.
+                 */
+                static int8_t ReadInt8(interop::InteropMemory& mem, int32_t pos);
+
+                /**
+                 * Utility method to read signed 8-bit integer from memory.
+                 * @warning Does not check if there is enough data in memory to read.
+                 *
+                 * @param mem Memory.
+                 * @param pos Position in memory.
+                 * @return Value.
+                 */
+                static int8_t UnsafeReadInt8(interop::InteropMemory& mem, int32_t pos);
 
                 /**
                  * Utility method to write signed 8-bit integer to stream.
@@ -121,6 +144,26 @@ namespace ignite
                 static int16_t ReadInt16(interop::InteropInputStream* stream);
 
                 /**
+                 * Utility method to read signed 16-bit integer from memory.
+                 * @throw IgniteError if there is not enough memory.
+                 *
+                 * @param mem Memory.
+                 * @param pos Position in memory.
+                 * @return Value.
+                 */
+                static int16_t ReadInt16(interop::InteropMemory& mem, int32_t pos);
+
+                /**
+                 * Utility method to read signed 16-bit integer from memory.
+                 * @warning Does not check if there is enough data in memory to read.
+                 *
+                 * @param mem Memory.
+                 * @param pos Position in memory.
+                 * @return Value.
+                 */
+                static int16_t UnsafeReadInt16(interop::InteropMemory& mem, int32_t pos);
+
+                /**
                  * Utility method to write signed 16-bit integer to stream.
                  *
                  * @param stream Stream.
@@ -187,6 +230,26 @@ namespace ignite
                  * @return Value.
                  */
                 static int32_t ReadInt32(interop::InteropInputStream* stream);
+
+                /**
+                 * Utility method to read signed 32-bit integer from memory.
+                 * @throw IgniteError if there is not enough memory.
+                 *
+                 * @param mem Memory.
+                 * @param pos Position in memory.
+                 * @return Value.
+                 */
+                static int32_t ReadInt32(interop::InteropMemory& mem, int32_t pos);
+
+                /**
+                 * Utility method to read signed 32-bit integer from memory.
+                 * @warning Does not check if there is enough data in memory to read.
+                 *
+                 * @param mem Memory.
+                 * @param pos Position in memory.
+                 * @return Value.
+                 */
+                static int32_t UnsafeReadInt32(interop::InteropMemory& mem, int32_t pos);
 
                 /**
                  * Utility method to write signed 32-bit integer to stream.
@@ -538,7 +601,92 @@ namespace ignite
                  */
                 static Timestamp MakeTimestampLocal(int year = 1900, int month = 1,
                     int day = 1, int hour = 0, int min = 0, int sec = 0, long ns = 0);
+
+                /**
+                 * Get default value for the type.
+                 *
+                 * @return Null value for non primitive types and zeroes for primitives.
+                 */
+                template<typename T>
+                static T GetDefaultValue()
+                {
+                    ignite::binary::BinaryType<T> binType;
+
+                    return binType.GetNull();
+                }
             };
+
+            template<>
+            inline int8_t BinaryUtils::GetDefaultValue<int8_t>()
+            {
+                return 0;
+            }
+
+            template<>
+            inline int16_t BinaryUtils::GetDefaultValue<int16_t>()
+            {
+                return 0;
+            }
+
+            template<>
+            inline uint16_t BinaryUtils::GetDefaultValue<uint16_t>()
+            {
+                return 0;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetDefaultValue<int32_t>()
+            {
+                return 0;
+            }
+
+            template<>
+            inline int64_t BinaryUtils::GetDefaultValue<int64_t>()
+            {
+                return 0;
+            }
+
+            template<>
+            inline bool BinaryUtils::GetDefaultValue<bool>()
+            {
+                return false;
+            }
+
+            template<>
+            inline float BinaryUtils::GetDefaultValue<float>()
+            {
+                return 0.0f;
+            }
+
+            template<>
+            inline double BinaryUtils::GetDefaultValue<double>()
+            {
+                return 0.0;
+            }
+
+            template<>
+            inline Guid BinaryUtils::GetDefaultValue<Guid>()
+            {
+                return Guid();
+            }
+
+            template<>
+            inline Date BinaryUtils::GetDefaultValue<Date>()
+            {
+                return Date();
+            }
+
+            template<>
+            inline Timestamp BinaryUtils::GetDefaultValue<Timestamp>()
+            {
+                return Timestamp();
+            }
+
+            template<>
+            inline std::string BinaryUtils::GetDefaultValue<std::string>()
+            {
+                return std::string();
+            }
         }
     }
 }
