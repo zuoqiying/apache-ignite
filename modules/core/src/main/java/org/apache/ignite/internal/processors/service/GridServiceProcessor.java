@@ -1285,6 +1285,9 @@ public class GridServiceProcessor extends GridProcessorAdapter implements Ignite
     @SuppressWarnings("unchecked")
     private Iterator<Cache.Entry<Object, Object>> serviceEntries(IgniteBiPredicate<Object, Object> p) {
         try {
+            System.out.println(">>> Cache         " + cache);
+            System.out.println(">>> Cache context " + cache.context());
+
             GridCacheQueryManager qryMgr = cache.context().queries();
 
             CacheQuery<Map.Entry<Object, Object>> qry = qryMgr.createScanQuery(p, null, false);
