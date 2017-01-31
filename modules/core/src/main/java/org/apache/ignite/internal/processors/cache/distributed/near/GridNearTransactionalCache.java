@@ -551,7 +551,7 @@ public class GridNearTransactionalCache<K, V> extends GridNearCacheAdapter<K, V>
                             topVer = cand.topologyVersion();
 
                             // Send request to remove from remote nodes.
-                            ClusterNode primary = ctx.affinity().primaryByKey(  key, topVer);
+                            ClusterNode primary = ctx.affinity().primaryByKey(key, topVer);
 
                             if (primary == null) {
                                 if (log.isDebugEnabled())
