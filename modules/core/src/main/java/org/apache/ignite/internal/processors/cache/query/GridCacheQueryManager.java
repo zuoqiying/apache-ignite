@@ -1246,7 +1246,8 @@ public abstract class GridCacheQueryManager<K, V> extends GridCacheManagerAdapte
                     V val = row.getValue();
 
                     if (log.isDebugEnabled()) {
-                        ClusterNode primaryNode = CU.primaryNode(cctx, key);
+                        ClusterNode primaryNode = cctx.affinity().primaryByKey(key,
+                            cctx.affinity().affinityTopologyVersion());
 
                         log.debug("Record [key=" + key +
                             ", val=" + val +

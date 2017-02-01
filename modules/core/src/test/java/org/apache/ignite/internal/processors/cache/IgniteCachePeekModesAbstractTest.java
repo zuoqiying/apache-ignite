@@ -1061,7 +1061,7 @@ public abstract class IgniteCachePeekModesAbstractTest extends IgniteCacheAbstra
         int backupCnt = 0;
         if (affinity.primaryByPartition(ctx.localNode(), part, topVer))
             primaryCnt = cnt;
-        else if (affinity.backup(ctx.localNode(), part, topVer))
+        else if (affinity.backupByPartition(ctx.localNode(), part, topVer))
             backupCnt = cnt;
         return new T2<>(primaryCnt, backupCnt);
     }

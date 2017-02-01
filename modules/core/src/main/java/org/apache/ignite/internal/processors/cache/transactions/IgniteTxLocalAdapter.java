@@ -1409,7 +1409,7 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                     finally {
                         if (entry != null && readCommitted()) {
                             if (cacheCtx.isNear()) {
-                                if (cacheCtx.affinity().belongs(cacheCtx.localNode(), entry.partition(), topVer)) {
+                                if (cacheCtx.affinity().partitionBelongs(cacheCtx.localNode(), entry.partition(), topVer)) {
                                     if (entry.markObsolete(xidVer))
                                         cacheCtx.cache().removeEntry(entry);
                                 }

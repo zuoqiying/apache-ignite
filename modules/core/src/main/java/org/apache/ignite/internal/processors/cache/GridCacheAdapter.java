@@ -789,7 +789,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                     nearKey = false;
                 }
                 else {
-                    boolean keyBackup = ctx.affinity().belongs(ctx.localNode(), part, topVer);
+                    boolean keyBackup = ctx.affinity().partitionBelongs(ctx.localNode(), part, topVer);
 
                     if (keyBackup) {
                         if (!modes.backup)
@@ -809,7 +809,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                 }
             }
             else {
-                nearKey = !ctx.affinity().belongs(ctx.localNode(), part, topVer);
+                nearKey = !ctx.affinity().partitionBelongs(ctx.localNode(), part, topVer);
 
                 if (nearKey) {
                     // Swap and offheap are disabled for near cache.
@@ -3841,7 +3841,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
             @Override public boolean apply(ClusterNode clusterNode) {
                 return clusterNode.version().compareTo(PartitionSizeLongTask.SINCE_VER) >= 0 &&
                     ((modes.primary && aff.primaryByPartition(clusterNode, part, topVer)) ||
-                        (modes.backup && aff.backup(clusterNode, part, topVer)));
+                        (modes.backup && aff.backupByPartition(clusterNode, part, topVer)));
             }
         }).nodes();
 

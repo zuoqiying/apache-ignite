@@ -334,7 +334,7 @@ public class GridCacheAffinityManager extends GridCacheManagerAdapter {
      * @param topVer Topology version.
      * @return Backup nodes.
      */
-    public Collection<ClusterNode> backupsByPartition(int part, AffinityTopologyVersion topVer) {
+    private Collection<ClusterNode> backupsByPartition(int part, AffinityTopologyVersion topVer) {
         List<ClusterNode> nodes = nodesByPartition(part, topVer);
 
         assert !F.isEmpty(nodes);
@@ -351,26 +351,12 @@ public class GridCacheAffinityManager extends GridCacheManagerAdapter {
      * @param topVer Topology version.
      * @return {@code True} if checked node is a backup node for given partition.
      */
-    public boolean backup(ClusterNode n, int part, AffinityTopologyVersion topVer) {
+    public boolean backupByPartition(ClusterNode n, int part, AffinityTopologyVersion topVer) {
         List<ClusterNode> nodes = nodesByPartition(part, topVer);
 
         assert !F.isEmpty(nodes);
 
         return nodes.indexOf(n) > 0;
-    }
-
-    /**
-     * @param keys keys.
-     * @param topVer Topology version.
-     * @return Nodes for the keys.
-     */
-    public Collection<ClusterNode> remoteNodes(Iterable keys, AffinityTopologyVersion topVer) {
-        Collection<Collection<ClusterNode>> colcol = new GridLeanSet<>();
-
-        for (Object key : keys)
-            colcol.add(nodesByKey(key, topVer));
-
-        return F.view(F.flatCollections(colcol), F.remoteNodes(cctx.localNodeId()));
     }
 
     /**
@@ -399,7 +385,7 @@ public class GridCacheAffinityManager extends GridCacheManagerAdapter {
      * @param topVer Topology version.
      * @return {@code true} if given partition belongs to specified node.
      */
-    public boolean belongs(ClusterNode node, int part, AffinityTopologyVersion topVer) {
+    public boolean partitionBelongs(ClusterNode node, int part, AffinityTopologyVersion topVer) {
         assert node != null;
         assert part >= 0 : "Invalid partition: " + part;
 

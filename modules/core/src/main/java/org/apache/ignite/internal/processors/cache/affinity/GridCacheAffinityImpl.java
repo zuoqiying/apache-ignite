@@ -96,7 +96,7 @@ public class GridCacheAffinityImpl<K, V> implements Affinity<K> {
     @Override public boolean isPrimaryOrBackup(ClusterNode n, K key) {
         A.notNull(n, "n", key, "key");
 
-        return cctx.affinity().belongs(n, cctx.affinity().partition(key), topologyVersion());
+        return cctx.affinity().partitionBelongs(n, cctx.affinity().partition(key), topologyVersion());
     }
 
     /** {@inheritDoc} */
