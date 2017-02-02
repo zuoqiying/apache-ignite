@@ -54,8 +54,9 @@ public class NoopCollisionSpi extends IgniteSpiAdapter implements CollisionSpi {
     }
 
     /** {@inheritDoc} */
-    @Override public void setExternalCollisionListener(@Nullable CollisionExternalListener lsnr) {
+    @Override public NoopCollisionSpi setExternalCollisionListener(@Nullable CollisionExternalListener lsnr) {
         // No-op.
+        return this;
     }
 
     /** {@inheritDoc} */

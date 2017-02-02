@@ -465,8 +465,10 @@ public class JobStealingCollisionSpi extends IgniteSpiAdapter implements Collisi
     }
 
     /** {@inheritDoc} */
-    @Override public void setExternalCollisionListener(CollisionExternalListener extLsnr) {
+    @Override public JobStealingCollisionSpi setExternalCollisionListener(CollisionExternalListener extLsnr) {
         this.extLsnr = extLsnr;
+
+        return this;
     }
 
     /** {@inheritDoc} */

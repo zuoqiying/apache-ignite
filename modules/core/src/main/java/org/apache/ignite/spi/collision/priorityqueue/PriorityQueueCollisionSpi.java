@@ -408,8 +408,9 @@ public class PriorityQueueCollisionSpi extends IgniteSpiAdapter implements Colli
     }
 
     /** {@inheritDoc} */
-    @Override public void setExternalCollisionListener(CollisionExternalListener lsnr) {
+    @Override public PriorityQueueCollisionSpi setExternalCollisionListener(CollisionExternalListener lsnr) {
         // No-op.
+        return this;
     }
 
     /** {@inheritDoc} */

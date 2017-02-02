@@ -185,8 +185,10 @@ public class FifoQueueCollisionSpi extends IgniteSpiAdapter implements Collision
     }
 
     /** {@inheritDoc} */
-    @Override public void setExternalCollisionListener(CollisionExternalListener lsnr) {
+    @Override public FifoQueueCollisionSpi setExternalCollisionListener(CollisionExternalListener lsnr) {
         // No-op.
+
+        return this;
     }
 
     /** {@inheritDoc} */

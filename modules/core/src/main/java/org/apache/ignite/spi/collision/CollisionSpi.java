@@ -80,6 +80,7 @@ public interface CollisionSpi extends IgniteSpi {
      * they should simply ignore this method and do nothing when listener is set.
      *
      * @param lsnr Listener for external collision events.
+     * @return {@code this} for chaining.
      */
-    public void setExternalCollisionListener(@Nullable CollisionExternalListener lsnr);
+    public CollisionSpi setExternalCollisionListener(@Nullable CollisionExternalListener lsnr);
 }
