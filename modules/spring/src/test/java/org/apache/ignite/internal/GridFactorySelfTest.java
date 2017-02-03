@@ -758,8 +758,10 @@ public class GridFactorySelfTest extends GridCommonAbstractTest {
         }
 
         /** {@inheritDoc} */
-        @Override public void setExternalCollisionListener(CollisionExternalListener lsnr) {
+        @Override public TestMultipleInstancesCollisionSpi setExternalCollisionListener(CollisionExternalListener lsnr) {
             // No-op.
+
+            return this;
         }
     }
 
@@ -796,8 +798,10 @@ public class GridFactorySelfTest extends GridCommonAbstractTest {
         }
 
         /** {@inheritDoc} */
-        @Override public void setExternalCollisionListener(CollisionExternalListener lsnr) {
+        @Override public TestSingleInstancesCollisionSpi setExternalCollisionListener(CollisionExternalListener lsnr) {
             // No-op.
+
+            return this;
         }
     }
 

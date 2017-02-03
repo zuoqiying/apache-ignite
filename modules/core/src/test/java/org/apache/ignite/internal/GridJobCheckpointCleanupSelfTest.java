@@ -122,8 +122,10 @@ public class GridJobCheckpointCleanupSelfTest extends GridCommonAbstractTest {
         }
 
         /** {@inheritDoc} */
-        @Override public void setCheckpointListener(CheckpointListener lsnr) {
+        @Override public TestCheckpointSpi setCheckpointListener(CheckpointListener lsnr) {
             // No-op.
+
+            return this;
         }
 
         /** {@inheritDoc} */

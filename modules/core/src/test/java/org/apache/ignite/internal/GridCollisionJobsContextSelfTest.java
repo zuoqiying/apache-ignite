@@ -114,8 +114,9 @@ public class GridCollisionJobsContextSelfTest extends GridCommonAbstractTest {
         }
 
         /** {@inheritDoc} */
-        @Override public void setExternalCollisionListener(CollisionExternalListener lsnr) {
+        @Override public TestCollisionSpi setExternalCollisionListener(CollisionExternalListener lsnr) {
             // No-op.
+            return this;
         }
     }
 }

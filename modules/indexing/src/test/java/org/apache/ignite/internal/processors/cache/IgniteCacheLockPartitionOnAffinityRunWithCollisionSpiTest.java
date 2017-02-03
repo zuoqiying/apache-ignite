@@ -197,8 +197,10 @@ public class IgniteCacheLockPartitionOnAffinityRunWithCollisionSpiTest
         }
 
         /** {@inheritDoc} */
-        @Override public void setExternalCollisionListener(CollisionExternalListener lsnr) {
+        @Override public AlwaysCancelCollisionSpi setExternalCollisionListener(CollisionExternalListener lsnr) {
             // No-op.
+
+            return this;
         }
     }
 }

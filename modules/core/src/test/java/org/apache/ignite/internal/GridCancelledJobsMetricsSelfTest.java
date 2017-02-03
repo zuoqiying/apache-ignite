@@ -216,8 +216,10 @@ public class GridCancelledJobsMetricsSelfTest extends GridCommonAbstractTest {
         }
 
         /** {@inheritDoc} */
-        @Override public void setExternalCollisionListener(CollisionExternalListener lsnr) {
+        @Override public GridCancelCollisionSpi setExternalCollisionListener(CollisionExternalListener lsnr) {
             this.lsnr = lsnr;
+
+            return this;
         }
 
         /** */
