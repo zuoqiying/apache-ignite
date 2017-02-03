@@ -40,7 +40,7 @@ suite('ClusterServiceTestsSuite', () => {
             });
     });
 
-    setup(() => db.init());
+    setup(() => db.connect());
 
     test('Create new cluster', (done) => {
         const dupleCluster = Object.assign({}, testClusters[0], {name: 'Other name'});

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export class IgniteAgentModal {
+export default class IgniteAgentModal {
     static $inject = ['$rootScope', '$state', '$modal', 'IgniteMessages'];
 
     constructor($root, $state, $modal, Messages) {

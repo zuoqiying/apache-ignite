@@ -40,7 +40,7 @@ suite('DomainsServiceTestsSuite', () => {
             });
     });
 
-    setup(() => db.init());
+    setup(() => db.connect());
 
     test('Create new domain', (done) => {
         const dupleDomain = Object.assign({}, testDomains[0], {valueType: 'other.Type'});

@@ -32,7 +32,7 @@ suite('routes.clusters', () => {
     });
 
     setup(() => {
-        return db.init();
+        return db.connect();
     });
 
     test('Save cluster model', (done) => {

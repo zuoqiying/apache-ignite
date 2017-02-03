@@ -40,7 +40,7 @@ suite('IgfsServiceTestsSuite', () => {
             });
     });
 
-    setup(() => db.init());
+    setup(() => db.connect());
 
     test('Create new igfs', (done) => {
         const dupleIgfs = Object.assign({}, testIgfss[0], {name: 'Other name'});

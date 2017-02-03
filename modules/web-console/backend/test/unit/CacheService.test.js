@@ -40,7 +40,7 @@ suite('CacheServiceTestsSuite', () => {
             });
     });
 
-    setup(() => db.init());
+    setup(() => db.connect());
 
     test('Create new cache', (done) => {
         const dupleCache = Object.assign({}, testCaches[0], {name: 'Other name'});

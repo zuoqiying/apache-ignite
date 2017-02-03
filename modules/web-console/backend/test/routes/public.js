@@ -33,7 +33,7 @@ suite('routes.public', () => {
     });
 
     setup(() => {
-        return db.init();
+        return db.connect();
     });
 
     test('Login success', (done) => {
