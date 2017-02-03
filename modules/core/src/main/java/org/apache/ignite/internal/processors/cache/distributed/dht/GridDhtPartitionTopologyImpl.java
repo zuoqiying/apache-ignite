@@ -506,8 +506,11 @@ class GridDhtPartitionTopologyImpl implements GridDhtPartitionTopology {
         cctx.shared().database().checkpointReadLock();
 
         synchronized (cctx.shared().exchange().interruptLock()) {
-            if (Thread.currentThread().isInterrupted())
+            if (Thread.currentThread().isInterrupted()) {
+                cctx.shared().database().checkpointReadUnlock();
+
                 throw new IgniteInterruptedCheckedException("Thread is interrupted: " + Thread.currentThread());
+            }
 
             try {
                 U.writeLock(lock);
