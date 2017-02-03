@@ -163,6 +163,9 @@ public final class IgniteNodeAttributes {
     /** Late affinity assignment mode. */
     public static final String ATTR_ACTIVE_ON_START = ATTR_PREFIX + ".active.on.start";
 
+    /** Database configuration. */
+    public static final String ATTR_MEMORY_CONFIG = ATTR_PREFIX + ".memory";
+
     /**
      * Enforces singleton.
      */
