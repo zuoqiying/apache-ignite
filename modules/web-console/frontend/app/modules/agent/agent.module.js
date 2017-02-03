@@ -21,6 +21,8 @@ import io from 'socket.io-client'; // eslint-disable-line no-unused-vars
 const maskNull = (val) => _.isEmpty(val) ? 'null' : val;
 
 class IgniteAgentMonitor {
+    static $inject = ['igniteSocketFactory', '$rootScope', '$q', '$state', '$modal', 'IgniteMessages'];
+
     constructor(socketFactory, $root, $q, $state, $modal, Messages) {
         this._modalScope = $root.$new();
 
@@ -31,7 +33,7 @@ class IgniteAgentMonitor {
         $root.$on('$stateChangeStart', this.stopWatch);
 
         // Pre-fetch modal dialogs.
-        this._downloadAgentModal = $modal({
+        this.modal = $modal({
             scope: this._modalScope,
             templateUrl: '/templates/agent-download.html',
             show: false,
@@ -39,15 +41,26 @@ class IgniteAgentMonitor {
             keyboard: false
         });
 
-        const _modalHide = this._downloadAgentModal.hide;
+        const _modalHide = this.modal.hide;
 
         /**
          * Special dialog hide function.
          */
-        this._downloadAgentModal.hide = () => {
+        this.modal.hide = () => {
             Messages.hideAlert();
 
             _modalHide();
+        };
+
+        /**
+         * @param {Object} err
+         */
+        this.modal.error = (err) => {
+            if (this._modalScope.showModal) {
+                this.modal.$promise.then(this.modal.show);
+
+                Messages.showError(err);
+            }
         };
 
         /**
@@ -60,21 +73,7 @@ class IgniteAgentMonitor {
                 this._modalScope.$$postDigest(() => $state.go(this._modalScope.backState));
         };
 
-        this._modalScope.downloadAgent = () => {
-            const lnk = document.createElement('a');
-
-            lnk.setAttribute('href', '/api/v1/agent/downloads/agent');
-            lnk.setAttribute('target', '_self');
-            lnk.setAttribute('download', null);
-            lnk.style.display = 'none';
-
-            document.body.appendChild(lnk);
-
-            lnk.click();
-
-            document.body.removeChild(lnk);
-        };
-
+        this._modalScope.demo = false;
         this._modalScope.hasAgents = null;
         this._modalScope.showModal = false;
 
@@ -86,8 +85,6 @@ class IgniteAgentMonitor {
         this._socketFactory = socketFactory;
 
         this._$q = $q;
-
-        this.Messages = Messages;
     }
 
     /**
@@ -95,9 +92,9 @@ class IgniteAgentMonitor {
      */
     checkModal() {
         if (this._modalScope.showModal && !this._modalScope.hasAgents)
-            this._downloadAgentModal.$promise.then(this._downloadAgentModal.show);
-        else if ((this._modalScope.hasAgents || !this._modalScope.showModal) && this._downloadAgentModal.$isShown)
-            this._downloadAgentModal.hide();
+            this.modal.$promise.then(this.modal.show);
+        else if ((this._modalScope.hasAgents || !this._modalScope.showModal) && this.modal.$isShown)
+            this.modal.hide();
     }
 
     /**
@@ -140,7 +137,8 @@ class IgniteAgentMonitor {
         this._socket.on('connect_error', disconnectFn);
         this._socket.on('disconnect', disconnectFn);
 
-        this._socket.on('agent:count', ({count}) => {
+        this._socket.on('agent:count', ({count, demo}) => {
+            this._modalScope.demo = demo;
             this._modalScope.hasAgents = count > 0;
 
             this.checkModal();
@@ -257,7 +255,7 @@ class IgniteAgentMonitor {
      */
     showNodeError(err) {
         if (this._modalScope.showModal) {
-            this._downloadAgentModal.$promise.then(this._downloadAgentModal.show);
+            this.modal.$promise.then(this.modal.show);
 
             this.Messages.showError(err);
         }
@@ -271,7 +269,7 @@ class IgniteAgentMonitor {
      * @private
      */
     _rest(event, ...args) {
-        return this._downloadAgentModal.$promise
+        return this.modal.$promise
             .then(() => this._emit(event, ...args));
     }
 
@@ -343,8 +341,6 @@ class IgniteAgentMonitor {
         return this._rest('node:cache:metadata', maskNull(cacheName));
     }
 }
-
-IgniteAgentMonitor.$inject = ['igniteSocketFactory', '$rootScope', '$q', '$state', '$modal', 'IgniteMessages'];
 
 angular
     .module('ignite-console.agent', [
