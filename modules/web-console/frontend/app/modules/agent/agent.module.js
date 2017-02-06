@@ -17,12 +17,12 @@
 
 import angular from 'angular';
 
-import IgniteAgent from './Agent.service';
 import IgniteAgentModal from './AgentModal.service';
+import IgniteAgentManager from './AgentManager.service';
 
 angular
     .module('ignite-console.agent', [
 
     ])
-    .service('IgniteAgentMonitor', IgniteAgent)
-    .service('IgniteAgentModal', IgniteAgentModal);
+    .service('IgniteAgentModal', IgniteAgentModal)
+    .service('IgniteAgentMonitor', IgniteAgentManager);

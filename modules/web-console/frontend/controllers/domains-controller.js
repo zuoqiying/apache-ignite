@@ -18,7 +18,7 @@
 // Controller for Domain model screen.
 export default ['domainsController', [
     '$rootScope', '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteFocus', 'IgniteConfirm', 'IgniteConfirmBatch', 'IgniteClone', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteAgentMonitor', 'IgniteLegacyTable', 'IgniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils', 'JavaTypes', 'SqlTypes',
-    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, IgniteAgentMonitor, LegacyTable, Resource, ErrorPopover, FormUtils, JavaTypes, SqlTypes) {
+    function($root, $scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Focus, Confirm, ConfirmBatch, Clone, Loading, ModelNormalizer, UnsavedChangesGuard, AgentManager, LegacyTable, Resource, ErrorPopover, FormUtils, JavaTypes, SqlTypes) {
         UnsavedChangesGuard.install($scope);
 
         const emptyDomain = {empty: true};
@@ -414,7 +414,7 @@ export default ['domainsController', [
         const hideImportDomain = importDomainModal.hide;
 
         importDomainModal.hide = function() {
-            IgniteAgentMonitor.stopWatch();
+            AgentManager.stopWatch();
 
             hideImportDomain();
         };
@@ -459,7 +459,7 @@ export default ['domainsController', [
 
                 $scope.importDomain.loadingOptions = LOADING_JDBC_DRIVERS;
 
-                IgniteAgentMonitor.startWatch({text: 'Back to Domain models', goal: 'import domain model from database'})
+                AgentManager.startWatch('Back to Domain models')
                     .then(importDomainModal.$promise)
                     .then(importDomainModal.show)
                     .then(() => {
@@ -476,7 +476,7 @@ export default ['domainsController', [
                         $scope.jdbcDriverJars = [];
                         $scope.ui.selectedJdbcDriverJar = {};
 
-                        return IgniteAgentMonitor.drivers()
+                        return AgentManager.drivers()
                             .then((drivers) => {
                                 $scope.ui.packageName = $scope.ui.packageNameUserInput;
 
@@ -520,19 +520,19 @@ export default ['domainsController', [
          * Load list of database schemas.
          */
         function _loadSchemas() {
-            IgniteAgentMonitor.awaitAgent()
+            AgentManager.awaitAgent()
                 .then(function() {
                     $scope.importDomain.loadingOptions = LOADING_SCHEMAS;
                     Loading.start('importDomainFromDb');
 
                     if ($root.IgniteDemoMode)
-                        return IgniteAgentMonitor.schemas($scope.demoConnection);
+                        return AgentManager.schemas($scope.demoConnection);
 
                     const preset = $scope.selectedPreset;
 
                     _savePreset(preset);
 
-                    return IgniteAgentMonitor.schemas(preset);
+                    return AgentManager.schemas(preset);
                 })
                 .then(function(schemas) {
                     $scope.importDomain.schemas = _.map(schemas, function(schema) {
@@ -664,7 +664,7 @@ export default ['domainsController', [
          * Load list of database tables.
          */
         function _loadTables() {
-            IgniteAgentMonitor.awaitAgent()
+            AgentManager.awaitAgent()
                 .then(function() {
                     $scope.importDomain.loadingOptions = LOADING_TABLES;
                     Loading.start('importDomainFromDb');
@@ -680,7 +680,7 @@ export default ['domainsController', [
                             preset.schemas.push(schema.name);
                     });
 
-                    return IgniteAgentMonitor.tables(preset);
+                    return AgentManager.tables(preset);
                 })
                 .then(function(tables) {
                     _importCachesOrTemplates = [DFLT_PARTITIONED_CACHE, DFLT_REPLICATED_CACHE].concat($scope.caches);

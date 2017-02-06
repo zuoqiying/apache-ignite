@@ -19,120 +19,124 @@ import io from 'socket.io-client'; // eslint-disable-line no-unused-vars
 
 const maskNull = (val) => _.isEmpty(val) ? 'null' : val;
 
-export default class IgniteAgent {
-    static $inject = ['igniteSocketFactory', '$q', '$rootScope', 'IgniteAgentModal'];
+export default class IgniteAgentManager {
+    static $inject = ['$rootScope', '$q', 'igniteSocketFactory', 'IgniteAgentModal'];
 
-    constructor(socketFactory, $q, $root) {
-        this._socketFactory = socketFactory;
-
-        this._$q = $q;
-
-        $root.$on('$stateChangeSuccess', this.stopWatch);
+    constructor($root, $q, socketFactory, AgentModal) {
+        this.$root = $root;
+        this.$q = $q;
+        this.socketFactory = socketFactory;
 
         /**
+         * @type {IgniteAgentModal}
+         */
+        this.AgentModal = AgentModal;
+
+        $root.$on('$stateChangeSuccess', _.bind(this.stopWatch, this));
+
+        /**
+         * Connection to backend.
          * @type {Socket}
          */
-        this._socket = null;
+        this.socket = null;
 
-        this.connected = false;
+        /**
+         * One or more agent are connected with user token.
+         * @type {boolean}
+         */
+        this.connected = null;
 
+        /**
+         * Has agent with enabled demo mode.
+         * @type {boolean}
+         */
         this.hasDemo = false;
     }
 
-    /**
-     * @private
-     */
-    checkModal() {
-        if (this._modalScope.showModal && !this._modalScope.hasAgents)
-            this.modal.$promise.then(this.modal.show);
-        else if ((this._modalScope.hasAgents || !this._modalScope.showModal) && this.modal.$isShown)
-            this.modal.hide();
+    connect() {
+        const self = this;
+
+        if (_.nonNil(self.socket))
+            return;
+
+        self.socket = self.socketFactory();
+
+        const onDisconnect = () => {
+            self.connected = false;
+
+            self.AgentModal.agentDisconnected(this.backText, this.backState);
+        };
+
+        self.socket.on('connect_error', onDisconnect);
+        self.socket.on('disconnect', onDisconnect);
+
+        self.connected = null;
+
+        self.socket.on('agent:count', ({count, hasDemo}) => {
+            self.hasDemo = hasDemo;
+            self.connected = count > 0;
+        });
     }
 
     /**
      * @returns {Promise}
      */
     awaitAgent() {
-        if (this._modalScope.hasAgents)
-            return this._$q.when();
+        this.latchAwaitAgent = this.$q.defer();
 
-        const latch = this._$q.defer();
+        this.offAwaitAgent = this.$root.$watch(() => this.connected, (connected) => {
+            if (connected) {
+                this.offAwaitAgent();
 
-        const offConnected = this._modalScope.$on('agent:watch', (event, state) => {
-            if (state !== 'DISCONNECTED')
-                offConnected();
-
-            if (state === 'CONNECTED')
-                return latch.resolve();
-
-            if (state === 'STOPPED')
-                return latch.reject('Agent watch stopped.');
+                this.latchAwaitAgent.resolve();
+            }
         });
 
-        return latch.promise;
-    }
-
-    connect() {
-        const self = this;
-
-        if (_.nonNil(self._socket))
-            return;
-
-        self._socket = self._socketFactory();
-
-        const disconnectFn = () => {
-            self.connected = false;
-
-            self.checkModal();
-
-            self._modalScope.$broadcast('agent:watch', 'DISCONNECTED');
-        };
-
-        self._socket.on('connect_error', disconnectFn);
-        self._socket.on('disconnect', disconnectFn);
-
-        this._socket.on('agent:count', ({count, demo}) => {
-            self.hasDemo = demo;
-            self.connected = count > 0;
-
-            self.checkModal();
-
-            this._modalScope.$broadcast('agent:watch', this._modalScope.hasAgents ? 'CONNECTED' : 'DISCONNECTED');
-        });
+        return this.latchAwaitAgent.promise;
     }
 
     /**
-     * @param {Object} back
+     * @param {String} backText
+     * @param {String} [backState]
      * @returns {Promise}
      */
-    startWatch(back) {
-        this._modalScope.backState = back.state;
-        this._modalScope.backText = back.text;
+    startWatch(backText, backState) {
+        const self = this;
 
-        this._modalScope.agentGoal = back.goal;
+        self.backText = backText;
+        self.backState = backState;
 
-        if (back.onDisconnect) {
-            this._modalScope.offDisconnect = this._modalScope.$on('agent:watch', (e, state) =>
-            state === 'DISCONNECTED' && back.onDisconnect());
-        }
+        self.offWatch = this.$root.$watch(() => self.connected, (connected) => {
+            switch (connected) {
+                case false:
+                    this.AgentModal.agentDisconnected(self.backText, self.backState);
 
-        this._modalScope.showModal = true;
+                    break;
+                case true:
+                    this.AgentModal.hide();
 
-        // Remove blinking on init.
-        if (this._modalScope.hasAgents !== null)
-            this.checkModal();
+                    break;
+                default:
+                    // Connection to backend is not established yet.
+            }
+        });
 
-        return this.awaitAgent();
+        return self.awaitAgent();
     }
 
     stopWatch() {
-        this._modalScope.showModal = false;
+        if (!_.isFunction(this.offWatch))
+            return;
 
-        this.checkModal();
+        this.offWatch();
 
-        this._modalScope.offDisconnect && this._modalScope.offDisconnect();
+        this.AgentModal.hide();
 
-        this._modalScope.$broadcast('agent:watch', 'STOPPED');
+        if (this.latchAwaitAgent) {
+            this.offAwaitAgent();
+
+            this.latchAwaitAgent.reject('Agent watch stopped.');
+        }
     }
 
     /**
@@ -143,21 +147,21 @@ export default class IgniteAgent {
      * @private
      */
     _emit(event, ...args) {
-        if (!this._socket)
-            return this._$q.reject('Failed to connect to server');
+        if (!this.socket)
+            return this.$q.reject('Failed to connect to server');
 
-        const latch = this._$q.defer();
+        const latch = this.$q.defer();
 
         const onDisconnect = () => {
-            this._socket.removeListener('disconnect', onDisconnect);
+            this.socket.removeListener('disconnect', onDisconnect);
 
             latch.reject('Connection to server was closed');
         };
 
-        this._socket.on('disconnect', onDisconnect);
+        this.socket.on('disconnect', onDisconnect);
 
         args.push((err, res) => {
-            this._socket.removeListener('disconnect', onDisconnect);
+            this.socket.removeListener('disconnect', onDisconnect);
 
             if (err)
                 latch.reject(err);
@@ -165,7 +169,7 @@ export default class IgniteAgent {
             latch.resolve(res);
         });
 
-        this._socket.emit(event, ...args);
+        this.socket.emit(event, ...args);
 
         return latch.promise;
     }
@@ -238,15 +242,6 @@ export default class IgniteAgent {
 
     /**
      * @param {String} nid Node id.
-     * @param {int} [queryId]
-     * @returns {Promise}
-     */
-    queryClose(nid, queryId) {
-        return this._rest('node:query:close', nid, queryId);
-    }
-
-    /**
-     * @param {String} nid Node id.
      * @param {String} cacheName Cache name.
      * @param {String} [query] Query if null then scan query.
      * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
@@ -282,9 +277,18 @@ export default class IgniteAgent {
      * @param {int} pageSize
      * @returns {Promise}
      */
-    next(nid, queryId, pageSize) {
+    queryNextPage(nid, queryId, pageSize) {
         return this._rest('node:query:fetch', nid, queryId, pageSize)
             .then(({result}) => result);
+    }
+
+    /**
+     * @param {String} nid Node id.
+     * @param {int} [queryId]
+     * @returns {Promise}
+     */
+    queryClose(nid, queryId) {
+        return this._rest('node:query:close', nid, queryId);
     }
 
     /**

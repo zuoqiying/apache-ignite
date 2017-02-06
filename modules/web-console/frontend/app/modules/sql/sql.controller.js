@@ -859,20 +859,11 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             paragraph.cacheName = _.head(cacheNames);
                     });
                 })
-                .then(() => agentMonitor.checkModal())
+                .then(() => agentMonitor.toggleModalIfNeeded())
                 .catch((err) => agentMonitor.showNodeError(err));
 
         const _startWatch = () =>
-            agentMonitor.startWatch({
-                state: 'base.configuration.clusters',
-                text: 'Back to Configuration',
-                goal: 'execute sql statements',
-                onDisconnect: () => {
-                    _stopTopologyRefresh();
-
-                    _startWatch();
-                }
-            })
+            agentMonitor.startWatch('Back to Configuration', 'base.configuration.clusters')
                 .then(() => Loading.start('sqlLoading'))
                 .then(_refreshFn)
                 .then(() => Loading.finish('sqlLoading'))
@@ -1499,7 +1490,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
             paragraph.queryArgs.pageSize = paragraph.pageSize;
 
-            agentMonitor.next(paragraph.resNodeId, paragraph.queryId, paragraph.pageSize)
+            agentMonitor.queryNextPage(paragraph.resNodeId, paragraph.queryId, paragraph.pageSize)
                 .then((res) => {
                     paragraph.page++;
 

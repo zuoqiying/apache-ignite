@@ -19,41 +19,30 @@ export default class IgniteAgentModal {
     static $inject = ['$rootScope', '$state', '$modal', 'IgniteMessages'];
 
     constructor($root, $state, $modal, Messages) {
-        const controller = this;
+        const self = this;
 
-        controller.$state = $state;
-        controller.Messages = Messages;
+        self.$state = $state;
+        self.Messages = Messages;
 
         // Pre-fetch modal dialogs.
-        controller.modal = $modal({
+        self.modal = $modal({
             templateUrl: '/templates/agent-download.html',
             show: false,
             backdrop: 'static',
             keyboard: false,
-            controller,
-            controllerAs: 'ctrl'
+            controller: () => self,
+            controllerAs: '$ctrl'
         });
 
-        controller.modal.$scope.$on('modal.hide.before', () => {
+        self.modal.$scope.$on('modal.hide.before', () => {
             Messages.hideAlert();
         });
 
-        $root.$on('user', (event, user) => controller.user = user);
-    }
-
-    /**
-     * @param {Object} err
-     */
-    error(err, backState) {
-        if (this.modal.$scope.showModal) {
-            this.modal.$promise.then(this.modal.show);
-
-            this.Messages.showError(err);
-        }
+        $root.$on('user', (event, user) => self.user = user);
     }
 
     hide() {
-        return this.modal.hide();
+        this.modal.hide();
     }
 
     /**
@@ -66,11 +55,33 @@ export default class IgniteAgentModal {
             this.$state.go(this.backState);
     }
 
-    agentDisconnected(backState) {
+    /**
+     * @param {String} backState
+     * @param {String} [backText]
+     */
+    agentDisconnected(backText, backState) {
+        const self = this;
 
+        self.backText = backText;
+        self.backState = backState;
+
+        self.status = 'agentMissing';
+
+        self.modal.$promise.then(self.modal.show);
     }
 
-    clusterDisconnected() {
-        
+    /**
+     * @param {String} backState
+     * @param {String} [backText]
+     */
+    clusterDisconnected(backText, backState) {
+        const self = this;
+
+        self.backText = backText;
+        self.backState = backState;
+
+        self.status = 'nodeMissing';
+
+        self.modal.$promise.then(self.modal.show);
     }
 }

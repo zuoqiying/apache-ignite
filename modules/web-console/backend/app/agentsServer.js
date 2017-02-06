@@ -144,8 +144,8 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
                     this.io = socketio(srv, {path: '/agents'});
 
-                    this.io.on('connection', (ioSocket) => {
-                        ioSocket.on('agent:auth', ({ver, bt, tokens, disableDemo}, cb) => {
+                    this.io.on('connection', (agentSock) => {
+                        agentSock.on('agent:auth', ({ver, bt, tokens, disableDemo}, cb) => {
                             if (_.isEmpty(tokens))
                                 return cb('Tokens not set. Please reload agent archive or check settings');
 
@@ -163,7 +163,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                                     cb(activeTokens);
 
                                     if (!_.isEmpty(activeTokens))
-                                        this.onAgentConnect(ioSocket, activeTokens);
+                                        this.onAgentConnect(activeTokens, agentSock);
                                 })
                                 // TODO IGNITE-1379 send error to web master.
                                 .catch(() => cb([]));
@@ -214,23 +214,23 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             const browserSockets = this._browserSockets[token];
 
             const count = _.size(agentSockets);
-            const demo = !!_.find(agentSockets, (sock) => sock.demo.enabled);
+            const hasDemo = !!_.find(agentSockets, (sock) => _.get(sock, 'demo.enabled'));
 
-            _.forEach(browserSockets, (socket) => socket.emit('agent:count', {count, demo}));
+            _.forEach(browserSockets, (sock) => sock.emit('agent:count', {count, hasDemo}));
         }
 
         /**
          * Link agent with browsers by account.
          *
          * @param {Array.<String>} tokens
-         * @param {AgentSocket} ioSocket
+         * @param {AgentSocket} agentSock
          *
          * @private
          */
-        onAgentConnect(ioSocket, tokens) {
-            const sock = new AgentSocket(ioSocket, tokens);
+        onAgentConnect(tokens, agentSock) {
+            const sock = new AgentSocket(agentSock, false);
 
-            ioSocket.on('disconnect', () => {
+            agentSock.on('disconnect', () => {
                 _.forEach(tokens, (token) => {
                     const agentSockets = this._agentSockets[token];
 
@@ -243,10 +243,10 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             });
 
             _.forEach(tokens, (token) => {
-                const agentSockets = this._agentSockets[token];
+                let agentSockets = this._agentSockets[token];
 
                 if (_.isEmpty(agentSockets)) {
-                    this._agentSockets[token] = [sock];
+                    agentSockets = this._agentSockets[token] = [sock];
 
                     const browserSockets = _.filter(this._browserSockets[token],
                         (socket) => socket.request._query.IgniteDemoMode === 'true');
@@ -267,26 +267,26 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
         /**
          * @param {ObjectId} token
-         * @param {AgentSocket} browserSocket
+         * @param {AgentSocket} browserSock
          * @returns {int} Connected agent count.
          */
-        onBrowserConnect(token, browserSocket) {
+        onBrowserConnect(token, browserSock) {
             let browserSockets = this._browserSockets[token];
 
             if (_.isNil(browserSockets))
                 this._browserSockets[token] = browserSockets = [];
 
-            browserSockets.push(browserSocket);
+            browserSockets.push(browserSock);
 
             const agentSockets = this._agentSockets[token];
 
             this.sendAgentsCount(token, agentSockets);
 
             // If user start demo and agents was connected before.
-            const demo = browserSocket.request._query.IgniteDemoMode === 'true';
+            const demo = browserSock.request._query.IgniteDemoMode === 'true';
 
             if (demo && _.size(agentSockets) > 0 && !_.find(agentSockets, (agent) => agent.demoStarted(token)))
-                _.head(agentSockets).listenDemo(token, [browserSocket]);
+                _.head(agentSockets).listenDemo(token, [browserSock]);
         }
 
         /**
