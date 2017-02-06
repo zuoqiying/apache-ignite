@@ -3467,6 +3467,8 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
                     ldr.keepBinary(keepBinary);
 
+                    ldr.allowOverwrite(false);
+
                     LocalStoreLoadClosure c = new LocalStoreLoadClosure(p, ldr, plc);
 
                     ctx.store().loadCache(c, args);
