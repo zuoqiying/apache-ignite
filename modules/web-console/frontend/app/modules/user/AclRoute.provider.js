@@ -20,11 +20,11 @@ export default [() => {
         static checkAccess = (permissions, failState) => {
             failState = failState || '403';
 
-            return ['$state', 'AclService', 'User', ($state, AclService, User) => {
+            return ['$state', 'AclService', 'User', 'IgniteActivitiesData', ($state, AclService, User, Activities) => {
                 User.read()
                     .then(() => {
                         if (AclService.can(permissions))
-                            return;
+                            return Activities.post();
 
                         return $state.go(failState);
                     })

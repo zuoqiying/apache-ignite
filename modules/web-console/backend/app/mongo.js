@@ -907,19 +907,19 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         res.status(err.code || 500).send(err.message);
     };
 
-    // Define Statistics schema.
-    const StatisticsSchema = new Schema({
+    // Define Activities schema.
+    const ActivitiesSchema = new Schema({
         owner: {type: ObjectId, ref: 'Account'},
-        amount: { type: Number, default: 1 },
-        title: String,
-        url: String,
-        name: String
+        date: Date,
+        group: String,
+        action: String,
+        amount: { type: Number, default: 1 }
     });
 
-    StatisticsSchema.index({ owner: 1, url: 1}, { unique: true });
+    ActivitiesSchema.index({ owner: 1, group: 1, action: 1, date: 1}, { unique: true });
 
-    // Define Statistics model.
-    result.Statistics = mongoose.model('Statistics', StatisticsSchema);
+    // Define Activities model.
+    result.Activities = mongoose.model('Activities', ActivitiesSchema);
 
     // Registering the routes of all plugin modules
     for (const name in pluginMongo) {

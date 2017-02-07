@@ -40,8 +40,8 @@ try {
             './routes/**/*.js',
             './services/**/*.js',
             './test/app/*.js'
-        ],
-        use: ['mongoose:mock']
+        ]
+        // ,use: ['mongoose']
     });
 }
 
