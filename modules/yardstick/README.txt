@@ -15,7 +15,7 @@ Running Ignite Benchmarks Locally
 
 The simplest way to start with benchmarking is to use one of the executable scripts available under `benchmarks\bin` directory:
 
-./bin/benchmark-run-all.sh config/benchmark-atomic-put.properties
+./bin/benchmark-run-all.sh config/benchmark-sample.properties
 
 The command above will benchmark the cache put operation for a distributed atomic cache. The results of the benchmark will be added
 to auto-generated `results-{DATE-TIME}` directory.
@@ -51,7 +51,7 @@ in `config/benchmark-atomic-put.properties` file.
 
 Then use the following command:
 
-./bin/benchmark-run-all.sh config/benchmark-atomic-put.properties
+./bin/benchmark-run-all.sh config/benchmark-sample.properties
 
 
 It is recommended to create some copies of original config files, edit these copies and then use as a
