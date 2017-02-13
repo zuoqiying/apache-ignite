@@ -506,10 +506,13 @@
                                             <fileset dir="${basedir}/target/release-package/benchmarks/config/">
                                                 <include name="*.*" />
                                                 <exclude name="benchmark.properties"/>
+                                                <exclude name="benchmark-remote.properties"/>
                                                 <exclude name="benchmark-sample.properties"/>
+                                                <exclude name="benchmark-remote-sample.properties"/>
                                                 <exclude name="benchmark-multicast.properties"/>
                                                 <exclude name="ignite-base-config.xml"/>
                                                 <exclude name="ignite-localhost-config.xml"/>
+                                                <exclude name="ignite-remote-config.xml"/>
                                                 <exclude name="ignite-multicast-config.xml"/>
                                             </fileset>
                                         </delete>
