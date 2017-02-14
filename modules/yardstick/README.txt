@@ -37,8 +37,7 @@ Running Ignite Benchmarks Remotely
 To benchmark Apache Ignite across several remote hosts the following steps need
 to be done:
 
-1. These Ignite Yardstick Benchmarks have to be uploaded to every remote host. The path
-to the uploaded benchmarks should be exactly the same on each host.
+1. These Ignite Yardstick Benchmarks have to be uploaded to one of your remote host.
 
 2. Go to `config/ignite-remote-config.xml` and replace
 `<value>127.0.0.1:47500..47509</value>` with actual IPs of all the remote hosts.
@@ -47,10 +46,14 @@ https://apacheignite.readme.io/docs/cluster-config
 
 3. Go to `config/benchmark-remote-sample.properties` and replace the `localhost` with
 actual IPs of the remote hosts in the following places:
-SERVERS='localhost,localhost'
-DRIVERS='localhost'
+SERVER_HOSTS='localhost,localhost'
+DRIVER_HOSTS='localhost'
 
 DRIVER is one of the remote hosts where benchmarks execution will be initiated and driven.
+Note: If you want to run a benchmark with more then one driver, you have to add "--client" line to the configuration of
+this benchmark.
+For example:
+-cfg ${SCRIPT_DIR}/../config/ignite-remote-config.xml --client -nn ${nodesNum} -b 1 -w 60 -d 300 -t 64 -sm PRIMARY_SYNC -dn IgnitePutBenchmark -sn IgniteNode -ds ${ver}atomic-put-1-backup
 
 Replace `localhost` occurrences in the same places in
 `config/benchmark-remote.properties` files if you plan to execute a full set of
@@ -60,13 +63,15 @@ benchmarks available.
 
 ./bin/benchmark-run-all.sh config/benchmark-remote-sample.properties
 
-The command above will benchmark the cache put operation for a distributed atomic cache. The results of the benchmark
-will be added to an auto-generated `output/results-{DATE-TIME}` directory.
-
 If you want to execute all the available benchmarks across the remote hosts then
 execute the following command on the DRIVER side:
 ./bin/benchmark-run-all.sh config/benchmark-remote.properties
 
+The /bin/benchmark-run-all.sh will copy the directory which containing the Ignite Yardstick to all the other hosts
+listed in SERVER_HOSTS and DRIVER_HOSTS variables. After running all the listed benchmarks the result and logs from all
+the hosts will be collected to the `output/results-{DATE-TIME}` and `output/logs-{DATE-TIME}` directory on the host in
+which you were running the command above. Then the charts will be generated in the `output/charts-{DATE-TIME}`
+directory. If you prefer to do it manually you need to set AUTO_COPY variable in the configuration file to "false".
 
 Provided Benchmarks
 ===================
