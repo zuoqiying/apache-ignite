@@ -11,7 +11,7 @@ graphs generation and how the frameworks works.
 
 
 Running Ignite Benchmarks Locally
-==========================================
+=================================
 
 The simplest way to start with benchmarking is to use one of the executable scripts available under `benchmarks\bin`
 directory:
@@ -32,7 +32,7 @@ to “Provided Benchmarks” and “Properties And Command Line Arguments” sec
 
 
 Running Ignite Benchmarks Remotely
-=========================================
+==================================
 
 To benchmark Apache Ignite across several remote hosts the following steps need
 to be done:
@@ -59,9 +59,8 @@ benchmarks available.
 
 ./bin/benchmark-run-all.sh config/benchmark-remote-sample.properties
 
-By default all the necessary files will be automatically uploaded from the host in which you run the command above to
-every other host in the exact same path. If you prefer to do it manually set the AUTO_COPY variable in property
-file to `false`.
+By default, all the necessary files will be automatically uploaded from the host in which you run the command above to
+every other host to the same path. If you prefer to do it manually set the AUTO_COPY variable in property file to `false`.
 
 The command above will benchmark the cache put operation for a distributed atomic cache. The results of the benchmark
 will be added to an auto-generated `output/results-{DATE-TIME}` directory.
@@ -103,8 +102,9 @@ The following benchmarks are provided:
 
 Properties And Command Line Arguments
 =====================================
-Note that this section only describes configuration parameters specific to Ignite benchmarks, and not for Yardstick framework. To run Ignite benchmarks and generate
-graphs, you will need to run them using Yardstick framework scripts in `bin` folder.
+Note that this section only describes configuration parameters specific to Ignite benchmarks, and not for Yardstick
+framework. To run Ignite benchmarks and generate graphs, you will need to run them using Yardstick framework scripts in
+`bin` folder.
 
 Refer to Yardstick Documentation (https://github.com/gridgain/yardstick) for common Yardstick properties
 and command line arguments for running Yardstick scripts.
