@@ -1,13 +1,13 @@
 Yardstick Ignite Benchmarks
 ===========================
-Apache Ignite benchmarks are written on top of Yardstick Framework (https://github.com/gridgain/yardstick) and allow you
-to measure performance of various Apache Ignite components and modules.
+Apache Ignite benchmarks are written on top of Yardstick Framework (https://github.com/gridgain/yardstick)
+and allow you to measure performance of various Apache Ignite components and modules.
 
 The documentation below describes how to execute and configure already assembled benchmarks. If you need to add new
 benchmarks or build existing one then refer to instruction from `DEVNOTES.txt` in source directory.
 
-Visit Yardstick Repository (https://github.com/gridgain/yardstick) for detailed information in regards resulting graphs
-generation and how the frameworks works.
+Visit Yardstick Repository (https://github.com/gridgain/yardstick) for detailed information in regards resulting
+graphs generation and how the frameworks works.
 
 
 Running Ignite Benchmarks Locally
@@ -18,8 +18,8 @@ directory:
 
 ./bin/benchmark-run-all.sh config/benchmark-sample.properties
 
-The command above will benchmark the cache put operation for a distributed atomic cache. The results of the benchmark
-will be added to an auto-generated `output/results-{DATE-TIME}` directory.
+The command above will benchmark the cache put operation for a distributed atomic cache. The results of the
+benchmark will be added to an auto-generated `output/results-{DATE-TIME}` directory.
 
 If `./bin/benchmark-run-all.sh` command is executed as is without any parameters and modifications in configurations
 files then all the available benchmarks will be executed on a local machine using `config/benchmark.properties` configuration.
@@ -37,41 +37,39 @@ Running Ignite Benchmarks Remotely
 To benchmark Apache Ignite across several remote hosts the following steps need
 to be done:
 
-1. These Ignite Yardstick Benchmarks have to be uploaded to one of your remote host.
-
-2. Go to `config/ignite-remote-config.xml` and replace
+1. Go to `config/ignite-remote-config.xml` and replace
 `<value>127.0.0.1:47500..47509</value>` with actual IPs of all the remote hosts.
 Refer to the documentation section below if you prefer to use other kind of IP finder:
 https://apacheignite.readme.io/docs/cluster-config
 
-3. Go to `config/benchmark-remote-sample.properties` and replace the `localhost` with
+2. Go to `config/benchmark-remote-sample.properties` and replace the `localhost` with
 actual IPs of the remote hosts in the following places:
-SERVER_HOSTS='localhost,localhost'
-DRIVER_HOSTS='localhost'
+SERVERS='localhost,localhost'
+DRIVERS='localhost'
 
-DRIVER is one of the remote hosts where benchmarks execution will be initiated and driven.
-Note: If you want to run a benchmark with more then one driver, you have to add "--client" line to the configuration of
-this benchmark.
-For example:
--cfg ${SCRIPT_DIR}/../config/ignite-remote-config.xml --client -nn ${nodesNum} -b 1 -w 60 -d 300 -t 64 -sm PRIMARY_SYNC -dn IgnitePutBenchmark -sn IgniteNode -ds ${ver}atomic-put-1-backup
+DRIVERS is the remote hosts where benchmarks execution will be and driven.
 
 Replace `localhost` occurrences in the same places in
 `config/benchmark-remote.properties` files if you plan to execute a full set of
 benchmarks available.
 
+3. Upload Ignite Yardstick Benchmarks to one of your DRIVERS host.
+
 4. Log in on the remote host that will be the DRIVER and execute the following command:
 
 ./bin/benchmark-run-all.sh config/benchmark-remote-sample.properties
+
+By default all the necessary files will be automatically uploaded from the host in which you run the command above to
+every other host in the exact same path. If you prefer to do it manually set the AUTO_COPY variable in property
+file to `false`.
+
+The command above will benchmark the cache put operation for a distributed atomic cache. The results of the benchmark
+will be added to an auto-generated `output/results-{DATE-TIME}` directory.
 
 If you want to execute all the available benchmarks across the remote hosts then
 execute the following command on the DRIVER side:
 ./bin/benchmark-run-all.sh config/benchmark-remote.properties
 
-The /bin/benchmark-run-all.sh will copy the directory which containing the Ignite Yardstick to all the other hosts
-listed in SERVER_HOSTS and DRIVER_HOSTS variables. After running all the listed benchmarks the result and logs from all
-the hosts will be collected to the `output/results-{DATE-TIME}` and `output/logs-{DATE-TIME}` directory on the host in
-which you were running the command above. Then the charts will be generated in the `output/charts-{DATE-TIME}`
-directory. If you prefer to do it manually you need to set AUTO_COPY variable in the configuration file to "false".
 
 Provided Benchmarks
 ===================
@@ -116,7 +114,8 @@ The following Ignite benchmark properties can be defined in the benchmark config
 * `-b <num>` or `--backups <num>` - Number of backups for every key
 * `-cfg <path>` or `--Config <path>` - Path to Ignite configuration file
 * `-cs` or `--cacheStore` - Enable or disable cache store readThrough, writeThrough
-* `-cl` or `--client` - Client flag
+* `-cl` or `--client` - Client flag. Use this flag if you running more than one `DRIVER`, otherwise additional drivers
+would behave like a `servers`.
 * `-nc` or `--nearCache` - Near cache flag
 * `-nn <num>` or `--nodeNumber <num>` - Number of nodes (automatically set in `benchmark.properties`), used to wait for
     the specified number of nodes to start
