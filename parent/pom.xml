@@ -203,10 +203,6 @@
             <url>http://h2database.com/m2-repo</url>
             <layout>default</layout>
         </repository>
-            <repository>
-                <id>Temp Repository</id>
-                <url>https://oss.sonatype.org/content/repositories/orgyardstickframework-1016</url>
-            </repository>
     </repositories>
 
     <dependencyManagement>
