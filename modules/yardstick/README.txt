@@ -53,7 +53,7 @@ Replace `localhost` occurrences in the same places in
 `config/benchmark-remote.properties` files if you plan to execute a full set of
 benchmarks available.
 
-3. Upload Ignite Yardstick Benchmarks to one of your DRIVERS host.
+3. Upload Ignite Yardstick Benchmarks to one of your DRIVERS host in its own working directory.
 
 4. Log in on the remote host that will be the DRIVER and execute the following command:
 
