@@ -333,7 +333,7 @@ public class GridDhtColocatedCache<K, V> extends GridDhtTransactionalCacheAdapte
         AffinityTopologyVersion topVer
     ) {
         try {
-            return ctx.affinity().localNode(key, topVer) ? entryEx(key) : null;
+            return ctx.affinity().keyLocalNode(key, topVer) ? entryEx(key) : null;
         }
         catch (GridDhtInvalidPartitionException ignored) {
             return null;

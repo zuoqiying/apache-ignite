@@ -5545,7 +5545,7 @@ public class IgniteCacheConfigVariationsFullApiTest extends IgniteCacheConfigVar
             int size = 0;
 
             for (String key : keys) {
-                if (ctx.affinity().localNode(key, ctx.discovery().topologyVersionEx())) {
+                if (ctx.affinity().keyLocalNode(key, ctx.discovery().topologyVersionEx())) {
                     GridCacheEntryEx e =
                         ctx.isNear() ? ctx.near().dht().peekEx(key) : ctx.cache().peekEx(key);
 
@@ -5586,7 +5586,7 @@ public class IgniteCacheConfigVariationsFullApiTest extends IgniteCacheConfigVar
             int size = 0;
 
             for (String key : map.keySet())
-                if (ctx.affinity().localNode(key, ctx.discovery().topologyVersionEx()))
+                if (ctx.affinity().keyLocalNode(key, ctx.discovery().topologyVersionEx()))
                     size++;
 
             assertEquals("Incorrect key size on cache #" + idx, size, ignite.cache(ctx.name()).localSize(ALL));
@@ -5847,7 +5847,7 @@ public class IgniteCacheConfigVariationsFullApiTest extends IgniteCacheConfigVar
             int size = 0;
 
             for (String key : keys)
-                if (ctx.affinity().localNode(key, ctx.discovery().topologyVersionEx()))
+                if (ctx.affinity().keyLocalNode(key, ctx.discovery().topologyVersionEx()))
                     size++;
 
             assertEquals("Incorrect key size on cache #" + idx, size, ignite.cache(cacheName).localSize(ALL));
