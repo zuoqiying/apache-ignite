@@ -140,20 +140,23 @@ public class IgniteProcessProxy implements IgniteEx {
 
         locJvmGrid.events().localListen(new NodeStartedListener(id, rmtNodeStartedLatch), EventType.EVT_NODE_JOINED);
 
+        IgniteInClosure<String> c = new IgniteInClosure<String>() {
+            @Override public void apply(String s) {
+                IgniteProcessProxy.this.log.info(s);
+            }
+        };
+
         proc = GridJavaProcess.exec(
             IgniteNodeRunner.class.getCanonicalName(),
             cfgFileName, // Params.
             this.log,
-            // Optional closure to be called each time wrapped process prints line to system.out or system.err.
-            new IgniteInClosure<String>() {
-                @Override public void apply(String s) {
-                    IgniteProcessProxy.this.log.info(s);
-                }
-            },
+            c, c,
             null,
             System.getProperty(TEST_MULTIJVM_JAVA_HOME),
             filteredJvmArgs, // JVM Args.
-            System.getProperty("surefire.test.class.path")
+            System.getProperty("surefire.test.class.path"),
+            null,
+            null
         );
 
         assert rmtNodeStartedLatch.await(30, TimeUnit.SECONDS): "Remote node has not joined [id=" + id + ']';
@@ -694,7 +697,7 @@ public class IgniteProcessProxy implements IgniteEx {
     /**
      *
      */
-    private static class NodeTask implements IgniteCallable<ClusterNode> {
+    public static class NodeTask implements IgniteCallable<ClusterNode> {
         /** Ignite. */
         @IgniteInstanceResource
         private Ignite ignite;
