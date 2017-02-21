@@ -207,7 +207,8 @@ public class GridSqlQuerySplitter {
             boolean allCollocated = true;
 
             for (GridCacheSqlQuery mapSqlQry : splitter.mapSqlQrys) {
-                Prepared prepared = optimize(h2, conn, mapSqlQry.query(), params, true, enforceJoinOrder);
+                Prepared prepared = optimize(h2, conn, mapSqlQry.query(), mapSqlQry.parameters(),
+                    true, enforceJoinOrder);
 
                 allCollocated &= isCollocated((Query)prepared);
 
