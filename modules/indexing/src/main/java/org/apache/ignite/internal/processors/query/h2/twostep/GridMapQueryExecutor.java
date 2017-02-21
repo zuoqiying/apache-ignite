@@ -88,6 +88,7 @@ import static org.apache.ignite.internal.processors.affinity.AffinityTopologyVer
 import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState.OWNING;
 import static org.apache.ignite.internal.processors.query.h2.opt.DistributedJoinMode.OFF;
 import static org.apache.ignite.internal.processors.query.h2.opt.DistributedJoinMode.distributedJoinMode;
+import static org.apache.ignite.internal.processors.query.h2.IgniteH2Indexing.setupConnection;
 import static org.apache.ignite.internal.processors.query.h2.opt.GridH2QueryType.MAP;
 import static org.apache.ignite.internal.processors.query.h2.opt.GridH2QueryType.REPLICATED;
 import static org.apache.ignite.internal.processors.query.h2.twostep.GridReduceQueryExecutor.QUERY_POOL;
@@ -434,6 +435,7 @@ public class GridMapQueryExecutor {
             null,
             req.pageSize(),
             OFF,
+            true,
             req.timeout());
     }
 
@@ -473,6 +475,7 @@ public class GridMapQueryExecutor {
                             req.tables(),
                             req.pageSize(),
                             joinMode,
+                            req.isFlagSet(GridH2QueryRequest.FLAG_ENFORCE_JOIN_ORDER),
                             req.timeout());
 
                         return null;
@@ -492,6 +495,7 @@ public class GridMapQueryExecutor {
             req.tables(),
             req.pageSize(),
             joinMode,
+            req.isFlagSet(GridH2QueryRequest.FLAG_ENFORCE_JOIN_ORDER),
             req.timeout());
     }
 
@@ -520,6 +524,7 @@ public class GridMapQueryExecutor {
         Collection<String> tbls,
         int pageSize,
         DistributedJoinMode distributedJoinMode,
+        boolean enforceJoinOrder,
         int timeout
     ) {
         // Prepare to run queries.
@@ -581,7 +586,7 @@ public class GridMapQueryExecutor {
             Connection conn = h2.connectionForSpace(mainCctx.name());
 
             // Here we enforce join order to have the same behavior on all the nodes.
-            h2.setupConnection(conn, distributedJoinMode != OFF, true);
+            setupConnection(conn, distributedJoinMode != OFF, enforceJoinOrder);
 
             GridH2QueryContext.set(qctx);
 
