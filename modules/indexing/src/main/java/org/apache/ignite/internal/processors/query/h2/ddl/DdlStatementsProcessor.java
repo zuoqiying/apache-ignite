@@ -24,6 +24,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cache.query.QueryCursor;
@@ -47,12 +53,15 @@ import org.apache.ignite.internal.processors.query.h2.sql.GridSqlCreateIndex;
 import org.apache.ignite.internal.processors.query.h2.sql.GridSqlDropIndex;
 import org.apache.ignite.internal.processors.query.h2.sql.GridSqlQueryParser;
 import org.apache.ignite.internal.processors.query.h2.sql.GridSqlStatement;
+import org.apache.ignite.internal.util.lang.GridClosureException;
+import org.apache.ignite.internal.util.typedef.CAX;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteUuid;
 import org.h2.command.Prepared;
 import org.h2.command.ddl.CreateIndex;
 import org.h2.command.ddl.DropIndex;
 import org.h2.jdbc.JdbcPreparedStatement;
+import org.jetbrains.annotations.NotNull;
 import org.jsr166.ConcurrentHashMap8;
 
 /**
@@ -66,7 +75,8 @@ public class DdlStatementsProcessor {
     /** Indexing engine. */
     private IgniteH2Indexing idx;
 
-    private volatile boolean isStopped;
+    /** State flag. */
+    private AtomicBoolean isStopped = new AtomicBoolean();
 
     /** Running operations originating at this node as a client. */
     private Map<IgniteUuid, DdlOperationFuture> operations = new ConcurrentHashMap8<>();
@@ -77,6 +87,9 @@ public class DdlStatementsProcessor {
     /** Running operations <b>coordinated by</b> this node. */
     private Map<IgniteUuid, DdlOperationRunContext> operationRuns = new ConcurrentHashMap8<>();
 
+    /** Single threaded worker. */
+    private ExecutorService worker;
+
     /**
      * Initialize message handlers and this' fields needed for further operation.
      *
@@ -86,6 +99,17 @@ public class DdlStatementsProcessor {
     public void start(final GridKernalContext ctx, IgniteH2Indexing idx) {
         this.ctx = ctx;
         this.idx = idx;
+
+        worker = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            /** {@inheritDoc} */
+            @Override public Thread newThread(@NotNull Runnable r) {
+                Thread res = new Thread(r);
+
+                res.setName("ddl-worker");
+
+                return res;
+            }
+        });
 
         ctx.discovery().setCustomEventListener(DdlOperationInit.class, new CustomEventListener<DdlOperationInit>() {
             /** {@inheritDoc} */
@@ -135,18 +159,23 @@ public class DdlStatementsProcessor {
      */
     @SuppressWarnings("unchecked")
     private void onCancel(DdlOperationCancel msg) {
-        DdlCommandArguments args = operationArgs.remove(msg.getOperationId());
+        final DdlCommandArguments args = operationArgs.remove(msg.getOperationId());
 
         // Node does not know anything about this operation, nothing to do.
         if (args == null)
             return;
 
         try {
-            args.getOperationArguments().opType.command().cancel(args);
+            runJob(new CAX() {
+                /** {@inheritDoc} */
+                @Override public void applyx() throws IgniteCheckedException {
+                    args.getOperationArguments().opType.command().cancel(args);
+                }
+            });
         }
-        catch (Throwable e) {
-            idx.getLogger().warning("Failed to process DDL CANCEL locally [opId=" +
-                args.getOperationArguments().opId +']', e);
+        catch (IgniteCheckedException e) {
+            idx.getLogger().warning("Failed to process DDL CANCEL locally [opId=" + args.getOperationArguments()
+                .opId +']', e);
         }
 
         DdlOperationRunContext runCtx = operationRuns.remove(msg.getOperationId());
@@ -156,6 +185,40 @@ public class DdlStatementsProcessor {
                 msg.getError());
 
             sendResult(args.getOperationArguments(), ex);
+        }
+    }
+
+    /**
+     * Submit a task to {@link #worker}, wait for its finish, throw an exception if needed.
+     *
+     * @param clo Task to execute.
+     * @throws IgniteCheckedException if failed.
+     */
+    private void runJob(final CAX clo)
+        throws IgniteCheckedException {
+        Future fut = worker.submit(new Runnable() {
+            /** {@inheritDoc} */
+            @Override public void run() {
+                clo.apply();
+            }
+        });
+
+        try {
+            fut.get();
+        }
+        catch (InterruptedException ignored) {
+            // No-op.
+        }
+        catch (ExecutionException e) {
+            try {
+                throw e.getCause();
+            }
+            catch (GridClosureException e1) {
+                throw new IgniteCheckedException(e1.getCause());
+            }
+            catch (Throwable e1) {
+                throw new IgniteCheckedException(e1);
+            }
         }
     }
 
@@ -207,8 +270,13 @@ public class DdlStatementsProcessor {
      * @throws IgniteCheckedException if failed.
      */
     @SuppressWarnings("unchecked")
-    void doAck(DdlCommandArguments args) throws IgniteCheckedException {
-        args.getOperationArguments().opType.command().execute(args);
+    void doAck(final DdlCommandArguments args) throws IgniteCheckedException {
+        runJob(new CAX() {
+            /** {@inheritDoc} */
+            @Override public void applyx() throws IgniteCheckedException {
+                args.getOperationArguments().opType.command().execute(args);
+            }
+        });
     }
 
     /**
@@ -217,7 +285,8 @@ public class DdlStatementsProcessor {
      * @param opId DDL operation ID.
      * @param err Exception that occurred on the <b>peer</b>, or null if the local operation has been successful.
      */
-    @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "SynchronizationOnLocalVariableOrMethodParameter"})
+    @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "SynchronizationOnLocalVariableOrMethodParameter",
+        "ForLoopReplaceableByForEach"})
     private void onNodeResult(IgniteUuid opId, IgniteCheckedException err) {
         DdlOperationRunContext runCtx = operationRuns.get(opId);
 
@@ -353,8 +422,13 @@ public class DdlStatementsProcessor {
      * @throws IgniteCheckedException if failed.
      */
     @SuppressWarnings("unchecked")
-    void doInit(DdlCommandArguments args) throws IgniteCheckedException {
-        args.getOperationArguments().opType.command().init(args);
+    void doInit(final DdlCommandArguments args) throws IgniteCheckedException {
+        runJob(new CAX() {
+            /** {@inheritDoc} */
+            @Override public void applyx() throws IgniteCheckedException {
+                args.getOperationArguments().opType.command().init(args);
+            }
+        });
     }
 
     /**
@@ -373,16 +447,11 @@ public class DdlStatementsProcessor {
     /**
      * Do cleanup.
      */
-    public void stop() {
-        isStopped = true;
+    public void stop() throws IgniteCheckedException {
+        if (!isStopped.compareAndSet(false, true))
+            throw new IgniteCheckedException(new IllegalStateException("DDL processor has been stopped already"));
 
-        for (DdlOperationFuture f : operations.values())
-            try {
-                f.cancel();
-            }
-            catch (IgniteCheckedException e) {
-                idx.getLogger().warning("Failed to cancel DDL future [opId=" + f.getId() + ']', e);
-            }
+        worker.shutdown();
     }
 
     /**
@@ -390,9 +459,8 @@ public class DdlStatementsProcessor {
      *
      * @param stmt H2 statement to parse and execute.
      */
-    public QueryCursor<List<?>> runDdlStatement(PreparedStatement stmt)
-        throws IgniteCheckedException {
-        if (isStopped)
+    public QueryCursor<List<?>> runDdlStatement(PreparedStatement stmt) throws IgniteCheckedException {
+        if (isStopped.get())
             throw new IgniteCheckedException(new IllegalStateException("DDL processor has been stopped"));
 
         assert stmt instanceof JdbcPreparedStatement;
