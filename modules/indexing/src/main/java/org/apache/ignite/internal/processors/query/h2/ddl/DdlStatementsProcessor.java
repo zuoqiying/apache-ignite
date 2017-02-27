@@ -24,8 +24,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -111,14 +113,23 @@ public class DdlStatementsProcessor {
 
         ctx.discovery().setCustomEventListener(DdlOperationInit.class, new CustomEventListener<DdlOperationInit>() {
             /** {@inheritDoc} */
+            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             @Override public void onCustomEvent(final AffinityTopologyVersion topVer, final ClusterNode snd,
-                final DdlOperationInit msg) {
-                runJob(new CAX() {
-                    /** {@inheritDoc} */
-                    @Override public void applyx() throws IgniteCheckedException {
-                        onInit(topVer, msg);
-                    }
-                });
+                                                final DdlOperationInit msg) {
+                try {
+                    runJob(new CAX() {
+                        /** {@inheritDoc} */
+                        @Override public void applyx() throws IgniteCheckedException {
+                            onInit(topVer, msg);
+                        }
+                    }).get();
+                }
+                catch (InterruptedException ignored) {
+                    // No-op.
+                }
+                catch (ExecutionException e) {
+                    msg.getNodesState().put(ctx.localNodeId(), wrapThrowableIfNeeded(e.getCause()));
+                }
             }
         });
 
@@ -203,9 +214,10 @@ public class DdlStatementsProcessor {
      * Submit a task to {@link #worker} for async execution.
      *
      * @param clo Task to execute.
+     * @return
      */
-    private void runJob(final IgniteRunnable clo) {
-        worker.submit(new Runnable() {
+    private Future<?> runJob(final IgniteRunnable clo) {
+        return worker.submit(new Runnable() {
             /** {@inheritDoc} */
             @Override public void run() {
                 try {
