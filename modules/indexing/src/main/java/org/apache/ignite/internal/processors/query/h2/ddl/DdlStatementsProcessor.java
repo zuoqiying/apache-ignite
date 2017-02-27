@@ -24,10 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,9 +51,9 @@ import org.apache.ignite.internal.processors.query.h2.sql.GridSqlCreateIndex;
 import org.apache.ignite.internal.processors.query.h2.sql.GridSqlDropIndex;
 import org.apache.ignite.internal.processors.query.h2.sql.GridSqlQueryParser;
 import org.apache.ignite.internal.processors.query.h2.sql.GridSqlStatement;
-import org.apache.ignite.internal.util.lang.GridClosureException;
 import org.apache.ignite.internal.util.typedef.CAX;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteRunnable;
 import org.apache.ignite.lang.IgniteUuid;
 import org.h2.command.Prepared;
 import org.h2.command.ddl.CreateIndex;
@@ -113,24 +111,41 @@ public class DdlStatementsProcessor {
 
         ctx.discovery().setCustomEventListener(DdlOperationInit.class, new CustomEventListener<DdlOperationInit>() {
             /** {@inheritDoc} */
-            @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "unchecked"})
-            @Override public void onCustomEvent(AffinityTopologyVersion topVer, ClusterNode snd, DdlOperationInit msg) {
-                onInit(topVer, msg);
+            @Override public void onCustomEvent(final AffinityTopologyVersion topVer, final ClusterNode snd,
+                final DdlOperationInit msg) {
+                runJob(new CAX() {
+                    /** {@inheritDoc} */
+                    @Override public void applyx() throws IgniteCheckedException {
+                        onInit(topVer, msg);
+                    }
+                });
             }
         });
 
         ctx.discovery().setCustomEventListener(DdlOperationAck.class, new CustomEventListener<DdlOperationAck>() {
             /** {@inheritDoc} */
-            @Override public void onCustomEvent(AffinityTopologyVersion topVer, ClusterNode snd, DdlOperationAck msg) {
-                onAck(snd, msg);
+            @Override public void onCustomEvent(AffinityTopologyVersion topVer, final ClusterNode snd,
+                final DdlOperationAck msg) {
+                runJob(new CAX() {
+                    /** {@inheritDoc} */
+                    @Override public void applyx() throws IgniteCheckedException {
+                        onAck(snd, msg);
+                    }
+                });
             }
         });
 
         ctx.discovery().setCustomEventListener(DdlOperationCancel.class, new CustomEventListener<DdlOperationCancel>() {
             /** {@inheritDoc} */
             @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "unchecked"})
-            @Override public void onCustomEvent(AffinityTopologyVersion topVer, ClusterNode snd, DdlOperationCancel msg) {
-                onCancel(msg);
+            @Override public void onCustomEvent(AffinityTopologyVersion topVer, ClusterNode snd,
+                final DdlOperationCancel msg) {
+                runJob(new CAX() {
+                    /** {@inheritDoc} */
+                    @Override public void applyx() throws IgniteCheckedException {
+                        onCancel(msg);
+                    }
+                });
             }
         });
 
@@ -158,7 +173,7 @@ public class DdlStatementsProcessor {
      * @param msg Message.
      */
     @SuppressWarnings("unchecked")
-    private void onCancel(DdlOperationCancel msg) {
+    private void onCancel(final DdlOperationCancel msg) {
         final DdlCommandArguments args = operationArgs.remove(msg.getOperationId());
 
         // Node does not know anything about this operation, nothing to do.
@@ -166,12 +181,7 @@ public class DdlStatementsProcessor {
             return;
 
         try {
-            runJob(new CAX() {
-                /** {@inheritDoc} */
-                @Override public void applyx() throws IgniteCheckedException {
-                    args.getOperationArguments().opType.command().cancel(args);
-                }
-            });
+            args.getOperationArguments().opType.command().cancel(args);
         }
         catch (IgniteCheckedException e) {
             idx.getLogger().warning("Failed to process DDL CANCEL locally [opId=" + args.getOperationArguments()
@@ -180,46 +190,32 @@ public class DdlStatementsProcessor {
 
         DdlOperationRunContext runCtx = operationRuns.remove(msg.getOperationId());
 
-        if (runCtx != null) { // We're on the coordinator, let's notify the client about cancellation and its reason
-            IgniteCheckedException ex = new IgniteCheckedException("DDL operation has been cancelled at INIT stage",
-                msg.getError());
+        // We're on the coordinator, let's notify the client about cancellation and its reason
+        if (runCtx != null) {
+            IgniteCheckedException ex = new IgniteCheckedException("DDL operation has been cancelled at INIT " +
+                "stage", msg.getError());
 
             sendResult(args.getOperationArguments(), ex);
         }
     }
 
     /**
-     * Submit a task to {@link #worker}, wait for its finish, throw an exception if needed.
+     * Submit a task to {@link #worker} for async execution.
      *
      * @param clo Task to execute.
-     * @throws IgniteCheckedException if failed.
      */
-    private void runJob(final CAX clo)
-        throws IgniteCheckedException {
-        Future fut = worker.submit(new Runnable() {
+    private void runJob(final IgniteRunnable clo) {
+        worker.submit(new Runnable() {
             /** {@inheritDoc} */
             @Override public void run() {
-                clo.apply();
+                try {
+                    clo.run();
+                }
+                catch (Throwable e) {
+                    idx.getLogger().warning("Unhandled exception in DDL worker", e);
+                }
             }
         });
-
-        try {
-            fut.get();
-        }
-        catch (InterruptedException ignored) {
-            // No-op.
-        }
-        catch (ExecutionException e) {
-            try {
-                throw e.getCause();
-            }
-            catch (GridClosureException e1) {
-                throw new IgniteCheckedException(e1.getCause());
-            }
-            catch (Throwable e1) {
-                throw new IgniteCheckedException(e1);
-            }
-        }
     }
 
     /**
@@ -271,12 +267,7 @@ public class DdlStatementsProcessor {
      */
     @SuppressWarnings("unchecked")
     void doAck(final DdlCommandArguments args) throws IgniteCheckedException {
-        runJob(new CAX() {
-            /** {@inheritDoc} */
-            @Override public void applyx() throws IgniteCheckedException {
-                args.getOperationArguments().opType.command().execute(args);
-            }
-        });
+        args.getOperationArguments().opType.command().execute(args);
     }
 
     /**
@@ -381,8 +372,8 @@ public class DdlStatementsProcessor {
      * @param msg {@code INIT} message.
      */
     @SuppressWarnings({"unchecked", "ThrowableResultOfMethodCallIgnored"})
-    private void onInit(AffinityTopologyVersion topVer, DdlOperationInit msg) {
-        DdlCommandArguments args = msg.getArguments();
+    private void onInit(AffinityTopologyVersion topVer, final DdlOperationInit msg) {
+        final DdlCommandArguments args = msg.getArguments();
 
         if (msg.getNodesState() == null) {
             // Null state means we're at coordinator, so let's populate state with participating nodes
@@ -404,9 +395,9 @@ public class DdlStatementsProcessor {
         else if (!msg.getNodesState().containsKey(ctx.localNodeId()))
             return;
 
-        try {
-            operationArgs.put(args.getOperationArguments().opId, args);
+        operationArgs.put(args.getOperationArguments().opId, args);
 
+        try {
             doInit(args);
         }
         catch (Throwable e) {
@@ -423,12 +414,7 @@ public class DdlStatementsProcessor {
      */
     @SuppressWarnings("unchecked")
     void doInit(final DdlCommandArguments args) throws IgniteCheckedException {
-        runJob(new CAX() {
-            /** {@inheritDoc} */
-            @Override public void applyx() throws IgniteCheckedException {
-                args.getOperationArguments().opType.command().init(args);
-            }
-        });
+        args.getOperationArguments().opType.command().init(args);
     }
 
     /**
