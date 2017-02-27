@@ -31,14 +31,14 @@ import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 /**
- * LargeEntryTest
+ * LargeEntryUpdateTest
  *
  * @author Alexandr Kuramshin <ein.nsk.ru@gmail.com>
  */
-public class LargeEntryTest extends GridCommonAbstractTest {
+public class LargeEntryUpdateTest extends GridCommonAbstractTest {
 
     /**  */
-    private static final int THREAD_COUNT = 64;
+    private static final int THREAD_COUNT = 10;
 
     /**  */
     private static final int PAGE_SIZE = 1 << 10; // 1 kB
@@ -53,13 +53,21 @@ public class LargeEntryTest extends GridCommonAbstractTest {
     private static final int CACHE_COUNT = 10;
 
     /**  */
-    private static final long WAIT_TIMEOUT = 3 * 60_000L; // 3 min
+    private static final long WAIT_TIMEOUT = 5 * 60_000L; // 5 min
+
+    /**  */
+    private static final long TEST_TIMEOUT = 10 * 60_000L; // 10 min
 
     /**  */
     private final AtomicBoolean cacheUpdate = new AtomicBoolean();
 
     /**  */
     private OutOfMemoryException outOfMemoryEx;
+
+    /** {@inheritDoc} */
+    @Override protected long getTestTimeout() {
+        return TEST_TIMEOUT;
+    }
 
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
@@ -93,10 +101,8 @@ public class LargeEntryTest extends GridCommonAbstractTest {
             }
             cacheUpdate.set(true);
             IgniteCompute compute = ignite.compute().withAsync();
-            for (int i = 0; i < THREAD_COUNT; ++i) {
+            for (int i = 0; i < THREAD_COUNT; ++i)
                 compute.run(new CacheUpdater());
-                compute.future();
-            }
             try {
                 long deadline = System.currentTimeMillis() + WAIT_TIMEOUT;
                 while (true)
