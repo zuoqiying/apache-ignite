@@ -53,7 +53,7 @@ public class LargeEntryTest extends GridCommonAbstractTest {
     private static final int CACHE_COUNT = 10;
 
     /**  */
-    private static final long WAIT_TIMEOUT = 5 * 60_000L; // 5 min
+    private static final long WAIT_TIMEOUT = 3 * 60_000L; // 3 min
 
     /**  */
     private final AtomicBoolean cacheUpdate = new AtomicBoolean();
