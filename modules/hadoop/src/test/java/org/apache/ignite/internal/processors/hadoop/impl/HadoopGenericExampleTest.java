@@ -301,11 +301,11 @@ public abstract class HadoopGenericExampleTest extends HadoopAbstract2Test {
         //        if (gzip)
         //            conf.setBoolean(HadoopJobProperty.SHUFFLE_MSG_GZIP.propertyName(), true);
 
-//        // Set the Ignite framework and the address:
-//        conf.set(MRConfig.FRAMEWORK_NAME,  "ignite");
-//        conf.set(MRConfig.MASTER_ADDRESS, "localhost:11211");
+        // Set the Ignite framework and the address:
+        conf.set(MRConfig.FRAMEWORK_NAME,  "ignite");
+        conf.set(MRConfig.MASTER_ADDRESS, "localhost:11211");
 
-        conf.set(MRConfig.FRAMEWORK_NAME,  "local");
+//        conf.set(MRConfig.FRAMEWORK_NAME,  "local");
     }
 
     /**
@@ -336,7 +336,7 @@ public abstract class HadoopGenericExampleTest extends HadoopAbstract2Test {
 
         String[] args = ex.parameters(fp);
 
-        X.println("Running example [" + ex.name() + "] with " + args.length + " parameters: " + Arrays.toString(args));
+        X.println("### Running example [" + ex.name() + "] with " + args.length + " parameters: " + Arrays.toString(args));
 
         int res = ToolRunner.run(conf, ex.tool(), args);
 
@@ -346,20 +346,34 @@ public abstract class HadoopGenericExampleTest extends HadoopAbstract2Test {
     }
 
     /**
+     * Original version of method org.apache.hadoop.mapreduce.lib.aggregate
+     *     .ValueAggregatorJob#setAggregatorDescriptors(java.lang.Class[]): it adds correct "." to the property name.
+     *
+     * @param conf The configuration.
+     * @param descriptors The descriptors.
+     */
+    public static void setAggregatorDescriptors_WRONG(Configuration conf,
+            Class<? extends ValueAggregatorDescriptor>[] descriptors) {
+        conf.setInt(ValueAggregatorJobBase.DESCRIPTOR_NUM, descriptors.length);
+
+        for(int i = 0; i < descriptors.length; ++i)
+            conf.set(ValueAggregatorJobBase.DESCRIPTOR + i, "UserDefined," + descriptors[i].getName());
+    }
+
+    /**
      * Fixed version of method org.apache.hadoop.mapreduce.lib.aggregate
      *     .ValueAggregatorJob#setAggregatorDescriptors(java.lang.Class[]): it adds correct "." to the property name.
      *
      * @param conf The configuration.
      * @param descriptors The descriptors.
      */
-    static void setAggregatorDescriptors(Configuration conf,
+    public static void setAggregatorDescriptors_CORRECT(Configuration conf,
         Class<? extends ValueAggregatorDescriptor>[] descriptors) {
         conf.setInt(ValueAggregatorJobBase.DESCRIPTOR_NUM, descriptors.length);
+
         //specify the aggregator descriptors
-        for(int i=0; i< descriptors.length; i++) {
-            conf.set(ValueAggregatorJobBase.DESCRIPTOR + "." + i,
-                "UserDefined," + descriptors[i].getName());
-        }
+        for(int i=0; i< descriptors.length; i++)
+            conf.set(ValueAggregatorJobBase.DESCRIPTOR + "." + i, "UserDefined," + descriptors[i].getName());
     }
 
     /**

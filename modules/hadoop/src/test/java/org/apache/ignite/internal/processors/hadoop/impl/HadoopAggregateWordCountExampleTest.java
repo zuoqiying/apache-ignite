@@ -9,7 +9,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.aggregate.ValueAggregatorJob;
-import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 
 /**
@@ -48,8 +47,22 @@ public class HadoopAggregateWordCountExampleTest extends HadoopGenericExampleTes
 ////                } );
 //
 //            Job job = ValueAggregatorJob.createValueAggregatorJob(conf0, otherArgs);
-            Job job = ValueAggregatorJob.createValueAggregatorJob(args
-                , new Class[] {AggregateWordCount.WordCountPlugInClass.class});
+
+            // Original example code looks like the following:
+            // ----------------
+            //     Job job = ValueAggregatorJob.createValueAggregatorJob(args, new Class[] {WordCountPlugInClass.class});
+            //     job.setJarByClass(AggregateWordCount.class);
+            //     int ret = job.waitForCompletion(true) ? 0 : 1;
+            // ----------------
+
+            final Configuration conf = getConf();
+
+            setAggregatorDescriptors_WRONG(conf, new Class[] {AggregateWordCount.WordCountPlugInClass.class});
+
+            Job job = ValueAggregatorJob.createValueAggregatorJob(conf, args);
+
+//            Job job = ValueAggregatorJob.createValueAggregatorJob(args
+//                , new Class[] {AggregateWordCount.WordCountPlugInClass.class});
 
             job.setJarByClass(AggregateWordCount.class);
 
@@ -116,13 +129,19 @@ public class HadoopAggregateWordCountExampleTest extends HadoopGenericExampleTes
 //        return super.frameworkParameters();
 //    }
 
-    @Override protected int numMaps() {
-        return gridCount() * 50;
-    }
+//    /** {@inheritDoc} */
+//    @Override protected int numMaps() {
+//        return gridCount() * 50;
+//    }
 
     /** {@inheritDoc} */
     @Override protected int gridCount() {
         // Reproduce
         return 1; //super.gridCount();
+    }
+
+    /** {@inheritDoc} */
+    @Override protected boolean isOneJvm() {
+        return true;
     }
 }

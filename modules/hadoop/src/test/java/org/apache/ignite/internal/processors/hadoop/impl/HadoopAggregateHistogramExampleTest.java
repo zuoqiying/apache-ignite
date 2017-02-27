@@ -9,7 +9,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.aggregate.ValueAggregatorJob;
-import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 
 /**
@@ -32,12 +31,10 @@ public class HadoopAggregateHistogramExampleTest extends HadoopGenericExampleTes
         @Override public int run(String[] args) throws Exception {
             final Configuration conf = getConf();
 
-            String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-
-            HadoopGenericExampleTest.setAggregatorDescriptors(conf,
+            HadoopGenericExampleTest.setAggregatorDescriptors_CORRECT(conf,
                 new Class[] { AggregateWordHistogram.AggregateWordHistogramPlugin.class } );
 
-            Job job = ValueAggregatorJob.createValueAggregatorJob(conf, otherArgs);
+            Job job = ValueAggregatorJob.createValueAggregatorJob(conf, args);
 
             job.setJarByClass(AggregateWordHistogram.class);
 

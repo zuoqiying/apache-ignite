@@ -33,19 +33,35 @@ public class HadoopAbstract2Test extends GridCommonAbstractTest {
     }
 
     /**
+     *  TODO: in development
+     * @return
+     */
+    protected boolean isOneJvm() {
+        return true; // false;
+    }
+
+    /**
      * Starts the Ignite nodes.
      *
      * @throws Exception On error.
      */
-    protected void startNodes() throws Exception {
+    protected final void startNodes() throws Exception {
+        assert !isMultiJvm(); // This mecahnism is unused.
+
         for (int idx = 0; idx<gridCount(); idx++) {
-            String nodeName = "node-" + idx;
+            final String nodeName = "node-" + idx;
+
+            assert !isRemoteJvm(nodeName);
 
             IgniteConfiguration cfg = getConfiguration(idx, nodeName);
 
-            NodeProcessParameters parameters = getParameters(idx, nodeName);
+            if (isOneJvm())
+                startGrid(nodeName, cfg);
+            else {
+                NodeProcessParameters parameters = getParameters(idx, nodeName);
 
-            new IgniteNodeProxy2(cfg, log(), parameters);
+                new IgniteNodeProxy2(cfg, log(), parameters);
+            }
         }
 
         IgniteNodeProxy2.ensureTopology(gridCount(),
