@@ -41,15 +41,6 @@ public class AgentUtils {
     /** JSON object mapper. */
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    static {
-        JsonOrgModule module = new JsonOrgModule();
-
-        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
-        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-
-        mapper.registerModule(module);
-    }
-
     /** */
     private static final Ack NOOP_CB = new Ack() {
         @Override public void call(Object... args) {
@@ -60,31 +51,20 @@ public class AgentUtils {
         }
     };
 
+    static {
+        JsonOrgModule module = new JsonOrgModule();
+
+        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
+        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+
+        mapper.registerModule(module);
+    }
+
     /**
      * Default constructor.
      */
     private AgentUtils() {
         // No-op.
-    }
-
-    /**
-     * @param obj Object.
-     * @return {@link JSONObject} or {@link JSONArray}.
-     */
-    public static Object toJSON(Object obj) {
-        if (obj instanceof Iterable)
-            return mapper.convertValue(obj, JSONArray.class);
-
-        return mapper.convertValue(obj, JSONObject.class);
-    }
-
-    /**
-     * @param obj {@link JSONObject} or {@link JSONArray}.
-     * @param toValType .
-     * @return Object.
-     */
-    public static <T> T fromJSON(Object obj, Class<T> toValType) {
-        return mapper.convertValue(obj, toValType);
     }
 
     /**
@@ -159,15 +139,53 @@ public class AgentUtils {
         return null;
     }
 
+    /**
+     * Get callback from handler arguments.
+     *
+     * @param args Arguments.
+     * @return Callback or noop callback.
+     */
     public static Ack safeCallback(Object[] args) {
         boolean hasCb = args != null && args.length > 0 && args[args.length - 1] instanceof Ack;
 
         return hasCb ? (Ack)args[args.length - 1] : NOOP_CB;
     }
 
+    /**
+     * Remove callback from handler arguments.
+     *
+     * @param args Arguments.
+     * @return Arguments without callback.
+     */
     public static Object[] removeCallback(Object[] args) {
         boolean hasCb = args != null && args.length > 0 && args[args.length - 1] instanceof Ack;
 
         return hasCb ? Arrays.copyOf(args, args.length - 1) : args;
+    }
+
+    /**
+     * Map java object to JSON object.
+     *
+     * @param obj Java object.
+     * @return {@link JSONObject} or {@link JSONArray}.
+     * @throws IllegalArgumentException If conversion fails due to incompatible type.
+     */
+    public static Object toJSON(Object obj) {
+        if (obj instanceof Iterable)
+            return mapper.convertValue(obj, JSONArray.class);
+
+        return mapper.convertValue(obj, JSONObject.class);
+    }
+
+    /**
+     * Map JSON object to java object.
+     *
+     * @param obj {@link JSONObject} or {@link JSONArray}.
+     * @param toValType Expected value type.
+     * @return Mapped object type of {@link T}.
+     * @throws IllegalArgumentException If conversion fails due to incompatible type.
+     */
+    public static <T> T fromJSON(Object obj, Class<T> toValType) throws IllegalArgumentException {
+        return mapper.convertValue(obj, toValType);
     }
 }

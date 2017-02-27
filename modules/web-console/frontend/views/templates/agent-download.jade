@@ -32,8 +32,8 @@
                     i.fa(ng-class='showToken ? "fa-chevron-circle-down" : "fa-chevron-circle-right"' ng-click='showToken = !showToken')
                     a(ng-click='showToken = !showToken') {{showToken ? 'Hide security token...' : 'Show security token...'}}
                 .details-row(ng-show='showToken')
-                    label.labelField Security token: {{user.token}}
-                    i.tipLabel.fa.fa-clipboard(ignite-copy-to-clipboard='{{user.token}}' bs-tooltip='' data-title='Copy security token to clipboard')
+                    label.labelField Security token: {{user.becameToken || user.token}}
+                    i.tipLabel.fa.fa-clipboard(ignite-copy-to-clipboard='{{user.becameToken || user.token}}' bs-tooltip='' data-title='Copy security token to clipboard')
                     i.tipLabel.icon-help(ng-if=lines bs-tooltip='' data-title='The security token is used for authorization of web agent')
 
             .modal-footer
@@ -45,12 +45,12 @@
                 h4.modal-title
                     i.fa.fa-download
                     span Connection to Ignite Node is not established
-                    
+
             .modal-body.agent-download
                 p Connection to Ignite Web Agent is established, but agent failed to connect to Ignite Node
                 p Please check the following:
                 ul
-                    li Ignite Grid is up and running
+                    li Ignite Grid is up and Ignite REST server started (copy "ignite-rest-http" folder from libs/optional/ to libs/)
                     li In agent settings check URI for connect to Ignite REST server
                     li Check agent logs for errors
                     li Refer to #[b README.txt] in agent folder for more information

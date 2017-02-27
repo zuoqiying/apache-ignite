@@ -21,7 +21,7 @@
 
 module.exports = {
     implements: 'services/users',
-    inject: ['require(lodash)', 'errors', 'settings', 'mongo', 'services/spaces', 'services/mails', 'agents-server']
+    inject: ['require(lodash)', 'errors', 'settings', 'mongo', 'services/spaces', 'services/mails', 'services/activities', 'agent-manager']
 };
 
 /**
@@ -31,10 +31,11 @@ module.exports = {
  * @param settings
  * @param {SpacesService} spacesService
  * @param {MailsService} mailsService
+ * @param {ActivitiesService} activitiesService
  * @param {AgentsServer} agentMgr
  * @returns {UsersService}
  */
-module.exports.factory = (_, errors, settings, mongo, spacesService, mailsService, agentMgr) => {
+module.exports.factory = (_, errors, settings, mongo, spacesService, mailsService, activitiesService, agentMgr) => {
     const _randomString = () => {
         const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const possibleLen = possible.length;
@@ -143,7 +144,7 @@ module.exports.factory = (_, errors, settings, mongo, spacesService, mailsServic
          * Get list of user accounts and summary information.
          * @returns {mongo.Account[]} - returns all accounts with counters object
          */
-        static list() {
+        static list(params) {
             return Promise.all([
                 mongo.Space.aggregate([
                     {$match: {demo: false}},
@@ -161,13 +162,17 @@ module.exports.factory = (_, errors, settings, mongo, spacesService, mailsServic
                         }
                     }
                 ]).exec(),
+                activitiesService.total(params),
+                activitiesService.detail(params),
                 mongo.Account.find({}).sort('firstName lastName').lean().exec()
             ])
-                .then(([counters, users]) => {
+                .then(([counters, activitiesTotal, activitiesDetail, users]) => {
                     const countersMap = _.keyBy(counters, 'owner');
 
                     _.forEach(users, (user) => {
                         user.counters = _.omit(countersMap[user._id], '_id', 'owner');
+                        user.activitiesTotal = activitiesTotal[user._id];
+                        user.activitiesDetail = activitiesDetail[user._id];
                     });
 
                     return users;
@@ -207,11 +212,8 @@ module.exports.factory = (_, errors, settings, mongo, spacesService, mailsServic
 
             const becomeUsed = viewedUser && user.admin;
 
-            if (becomeUsed) {
-                user = viewedUser;
-
-                user.becomeUsed = true;
-            }
+            if (becomeUsed)
+                user = _.extend({}, viewedUser, {becomeUsed: true, becameToken: user.token});
             else
                 user = user.toJSON();
 

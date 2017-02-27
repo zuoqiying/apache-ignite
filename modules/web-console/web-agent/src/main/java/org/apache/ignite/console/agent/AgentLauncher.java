@@ -43,11 +43,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import org.apache.ignite.console.agent.handlers.ClusterHandler;
-import org.apache.ignite.console.agent.handlers.DatabaseHandler;
+import org.apache.ignite.console.agent.handlers.ClusterLsnr;
 import org.apache.ignite.console.agent.handlers.DemoHandler;
-import org.apache.ignite.console.agent.handlers.RestHandler;
 import org.apache.ignite.console.agent.rest.RestExecutor;
+import org.apache.ignite.console.agent.handlers.DatabaseListener;
+import org.apache.ignite.console.agent.handlers.RestListener;
 import org.apache.ignite.internal.util.typedef.X;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -326,7 +326,7 @@ public class AgentLauncher {
 
             String tokens = String.valueOf(readPassword("Enter security tokens separated by comma: "));
 
-            cfg.tokens(Arrays.asList(System.console().readLine().trim().split(",")));
+            cfg.tokens(Arrays.asList(tokens.trim().split(",")));
         }
 
         URI uri = URI.create(cfg.serverUri());
@@ -368,7 +368,7 @@ public class AgentLauncher {
         final RestExecutor restExecutor = new RestExecutor(cfg.nodeUri());
 
         try {
-            final ClusterHandler clusterHnd = new ClusterHandler(client, restExecutor);
+            final ClusterLsnr clusterLsnr = new ClusterLsnr(client, restExecutor);
             final DemoHandler demoHnd = new DemoHandler(client, restExecutor);
 
             Emitter.Listener onConnect = new Emitter.Listener() {
@@ -419,7 +419,7 @@ public class AgentLauncher {
 
                                         log.info("Authentication success.");
 
-                                        clusterHnd.watch();
+                                        clusterLsnr.watch();
 
                                         return;
                                     }
@@ -439,8 +439,8 @@ public class AgentLauncher {
                 }
             };
 
-            DatabaseHandler dbHnd = new DatabaseHandler(cfg);
-            RestHandler restHnd = new RestHandler(restExecutor);
+            DatabaseListener dbHnd = new DatabaseListener(cfg);
+            RestListener restHnd = new RestListener(restExecutor);
 
             final CountDownLatch latch = new CountDownLatch(1);
 
@@ -452,8 +452,8 @@ public class AgentLauncher {
                 .on(EVENT_ERROR, onError)
                 .on(EVENT_DISCONNECT, onDisconnect)
                 .on(EVENT_LOG_WARNING, onLogWarning)
-                .on(EVENT_CLUSTER_BROADCAST_START, clusterHnd.start())
-                .on(EVENT_CLUSTER_BROADCAST_STOP, clusterHnd.stop())
+                .on(EVENT_CLUSTER_BROADCAST_START, clusterLsnr.start())
+                .on(EVENT_CLUSTER_BROADCAST_STOP, clusterLsnr.stop())
                 .on(EVENT_DEMO_BROADCAST_START, demoHnd.start())
                 .on(EVENT_DEMO_BROADCAST_STOP, demoHnd.stop())
                 .on(EVENT_RESET_TOKENS, new Emitter.Listener() {

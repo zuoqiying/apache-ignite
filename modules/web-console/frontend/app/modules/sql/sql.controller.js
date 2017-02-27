@@ -186,8 +186,8 @@ class Paragraph {
 }
 
 // Controller for SQL notebook screen.
-export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$filter', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteNodes', 'uiGridExporterConstants', 'IgniteVersion',
-    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $filter, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, Nodes, uiGridExporterConstants, Version) {
+export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', '$animate', '$location', '$anchorScroll', '$state', '$filter', '$modal', '$popover', 'IgniteLoading', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteAgentMonitor', 'IgniteChartColors', 'IgniteNotebook', 'IgniteNodes', 'uiGridExporterConstants', 'IgniteVersion', 'IgniteActivitiesData',
+    function($root, $scope, $http, $q, $timeout, $interval, $animate, $location, $anchorScroll, $state, $filter, $modal, $popover, Loading, LegacyUtils, Messages, Confirm, agentMonitor, IgniteChartColors, Notebook, Nodes, uiGridExporterConstants, Version, ActivitiesData) {
         let stopTopology = null;
 
         const _tryStopRefresh = function(paragraph) {
@@ -956,6 +956,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         $scope.addQuery = function() {
             const sz = $scope.notebook.paragraphs.length;
 
+            ActivitiesData.post({ action: '/queries/add/query' });
+
             const paragraph = new Paragraph($animate, $timeout, {
                 name: 'Query' + (sz === 0 ? '' : sz),
                 query: '',
@@ -981,6 +983,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
         $scope.addScan = function() {
             const sz = $scope.notebook.paragraphs.length;
+
+            ActivitiesData.post({ action: '/queries/add/scan' });
 
             const paragraph = new Paragraph($animate, $timeout, {
                 name: 'Scan' + (sz === 0 ? '' : sz),
@@ -1370,6 +1374,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                             const qry = args.maxPages ? addLimit(args.query, args.pageSize * args.maxPages) : paragraph.query;
 
+                            ActivitiesData.post({ action: '/queries/execute' });
+
                             return agentMonitor.query(nid, args.cacheName, qry, nonCollocatedJoins, local, args.pageSize);
                         })
                         .then((res) => {
@@ -1421,6 +1427,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                         pageSize: paragraph.pageSize
                     };
 
+                    ActivitiesData.post({ action: '/queries/explain' });
+
                     return agentMonitor.query(nid, args.cacheName, args.query, false, false, args.pageSize);
                 })
                 .then(_processQueryResult.bind(this, paragraph, true))
@@ -1456,6 +1464,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                                 pageSize: paragraph.pageSize,
                                 localNid: local ? nid : null
                             };
+
+                            ActivitiesData.post({ action: '/queries/scan' });
 
                             return agentMonitor.query(nid, args.cacheName, query, false, local, args.pageSize);
                         })

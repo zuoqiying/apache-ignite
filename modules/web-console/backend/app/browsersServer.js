@@ -451,6 +451,32 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
+                // Collect service information from grid.
+                socket.on('service:collect', (nid, cb) => {
+                    agentMgr.forCluster(currentToken(), clusterId())
+                        .then((agent) => agent.services(demo, nid))
+                        .then((data) => {
+                            if (data.finished)
+                                return cb(null, data.result);
+
+                            cb(_errorToJson(data.error));
+                        })
+                        .catch((err) => cb(_errorToJson(err)));
+                });
+
+                // Collect service information from grid.
+                socket.on('service:cancel', (nid, name, cb) => {
+                    agentMgr.forCluster(currentToken(), clusterId())
+                        .then((agent) => agent.serviceCancel(demo, nid, name))
+                        .then((data) => {
+                            if (data.finished)
+                                return cb(null, data.result);
+
+                            cb(_errorToJson(data.error));
+                        })
+                        .catch((err) => cb(_errorToJson(err)));
+                });
+
                 agentMgr.onBrowserConnect(currentToken(), socket);
             });
 

@@ -61,20 +61,21 @@ public class RestExecutor {
             httpClient.dispatcher().executorService().shutdown();
     }
 
+    /** */
     private RestResult sendRequest(boolean demo, String path, Map<String, Object> params,
         String mtd, Map<String, Object> headers, String body) throws IOException {
-        final Request.Builder reqBuilder = new Request.Builder();
+        if (demo && AgentClusterDemo.getDemoUrl() == null)
+            throw new IllegalStateException("Failed to execute request because of embedded node for demo mode is not started yet.");
 
         String url = demo ? AgentClusterDemo.getDemoUrl() : this.nodeUrl;
-
-        if (url == null)
-            throw new IllegalStateException("Demo node is not started yet.");
 
         HttpUrl.Builder urlBuilder = HttpUrl.parse(url)
             .newBuilder();
 
         if (path != null)
             urlBuilder.addPathSegment(path);
+
+        final Request.Builder reqBuilder = new Request.Builder();
 
         if (headers != null) {
             for (Map.Entry<String, Object> entry : headers.entrySet())
