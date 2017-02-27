@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class ClusterHandler {
+public class ClusterListener {
     /** */
     private static final String EVENT_CLUSTER_CONNECTED = "cluster:connected";
 
@@ -52,7 +52,7 @@ public class ClusterHandler {
     private static final long DFLT_TIMEOUT = 3000L;
 
     /** */
-    private static final Logger log = LoggerFactory.getLogger(ClusterHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(ClusterListener.class);
 
     /** */
     private static final ScheduledExecutorService pool = Executors.newScheduledThreadPool(1);
@@ -70,7 +70,7 @@ public class ClusterHandler {
      * @param client Client.
      * @param restExecutor Client.
      */
-    public ClusterHandler(Socket client, RestExecutor restExecutor) {
+    public ClusterListener(Socket client, RestExecutor restExecutor) {
         this.client = client;
         this.restExecutor = restExecutor;
     }

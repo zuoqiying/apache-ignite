@@ -43,8 +43,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import org.apache.ignite.console.agent.handlers.ClusterLsnr;
-import org.apache.ignite.console.agent.handlers.DemoHandler;
+import org.apache.ignite.console.agent.handlers.ClusterListener;
+import org.apache.ignite.console.agent.handlers.DemoListener;
 import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.console.agent.handlers.DatabaseListener;
 import org.apache.ignite.console.agent.handlers.RestListener;
@@ -368,8 +368,8 @@ public class AgentLauncher {
         final RestExecutor restExecutor = new RestExecutor(cfg.nodeUri());
 
         try {
-            final ClusterLsnr clusterLsnr = new ClusterLsnr(client, restExecutor);
-            final DemoHandler demoHnd = new DemoHandler(client, restExecutor);
+            final ClusterListener clusterLsnr = new ClusterListener(client, restExecutor);
+            final DemoListener demoHnd = new DemoListener(client, restExecutor);
 
             Emitter.Listener onConnect = new Emitter.Listener() {
                 @Override public void call(Object... args) {

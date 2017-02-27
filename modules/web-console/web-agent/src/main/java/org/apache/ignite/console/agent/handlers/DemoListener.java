@@ -39,7 +39,7 @@ import static org.apache.ignite.console.agent.AgentUtils.toJSON;
 /**
  *
  */
-public class DemoHandler {
+public class DemoListener {
     /** */
     private static final String EVENT_DEMO_TOPOLOGY = "demo:topology";
 
@@ -47,7 +47,7 @@ public class DemoHandler {
     private static final long DFLT_TIMEOUT = 3000L;
 
     /** */
-    private static final Logger log = LoggerFactory.getLogger(DemoHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(DemoListener.class);
 
     /** */
     private static final ScheduledExecutorService pool = Executors.newScheduledThreadPool(2);
@@ -65,7 +65,7 @@ public class DemoHandler {
      * @param client Client.
      * @param restExecutor Client.
      */
-    public DemoHandler(Socket client, RestExecutor restExecutor) {
+    public DemoListener(Socket client, RestExecutor restExecutor) {
         this.client = client;
         this.restExecutor = restExecutor;
     }

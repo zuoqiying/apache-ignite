@@ -19,6 +19,7 @@ package org.apache.ignite.console.agent.rest;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.HashMap;
 import java.util.Map;
 import okhttp3.FormBody;
 import okhttp3.HttpUrl;
@@ -151,7 +152,7 @@ public class RestExecutor {
      * @param demo Is demo node request.
      */
     public RestResult topology(boolean demo, boolean full) throws IOException {
-        Map<String, Object> params = U.newLinkedHashMap(3);
+        Map<String, Object> params = new HashMap<>(3);
 
         params.put("cmd", "top");
         params.put("attr", full);
