@@ -150,6 +150,8 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         int id, GridCacheMapEntryFactory entryFactory) {
         assert cctx != null;
 
+        log.error("??? Creating partition [cacheId=" + cctx.cacheId() + ", partId=" + id + "]");
+
         this.id = id;
         this.cctx = cctx;
 
@@ -170,6 +172,8 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
 
         rmvdEntryTtl = Long.getLong(IGNITE_CACHE_REMOVED_ENTRIES_TTL, 10_000);
 
+        log.error("??? Creating cache data store [cacheId=" + cctx.cacheId() + ", partId=" + id + "]");
+
         try {
             store = cctx.offheap().createCacheDataStore(id);
         }
@@ -177,6 +181,9 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
             // TODO ignite-db
             throw new IgniteException(e);
         }
+
+        log.error("??? Created cache data store [cacheId=" + cctx.cacheId() + ", partId=" + id + "]");
+        log.error("??? Created partition [cacheId=" + cctx.cacheId() + ", partId=" + id + "]");
     }
 
     /**
