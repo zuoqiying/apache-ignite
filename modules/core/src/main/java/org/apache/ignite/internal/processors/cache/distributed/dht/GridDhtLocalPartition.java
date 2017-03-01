@@ -150,12 +150,12 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         int id, GridCacheMapEntryFactory entryFactory) {
         assert cctx != null;
 
-        log.error("??? Creating partition [cacheId=" + cctx.cacheId() + ", partId=" + id + "]");
-
         this.id = id;
         this.cctx = cctx;
 
         log = U.logger(cctx.kernalContext(), logRef, this);
+
+        log.error("??? Creating partition [cacheId=" + cctx.cacheId() + ", partId=" + id + "]");
 
         rent = new GridFutureAdapter<Object>() {
             @Override public String toString() {
