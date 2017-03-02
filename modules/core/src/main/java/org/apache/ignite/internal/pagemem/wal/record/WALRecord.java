@@ -17,7 +17,6 @@
 
 package org.apache.ignite.internal.pagemem.wal.record;
 
-import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 /**
@@ -179,42 +178,7 @@ public abstract class WALRecord {
     private int size;
 
     /** */
-    private int chainSize;
-
-    /** */
-    @GridToStringExclude
-    private WALRecord prev;
-
-    /** */
     private long pos;
-
-    /**
-     * @param chainSize Chain size in bytes.
-     */
-    public void chainSize(int chainSize) {
-        this.chainSize = chainSize;
-    }
-
-    /**
-     * @return Get chain size in bytes.
-     */
-    public int chainSize() {
-        return chainSize;
-    }
-
-    /**
-     * @return Previous record in chain.
-     */
-    public WALRecord previous() {
-        return prev;
-    }
-
-    /**
-     * @param prev Previous record in chain.
-     */
-    public void previous(WALRecord prev) {
-        this.prev = prev;
-    }
 
     /**
      * @return Position in file.
