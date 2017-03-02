@@ -32,6 +32,7 @@ import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.PageMemory;
+import org.apache.ignite.internal.pagemem.wal.IgniteWriteAheadLogManager;
 import org.apache.ignite.internal.pagemem.PageUtils;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
@@ -189,14 +190,18 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
         assert cctx.affinityNode();
 
         try {
-            if (locCacheDataStore != null)
-                locCacheDataStore.destroy();
+            if (cctx.affinityNode()) {
+                IgniteWriteAheadLogManager wal = cctx.shared().wal();
+
+                if (locCacheDataStore != null)
+                    locCacheDataStore.destroy();
 
             if (pendingEntries != null)
                 pendingEntries.destroy();
 
-            for (CacheDataStore store : partDataStores.values())
-                store.destroy();
+                for (CacheDataStore store : partDataStores.values())
+                    store.destroy();
+            }
         }
         catch (IgniteCheckedException e) {
             throw new IgniteException(e.getMessage(), e);

@@ -643,9 +643,9 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
         if (!empty) {
             batchStoreCommit(writeEntries());
 
-            WALPointer ptr = null;
-
             cctx.database().checkpointReadLock();
+
+            WALPointer ptr = null;
 
             try {
                 cctx.tm().txContext(this);

@@ -98,12 +98,12 @@ public class FreeListImpl extends PagesList implements FreeList, ReuseList {
 
                 PageUtils.getBytes(pageAddr, data.offset(), payload, 0, rowSize);
 
-                wal.log(new DataPageUpdateRecord(
-                    cacheId,
-                    page.id(),
-                    itemId,
-                    payload));
-            }
+                    wal.log(new DataPageUpdateRecord(
+                        cacheId,
+                        page.id(),
+                        itemId,
+                        payload));
+                }
 
             return updated;
         }
@@ -171,11 +171,11 @@ public class FreeListImpl extends PagesList implements FreeList, ReuseList {
 
                 PageUtils.getBytes(pageAddr, data.offset(), payload, 0, rowSize);
 
-                wal.log(new DataPageInsertRecord(
-                    cacheId,
-                    page.id(),
-                    payload));
-            }
+                    wal.log(new DataPageInsertRecord(
+                        cacheId,
+                        page.id(),
+                        payload));
+                }
 
             return rowSize;
         }
@@ -213,8 +213,8 @@ public class FreeListImpl extends PagesList implements FreeList, ReuseList {
 
                 PageUtils.getBytes(pageAddr, data.offset(), payload, 0, payloadSize);
 
-                wal.log(new DataPageInsertFragmentRecord(cacheId, page.id(), payload, lastLink));
-            }
+                    wal.log(new DataPageInsertFragmentRecord(cacheId, page.id(), payload, lastLink));
+                }
 
             return written + payloadSize;
         }
