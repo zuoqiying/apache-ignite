@@ -191,14 +191,6 @@ public class DdlStatementsProcessor {
         if (args == null)
             return;
 
-        try {
-            args.getOperationArguments().opType.command().cancel(args);
-        }
-        catch (IgniteCheckedException e) {
-            idx.getLogger().warning("Failed to process DDL CANCEL locally [opId=" + args.getOperationArguments()
-                .opId +']', e);
-        }
-
         DdlOperationRunContext runCtx = operationRuns.remove(msg.getOperationId());
 
         // We're on the coordinator, let's notify the client about cancellation and its reason
@@ -530,18 +522,7 @@ public class DdlStatementsProcessor {
             doInit(args);
         }
         catch (Throwable e) {
-            Throwable ex = e;
-
-            try {
-                args.getOperationArguments().opType.command().cancel(args);
-            }
-            catch (Throwable e1) {
-                e1.addSuppressed(e);
-
-                ex = e1;
-            }
-
-            throw new IgniteCheckedException("DDL operation has been cancelled at INIT stage", ex);
+            throw new IgniteCheckedException("DDL operation has been cancelled at INIT stage", e);
         }
 
         try {
