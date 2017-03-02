@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -115,19 +114,11 @@ public class DdlStatementsProcessor {
             /** {@inheritDoc} */
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             @Override public void onCustomEvent(final AffinityTopologyVersion topVer, final ClusterNode snd,
-                                                final DdlOperationInit msg) {
+                final DdlOperationInit msg) {
                 try {
-                    runJob(new CAX() {
-                        /** {@inheritDoc} */
-                        @Override public void applyx() throws IgniteCheckedException {
-                            onInit(topVer, msg);
-                        }
-                    }).get();
+                    onInit(topVer, msg);
                 }
-                catch (InterruptedException ignored) {
-                    // No-op.
-                }
-                catch (ExecutionException e) {
+                catch (Throwable e) {
                     msg.getNodesState().put(ctx.localNodeId(), wrapThrowableIfNeeded(e.getCause()));
                 }
             }
@@ -151,12 +142,13 @@ public class DdlStatementsProcessor {
             @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "unchecked"})
             @Override public void onCustomEvent(AffinityTopologyVersion topVer, ClusterNode snd,
                 final DdlOperationCancel msg) {
-                runJob(new CAX() {
-                    /** {@inheritDoc} */
-                    @Override public void applyx() throws IgniteCheckedException {
-                        onCancel(msg);
-                    }
-                });
+                try {
+                    onCancel(msg);
+                }
+                catch (Throwable e) {
+                    DdlStatementsProcessor.this.idx.getLogger()
+                        .error("Failed to process CANCEL event [opId=" + msg.getOperationId() + ']', e);
+                }
             }
         });
 
@@ -206,7 +198,7 @@ public class DdlStatementsProcessor {
      * Submit a task to {@link #worker} for async execution.
      *
      * @param clo Task to execute.
-     * @return
+     * @return {@link Future} to track job's state.
      */
     private Future<?> runJob(final IgniteRunnable clo) {
         return worker.submit(new Runnable() {
@@ -344,7 +336,7 @@ public class DdlStatementsProcessor {
             ctx.io().send(args.sndNodeId, GridTopic.TOPIC_DDL, res, GridIoPolicy.IDX_POOL);
         }
         catch (IgniteCheckedException e) {
-            idx.getLogger().error("Failed to notify client node about DDL operation failure " +
+            idx.getLogger().error("Failed to notify client node about DDL operation result " +
                 "[opId=" + args.opId + ", sndNodeId=" + args.sndNodeId + ']', e);
         }
     }
