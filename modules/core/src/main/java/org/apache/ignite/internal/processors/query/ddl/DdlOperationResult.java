@@ -15,27 +15,22 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.processors.query.h2.ddl.msg;
+package org.apache.ignite.internal.processors.query.ddl;
 
 import java.nio.ByteBuffer;
-import org.apache.ignite.internal.processors.query.h2.GridH2IndexingMessageFactory;
-import org.apache.ignite.internal.processors.query.h2.ddl.DdlStatementsProcessor;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.plugin.extensions.communication.Message;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
 import org.apache.ignite.plugin.extensions.communication.MessageWriter;
 
 /**
- * Message sent from <b>peer node</b> to <b>coordinator</b> when local portion of work is done.
+ * Message sent from <b>coordinator</b> to <b>client</b> when operation is ultimately finished.
  */
-public class DdlOperationNodeResult implements Message {
-    /**
-     * Operation id.
-     * @see DdlStatementsProcessor#operations
-     */
+public class DdlOperationResult implements Message {
+    /** Operation id. */
     private IgniteUuid opId;
 
-    /** Map from node ID to its error, if any. */
+    /** Error bytes. */
     private byte[] err;
 
     /** {@inheritDoc} */
@@ -61,7 +56,6 @@ public class DdlOperationNodeResult implements Message {
                     return false;
 
                 writer.incrementState();
-
         }
 
         return true;
@@ -90,15 +84,14 @@ public class DdlOperationNodeResult implements Message {
                     return false;
 
                 reader.incrementState();
-
         }
 
-        return reader.afterMessageRead(DdlOperationNodeResult.class);
+        return reader.afterMessageRead(DdlOperationResult.class);
     }
 
     /** {@inheritDoc} */
     @Override public byte directType() {
-        return GridH2IndexingMessageFactory.NODE_RESULT;
+        return -45;
     }
 
     /** {@inheritDoc} */

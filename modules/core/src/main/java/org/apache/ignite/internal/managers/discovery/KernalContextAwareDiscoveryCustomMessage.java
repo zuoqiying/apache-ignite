@@ -15,35 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.internal.processors.query.h2.ddl;
+package org.apache.ignite.internal.managers.discovery;
 
-import org.apache.ignite.internal.processors.query.h2.ddl.cmd.GridCreateIndex;
-import org.apache.ignite.internal.processors.query.h2.ddl.cmd.GridDdlCommand;
+import org.apache.ignite.internal.GridKernalContext;
 
 /**
- * DDL operation type.
+ * A kind of custom message that could use a {@link GridKernalContext} when building its ACK message.
  */
-public enum DdlOperationType {
-    /** */
-    CREATE_INDEX {
-        /** {@inheritDoc} */
-        @Override GridDdlCommand command() {
-            return GridCreateIndex.INSTANCE;
-        }
-    },
-
-    /** */
-    DROP_INDEX {
-        /** {@inheritDoc} */
-        @Override GridDdlCommand command() {
-            throw new UnsupportedOperationException(name());
-        }
-    },
-
-    ;
-
+public interface KernalContextAwareDiscoveryCustomMessage {
     /**
-     * @return Handler for DDL protocol events containing actual logic.
+     * Provide this message with a kernal context.
+     *
+     * @param ctx Kernal context.
      */
-    abstract GridDdlCommand command();
+    public void setContext(GridKernalContext ctx);
 }
