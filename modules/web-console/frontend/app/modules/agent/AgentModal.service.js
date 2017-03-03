@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import templateUrl from 'views/templates/agent-download.tpl.pug';
+
 export default class IgniteAgentModal {
     static $inject = ['$rootScope', '$state', '$modal', 'IgniteMessages'];
 
@@ -26,7 +28,7 @@ export default class IgniteAgentModal {
 
         // Pre-fetch modal dialogs.
         self.modal = $modal({
-            templateUrl: '/templates/agent-download.html',
+            templateUrl,
             show: false,
             backdrop: 'static',
             keyboard: false,
