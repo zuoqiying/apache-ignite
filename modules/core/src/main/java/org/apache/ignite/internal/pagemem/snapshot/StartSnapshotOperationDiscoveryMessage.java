@@ -104,7 +104,7 @@ public class StartSnapshotOperationDiscoveryMessage implements DiscoveryCustomMe
     /**
      * @return Initiator node id.
      */
-    public UUID initiatorId() {
+    public UUID initiatorNodeId() {
         return initiatorId;
     }
 
