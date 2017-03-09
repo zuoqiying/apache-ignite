@@ -38,7 +38,7 @@ module.exports.factory = (_, mongo) => {
          * @param {String} action - Action string presentation.
          * @param {String} group - Action group string presentation.
          * @param {Date} [now] - Optional date to save in activity.
-         * @returns {Promise.<mongo.ObjectId>} that resolve activity
+         * @returns {Promise.<mongo.Activities>} that resolve activity
          */
         static merge(owner, {action, group}, now = new Date()) {
             mongo.Account.findById(owner)

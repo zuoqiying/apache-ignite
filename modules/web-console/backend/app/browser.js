@@ -180,7 +180,6 @@ module.exports.factory = (_, socketio, agentMgr, configure) => {
                     agentMgr.findAgent(accountId())
                         .then((agent) => agent.queryCollectRunning(demo, duration))
                         .then((data) => {
-
                             if (data.finished)
                                 return cb(null, data.result);
 
@@ -194,7 +193,6 @@ module.exports.factory = (_, socketio, agentMgr, configure) => {
                     agentMgr.findAgent(accountId())
                         .then((agent) => agent.queryCancel(demo, nid, queryId))
                         .then((data) => {
-
                             if (data.finished)
                                 return cb(null, data.result);
 

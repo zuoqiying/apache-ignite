@@ -297,6 +297,60 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
         }
 
         /**
+         * @param query Query text.
+         * @returns {Promise.<mongo.ObjectId>} that resolve query.
+         */
+        writeQuery(query) {
+            return mongo.Queries.findOne({query}).lean().exec()
+                .then((qry) => {
+                    if (qry)
+                        return qry;
+
+                    return mongo.Queries.create({owner, action, group, date});
+                });
+        }
+
+        writeQueriesHistory(data) {
+            if (data.finished) {
+                this.writeQuery(data.query)
+                    .then((query) => {
+                        mongo.QueriesHistory.findOne({tokens: data.tokens, query: query._id}).lean().exec()
+                            .then((history) => {
+                                if (history) {
+                                    console.log("History found! Update it");
+
+                                    return history;
+                                }
+
+                                mongo.QueriesHistory.create({
+                                    tokens: data.tokens,
+                                    query: history._id,
+                                    date: new Date(),
+                                    nodeId: "TODO",
+                                    cache: data.cache,
+                                    executions: data.executions || 0,
+                                    completions: data.completions || 0,
+                                    failures: data.failures || 0,
+                                    minimumTime: data.minimumTime || 0,
+                                    maximumTime: data.maximumTime || 0,
+                                    averageTime: data.averageTime || 0,
+                                    totalTime: data.totalTime || 0,
+                                    lastStartTime: data.lastStartTime || 0
+                                })
+
+                            });
+                    });
+
+                const tokens = data.tokens;
+
+                mongo.Query.upsert({query: {$in: tokens}}, '_id token').lean().exec()
+
+                //mongo.Query.find();
+                // writeToMongo
+            }
+        }
+
+        /**
          * @param {Boolean} demo Is need run command on demo node.
          * @param {Array.<String>} nids Node ids.
          * @param {Number} since Metrics since.
@@ -310,7 +364,12 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                 .addParam('p3', 'java.lang.Long')
                 .addParam('p4', since);
 
-            return this.executeRest(cmd);
+            return this.executeRest(cmd)
+                .then((data) => {
+                    writeQueriesHistory(data);
+
+                    return data;
+                });
         }
 
         /**
