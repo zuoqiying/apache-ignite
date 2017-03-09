@@ -36,7 +36,7 @@ class Command {
      * @param {String} name Command name.
      */
     constructor(demo, name) {
-        this._demo = demo;
+        this.demo = demo;
 
         /**
          * Command name.
@@ -87,21 +87,19 @@ module.exports.factory = function(_) {
      */
     class AgentSocket {
         /**
-         * @param {socketIo.Socket} socket - AgentSocket socket for interaction.
+         * @param {Socket} socket Socket for interaction.
+         * @param {String} tokens Active tokens.
+         * @param {String} demoEnabled Demo enabled.
          */
-        constructor(socket, disableDemo) {
-            /**
-             * AgentSocket socket for interaction.
-             *
-             * @type {socketIo.Socket}
-             */
-            this.socket = socket;
-
-            this._demo = {
-                enabled: disableDemo,
-                tokens: [],
-                browserSockets: []
-            };
+        constructor(socket, tokens, demoEnabled) {
+            Object.assign(this, {
+                socket,
+                tokens,
+                demo: {
+                    enabled: demoEnabled,
+                    browserSockets: []
+                }
+            });
         }
 
         /**
@@ -161,31 +159,41 @@ module.exports.factory = function(_) {
             throw new Error(msg.error);
         }
 
+        attachToCluster(browserSock) {
+
+        }
+
+        deattachFromCluster() {
+            
+        }
+
         /**
-         *
          * @param {String} token
          * @param {Array.<Socket>} browserSockets
          */
-        listenDemo(token, browserSockets) {
+        runDemoCluster(token, browserSockets) {
             this.emitEvent('demo:broadcast:start')
                 .then(() => {
-                    this._demo.tokens.push(token);
-                    this._demo.browserSockets.push(...browserSockets);
+                    this.demo.tokens.push(token);
+                    this.demo.browserSockets.push(...browserSockets);
 
                     this.socket.on('demo:topology', (res) => {
                         try {
                             const top = this.restResultParse(res);
 
-                            _.forEach(this._demo.browserSockets, (sock) => sock.emit('topology', top));
+                            _.forEach(this.demo.browserSockets, (sock) => sock.emit('topology', top));
                         } catch (err) {
-                            _.forEach(this._demo.browserSockets, (sock) => sock.emit('topology:err', err));
+                            _.forEach(this.demo.browserSockets, (sock) => sock.emit('topology:err', err));
                         }
                     });
                 });
         }
 
-        demoStarted(token) {
-            return _.includes(this._demo.tokens, token);
+        /**
+         * @param {Socket} browserSocket
+         */
+        attachToDemoCluster(browserSocket) {
+            this.demo.browserSockets.push(...browserSocket);
         }
 
         startCollectTopology(timeout) {
@@ -208,7 +216,7 @@ module.exports.factory = function(_) {
             for (const param of cmd._params)
                 params[param.key] = param.value;
 
-            return this.emitEvent('node:rest', {uri: 'ignite', params, demo: cmd._demo, method: 'GET'})
+            return this.emitEvent('node:rest', {uri: 'ignite', params, demo: cmd.demo, method: 'GET'})
                 .then(this.restResultParse);
         }
 

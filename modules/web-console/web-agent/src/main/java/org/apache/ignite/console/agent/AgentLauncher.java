@@ -414,7 +414,8 @@ public class AgentLauncher {
 
                                             tokens = tokens.substring(1, tokens.length() - 1);
 
-                                            log.warn("Failed to authenticate with token(s): {}", tokens);
+                                            log.warn("Failed to authenticate with token(s): {}. " +
+                                                "Please reload agent archive or check settings", tokens);
                                         }
 
                                         log.info("Authentication success.");

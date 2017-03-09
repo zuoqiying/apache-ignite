@@ -75,10 +75,10 @@ const _onListening = (addr) => {
 /**
  * @param settings
  * @param {ApiServer} apiSrv
- * @param {AgentsServer} agentsSrv
- * @param {BrowsersServer} browsersSrv
+ * @param {AgentsHandler} agentsHnd
+ * @param {BrowsersHandler} browsersHnd
  */
-const init = ([settings, apiSrv, agentsSrv, browsersSrv]) => {
+const init = ([settings, apiSrv, agentsHnd, browsersHnd]) => {
     // Start rest server.
     const srv = settings.server.SSLOptions ? https.createServer(settings.server.SSLOptions) : http.createServer();
 
@@ -88,15 +88,15 @@ const init = ([settings, apiSrv, agentsSrv, browsersSrv]) => {
     srv.on('listening', _onListening.bind(null, srv.address()));
 
     apiSrv.attach(srv);
-    agentsSrv.attach(srv);
-    browsersSrv.attach(srv);
+    agentsHnd.attach(srv, browsersHnd);
+    browsersHnd.attach(srv, agentsHnd);
 
     // Used for automated test.
     if (process.send)
         process.send('running');
 };
 
-Promise.all([injector('settings'), injector('api-server'), injector('agents-server'), injector('browsers-server')])
+Promise.all([injector('settings'), injector('api-server'), injector('agents-handler'), injector('browsers-handler')])
     .then(init)
     .catch((err) => {
         console.error(err);

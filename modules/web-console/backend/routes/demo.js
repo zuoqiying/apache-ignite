@@ -37,7 +37,7 @@ module.exports = {
  * @param settings
  * @param mongo
  * @param spacesService
- * @param {AgentsServer} agentMgr
+ * @param {AgentsHandler} agentMgr
  * @return {Promise}
  */
 module.exports.factory = (_, express, errors, settings, mongo, spacesService, agentMgr) => {

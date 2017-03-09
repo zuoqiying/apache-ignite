@@ -23,11 +23,11 @@
  * Module interaction with browsers.
  */
 module.exports = {
-    implements: 'browsers-server',
-    inject: ['require(lodash)', 'require(socket.io)', 'configure', 'agents-server']
+    implements: 'browsers-handler',
+    inject: ['require(lodash)', 'require(socket.io)', 'configure']
 };
 
-module.exports.factory = (_, socketio, configure, agentMgr) => {
+module.exports.factory = (_, socketio, configure) => {
     const _errorToJson = (err) => {
         return {
             code: err.code || 1,
@@ -35,16 +35,108 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
         };
     };
 
-    class BrowsersServer {
-        attach(server) {
+    class BrowserSockets {
+        constructor() {
+            this.sockets = new Map();
+        }
+
+        /**
+         * @param {Socket} sock
+         */
+        add(sock) {
+            const token = sock.request.user.token;
+
+            if (this.sockets.has(token))
+                this.sockets.get(token).push(sock);
+            else
+                this.sockets.set(token, [token]);
+
+            return this.sockets.get(token);
+        }
+
+        /**
+         * @param {Socket} sock
+         */
+        remove(sock) {
+            const token = sock.request.user.token;
+            
+            const sockets = this.sockets.get(token);
+
+            _.pull(sockets, sock);
+
+            return sockets;
+        }
+
+        get(token) {
+            if (this.sockets.has(token))
+                return this.sockets.get(token);
+            
+            return [];
+        }
+
+        demo(token) {
+            return _.filter(this.sockets.get(token), (sock) => sock.request._query.IgniteDemoMode === 'true');
+        }
+    }
+
+    class BrowsersHandler {
+        /**
+         * @constructor
+         */
+        constructor() {
+            /**
+             * Connected browsers.
+             * @type {BrowserSockets}
+             */
+            this._browserSockets = new BrowserSockets();
+        }
+
+        /**
+         * @param {String} token
+         * @param {Array.<Socket>} [socks]
+         */
+        sendAgents(token, socks = this._browserSockets.get(token)) {
+            return this._agentHnd.forToken(token)
+                .then((agentSocks) => {
+                    const count = _.size(agentSocks);
+                    const hasDemo = !!_.find(agentSocks, (sock) => _.get(sock, 'demo.enabled'));
+
+                    _.forEach(socks, (sock) => sock.emit('agent:count', {count, hasDemo}));
+                });
+        }
+
+        /**
+         * 
+         * @param server
+         * @param {AgentsHandler} agentHnd
+         */
+        attach(server, agentHnd) {
+            this._agentHnd = agentHnd;
+
+            if (this.io)
+                throw 'Browser server already started!';
+
             const io = socketio(server);
 
             configure.socketio(io);
 
-            io.sockets.on('connection', (socket) => {
-                const demo = socket.request._query.IgniteDemoMode === 'true';
+            // Handle browser connect event.
+            io.sockets.on('connection', (sock) => {
+                const demo = sock.request._query.IgniteDemoMode === 'true';
 
-                const currentToken = () => socket.request.user.token;
+                // Handle browser disconnect event.
+                sock.on('disconnect', () => {
+                    this._browserSockets.remove(sock);
+
+                    // Stop demo if latest demo tab for this token.
+                    demo && agentHnd.tryStopDemo(sock);
+                });
+
+                this._browserSockets.add(sock);
+
+                const currentToken = () => sock.request.user.token;
+
+                this.sendAgents(currentToken(), [sock]);
 
                 const clusterId = () => demo ? 'DEMO' : 'CLUSTER';
 
@@ -52,7 +144,7 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                     return (...args) => {
                         const cb = _.last(args);
 
-                        return agentMgr.forToken(currentToken())
+                        return agentHnd.forToken(currentToken())
                             .then((agent) => agent.emitEvent(event, ..._.dropRight(args)))
                             .then((res) => cb(null, res))
                             .catch((err) => cb(_errorToJson(err)));
@@ -60,61 +152,80 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 };
 
                 // Return available drivers to browser.
-                socket.on('schemaImport:drivers', resendToAgent('schemaImport:drivers'));
-                // Return schemas from database to browser.
-                socket.on('schemaImport:schemas', resendToAgent('schemaImport:schemas'));
-                // Return tables from database to browser.
-                socket.on('schemaImport:tables', resendToAgent('schemaImport:tables'));
+                sock.on('schemaImport:drivers', resendToAgent('schemaImport:drivers'));
 
-                // const resendToCluster = (event) => {
-                //     return (...args) => {
-                //         const cb = _.last(args);
-                //
-                //         return agentMgr.forCluster(currentToken(), clusterId())
-                //             .then((agent) => agent.emitEvent(event, ..._.dropRight(args)))
-                //             .then((res) => cb(null, res))
-                //             .catch((err) => cb(_errorToJson(err)));
-                //     };
-                // };
+                // Return schemas from database to browser.
+                sock.on('schemaImport:schemas', resendToAgent('schemaImport:schemas'));
+
+                // Return tables from database to browser.
+                sock.on('schemaImport:tables', resendToAgent('schemaImport:tables'));
+
+                const resendToCluster = (demo, name, ...args) => {
+                    const cb = _.last(args);
+                    return agent.emitEvent('node:rest', {uri: 'ignite', params, demo: cmd.demo, method: 'GET'})
+                        .then(this.restResultParse);
+
+                    return agentHnd.forCluster(currentToken(), clusterId())
+                        .then((agent) => agent.gatewayTask('node:rest', {method: 'GET', uri: 'ignite', demo, params})
+                        .then(this.restResultParse)
+                        .then((res) => cb(null, res))
+                        .catch((err) => cb(_errorToJson(err)));
+                };
 
                 // Return topology command result from grid to browser.
-                socket.on('node:topology', (attr, mtr, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:command', resendToCluster);
+
+                // Return topology command result from grid to browser.
+                sock.on('node:gatewayTask', (demo, nids, taskCls, argCls, ...args) => {
+                    const cb = _.last(args);
+                    return agent.emitEvent('node:rest', {uri: 'ignite', params, demo: cmd.demo, method: 'GET'})
+                        .then(this.restResultParse);
+
+                    return agentHnd.forCluster(currentToken(), clusterId())
+                        .then((agent) => agent.gatewayTask('node:rest', {method: 'GET', uri: 'ignite', demo, params})
+                        .then(this.restResultParse)
+                        .then((res) => cb(null, res))
+                        .catch((err) => cb(_errorToJson(err));
+                });
+
+                // Return topology command result from grid to browser.
+                sock.on('node:topology', (attr, mtr, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.topology(demo, attr, mtr))
                         .then((clusters) => cb(null, clusters))
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
                 // Close query on node.
-                socket.on('node:query:close', (nid, queryId, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:query:close', (nid, queryId, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.queryClose(demo, nid, queryId))
                         .then(() => cb())
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
                 // Execute query on node and return first page to browser.
-                socket.on('node:query', (nid, cacheName, query, distributedJoins, local, pageSize, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:query', (nid, cacheName, query, distributedJoins, local, pageSize, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.fieldsQuery(demo, nid, cacheName, query, distributedJoins, local, pageSize))
                         .then((res) => cb(null, res))
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
                 // Fetch next page for query and return result to browser.
-                socket.on('node:query:fetch', (nid, queryId, pageSize, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:query:fetch', (nid, queryId, pageSize, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.queryFetch(demo, nid, queryId, pageSize))
                         .then((res) => cb(null, res))
                         .catch((err) => cb(_errorToJson(err)));
                 });
 
                 // Execute query on node and return full result to browser.
-                socket.on('node:query:getAll', (nid, cacheName, query, distributedJoins, local, cb) => {
+                sock.on('node:query:getAll', (nid, cacheName, query, distributedJoins, local, cb) => {
                     // Set page size for query.
                     const pageSize = 1024;
 
-                    agentMgr.forCluster(currentToken(), clusterId())
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => {
                             const firstPage = agent.fieldsQuery(demo, nid, cacheName, query, distributedJoins, local, pageSize)
                                 .then(({result}) => {
@@ -146,8 +257,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Collect cache query metrics and return result to browser.
-                socket.on('node:query:metrics', (nids, since, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:query:metrics', (nids, since, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.queryDetailMetrics(demo, nids, since))
                         .then((data) => {
                             if (data.finished)
@@ -159,8 +270,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Collect cache query metrics and return result to browser.
-                socket.on('node:query:reset:metrics', (nids, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:query:reset:metrics', (nids, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.queryResetDetailMetrics(demo, nids))
                         .then((data) => {
                             if (data.finished)
@@ -172,8 +283,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Collect running queries from all nodes in grid.
-                socket.on('node:query:running', (duration, cb) => {
-                    agentMgr.findAgent(accountId())
+                sock.on('node:query:running', (duration, cb) => {
+                    agentHnd.findAgent(accountId())
                         .then((agent) => agent.queryCollectRunning(demo, duration))
                         .then((data) => {
 
@@ -186,8 +297,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Cancel running query by query id on node.
-                socket.on('node:query:cancel', (nid, queryId, cb) => {
-                    agentMgr.findAgent(accountId())
+                sock.on('node:query:cancel', (nid, queryId, cb) => {
+                    agentHnd.findAgent(accountId())
                         .then((agent) => agent.queryCancel(demo, nid, queryId))
                         .then((data) => {
 
@@ -200,8 +311,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Return cache metadata from all nodes in grid.
-                socket.on('node:cache:metadata', (cacheName, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:cache:metadata', (cacheName, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.metadata(demo, cacheName))
                         .then((caches) => {
                             let types = [];
@@ -297,8 +408,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Fetch next page for query and return result to browser.
-                socket.on('node:visor:collect', (evtOrderKey, evtThrottleCntrKey, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:visor:collect', (evtOrderKey, evtThrottleCntrKey, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.collect(demo, evtOrderKey, evtThrottleCntrKey))
                         .then((data) => {
                             if (data.finished)
@@ -310,8 +421,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Gets node configuration for specified node.
-                socket.on('node:configuration', (nid, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:configuration', (nid, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.collectNodeConfiguration(demo, nid))
                         .then((data) => {
                             if (data.finished)
@@ -323,8 +434,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Gets cache configurations for specified node and caches deployment IDs.
-                socket.on('cache:configuration', (nid, caches, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('cache:configuration', (nid, caches, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.collectCacheConfigurations(demo, nid, caches))
                         .then((data) => {
                             if (data.finished)
@@ -336,8 +447,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Swap backups specified caches on specified node and return result to browser.
-                socket.on('node:cache:swap:backups', (nid, cacheNames, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:cache:swap:backups', (nid, cacheNames, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.cacheSwapBackups(demo, nid, cacheNames))
                         .then((data) => {
                             if (data.finished)
@@ -349,8 +460,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Reset metrics specified cache on specified node and return result to browser.
-                socket.on('node:cache:reset:metrics', (nid, cacheName, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:cache:reset:metrics', (nid, cacheName, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.cacheResetMetrics(demo, nid, cacheName))
                         .then((data) => {
                             if (data.finished)
@@ -362,8 +473,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Clear specified cache on specified node and return result to browser.
-                socket.on('node:cache:clear', (nid, cacheName, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:cache:clear', (nid, cacheName, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.cacheClear(demo, nid, cacheName))
                         .then((data) => {
                             if (data.finished)
@@ -375,8 +486,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Start specified cache and return result to browser.
-                socket.on('node:cache:start', (nids, near, cacheName, cfg, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:cache:start', (nids, near, cacheName, cfg, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.cacheStart(demo, nids, near, cacheName, cfg))
                         .then((data) => {
                             if (data.finished)
@@ -388,8 +499,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Stop specified cache on specified node and return result to browser.
-                socket.on('node:cache:stop', (nid, cacheName, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:cache:stop', (nid, cacheName, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.cacheStop(demo, nid, cacheName))
                         .then((data) => {
                             if (data.finished)
@@ -402,8 +513,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
 
 
                 // Ping node and return result to browser.
-                socket.on('node:ping', (taskNid, nid, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:ping', (taskNid, nid, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.ping(demo, taskNid, nid))
                         .then((data) => {
                             if (data.finished)
@@ -415,8 +526,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // GC node and return result to browser.
-                socket.on('node:gc', (nids, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:gc', (nids, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.gc(demo, nids))
                         .then((data) => {
                             if (data.finished)
@@ -428,8 +539,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Thread dump for node.
-                socket.on('node:thread:dump', (nid, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:thread:dump', (nid, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.threadDump(demo, nid))
                         .then((data) => {
                             if (data.finished)
@@ -441,8 +552,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Collect cache partitions.
-                socket.on('node:cache:partitions', (nids, cacheName, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:cache:partitions', (nids, cacheName, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.partitions(demo, nids, cacheName))
                         .then((data) => {
                             if (data.finished)
@@ -454,8 +565,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Stops given node IDs
-                socket.on('node:stop', (nids, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:stop', (nids, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.stopNodes(demo, nids))
                         .then((data) => {
                             if (data.finished)
@@ -467,8 +578,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Restarts given node IDs.
-                socket.on('node:restart', (nids, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('node:restart', (nids, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.restartNodes(demo, nids))
                         .then((data) => {
                             if (data.finished)
@@ -480,8 +591,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Collect service information from grid.
-                socket.on('service:collect', (nid, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('service:collect', (nid, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.services(demo, nid))
                         .then((data) => {
                             if (data.finished)
@@ -493,8 +604,8 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                 });
 
                 // Collect service information from grid.
-                socket.on('service:cancel', (nid, name, cb) => {
-                    agentMgr.forCluster(currentToken(), clusterId())
+                sock.on('service:cancel', (nid, name, cb) => {
+                    agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => agent.serviceCancel(demo, nid, name))
                         .then((data) => {
                             if (data.finished)
@@ -504,14 +615,9 @@ module.exports.factory = (_, socketio, configure, agentMgr) => {
                         })
                         .catch((err) => cb(_errorToJson(err)));
                 });
-
-                agentMgr.onBrowserConnect(currentToken(), socket);
             });
-
-            // Handle browser disconnect event.
-            io.sockets.on('disconnect', agentMgr.onBrowserDisconnect);
         }
     }
 
-    return new BrowsersServer();
+    return new BrowsersHandler();
 };

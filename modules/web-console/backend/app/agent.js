@@ -47,7 +47,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo)
          * @param {String} name Command name.
          */
         constructor(demo, name) {
-            this._demo = demo;
+            this.demo = demo;
 
             /**
              * Command name.
@@ -142,7 +142,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo)
                 params[param.key] = param.value;
 
             return new Promise((resolve, reject) => {
-                this._emit('node:rest', {uri: 'ignite', params, demo: cmd._demo, method: 'GET'}, (error, res) => {
+                this._emit('node:rest', {uri: 'ignite', params, demo: cmd.demo, method: 'GET'}, (error, res) => {
                     if (error)
                         return reject(new Error(error));
 

@@ -32,7 +32,7 @@ module.exports = {
  * @param {SpacesService} spacesService
  * @param {MailsService} mailsService
  * @param {ActivitiesService} activitiesService
- * @param {AgentsServer} agentMgr
+ * @param {AgentsHandler} agentMgr
  * @returns {UsersService}
  */
 module.exports.factory = (_, errors, settings, mongo, spacesService, mailsService, activitiesService, agentMgr) => {
