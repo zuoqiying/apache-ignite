@@ -28,10 +28,10 @@ module.exports = {
 };
 
 module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose) {
-    // Use native promises
+    // Use native promises.
     mongoose.Promise = global.Promise;
 
-    // Connect to mongoDB database.
+    // Connect to MongoDB database.
     mongoose.connect(settings.mongoUrl, {server: {poolSize: 4}});
 
     const Schema = mongoose.Schema;
@@ -921,7 +921,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
     // Define Activities model.
     result.Activities = mongoose.model('Activities', ActivitiesSchema);
 
-    // Registering the routes of all plugin modules
+    // Registering the routes of all plugin modules.
     for (const name in pluginMongo) {
         if (pluginMongo.hasOwnProperty(name))
             pluginMongo[name].register(mongoose, result);
