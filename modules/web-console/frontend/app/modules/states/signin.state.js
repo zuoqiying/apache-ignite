@@ -33,7 +33,14 @@ angular
         resolve: {
             user: ['$state', 'User', ($state, User) => {
                 return User.read()
-                    .then(() => $state.go('base.configuration.clusters'))
+                    .then(() => {
+                        try {
+                            const {name, params} = JSON.parse(localStorage.getItem('lastStateChangeSuccess'));
+                            $state.go(name, params);
+                        } catch (ignored) {
+                            $state.go('base.configuration.clusters')
+                        }
+                    })
                     .catch(() => {});
             }]
         },

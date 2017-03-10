@@ -265,6 +265,15 @@ angular
     $root.$on('$stateChangeStart', () => {
         _.forEach(angular.element('.modal'), (m) => angular.element(m).scope().$hide());
     });
+
+    $root.$on('$stateChangeSuccess', (event, state) => {
+        try {
+            localStorage.removeItem('lastStateChangeSuccess');
+            localStorage.setItem('lastStateChangeSuccess', JSON.stringify(state));
+        } catch (ignored) {
+            // Ignore.
+        }
+    });
 }])
 .run(['$rootScope', '$http', '$state', 'IgniteMessages', 'User', 'IgniteNotebookData',
     ($root, $http, $state, Messages, User, Notebook) => { // eslint-disable-line no-shadow
