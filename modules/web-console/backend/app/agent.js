@@ -366,7 +366,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
             return this.executeRest(cmd)
                 .then((data) => {
-                    writeQueriesHistory(data);
+                    this.writeQueriesHistory(data);
 
                     return data;
                 });
