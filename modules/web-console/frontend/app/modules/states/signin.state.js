@@ -38,7 +38,7 @@ angular
                             const {name, params} = JSON.parse(localStorage.getItem('lastStateChangeSuccess'));
                             $state.go(name, params);
                         } catch (ignored) {
-                            $state.go('base.configuration.clusters')
+                            $state.go('base.configuration.clusters');
                         }
                     })
                     .catch(() => {});
