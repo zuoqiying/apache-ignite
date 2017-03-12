@@ -17,7 +17,7 @@
 
 package org.apache.ignite.examples.indexing;
 
-import org.apache.ignite.cache.affinity.AffinityKeyMapped;
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 /**
  * <p>
@@ -27,13 +27,13 @@ import org.apache.ignite.cache.affinity.AffinityKeyMapped;
  * @author Alexei Scherbakov
  */
 public class IndexFieldKey {
-    @AffinityKeyMapped
+    @QuerySqlField(index = true)
     private String fieldValue;
 
     private Object payload;
 
-    public IndexFieldKey(String fieldValue, Object payload) {
-        this.fieldValue = fieldValue;
+    public IndexFieldKey(String fieldVal, Object payload) {
+        this.fieldValue = fieldVal;
         this.payload = payload;
     }
 

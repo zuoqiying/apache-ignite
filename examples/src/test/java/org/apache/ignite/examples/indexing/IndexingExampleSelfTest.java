@@ -19,14 +19,15 @@ package org.apache.ignite.examples.indexing;
 
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
-import org.jsr166.ThreadLocalRandom8;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Iterator;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * <p>
@@ -84,25 +85,57 @@ public class IndexingExampleSelfTest extends GridCommonAbstractTest {
     }
 
     /**
-     * Tests entity creation.
+     * Tests entity creation with manual key assignment.
      */
-    public void testCreate() throws Exception {
+    public void testSelfKeyAssignCreate() throws Exception {
         try {
             IgniteEx igniteEx = startGrid(0);
 
             mgr.attach(igniteEx);
 
-            TestUser user1 = new TestUser("Ivan", "Petrov", "IvanPetrov@email.com", ThreadLocalRandom8.current().nextInt(10, 80));
+            TestUser user1 = new TestUser("Ivan", "Petrov", "IvanPetrov@email.com", 20);
 
             mgr.save(1L, user1);
 
-            TestUser user2 = new TestUser("Petr", "Sidorov", "PetrSidorov@email.com", ThreadLocalRandom8.current().nextInt(10, 80));
+            TestUser u = mgr.get(1L);
+
+            assertEquals(user1, u);
+
+            TestUser user2 = new TestUser("Petr", "Sidorov", "PetrSidorov@email.com", 30);
 
             mgr.save(2L, user2);
 
-            TestUser user3 = new TestUser("Ivan", "Sidorov", "IvanSidorov@email.com", ThreadLocalRandom8.current().nextInt(10, 80));
+            u = mgr.get(2L);
+
+            assertEquals(user2, u);
+
+            TestUser user3 = new TestUser("Ivan", "Sidorov", "IvanSidorov@email.com", 30);
 
             mgr.save(3L, user3);
+
+            u = mgr.get(3L);
+
+            assertEquals(user3, u);
+
+            assertTrue(mgr.contains("firstName", user1, 1L));
+
+            assertTrue(mgr.contains("firstName", user1, 3L));
+
+            assertTrue(mgr.contains("firstName", user2, 2L));
+
+            TestUser example = new TestUser("ivan", "sidorov", "some@email.com", 10);
+
+            assertTrue(mgr.contains("fio", example, 3L));
+
+            example.setLastName("sidorov1");
+
+            assertFalse(mgr.contains("fio", example, 3L));
+
+            Collection<T2<Long, TestUser>> users = mgr.findAll(user1, "firstName");
+
+            assertEquals(2, users.size());
+
+            LockSupport.park();
         } finally {
             stopAllGrids();
         }

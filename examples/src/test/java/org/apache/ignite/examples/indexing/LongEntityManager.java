@@ -20,7 +20,6 @@ package org.apache.ignite.examples.indexing;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteAtomicSequence;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteClosure;
 
 import java.util.BitSet;
@@ -47,10 +46,10 @@ public class LongEntityManager<V> extends EntityManager<Long, V> {
 
     /**
      * @param name   Name.
-     * @param fields Fields.
+     * @param indcies Indices.
      */
-    public LongEntityManager(String name, Map<String, IgniteClosure<Object, String>> fieldsMap) {
-        super(name, fieldsMap);
+    public LongEntityManager(String name, Map<String, IgniteClosure<Object, String>> indcies) {
+        super(name, indcies);
 
         this.seqName = name + "_seq";
     }
@@ -66,62 +65,68 @@ public class LongEntityManager<V> extends EntityManager<Long, V> {
         seq = ignite.atomicSequence(seqName, 0, true);
     }
 
-    public boolean contains(String field, String val, Long id) {
+    public boolean contains(String idxName, Object value, Long id) {
         long seg = id / CAPACITY;
 
         int off = (int) (id % CAPACITY);
 
-        IndexFieldKey indexKey = new IndexFieldKey(val, id);
+        IgniteClosure<Object, String> clo = incices.get(idxName);
 
-        BitSet set = (BitSet) indexCache(field).get(indexKey);
+        String strVal = clo.apply(value);
 
-        return set != null && set.get(off);
+        IndexFieldKey idxKey = new IndexFieldKey(strVal, seg);
+
+        IndexFieldValue idxVal = indexCache(idxName).get(idxKey);
+
+        return idxVal != null && ((BitSet)idxVal.getValue()).get(off);
     }
 
     /** {@inheritDoc} */
-    protected void addEntry(Long key, Map<String, String> fields) {
+    protected void addEntry(Long key, Map<String, String> changes) {
         long seg = key / CAPACITY;
 
         int off = (int) (key % CAPACITY);
 
-        for (Map.Entry<String, String> field : fields.entrySet()) {
+        for (Map.Entry<String, String> field : changes.entrySet()) {
             IndexFieldKey idxKey = new IndexFieldKey(field.getValue(), seg);
 
-            IgniteCache<IndexFieldKey, Object> cache = indexCache(field.getKey());
+            IgniteCache<IndexFieldKey, IndexFieldValue> cache = indexCache(field.getKey());
 
-            BitSet set = (BitSet) cache.get(idxKey);
+            IndexFieldValue idxVal = cache.get(idxKey);
 
-            if (set == null)
-                set = new BitSet();
+            if (idxVal == null)
+                idxVal = new IndexFieldValue(new BitSet());
 
-            set.set(off);
+            ((BitSet)idxVal.getValue()).set(off);
 
-            cache.put(idxKey, set);
+            cache.put(idxKey, idxVal);
         }
     }
 
     /** {@inheritDoc} */
-    protected void removeEntry(Long key, Map<String, String> fields) {
+    protected void removeEntry(Long key, Map<String, String> changes) {
         long seg = key / CAPACITY;
 
         int off = (int) (key % CAPACITY);
 
-        for (Map.Entry<String, String> field : fields.entrySet()) {
+        for (Map.Entry<String, String> field : changes.entrySet()) {
             IndexFieldKey idxKey = new IndexFieldKey(field.getValue(), seg);
 
-            IgniteCache<IndexFieldKey, Object> cache = indexCache(field.getKey());
+            IgniteCache<IndexFieldKey, IndexFieldValue> cache = indexCache(field.getKey());
 
-            BitSet set = (BitSet) cache.get(idxKey);
+            IndexFieldValue val = (IndexFieldValue) cache.get(idxKey);
 
-            if (set == null)
+            if (val == null)
                 continue;
+
+            BitSet set = (BitSet) val.getValue();
 
             if (set.cardinality() == 0)
                 cache.remove(idxKey);
             else {
                 set.clear(off);
 
-                cache.put(idxKey, set);
+                cache.put(idxKey, val);
             }
         }
     }

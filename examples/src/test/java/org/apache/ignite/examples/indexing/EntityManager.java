@@ -25,7 +25,8 @@ import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.util.typedef.F;
-import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.internal.util.typedef.T2;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.transactions.Transaction;
@@ -33,9 +34,9 @@ import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
 
 import javax.cache.Cache;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,26 +55,26 @@ public class EntityManager<K, V> {
     protected final String name;
 
     /** */
-    protected final Map<String, IgniteClosure<Object, String>> fieldsMap;
+    protected final Map<String, IgniteClosure<Object, String>> incices;
 
     /** */
     protected Ignite ignite;
 
     /**
      * @param name      Name.
-     * @param fieldsMap Fields map.
+     * @param incices Fields map.
      */
-    public EntityManager(String name, Map<String, IgniteClosure<Object, String>> fieldsMap) {
+    public EntityManager(String name, Map<String, IgniteClosure<Object, String>> incices) {
         this.name = name;
 
-        this.fieldsMap = fieldsMap == null ? Collections.<String, IgniteClosure<Object, String>>emptyMap() : fieldsMap;
+        this.incices = incices == null ? Collections.<String, IgniteClosure<Object, String>>emptyMap() : incices;
     }
 
     /**
      * Returns cache configurations.
      */
     public CacheConfiguration[] cacheConfigurations() {
-        CacheConfiguration[] ccfgs = new CacheConfiguration[fieldsMap.size() + 1];
+        CacheConfiguration[] ccfgs = new CacheConfiguration[incices.size() + 1];
 
         int c = 0;
 
@@ -83,11 +84,12 @@ public class EntityManager<K, V> {
 
         c++;
 
-        for (Map.Entry<String, IgniteClosure<Object, String>> field : fieldsMap.entrySet()) {
-            String field1 = field.getKey();
-            ccfgs[c] = new CacheConfiguration(indexCacheName(field1));
+        for (Map.Entry<String, IgniteClosure<Object, String>> idx : incices.entrySet()) {
+            String idxName = idx.getKey();
+            ccfgs[c] = new CacheConfiguration(indexCacheName(idxName));
             ccfgs[c].setCacheMode(CacheMode.REPLICATED);
             ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
+            ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
 
             c++;
         }
@@ -96,17 +98,17 @@ public class EntityManager<K, V> {
     }
 
     /**
-     * @param field Field.
+     * @param idxName Index name.
      */
-    protected IgniteCache<IndexFieldKey, Object> indexCache(String field) {
-        return ignite.getOrCreateCache(indexCacheName(field));
+    protected IgniteCache<IndexFieldKey, IndexFieldValue> indexCache(String idxName) {
+        return ignite.getOrCreateCache(indexCacheName(idxName));
     }
 
     /**
-     * @param field Field.
+     * @param idxName Index name.
      */
-    protected String indexCacheName(String field) {
-        return name + "_" + field;
+    protected String indexCacheName(String idxName) {
+        return name + "_" + idxName;
     }
 
     /**
@@ -123,13 +125,13 @@ public class EntityManager<K, V> {
      * @param val Value.
      * @return List of indexed fields.
      */
-    protected IndexedFields<K> indexedFields(K key, V val) {
-        IndexedFields<K> indexedFields = new IndexedFields<>(name, key);
+    protected IndexChange<K> indexChange(K key, V val) {
+        IndexChange<K> idxChange = new IndexChange<>(name, key);
 
-        for (Map.Entry<String, IgniteClosure<Object, String>> field : fieldsMap.entrySet())
-            indexedFields.addField(field.getKey(), field.getValue().apply(val));
+        for (Map.Entry<String, IgniteClosure<Object, String>> idx : incices.entrySet())
+            idxChange.addChange(idx.getKey(), idx.getValue().apply(val));
 
-        return indexedFields;
+        return idxChange;
     }
 
     public V get(K key) {
@@ -140,7 +142,7 @@ public class EntityManager<K, V> {
         try (Transaction tx = ignite.transactions().txStart(TransactionConcurrency.OPTIMISTIC, TransactionIsolation.SERIALIZABLE)) {
             V oldVal = null;
 
-            IndexedFields<K> oldFields = null;
+            IndexChange<K> oldChange = null;
 
             if (key == null)
                 key = nextKey(); // New value.
@@ -148,29 +150,29 @@ public class EntityManager<K, V> {
                 oldVal = get(key);
 
                 if (oldVal != null)
-                    oldFields = indexedFields(key, oldVal);
+                    oldChange = indexChange(key, oldVal);
             }
 
             // Merge indices.
-            final IndexedFields<K> newFields = indexedFields(key, val);
+            final IndexChange<K> newChange = indexChange(key, val);
 
-            IgnitePredicate<String> exclSameFieldsPred = null;
+            IgnitePredicate<String> exclSameValsPred = null;
 
-            if (oldFields != null) {
-                final IndexedFields<K> finalOldFields = oldFields;
+            if (oldChange != null) {
+                final IndexChange<K> finalOldChange = oldChange;
 
-                exclSameFieldsPred = new IgnitePredicate<String>() {
+                exclSameValsPred = new IgnitePredicate<String>() {
                     @Override public boolean apply(String s) {
-                        return !finalOldFields.fields().get(s).equals(newFields.fields().get(s));
+                        return !finalOldChange.changes().get(s).equals(newChange.changes().get(s));
                     }
                 };
 
-                // Remove only changed index fields.
-                removeEntry(key, F.view(oldFields.fields(), exclSameFieldsPred));
+                // Remove only changed index values.
+                removeEntry(key, F.view(oldChange.changes(), exclSameValsPred));
             }
 
-            // Insert only changed index fields.
-            addEntry(key, exclSameFieldsPred == null ? newFields.fields() : F.view(newFields.fields(), exclSameFieldsPred));
+            // Insert only changed index values.
+            addEntry(key, exclSameValsPred == null ? newChange.changes() : F.view(newChange.changes(), exclSameValsPred));
 
             entityCache().put(key, val);
 
@@ -190,9 +192,9 @@ public class EntityManager<K, V> {
         if (v == null)
             return false;
 
-        IndexedFields<K> indexedFields = indexedFields(key, v);
+        IndexChange<K> indexChange = indexChange(key, v);
 
-        removeEntry(indexedFields.id(), indexedFields.fields());
+        removeEntry(indexChange.id(), indexChange.changes());
 
         entityCache().remove(key);
 
@@ -200,66 +202,75 @@ public class EntityManager<K, V> {
     }
 
     /** */
-    protected void addEntry(K key, Map<String, String> fields) {
-        if (fields == null)
+    protected void addEntry(K key, Map<String, String> changes) {
+        if (changes == null)
             return;
 
-        for (Map.Entry<String, String> field : fields.entrySet()) {
-            IndexFieldKey idxKey = new IndexFieldKey(field.getValue(), key);
+        for (Map.Entry<String, String> change : changes.entrySet()) {
+            IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), key);
 
-            indexCache(field.getKey()).put(idxKey, null);
+            indexCache(change.getKey()).put(idxKey, IndexFieldValue.MARKER);
         }
     }
 
     /** */
-    protected void removeEntry(K key, Map<String, String> fields) {
-        if (fields == null)
+    protected void removeEntry(K key, Map<String, String> changes) {
+        if (changes == null)
             return;
 
-        for (Map.Entry<String, String> field : fields.entrySet()) {
-            IndexFieldKey idxKey = new IndexFieldKey(field.getValue(), key);
+        for (Map.Entry<String, String> change : changes.entrySet()) {
+            IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), key);
 
-            indexCache(field.getKey()).remove(idxKey);
+            indexCache(change.getKey()).remove(idxKey);
         }
     }
 
     /**
-     * @param field Field.
+     * @param idxName Field.
      * @param val   Value.
      * @param id    Id.
      */
-    public boolean contains(String field, String val, K id) {
-        IndexFieldKey idxKey = new IndexFieldKey(val, id);
+    public boolean contains(String idxName, Object val, K id) {
+        IgniteClosure<Object, String> clo = incices.get(idxName);
 
-        return indexCache(field).containsKey(idxKey);
+        String strVal = clo.apply(val);
+
+        IndexFieldKey idxKey = new IndexFieldKey(strVal, id);
+
+        return indexCache(idxName).containsKey(idxKey);
     }
 
     /**
      * Returns all entities matching the example.
      *
      * @param val Value.
+     * @param idxName Index name.
+     *
+     * @return Entities iterator.
      */
     @SuppressWarnings("unchecked")
-    public Iterator<V> findByFieldValue(V val, String fieldName) {
-        IgniteClosure<Object, String> clo = fieldsMap.get(fieldName);
+    public Collection<T2<K, V>> findAll(V val, String idxName) {
+        IgniteClosure<Object, String> clo = incices.get(idxName);
 
         String strVal = clo.apply(val);
 
-        SqlQuery<IndexFieldKey, V> sqlQry = new SqlQuery<>(Object.class, "fieldValue = ?");
+        SqlQuery<IndexFieldKey, IndexFieldValue> sqlQry = new SqlQuery<>(IndexFieldValue.class, "fieldValue = ?");
 
         sqlQry.setArgs(strVal);
 
         // TODO set partition when IGNITE-4523 will be ready.
 
-        QueryCursor<Cache.Entry<IndexFieldKey, V>> cur = indexCache(fieldName).query(sqlQry);
+        QueryCursor<Cache.Entry<IndexFieldKey, IndexFieldValue>> cur = indexCache(idxName).query(sqlQry);
 
-        return F.iterator(cur.iterator(), new IgniteClosure<Cache.Entry<IndexFieldKey, V>, V>() {
-            @Override public V apply(Cache.Entry<IndexFieldKey, V> e) {
+        List<Cache.Entry<IndexFieldKey, IndexFieldValue>> rows = U.arrayList(cur, 16);
+
+        return F.viewReadOnly(rows, new IgniteClosure<Cache.Entry<IndexFieldKey, IndexFieldValue>, T2<K, V>>() {
+            @Override public T2<K, V> apply(Cache.Entry<IndexFieldKey, IndexFieldValue> e) {
                 Object entryKey = e.getKey().getPayload();
 
-                return entityCache().get((K) entryKey); // TODO use batching
+                return new T2(entryKey, entityCache().get((K) entryKey)); // TODO use batching
             }
-        }, true);
+        });
     }
 
     /** */

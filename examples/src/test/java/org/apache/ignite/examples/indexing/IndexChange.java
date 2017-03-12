@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  *
  */
-public class IndexedFields<K> {
+public class IndexChange<K> {
     /** */
     private final K id;
 
@@ -31,13 +31,13 @@ public class IndexedFields<K> {
     private final String name;
 
     /** */
-    private Map<String, String> fields = new HashMap<>();
+    private Map<String, String> changes = new HashMap<>();
 
     /**
      * @param name Name.
      * @param id   Id.
      */
-    public IndexedFields(String name, K id) {
+    public IndexChange(String name, K id) {
         this.id = id;
         this.name = name;
     }
@@ -53,12 +53,12 @@ public class IndexedFields<K> {
     }
 
     /** */
-    public void addField(String name, String value) {
-        fields.put(name, value);
+    public void addChange(String name, String val) {
+        changes.put(name, val);
     }
 
     /** */
-    public Map<String, String> fields() {
-        return fields;
+    public Map<String, String> changes() {
+        return changes;
     }
 }
