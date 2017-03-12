@@ -1,34 +1,51 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.ignite.examples.indexing;
 
 import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteAtomicSequence;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.query.QueryCursor;
+import org.apache.ignite.cache.query.SqlQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteClosure;
+import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.transactions.Transaction;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
 
-import java.util.BitSet;
-import java.util.concurrent.locks.Lock;
+import javax.cache.Cache;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
- * <p>
- * The <code>EntityManager</code>
- * </p>
- *
- * @author Alexei Scherbakov
+ * The <code>EntityManager</code> which support only manual ids assignment.
  */
-public class EntityManager<V> {
-    /** Segment capacity. */
-    public static final int CAPACITY = 16_000; // Compressed size fits in 2k page.
-
+public class EntityManager<K, V> {
     /** */
     private ThreadLocal<StringBuilder> builder = new ThreadLocal<StringBuilder>() {
-        @Override protected StringBuilder initialValue() {
+        @Override
+        protected StringBuilder initialValue() {
             return new StringBuilder();
         }
     };
@@ -37,32 +54,26 @@ public class EntityManager<V> {
     protected final String name;
 
     /** */
-    private String seqName;
+    protected final Map<String, IgniteClosure<Object, String>> fieldsMap;
 
     /** */
-    protected final IgniteBiTuple<String, IgniteClosure<Object, String>>[] fields;
-
-    /** */
-    private Ignite ignite;
+    protected Ignite ignite;
 
     /**
-     * @param name   Name.
-     * @param fields Fields.
+     * @param name      Name.
+     * @param fieldsMap Fields map.
      */
-    @SafeVarargs
-    public EntityManager(String name, IgniteBiTuple<String, IgniteClosure<Object, String>>... fields) {
+    public EntityManager(String name, Map<String, IgniteClosure<Object, String>> fieldsMap) {
         this.name = name;
 
-        this.seqName = name + "_seq";
-
-        this.fields = fields;
+        this.fieldsMap = fieldsMap == null ? Collections.<String, IgniteClosure<Object, String>>emptyMap() : fieldsMap;
     }
 
     /**
      * Returns cache configurations.
      */
     public CacheConfiguration[] cacheConfigurations() {
-        CacheConfiguration[] ccfgs = new CacheConfiguration[(fields == null ? 0 : fields.length) + 1];
+        CacheConfiguration[] ccfgs = new CacheConfiguration[fieldsMap.size() + 1];
 
         int c = 0;
 
@@ -72,17 +83,30 @@ public class EntityManager<V> {
 
         c++;
 
-        if (fields != null)
-            for (IgniteBiTuple<String, IgniteClosure<Object, String>> field : fields) {
-                String field1 = field.get1();
-                ccfgs[c] = new CacheConfiguration(segmentCacheName(field1));
-                ccfgs[c].setCacheMode(CacheMode.REPLICATED);
-                ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
+        for (Map.Entry<String, IgniteClosure<Object, String>> field : fieldsMap.entrySet()) {
+            String field1 = field.getKey();
+            ccfgs[c] = new CacheConfiguration(indexCacheName(field1));
+            ccfgs[c].setCacheMode(CacheMode.REPLICATED);
+            ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
 
-                c++;
-            }
+            c++;
+        }
 
         return ccfgs;
+    }
+
+    /**
+     * @param field Field.
+     */
+    protected IgniteCache<IndexFieldKey, Object> indexCache(String field) {
+        return ignite.getOrCreateCache(indexCacheName(field));
+    }
+
+    /**
+     * @param field Field.
+     */
+    protected String indexCacheName(String field) {
+        return name + "_" + field;
     }
 
     /**
@@ -94,32 +118,61 @@ public class EntityManager<V> {
         this.ignite = ignite;
     }
 
-    public IndexedFields indexedFields(long key, V t) {
-        return null;
+    /**
+     * @param key key;
+     * @param val Value.
+     * @return List of indexed fields.
+     */
+    protected IndexedFields<K> indexedFields(K key, V val) {
+        IndexedFields<K> indexedFields = new IndexedFields<>(name, key);
+
+        for (Map.Entry<String, IgniteClosure<Object, String>> field : fieldsMap.entrySet())
+            indexedFields.addField(field.getKey(), field.getValue().apply(val));
+
+        return indexedFields;
     }
 
-    public V get(long key) {
+    public V get(K key) {
         return (V) entityCache().get(key);
     }
 
-    /**
-     * Insert value with generated id, creating necessary indices.
-     *
-     * @param val Value.
-     *
-     *  @return Assigned id.
-     */
-    public long create(V val) {
-        try(Transaction tx = ignite.transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.READ_COMMITTED)) {
-            IgniteAtomicSequence seq = ignite.atomicSequence(seqName, 0, true);
+    public K save(K key, V val) {
+        try (Transaction tx = ignite.transactions().txStart(TransactionConcurrency.OPTIMISTIC, TransactionIsolation.SERIALIZABLE)) {
+            V oldVal = null;
 
-            long key = seq.getAndIncrement();
+            IndexedFields<K> oldFields = null;
+
+            if (key == null)
+                key = nextKey(); // New value.
+            else {
+                oldVal = get(key);
+
+                if (oldVal != null)
+                    oldFields = indexedFields(key, oldVal);
+            }
+
+            // Merge indices.
+            final IndexedFields<K> newFields = indexedFields(key, val);
+
+            IgnitePredicate<String> exclSameFieldsPred = null;
+
+            if (oldFields != null) {
+                final IndexedFields<K> finalOldFields = oldFields;
+
+                exclSameFieldsPred = new IgnitePredicate<String>() {
+                    @Override public boolean apply(String s) {
+                        return !finalOldFields.fields().get(s).equals(newFields.fields().get(s));
+                    }
+                };
+
+                // Remove only changed index fields.
+                removeEntry(key, F.view(oldFields.fields(), exclSameFieldsPred));
+            }
+
+            // Insert only changed index fields.
+            addEntry(key, exclSameFieldsPred == null ? newFields.fields() : F.view(newFields.fields(), exclSameFieldsPred));
 
             entityCache().put(key, val);
-
-            IndexedFields indexedFields = indexedFields(key, val);
-
-            addEntry(indexedFields);
 
             tx.commit();
 
@@ -127,131 +180,90 @@ public class EntityManager<V> {
         }
     }
 
-    public void update(long key, V val) {
-        // TODO implement indices merging.
+    protected K nextKey() {
+        throw new IllegalArgumentException();
     }
 
-    public boolean delete(long key) {
+    public boolean delete(K key) {
         V v = get(key);
 
         if (v == null)
             return false;
 
-        IndexedFields indexedFields = indexedFields(key, v);
+        IndexedFields<K> indexedFields = indexedFields(key, v);
 
-        if (indexedFields != null)
-            removeEntry(indexedFields);
+        removeEntry(indexedFields.id(), indexedFields.fields());
 
         entityCache().remove(key);
 
         return true;
     }
 
-    protected void addEntry(IndexedFields indexedFields) {
-        long seg = indexedFields.id() / CAPACITY;
+    /** */
+    protected void addEntry(K key, Map<String, String> fields) {
+        if (fields == null)
+            return;
 
-        int off = (int) (indexedFields.id() % CAPACITY);
+        for (Map.Entry<String, String> field : fields.entrySet()) {
+            IndexFieldKey idxKey = new IndexFieldKey(field.getValue(), key);
 
-        for (Field field : indexedFields.fields()) {
-            String k = segmentKey(field.value(), seg);
-
-            Lock lock = segmentCache(field.name()).lock(k);
-            try {
-                lock.lock();
-
-                BitSet set = segmentCache(field.name()).get(k);
-
-                if (set == null)
-                    set = new BitSet();
-
-                set.set(off);
-
-                segmentCache(field.name()).put(k, set);
-            } finally {
-                lock.unlock();
-            }
+            indexCache(field.getKey()).put(idxKey, null);
         }
-    }
-
-    protected void removeEntry(IndexedFields indexedFields) {
-        long seg = indexedFields.id() / CAPACITY;
-
-        int off = (int) (indexedFields.id() % CAPACITY);
-
-        for (Field field : indexedFields.fields()) {
-            String k = segmentKey(field.value(), seg);
-
-            BitSet set = segmentCache(field.name()).get(k);
-
-            if (set == null)
-                continue;
-
-            if (set.cardinality() == 0)
-                segmentCache(field.name()).remove(k);
-            else {
-                set.clear(off);
-
-                segmentCache(field.name()).put(k, set);
-            }
-        }
-    }
-
-    /**
-     * @param val Value.
-     * @param seg Seg.
-     */
-    protected String segmentKey(String val, long seg) {
-        StringBuilder builder = builder();
-
-        builder.append(val);
-        builder.append('\0');
-        builder.append(seg);
-
-        return builder.toString();
-    }
-
-    /**
-     * @param field Field.
-     * @param val Value.
-     * @param id Id.
-     */
-    public boolean contains(String field, String val, long id) {
-        long seg = id / CAPACITY;
-
-        int off = (int) (id % CAPACITY);
-
-        BitSet set = segmentCache(field).get(segmentKey(val, seg));
-
-        return set != null && set.get(off);
-    }
-
-    /**
-     * Returns all entity ids for indexed field.
-     *
-     * @param field Field.
-     * @param val Value.
-     */
-    public Iterable<Long> ids(String field, String val) {
-        // TODO FIXME can be efficiently implemented.
-        return null;
-    }
-
-    /**
-     * @param field Field.
-     */
-    private IgniteCache<String, BitSet> segmentCache(String field) {
-        return ignite.getOrCreateCache(segmentCacheName(field));
-    }
-
-    /**
-     * @param field Field.
-     */
-    private String segmentCacheName(String field) {
-        return name + "_" + field;
     }
 
     /** */
-    private IgniteCache<Long, V> entityCache() {
+    protected void removeEntry(K key, Map<String, String> fields) {
+        if (fields == null)
+            return;
+
+        for (Map.Entry<String, String> field : fields.entrySet()) {
+            IndexFieldKey idxKey = new IndexFieldKey(field.getValue(), key);
+
+            indexCache(field.getKey()).remove(idxKey);
+        }
+    }
+
+    /**
+     * @param field Field.
+     * @param val   Value.
+     * @param id    Id.
+     */
+    public boolean contains(String field, String val, K id) {
+        IndexFieldKey idxKey = new IndexFieldKey(val, id);
+
+        return indexCache(field).containsKey(idxKey);
+    }
+
+    /**
+     * Returns all entities matching the example.
+     *
+     * @param val Value.
+     */
+    @SuppressWarnings("unchecked")
+    public Iterator<V> findByFieldValue(V val, String fieldName) {
+        IgniteClosure<Object, String> clo = fieldsMap.get(fieldName);
+
+        String strVal = clo.apply(val);
+
+        SqlQuery<IndexFieldKey, V> sqlQry = new SqlQuery<>(Object.class, "fieldValue = ?");
+
+        sqlQry.setArgs(strVal);
+
+        // TODO set partition when IGNITE-4523 will be ready.
+
+        QueryCursor<Cache.Entry<IndexFieldKey, V>> cur = indexCache(fieldName).query(sqlQry);
+
+        return F.iterator(cur.iterator(), new IgniteClosure<Cache.Entry<IndexFieldKey, V>, V>() {
+            @Override public V apply(Cache.Entry<IndexFieldKey, V> e) {
+                Object entryKey = e.getKey().getPayload();
+
+                return entityCache().get((K) entryKey); // TODO use batching
+            }
+        }, true);
+    }
+
+    /** */
+    private IgniteCache<K, V> entityCache() {
         return ignite.getOrCreateCache(entityCacheName());
     }
 
@@ -273,6 +285,6 @@ public class EntityManager<V> {
      * @param field Field.
      */
     public int indexSize(String field) {
-        return segmentCache(field).size();
+        return indexCache(field).size();
     }
 }
