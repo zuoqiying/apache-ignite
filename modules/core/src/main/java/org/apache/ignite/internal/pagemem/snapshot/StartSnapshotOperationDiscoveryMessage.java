@@ -21,6 +21,8 @@ package org.apache.ignite.internal.pagemem.snapshot;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.managers.discovery.DiscoveryCustomMessage;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.lang.IgniteUuid;
@@ -165,7 +167,7 @@ public class StartSnapshotOperationDiscoveryMessage implements DiscoveryCustomMe
             snapshotOperation,
             lastFullSnapshotIdForCache,
             lastSnapshotIdForCache,
-            err,
+            err != null ? err : (validatedByCoordinator? null : new IgniteException("Coordinator didn't validate operation!")),
             initiatorId);
     }
 
