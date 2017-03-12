@@ -131,11 +131,11 @@ public class IndexingExampleSelfTest extends GridCommonAbstractTest {
 
             assertFalse(mgr.contains("fio", example, 3L));
 
-            Collection<T2<Long, TestUser>> users = mgr.findAll(user1, "firstName");
+            assertEquals(2, mgr.findAll(user1, "firstName").size());
 
-            assertEquals(2, users.size());
+            assertEquals(1, mgr.findAll(user1, "fio").size());
 
-            LockSupport.park();
+            assertEquals(0, mgr.findAll(example, "fio").size());
         } finally {
             stopAllGrids();
         }
