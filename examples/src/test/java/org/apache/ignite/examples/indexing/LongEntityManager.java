@@ -20,6 +20,7 @@ package org.apache.ignite.examples.indexing;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteAtomicSequence;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.lang.IgniteBiClosure;
 import org.apache.ignite.lang.IgniteClosure;
 
 import java.util.BitSet;
@@ -38,31 +39,12 @@ public class LongEntityManager<V> extends EntityManager<Long, V> {
      */
     public static final int CAPACITY = 16_000; // Compressed size fits in 2k page.
 
-    /** */
-    private String seqName;
-
-    /** */
-    private IgniteAtomicSequence seq;
-
     /**
      * @param name   Name.
-     * @param indcies Indices.
+     * @param indices Indices.
      */
-    public LongEntityManager(String name, Map<String, IgniteClosure<Object, String>> indcies) {
-        super(name, indcies);
-
-        this.seqName = name + "_seq";
-    }
-
-    /** {@inheritDoc} */
-    @Override protected Long nextKey() {
-        return seq.getAndIncrement();
-    }
-
-    @Override public void attach(Ignite ignite) {
-        super.attach(ignite);
-
-        seq = ignite.atomicSequence(seqName, 0, true);
+    public LongEntityManager(String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices) {
+        super(name, indices, new SequenceIdGenerator());
     }
 
     public boolean contains(String idxName, Object value, Long id) {
@@ -70,9 +52,9 @@ public class LongEntityManager<V> extends EntityManager<Long, V> {
 
         int off = (int) (id % CAPACITY);
 
-        IgniteClosure<Object, String> clo = incices.get(idxName);
+        IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
 
-        String strVal = clo.apply(value);
+        String strVal = clo.apply(builder(), value);
 
         IndexFieldKey idxKey = new IndexFieldKey(strVal, seg);
 

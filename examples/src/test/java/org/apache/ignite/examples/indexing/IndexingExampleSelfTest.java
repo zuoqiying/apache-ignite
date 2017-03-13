@@ -17,22 +17,19 @@
 
 package org.apache.ignite.examples.indexing;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.lang.IgniteClosure;
+import org.apache.ignite.lang.IgniteBiClosure;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.concurrent.locks.LockSupport;
+import org.jsr166.ThreadLocalRandom8;
 
 /**
- * <p>
- * The <code>IndexingExample</code>
- * </p>
+ * <p> The <code>IndexingExample</code> </p>
  *
  * @author Alexei Scherbakov
  */
@@ -54,136 +51,210 @@ public class IndexingExampleSelfTest extends GridCommonAbstractTest {
         super.beforeTest();
 
         mgr = new EntityManager<>("user",
-                new HashMap<String, IgniteClosure<Object, String>>() {{
-                    put("firstName", new IgniteClosure<Object, String>() {
-                        @Override public String apply(Object val) {
-                            return U.field(val, "firstName").toString().toLowerCase();
-                        }
-                    });
-                    put("lastName", new IgniteClosure<Object, String>() {
-                        @Override public String apply(Object val) {
-                            return U.field(val, "lastName").toString().toLowerCase();
-                        }
-                    });
-                    put("email", new IgniteClosure<Object, String>() {
-                        @Override public String apply(Object val) {
-                            return U.field(val, "email").toString().toLowerCase();
-                        }
-                    });
-                    put("age", new IgniteClosure<Object, String>() {
-                        @Override public String apply(Object val) {
-                            return U.field(val, "age").toString().toLowerCase();
-                        }
-                    });
-                    put("fio", new IgniteClosure<Object, String>() {
-                        @Override public String apply(Object val) {
-                            return U.field(val, "lastName").toString().toLowerCase() + U.field(val, "firstName").toString().toLowerCase();
-                        }
-                    });
-                }}
+            new HashMap<String, IgniteBiClosure<StringBuilder, Object, String>>() {{
+                put("firstName", new IgniteBiClosure<StringBuilder, Object, String>() {
+                    @Override public String apply(StringBuilder builder, Object val) {
+                        return builder.append(U.field(val, "firstName").toString().toLowerCase()).toString();
+                    }
+                });
+                put("lastName", new IgniteBiClosure<StringBuilder, Object, String>() {
+                    @Override public String apply(StringBuilder builder, Object val) {
+                        return builder.append(U.field(val, "lastName").toString().toLowerCase()).toString();
+                    }
+                });
+                put("email", new IgniteBiClosure<StringBuilder, Object, String>() {
+                    @Override public String apply(StringBuilder builder, Object val) {
+                        return builder.append(U.field(val, "email").toString().toLowerCase()).toString();
+                    }
+                });
+                put("age", new IgniteBiClosure<StringBuilder, Object, String>() {
+                    @Override public String apply(StringBuilder builder, Object val) {
+                        return builder.append(U.field(val, "age").toString().toLowerCase()).toString();
+                    }
+                });
+                put("fio", new IgniteBiClosure<StringBuilder, Object, String>() {
+                    @Override public String apply(StringBuilder builder, Object val) {
+                        return builder.append(U.field(val, "lastName").toString().toLowerCase()).
+                            append(U.field(val, "firstName").toString().toLowerCase()).toString();
+                    }
+                });
+            }},
+            new SequenceIdGenerator()
         );
+
+        IgniteEx grid = startGrid(0);
+
+        mgr.attach(grid);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void afterTest() throws Exception {
+        stopAllGrids();
     }
 
     /**
      * Tests entity creation with manual key assignment.
      */
-    public void testSelfKeyAssignCreate() throws Exception {
-        try {
-            IgniteEx igniteEx = startGrid(0);
+    public void testCreate() throws Exception {
+        TestUser user1 = new TestUser("Ivan", "Petrov", "IvanPetrov@email.com", 20);
 
-            mgr.attach(igniteEx);
+        long id = mgr.save(null, user1);
 
-            TestUser user1 = new TestUser("Ivan", "Petrov", "IvanPetrov@email.com", 20);
+        assertEquals(0, id);
 
-            mgr.save(1L, user1);
+        TestUser u = mgr.get(id);
 
-            TestUser u = mgr.get(1L);
+        assertEquals(user1, u);
 
-            assertEquals(user1, u);
+        TestUser user2 = new TestUser("Petr", "Sidorov", "PetrSidorov@email.com", 30);
 
-            TestUser user2 = new TestUser("Petr", "Sidorov", "PetrSidorov@email.com", 30);
+        id = mgr.save(null, user2);
 
-            mgr.save(2L, user2);
+        assertEquals(1, id);
 
-            u = mgr.get(2L);
+        u = mgr.get(id);
 
-            assertEquals(user2, u);
+        assertEquals(user2, u);
 
-            TestUser user3 = new TestUser("Ivan", "Sidorov", "IvanSidorov@email.com", 30);
+        TestUser user3 = new TestUser("Ivan", "Sidorov", "IvanSidorov@email.com", 30);
 
-            mgr.save(3L, user3);
+        id = mgr.save(null, user3);
 
-            u = mgr.get(3L);
+        assertEquals(2, id);
 
-            assertEquals(user3, u);
+        u = mgr.get(id);
 
-            assertTrue(mgr.contains("firstName", user1, 1L));
+        assertEquals(user3, u);
 
-            assertTrue(mgr.contains("firstName", user1, 3L));
+        assertTrue(mgr.contains("firstName", user1, 0L));
 
-            assertTrue(mgr.contains("firstName", user2, 2L));
+        assertTrue(mgr.contains("firstName", user1, 2L));
 
-            TestUser example = new TestUser("ivan", "sidorov", "some@email.com", 10);
+        assertTrue(mgr.contains("firstName", user2, 1L));
 
-            assertTrue(mgr.contains("fio", example, 3L));
+        TestUser example = new TestUser("ivan", "sidorov", "some@email.com", 10);
 
-            example.setLastName("sidorov1");
+        assertTrue(mgr.contains("fio", example, 2L));
 
-            assertFalse(mgr.contains("fio", example, 3L));
+        example.setLastName("sidorov1");
 
-            assertEquals(2, mgr.findAll(user1, "firstName").size());
+        assertFalse(mgr.contains("fio", example, 2L));
 
-            assertEquals(1, mgr.findAll(user1, "fio").size());
+        assertEquals(2, mgr.findAll(user1, "firstName").size());
 
-            assertEquals(0, mgr.findAll(example, "fio").size());
-        } finally {
-            stopAllGrids();
-        }
+        assertEquals(1, mgr.findAll(user1, "fio").size());
+
+        assertEquals(0, mgr.findAll(example, "fio").size());
     }
 
-//    /**
-//     * Tests entity creation.
-//     */
-//    public void testCreate() throws Exception {
-//        try {
-//            IgniteEx igniteEx = startGrid(0);
-//
-//            mgr.attach(igniteEx);
-//
-//            final int total = 100_000;
-//
-//            final String field = "firstName";
-//
-//            final AtomicInteger cnt = new AtomicInteger();
-//
-//            multithreaded(new Runnable() {
-//                @Override public void run() {
-//                    int i = 0;
-//
-//                    while((i = cnt.getAndIncrement()) < total) {
-//                        TestUser user1 = new TestUser("Ivan", "Petrov", "test" + i + "@email.com", ThreadLocalRandom8.current().nextInt(10, 80));
-//
-//                        long id = 1;
-//
-//                        mgr.save(id, user1);
-//
-//                        TestUser user2 = mgr.get(id);
-//
-//                        assertEquals(user1, user2);
-//
-//                        assertTrue(id + "", mgr.contains(field, "Ivan", id));
-//
-//                        assertFalse(id + "", mgr.contains(field, "Petr", id));
-//
-//                        if ((i + 1) % 10_000 == 0)
-//                            log().info("Processed " + (i + 1) + " of " + total);
-//                    }
-//                }
-//            }, 1);
-//
-//            assertEquals(4, mgr.indexSize(field));
-//        } finally {
-//            stopAllGrids();
-//        }
-//    }
+    /**
+     * Tests entity update.
+     */
+    public void testUpdate() {
+        TestUser u1 = new TestUser("Ivan", "Petrov", "IvanPetrov@email.com", 20);
+
+        long id = mgr.save(null, u1);
+
+        TestUser u1Cp = mgr.get(id);
+
+        TestUser u2 = new TestUser("Petr", "Sidorov", "PetrSidorov@email.com", 30);
+
+        long id2 = mgr.save(null, u2);
+
+        assertEquals(1, mgr.findAll(u1, "firstName").size());
+        assertEquals(1, mgr.findAll(u1, "lastName").size());
+        assertEquals(1, mgr.findAll(u1, "email").size());
+        assertEquals(1, mgr.findAll(u1, "age").size());
+        assertEquals(1, mgr.findAll(u1, "fio").size());
+
+        u1.setFirstName("Fedor");
+        u1.setAge(30);
+
+        mgr.save(id, u1);
+
+        assertEquals(0, mgr.findAll(u1Cp, "firstName").size());
+        assertEquals(1, mgr.findAll(u1Cp, "lastName").size());
+        assertEquals(1, mgr.findAll(u1Cp, "email").size());
+        assertEquals(0, mgr.findAll(u1Cp, "age").size());
+        assertEquals(0, mgr.findAll(u1Cp, "fio").size());
+
+        assertEquals(1, mgr.findAll(u1, "firstName").size());
+        assertEquals(1, mgr.findAll(u1, "lastName").size());
+        assertEquals(1, mgr.findAll(u1, "email").size());
+        assertEquals(2, mgr.findAll(u1, "age").size());
+        assertEquals(1, mgr.findAll(u1, "fio").size());
+    }
+
+    /**
+     * Tests entity removal.
+     */
+    public void testRemove() {
+        TestUser u1 = new TestUser("Ivan", "Petrov", "IvanPetrov@email.com", 20);
+
+        long id = mgr.save(null, u1);
+
+        assertEquals(1, mgr.findAll(u1, "firstName").size());
+        assertEquals(1, mgr.findAll(u1, "lastName").size());
+        assertEquals(1, mgr.findAll(u1, "email").size());
+        assertEquals(1, mgr.findAll(u1, "age").size());
+        assertEquals(1, mgr.findAll(u1, "fio").size());
+
+        mgr.delete(id);
+
+        assertEquals(0, mgr.findAll(u1, "firstName").size());
+        assertEquals(0, mgr.findAll(u1, "lastName").size());
+        assertEquals(0, mgr.findAll(u1, "email").size());
+        assertEquals(0, mgr.findAll(u1, "age").size());
+        assertEquals(0, mgr.findAll(u1, "fio").size());
+    }
+
+    /**
+     * Tests multithreaded entity creation.
+     */
+    public void testCreateMultithreaded() throws Exception {
+        final int total = 100_000;
+
+        final AtomicInteger cnt = new AtomicInteger();
+
+        final int[] firstNamesCnt = new int[600];
+        final int[] lastNamesCnt = new int[15_000];
+        final int[] agesCnt = new int[100];
+
+        multithreaded(new Runnable() {
+            @Override public void run() {
+                int i = 0;
+
+                while ((i = cnt.getAndIncrement()) < total) {
+                    int fnIdx = ThreadLocalRandom8.current().nextInt(firstNamesCnt.length);
+                    int lnIdx = ThreadLocalRandom8.current().nextInt(lastNamesCnt.length);
+                    int age = ThreadLocalRandom8.current().nextInt(agesCnt.length);
+
+                    TestUser user1 = new TestUser("fname" + fnIdx,
+                        "lname" + lnIdx,
+                        "test" + i + "@email.com",
+                        age);
+
+                    mgr.save(null, user1);
+
+                    if ((i + 1) % 10_000 == 0)
+                        log().info("Processed " + (i + 1) + " of " + total);
+                }
+            }
+        }, 1);
+
+        TestUser u = new TestUser();
+
+        for (int i = 0; i < total; i++) {
+            u.setEmail("test" + i + "@email.com");
+
+            Collection<T2<Long, TestUser>> entities = mgr.findAll(u, "email");
+
+            assertEquals(1, entities.size());
+
+            assertEquals(i, entities.iterator().next().get1().intValue());
+
+            if ((i + 1) % 10_000 == 0)
+                log().info("Verified " + (i + 1) + " of " + total);
+        }
+    }
 }

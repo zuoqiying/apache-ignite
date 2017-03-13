@@ -37,6 +37,9 @@ public class TestUser {
     /** */
     private int age;
 
+    public TestUser() {
+    }
+
     /**
      * @param firstName First name.
      * @param lastName Last name.

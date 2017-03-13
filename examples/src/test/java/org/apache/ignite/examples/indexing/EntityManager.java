@@ -27,6 +27,7 @@ import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteBiClosure;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.transactions.Transaction;
@@ -55,19 +56,26 @@ public class EntityManager<K, V> {
     protected final String name;
 
     /** */
-    protected final Map<String, IgniteClosure<Object, String>> incices;
+    protected final Map<String, IgniteBiClosure<StringBuilder, Object, String>> incices;
 
     /** */
     protected Ignite ignite;
 
+    /** */
+    private final IdGenerator<K> idGenerator;
+
     /**
      * @param name      Name.
-     * @param incices Fields map.
+     * @param indices Indices.
      */
-    public EntityManager(String name, Map<String, IgniteClosure<Object, String>> incices) {
+    public EntityManager(String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices,
+        IdGenerator<K> idGenerator) {
         this.name = name;
 
-        this.incices = incices == null ? Collections.<String, IgniteClosure<Object, String>>emptyMap() : incices;
+        this.incices = indices == null ?
+            Collections.<String, IgniteBiClosure<StringBuilder, Object, String>>emptyMap() : indices;
+
+        this.idGenerator = idGenerator;
     }
 
     /**
@@ -84,7 +92,7 @@ public class EntityManager<K, V> {
 
         c++;
 
-        for (Map.Entry<String, IgniteClosure<Object, String>> idx : incices.entrySet()) {
+        for (Map.Entry<String, IgniteBiClosure<StringBuilder, Object, String>> idx : incices.entrySet()) {
             String idxName = idx.getKey();
             ccfgs[c] = new CacheConfiguration(indexCacheName(idxName));
             ccfgs[c].setCacheMode(CacheMode.REPLICATED);
@@ -118,6 +126,8 @@ public class EntityManager<K, V> {
      */
     public void attach(Ignite ignite) {
         this.ignite = ignite;
+
+        idGenerator.attach(ignite, name);
     }
 
     /**
@@ -128,8 +138,8 @@ public class EntityManager<K, V> {
     protected IndexChange<K> indexChange(K key, V val) {
         IndexChange<K> idxChange = new IndexChange<>(name, key);
 
-        for (Map.Entry<String, IgniteClosure<Object, String>> idx : incices.entrySet())
-            idxChange.addChange(idx.getKey(), idx.getValue().apply(val));
+        for (Map.Entry<String, IgniteBiClosure<StringBuilder, Object, String>> idx : incices.entrySet())
+            idxChange.addChange(idx.getKey(), idx.getValue().apply(builder(), val));
 
         return idxChange;
     }
@@ -182,19 +192,21 @@ public class EntityManager<K, V> {
         }
     }
 
+    /** */
     protected K nextKey() {
-        throw new IllegalArgumentException();
+        return idGenerator.nextId();
     }
 
+    /** */
     public boolean delete(K key) {
         V v = get(key);
 
         if (v == null)
             return false;
 
-        IndexChange<K> indexChange = indexChange(key, v);
+        IndexChange<K> idxChange = indexChange(key, v);
 
-        removeEntry(indexChange.id(), indexChange.changes());
+        removeEntry(idxChange.id(), idxChange.changes());
 
         entityCache().remove(key);
 
@@ -231,9 +243,9 @@ public class EntityManager<K, V> {
      * @param id    Id.
      */
     public boolean contains(String idxName, Object val, K id) {
-        IgniteClosure<Object, String> clo = incices.get(idxName);
+        IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
 
-        String strVal = clo.apply(val);
+        String strVal = clo.apply(builder(), val);
 
         IndexFieldKey idxKey = new IndexFieldKey(strVal, id);
 
@@ -250,9 +262,9 @@ public class EntityManager<K, V> {
      */
     @SuppressWarnings("unchecked")
     public Collection<T2<K, V>> findAll(V val, String idxName) {
-        IgniteClosure<Object, String> clo = incices.get(idxName);
+        IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
 
-        String strVal = clo.apply(val);
+        String strVal = clo.apply(builder(), val);
 
         SqlQuery<IndexFieldKey, IndexFieldValue> sqlQry = new SqlQuery<>(IndexFieldValue.class, "fieldValue = ?");
 
@@ -284,7 +296,7 @@ public class EntityManager<K, V> {
     }
 
     /** */
-    private StringBuilder builder() {
+    protected StringBuilder builder() {
         StringBuilder builder = this.builder.get();
 
         builder.setLength(0);
