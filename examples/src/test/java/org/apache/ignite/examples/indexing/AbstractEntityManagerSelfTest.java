@@ -19,9 +19,13 @@ package org.apache.ignite.examples.indexing;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import junit.framework.AssertionFailedError;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.util.GridRandom;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiClosure;
@@ -29,11 +33,9 @@ import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.jsr166.ThreadLocalRandom8;
 
 /**
- * <p> The <code>IndexingExample</code> </p>
  *
- * @author Alexei Scherbakov
  */
-public class IndexingExampleSelfTest extends GridCommonAbstractTest {
+public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTest {
     /** Entity manager. */
     private EntityManager<Long, TestUser> mgr;
 
@@ -50,7 +52,7 @@ public class IndexingExampleSelfTest extends GridCommonAbstractTest {
     @Override protected void beforeTest() throws Exception {
         super.beforeTest();
 
-        mgr = new EntityManager<>("user",
+        mgr = mgr("user",
             new HashMap<String, IgniteBiClosure<StringBuilder, Object, String>>() {{
                 put("firstName", new IgniteBiClosure<StringBuilder, Object, String>() {
                     @Override public String apply(StringBuilder builder, Object val) {
@@ -79,13 +81,21 @@ public class IndexingExampleSelfTest extends GridCommonAbstractTest {
                     }
                 });
             }},
-            new SequenceIdGenerator()
-        );
+            new SequenceIdGenerator());
 
         IgniteEx grid = startGrid(0);
 
         mgr.attach(grid);
     }
+
+    /**
+     * @param name Name.
+     * @param indices Indices.
+     * @param gen Gen.
+     */
+    protected abstract EntityManager<Long, TestUser> mgr(String name,
+        Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices,
+        IdGenerator<Long> gen);
 
     /** {@inheritDoc} */
     @Override protected void afterTest() throws Exception {
@@ -216,45 +226,85 @@ public class IndexingExampleSelfTest extends GridCommonAbstractTest {
 
         final AtomicInteger cnt = new AtomicInteger();
 
-        final int[] firstNamesCnt = new int[600];
-        final int[] lastNamesCnt = new int[15_000];
-        final int[] agesCnt = new int[100];
+        final AtomicIntegerArray firstNamesCnt = new AtomicIntegerArray(600);
+        final AtomicIntegerArray lastNamesCnt = new AtomicIntegerArray(15_000);
+        final AtomicIntegerArray agesCnt = new AtomicIntegerArray(100);
+
+        final GridRandom r = new GridRandom(0);
 
         multithreaded(new Runnable() {
             @Override public void run() {
                 int i = 0;
 
                 while ((i = cnt.getAndIncrement()) < total) {
-                    int fnIdx = ThreadLocalRandom8.current().nextInt(firstNamesCnt.length);
-                    int lnIdx = ThreadLocalRandom8.current().nextInt(lastNamesCnt.length);
-                    int age = ThreadLocalRandom8.current().nextInt(agesCnt.length);
+                    int fnIdx = r.nextInt(firstNamesCnt.length());
+                    int lnIdx = r.nextInt(lastNamesCnt.length());
+                    int age = r.nextInt(agesCnt.length());
 
-                    TestUser user1 = new TestUser("fname" + fnIdx,
-                        "lname" + lnIdx,
-                        "test" + i + "@email.com",
+                    firstNamesCnt.getAndIncrement(fnIdx);
+                    lastNamesCnt.getAndIncrement(lnIdx);
+                    agesCnt.getAndIncrement(age);
+
+                    TestUser user = new TestUser(firstName(fnIdx),
+                        lastName(lnIdx),
+                        email(i),
                         age);
 
-                    mgr.save(null, user1);
+                    mgr.save(null, user);
 
                     if ((i + 1) % 10_000 == 0)
                         log().info("Processed " + (i + 1) + " of " + total);
                 }
             }
-        }, 1);
+        }, Runtime.getRuntime().availableProcessors() * 2);
 
         TestUser u = new TestUser();
 
+        for (int i = 0; i < firstNamesCnt.length(); i++) {
+            u.setFirstName("fname" + i);
+
+            assertEquals(firstNamesCnt.get(i), mgr.findAll(u, "firstName").size());
+        }
+
+        log().info("Verified firstName");
+
+        for (int i = 0; i < lastNamesCnt.length(); i++) {
+            u.setLastName("lname" + i);
+
+            assertEquals(lastNamesCnt.get(i), mgr.findAll(u, "lastName").size());
+        }
+
+        log().info("Verified lastName");
+
+        for (int i = 0; i < agesCnt.length(); i++) {
+            u.setAge(i);
+
+            assertEquals(agesCnt.get(i), mgr.findAll(u, "age").size());
+        }
+
+        log().info("Verified age");
+
         for (int i = 0; i < total; i++) {
-            u.setEmail("test" + i + "@email.com");
+            u.setEmail(email(i));
 
             Collection<T2<Long, TestUser>> entities = mgr.findAll(u, "email");
 
             assertEquals(1, entities.size());
 
-            assertEquals(i, entities.iterator().next().get1().intValue());
-
             if ((i + 1) % 10_000 == 0)
-                log().info("Verified " + (i + 1) + " of " + total);
+                log().info("Verified email " + (i + 1) + " of " + total);
         }
+    }
+
+    private String email(int idx) {
+        return "test" + idx + "@email.com";
+    }
+
+    private String firstName(int idx) {
+        return "fname" + idx;
+    }
+
+    private String lastName(int idx) {
+        return "lname" + idx;
     }
 }

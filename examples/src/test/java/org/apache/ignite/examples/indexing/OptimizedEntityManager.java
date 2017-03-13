@@ -17,36 +17,38 @@
 
 package org.apache.ignite.examples.indexing;
 
-import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteAtomicSequence;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import javax.cache.Cache;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.cache.query.QueryCursor;
+import org.apache.ignite.cache.query.SqlQuery;
+import org.apache.ignite.internal.util.typedef.T2;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiClosure;
-import org.apache.ignite.lang.IgniteClosure;
 
 import java.util.BitSet;
 import java.util.Map;
 
 /**
- * <p>
- * The <code>LongEntityManager</code>
- * </p>
- *
- * @author Alexei Scherbakov
+ * OptimizedEntityManager works only with numeric monotonous keys.
  */
-public class LongEntityManager<V> extends EntityManager<Long, V> {
+public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
     /**
      * Segment capacity.
      */
-    public static final int CAPACITY = 16_000; // Compressed size fits in 2k page.
+    public static final int CAPACITY = 8192; // Compressed size fits in 2k page.
 
     /**
      * @param name   Name.
      * @param indices Indices.
      */
-    public LongEntityManager(String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices) {
+    public OptimizedEntityManager(String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices) {
         super(name, indices, new SequenceIdGenerator());
     }
 
+    /** {@inheritDoc} */
     public boolean contains(String idxName, Object value, Long id) {
         long seg = id / CAPACITY;
 
@@ -96,7 +98,7 @@ public class LongEntityManager<V> extends EntityManager<Long, V> {
 
             IgniteCache<IndexFieldKey, IndexFieldValue> cache = indexCache(field.getKey());
 
-            IndexFieldValue val = (IndexFieldValue) cache.get(idxKey);
+            IndexFieldValue val = cache.get(idxKey);
 
             if (val == null)
                 continue;
@@ -111,5 +113,44 @@ public class LongEntityManager<V> extends EntityManager<Long, V> {
                 cache.put(idxKey, val);
             }
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override public Collection<T2<Long, V>> findAll(V example, String idxName) {
+        IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
+
+        String strVal = clo.apply(builder(), example);
+
+        SqlQuery<IndexFieldKey, IndexFieldValue> sqlQry = new SqlQuery<>(IndexFieldValue.class, "fieldValue = ?");
+
+        sqlQry.setArgs(strVal);
+
+        // TODO set partition when IGNITE-4523 will be ready.
+
+        QueryCursor<Cache.Entry<IndexFieldKey, IndexFieldValue>> cur = indexCache(idxName).query(sqlQry);
+
+        List<Cache.Entry<IndexFieldKey, IndexFieldValue>> rows = U.arrayList(cur, 16);
+
+        List<T2<Long, V>> ret = new ArrayList<>();
+
+        for (Cache.Entry<IndexFieldKey, IndexFieldValue> row : rows) {
+            BitSet val = (BitSet)row.getValue().getValue();
+
+            Long seg = (Long)row.getKey().getPayload();
+
+            if (val != null) {
+                int id = -1;
+
+                while(id != Integer.MAX_VALUE && (id = val.nextSetBit(id + 1)) != -1) {
+                    long entityId = seg * CAPACITY + id;
+
+                    V v = entityCache().get(entityId);
+
+                    ret.add(new T2<>(entityId, v));
+                }
+            }
+        }
+
+        return ret;
     }
 }

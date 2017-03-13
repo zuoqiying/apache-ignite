@@ -149,7 +149,7 @@ public class EntityManager<K, V> {
     }
 
     public K save(K key, V val) {
-        try (Transaction tx = ignite.transactions().txStart(TransactionConcurrency.OPTIMISTIC, TransactionIsolation.SERIALIZABLE)) {
+        try (Transaction tx = ignite.transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
             V oldVal = null;
 
             IndexChange<K> oldChange = null;
@@ -255,16 +255,16 @@ public class EntityManager<K, V> {
     /**
      * Returns all entities matching the example.
      *
-     * @param val Value.
+     * @param example Example value.
      * @param idxName Index name.
      *
      * @return Entities iterator.
      */
     @SuppressWarnings("unchecked")
-    public Collection<T2<K, V>> findAll(V val, String idxName) {
+    public Collection<T2<K, V>> findAll(V example, String idxName) {
         IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
 
-        String strVal = clo.apply(builder(), val);
+        String strVal = clo.apply(builder(), example);
 
         SqlQuery<IndexFieldKey, IndexFieldValue> sqlQry = new SqlQuery<>(IndexFieldValue.class, "fieldValue = ?");
 
@@ -286,12 +286,12 @@ public class EntityManager<K, V> {
     }
 
     /** */
-    private IgniteCache<K, V> entityCache() {
+    protected IgniteCache<K, V> entityCache() {
         return ignite.getOrCreateCache(entityCacheName());
     }
 
     /** */
-    private String entityCacheName() {
+    protected String entityCacheName() {
         return name + "_entity";
     }
 
