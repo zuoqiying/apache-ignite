@@ -1338,7 +1338,14 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then(() => args.localNid || _chooseNode(args.cacheName, false))
                 .then((nid) => agentMonitor.query(nid, args.cacheName, args.query, args.nonCollocatedJoins, !!args.localNid, args.pageSize))
                 .then(_processQueryResult.bind(this, paragraph, false))
-                .catch((err) => paragraph.errMsg = err.message);
+                .catch((err) => paragraph.errMsg = err.message)
+                .then(() => {
+                    if (paragraph.rate && paragraph.rate.installed && paragraph.queryArgs) {
+                        const delay = paragraph.rate.value * paragraph.rate.unit;
+
+                        paragraph.rate.stopTime = $timeout(_executeRefresh, delay, false, paragraph);
+                    }
+                });
         };
 
         const _tryStartRefresh = function(paragraph) {
@@ -1348,10 +1355,6 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 $scope.chartAcceptKeyColumn(paragraph, TIME_LINE);
 
                 _executeRefresh(paragraph);
-
-                const delay = paragraph.rate.value * paragraph.rate.unit;
-
-                paragraph.rate.stopTime = $interval(_executeRefresh, delay, 0, false, paragraph);
             }
         };
 
