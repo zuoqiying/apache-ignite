@@ -376,7 +376,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         map.removeEntry(entry);
 
         // Attempt to evict.
-        tryEvictAsync(false);
+//        tryEvictAsync(false);
     }
 
     /**
@@ -512,7 +512,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
                 if ((reservations & 0xFFFF) == 0 && shouldBeRenting)
                     rent(true);
 
-                tryEvictAsync(false);
+//                tryEvictAsync(false);
 
                 break;
             }
@@ -820,7 +820,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
      *
      */
     void onUnlock() {
-        tryEvictAsync(false);
+//        tryEvictAsync(false);
     }
 
     /**
