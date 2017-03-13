@@ -152,7 +152,7 @@ module.exports.factory = (_, socketio, agentMgr, configure) => {
                 // Collect cache query metrics and return result to browser.
                 socket.on('node:query:metrics', (nids, since, cb) => {
                     agentMgr.findAgent(accountId())
-                        .then((agent) => agent.queryDetailMetrics(demo, nids, since))
+                        .then((agent) => agent.queryDetailMetrics(demo, nids, since, accountId()))
                         .then((data) => {
                             if (data.finished)
                                 return cb(null, data.result);

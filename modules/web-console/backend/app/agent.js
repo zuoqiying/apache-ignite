@@ -306,47 +306,58 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                     if (qry)
                         return qry;
 
-                    return mongo.Queries.create({owner, action, group, date});
+                    return mongo.Queries.create({query});
                 });
         }
 
-        writeQueriesHistory(data) {
+        /**
+         * @param {mongo.ObjectId|String} owner The metrics owner.
+         * @param {Object} data
+         */
+        writeQueriesHistory(owner, data) {
             if (data.finished) {
-                this.writeQuery(data.query)
-                    .then((query) => {
-                        mongo.QueriesHistory.findOne({tokens: data.tokens, query: query._id}).lean().exec()
-                            .then((history) => {
-                                if (history) {
-                                    console.log("History found! Update it");
+                _.forEach(data.result, (metrics) => {
+                    this.writeQuery(metrics.query)
+                        .then((query) => {
+                            const lst = new Date(metrics.lastStartTime);
+                            const date = Date.UTC(lst.getFullYear(), lst.getMonth(), lst.getDay(), lst.getHours());
 
-                                    return history;
-                                }
+                            mongo.QueriesHistory.findOne({owner, query: query._id, date}).lean().exec()
+                                .then((history) => {
+                                    if (_.isEmpty(history)) {
+                                        mongo.QueriesHistory.create({
+                                            owner,
+                                            query: query._id,
+                                            date,
+                                            nodeId: "TODO", // TODO WC-8 implement node ID.
+                                            cache: metrics.cache,
+                                            executions: metrics.executions,
+                                            completions: metrics.completions,
+                                            failures: metrics.failures,
+                                            minimumTime: metrics.minimumTime,
+                                            maximumTime: metrics.maximumTime,
+                                            averageTime: metrics.averageTime,
+                                            totalTime: metrics.totalTime,
+                                            lastStartTime: metrics.lastStartTime
+                                        })
+                                    }
+                                    else if (history.lastStartTime != metrics.lastStartTime) {
+                                        // TODO WC-9 Add advanced logic for between hours turn.
 
-                                mongo.QueriesHistory.create({
-                                    tokens: data.tokens,
-                                    query: history._id,
-                                    date: new Date(),
-                                    nodeId: "TODO",
-                                    cache: data.cache,
-                                    executions: data.executions || 0,
-                                    completions: data.completions || 0,
-                                    failures: data.failures || 0,
-                                    minimumTime: data.minimumTime || 0,
-                                    maximumTime: data.maximumTime || 0,
-                                    averageTime: data.averageTime || 0,
-                                    totalTime: data.totalTime || 0,
-                                    lastStartTime: data.lastStartTime || 0
-                                })
+                                        history.executions = metrics.executions;
+                                        history.completions = metrics.completions;
+                                        history.failures = metrics.failures;
+                                        history.minimumTime = metrics.minimumTime;
+                                        history.maximumTime = metrics.maximumTime;
+                                        history.averageTime = metrics.averageTime;
+                                        history.totalTime = metrics.totalTime;
+                                        history.lastStartTime = metrics.lastStartTime;
 
-                            });
-                    });
-
-                const tokens = data.tokens;
-
-                mongo.Query.upsert({query: {$in: tokens}}, '_id token').lean().exec()
-
-                //mongo.Query.find();
-                // writeToMongo
+                                        history.save();
+                                    }
+                                });
+                        });
+                });
             }
         }
 
@@ -354,9 +365,10 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
          * @param {Boolean} demo Is need run command on demo node.
          * @param {Array.<String>} nids Node ids.
          * @param {Number} since Metrics since.
+         * @param {mongo.ObjectId|String} owner The metrics owner.
          * @returns {Promise}
          */
-        queryDetailMetrics(demo, nids, since) {
+        queryDetailMetrics(demo, nids, since, owner) {
             const cmd = new Command(demo, 'exe')
                 .addParam('name', 'org.apache.ignite.internal.visor.compute.VisorGatewayTask')
                 .addParam('p1', nids)
@@ -366,7 +378,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
             return this.executeRest(cmd)
                 .then((data) => {
-                    this.writeQueriesHistory(data);
+                    this.writeQueriesHistory(owner, data);
 
                     return data;
                 });
