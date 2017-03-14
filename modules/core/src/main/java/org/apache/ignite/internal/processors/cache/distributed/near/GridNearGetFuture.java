@@ -418,7 +418,7 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
     ) {
         int part = cctx.affinity().partition(key);
 
-        List<ClusterNode> affNodes = cctx.affinity().nodes(part, topVer);
+        List<ClusterNode> affNodes = cctx.affinity().nodesByPartition(part, topVer);
 
         if (affNodes.isEmpty()) {
             onDone(serverNotFoundError(topVer));
@@ -430,10 +430,6 @@ public final class GridNearGetFuture<K, V> extends CacheDistributedGetFutureAdap
 
         // Allow to get cached value from the local node.
         boolean allowLocRead = !forcePrimary || cctx.localNode().equals(affNodes.get(0));
-
-        // When persistence is enabled, only reading from partitions with OWNING state is allowed.
-        assert !allowLocRead || !cctx.shared().database().persistenceEnabled() ||
-            cctx.topology().partitionState(cctx.localNodeId(), part) == GridDhtPartitionState.OWNING;
 
         while (true) {
             GridNearCacheEntry entry = allowLocRead ? (GridNearCacheEntry)near.peekEx(key) : null;

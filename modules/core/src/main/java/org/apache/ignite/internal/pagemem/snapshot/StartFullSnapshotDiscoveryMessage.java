@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.ignite.internal.managers.discovery.DiscoveryCustomMessage;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,12 +59,20 @@ public class StartFullSnapshotDiscoveryMessage implements DiscoveryCustomMessage
     /** Last full snapshot id for cache. */
     private Map<Integer, Long> lastFullSnapshotIdForCache = new HashMap<>();
 
+    /** Last snapshot id for cache. */
+    private Map<Integer, Long> lastSnapshotIdForCache = new HashMap<>();
+
     /**
      * @param cacheNames Cache names.
      * @param msg message to log
      */
-    public StartFullSnapshotDiscoveryMessage(long globalSnapshotId, Collection<String> cacheNames, UUID initiatorId,
-        boolean fullSnapshot, String msg) {
+    public StartFullSnapshotDiscoveryMessage(
+        long globalSnapshotId,
+        Collection<String> cacheNames,
+        UUID initiatorId,
+        boolean fullSnapshot,
+        String msg
+    ) {
         this.globalSnapshotId = globalSnapshotId;
         this.cacheNames = cacheNames;
         this.initiatorId = initiatorId;
@@ -141,9 +151,32 @@ public class StartFullSnapshotDiscoveryMessage implements DiscoveryCustomMessage
         lastFullSnapshotIdForCache.put(cacheId, id);
     }
 
+    /**
+     * @param cacheId Cache id.
+     */
+    public Long lastSnapshotId(int cacheId) {
+        return lastSnapshotIdForCache.get(cacheId);
+    }
+
+    /**
+     * @param cacheId Cache id.
+     * @param id Id.
+     */
+    public void lastSnapshotId(int cacheId, long id) {
+        lastSnapshotIdForCache.put(cacheId, id);
+    }
+
     /** {@inheritDoc} */
     @Nullable @Override public DiscoveryCustomMessage ackMessage() {
-        return new StartFullSnapshotAckDiscoveryMessage(globalSnapshotId, fullSnapshot, lastFullSnapshotIdForCache, cacheNames, err, initiatorId, msg);
+        return new StartFullSnapshotAckDiscoveryMessage(
+            globalSnapshotId,
+            fullSnapshot,
+            lastFullSnapshotIdForCache,
+            lastSnapshotIdForCache,
+            cacheNames,
+            err,
+            initiatorId,
+            msg);
     }
 
     /** {@inheritDoc} */
@@ -156,5 +189,10 @@ public class StartFullSnapshotDiscoveryMessage implements DiscoveryCustomMessage
      */
     public void fullSnapshot(boolean full) {
         fullSnapshot = full;
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(StartFullSnapshotDiscoveryMessage.class, this);
     }
 }

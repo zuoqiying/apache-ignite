@@ -17,8 +17,8 @@
 
 package org.apache.ignite.internal.pagemem.wal.record.delta;
 
-import java.nio.ByteBuffer;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusMetaIO;
 
 /**
@@ -26,7 +26,7 @@ import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusMetaIO;
  */
 public class MetaPageInitRootRecord extends PageDeltaRecord {
     /** */
-    private long rootId;
+    protected long rootId;
 
     /**
      * @param pageId Meta page ID.
@@ -40,11 +40,11 @@ public class MetaPageInitRootRecord extends PageDeltaRecord {
     }
 
     /** {@inheritDoc} */
-    @Override public void applyDelta(ByteBuffer buf)
-        throws IgniteCheckedException {
-        BPlusMetaIO io = BPlusMetaIO.VERSIONS.forPage(buf);
+    @Override public void applyDelta(PageMemory pageMem, long pageAddr) throws IgniteCheckedException {
+        BPlusMetaIO io = BPlusMetaIO.VERSIONS.forPage(pageAddr);
 
-        io.initRoot(buf, rootId);
+        io.initRoot(pageAddr, rootId, pageMem.pageSize());
+        io.setInlineSize(pageAddr, 0);
     }
 
     /** {@inheritDoc} */

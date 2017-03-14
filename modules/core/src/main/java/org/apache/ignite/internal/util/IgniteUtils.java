@@ -1109,7 +1109,7 @@ public abstract class IgniteUtils {
      */
     @Deprecated
     public static void dumpStack(String msg) {
-        new Exception(debugPrefix() + msg).printStackTrace(System.out);
+        new Exception(debugPrefix() + msg).printStackTrace(System.err);
     }
 
     /**
@@ -3441,22 +3441,25 @@ public abstract class IgniteUtils {
         if (file.isDirectory()) {
             File[] files = file.listFiles();
 
-            if (files != null && files.length > 0)
-                for (File file1 : files)
+            if (files != null && files.length > 0) {
+                for (File file1 : files) {
                     if (file1.isDirectory())
                         res &= delete(file1);
-                    else if (file1.getName().endsWith("jar"))
+                    else if (file1.getName().endsWith("jar")) {
                         try {
                             // Why do we do this?
                             new JarFile(file1, false).close();
-
-                            res &= file1.delete();
                         }
                         catch (IOException ignore) {
                             // Ignore it here...
                         }
+
+                        res &= file1.delete();
+                    }
                     else
                         res &= file1.delete();
+                }
+            }
 
             res &= file.delete();
         }
@@ -7586,6 +7589,9 @@ public abstract class IgniteUtils {
             return fut.get();
         }
         catch (ExecutionException e) {
+            //todo only for investigation
+            e.printStackTrace();
+
             throw new IgniteCheckedException(e.getCause());
         }
         catch (InterruptedException e) {
@@ -7960,6 +7966,22 @@ public abstract class IgniteUtils {
         throw new IgniteException("Failed to get field value [fieldName=" + fieldName + ", obj=" + obj + ']');
     }
 
+    /**
+     * Check that field exist.
+     *
+     * @param obj Object.
+     * @param fieldName Field name.
+     * @return Boolean flag.
+     */
+    public static boolean hasField(Object obj, String fieldName){
+        try {
+            field(obj, fieldName);
+
+            return true;
+        }catch (IgniteException e){
+            return false;
+        }
+    }
     /**
      * Gets object field offset.
      *

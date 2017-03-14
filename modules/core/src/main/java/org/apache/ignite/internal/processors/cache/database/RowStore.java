@@ -42,6 +42,7 @@ public class RowStore {
 
     /**
      * @param cctx Cache context.
+     * @param freeList Free list.
      */
     public RowStore(GridCacheContext<?,?> cctx, FreeList freeList) {
         assert cctx != null;
@@ -69,15 +70,39 @@ public class RowStore {
      */
     public void removeRow(long link) throws IgniteCheckedException {
         assert link != 0;
+        cctx.shared().database().checkpointReadLock();
 
-        freeList.removeDataRowByLink(link);
+        try {
+            freeList.removeDataRowByLink(link);
+        }
+        finally {
+            cctx.shared().database().checkpointReadUnlock();
+        }
     }
 
     /**
      * @param row Row.
+     * @throws IgniteCheckedException If failed.
      */
     public void addRow(CacheDataRow row) throws IgniteCheckedException {
-        freeList.insertDataRow(row);
+        cctx.shared().database().checkpointReadLock();
+
+        try {
+            freeList.insertDataRow(row);
+        }
+        finally {
+            cctx.shared().database().checkpointReadUnlock();
+        }
+    }
+
+    /**
+     * @param link Row link.
+     * @param row New row data.
+     * @throws IgniteCheckedException If failed.
+     * @return {@code True} if was able to update row.
+     */
+    public boolean updateRow(long link, CacheDataRow row) throws IgniteCheckedException {
+        return freeList.updateDataRow(link, row);
     }
 
     /**

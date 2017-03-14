@@ -22,6 +22,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.ignite.internal.managers.discovery.DiscoveryCustomMessage;
+import org.apache.ignite.internal.util.typedef.internal.CU;
+import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,22 +59,40 @@ public class StartFullSnapshotAckDiscoveryMessage implements DiscoveryCustomMess
     /** Last full snapshot id for cache. */
     private Map<Integer, Long> lastFullSnapshotIdForCache;
 
+    /** Last snapshot id for cache. */
+    private Map<Integer, Long> lastSnapshotIdForCache;
+
     /**
      * @param globalSnapshotId Snapshot ID.
      * @param err Error.
      * @param cacheNames Cache names.
      */
-    public StartFullSnapshotAckDiscoveryMessage(long globalSnapshotId, boolean fullSnapshot,
+    public StartFullSnapshotAckDiscoveryMessage(
+        long globalSnapshotId,
+        boolean fullSnapshot,
         Map<Integer, Long> lastFullSnapshotIdForCache,
-        Collection<String> cacheNames, Exception err,
-        UUID initiatorNodeId, String msg) {
+        Map<Integer, Long> lastSnapshotIdForCache,
+        Collection<String> cacheNames,
+        Exception err,
+        UUID initiatorNodeId,
+        String msg
+    ) {
         this.globalSnapshotId = globalSnapshotId;
         this.fullSnapshot = fullSnapshot;
         this.lastFullSnapshotIdForCache = lastFullSnapshotIdForCache;
+        this.lastSnapshotIdForCache = lastSnapshotIdForCache;
         this.err = err;
         this.cacheNames = cacheNames;
         this.initiatorNodeId = initiatorNodeId;
         this.msg = msg;
+
+        for (String cacheName : cacheNames) {
+            int i = CU.cacheId(cacheName);
+
+            if (lastFullSnapshotIdForCache.get(i) == null || lastSnapshotIdForCache.get(i) == null) {
+                throw new AssertionError();
+            }
+        }
     }
 
     /**
@@ -135,6 +156,13 @@ public class StartFullSnapshotAckDiscoveryMessage implements DiscoveryCustomMess
         return lastFullSnapshotIdForCache.get(cacheId);
     }
 
+    /**
+     * @param cacheId Cache id.
+     */
+    @Nullable public Long lastSnapshotId(int cacheId) {
+        return lastSnapshotIdForCache.get(cacheId);
+    }
+
     /** {@inheritDoc} */
     @Nullable @Override public DiscoveryCustomMessage ackMessage() {
         return null;
@@ -143,5 +171,10 @@ public class StartFullSnapshotAckDiscoveryMessage implements DiscoveryCustomMess
     /** {@inheritDoc} */
     @Override public boolean isMutable() {
         return false;
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(StartFullSnapshotAckDiscoveryMessage.class, this);
     }
 }

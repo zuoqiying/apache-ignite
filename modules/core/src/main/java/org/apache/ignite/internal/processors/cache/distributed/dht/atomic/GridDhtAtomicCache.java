@@ -122,7 +122,7 @@ import static org.apache.ignite.internal.processors.dr.GridDrType.DR_PRIMARY;
 /**
  * Non-transactional partitioned cache.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "TooBroadScope"})
 @GridToStringExclude
 public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
     /** */
@@ -1806,6 +1806,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
         IgniteCacheExpiryPolicy expiry = null;
 
+        ctx.shared().database().checkpointReadLock();
+
         try {
             // If batch store update is enabled, we need to lock all entries.
             // First, need to acquire locks on cache entries, then check filter.
@@ -1953,7 +1955,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                 // TODO handle failure: probably drop the node from topology
                 // TODO fire events only after successful fsync
-                ctx.shared().wal().fsync(null);
+                if (ctx.shared().wal() != null)
+                    ctx.shared().wal().fsync(null);
             }
         }
         catch (GridDhtInvalidPartitionException ignore) {
@@ -1977,6 +1980,9 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                 throw (Error)e;
 
             return;
+        }
+        finally {
+            ctx.shared().database().checkpointReadUnlock();
         }
 
         if (remap) {
@@ -2479,7 +2485,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                 assert !(newConflictVer instanceof GridCacheVersionEx) : newConflictVer;
 
-                boolean primary = !req.fastMap() || ctx.affinity().primary(ctx.localNode(), entry.partition(),
+                boolean primary = !req.fastMap() || ctx.affinity().primaryByPartition(ctx.localNode(), entry.partition(),
                     req.topologyVersion());
 
                 Object writeVal = op == TRANSFORM ? req.entryProcessor(i) : req.writeValue(i);
@@ -2569,7 +2575,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                 if (hasNear) {
                     if (primary && updRes.sendToDht()) {
-                        if (!ctx.affinity().belongs(node, entry.partition(), topVer)) {
+                        if (!ctx.affinity().partitionBelongs(node, entry.partition(), topVer)) {
                             // If put the same value as in request then do not need to send it back.
                             if (op == TRANSFORM || writeVal != updRes.newValue()) {
                                 res.addNearValue(i,
@@ -2700,7 +2706,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                 Map<KeyCacheObject, CacheObject> storeMap = req.fastMap() ?
                     F.view(putMap, new P1<CacheObject>() {
                         @Override public boolean apply(CacheObject key) {
-                            return ctx.affinity().primary(ctx.localNode(), key, req.topologyVersion());
+                            return ctx.affinity().primaryByKey(ctx.localNode(), key, req.topologyVersion());
                         }
                     }) :
                     putMap;
@@ -2726,7 +2732,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                 Collection<KeyCacheObject> storeKeys = req.fastMap() ?
                     F.view(rmvKeys, new P1<Object>() {
                         @Override public boolean apply(Object key) {
-                            return ctx.affinity().primary(ctx.localNode(), key, req.topologyVersion());
+                            return ctx.affinity().primaryByKey(ctx.localNode(), key, req.topologyVersion());
                         }
                     }) :
                     rmvKeys;
@@ -2765,7 +2771,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                     assert writeVal != null || op == DELETE : "null write value found.";
 
-                    boolean primary = !req.fastMap() || ctx.affinity().primary(ctx.localNode(), entry.key(),
+                    boolean primary = !req.fastMap() || ctx.affinity().primaryByKey(ctx.localNode(), entry.key(),
                         req.topologyVersion());
 
                     Collection<UUID> readers = null;
@@ -2861,7 +2867,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                     if (hasNear) {
                         if (primary) {
-                            if (!ctx.affinity().belongs(node, entry.partition(), topVer)) {
+                            if (!ctx.affinity().partitionBelongs(node, entry.partition(), topVer)) {
                                 int idx = firstEntryIdx + i;
 
                                 if (req.operation() == TRANSFORM) {
@@ -2923,8 +2929,6 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
     @SuppressWarnings("ForLoopReplaceableByForEach")
     private List<GridDhtCacheEntry> lockEntries(GridNearAtomicAbstractUpdateRequest req, AffinityTopologyVersion topVer)
         throws GridDhtInvalidPartitionException {
-        ctx.shared().database().checkpointReadLock();
-
         if (req.size() == 1) {
             KeyCacheObject key = req.key(0);
 
@@ -3039,8 +3043,6 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             if (entry != null)
                 entry.onUnlock();
         }
-
-        ctx.shared().database().checkpointReadUnlock();
 
         if (skip != null && skip.size() == locked.size())
             // Optimization.
@@ -3340,7 +3342,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         try {
             // TODO handle failure: probably drop the node from topology
             // TODO fire events only after successful fsync
-            ctx.shared().wal().fsync(null);
+            if (ctx.shared().wal() != null)
+                ctx.shared().wal().fsync(null);
         }
         catch (StorageException e) {
             res.onError(new IgniteCheckedException(e));

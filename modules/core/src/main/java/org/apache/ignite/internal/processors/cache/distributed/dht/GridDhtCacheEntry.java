@@ -118,8 +118,8 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
     }
 
     /** {@inheritDoc} */
-    @Override protected void onUpdateFinished(Long cntr) {
-        if (cntr != null)
+    @Override protected void onUpdateFinished(long cntr) {
+        if (cctx.shared().database().persistenceEnabled())
             locPart.onUpdateReceived(cntr);
     }
 
@@ -413,7 +413,7 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
         }
 
         // If remote node is (primary?) or back up, don't add it as a reader.
-        if (cctx.affinity().belongs(node, partition(), topVer)) {
+        if (cctx.affinity().partitionBelongs(node, partition(), topVer)) {
             if (log.isDebugEnabled())
                 log.debug("Ignoring near reader because remote node is affinity node [locNodeId=" + cctx.localNodeId()
                     + ", rmtNodeId=" + nodeId + ", key=" + key + ']');

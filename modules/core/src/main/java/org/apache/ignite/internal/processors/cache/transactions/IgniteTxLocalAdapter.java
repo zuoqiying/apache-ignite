@@ -87,6 +87,7 @@ import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.CU;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiClosure;
 import org.apache.ignite.lang.IgniteBiTuple;
@@ -1128,7 +1129,7 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
      * @return {@code True} if local node is current primary for given entry.
      */
     private boolean primaryLocal(GridCacheEntryEx entry) {
-        return entry.context().affinity().primary(cctx.localNode(), entry.partition(), AffinityTopologyVersion.NONE);
+        return entry.context().affinity().primaryByPartition(cctx.localNode(), entry.partition(), AffinityTopologyVersion.NONE);
     }
 
     /**
@@ -1409,7 +1410,7 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                     finally {
                         if (entry != null && readCommitted()) {
                             if (cacheCtx.isNear()) {
-                                if (cacheCtx.affinity().belongs(cacheCtx.localNode(), entry.partition(), topVer)) {
+                                if (cacheCtx.affinity().partitionBelongs(cacheCtx.localNode(), entry.partition(), topVer)) {
                                     if (entry.markObsolete(xidVer))
                                         cacheCtx.cache().removeEntry(entry);
                                 }
@@ -3353,10 +3354,12 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
 
         assert keys0 != null;
 
-        if (log.isDebugEnabled()) {
-            log.debug("Called removeAllAsync(...) [tx=" + this + ", keys=" + keys0 + ", implicit=" + implicit +
-                ", retval=" + retval + "]");
-        }
+        if (log.isDebugEnabled())
+            log.debug(S.toString("Called removeAllAsync(...)",
+                "tx", this, false,
+                "keys", keys0, true,
+                "implicit", implicit, false,
+                "retval", retval, false));
 
         try {
             checkValid();

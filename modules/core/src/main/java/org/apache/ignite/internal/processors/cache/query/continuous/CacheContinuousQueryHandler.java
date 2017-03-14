@@ -448,6 +448,8 @@ public class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler 
             }
 
             @Override public void flushBackupQueue(GridKernalContext ctx, AffinityTopologyVersion topVer) {
+                assert topVer != null;
+
                 Collection<CacheContinuousQueryEntry> backupQueue0 = backupQueue;
 
                 if (backupQueue0 == null)
@@ -843,6 +845,15 @@ public class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler 
         return ctx.security().enabled() ? ctx.task().resolveTaskName(taskHash) : null;
     }
 
+    /** {@inheritDoc} */
+    @Override public void onClientDisconnected() {
+        if (internal)
+            return;
+
+        for (PartitionRecovery rec : rcvs.values())
+            rec.resetTopologyCache();
+    }
+
     /**
      * @param ctx Context.
      * @param partId Partition id.
@@ -862,7 +873,7 @@ public class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler 
                 GridCacheAffinityManager aff = cctx.affinity();
 
                 if (initUpdCntrsPerNode != null) {
-                    for (ClusterNode node : aff.nodes(partId, initTopVer)) {
+                    for (ClusterNode node : aff.nodesByPartition(partId, initTopVer)) {
                         Map<Integer, T2<Long, Long>> map = initUpdCntrsPerNode.get(node.id());
 
                         if (map != null) {
@@ -958,6 +969,13 @@ public class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler 
 
                 curTop = topVer;
             }
+        }
+
+        /**
+         * Resets cached topology.
+         */
+        void resetTopologyCache() {
+            curTop = AffinityTopologyVersion.NONE;
         }
 
         /**

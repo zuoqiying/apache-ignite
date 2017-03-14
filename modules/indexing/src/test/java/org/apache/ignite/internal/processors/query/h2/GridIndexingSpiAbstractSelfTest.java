@@ -500,6 +500,11 @@ public abstract class GridIndexingSpiAbstractSelfTest extends GridCommonAbstract
         @Override public GridQueryIndexType type() {
             return GridQueryIndexType.FULLTEXT;
         }
+
+        /** {@inheritDoc} */
+        @Override public int inlineSize() {
+            return 0;
+        }
     }
 
     /**
@@ -691,6 +696,11 @@ public abstract class GridIndexingSpiAbstractSelfTest extends GridCommonAbstract
         /** {@inheritDoc} */
         @Override public boolean putValue(ByteBuffer buf) throws IgniteCheckedException {
             return false;
+        }
+
+        /** {@inheritDoc} */
+        @Override public int putValue(long addr) throws IgniteCheckedException {
+            return 0;
         }
 
         /** {@inheritDoc} */

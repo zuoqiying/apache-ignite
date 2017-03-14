@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.internal.GridKernalContext;
@@ -39,12 +40,14 @@ import org.apache.ignite.internal.processors.cache.database.tree.reuse.ReuseList
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsExchangeFuture;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.processors.cluster.IgniteChangeGlobalStateSupport;
+import org.apache.ignite.lang.IgniteBiTuple;
 import org.jetbrains.annotations.Nullable;
 
 /**
  *
  */
-public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdapter implements IgniteChangeGlobalStateSupport {
+public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdapter
+    implements IgniteChangeGlobalStateSupport, CheckpointLockStateChecker {
     /** */
     protected PageMemory pageMem;
 
@@ -73,6 +76,14 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
             initDataStructures();
         }
+    }
+
+    /**
+     * @param log Logger.
+     */
+    public void dumpStatistics(IgniteLogger log) {
+        if (freeList != null)
+            freeList.dumpStatistics(log);
     }
 
     /**
@@ -117,6 +128,11 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
      *
      */
     public boolean persistenceEnabled() {
+        return false;
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean checkpointLockIsHeldByThread() {
         return false;
     }
 
@@ -174,8 +190,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     /**
      *
      */
-    @Nullable public IgniteInternalFuture wakeupForSnapshot(long snapshotId, UUID snapshotNodeId,
-        Collection<String> cacheNames) {
+    @Nullable public IgniteInternalFuture wakeupForSnapshot(long snapshotId) {
         return null;
     }
 
@@ -187,9 +202,9 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     }
 
     /**
-     * @throws IgniteCheckedException If failed.
+     * @param stoppedCtxs A collection of tuples (cache context, destroy flag).
      */
-    public void beforeCachesStop() throws IgniteCheckedException {
+    public void onCachesStopped(Collection<IgniteBiTuple<GridCacheContext, Boolean>> stoppedCtxs) {
         // No-op.
     }
 
@@ -202,13 +217,10 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
     /**
      * @param snapshotMsg Snapshot message.
-     * @param initiator Initiator node.
-     * @param msg message to log
      * @return Snapshot creation init future or {@code null} if snapshot is not available.
      * @throws IgniteCheckedException If failed.
      */
-    @Nullable public IgniteInternalFuture startLocalSnapshotCreation(StartFullSnapshotAckDiscoveryMessage snapshotMsg,
-        ClusterNode initiator, String msg)
+    @Nullable public IgniteInternalFuture startLocalSnapshotCreation(StartFullSnapshotAckDiscoveryMessage snapshotMsg)
         throws IgniteCheckedException {
         return null;
     }
@@ -256,7 +268,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
                 true,
                 sizes);
 
-        return new PageMemoryNoStoreImpl(log, memProvider, cctx, dbCfg.getPageSize());
+        return new PageMemoryNoStoreImpl(log, memProvider, cctx, dbCfg.getPageSize(), false);
     }
 
     /**

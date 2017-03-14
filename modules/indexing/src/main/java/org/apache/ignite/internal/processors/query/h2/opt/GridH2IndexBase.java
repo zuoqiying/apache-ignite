@@ -178,12 +178,22 @@ public abstract class GridH2IndexBase extends BaseIndex {
     }
 
     /**
-     * Put row if absent.
+     * Puts row.
      *
      * @param row Row.
      * @return Existing row or {@code null}.
      */
     public abstract GridH2Row put(GridH2Row row);
+
+    /**
+     * Puts row.
+     *
+     * @param row Row.
+     * @return {@code True} if replaced existing row.
+     */
+    public boolean putx(GridH2Row row) {
+        return put(row) != null;
+    }
 
     /**
      * Remove row from index.
@@ -192,6 +202,15 @@ public abstract class GridH2IndexBase extends BaseIndex {
      * @return Removed row.
      */
     public abstract GridH2Row remove(SearchRow row);
+
+    /**
+     * Remove row from index, does not return removed row.
+     *
+     * @param row Row.
+     */
+    public void removex(SearchRow row) {
+        remove(row);
+    }
 
     /**
      * Finds a single row by the given row.
@@ -610,7 +629,7 @@ public abstract class GridH2IndexBase extends BaseIndex {
             node = cctx.discovery().node(nodeId);
         }
         else // Get primary node for current topology version.
-            node = cctx.affinity().primary(affKeyObj, qctx.topologyVersion());
+            node = cctx.affinity().primaryByKey(affKeyObj, qctx.topologyVersion());
 
         if (node == null) // Node was not found, probably topology changed and we need to retry the whole query.
             throw new GridH2RetryException("Failed to find node.");

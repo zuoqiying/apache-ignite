@@ -17,12 +17,11 @@
 
 package org.apache.ignite.internal.processors.query;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -40,10 +39,12 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
 import javax.cache.CacheException;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.binary.BinaryField;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
@@ -70,9 +71,8 @@ import org.apache.ignite.internal.processors.cache.CacheEntryImpl;
 import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.CacheObjectContext;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
-import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.GridCacheDefaultAffinityKeyMapper;
-import org.apache.ignite.internal.processors.cache.IgniteCacheProxy;
+import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.QueryCursorImpl;
 import org.apache.ignite.internal.processors.cache.binary.CacheObjectBinaryProcessorImpl;
 import org.apache.ignite.internal.processors.cache.query.CacheQueryFuture;
@@ -91,7 +91,6 @@ import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.A;
-import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.util.worker.GridWorker;
@@ -166,6 +165,9 @@ public class GridQueryProcessor extends GridProcessorAdapter {
 
     /** */
     private static final ThreadLocal<AffinityTopologyVersion> requestTopVer = new ThreadLocal<>();
+
+    /** Default is @{true} */
+    private final boolean isIndexingSpiAllowsBinary = !IgniteSystemProperties.getBoolean(IgniteSystemProperties.IGNITE_UNWRAP_BINARY_FOR_INDEXING_SPI);
 
     /**
      * @param ctx Kernal context.
@@ -598,7 +600,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
             throw new IllegalStateException("Failed to rebuild indexes (grid is stopping).");
 
         try {
-            return rebuildIndexes(space, typesByName.get(new TypeName(space, valTypeName)), false);
+            return rebuildIndexes(space, typesByName.get(new TypeName(space, valTypeName)));
         }
         finally {
             busyLock.leaveBusy();
@@ -610,8 +612,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
      * @param desc Type descriptor.
      * @return Future that will be completed when rebuilding of all indexes is finished.
      */
-    private IgniteInternalFuture<?> rebuildIndexes(@Nullable final String space, @Nullable final TypeDescriptor desc,
-        final boolean fromHash) {
+    private IgniteInternalFuture<?> rebuildIndexes(@Nullable final String space, @Nullable final TypeDescriptor desc) {
         if (idx == null)
             return new GridFinishedFuture<>(new IgniteCheckedException("Indexing is disabled."));
 
@@ -620,16 +621,10 @@ public class GridQueryProcessor extends GridProcessorAdapter {
 
         final GridWorkerFuture<?> fut = new GridWorkerFuture<Void>();
 
-        if (fromHash)
-            idx.markForRebuildFromHash(space, desc);
-
         GridWorker w = new GridWorker(ctx.gridName(), "index-rebuild-worker", log) {
             @Override protected void body() {
                 try {
-                    if (fromHash)
-                        idx.rebuildIndexesFromHash(space, desc);
-                    else
-                        idx.rebuildIndexes(space, desc);
+                    idx.rebuildIndexes(space, desc);
 
                     fut.onDone();
                 }
@@ -637,7 +632,8 @@ public class GridQueryProcessor extends GridProcessorAdapter {
                     fut.onDone(e);
                 }
                 catch (Throwable e) {
-                    log.error("Failed to rebuild indexes for type: " + desc.name(), e);
+                    U.error(log, "Failed to rebuild indexes for type [space=" + space +
+                        ", name=" + desc.name() + ']', e);
 
                     fut.onDone(e);
 
@@ -668,7 +664,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
             GridCompoundFuture<?, ?> fut = new GridCompoundFuture<Object, Object>();
 
             for (Map.Entry<TypeId, TypeDescriptor> e : types.entrySet())
-                fut.add((IgniteInternalFuture)rebuildIndexes(e.getKey().space, e.getValue(), false));
+                fut.add((IgniteInternalFuture)rebuildIndexes(e.getKey().space, e.getValue()));
 
             fut.markInitialized();
 
@@ -682,22 +678,42 @@ public class GridQueryProcessor extends GridProcessorAdapter {
     /**
      * Rebuilds indexes for provided caches from corresponding hash indexes.
      *
-     * @param cacheIds Cache IDs.
+     * @param cacheName Cache name.
      * @return Future that will be completed when rebuilding is finished.
      */
-    public IgniteInternalFuture<?> rebuildIndexesFromHash(Collection<Integer> cacheIds) {
+    public IgniteInternalFuture<?> rebuildIndexesFromHash(final String cacheName) {
         if (!busyLock.enterBusy())
             throw new IllegalStateException("Failed to get space size (grid is stopping).");
 
         try {
-            GridCompoundFuture<?, ?> fut = new GridCompoundFuture<Object, Object>();
+            final GridWorkerFuture<?> fut = new GridWorkerFuture<Void>();
 
-            for (Map.Entry<TypeId, TypeDescriptor> e : types.entrySet()) {
-                if (cacheIds.contains(CU.cacheId(e.getKey().space)))
-                    fut.add((IgniteInternalFuture)rebuildIndexes(e.getKey().space, e.getValue(), true));
-            }
+            idx.markForRebuildFromHash(cacheName);
 
-            fut.markInitialized();
+            GridWorker w = new GridWorker(ctx.gridName(), "index-rebuild-worker", log) {
+                @Override protected void body() {
+                    try {
+                        idx.rebuildIndexesFromHash(cacheName);
+
+                        fut.onDone();
+                    }
+                    catch (Exception e) {
+                        fut.onDone(e);
+                    }
+                    catch (Throwable e) {
+                        U.error(log, "Failed to rebuild indexes for type [cache=" + cacheName + ']');
+
+                        fut.onDone(e);
+
+                        if (e instanceof Error)
+                            throw e;
+                    }
+                }
+            };
+
+            fut.setWorker(w);
+
+            execSvc.execute(w);
 
             return fut;
         }
@@ -745,7 +761,11 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         if (ctx.indexing().enabled()) {
             coctx = cacheObjectContext(space);
 
-            ctx.indexing().store(space, key.value(coctx, false), val.value(coctx, false), expirationTime);
+            Object key0 = unwrap(key, coctx);
+
+            Object val0 = unwrap(val, coctx);
+
+            ctx.indexing().store(space, key0, val0, expirationTime);
         }
 
         if (idx == null)
@@ -828,6 +848,13 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         }
 
         return desc;
+    }
+
+    /**
+     * Unwrap CacheObject if needed.
+     */
+    private Object unwrap(CacheObject obj, CacheObjectContext coctx) {
+        return isIndexingSpiAllowsBinary && ctx.cacheObjects().isBinaryObject(obj) ? obj : obj.value(coctx, false);
     }
 
     /**
@@ -1135,7 +1162,9 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         if (ctx.indexing().enabled()) {
             coctx = cacheObjectContext(space);
 
-            ctx.indexing().remove(space, key.value(coctx, false));
+            Object key0 = unwrap(key, coctx);
+
+            ctx.indexing().remove(space, key0);
         }
 
         // If val == null we only need to call SPI.
@@ -1287,11 +1316,9 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         if (ctx.indexing().enabled()) {
             CacheObjectContext coctx = cacheObjectContext(spaceName);
 
-            ctx.indexing().onSwap(
-                spaceName,
-                key.value(
-                    coctx,
-                    false));
+            Object key0 = unwrap(key, coctx);
+
+            ctx.indexing().onSwap(spaceName, key0);
         }
 
         if (idx == null)
@@ -1327,7 +1354,11 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         if (ctx.indexing().enabled()) {
             CacheObjectContext coctx = cacheObjectContext(spaceName);
 
-            ctx.indexing().onUnswap(spaceName, key.value(coctx, false), val.value(coctx, false));
+            Object key0 = unwrap(key, coctx);
+
+            Object val0 = unwrap(val, coctx);
+
+            ctx.indexing().onUnswap(spaceName, key0, val0);
         }
 
         if (idx == null)
@@ -1683,7 +1714,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
                     idxName = QueryEntity.defaultIndexName(idx);
 
                 if (idx.getIndexType() == QueryIndexType.SORTED || idx.getIndexType() == QueryIndexType.GEOSPATIAL) {
-                    d.addIndex(idxName, idx.getIndexType() == QueryIndexType.SORTED ? SORTED : GEO_SPATIAL);
+                    d.addIndex(idxName, idx.getIndexType() == QueryIndexType.SORTED ? SORTED : GEO_SPATIAL, idx.getInlineSize());
 
                     int i = 0;
 
@@ -2230,7 +2261,7 @@ public class GridQueryProcessor extends GridProcessorAdapter {
             if (!(obj instanceof BinaryObjectBuilder))
                 throw new UnsupportedOperationException("Individual properties can be set for binary builders only");
 
-            setValue0((BinaryObjectBuilder) obj, name(), propVal, type());
+            setValue0((BinaryObjectBuilder) obj, propName, propVal, type());
         }
 
         /**
@@ -2436,16 +2467,30 @@ public class GridQueryProcessor extends GridProcessorAdapter {
          *
          * @param idxName Index name.
          * @param type Index type.
+         * @param inlineSize Inline size.
          * @return Index descriptor.
          * @throws IgniteCheckedException In case of error.
          */
-        public IndexDescriptor addIndex(String idxName, GridQueryIndexType type) throws IgniteCheckedException {
-            IndexDescriptor idx = new IndexDescriptor(type);
+        public IndexDescriptor addIndex(String idxName, GridQueryIndexType type,
+            int inlineSize) throws IgniteCheckedException {
+            IndexDescriptor idx = new IndexDescriptor(type, inlineSize);
 
             if (indexes.put(idxName, idx) != null)
                 throw new IgniteCheckedException("Index with name '" + idxName + "' already exists.");
 
             return idx;
+        }
+
+        /**
+         * Adds index.
+         *
+         * @param idxName Index name.
+         * @param type Index type.
+         * @return Index descriptor.
+         * @throws IgniteCheckedException In case of error.
+         */
+        public IndexDescriptor addIndex(String idxName, GridQueryIndexType type) throws IgniteCheckedException {
+            return addIndex(idxName, type, 0);
         }
 
         /**
@@ -2636,13 +2681,25 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         /** */
         private final GridQueryIndexType type;
 
+        /** */
+        private int inlineSize;
+
+        /**
+         * @param type Type.
+         * @param inlineSize Inline size.
+         */
+        private IndexDescriptor(GridQueryIndexType type, int inlineSize) {
+            assert type != null;
+
+            this.type = type;
+            this.inlineSize = inlineSize;
+        }
+
         /**
          * @param type Type.
          */
         private IndexDescriptor(GridQueryIndexType type) {
-            assert type != null;
-
-            this.type = type;
+            this(type, 0);
         }
 
         /** {@inheritDoc} */
@@ -2681,6 +2738,11 @@ public class GridQueryProcessor extends GridProcessorAdapter {
         /** {@inheritDoc} */
         @Override public GridQueryIndexType type() {
             return type;
+        }
+
+        /** {@inheritDoc} */
+        @Override public int inlineSize() {
+            return inlineSize;
         }
 
         /** {@inheritDoc} */
