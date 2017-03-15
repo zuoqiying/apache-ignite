@@ -15,28 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.cache.eviction.random;
+package org.apache.ignite.internal.managers.eventstorage;
 
-import org.apache.ignite.mxbean.MXBeanDescription;
+import java.util.EventListener;
+import org.apache.ignite.events.DiscoveryEvent;
+import org.apache.ignite.internal.managers.discovery.DiscoCache;
 
 /**
- * MBean for {@code random} eviction policy.
+ * Internal listener for discovery events.
  */
-@MXBeanDescription("MBean for random cache eviction policy.")
-public interface RandomEvictionPolicyMBean {
+public interface DiscoveryEventListener extends EventListener {
     /**
-     * Gets maximum allowed cache size.
-     *
-     * @return Maximum allowed cache size.
+     * @param evt Discovery event.
+     * @param discoCache Discovery cache.
      */
-    @MXBeanDescription("Maximum allowed cache size.")
-    public int getMaxSize();
-
-    /**
-     * Sets maximum allowed cache size.
-     *
-     * @param max Maximum allowed cache size.
-     */
-    @MXBeanDescription("Sets maximum allowed cache size.")
-    public void setMaxSize(int max);
+    public void onEvent(DiscoveryEvent evt, DiscoCache discoCache);
 }

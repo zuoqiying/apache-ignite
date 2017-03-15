@@ -59,7 +59,7 @@ module.exports.factory = (_, socketio, configure) => {
          */
         remove(sock) {
             const token = sock.request.user.token;
-            
+
             const sockets = this.sockets.get(token);
 
             _.pull(sockets, sock);
@@ -70,7 +70,7 @@ module.exports.factory = (_, socketio, configure) => {
         get(token) {
             if (this.sockets.has(token))
                 return this.sockets.get(token);
-            
+
             return [];
         }
 
@@ -106,7 +106,7 @@ module.exports.factory = (_, socketio, configure) => {
         }
 
         /**
-         * 
+         *
          * @param server
          * @param {AgentsHandler} agentHnd
          */
@@ -205,9 +205,9 @@ module.exports.factory = (_, socketio, configure) => {
                 });
 
                 // Execute query on node and return first page to browser.
-                sock.on('node:query', (nid, cacheName, query, distributedJoins, local, pageSize, cb) => {
-                    agentHnd.forCluster(currentToken(), clusterId())
-                        .then((agent) => agent.fieldsQuery(demo, nid, cacheName, query, distributedJoins, local, pageSize))
+                socket.on('node:query', (nid, cacheName, query, distributedJoins, enforceJoinOrder, local, pageSize, cb) => {
+                    agentMgr.findAgent(accountId())
+                        .then((agent) => agent.fieldsQuery(demo, nid, cacheName, query, distributedJoins, enforceJoinOrder, local, pageSize))
                         .then((res) => cb(null, res))
                         .catch((err) => cb(_errorToJson(err)));
                 });
@@ -221,13 +221,13 @@ module.exports.factory = (_, socketio, configure) => {
                 });
 
                 // Execute query on node and return full result to browser.
-                sock.on('node:query:getAll', (nid, cacheName, query, distributedJoins, local, cb) => {
+                socket.on('node:query:getAll', (nid, cacheName, query, distributedJoins, enforceJoinOrder, local, cb) => {
                     // Set page size for query.
                     const pageSize = 1024;
 
                     agentHnd.forCluster(currentToken(), clusterId())
                         .then((agent) => {
-                            const firstPage = agent.fieldsQuery(demo, nid, cacheName, query, distributedJoins, local, pageSize)
+                            const firstPage = agent.fieldsQuery(demo, nid, cacheName, query, distributedJoins, enforceJoinOrder, local, pageSize)
                                 .then(({result}) => {
                                     if (result.key)
                                         return Promise.reject(result.key);
