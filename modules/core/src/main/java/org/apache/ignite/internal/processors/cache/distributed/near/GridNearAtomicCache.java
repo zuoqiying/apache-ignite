@@ -130,7 +130,19 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
         GridNearAtomicAbstractUpdateRequest req,
         GridNearAtomicUpdateResponse res
     ) {
-        if (F.size(res.failedKeys()) == req.size())
+        int keyNum;
+        int[] stripeIdxs;
+
+        if (res.stripe() > -1 && req.stripeMap() != null) {
+            stripeIdxs = req.stripeMap().get(res.stripe());
+            keyNum = stripeIdxs.length;
+        }
+        else {
+            stripeIdxs = null;
+            keyNum = req.keys().size();
+        }
+
+        if (F.size(res.failedKeys()) == keyNum)
             return;
 
         /*
@@ -150,11 +162,13 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
 
         String taskName = ctx.kernalContext().task().resolveTaskName(req.taskNameHash());
 
-        for (int i = 0; i < req.size(); i++) {
-            if (F.contains(skipped, i))
+        for (int i = 0; i < keyNum; i++) {
+            int trueIdx = stripeIdxs == null ? i : stripeIdxs[i];
+
+            if (F.contains(skipped, trueIdx))
                 continue;
 
-            KeyCacheObject key = req.key(i);
+            KeyCacheObject key = req.key(trueIdx);
 
             if (F.contains(failed, key))
                 continue;
@@ -170,7 +184,7 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
 
             CacheObject val = null;
 
-            if (F.contains(nearValsIdxs, i)) {
+            if (F.contains(nearValsIdxs, trueIdx)) {
                 val = res.nearValue(nearValIdx);
 
                 nearValIdx++;
@@ -179,7 +193,7 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
                 assert req.operation() != TRANSFORM;
 
                 if (req.operation() != DELETE)
-                    val = req.value(i);
+                    val = req.value(trueIdx);
             }
 
             long ttl = res.nearTtl(i);

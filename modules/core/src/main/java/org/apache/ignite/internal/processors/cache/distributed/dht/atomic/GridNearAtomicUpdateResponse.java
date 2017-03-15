@@ -75,6 +75,10 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
     /** Partition ID. */
     private int partId = -1;
 
+    /** Stripe. */
+    @GridDirectTransient
+    private int stripe = -1;
+
     /** */
     @GridDirectCollection(UUID.class)
     @GridToStringInclude
@@ -158,6 +162,13 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
      */
     public long futureId() {
         return futId;
+    }
+
+    /**
+     * @param partId Partition ID for proper striping on near node.
+     */
+    public void partition(int partId) {
+        this.partId = partId;
     }
 
     /**
@@ -375,6 +386,20 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
     /** {@inheritDoc} */
     @Override public int partition() {
         return partId;
+    }
+
+    /**
+     * @return Stripe number.
+     */
+    public int stripe() {
+        return stripe;
+    }
+
+    /**
+     * @param stripe Stripe number.
+     */
+    public void stripe(int stripe) {
+        this.stripe = stripe;
     }
 
     /** {@inheritDoc} */

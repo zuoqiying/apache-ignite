@@ -138,7 +138,7 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
 
     /** Future ID. */
     @GridToStringInclude
-    protected Long futId;
+    protected long futId = -1;
 
     /** Operation result. */
     protected GridCacheReturn opRes;
@@ -356,7 +356,7 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
      * @return Response to notify about primary failure.
      */
     final GridNearAtomicUpdateResponse primaryFailedResponse(GridNearAtomicAbstractUpdateRequest req) {
-        assert req.response() == null : req;
+//        assert req == null : req;
         assert req.nodeId() != null : req;
 
         if (msgLog.isDebugEnabled()) {
@@ -421,6 +421,9 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
     static class PrimaryRequestState {
         /** */
         final GridNearAtomicAbstractUpdateRequest req;
+
+        /** */
+        private GridNearAtomicUpdateResponse res;
 
         /** */
         @GridToStringInclude
@@ -536,13 +539,13 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
              * When primary failed, even if primary response is received, it is possible it failed to send
              * request to backup(s), need remap operation.
              */
-            if (req.fullSync() && !req.nodeFailedResponse()) {
-                req.resetResponse();
+            if (req.fullSync() && !nodeFailedResponse()) {
+                resetResponse();
 
                 return req;
             }
 
-            return req.response() == null ? req : null;
+            return this.res == null ? req : null;
         }
 
         /**
@@ -559,7 +562,7 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
             if (finished())
                 return null;
 
-            return req.response() == null ? req : null;
+            return this.res == null ? req : null;
         }
 
         /**
@@ -616,7 +619,7 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
 
             hasRes = true;
 
-            boolean onRes = req.onResponse(res);
+            boolean onRes = storeResponse(res);
 
             assert onRes;
 
@@ -664,12 +667,47 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
                 dhtNodes = Collections.emptySet();
         }
 
+        /**
+         * @return {@code True} if received notification about primary fail.
+         */
+        boolean nodeFailedResponse() {
+            return res != null && res.nodeLeftResponse();
+        }
+
+        /**
+         * @param res Response.
+         * @return {@code True} if current response was {@code null}.
+         */
+        private boolean storeResponse(GridNearAtomicUpdateResponse res) {
+            if (this.res == null) {
+                this.res = res;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         *
+         */
+        void resetResponse() {
+            res = null;
+        }
+
+        /**
+         * @return Response.
+         */
+        @Nullable public GridNearAtomicUpdateResponse response() {
+            return res;
+        }
+
         /** {@inheritDoc} */
         @Override public String toString() {
             return S.toString(PrimaryRequestState.class, this,
                 "primary", primaryId(),
                 "needPrimaryRes", req.needPrimaryResponse(),
-                "primaryRes", req.response() != null,
+                "primaryRes", res != null,
                 "done", finished());
         }
     }

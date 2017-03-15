@@ -21,6 +21,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,6 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -54,11 +56,14 @@ import org.apache.ignite.internal.managers.GridManagerAdapter;
 import org.apache.ignite.internal.managers.deployment.GridDeployment;
 import org.apache.ignite.internal.managers.eventstorage.GridEventStorageManager;
 import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
+import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicFullUpdateRequest;
+import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.NearAtomicResponseHelper;
 import org.apache.ignite.internal.processors.platform.message.PlatformMessageFilter;
 import org.apache.ignite.internal.processors.pool.PoolProcessor;
 import org.apache.ignite.internal.processors.timeout.GridTimeoutObject;
 import org.apache.ignite.internal.util.GridBoundedConcurrentLinkedHashSet;
 import org.apache.ignite.internal.util.StripedCompositeReadWriteLock;
+import org.apache.ignite.internal.util.StripedExecutor;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.lang.GridTuple3;
@@ -100,7 +105,6 @@ import static org.apache.ignite.internal.managers.communication.GridIoPolicy.PUB
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SERVICE_POOL;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SYSTEM_POOL;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.UTILITY_CACHE_POOL;
-import static org.apache.ignite.internal.managers.communication.GridIoPolicy.QUERY_POOL;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.isReservedGridIoPolicy;
 import static org.apache.ignite.internal.util.nio.GridNioBackPressureControl.threadProcessingMessage;
 import static org.jsr166.ConcurrentLinkedHashMap.QueuePolicy.PER_SEGMENT_Q_OPTIMIZED_RMV;
@@ -191,6 +195,12 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
 
     /** */
     private final AtomicLong ioTestId = new AtomicLong();
+
+    /** */
+    private final Map<Integer, Integer> part2stripe = new ConcurrentHashMap8<>();
+
+    /** */
+    private final AtomicInteger curStripe = new AtomicInteger();
 
     /** No-op runnable. */
     private static final IgniteRunnable NOOP = new IgniteRunnable() {
@@ -809,19 +819,30 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             }
         };
 
+        StripedExecutor stripedExecutor = ctx.getStripedExecutorService();
+
         if (msg.topicOrdinal() == TOPIC_IO_TEST.ordinal()) {
             IgniteIoTestMessage msg0 = (IgniteIoTestMessage)msg.message();
 
             if (msg0.processFromNioThread())
                 c.run();
             else
-                ctx.getStripedExecutorService().execute(-1, c);
+                stripedExecutor.execute(-1, c);
 
             return;
         }
 
-        if (plc == GridIoPolicy.SYSTEM_POOL && msg.partition() != Integer.MIN_VALUE) {
-            ctx.getStripedExecutorService().execute(msg.partition(), c);
+        if (plc == GridIoPolicy.SYSTEM_POOL &&
+            (msg.partition() != Integer.MIN_VALUE ||
+                msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE)) {
+
+            if (msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE) {
+                GridNearAtomicFullUpdateRequest msg0 = (GridNearAtomicFullUpdateRequest)msg.message();
+
+                makeStripeMap(msg0);
+            }
+
+            stripedExecutor.execute(msg.partition(), c);
 
             return;
         }
@@ -836,6 +857,43 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
 
             c.run();
         }
+    }
+
+    private Map<Integer, int[]> makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
+        int maxStripes = ctx.getStripedExecutorService().stripes();
+
+        Map<Integer, int[]> map = new HashMap<>();
+
+        int[] cnt = new int[maxStripes];
+
+        for (int i = 0; i < msg.size(); i++) {
+            int part = msg.key(i).partition();
+
+            int stripe;
+
+            if (!part2stripe.containsKey(part)) {
+                stripe = curStripe.incrementAndGet() % maxStripes;
+                part2stripe.put(part, stripe);
+            }
+            else
+                stripe = part2stripe.get(part);
+
+            int[] idxs = map.get(stripe);
+
+            if (idxs == null)
+                map.put(stripe, idxs = new int[msg.size()]);
+
+            idxs[cnt[stripe]++] = i;
+        }
+
+        for (Integer stripe : map.keySet()) {
+            map.put(stripe, Arrays.copyOf(map.get(stripe), cnt[stripe]));
+        }
+
+        msg.stripeMap(map);
+        msg.responseHelper(new NearAtomicResponseHelper(map.keySet()));
+
+        return map;
     }
 
     /**

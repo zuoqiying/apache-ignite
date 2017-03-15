@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.cache.distributed.dht.atomic;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
@@ -89,9 +90,9 @@ public abstract class GridNearAtomicAbstractUpdateRequest extends GridCacheMessa
     @GridToStringExclude
     protected byte flags;
 
-    /** */
+    /** Response helper. */
     @GridDirectTransient
-    private GridNearAtomicUpdateResponse res;
+    private NearAtomicResponseHelper responseHelper;
 
     /**
      *
@@ -246,41 +247,6 @@ public abstract class GridNearAtomicAbstractUpdateRequest extends GridCacheMessa
      */
     public final CacheWriteSynchronizationMode writeSynchronizationMode() {
         return syncMode;
-    }
-
-    /**
-     * @param res Response.
-     * @return {@code True} if current response was {@code null}.
-     */
-    public boolean onResponse(GridNearAtomicUpdateResponse res) {
-        if (this.res == null) {
-            this.res = res;
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     *
-     */
-    void resetResponse() {
-        this.res = null;
-    }
-
-    /**
-     * @return Response.
-     */
-    @Nullable public GridNearAtomicUpdateResponse response() {
-        return res;
-    }
-
-    /**
-     * @return {@code True} if received notification about primary fail.
-     */
-    boolean nodeFailedResponse() {
-        return res != null && res.nodeLeftResponse();
     }
 
     /**
@@ -451,10 +417,32 @@ public abstract class GridNearAtomicAbstractUpdateRequest extends GridCacheMessa
     public abstract int size();
 
     /**
+     * @return Response helper.
+     */
+    public NearAtomicResponseHelper responseHelper() {
+        return responseHelper;
+    }
+
+    /**
+     * @param responseHelper Response helper.
+     */
+    public void responseHelper(
+        NearAtomicResponseHelper responseHelper) {
+        this.responseHelper = responseHelper;
+    }
+
+    /**
      * @param idx Key index.
      * @return Key.
      */
     public abstract KeyCacheObject key(int idx);
+
+    /**
+     * @return Stripe map.
+     */
+    @Nullable public Map<Integer, int[]> stripeMap() {
+        return null;
+    }
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {

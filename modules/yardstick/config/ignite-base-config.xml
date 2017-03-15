@@ -39,6 +39,10 @@
                     <property name="atomicityMode" value="ATOMIC"/>
 
                     <property name="swapEnabled" value="false"/>
+
+                    <property name="affinity">
+                        <bean class="org.apache.ignite.cache.affinity.fair.FairAffinityFunction"/>
+                    </property>
                 </bean>
 
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
