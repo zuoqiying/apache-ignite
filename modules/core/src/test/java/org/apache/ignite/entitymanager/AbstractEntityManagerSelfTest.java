@@ -75,11 +75,11 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
 //                        return builder.append(U.field(val, "email").toString().toLowerCase()).toString();
 //                    }
 //                });
-                put("age", new IgniteBiClosure<StringBuilder, Object, String>() {
-                    @Override public String apply(StringBuilder builder, Object val) {
-                        return builder.append(U.field(val, "age").toString().toLowerCase()).toString();
-                    }
-                });
+//                put("age", new IgniteBiClosure<StringBuilder, Object, String>() {
+//                    @Override public String apply(StringBuilder builder, Object val) {
+//                        return builder.append(U.field(val, "age").toString().toLowerCase()).toString();
+//                    }
+//                });
 //                put("fio", new IgniteBiClosure<StringBuilder, Object, String>() {
 //                    @Override public String apply(StringBuilder builder, Object val) {
 //                        return builder.append(U.field(val, "lastName").toString().toLowerCase()).
@@ -270,7 +270,7 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
             }
         }, 1);
 
-//        TestUser u = new TestUser();
+        TestUser u = new TestUser();
 //
 //        for (int i = 0; i < firstNamesCnt.length(); i++) {
 //            u.setFirstName("fname" + i);
