@@ -1,4 +1,4 @@
-package org.apache.ignite.examples.indexing;
+package org.apache.ignite.entitymanager;
 
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteAtomicSequence;

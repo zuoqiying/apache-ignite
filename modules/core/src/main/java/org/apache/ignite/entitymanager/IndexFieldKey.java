@@ -15,49 +15,58 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.examples.indexing;
+package org.apache.ignite.entitymanager;
+
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
 
 /**
  * <p>
- * The <code>Field</code>
+ * The <code>IndexFieldEntry</code>
  * </p>
  *
  * @author Alexei Scherbakov
  */
-public class Field {
-    private String name;
-    private String value;
+public class IndexFieldKey {
+    @QuerySqlField(index = true)
+    private String fieldValue;
 
-    public Field(String name, String value) {
-        this.name = name;
-        this.value = value;
+    private Object payload;
+
+    public IndexFieldKey(String fieldVal, Object payload) {
+        this.fieldValue = fieldVal;
+        this.payload = payload;
     }
 
-    public String name() {
-        return name;
+    public String getFieldValue() {
+        return fieldValue;
     }
 
-    public String value() {
-        return value;
+    public void setFieldValue(String fieldValue) {
+        this.fieldValue = fieldValue;
+    }
+
+    public Object getPayload() {
+        return payload;
+    }
+
+    public void setPayload(Object payload) {
+        this.payload = payload;
     }
 
     @Override public boolean equals(Object o) {
         if (this == o) return true;
-
         if (o == null || getClass() != o.getClass()) return false;
 
-        Field field = (Field) o;
+        IndexFieldKey that = (IndexFieldKey) o;
 
-        if (!name.equals(field.name)) return false;
+        if (!fieldValue.equals(that.fieldValue)) return false;
+        return payload.equals(that.payload);
 
-        return value.equals(field.value);
     }
 
     @Override public int hashCode() {
-        int result = name.hashCode();
-
-        result = 31 * result + value.hashCode();
-
+        int result = fieldValue.hashCode();
+        result = 31 * result + payload.hashCode();
         return result;
     }
 }

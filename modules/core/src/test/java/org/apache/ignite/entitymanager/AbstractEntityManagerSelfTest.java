@@ -15,14 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.examples.indexing;
+package org.apache.ignite.entitymanager;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
-import junit.framework.AssertionFailedError;
+import java.util.concurrent.locks.LockSupport;
+import org.apache.commons.collections.map.HashedMap;
+import org.apache.ignite.Ignite;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.GridRandom;
@@ -30,18 +32,22 @@ import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiClosure;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
-import org.jsr166.ThreadLocalRandom8;
 
 /**
  *
  */
 public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTest {
+    /** Grids count. */
+    private static final int GRIDS_CNT = 1;
+
     /** Entity manager. */
     private EntityManager<Long, TestUser> mgr;
 
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
-        IgniteConfiguration cfg = super.getConfiguration(gridName);
+        IgniteConfiguration cfg = new IgniteConfiguration();
+
+        cfg.setGridName(gridName);
 
         cfg.setCacheConfiguration(mgr.cacheConfigurations());
 
@@ -81,9 +87,10 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
                     }
                 });
             }},
+//            new HashMap<String, IgniteBiClosure<StringBuilder, Object, String>>(),
             new SequenceIdGenerator());
 
-        IgniteEx grid = startGrid(0);
+        Ignite grid = startGridsMultiThreaded(GRIDS_CNT);
 
         mgr.attach(grid);
     }
@@ -99,7 +106,7 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
 
     /** {@inheritDoc} */
     @Override protected void afterTest() throws Exception {
-        stopAllGrids();
+        stopAllGrids(false);
     }
 
     /**
@@ -256,7 +263,7 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
                         log().info("Processed " + (i + 1) + " of " + total);
                 }
             }
-        }, Runtime.getRuntime().availableProcessors() * 2);
+        }, 1);
 
         TestUser u = new TestUser();
 

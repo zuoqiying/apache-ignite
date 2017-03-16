@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.examples.indexing;
+package org.apache.ignite.entitymanager;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCache;
@@ -117,6 +118,9 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
 
     /** {@inheritDoc} */
     @Override public Collection<T2<Long, V>> findAll(V example, String idxName) {
+        if (incices.isEmpty())
+            return Collections.EMPTY_LIST;
+
         IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
 
         String strVal = clo.apply(builder(), example);

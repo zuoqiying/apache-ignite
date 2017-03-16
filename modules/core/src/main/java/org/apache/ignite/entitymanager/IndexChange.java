@@ -15,29 +15,50 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.examples.indexing;
+package org.apache.ignite.entitymanager;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * <p>
- * The <code>IndexFieldEntry</code>
- * </p>
  *
- * @author Alexei Scherbakov
  */
-public class IndexFieldValue {
-    public static final IndexFieldValue MARKER = new IndexFieldValue(null);
+public class IndexChange<K> {
+    /** */
+    private final K id;
 
-    private Object value;
+    /** */
+    private final String name;
 
-    public IndexFieldValue(Object value) {
-        this.value = value;
+    /** */
+    private Map<String, String> changes = new HashMap<>();
+
+    /**
+     * @param name Name.
+     * @param id   Id.
+     */
+    public IndexChange(String name, K id) {
+        this.id = id;
+        this.name = name;
     }
 
-    public Object getValue() {
-        return value;
+    /** */
+    public K id() {
+        return id;
     }
 
-    public void setValue(Object value) {
-        this.value = value;
+    /** */
+    public String name() {
+        return name;
+    }
+
+    /** */
+    public void addChange(String name, String val) {
+        changes.put(name, val);
+    }
+
+    /** */
+    public Map<String, String> changes() {
+        return changes;
     }
 }

@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.examples.indexing;
+package org.apache.ignite.entitymanager;
 
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
@@ -64,8 +65,14 @@ public class EntityManager<K, V> {
     /** */
     private final IdGenerator<K> idGenerator;
 
+    /** */
+    private TransactionConcurrency concurrency = TransactionConcurrency.PESSIMISTIC;
+
+    /** */
+    private TransactionIsolation isolation = TransactionIsolation.REPEATABLE_READ;
+
     /**
-     * @param name      Name.
+     * @param name Name.
      * @param indices Indices.
      */
     public EntityManager(String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices,
@@ -87,17 +94,20 @@ public class EntityManager<K, V> {
         int c = 0;
 
         ccfgs[c] = new CacheConfiguration(entityCacheName());
-        ccfgs[c].setCacheMode(CacheMode.REPLICATED);
+        ccfgs[c].setCacheMode(CacheMode.PARTITIONED);
         ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
+        ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, 64));
 
         c++;
 
         for (Map.Entry<String, IgniteBiClosure<StringBuilder, Object, String>> idx : incices.entrySet()) {
             String idxName = idx.getKey();
             ccfgs[c] = new CacheConfiguration(indexCacheName(idxName));
-            ccfgs[c].setCacheMode(CacheMode.REPLICATED);
+            ccfgs[c].setCacheMode(CacheMode.PARTITIONED);
             ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
             ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
+            ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, 64));
+            ccfgs[c].setCopyOnRead(false);
 
             c++;
         }
@@ -145,11 +155,11 @@ public class EntityManager<K, V> {
     }
 
     public V get(K key) {
-        return (V) entityCache().get(key);
+        return (V)entityCache().get(key);
     }
 
     public K save(K key, V val) {
-        try (Transaction tx = ignite.transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = ignite.transactions().txStart(concurrency, isolation)) {
             V oldVal = null;
 
             IndexChange<K> oldChange = null;
@@ -199,18 +209,20 @@ public class EntityManager<K, V> {
 
     /** */
     public boolean delete(K key) {
-        V v = get(key);
+        try (Transaction tx = ignite.transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+            V v = get(key);
 
-        if (v == null)
-            return false;
+            if (v == null)
+                return false;
 
-        IndexChange<K> idxChange = indexChange(key, v);
+            IndexChange<K> idxChange = indexChange(key, v);
 
-        removeEntry(idxChange.id(), idxChange.changes());
+            removeEntry(idxChange.id(), idxChange.changes());
 
-        entityCache().remove(key);
+            entityCache().remove(key);
 
-        return true;
+            return true;
+        }
     }
 
     /** */
@@ -239,8 +251,8 @@ public class EntityManager<K, V> {
 
     /**
      * @param idxName Field.
-     * @param val   Value.
-     * @param id    Id.
+     * @param val Value.
+     * @param id Id.
      */
     public boolean contains(String idxName, Object val, K id) {
         IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
@@ -257,7 +269,6 @@ public class EntityManager<K, V> {
      *
      * @param example Example value.
      * @param idxName Index name.
-     *
      * @return Entities iterator.
      */
     @SuppressWarnings("unchecked")
@@ -280,7 +291,7 @@ public class EntityManager<K, V> {
             @Override public T2<K, V> apply(Cache.Entry<IndexFieldKey, IndexFieldValue> e) {
                 Object entryKey = e.getKey().getPayload();
 
-                return new T2(entryKey, entityCache().get((K) entryKey)); // TODO use batching
+                return new T2(entryKey, entityCache().get((K)entryKey)); // TODO use batching
             }
         });
     }
@@ -309,5 +320,33 @@ public class EntityManager<K, V> {
      */
     public int indexSize(String field) {
         return indexCache(field).size();
+    }
+
+    /**
+     * @return Concurrency.
+     */
+    public TransactionConcurrency concurrency() {
+        return concurrency;
+    }
+
+    /**
+     * @param concurrency New concurrency.
+     */
+    public void concurrency(TransactionConcurrency concurrency) {
+        this.concurrency = concurrency;
+    }
+
+    /**
+     * @return Isolation.
+     */
+    public TransactionIsolation isolation() {
+        return isolation;
+    }
+
+    /**
+     * @param isolation New isolation.
+     */
+    public void isolation(TransactionIsolation isolation) {
+        this.isolation = isolation;
     }
 }

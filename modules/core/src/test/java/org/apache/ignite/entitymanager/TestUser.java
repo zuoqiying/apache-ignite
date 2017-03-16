@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.examples.indexing;
+package org.apache.ignite.entitymanager;
 
 /**
  * <p>

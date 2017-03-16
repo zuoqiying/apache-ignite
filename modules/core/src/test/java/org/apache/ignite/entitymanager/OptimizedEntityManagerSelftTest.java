@@ -1,4 +1,4 @@
-package org.apache.ignite.examples.indexing;
+package org.apache.ignite.entitymanager;
 
 import java.util.Map;
 import org.apache.ignite.lang.IgniteBiClosure;
