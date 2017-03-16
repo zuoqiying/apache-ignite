@@ -204,7 +204,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
         const _tryStopRefresh = function(paragraph) {
             if (paragraph.rate && paragraph.rate.stopTime) {
-                $interval.cancel(paragraph.rate.stopTime);
+                $timeout.cancel(paragraph.rate.stopTime);
 
                 delete paragraph.rate.stopTime;
             }
@@ -1349,8 +1349,6 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         };
 
         const _tryStartRefresh = function(paragraph) {
-            _tryStopRefresh(paragraph);
-
             if (paragraph.rate && paragraph.rate.installed && paragraph.queryArgs) {
                 $scope.chartAcceptKeyColumn(paragraph, TIME_LINE);
 
@@ -1386,6 +1384,8 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     return _closeOldQuery(paragraph)
                         .then(() => {
+                            _tryStopRefresh(paragraph);
+
                             const args = paragraph.queryArgs = {
                                 type: 'QUERY',
                                 cacheName: paragraph.cacheName,
@@ -1646,8 +1646,11 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             paragraph.rate.unit = unit;
             paragraph.rate.installed = true;
 
-            if (paragraph.queryExecuted())
+            if (paragraph.queryExecuted()) {
+                _tryStopRefresh(paragraph);
+
                 _tryStartRefresh(paragraph);
+            }
         };
 
         $scope.stopRefresh = function(paragraph) {
