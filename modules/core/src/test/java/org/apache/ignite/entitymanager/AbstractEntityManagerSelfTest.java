@@ -60,32 +60,32 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
 
         mgr = mgr(partitionCount(), "user",
             new HashMap<String, IgniteBiClosure<StringBuilder, Object, String>>() {{
-                put("firstName", new IgniteBiClosure<StringBuilder, Object, String>() {
-                    @Override public String apply(StringBuilder builder, Object val) {
-                        return builder.append(U.field(val, "firstName").toString().toLowerCase()).toString();
-                    }
-                });
-                put("lastName", new IgniteBiClosure<StringBuilder, Object, String>() {
-                    @Override public String apply(StringBuilder builder, Object val) {
-                        return builder.append(U.field(val, "lastName").toString().toLowerCase()).toString();
-                    }
-                });
-                put("email", new IgniteBiClosure<StringBuilder, Object, String>() {
-                    @Override public String apply(StringBuilder builder, Object val) {
-                        return builder.append(U.field(val, "email").toString().toLowerCase()).toString();
-                    }
-                });
+//                put("firstName", new IgniteBiClosure<StringBuilder, Object, String>() {
+//                    @Override public String apply(StringBuilder builder, Object val) {
+//                        return builder.append(U.field(val, "firstName").toString().toLowerCase()).toString();
+//                    }
+//                });
+//                put("lastName", new IgniteBiClosure<StringBuilder, Object, String>() {
+//                    @Override public String apply(StringBuilder builder, Object val) {
+//                        return builder.append(U.field(val, "lastName").toString().toLowerCase()).toString();
+//                    }
+//                });
+//                put("email", new IgniteBiClosure<StringBuilder, Object, String>() {
+//                    @Override public String apply(StringBuilder builder, Object val) {
+//                        return builder.append(U.field(val, "email").toString().toLowerCase()).toString();
+//                    }
+//                });
                 put("age", new IgniteBiClosure<StringBuilder, Object, String>() {
                     @Override public String apply(StringBuilder builder, Object val) {
                         return builder.append(U.field(val, "age").toString().toLowerCase()).toString();
                     }
                 });
-                put("fio", new IgniteBiClosure<StringBuilder, Object, String>() {
-                    @Override public String apply(StringBuilder builder, Object val) {
-                        return builder.append(U.field(val, "lastName").toString().toLowerCase()).
-                            append(U.field(val, "firstName").toString().toLowerCase()).toString();
-                    }
-                });
+//                put("fio", new IgniteBiClosure<StringBuilder, Object, String>() {
+//                    @Override public String apply(StringBuilder builder, Object val) {
+//                        return builder.append(U.field(val, "lastName").toString().toLowerCase()).
+//                            append(U.field(val, "firstName").toString().toLowerCase()).toString();
+//                    }
+//                });
             }},
 //            new HashMap<String, IgniteBiClosure<StringBuilder, Object, String>>(),
             new SequenceIdGenerator());
@@ -260,7 +260,7 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
                     TestUser user = new TestUser(firstName(fnIdx),
                         lastName(lnIdx),
                         email(i),
-                        age);
+                        0);
 
                     mgr.save(null, user);
 
@@ -270,42 +270,42 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
             }
         }, 1);
 
-        TestUser u = new TestUser();
-
-        for (int i = 0; i < firstNamesCnt.length(); i++) {
-            u.setFirstName("fname" + i);
-
-            assertEquals(firstNamesCnt.get(i), mgr.findAll(u, "firstName").size());
-        }
-
-        log().info("Verified firstName");
-
-        for (int i = 0; i < lastNamesCnt.length(); i++) {
-            u.setLastName("lname" + i);
-
-            assertEquals(lastNamesCnt.get(i), mgr.findAll(u, "lastName").size());
-        }
-
-        log().info("Verified lastName");
-
-        for (int i = 0; i < agesCnt.length(); i++) {
-            u.setAge(i);
-
-            assertEquals(agesCnt.get(i), mgr.findAll(u, "age").size());
-        }
-
-        log().info("Verified age");
-
-        for (int i = 0; i < total; i++) {
-            u.setEmail(email(i));
-
-            Collection<T2<Long, TestUser>> entities = mgr.findAll(u, "email");
-
-            assertEquals(1, entities.size());
-
-            if ((i + 1) % 10_000 == 0)
-                log().info("Verified email " + (i + 1) + " of " + total);
-        }
+//        TestUser u = new TestUser();
+//
+//        for (int i = 0; i < firstNamesCnt.length(); i++) {
+//            u.setFirstName("fname" + i);
+//
+//            assertEquals(firstNamesCnt.get(i), mgr.findAll(u, "firstName").size());
+//        }
+//
+//        log().info("Verified firstName");
+//
+//        for (int i = 0; i < lastNamesCnt.length(); i++) {
+//            u.setLastName("lname" + i);
+//
+//            assertEquals(lastNamesCnt.get(i), mgr.findAll(u, "lastName").size());
+//        }
+//
+//        log().info("Verified lastName");
+//
+//        for (int i = 0; i < agesCnt.length(); i++) {
+//            u.setAge(i);
+//
+//            assertEquals(agesCnt.get(i), mgr.findAll(u, "age").size());
+//        }
+//
+//        log().info("Verified age");
+//
+//        for (int i = 0; i < total; i++) {
+//            u.setEmail(email(i));
+//
+//            Collection<T2<Long, TestUser>> entities = mgr.findAll(u, "email");
+//
+//            assertEquals(1, entities.size());
+//
+//            if ((i + 1) % 10_000 == 0)
+//                log().info("Verified email " + (i + 1) + " of " + total);
+//        }
     }
 
     private String email(int idx) {
