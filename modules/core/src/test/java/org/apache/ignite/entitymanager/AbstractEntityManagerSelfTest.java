@@ -58,7 +58,7 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
     @Override protected void beforeTest() throws Exception {
         super.beforeTest();
 
-        mgr = mgr("user",
+        mgr = mgr(partitionCount(), "user",
             new HashMap<String, IgniteBiClosure<StringBuilder, Object, String>>() {{
                 put("firstName", new IgniteBiClosure<StringBuilder, Object, String>() {
                     @Override public String apply(StringBuilder builder, Object val) {
@@ -95,12 +95,17 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
         mgr.attach(grid);
     }
 
+    /** */
+    protected int partitionCount() {
+        return 1;
+    }
+
     /**
      * @param name Name.
      * @param indices Indices.
      * @param gen Gen.
      */
-    protected abstract EntityManager<Long, TestUser> mgr(String name,
+    protected abstract EntityManager<Long, TestUser> mgr(int parts, String name,
         Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices,
         IdGenerator<Long> gen);
 

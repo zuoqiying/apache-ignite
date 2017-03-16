@@ -46,6 +46,9 @@ import java.util.Map;
  */
 public class EntityManager<K, V> {
     /** */
+    private final int parts;
+
+    /** */
     private ThreadLocal<StringBuilder> builder = new ThreadLocal<StringBuilder>() {
         @Override
         protected StringBuilder initialValue() {
@@ -75,9 +78,10 @@ public class EntityManager<K, V> {
      * @param name Name.
      * @param indices Indices.
      */
-    public EntityManager(String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices,
+    public EntityManager(int partitions, String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices,
         IdGenerator<K> idGenerator) {
         this.name = name;
+        this.parts = partitions;
 
         this.incices = indices == null ?
             Collections.<String, IgniteBiClosure<StringBuilder, Object, String>>emptyMap() : indices;
@@ -96,7 +100,7 @@ public class EntityManager<K, V> {
         ccfgs[c] = new CacheConfiguration(entityCacheName());
         ccfgs[c].setCacheMode(CacheMode.PARTITIONED);
         ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
-        ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, 64));
+        ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, parts));
 
         c++;
 
@@ -106,7 +110,7 @@ public class EntityManager<K, V> {
             ccfgs[c].setCacheMode(CacheMode.PARTITIONED);
             ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
             ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
-            ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, 64));
+            ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, parts));
             ccfgs[c].setCopyOnRead(false);
 
             c++;

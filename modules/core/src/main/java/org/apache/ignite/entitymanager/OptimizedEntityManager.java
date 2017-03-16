@@ -45,8 +45,8 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
      * @param name   Name.
      * @param indices Indices.
      */
-    public OptimizedEntityManager(String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices) {
-        super(name, indices, new SequenceIdGenerator());
+    public OptimizedEntityManager(int parts, String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices) {
+        super(parts, name, indices, new SequenceIdGenerator());
     }
 
     /** {@inheritDoc} */
