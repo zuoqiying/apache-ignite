@@ -198,7 +198,7 @@ public class EntityManager<K, V> {
             // Insert only changed index values.
             addEntry(key, exclSameValsPred == null ? newChange.changes() : F.view(newChange.changes(), exclSameValsPred));
 
-            entityCache().put(key, val);
+            //entityCache().put(key, val);
 
             tx.commit();
 
