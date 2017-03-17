@@ -24,6 +24,7 @@ import java.io.ObjectOutput;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.UUID;
@@ -115,13 +116,25 @@ public class BinaryObjectOffheapImpl extends BinaryObjectExImpl implements Exter
     }
 
     /** {@inheritDoc} */
-    @Override protected int schemaId() {
+    @Override public boolean hasSchema() {
+        short flags = BinaryPrimitives.readShort(ptr, start + GridBinaryMarshaller.FLAGS_POS);
+
+        return BinaryUtils.hasSchema(flags);
+    }
+
+    /** {@inheritDoc} */
+    @Override public int schemaId() {
         return BinaryPrimitives.readInt(ptr, start + GridBinaryMarshaller.SCHEMA_ID_POS);
     }
 
     /** {@inheritDoc} */
-    @Override protected BinarySchema createSchema() {
+    @Override public BinarySchema createSchema() {
         return reader(null, false).getOrCreateSchema();
+    }
+
+    /** {@inheritDoc} */
+    @Override public BinaryContext context() {
+        return ctx;
     }
 
     /** {@inheritDoc} */
@@ -140,7 +153,7 @@ public class BinaryObjectOffheapImpl extends BinaryObjectExImpl implements Exter
     }
 
     /** {@inheritDoc} */
-    @Override protected boolean hasArray() {
+    @Override public boolean hasArray() {
         return false;
     }
 
@@ -174,7 +187,22 @@ public class BinaryObjectOffheapImpl extends BinaryObjectExImpl implements Exter
     }
 
     /** {@inheritDoc} */
-    @Nullable @Override protected int dataStartOffset() {
+    @Override public BinarySerializedFieldComparator createFieldComparator() {
+        int schemaOff = BinaryPrimitives.readInt(ptr, start + GridBinaryMarshaller.SCHEMA_OR_RAW_OFF_POS);
+
+        short flags = BinaryPrimitives.readShort(ptr, start + GridBinaryMarshaller.FLAGS_POS);
+
+        int fieldIdLen = BinaryUtils.isCompactFooter(flags) ? 0 : BinaryUtils.FIELD_ID_LEN;
+        int fieldOffLen = BinaryUtils.fieldOffsetLength(flags);
+
+        int orderBase = start + schemaOff + fieldIdLen;
+        int orderMultiplier = fieldIdLen + fieldOffLen;
+
+        return new BinarySerializedFieldComparator(this, null, ptr, start, orderBase, orderMultiplier, fieldOffLen);
+    }
+
+    /** {@inheritDoc} */
+    @Override public int dataStartOffset() {
         int typeId = BinaryPrimitives.readInt(ptr, start + GridBinaryMarshaller.TYPE_ID_POS);
 
         if (typeId == GridBinaryMarshaller.UNREGISTERED_TYPE_ID) {
@@ -186,7 +214,7 @@ public class BinaryObjectOffheapImpl extends BinaryObjectExImpl implements Exter
     }
 
     /** {@inheritDoc} */
-    @Nullable @Override protected int footerStartOffset() {
+    @Override public int footerStartOffset() {
         short flags = BinaryPrimitives.readShort(ptr, start + GridBinaryMarshaller.FLAGS_POS);
 
         if (!BinaryUtils.hasSchema(flags))
@@ -197,7 +225,10 @@ public class BinaryObjectOffheapImpl extends BinaryObjectExImpl implements Exter
 
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
-    @Nullable @Override protected <F> F fieldByOrder(int order) {
+    @Nullable @Override public <F> F fieldByOrder(int order) {
+        if (order == BinarySchema.ORDER_NOT_FOUND)
+            return null;
+
         Object val;
 
         // Calculate field position.
@@ -289,6 +320,14 @@ public class BinaryObjectOffheapImpl extends BinaryObjectExImpl implements Exter
                 ts.setNanos(ts.getNanos() + nanos);
 
                 val = ts;
+
+                break;
+            }
+
+            case GridBinaryMarshaller.TIME: {
+                long time = BinaryPrimitives.readLong(ptr, fieldPos + 1);
+
+                val = new Time(time);
 
                 break;
             }

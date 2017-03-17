@@ -26,9 +26,11 @@ namespace Apache.Ignite.Core.Tests.Cache
     using Apache.Ignite.Core.Cache.Affinity.Rendezvous;
     using Apache.Ignite.Core.Cache.Configuration;
     using Apache.Ignite.Core.Cache.Eviction;
+    using Apache.Ignite.Core.Cache.Expiry;
     using Apache.Ignite.Core.Cache.Store;
     using Apache.Ignite.Core.Common;
     using Apache.Ignite.Core.Impl.Cache.Affinity;
+    using Apache.Ignite.Core.Tests.Plugin.Cache;
     using NUnit.Framework;
 
     /// <summary>
@@ -250,11 +252,25 @@ namespace Apache.Ignite.Core.Tests.Cache
             Assert.AreEqual(x.WriteBehindEnabled, y.WriteBehindEnabled);
             Assert.AreEqual(x.WriteBehindFlushFrequency, y.WriteBehindFlushFrequency);
             Assert.AreEqual(x.WriteBehindFlushSize, y.WriteBehindFlushSize);
+            Assert.AreEqual(x.EnableStatistics, y.EnableStatistics);
+
+            if (x.ExpiryPolicyFactory != null)
+                Assert.AreEqual(x.ExpiryPolicyFactory.CreateInstance().GetType(),
+                    y.ExpiryPolicyFactory.CreateInstance().GetType());
+            else
+                Assert.IsNull(y.ExpiryPolicyFactory);
 
             AssertConfigsAreEqual(x.QueryEntities, y.QueryEntities);
             AssertConfigsAreEqual(x.NearConfiguration, y.NearConfiguration);
             AssertConfigsAreEqual(x.EvictionPolicy, y.EvictionPolicy);
             AssertConfigsAreEqual(x.AffinityFunction, y.AffinityFunction);
+
+            if (x.PluginConfigurations != null)
+            {
+                Assert.IsNotNull(y.PluginConfigurations);
+                Assert.AreEqual(x.PluginConfigurations.Select(p => p.GetType()),
+                    y.PluginConfigurations.Select(p => p.GetType()));
+            }
         }
 
         /// <summary>
@@ -439,6 +455,7 @@ namespace Apache.Ignite.Core.Tests.Cache
 
             Assert.AreEqual(x.Name, y.Name);
             Assert.AreEqual(x.FieldTypeName, y.FieldTypeName);
+            Assert.AreEqual(x.IsKeyField, y.IsKeyField);
         }
 
         /// <summary>
@@ -520,7 +537,7 @@ namespace Apache.Ignite.Core.Tests.Cache
                         Fields = new[]
                         {
                             new QueryField("length", typeof(int)), 
-                            new QueryField("name", typeof(string)), 
+                            new QueryField("name", typeof(string)) {IsKeyField = true},
                             new QueryField("location", typeof(string)),
                         },
                         Aliases = new [] {new QueryAlias("length", "len") },
@@ -555,7 +572,10 @@ namespace Apache.Ignite.Core.Tests.Cache
                 {
                     Partitions = 513,
                     ExcludeNeighbors = true
-                }
+                },
+                ExpiryPolicyFactory = new ExpiryFactory(),
+                EnableStatistics = true,
+                PluginConfigurations = new[] { new CachePluginConfiguration() }
             };
         }
         /// <summary>
@@ -614,7 +634,7 @@ namespace Apache.Ignite.Core.Tests.Cache
                         {
                             new QueryField("length", typeof(int)), 
                             new QueryField("name", typeof(string)), 
-                            new QueryField("location", typeof(string)),
+                            new QueryField("location", typeof(string)) {IsKeyField = true}
                         },
                         Aliases = new [] {new QueryAlias("length", "len") },
                         Indexes = new[]
@@ -713,6 +733,19 @@ namespace Apache.Ignite.Core.Tests.Cache
             /// Gets or sets the foo.
             /// </summary>
             public int Foo { get; set; }
+        }
+
+
+        /// <summary>
+        /// Expiry policy factory.
+        /// </summary>
+        private class ExpiryFactory : IFactory<IExpiryPolicy>
+        {
+            /** <inheritdoc /> */
+            public IExpiryPolicy CreateInstance()
+            {
+                return new ExpiryPolicy(null, null, null);
+            }
         }
     }
 }

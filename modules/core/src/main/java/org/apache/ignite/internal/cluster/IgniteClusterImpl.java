@@ -132,14 +132,7 @@ public class IgniteClusterImpl extends ClusterGroupAdapter implements IgniteClus
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
     @Override public <K, V> ConcurrentMap<K, V> nodeLocalMap() {
-        guard();
-
-        try {
-            return nodeLoc;
-        }
-        finally {
-            unguard();
-        }
+        return nodeLoc;
     }
 
     /** {@inheritDoc} */
@@ -564,6 +557,6 @@ public class IgniteClusterImpl extends ClusterGroupAdapter implements IgniteClus
 
     /** {@inheritDoc} */
     public String toString() {
-        return "IgniteCluster [igniteName=" + ctx.gridName() + ']';
+        return "IgniteCluster [igniteInstanceName=" + ctx.igniteInstanceName() + ']';
     }
 }
