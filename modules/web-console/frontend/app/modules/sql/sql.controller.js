@@ -1341,14 +1341,15 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .then((nid) => agentMonitor.query(nid, args.cacheName, args.query, args.nonCollocatedJoins,
                     args.enforceJoinOrder, !!args.localNid, args.pageSize))
                 .then(_processQueryResult.bind(this, paragraph, false))
-                .catch((err) => paragraph.errMsg = err.message)
                 .then(() => {
-                    if (paragraph.rate && paragraph.rate.installed && paragraph.queryArgs) {
+                    // TODO Replace check of state name on valid Promise cancellation.
+                    if ($state.current.name === 'base.sql.demo' && paragraph.rate && paragraph.rate.installed && paragraph.queryArgs) {
                         const delay = paragraph.rate.value * paragraph.rate.unit;
 
                         paragraph.rate.stopTime = $timeout(_executeRefresh, delay, false, paragraph);
                     }
-                });
+                })
+                .catch((err) => paragraph.errMsg = err.message);
         };
 
         const _tryStartRefresh = function(paragraph) {
@@ -1417,9 +1418,12 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             return agentMonitor.query(nid, args.cacheName, qry, nonCollocatedJoins, enforceJoinOrder, local, args.pageSize);
                         })
                         .then((res) => {
-                            _processQueryResult(paragraph, true, res);
+                            // TODO Replace check of state name on valid Promise cancellation.
+                            if ($state.current.name === 'base.sql.demo') {
+                                _processQueryResult(paragraph, true, res);
 
-                            _tryStartRefresh(paragraph);
+                                _tryStartRefresh(paragraph);
+                            }
                         })
                         .catch((err) => {
                             paragraph.errMsg = err.message;
