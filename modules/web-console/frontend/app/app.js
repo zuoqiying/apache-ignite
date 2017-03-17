@@ -267,9 +267,12 @@ angular
     });
 
     if (!$root.IgniteDemoMode) {
-        $root.$on('$stateChangeSuccess', (event, {name}, params) => {
+        $root.$on('$stateChangeSuccess', (event, {name, unsaved}, params) => {
             try {
-                localStorage.setItem('lastStateChangeSuccess', JSON.stringify({name, params}));
+                if (unsaved)
+                    localStorage.removeItem('lastStateChangeSuccess');
+                else
+                    localStorage.setItem('lastStateChangeSuccess', JSON.stringify({name, params}));
             }
             catch (ignored) {
                 // No-op.

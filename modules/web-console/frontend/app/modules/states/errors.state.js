@@ -16,8 +16,8 @@
  */
 
 import angular from 'angular';
-import templateNotFoundPage from 'views/404.pug';
-import templateNotAuthorizedPage from 'views/403.pug';
+import templateNotFoundPage from 'views/404.tpl.pug';
+import templateNotAuthorizedPage from 'views/403.tpl.pug';
 
 angular
     .module('ignite-console.states.errors', [
@@ -31,13 +31,15 @@ angular
                 templateUrl: templateNotFoundPage,
                 metaTags: {
                     title: 'Page not found'
-                }
+                },
+                unsaved: true
             })
             .state('403', {
                 url: '/403',
                 templateUrl: templateNotAuthorizedPage,
                 metaTags: {
                     title: 'Not authorized'
-                }
+                },
+                unsaved: true
             });
     }]);
