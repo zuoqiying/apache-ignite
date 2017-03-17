@@ -42,6 +42,9 @@ angular.module('ignite-console.sql', [
                     url: '/notebook/{noteId}',
                     templateUrl: sqlTplUrl,
                     onEnter: AclRoute.checkAccess('query'),
+                    params: {
+                        noteId: null
+                    },
                     metaTags: {
                         title: 'Query notebook'
                     }
