@@ -15,16 +15,23 @@
     limitations under the License.
 
 ul.nav.navbar-nav(ng-if='!IgniteDemoMode' ng-switch='ctrl.clusters.length')
-    li.disabled(ng-switch-when=0)
+    li.disabled(ng-switch-when='0')
         a
             i.icon-cluster
             label.padding-left-dflt No clusters available
 
-    li.disabled(ng-switch-when=1)
+    li.disabled(ng-switch-when='1')
         a
             i.icon-cluster
-            label.padding-left-dflt {{::ctrl.cluster}}
+            label.padding-left-dflt {{ctrl.cluster.name}}
 
-    li(ng-if='ctrl.clusters.length' bs-dropdown='ctrl.clusters' data-placement='bottom-left' data-trigger='hover focus' data-container='self' data-animation='' ng-click='$event.stopPropagation()' aria-haspopup='true' aria-expanded='false')
-        a.dropdown-toggle {{::ctrl.cluster}}
+    li(ng-switch-default)
+        a.dropdown-toggle(bs-dropdown='' data-placement='bottom-left' data-trigger='hover focus' data-container='self' data-animation='' ng-click='$event.stopPropagation()' aria-haspopup='true' aria-expanded='expanded')
+            i.icon-cluster
+            label.padding-left-dflt {{ctrl.cluster.name}}
             span.caret
+        ul.dropdown-menu(role='menu')
+            li(ng-repeat='cluster in ctrl.clusters')
+                div(ng-click='ctrl.change(cluster)')
+                    i.icon-cluster.pull-left(style='margin: 0; padding-left: 10px;')
+                    div: a {{cluster.name}}

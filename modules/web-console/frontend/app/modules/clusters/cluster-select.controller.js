@@ -17,6 +17,15 @@
 
 // Controller that load notebooks in navigation bar .
 export default ['ClustersData', function(ClustersData) {
-    this.cluster = null;
-    this.clusters = [];
+    this.clusters = [
+        {name: 'Cluster1', click: () => {}},
+        {name: 'Cluster2', click: () => {}},
+        {name: 'Cluster3', click: () => {}}
+    ];
+
+    this.cluster = _.head(this.clusters);
+
+    this.change = (cluster) => {
+        this.cluster = cluster;
+    };
 }];
