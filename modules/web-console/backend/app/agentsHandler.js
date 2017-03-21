@@ -294,8 +294,6 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             _.forEach(this._browserSockets[token], (sock) => sock.emit('agent:count', {count, hasDemo}));
         }
 
-
-
         /**
          * @param {ObjectId} token
          * @param {Socket} browserSock

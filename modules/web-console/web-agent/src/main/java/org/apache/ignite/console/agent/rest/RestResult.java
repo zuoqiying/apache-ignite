@@ -79,4 +79,8 @@ public class RestResult {
     public String getData() {
         return data;
     }
+
+    public boolean isSuccessful() {
+        return this.code >= 200 && this.code < 300;
+    }
 }

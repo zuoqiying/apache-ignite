@@ -50,6 +50,7 @@ import './modules/dialog/dialog.module';
 import './modules/ace.module';
 import './modules/socket.module';
 import './modules/loading/loading.module';
+import './modules/clusters/clusters.module';
 // endignite
 
 // Data
@@ -171,6 +172,7 @@ angular
     'ignite-console.configuration',
     'ignite-console.getting-started',
     'ignite-console.loading',
+    'ignite-console.clusters',
     // Ignite configuration module.
     'ignite-console.config',
     // Ignite modules.

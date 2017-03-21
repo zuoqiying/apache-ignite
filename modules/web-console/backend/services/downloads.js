@@ -21,7 +21,7 @@
 
 module.exports = {
     implements: 'services/agents',
-    inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'settings', 'agents-server', 'errors']
+    inject: ['require(lodash)', 'require(fs)', 'require(path)', 'require(jszip)', 'settings', 'agents-handler', 'errors']
 };
 
 /**
@@ -30,11 +30,11 @@ module.exports = {
  * @param path
  * @param JSZip
  * @param settings
- * @param agentSrv
+ * @param agentsHnd
  * @param errors
  * @returns {DownloadsService}
  */
-module.exports.factory = (_, fs, path, JSZip, settings, agentSrv, errors) => {
+module.exports.factory = (_, fs, path, JSZip, settings, agentsHnd, errors) => {
     class DownloadsService {
         /**
          * Get agent archive with user agent configuration.
@@ -42,10 +42,10 @@ module.exports.factory = (_, fs, path, JSZip, settings, agentSrv, errors) => {
          * @returns {*} - readable stream for further piping. (http://stuk.github.io/jszip/documentation/api_jszip/generate_node_stream.html)
          */
         prepareArchive(host, token) {
-            if (_.isEmpty(agentSrv.currentAgent))
+            if (_.isEmpty(agentsHnd.currentAgent))
                 throw new errors.MissingResourceException('Missing agent zip on server. Please ask webmaster to upload agent zip!');
 
-            const {filePath, fileName} = agentSrv.currentAgent;
+            const {filePath, fileName} = agentsHnd.currentAgent;
 
             const folder = path.basename(fileName, '.zip');
 

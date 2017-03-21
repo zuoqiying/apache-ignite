@@ -102,6 +102,9 @@ module.exports.factory = (_, socketio, configure) => {
                     const hasDemo = !!_.find(agentSocks, (sock) => _.get(sock, 'demo.enabled'));
 
                     _.forEach(socks, (sock) => sock.emit('agent:count', {count, hasDemo}));
+                })
+                .catch(() => {
+                    // No-op.
                 });
         }
 
@@ -162,30 +165,26 @@ module.exports.factory = (_, socketio, configure) => {
 
                 const resendToCluster = (demo, name, ...args) => {
                     const cb = _.last(args);
-                    return agent.emitEvent('node:rest', {uri: 'ignite', params, demo: cmd.demo, method: 'GET'})
-                        .then(this.restResultParse);
 
                     return agentHnd.forCluster(currentToken(), clusterId())
-                        .then((agent) => agent.gatewayTask('node:rest', {method: 'GET', uri: 'ignite', demo, params})
+                        .then((agent) => agent.gatewayTask('node:rest', {method: 'GET', uri: 'ignite', demo, args}))
                         .then(this.restResultParse)
                         .then((res) => cb(null, res))
                         .catch((err) => cb(_errorToJson(err)));
                 };
 
                 // Return topology command result from grid to browser.
-                sock.on('node:command', resendToCluster);
+                sock.on('node:rest', resendToCluster);
 
                 // Return topology command result from grid to browser.
-                sock.on('node:gatewayTask', (demo, nids, taskCls, argCls, ...args) => {
+                sock.on('node:restGateway', (demo, nids, taskCls, argCls, ...args) => {
                     const cb = _.last(args);
-                    return agent.emitEvent('node:rest', {uri: 'ignite', params, demo: cmd.demo, method: 'GET'})
-                        .then(this.restResultParse);
 
                     return agentHnd.forCluster(currentToken(), clusterId())
-                        .then((agent) => agent.gatewayTask('node:rest', {method: 'GET', uri: 'ignite', demo, params})
+                        .then((agent) => agent.gatewayTask('node:rest', {method: 'GET', uri: 'ignite', demo, args}))
                         .then(this.restResultParse)
                         .then((res) => cb(null, res))
-                        .catch((err) => cb(_errorToJson(err));
+                        .catch((err) => cb(_errorToJson(err)));
                 });
 
                 // Return topology command result from grid to browser.
@@ -205,7 +204,7 @@ module.exports.factory = (_, socketio, configure) => {
                 });
 
                 // Execute query on node and return first page to browser.
-                socket.on('node:query', (nid, cacheName, query, distributedJoins, enforceJoinOrder, local, pageSize, cb) => {
+                sock.on('node:query', (nid, cacheName, query, distributedJoins, enforceJoinOrder, local, pageSize, cb) => {
                     agentMgr.findAgent(accountId())
                         .then((agent) => agent.fieldsQuery(demo, nid, cacheName, query, distributedJoins, enforceJoinOrder, local, pageSize))
                         .then((res) => cb(null, res))
@@ -221,7 +220,7 @@ module.exports.factory = (_, socketio, configure) => {
                 });
 
                 // Execute query on node and return full result to browser.
-                socket.on('node:query:getAll', (nid, cacheName, query, distributedJoins, enforceJoinOrder, local, cb) => {
+                sock.on('node:query:getAll', (nid, cacheName, query, distributedJoins, enforceJoinOrder, local, cb) => {
                     // Set page size for query.
                     const pageSize = 1024;
 

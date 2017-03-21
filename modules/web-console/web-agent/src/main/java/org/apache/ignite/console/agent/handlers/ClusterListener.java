@@ -47,6 +47,8 @@ public class ClusterListener {
 
     private static State state = State.DISCONNECTED;
 
+    private static boolean connected = false;
+
 
     /** Default timeout. */
     private static final long DFLT_TIMEOUT = 3000L;
@@ -82,7 +84,7 @@ public class ClusterListener {
         refreshTask = pool.scheduleWithFixedDelay(new Runnable() {
             @Override public void run() {
                 try {
-                    RestResult top = restExecutor.topology(false, state == State.DISCONNECTED);
+                    RestResult top = restExecutor.topology(false, false);
 
                     if (state == State.DISCONNECTED) {
                         state = State.CONNECTED;
