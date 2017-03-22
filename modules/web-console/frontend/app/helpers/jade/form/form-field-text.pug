@@ -53,7 +53,7 @@ mixin ignite-form-field-text(label, model, name, disabled, required, placeholder
         +ignite-form-field__label(label, name, required)
         .ignite-form-field__control
             if tip
-                i.tipField.icon-help(bs-tooltip='' data-title=tip)
+                +ignite-tooltip(tip, tooltip)
             
             if block
                 block
