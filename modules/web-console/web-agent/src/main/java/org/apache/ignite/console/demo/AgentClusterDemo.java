@@ -79,19 +79,19 @@ public class AgentClusterDemo {
     /**
      * Configure node.
      * @param basePort Grid name index.
-     * @param gridIdx Grid name index.
+     * @param gridIdx Ignite instance name index.
      * @param client If {@code true} then start client node.
      * @return IgniteConfiguration
      */
     private static IgniteConfiguration igniteConfiguration(int basePort, int gridIdx, boolean client) {
         IgniteConfiguration cfg = new IgniteConfiguration();
 
-        cfg.setGridName((client ? "demo-client-" : "demo-server-" ) + gridIdx);
+        cfg.setIgniteInstanceName((client ? "demo-client-" : "demo-server-" ) + gridIdx);
         cfg.setLocalHost("127.0.0.1");
         cfg.setIncludeEventTypes(EVTS_DISCOVERY);
 
         cfg.getConnectorConfiguration().setPort(basePort);
-        
+
         System.setProperty(IGNITE_JETTY_PORT, String.valueOf(basePort + 10));
 
         TcpDiscoveryVmIpFinder ipFinder = new TcpDiscoveryVmIpFinder();
@@ -191,7 +191,7 @@ public class AgentClusterDemo {
 
                             if (F.isEmpty(jettyHost) || jettyPort == null)
                                 throw new IgniteException("DEMO: Failed to start Jetty REST handler on embedded node");
-                            
+
                             log.info("DEMO: Started embedded node for demo purpose [TCP binary port={}, Jetty REST port={}]", port, jettyPort);
 
                             demoUrl = String.format("http://%s:%d", jettyHost, jettyPort);
