@@ -46,7 +46,7 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
     private static final int GRIDS_CNT = 1;
 
     /** Batch size. */
-    private static final int BATCH_SIZE = 64;
+    private static final int BATCH_SIZE = 10;
 
     /** Entity manager. */
     private EntityManager<Long, TestUser> mgr;
