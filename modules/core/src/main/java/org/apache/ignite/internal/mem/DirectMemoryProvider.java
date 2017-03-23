@@ -21,5 +21,8 @@ package org.apache.ignite.internal.mem;
  *
  */
 public interface DirectMemoryProvider {
+    /**
+     *
+     */
     public DirectMemory memory();
 }
