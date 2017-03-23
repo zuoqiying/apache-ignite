@@ -101,7 +101,7 @@ public class EntityManager<K, V> {
             ccfgs[c] = new CacheConfiguration(indexCacheName(idxName));
             ccfgs[c].setCacheMode(CacheMode.PARTITIONED);
             ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
-//            ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
+            //ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
             ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, parts));
             ccfgs[c].setCopyOnRead(false);
 
@@ -229,9 +229,11 @@ public class EntityManager<K, V> {
         for (Map.Entry<String, String> change : changes.entrySet()) {
             IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), key);
 
-            indexCache(change.getKey()).put(idxKey, IndexFieldValue.MARKER);
+            //indexCache(change.getKey()).put(idxKey, IndexFieldValue.MARKER);
 
-            //ses.addAddition(indexCacheName(change.getKey()), idxKey, IndexFieldValue.MARKER);
+            Map<IndexFieldKey, IndexFieldValue> additions = ses.getAdditions(indexCacheName(change.getKey()));
+
+            additions.put(idxKey, IndexFieldValue.MARKER);
         }
     }
 
@@ -243,9 +245,11 @@ public class EntityManager<K, V> {
         for (Map.Entry<String, String> change : changes.entrySet()) {
             IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), key);
 
-            indexCache(change.getKey()).remove(idxKey);
+            //indexCache(change.getKey()).remove(idxKey);
 
-            //ses.addRemoval(indexCacheName(change.getKey()), idxKey);
+            Map<IndexFieldKey, IndexFieldValue> removals = ses.getRemovals(indexCacheName(change.getKey()));
+
+            removals.put(idxKey, null);
         }
     }
 

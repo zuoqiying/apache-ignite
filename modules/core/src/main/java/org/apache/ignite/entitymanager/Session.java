@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import javax.cache.Cache;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.transactions.Transaction;
@@ -30,7 +31,7 @@ import org.apache.ignite.transactions.TransactionIsolation;
 /**
  * Batch.
  */
-public class Session {
+public class Session implements AutoCloseable {
     /** */
     private final Transaction transaction;
 
@@ -38,10 +39,10 @@ public class Session {
     private static ThreadLocal<Session> sesHolder = new ThreadLocal<>();
 
     /** */
-    private Map<String, Map<IndexFieldKey, IndexFieldValue>> additions;
+    Map<String, Map<IndexFieldKey, IndexFieldValue>> additions;
 
     /** */
-    private Map<String, HashSet<IndexFieldKey>> removals;
+    Map<String, Map<IndexFieldKey, IndexFieldValue>> removals;
 
     /** */
     private Ignite ignite;
@@ -58,35 +59,17 @@ public class Session {
     }
 
     /** */
-    public static Transaction newSession(Ignite ignite, TransactionConcurrency concurrency, TransactionIsolation isolation) {
+    public static Session newSession(Ignite ignite, TransactionConcurrency concurrency, TransactionIsolation isolation) {
         Session ses;
 
         sesHolder.set(ses = new Session(ignite, concurrency, isolation));
 
-        return ses.transaction;
+        return ses;
     }
 
     /** */
-    public static Session current() {
+    static Session current() {
         return sesHolder.get();
-    }
-
-    public void addAddition(String idxName, IndexFieldKey key, IndexFieldValue val) {
-        Map<IndexFieldKey, IndexFieldValue> changes = additions.get(idxName);
-
-        if (changes == null)
-            additions.put(idxName, (changes = new HashMap<>()));
-
-        changes.put(key, val);
-    }
-
-    public void addRemoval(String idxName, IndexFieldKey key) {
-        HashSet<IndexFieldKey> changes = removals.get(idxName);
-
-        if (changes == null)
-            removals.put(idxName, (changes = new HashSet<>()));
-
-        changes.add(key);
     }
 
     /** */
@@ -106,21 +89,54 @@ public class Session {
             iter.remove(); // Freeing heap.
         }
 
-        Iterator<Map.Entry<String, HashSet<IndexFieldKey>>> iter2 = removals.entrySet().iterator();
+        Iterator<Map.Entry<String, Map<IndexFieldKey, IndexFieldValue>>> iter2 = removals.entrySet().iterator();
 
         while (iter2.hasNext()) {
-            Map.Entry<String, HashSet<IndexFieldKey>> entry = iter2.next();
+            Map.Entry<String, Map<IndexFieldKey, IndexFieldValue>> entry = iter2.next();
 
             String idxName = entry.getKey();
 
             IgniteCache<IndexFieldKey, IndexFieldValue> idxCache = ignite.cache(idxName).withKeepBinary();
 
-            for (IndexFieldKey key : entry.getValue())
-                idxCache.remove(key);
+            for (Map.Entry<IndexFieldKey, IndexFieldValue> valueEntry : entry.getValue().entrySet()) {
+                IndexFieldKey idxKey = valueEntry.getKey();
+
+                IndexFieldValue idxVal = valueEntry.getValue();
+
+                if (idxVal.getValue() == null)
+                    idxCache.remove(idxKey);
+                else
+                    idxCache.put(idxKey, idxVal);
+            }
 
             iter2.remove();
         }
 
         transaction.commit();
+    }
+
+    /** {@inheritDoc} */
+    @Override public void close() {
+        transaction.close();
+    }
+
+    /** */
+    public Map<IndexFieldKey, IndexFieldValue> getAdditions(String idxName) {
+        Map<IndexFieldKey, IndexFieldValue> changes = additions.get(idxName);
+
+        if (changes == null)
+            additions.put(idxName, (changes = new HashMap<>()));
+
+        return changes;
+    }
+
+    /** */
+    public Map<IndexFieldKey, IndexFieldValue> getRemovals(String idxName) {
+        Map<IndexFieldKey, IndexFieldValue> changes = removals.get(idxName);
+
+        if (changes == null)
+            removals.put(idxName, (changes = new HashMap<>()));
+
+        return changes;
     }
 }

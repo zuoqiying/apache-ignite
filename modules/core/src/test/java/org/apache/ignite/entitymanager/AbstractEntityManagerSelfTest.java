@@ -17,8 +17,10 @@
 
 package org.apache.ignite.entitymanager;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -43,10 +45,19 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
     /** Grids count. */
     private static final int GRIDS_CNT = 1;
 
+    /** Batch size. */
+    private static final int BATCH_SIZE = 64;
+
     /** Entity manager. */
     private EntityManager<Long, TestUser> mgr;
 
-    /** Grid. */
+    /** */
+    private TransactionConcurrency concurrency = TransactionConcurrency.PESSIMISTIC;
+
+    /** */
+    private TransactionIsolation isolation = TransactionIsolation.REPEATABLE_READ;
+
+    /** */
     private Ignite grid;
 
     /** {@inheritDoc} */
@@ -122,7 +133,7 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
 
     /** */
     protected int threadsCount() {
-        return Runtime.getRuntime().availableProcessors();
+        return 1; //Runtime.getRuntime().availableProcessors();
     }
 
     /**
@@ -145,6 +156,8 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
             @Override public void run() {
                 int i;
 
+                List<TestUser> batch = new ArrayList<>();
+
                 while ((i = cnt.getAndIncrement()) < total) {
                     int fnIdx = r.nextInt(firstNamesCnt.length());
                     int lnIdx = r.nextInt(lastNamesCnt.length());
@@ -162,21 +175,33 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
                         email(i),
                         0);
 
-                    try(Transaction tx = Session.newSession(grid, TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
-                        mgr.save(null, user);
+                    batch.add(user);
 
-                        //Session.current().flush();
+                    if (batch.size() == BATCH_SIZE) {
+                        try(Session ses = Session.newSession(grid, concurrency, isolation)) {
+                            for (TestUser testUser : batch)
+                                mgr.save(null, testUser);
 
-                        tx.commit();
+                            ses.flush();
+                        }
+
+                        batch.clear();
                     }
 
                     if ((i + 1) % 10_000 == 0)
                         log().info("Processed " + (i + 1) + " of " + total);
                 }
+
+                try(Session ses = Session.newSession(grid, concurrency, isolation)) {
+                    for (TestUser testUser : batch)
+                        mgr.save(null, testUser);
+
+                    ses.flush();
+                }
             }
         }, threadsCount());
 
-        log().info("TPS: " + (total - 10_000)/(((System.currentTimeMillis() - t1[0]))/1000) );
+        log().info("TPS: " + (total - 10_000)/((Math.max(1, (System.currentTimeMillis() - t1[0])))/1000) );
 
         TestUser u = new TestUser();
 //
@@ -196,13 +221,13 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
 //
 //        log().info("Verified lastName");
 //
-//        for (int i = 0; i < agesCnt.length(); i++) {
-//            u.setAge(i);
-//
-//            assertEquals(agesCnt.get(i), mgr.findAll(u, "age").size());
-//        }
-//
-//        log().info("Verified age");
+        for (int i = 0; i < agesCnt.length(); i++) {
+            u.setAge(i);
+
+            assertEquals(agesCnt.get(i), mgr.findAll(u, "age").size());
+        }
+
+        log().info("Verified age");
 //
 //        for (int i = 0; i < total; i++) {
 //            u.setEmail(email(i));

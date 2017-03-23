@@ -14,15 +14,16 @@ public class SequenceIdGenerator implements IdGenerator<Long> {
 
     /** {@inheritDoc} */
     @Override public Long nextId() {
-        Long val = threadLocCntr.get();
-        if (val == null || val % OptimizedEntityManager.CAPACITY == OptimizedEntityManager.CAPACITY - 1)
-            val = seq.getAndAdd(OptimizedEntityManager.CAPACITY);
-        else
-            val++;
+//        Long val = threadLocCntr.get();
+//        if (val == null || val % OptimizedEntityManager.CAPACITY == OptimizedEntityManager.CAPACITY - 1)
+//            val = seq.getAndAdd(OptimizedEntityManager.CAPACITY);
+//        else
+//            val++;
+//
+//        threadLocCntr.set(val);
 
-        threadLocCntr.set(val);
-
-        return val;
+//        return val;
+        return seq.getAndIncrement();
     }
 
     /** {@inheritDoc} */

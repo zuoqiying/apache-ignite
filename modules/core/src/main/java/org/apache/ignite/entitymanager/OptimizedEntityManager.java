@@ -20,6 +20,8 @@ package org.apache.ignite.entitymanager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCache;
@@ -50,14 +52,14 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
     }
 
     /** {@inheritDoc} */
-    public boolean contains(String idxName, Object value, Long id) {
+    public boolean contains(String idxName, Object val, Long id) {
         long seg = id / CAPACITY;
 
         int off = (int) (id % CAPACITY);
 
         IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
 
-        String strVal = clo.apply(builder(), value);
+        String strVal = clo.apply(builder(), val);
 
         IndexFieldKey idxKey = new IndexFieldKey(strVal, seg);
 
@@ -67,52 +69,67 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
     }
 
     /** {@inheritDoc} */
-    protected void addEntry(Long key, Map<String, String> changes) {
+    protected void addEntry(Session ses, Long key, Map<String, String> changes) {
         long seg = key / CAPACITY;
 
         int off = (int) (key % CAPACITY);
 
-        for (Map.Entry<String, String> field : changes.entrySet()) {
-            IndexFieldKey idxKey = new IndexFieldKey(field.getValue(), seg);
+        for (Map.Entry<String, String> change : changes.entrySet()) {
+            IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), seg);
 
-            IgniteCache<IndexFieldKey, IndexFieldValue> cache = indexCache(field.getKey());
+            String idxCacheName = indexCacheName(change.getKey());
 
-            IndexFieldValue idxVal = cache.get(idxKey);
+            Map<IndexFieldKey, IndexFieldValue> map = ses.getAdditions(idxCacheName);
+
+            IgniteCache<IndexFieldKey, IndexFieldValue> cache = ignite.cache(idxCacheName);
+
+            IndexFieldValue idxVal = map.get(idxKey);
+
+            // Load latest stored value.
+            if (idxVal == null)
+                map.put(idxKey, (idxVal = cache.get(idxKey)));
 
             if (idxVal == null)
-                idxVal = new IndexFieldValue(new BitSet());
+                map.put(idxKey, (idxVal = new IndexFieldValue(new BitSet())));
 
             ((BitSet)idxVal.getValue()).set(off);
-
-            cache.put(idxKey, idxVal);
         }
     }
 
     /** {@inheritDoc} */
-    protected void removeEntry(Long key, Map<String, String> changes) {
+    protected void removeEntry(Session ses, Long key, Map<String, String> changes) {
         long seg = key / CAPACITY;
 
         int off = (int) (key % CAPACITY);
 
-        for (Map.Entry<String, String> field : changes.entrySet()) {
-            IndexFieldKey idxKey = new IndexFieldKey(field.getValue(), seg);
+        for (Map.Entry<String, String> change : changes.entrySet()) {
+            IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), seg);
 
-            IgniteCache<IndexFieldKey, IndexFieldValue> cache = indexCache(field.getKey());
+            String idxCacheName = indexCacheName(change.getKey());
 
-            IndexFieldValue val = cache.get(idxKey);
+            Map<IndexFieldKey, IndexFieldValue> map = ses.getRemovals(idxCacheName);
 
-            if (val == null)
+            IgniteCache<IndexFieldKey, IndexFieldValue> cache = indexCache(change.getKey());
+
+            IndexFieldValue idxVal = map.get(idxKey);
+
+            // Load latest value.
+            if (idxVal == null)
+                idxVal = cache.get(idxKey);
+
+            if (idxVal == null)
                 continue;
+            else
+                map.put(idxKey, idxVal);
 
-            BitSet set = (BitSet) val.getValue();
+            BitSet set = (BitSet) idxVal.getValue();
+
+            assert set.cardinality() > 0;
+
+            set.clear(off);
 
             if (set.cardinality() == 0)
-                cache.remove(idxKey);
-            else {
-                set.clear(off);
-
-                cache.put(idxKey, val);
-            }
+                map.put(idxKey, null); // Mark for removal.
         }
     }
 
