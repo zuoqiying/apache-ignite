@@ -133,7 +133,7 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
 
     /** */
     protected int threadsCount() {
-        return 1; //Runtime.getRuntime().availableProcessors();
+        return Runtime.getRuntime().availableProcessors();
     }
 
     /**
