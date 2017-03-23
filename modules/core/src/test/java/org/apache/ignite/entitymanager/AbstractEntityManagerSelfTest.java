@@ -75,11 +75,11 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
 //                        return builder.append(U.field(val, "email").toString().toLowerCase()).toString();
 //                    }
 //                });
-//                put("age", new IgniteBiClosure<StringBuilder, Object, String>() {
-//                    @Override public String apply(StringBuilder builder, Object val) {
-//                        return builder.append(U.field(val, "age").toString().toLowerCase()).toString();
-//                    }
-//                });
+                put("age", new IgniteBiClosure<StringBuilder, Object, String>() {
+                    @Override public String apply(StringBuilder builder, Object val) {
+                        return builder.append(U.field(val, "age").toString().toLowerCase()).toString();
+                    }
+                });
 //                put("fio", new IgniteBiClosure<StringBuilder, Object, String>() {
 //                    @Override public String apply(StringBuilder builder, Object val) {
 //                        return builder.append(U.field(val, "lastName").toString().toLowerCase()).
@@ -112,6 +112,95 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
     /** {@inheritDoc} */
     @Override protected void afterTest() throws Exception {
         stopAllGrids(false);
+    }
+
+    protected int threadsCount() {
+        return Runtime.getRuntime().availableProcessors();
+    }
+
+    /**
+     * Tests multithreaded entity creation.
+     */
+    public void testCreateMultithreaded() throws Exception {
+        final int total = 310_000;
+
+        final AtomicInteger cnt = new AtomicInteger();
+
+        final AtomicIntegerArray firstNamesCnt = new AtomicIntegerArray(600);
+        final AtomicIntegerArray lastNamesCnt = new AtomicIntegerArray(15_000);
+        final AtomicIntegerArray agesCnt = new AtomicIntegerArray(1);
+
+        final GridRandom r = new GridRandom(0);
+
+        final long[] t1 = new long[1];
+
+        multithreaded(new Runnable() {
+            @Override public void run() {
+                int i;
+
+                while ((i = cnt.getAndIncrement()) < total) {
+                    int fnIdx = r.nextInt(firstNamesCnt.length());
+                    int lnIdx = r.nextInt(lastNamesCnt.length());
+                    int age = r.nextInt(agesCnt.length());
+
+                    if (i == 10_000)
+                        t1[0] = System.currentTimeMillis();
+
+                    firstNamesCnt.getAndIncrement(fnIdx);
+                    lastNamesCnt.getAndIncrement(lnIdx);
+                    agesCnt.getAndIncrement(age);
+
+                    TestUser user = new TestUser(firstName(fnIdx),
+                        lastName(lnIdx),
+                        email(i),
+                        0);
+
+                    mgr.save(null, user);
+
+                    if ((i + 1) % 10_000 == 0)
+                        log().info("Processed " + (i + 1) + " of " + total);
+                }
+            }
+        }, threadsCount());
+
+        log().info("TPS: " + (total - 10_000)/(((System.currentTimeMillis() - t1[0]))/1000) );
+
+        TestUser u = new TestUser();
+//
+//        for (int i = 0; i < firstNamesCnt.length(); i++) {
+//            u.setFirstName("fname" + i);
+//
+//            assertEquals(firstNamesCnt.get(i), mgr.findAll(u, "firstName").size());
+//        }
+//
+//        log().info("Verified firstName");
+//
+//        for (int i = 0; i < lastNamesCnt.length(); i++) {
+//            u.setLastName("lname" + i);
+//
+//            assertEquals(lastNamesCnt.get(i), mgr.findAll(u, "lastName").size());
+//        }
+//
+//        log().info("Verified lastName");
+//
+        for (int i = 0; i < agesCnt.length(); i++) {
+            u.setAge(i);
+
+            assertEquals(agesCnt.get(i), mgr.findAll(u, "age").size());
+        }
+
+        log().info("Verified age");
+//
+//        for (int i = 0; i < total; i++) {
+//            u.setEmail(email(i));
+//
+//            Collection<T2<Long, TestUser>> entities = mgr.findAll(u, "email");
+//
+//            assertEquals(1, entities.size());
+//
+//            if ((i + 1) % 10_000 == 0)
+//                log().info("Verified email " + (i + 1) + " of " + total);
+//        }
     }
 
     /**
@@ -228,84 +317,6 @@ public abstract class AbstractEntityManagerSelfTest extends GridCommonAbstractTe
         assertEquals(0, mgr.findAll(u1, "email").size());
         assertEquals(0, mgr.findAll(u1, "age").size());
         assertEquals(0, mgr.findAll(u1, "fio").size());
-    }
-
-    /**
-     * Tests multithreaded entity creation.
-     */
-    public void testCreateMultithreaded() throws Exception {
-        final int total = 100_000;
-
-        final AtomicInteger cnt = new AtomicInteger();
-
-        final AtomicIntegerArray firstNamesCnt = new AtomicIntegerArray(600);
-        final AtomicIntegerArray lastNamesCnt = new AtomicIntegerArray(15_000);
-        final AtomicIntegerArray agesCnt = new AtomicIntegerArray(100);
-
-        final GridRandom r = new GridRandom(0);
-
-        multithreaded(new Runnable() {
-            @Override public void run() {
-                int i = 0;
-
-                while ((i = cnt.getAndIncrement()) < total) {
-                    int fnIdx = r.nextInt(firstNamesCnt.length());
-                    int lnIdx = r.nextInt(lastNamesCnt.length());
-                    int age = r.nextInt(agesCnt.length());
-
-                    firstNamesCnt.getAndIncrement(fnIdx);
-                    lastNamesCnt.getAndIncrement(lnIdx);
-                    agesCnt.getAndIncrement(age);
-
-                    TestUser user = new TestUser(firstName(fnIdx),
-                        lastName(lnIdx),
-                        email(i),
-                        0);
-
-                    mgr.save(null, user);
-
-                    if ((i + 1) % 10_000 == 0)
-                        log().info("Processed " + (i + 1) + " of " + total);
-                }
-            }
-        }, 1);
-
-        TestUser u = new TestUser();
-//
-//        for (int i = 0; i < firstNamesCnt.length(); i++) {
-//            u.setFirstName("fname" + i);
-//
-//            assertEquals(firstNamesCnt.get(i), mgr.findAll(u, "firstName").size());
-//        }
-//
-//        log().info("Verified firstName");
-//
-//        for (int i = 0; i < lastNamesCnt.length(); i++) {
-//            u.setLastName("lname" + i);
-//
-//            assertEquals(lastNamesCnt.get(i), mgr.findAll(u, "lastName").size());
-//        }
-//
-//        log().info("Verified lastName");
-//
-//        for (int i = 0; i < agesCnt.length(); i++) {
-//            u.setAge(i);
-//
-//            assertEquals(agesCnt.get(i), mgr.findAll(u, "age").size());
-//        }
-//
-//        log().info("Verified age");
-//
-//        for (int i = 0; i < total; i++) {
-//            u.setEmail(email(i));
-//
-//            Collection<T2<Long, TestUser>> entities = mgr.findAll(u, "email");
-//
-//            assertEquals(1, entities.size());
-//
-//            if ((i + 1) % 10_000 == 0)
-//                log().info("Verified email " + (i + 1) + " of " + total);
-//        }
     }
 
     private String email(int idx) {

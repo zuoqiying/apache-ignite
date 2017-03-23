@@ -50,8 +50,7 @@ public class EntityManager<K, V> {
 
     /** */
     private ThreadLocal<StringBuilder> builder = new ThreadLocal<StringBuilder>() {
-        @Override
-        protected StringBuilder initialValue() {
+        @Override protected StringBuilder initialValue() {
             return new StringBuilder();
         }
     };
