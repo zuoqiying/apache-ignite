@@ -17,6 +17,11 @@
 
 package org.apache.ignite.entitymanager;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.cache.Cache;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.CacheAtomicityMode;
@@ -31,15 +36,8 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiClosure;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgnitePredicate;
-import org.apache.ignite.transactions.Transaction;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
-
-import javax.cache.Cache;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * The <code>EntityManager</code> which support only manual ids assignment.
@@ -67,17 +65,12 @@ public class EntityManager<K, V> {
     /** */
     private final IdGenerator<K> idGenerator;
 
-    /** */
-    private TransactionConcurrency concurrency = TransactionConcurrency.PESSIMISTIC;
-
-    /** */
-    private TransactionIsolation isolation = TransactionIsolation.REPEATABLE_READ;
-
     /**
      * @param name Name.
      * @param indices Indices.
      */
-    public EntityManager(int partitions, String name, Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices,
+    public EntityManager(int partitions, String name,
+        Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices,
         IdGenerator<K> idGenerator) {
         this.name = name;
         this.parts = partitions;
@@ -108,7 +101,7 @@ public class EntityManager<K, V> {
             ccfgs[c] = new CacheConfiguration(indexCacheName(idxName));
             ccfgs[c].setCacheMode(CacheMode.PARTITIONED);
             ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
-            ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
+//            ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
             ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, parts));
             ccfgs[c].setCopyOnRead(false);
 
@@ -162,47 +155,47 @@ public class EntityManager<K, V> {
     }
 
     public K save(K key, V val) {
-        try (Transaction tx = ignite.transactions().txStart(concurrency, isolation)) {
-            V oldVal = null;
+        Session ses = Session.current();
 
-            IndexChange<K> oldChange = null;
+        assert ses != null;
 
-            if (key == null)
-                key = nextKey(); // New value.
-            else {
-                oldVal = get(key);
+        V oldVal = null;
 
-                if (oldVal != null)
-                    oldChange = indexChange(key, oldVal);
-            }
+        IndexChange<K> oldChange = null;
 
-            // Merge indices.
-            final IndexChange<K> newChange = indexChange(key, val);
+        if (key == null)
+            key = nextKey(); // New value.
+        else {
+            oldVal = get(key);
 
-            IgnitePredicate<String> exclSameValsPred = null;
-
-            if (oldChange != null) {
-                final IndexChange<K> finalOldChange = oldChange;
-
-                exclSameValsPred = new IgnitePredicate<String>() {
-                    @Override public boolean apply(String s) {
-                        return !finalOldChange.changes().get(s).equals(newChange.changes().get(s));
-                    }
-                };
-
-                // Remove only changed index values.
-                removeEntry(key, F.view(oldChange.changes(), exclSameValsPred));
-            }
-
-            // Insert only changed index values.
-            addEntry(key, exclSameValsPred == null ? newChange.changes() : F.view(newChange.changes(), exclSameValsPred));
-
-            //entityCache().put(key, val);
-
-            tx.commit();
-
-            return key;
+            if (oldVal != null)
+                oldChange = indexChange(key, oldVal);
         }
+
+        // Merge indices.
+        final IndexChange<K> newChange = indexChange(key, val);
+
+        IgnitePredicate<String> exclSameValsPred = null;
+
+        if (oldChange != null) {
+            final IndexChange<K> finalOldChange = oldChange;
+
+            exclSameValsPred = new IgnitePredicate<String>() {
+                @Override public boolean apply(String s) {
+                    return !finalOldChange.changes().get(s).equals(newChange.changes().get(s));
+                }
+            };
+
+            // Remove only changed index values.
+            removeEntry(ses, key, F.view(oldChange.changes(), exclSameValsPred));
+        }
+
+        // Insert only changed index values.
+        addEntry(ses, key, exclSameValsPred == null ? newChange.changes() : F.view(newChange.changes(), exclSameValsPred));
+
+        //entityCache().put(key, val);
+
+        return key;
     }
 
     /** */
@@ -212,24 +205,24 @@ public class EntityManager<K, V> {
 
     /** */
     public boolean delete(K key) {
-        try (Transaction tx = ignite.transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
-            V v = get(key);
+        Session ses = Session.current();
 
-            if (v == null)
-                return false;
+        V v = get(key);
 
-            IndexChange<K> idxChange = indexChange(key, v);
+        if (v == null)
+            return false;
 
-            removeEntry(idxChange.id(), idxChange.changes());
+        IndexChange<K> idxChange = indexChange(key, v);
 
-            entityCache().remove(key);
+        removeEntry(ses, idxChange.id(), idxChange.changes());
 
-            return true;
-        }
+        entityCache().remove(key);
+
+        return true;
     }
 
     /** */
-    protected void addEntry(K key, Map<String, String> changes) {
+    protected void addEntry(Session ses, K key, Map<String, String> changes) {
         if (changes == null)
             return;
 
@@ -237,11 +230,13 @@ public class EntityManager<K, V> {
             IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), key);
 
             indexCache(change.getKey()).put(idxKey, IndexFieldValue.MARKER);
+
+            //ses.addAddition(indexCacheName(change.getKey()), idxKey, IndexFieldValue.MARKER);
         }
     }
 
     /** */
-    protected void removeEntry(K key, Map<String, String> changes) {
+    protected void removeEntry(Session ses, K key, Map<String, String> changes) {
         if (changes == null)
             return;
 
@@ -249,6 +244,8 @@ public class EntityManager<K, V> {
             IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), key);
 
             indexCache(change.getKey()).remove(idxKey);
+
+            //ses.addRemoval(indexCacheName(change.getKey()), idxKey);
         }
     }
 
@@ -323,33 +320,5 @@ public class EntityManager<K, V> {
      */
     public int indexSize(String field) {
         return indexCache(field).size();
-    }
-
-    /**
-     * @return Concurrency.
-     */
-    public TransactionConcurrency concurrency() {
-        return concurrency;
-    }
-
-    /**
-     * @param concurrency New concurrency.
-     */
-    public void concurrency(TransactionConcurrency concurrency) {
-        this.concurrency = concurrency;
-    }
-
-    /**
-     * @return Isolation.
-     */
-    public TransactionIsolation isolation() {
-        return isolation;
-    }
-
-    /**
-     * @param isolation New isolation.
-     */
-    public void isolation(TransactionIsolation isolation) {
-        this.isolation = isolation;
     }
 }
