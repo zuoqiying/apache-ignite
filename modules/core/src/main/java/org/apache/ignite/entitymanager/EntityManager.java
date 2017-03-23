@@ -101,7 +101,7 @@ public class EntityManager<K, V> {
             ccfgs[c] = new CacheConfiguration(indexCacheName(idxName));
             ccfgs[c].setCacheMode(CacheMode.PARTITIONED);
             ccfgs[c].setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
-            //ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
+            ccfgs[c].setIndexedTypes(IndexFieldKey.class, IndexFieldValue.class);
             ccfgs[c].setAffinity(new RendezvousAffinityFunction(false, parts));
             ccfgs[c].setCopyOnRead(false);
 
