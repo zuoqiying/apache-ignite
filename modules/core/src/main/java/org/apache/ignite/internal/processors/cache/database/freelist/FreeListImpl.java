@@ -481,14 +481,19 @@ public class FreeListImpl extends PagesList implements FreeList, ReuseList {
         long totalSize = 0;
         long loadSize = 0;
 
-        for (int b = BUCKETS - 2; b > 0; b--) {
-            long bsize = pageSize - ((REUSE_BUCKET - b) << shift);
+        try {
+            for (int b = BUCKETS - 2; b > 0; b--) {
+                long bsize = pageSize - ((REUSE_BUCKET - b) << shift);
 
-            long pages = bucketsSize[b].longValue();
+                long pages = trackBucketsSize ? bucketsSize[b].longValue() : storedPagesCount(b);
 
-            loadSize += pages * (pageSize - bsize);
+                loadSize += pages * (pageSize - bsize);
 
-            totalSize += pages * pageSize;
+                totalSize += pages * pageSize;
+            }
+        }
+        catch (IgniteCheckedException ignore) {
+            // ignore.
         }
 
         return totalSize == 0 ? -1L : ((double)loadSize / totalSize);
@@ -499,7 +504,10 @@ public class FreeListImpl extends PagesList implements FreeList, ReuseList {
      */
     public long freePagesSize() {
         try {
-            return recycledPagesCount();
+            if (trackBucketsSize)
+                return bucketsSize[REUSE_BUCKET].longValue();
+            else
+                return recycledPagesCount();
         }
         catch (IgniteCheckedException e) {
             return -1L;

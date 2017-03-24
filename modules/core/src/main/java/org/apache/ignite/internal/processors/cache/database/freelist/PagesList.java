@@ -76,7 +76,7 @@ public abstract class PagesList extends DataStructure {
             Math.min(8, Runtime.getRuntime().availableProcessors() * 2));
 
     /** */
-    private final boolean trackBucketsSize = IgniteSystemProperties.getBoolean("IGNITE_PAGES_LIST_TRACK_SIZE", false);
+    protected final boolean trackBucketsSize = IgniteSystemProperties.getBoolean("IGNITE_PAGES_LIST_TRACK_SIZE", false);
 
     /** */
     protected final LongAdder8[] bucketsSize;
