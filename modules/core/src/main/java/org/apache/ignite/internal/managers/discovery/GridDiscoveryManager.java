@@ -1165,6 +1165,9 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
     private int nodeJavaMajorVersion(ClusterNode node) throws IgniteCheckedException {
         try {
             // The format is identical for Oracle JDK, OpenJDK and IBM JDK.
+            if (node.<String>attribute("java.version").contains("9")) {
+                return 9;
+            }
             return Integer.parseInt(node.<String>attribute("java.version").split("\\.")[1]);
         }
         catch (Exception e) {

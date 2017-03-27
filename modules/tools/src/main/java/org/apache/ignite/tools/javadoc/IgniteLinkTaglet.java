@@ -110,8 +110,7 @@ public class IgniteLinkTaglet implements Taglet {
      * <p>
      * Input: org.apache.ignite.grid.spi.indexing.h2.GridH2IndexingSpi#setIndexCustomFunctionClasses(Class[])
      * <p>
-     * Output: <a href="../../../../../org/apache/ignite/grid/spi/indexing/h2/GridH2IndexingSpi.html#
-     * setIndexCustomFunctionClasses(java.lang.Class...)">
+     * Output: <a href="../../../../../org/apache/ignite/grid/spi/indexing/h2/GridH2IndexingSpi.html#setIndexCustomFunctionClasses(java.lang.Class...)">
      * <code>GridH2IndexingSpi.setIndexCustomFunctionClasses(java.lang.Class[])</code></a>
      *
      * @param tag <code>Tag</code> representation of this custom tag.

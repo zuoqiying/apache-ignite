@@ -18,12 +18,17 @@
 package org.apache.ignite.internal.util;
 
 import java.lang.reflect.Field;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.ignite.IgniteSystemProperties;
+import org.jsr166.ConcurrentHashMap8;
 import sun.misc.Unsafe;
 
 /**
@@ -84,6 +89,9 @@ public abstract class GridUnsafe {
 
     /** */
     public static final long BOOLEAN_ARR_OFF = UNSAFE.arrayBaseOffset(boolean[].class);
+
+    /** */
+    private static ConcurrentHashMap8<Object, ReentrantLock> locks = new ConcurrentHashMap8<>();
 
     /**
      * Ensure singleton.
@@ -1132,18 +1140,39 @@ public abstract class GridUnsafe {
      *
      * @param obj Object.
      */
-    public static void monitorEnter(Object obj) {
+  /*  public static void monitorEnter(Object obj) {
         UNSAFE.monitorEnter(obj);
-    }
+    }*/
 
     /**
      * Releases monitor lock.
      *
      * @param obj Object.
      */
-    public static void monitorExit(Object obj) {
+  /*  public static void monitorExit(Object obj) {
         UNSAFE.monitorExit(obj);
+    }*/
+
+    public static void monitorEnter(Object obj) {
+        ReentrantLock lock = locks.get(obj);
+
+        if (lock == null) {
+            lock = new ReentrantLock();
+            locks.put(obj, lock);
+        }
+
+        lock.lock();
     }
+
+    public static void monitorExit(Object obj) {
+        ReentrantLock lock = locks.get(obj);
+
+        if (lock != null) {
+            lock.unlock();
+            locks.remove(lock);
+        }
+    }
+
 
     /**
      * Integer CAS.
@@ -1565,6 +1594,13 @@ public abstract class GridUnsafe {
     }
 
     /**
+     * @param buffer direct buffer.
+     */
+    public static long getAddress(ByteBuffer buffer) {
+        return UNSAFE.getLong(buffer, fieldOffset(field(Buffer.class, "address")));
+    }
+
+    /**
      * @param addr Address.
      * @param val Value.
      * @param bigEndian Order of value bytes in memory. If {@code true} - big-endian, otherwise little-endian.
@@ -1590,5 +1626,27 @@ public abstract class GridUnsafe {
             UNSAFE.putByte(addr + 1, (byte)(val >> 8));
             UNSAFE.putByte(addr, (byte)(val));
         }
+    }
+
+    /**
+     * Returns the offset of the provided field
+     */
+    private static long fieldOffset(Field field) {
+        return UNSAFE.objectFieldOffset(field);
+    }
+    /**
+     * Gets the field with the given name within the class, or {@code null} if not found. If found,
+     * the field is made accessible.
+     */
+    private static Field field(Class<?> clazz, String fieldName) {
+        Field field;
+        try {
+            field = clazz.getDeclaredField(fieldName);
+            field.setAccessible(true);
+        } catch (Throwable t) {
+            // Failed to access the fields.
+            field = null;
+        }
+        return field;
     }
 }

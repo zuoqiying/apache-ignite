@@ -247,6 +247,32 @@
         </profile>
 
         <profile>
+            <id>java9</id>
+
+            <properties>
+                <java8.folder>src/main/java8</java8.folder>
+                <java8.test.folder>src/test/java8</java8.test.folder>
+            </properties>
+
+            <activation>
+                <jdk>[1.9,)</jdk>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>1.9</source>
+                            <target>1.9</target>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+
+        <profile>
             <id>lgpl</id>
 
             <properties>

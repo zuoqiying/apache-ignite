@@ -296,9 +296,8 @@ final class GridUriDeploymentFileProcessor {
         if (clsLdr instanceof URLClassLoader) {
             URLClassLoader clsLdr0 = (URLClassLoader)clsLdr;
 
-            U.close(clsLdr0, log);
-
             try {
+                clsLdr0.close();
                 URL url = clsLdr0.getURLs()[0];
 
                 File dir = new File(url.toURI());
