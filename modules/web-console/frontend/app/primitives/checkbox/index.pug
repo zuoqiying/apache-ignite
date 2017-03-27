@@ -14,19 +14,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-mixin form-field-feedback(name, error, message)
-    -var __field = `${form}[${name}]`
-    -var __error = `${__field}.$error.${error}`
-    -var __pristine = `${__field}.$pristine`
+mixin ignite-checkbox(label, model, name, disabled, required, tip)
+    div.ignite-form-field.checkbox
+        label(id=`{{ ${name} }}Label`)
+            .input-tip
+                if block
+                    block
+                else
+                    input(
+                        id=`{{ ${name} }}Input`
+                        name=`{{ ${name} }}`
+                        type='checkbox'
 
-    i.fa.fa-exclamation-triangle.form-field-feedback(
-        ng-if=`!${__pristine} && ${__error}`
-        name=`{{ ${name} }}`
+                        data-ng-model=model
+                        data-ng-required=required && `${required}`
+                        data-ng-disabled=disabled && `${disabled}`
 
-        bs-tooltip
-        data-title=message
+                        data-ng-focus='tableReset()'
 
-        ignite-error=error
-        ignite-error-message=message
-        ignite-restore-input-focus
-    )
+                        data-ignite-form-panel-field=''
+                    )
+            span #{label}
+            i.tipLabel.icon-help(bs-tooltip='' data-title=tip)

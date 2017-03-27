@@ -14,27 +14,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-mixin check-tooltip(message)
-    i.tipLabel.icon-help(bs-tooltip=`"${message}"`)
+include /app/helpers/jade/mixins
 
-.panel-details-noborder
+-var form = 'form'
+
+.ui-ace-pojos.form-horizontal.panel-details-noborder(ng-form=form novalidate)
     .details-row
-        .col-xs-2.col-sm-2.col-md-2
-            label POJO class:
-        .col-xs-10.col-sm-10.col-md-10.summary-pojo-list
-            button.select-toggle.form-control(ng-model='ctrl.class' bs-select bs-options='item for item in ctrl.classes' data-container='')
-    .details-row.checkbox
+        +ignite-form-field-dropdown('POJO class:', 'ctrl.class', '"class"', false, false, false, null, null, 'ctrl.classes')
         .col-xs-2.col-sm-2.col-md-2
         .col-xs-10.col-sm-10.col-md-10
-            label
-                input(type='checkbox' ng-model='ctrl.useConstructor')
-                | Generate constructors
-            +check-tooltip("Generate empty and full constructors in POJO classes")
-    .details-row.checkbox
+            +ignite-checkbox('Generate constructors', 'ctrl.useConstructor', '"useConstructor"', false, false, 'Generate empty and full constructors in POJO classes')
         .col-xs-2.col-sm-2.col-md-2
         .col-xs-10.col-sm-10.col-md-10
-            label
-                input(type='checkbox' ng-model='ctrl.includeKeyFields')
-                | Include key fields
-            +check-tooltip("Generate key fields in POJO value class")
+            +ignite-checkbox('Include key fields', 'ctrl.includeKeyFields', '"includeKeyFields"', false, false, 'Generate key fields in POJO value class')
     .details-row(ng-if='ctrl.data' ignite-ace='{onLoad: onLoad, mode: "java"}' ng-model='ctrl.data')

@@ -15,26 +15,23 @@
  * limitations under the License.
  */
 
-export default ['igniteFeedback', [() => {
-    const link = ($scope, $element, $attrs, [form]) => {
-        let name = $scope.name;
+@import '../../../public/stylesheets/variables';
 
-        if (_.isNil(name))
-            name = $attrs.name;
+.ignite-feedback {
+    position: relative;
+    width: 0;
+    height: 28px;
+    float: right;
+    z-index: 2;
 
-        const err = $attrs.igniteError;
-        const msg = $attrs.igniteErrorMessage;
+    color: $brand-primary;
+    line-height: $input-height;
+    pointer-events: initial;
+    text-align: center;
 
-        if (name && err && msg) {
-            form.$errorMessages = form.$errorMessages || {};
-            form.$errorMessages[name] = form.$errorMessages[name] || {};
-            form.$errorMessages[name][err] = msg;
-        }
-    };
-
-    return {
-        restrict: 'C',
-        link,
-        require: ['^form']
-    };
-}]];
+    &:before {
+        position: absolute;
+        right: 0;
+        width: 38px;
+    }
+}

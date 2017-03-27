@@ -17,3 +17,5 @@
 
 import './badge/index.scss';
 import './tabs/index.scss';
+import './feedback/index.scss';
+import './checkbox/index.scss';

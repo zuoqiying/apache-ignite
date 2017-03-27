@@ -47,9 +47,9 @@ export default ['$scope', 'JavaTypes', 'JavaTransformer', function($scope, JavaT
 
         _.forEach(ctrl.pojos, (pojo) => {
             if (_.nonNil(pojo.keyClass))
-                classes.push(pojo.keyType);
+                classes.push({ value: pojo.keyType, label: pojo.keyType });
 
-            classes.push(pojo.valueType);
+            classes.push({ value: pojo.valueType, label: pojo.valueType });
         });
     };
 

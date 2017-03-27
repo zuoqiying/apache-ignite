@@ -15,23 +15,27 @@
  * limitations under the License.
  */
 
-@import "../../../../public/stylesheets/variables";
+.checkbox label .input-tip {
+  position: initial;
+}
 
-.form-field-feedback {
-    position: relative;
-    width: 0;
-    height: 28px;
-    float: right;
-    z-index: 2;
-
-    color: $brand-primary;
-    line-height: $input-height;
-    pointer-events: initial;
-    text-align: center;
-
-    &:before {
-        position: absolute;
-        right: 0;
-        width: 38px;
+.details-row, .settings-row {
+    input[type="checkbox"] {
+        line-height: 20px;
+        margin-right: 5px;
     }
+
+    .checkbox label {
+        line-height: 20px !important;
+        vertical-align: middle;
+    }
+}
+
+.form-horizontal .checkbox {
+    padding-top: 0;
+    min-height: 0;
+}
+
+.ignite-form-field.checkbox {
+    margin: 10px 0;
 }

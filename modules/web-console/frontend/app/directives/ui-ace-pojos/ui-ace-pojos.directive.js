@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import './ui-ace-pojos.scss';
+
 import template from './ui-ace-pojos.pug';
 import controller from './ui-ace-pojos.controller';
 

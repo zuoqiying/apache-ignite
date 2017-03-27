@@ -14,7 +14,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
+include ../../primitives/index
 include ./form
+
 
 //- Mixin for advanced options toggle.
 mixin advanced-options-toggle(click, cond, showMessage, hideMessage)
@@ -79,23 +81,23 @@ mixin error-feedback(visible, error, errorMessage, name)
 
 //- Mixin for feedback on unique violation.
 mixin unique-feedback(name, errorMessage)
-    +form-field-feedback(name, 'igniteUnique', errorMessage)
+    +ignite-feedback(name, 'igniteUnique', errorMessage)
 
 //- Mixin for feedback on IP address violation.
 mixin ipaddress-feedback(name)
-    +form-field-feedback(name, 'ipaddress', 'Invalid address!')
+    +ignite-feedback(name, 'ipaddress', 'Invalid address!')
 
 //- Mixin for feedback on port of IP address violation.
 mixin ipaddress-port-feedback(name)
-    +form-field-feedback(name, 'ipaddressPort', 'Invalid port!')
+    +ignite-feedback(name, 'ipaddressPort', 'Invalid port!')
 
 //- Mixin for feedback on port range violation.
 mixin ipaddress-port-range-feedback(name)
-    +form-field-feedback(name, 'ipaddressPortRange', 'Invalid port range!')
+    +ignite-feedback(name, 'ipaddressPortRange', 'Invalid port range!')
 
 //- Mixin for feedback on UUID violation.
 mixin uuid-feedback(name)
-    +form-field-feedback(name, 'uuid', 'Invalid node ID!')
+    +ignite-feedback(name, 'uuid', 'Invalid node ID!')
 
 //- Function that convert enabled state to corresponding disabled state.
 -var enabledToDisabled = function (enabled) {
@@ -104,11 +106,11 @@ mixin uuid-feedback(name)
 
 //- Mixin for checkbox.
 mixin checkbox(lbl, model, name, tip)
-    +form-field-checkbox(lbl, model, name, false, false, tip)
+    +ignite-checkbox(lbl, model, name, false, false, tip)
 
 //- Mixin for checkbox with enabled condition.
 mixin checkbox-enabled(lbl, model, name, enabled, tip)
-    +form-field-checkbox(lbl, model, name, enabledToDisabled(enabled), false, tip)
+    +ignite-checkbox(lbl, model, name, enabledToDisabled(enabled), false, tip)
 
 //- Mixin for Java class name field with auto focus condition.
 mixin java-class-autofocus-placholder(lbl, model, name, enabled, required, autofocus, placeholder, tip, validationActive)
@@ -125,10 +127,10 @@ mixin java-class-autofocus-placholder(lbl, model, name, enabled, required, autof
         if  block
             block
 
-        +form-field-feedback(name, 'javaBuiltInClass', errLbl + ' should not be the Java built-in class!')
-        +form-field-feedback(name, 'javaKeywords', errLbl + ' could not contains reserved Java keyword!')
-        +form-field-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
-        +form-field-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
+        +ignite-feedback(name, 'javaBuiltInClass', errLbl + ' should not be the Java built-in class!')
+        +ignite-feedback(name, 'javaKeywords', errLbl + ' could not contains reserved Java keyword!')
+        +ignite-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
+        +ignite-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
 
 //- Mixin for Java class name field with auto focus condition.
 mixin java-class-autofocus(lbl, model, name, enabled, required, autofocus, tip, validationActive)
@@ -152,9 +154,9 @@ mixin java-class-typeahead(lbl, model, name, options, enabled, required, placeho
         data-java-keywords='true'
         data-validation-active=validationActive ? `{{ ${validationActive} }}` : `'always'`
     )
-        +form-field-feedback(name, 'javaKeywords', errLbl + ' could not contains reserved Java keyword!')
-        +form-field-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
-        +form-field-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
+        +ignite-feedback(name, 'javaKeywords', errLbl + ' could not contains reserved Java keyword!')
+        +ignite-feedback(name, 'javaPackageSpecified', errLbl + ' does not have package specified!')
+        +ignite-feedback(name, 'javaIdentifier', errLbl + ' is invalid Java identifier!')
 
 //- Mixin for java package field with enabled condition.
 mixin java-package(lbl, model, name, enabled, required, tip)
@@ -162,8 +164,8 @@ mixin java-package(lbl, model, name, enabled, required, tip)
         data-java-keywords='true'
         data-java-package-name='package-only'
     )
-        +form-field-feedback(name, 'javaPackageName', 'Package name is invalid')
-        +form-field-feedback(name, 'javaKeywords', 'Package name could not contains reserved java keyword')
+        +ignite-feedback(name, 'javaPackageName', 'Package name is invalid')
+        +ignite-feedback(name, 'javaKeywords', 'Package name could not contains reserved java keyword')
 
 //- Mixin for text field with IP address check.
 mixin text-ip-address(lbl, model, name, enabled, placeholder, tip)
@@ -297,10 +299,10 @@ mixin table-java-class-field(lbl, name, model, items, valid, save, newItem)
     -var onBlur = `${valid} && (${save}); ${resetOnBlur};`
 
     div(ignite-on-focus-out=onBlur)
-        +form-field-feedback(name, 'javaBuiltInClass', lbl + ' should not be the Java built-in class!')
-        +form-field-feedback(name, 'javaKeywords', lbl + ' could not contains reserved Java keyword!')
-        +form-field-feedback(name, 'javaPackageSpecified', lbl + ' does not have package specified!')
-        +form-field-feedback(name, 'javaIdentifier', lbl + ' is invalid Java identifier!')
+        +ignite-feedback(name, 'javaBuiltInClass', lbl + ' should not be the Java built-in class!')
+        +ignite-feedback(name, 'javaKeywords', lbl + ' could not contains reserved Java keyword!')
+        +ignite-feedback(name, 'javaPackageSpecified', lbl + ' does not have package specified!')
+        +ignite-feedback(name, 'javaIdentifier', lbl + ' is invalid Java identifier!')
 
         if block
             block
@@ -330,8 +332,8 @@ mixin table-java-package-field(name, model, items, valid, save, newItem)
     -var onBlur = `${valid} && (${save}); ${resetOnBlur};`
 
     div(ignite-on-focus-out=onBlur)
-        +form-field-feedback(name, 'javaKeywords', 'Package name could not contains reserved Java keyword!')
-        +form-field-feedback(name, 'javaPackageName', 'Package name is invalid!')
+        +ignite-feedback(name, 'javaKeywords', 'Package name could not contains reserved Java keyword!')
+        +ignite-feedback(name, 'javaPackageName', 'Package name is invalid!')
 
         if block
             block
@@ -385,7 +387,7 @@ mixin table-address-field(name, model, items, valid, save, newItem, portRange)
         +ipaddress-feedback(name)
         +ipaddress-port-feedback(name)
         +ipaddress-port-range-feedback(name)
-        +form-field-feedback(name, 'required', 'IP address:port could not be empty!')
+        +ignite-feedback(name, 'required', 'IP address:port could not be empty!')
 
         if block
             block

@@ -41,10 +41,10 @@ mixin ignite-form-field-number(label, model, name, disabled, required, placehold
             if tip
                 i.tipField.icon-help(bs-tooltip='' data-title=tip)
             
-            +form-field-feedback(name, 'required', 'This field could not be empty')
-            +form-field-feedback(name, 'min', 'Value is less than allowable minimum: '+ min || 0)
-            +form-field-feedback(name, 'max', 'Value is more than allowable maximum: '+ max)
-            +form-field-feedback(name, 'number', 'Only numbers allowed')
+            +ignite-feedback(name, 'required', 'This field could not be empty')
+            +ignite-feedback(name, 'min', 'Value is less than allowable minimum: '+ min || 0)
+            +ignite-feedback(name, 'max', 'Value is more than allowable maximum: '+ max)
+            +ignite-feedback(name, 'number', 'Only numbers allowed')
 
             if block
                 block

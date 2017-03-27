@@ -58,7 +58,7 @@ mixin ignite-form-field-text(label, model, name, disabled, required, placeholder
             if block
                 block
 
-            +form-field-feedback(name, 'required', errLbl + ' could not be empty!')
+            +ignite-feedback(name, 'required', errLbl + ' could not be empty!')
 
             .input-tip
                 +ignite-form-field-input(name, model, disabled, required, placeholder)(attributes=attributes)

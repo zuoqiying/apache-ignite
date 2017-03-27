@@ -19,7 +19,6 @@ import angular from 'angular';
 
 // Fields styles.
 import './field/field.scss';
-import './field/feedback.scss';
 import './field/input/text.scss';
 
 // Panel.

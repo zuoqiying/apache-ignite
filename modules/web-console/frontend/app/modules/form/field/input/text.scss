@@ -15,10 +15,6 @@
  * limitations under the License.
  */
 
-.checkbox label .input-tip {
-	position: initial;
-}
-
 .input-tip .fa-floppy-o {
 	position: absolute;
     top: 0;
@@ -33,8 +29,4 @@
     display: inline-block;
     line-height: 28px;
     pointer-events: initial;
-}
-
-.input-tip .form-control-feedback {
-    height: auto;
 }

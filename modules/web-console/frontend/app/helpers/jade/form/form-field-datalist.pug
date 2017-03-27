@@ -42,7 +42,7 @@ mixin form-field-datalist(label, model, name, disabled, required, placeholder, o
         .ignite-form-field__control
             i.tipField.fa.icon-help(bs-tooltip='' data-title=tip)
 
-            +form-field-feedback(name, 'required', errLbl + ' could not be empty!')
+            +ignite-feedback(name, 'required', errLbl + ' could not be empty!')
 
             if block
                 block
