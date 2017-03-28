@@ -782,9 +782,15 @@ public class StripedExecutor implements ExecutorService {
     /**
      * Stripe.
      */
-    private static class StripeMPSCQueue extends Stripe {
+    public static class StripeMPSCQueue extends Stripe {
         /** Queue. */
-        private final MPSCQueue<Runnable> queue = new MPSCQueue<>();
+        private final MPSCQueue<Runnable> queue = new MPSCQueue<>(this);
+
+        /** */
+        private volatile long parkCntr;
+
+        /** Unpark counter. */
+        private final LongAdder8 unparkCntr = new LongAdder8();
 
         /**
          * @param gridName Grid name.
@@ -804,10 +810,24 @@ public class StripedExecutor implements ExecutorService {
                 log);
         }
 
+        public void park() {
+            parkCntr++;
+            LockSupport.park();
+        }
+
+        public void unpark() {
+            unparkCntr.increment();
+            LockSupport.unpark(thread);
+        }
+
         /** {@inheritDoc} */
-        @Override void start() {
-            super.start();
-            queue.setConsumerThread(thread);
+        @Override public long parkCntr() {
+            return parkCntr;
+        }
+
+        /** {@inheritDoc} */
+        @Override public long unparkCntr() {
+            return unparkCntr.sum();
         }
 
         /** {@inheritDoc} */

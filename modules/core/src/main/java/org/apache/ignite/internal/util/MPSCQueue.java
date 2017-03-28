@@ -24,9 +24,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static java.util.concurrent.locks.LockSupport.park;
-import static java.util.concurrent.locks.LockSupport.unpark;
-
 /**
  * @param <E>
  */
@@ -43,7 +40,7 @@ public final class MPSCQueue<E> extends AbstractQueue<E> implements BlockingQueu
 //    private final AtomicInteger takeStackSize = new AtomicInteger();
 
     /** */
-    private Thread consumerThread;
+    private StripedExecutor.StripeMPSCQueue stripe;
     /** */
     private Object[] takeStack = new Object[INITIAL_ARRAY_SIZE];
     /** */
@@ -51,30 +48,9 @@ public final class MPSCQueue<E> extends AbstractQueue<E> implements BlockingQueu
 
     /**
      */
-    public MPSCQueue(Thread consumerThread) {
-        assert consumerThread != null;
-        this.consumerThread = consumerThread;
-    }
-
-    /**
-     */
-    public MPSCQueue() {
-    }
-
-    /**
-     * Sets the consumer thread.
-     *
-     * The consumer thread is needed for blocking, so that an offering known which thread
-     * to wakeup. There can only be a single consumerThread and this method should be called
-     * before the queue is safely published. It will not provide a happens before relation on
-     * its own.
-     *
-     * @param consumerThread the consumer thread.
-     * @throws NullPointerException when consumerThread null.
-     */
-    public void setConsumerThread(Thread consumerThread) {
-        assert consumerThread != null;
-        this.consumerThread = consumerThread;
+    public MPSCQueue(StripedExecutor.StripeMPSCQueue stripe) {
+        assert stripe != null;
+        this.stripe = stripe;
     }
 
     /**
@@ -109,7 +85,7 @@ public final class MPSCQueue<E> extends AbstractQueue<E> implements BlockingQueu
                 continue;
 
             if (oldHead == BLOCKED)
-                unpark(consumerThread);
+                stripe.unpark();
 
             return true;
         }
@@ -197,7 +173,7 @@ public final class MPSCQueue<E> extends AbstractQueue<E> implements BlockingQueu
         AtomicReference<Node> putStack = this.putStack;
 
         for (; ; ) {
-            if (consumerThread != null && consumerThread.isInterrupted()) {
+            if (stripe != null && stripe.thread.isInterrupted()) {
                 putStack.compareAndSet(BLOCKED, null);
                 throw new InterruptedException();
             }
@@ -212,10 +188,10 @@ public final class MPSCQueue<E> extends AbstractQueue<E> implements BlockingQueu
                 }
 
                 // lets block for real.
-                park();
+                stripe.park();
             }
             else if (currentPutStackHead == BLOCKED)
-                park();
+                stripe.park();
 
             else {
                 if (!putStack.compareAndSet(currentPutStackHead, null))

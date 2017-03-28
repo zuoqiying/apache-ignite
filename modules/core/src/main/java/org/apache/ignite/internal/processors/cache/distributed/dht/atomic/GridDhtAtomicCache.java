@@ -1731,27 +1731,22 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         if (!nodeId.equals(ctx.localNodeId()) && req.stripeMap() != null) {
             int curStripe = Thread.currentThread() instanceof IgniteThread ? ((IgniteThread)Thread.currentThread()).stripe() : -1;
 
-            StripedExecutor stripedExecutor = ctx.kernalContext().getStripedExecutorService();
-
             Map<Integer, int[]> stripeMap = req.stripeMap();
 
-            for (final Integer stripe : stripeMap.keySet()) {
-                if (curStripe == stripe)
-                    continue;
+            int[] stripes = new int[stripeMap.size()];
+            int idx = 0;
+            int firstIdx = -1;
 
-                stripedExecutor.execute(stripe, new Runnable() {
-                    @Override public void run() {
-                        updateAllAsyncInternal0(nodeId, req, stripe, completionCb);
-                    }
-                });
+            for (Integer stripe : stripeMap.keySet()) {
+                if (curStripe == stripe)
+                    firstIdx = idx;
+                stripes[idx++] = stripe;
             }
 
-            if (stripeMap.containsKey(curStripe))
-                updateAllAsyncInternal0(nodeId, req, curStripe, completionCb);
-
+            updateAllAsyncInternal0(nodeId, req, firstIdx, firstIdx, stripes, completionCb);
         }
         else
-            updateAllAsyncInternal0(nodeId, req, IgniteThread.GRP_IDX_UNASSIGNED, completionCb);
+            updateAllAsyncInternal0(nodeId, req, -1, -1, null, completionCb);
     }
 
     /**
@@ -1763,10 +1758,12 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      * @param completionCb Completion callback.
      */
     private void updateAllAsyncInternal0(
-        UUID nodeId,
-        GridNearAtomicAbstractUpdateRequest req,
-        int stripeIdx,
-        UpdateReplyClosure completionCb
+        final UUID nodeId,
+        final GridNearAtomicAbstractUpdateRequest req,
+        int idx,
+        final int firstIdx,
+        final int[] stripes,
+        final UpdateReplyClosure completionCb
     ) {
         ClusterNode node = ctx.discovery().node(nodeId);
 
@@ -1788,12 +1785,25 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
         int[] stripeIdxs = null;
 
-        if (stripeIdx != IgniteThread.GRP_IDX_UNASSIGNED
+        if (idx != -1
             && req.directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE
             && req.stripeMap() != null) {
+            int stripeIdx = stripes[idx];
             stripeIdxs = req.stripeMap().get(stripeIdx);
 
             res.stripe(stripeIdx);
+
+            // start next thread
+            final int nextIdx = (idx + 1) % stripes.length;
+            if (nextIdx != firstIdx) {
+                StripedExecutor stripedExecutor = ctx.kernalContext().getStripedExecutorService();
+
+                stripedExecutor.execute(stripes[nextIdx], new Runnable() {
+                    @Override public void run() {
+                        updateAllAsyncInternal0(nodeId, req, nextIdx, firstIdx, stripes, completionCb);
+                    }
+                });
+            }
         }
 
         assert !req.returnValue() || (req.operation() == TRANSFORM || req.size() == 1);

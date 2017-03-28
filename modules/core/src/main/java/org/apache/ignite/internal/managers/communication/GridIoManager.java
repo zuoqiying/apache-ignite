@@ -89,6 +89,7 @@ import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentHashMap8;
 import org.jsr166.ConcurrentLinkedDeque8;
+import org.jsr166.ThreadLocalRandom8;
 
 import static org.apache.ignite.events.EventType.EVT_NODE_FAILED;
 import static org.apache.ignite.events.EventType.EVT_NODE_JOINED;
@@ -836,13 +837,21 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             (msg.partition() != Integer.MIN_VALUE ||
                 msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE)) {
 
+            int stripe;
+
             if (msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE) {
                 GridNearAtomicFullUpdateRequest msg0 = (GridNearAtomicFullUpdateRequest)msg.message();
 
-                makeStripeMap(msg0);
-            }
+                Map<Integer, int[]> map = makeStripeMap(msg0);
 
-            stripedExecutor.execute(msg.partition(), c);
+                int idx = ThreadLocalRandom8.current().nextInt(0, msg0.size());
+
+                stripe = part2stripe.get(msg0.key(idx).partition());
+            }
+            else
+                stripe = msg.partition();
+
+            stripedExecutor.execute(stripe, c);
 
             return;
         }
