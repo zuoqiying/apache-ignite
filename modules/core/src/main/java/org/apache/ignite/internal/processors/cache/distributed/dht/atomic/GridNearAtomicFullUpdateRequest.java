@@ -115,14 +115,6 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
     @GridDirectTransient
     private int initSize;
 
-    /** Maximum number of keys. */
-    @GridDirectTransient
-    private int maxEntryCnt;
-
-    /** Number of stripes on remote node. */
-    @GridDirectTransient
-    private int maxStripes;
-
     /** Partition Id */
     private int partId;
 
@@ -173,8 +165,7 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
         boolean skipStore,
         boolean keepBinary,
         boolean addDepInfo,
-        int maxEntryCnt,
-        int maxStripes
+        int maxEntryCnt
     ) {
         super(cacheId,
             nodeId,
@@ -199,9 +190,6 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
         // participate in request. As such, we know upper bound of all collections in request. If this bound is lower
         // than 10, we use it.
         initSize = Math.min(maxEntryCnt, 10);
-
-        this.maxEntryCnt = maxEntryCnt;
-        this.maxStripes = maxStripes;
 
         keys = new ArrayList<>(initSize);
     }

@@ -1072,8 +1072,7 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
                     skipStore,
                     keepBinary,
                     cctx.deploymentEnabled(),
-                    keys.size(),
-                    stripes
+                    keys.size()
                 );
 
                 req.partition(part);
@@ -1181,7 +1180,6 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
             skipStore,
             keepBinary,
             cctx.deploymentEnabled(),
-            1,
             1);
 
         req.addUpdateEntry(cacheKey,
