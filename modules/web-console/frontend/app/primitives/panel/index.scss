@@ -17,24 +17,17 @@
 
 @import '../../../public/stylesheets/variables';
 
-.badge {
-  display: inline-block;
-  min-width: 26px;
-  height: 18px;
+.ignite-panel {
+  border: none;
+  border-radius: 0;
 
-  padding: 2px 9px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
 
-  border-radius: 9px;
+  .panel-heading {
+    height: auto;
+    padding: 20px;
 
-  color: white;
-  font-family: Roboto;
-  font-size: 12px;
-  text-align: center;
-  line-height: 12px;
-
-  background-color: $brand-primary;
-}
-
-.badge--blue {
-  background-color: #0067b9;
+    background-color: initial;
+    border-bottom: 1px solid $panel-default-border;
+  }
 }

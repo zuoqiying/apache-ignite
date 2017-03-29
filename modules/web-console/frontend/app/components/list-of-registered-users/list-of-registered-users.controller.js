@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-import headerTemplate from 'app/components/ui-grid-header/ui-grid-header.tpl.pug';
+import headerTemplate from 'app/primitives/ui-grid-header/index.tpl.pug';
 
 import columnDefs from './list-of-registered-users.column-defs';
 import categories from './list-of-registered-users.categories';
 
 const rowTemplate = `<div
   ng-repeat="(colRenderIndex, col) in colContainer.renderedColumns track by col.uid"
-  ng-mouseover="grid.api.selection.selectRow(row.entity);"
   ui-grid-one-bind-id-grid="rowRenderIndex + '-' + col.uid + '-cell'"
   class="ui-grid-cell"
   ng-class="{ 'ui-grid-row-header-cell': col.isRowHeader }"
@@ -38,6 +37,8 @@ export default class IgniteListOfRegisteredUsersCtrl {
         const dtFilter = $filter('date');
 
         $ctrl.groupBy = 'user';
+
+        $ctrl.selected = [];
 
         $ctrl.params = {
             startDate: new Date(),
@@ -92,6 +93,14 @@ export default class IgniteListOfRegisteredUsersCtrl {
             return renderableRows;
         };
 
+        $ctrl.actionOptions = [
+            { action: 'Become this user', click: true },
+            { action: 'Revoke admin', click: true },
+            { action: 'Grant admin', click: true },
+            { action: 'Remove user', click: true },
+            { action: 'Activity detail', click: true }
+        ];
+
         $ctrl._userGridOptions = {
             columnDefs,
             categories
@@ -99,23 +108,31 @@ export default class IgniteListOfRegisteredUsersCtrl {
 
         $ctrl.gridOptions = {
             data: [],
-            columnVirtualizationThreshold: 30,
+
             columnDefs,
             categories,
+
             headerTemplate,
+            columnVirtualizationThreshold: 30,
             rowTemplate,
+            rowHeight: 46,
+            selectWithCheckboxOnly: true,
             enableFiltering: true,
+            enableSelectAll: true,
             enableRowSelection: true,
-            enableRowHeaderSelection: false,
+            enableFullRowSelection: true,
             enableColumnMenus: false,
-            multiSelect: false,
+            multiSelect: true,
             modifierKeysToMultiSelect: true,
-            noUnselect: true,
+            noUnselect: false,
             fastWatch: true,
             exporterSuppressColumns: ['actions'],
             exporterCsvColumnSeparator: ';',
             onRegisterApi: (api) => {
                 $ctrl.gridApi = api;
+
+                api.selection.on.rowSelectionChanged($scope, $ctrl._updateSelected.bind($ctrl));
+                api.selection.on.rowSelectionChangedBatch($scope, $ctrl._updateSelected.bind($ctrl));
 
                 api.becomeUser = becomeUser;
                 api.removeUser = removeUser;
@@ -162,12 +179,19 @@ export default class IgniteListOfRegisteredUsersCtrl {
     }
 
     adjustHeight(rows) {
-        const height = Math.min(rows, 20) * 30 + 75;
+        const height = Math.min(rows, 20) * 46 + 75;
 
         // Remove header height.
         this.gridApi.grid.element.css('height', height + 'px');
 
         this.gridApi.core.handleWindowResize();
+    }
+
+    _updateSelected() {
+        const ids = this.gridApi.selection.getSelectedRows().map(({ _id }) => _id).sort();
+
+        if (!_.isEqual(ids, this.selected))
+            this.selected = ids;
     }
 
     _enableColumns(_categories, visible) {

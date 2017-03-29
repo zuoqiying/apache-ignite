@@ -15,26 +15,10 @@
  * limitations under the License.
  */
 
-@import '../../../public/stylesheets/variables';
-
-.badge {
-  display: inline-block;
-  min-width: 26px;
-  height: 18px;
-
-  padding: 2px 9px;
-
-  border-radius: 9px;
-
-  color: white;
-  font-family: Roboto;
-  font-size: 12px;
-  text-align: center;
-  line-height: 12px;
-
-  background-color: $brand-primary;
-}
-
-.badge--blue {
-  background-color: #0067b9;
+.ignite-form-field {
+    & &__control {
+        &:first-child:last-child {
+          width: 100% !important;
+        }
+    }
 }

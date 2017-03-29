@@ -17,3 +17,8 @@
 
 import './badge/index.scss';
 import './tabs/index.scss';
+import './panel/index.scss';
+import './dropdown/index.scss';
+import './ui-grid/index.scss';
+import './ui-grid-header/index.scss';
+import './ui-grid-settings/index.scss';
