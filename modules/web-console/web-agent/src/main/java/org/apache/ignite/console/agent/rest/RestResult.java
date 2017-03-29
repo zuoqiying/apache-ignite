@@ -22,7 +22,7 @@ package org.apache.ignite.console.agent.rest;
  */
 public class RestResult {
     /** REST http code. */
-    private final int code;
+    private final int status;
 
     /** The field contains description of error if server could not handle the request. */
     private final String error;
@@ -31,39 +31,38 @@ public class RestResult {
     private final String data;
 
     /**
-     * @param code REST http code.
+     * @param status REST http code.
      * @param error The field contains description of error if server could not handle the request.
      * @param data The field contains result of command.
      */
-    private RestResult(int code, String error, String data) {
+    private RestResult(int status, String error, String data) {
+        this.status = status;
         this.error = error;
-        this.code = code;
         this.data = data;
     }
 
     /**
-     * @param code REST http code.
+     * @param status REST http code.
      * @param error The field contains description of error if server could not handle the request.
      * @return Request result.
      */
-    public static RestResult fail(int code, String error) {
-        return new RestResult(code, error, null);
+    public static RestResult fail(int status, String error) {
+        return new RestResult(status, error, null);
     }
 
     /**
-     * @param code REST http code.
      * @param data The field contains result of command.
      * @return Request result.
      */
-    public static RestResult success(int code, String data) {
-        return new RestResult(code, null, data);
+    public static RestResult success(String data) {
+        return new RestResult(0, null, data);
     }
 
     /**
      * @return REST http code.
      */
-    public int getCode() {
-        return code;
+    public int getStatus() {
+        return status;
     }
 
     /**
@@ -78,9 +77,5 @@ public class RestResult {
      */
     public String getData() {
         return data;
-    }
-
-    public boolean isSuccessful() {
-        return this.code >= 200 && this.code < 300;
     }
 }

@@ -144,7 +144,7 @@ public class AgentLauncher {
             ConnectException ce = X.cause(e, ConnectException.class);
 
             if (ce != null)
-                log.error("Failed to receive response from server (connection refused).");
+                log.error("Failed to establish connection to server (connection refused).");
             else {
                 Exception ignore = X.cause(e, SSLHandshakeException.class);
 

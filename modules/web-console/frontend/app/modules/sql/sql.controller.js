@@ -896,8 +896,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             paragraph.cacheName = _.head(cacheNames);
                     });
                 })
-                .then(() => agentMonitor.toggleModalIfNeeded())
-                .catch((err) => agentMonitor.showNodeError(err));
+                .catch((err) => Messages.showError(err));
 
         const _startWatch = () =>
             agentMonitor.startWatch('Back to Configuration', 'base.configuration.clusters')

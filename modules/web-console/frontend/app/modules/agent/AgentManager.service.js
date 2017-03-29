@@ -32,6 +32,8 @@ export default class IgniteAgentManager {
          */
         this.AgentModal = AgentModal;
 
+        this.clusters = [];
+
         $root.$on('$stateChangeSuccess', _.bind(this.stopWatch, this));
 
         /**
@@ -51,6 +53,8 @@ export default class IgniteAgentManager {
          * @type {boolean}
          */
         this.hasDemo = false;
+
+        this.clusters = [];
     }
 
     connect() {
@@ -72,9 +76,22 @@ export default class IgniteAgentManager {
 
         self.connected = null;
 
-        self.socket.on('agent:count', ({count, hasDemo}) => {
-            self.hasDemo = hasDemo;
+        self.socket.on('agents:stat', ({count, hasDemo, clusters}) => {
             self.connected = count > 0;
+            self.hasDemo = hasDemo;
+
+            const removed = _.difference(self.clusters, clusters);
+
+            if (_.nonEmpty(removed))
+                _.pullAll(self.clusters, removed);
+
+            const added = _.difference(clusters, self.clusters);
+
+            if (_.nonEmpty(added))
+                self.clusters.push(...added);
+
+            if (_.isNil(self.cluster) || _.isNil(_.find(self.clusters, self.cluster)))
+                self.cluster = _.head(self.clusters);
         });
     }
 
@@ -227,8 +244,7 @@ export default class IgniteAgentManager {
      * @private
      */
     _rest(event, ...args) {
-        return this.modal.$promise
-            .then(() => this._emit(event, ...args));
+        return this._emit(event, this.cluster.id, ...args);
     }
 
     /**
@@ -245,12 +261,13 @@ export default class IgniteAgentManager {
      * @param {String} cacheName Cache name.
      * @param {String} [query] Query if null then scan query.
      * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
+     * @param {Boolean} enforceJoinOrder Flag whether enforce join order is enabled.
      * @param {Boolean} local Flag whether to execute query locally.
      * @param {int} pageSize
      * @returns {Promise}
      */
-    query(nid, cacheName, query, nonCollocatedJoins, local, pageSize) {
-        return this._rest('node:query', nid, maskNull(cacheName), maskNull(query), nonCollocatedJoins, local, pageSize)
+    query(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSize) {
+        return this._rest('node:query', nid, maskNull(cacheName), maskNull(query), nonCollocatedJoins, enforceJoinOrder, local, pageSize)
             .then(({result}) => {
                 if (_.isEmpty(result.key))
                     return result.value;

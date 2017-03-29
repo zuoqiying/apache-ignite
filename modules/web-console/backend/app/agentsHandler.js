@@ -47,17 +47,24 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             this.sockets = new Map();
         }
 
-        /**
-         * @param {String} token
-         * @param {AgentSocket} sock
-         * @return {Array.<AgentSocket>}
-         */
-        add(tokens, sock) {
-            const sockets = this.sockets.get(token);
+        get(token) {
+            let sockets = this.sockets.get(token);
 
-            _.pull(sockets, sock);
+            if (_.isEmpty(sockets))
+                this.sockets.set(token, sockets = []);
 
             return sockets;
+        }
+
+        /**
+         * @param {AgentSocket} sock
+         * @param {String} token
+         * @return {Array.<AgentSocket>}
+         */
+        add(token, sock) {
+            const sockets = this.get(token);
+
+            sockets.push(sock);
         }
 
         /**
@@ -70,6 +77,30 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             const sockets = this.sockets.get(token);
 
             return _.find(sockets, (sock) => _.includes(sock.demo.browserSockets, browserSocket));
+        }
+    }
+
+    class Cluster {
+        constructor(nids) {
+            let d = new Date().getTime();
+
+            this.id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+                const r = (d + Math.random() * 16) % 16 | 0;
+
+                d = Math.floor(d / 16);
+
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+
+            this.nids = nids;
+        }
+
+        same(nids) {
+            return _.intersection(this.nids, nids).length > 0;
+        }
+
+        updateTopology(nids) {
+            this.nids = nids;
         }
     }
 
@@ -86,6 +117,8 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
              * @type {AgentSockets}
              */
             this._agentSockets = new AgentSockets();
+
+            this.clusters = [];
         }
 
         /**
@@ -153,6 +186,15 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                 });
         }
 
+        getOrCreateCluster(nids) {
+            const cluster = _.find(this.clusters, (c) => c.same(nids));
+
+            if (_.isNil(cluster))
+                this.clusters.push(new Cluster(nids));
+
+            return cluster;
+        }
+
         /**
          * Link agent with browsers by account.
          *
@@ -167,30 +209,47 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
 
             sock.on('disconnect', () => {
                 _.forEach(tokens, (token) => {
-                    this._agentSockets.pull(token, agentSocket);
+                    _.pull(this._agentSockets.get(token), agentSocket);
 
-                    this.emitAgentsCount(token);
-
-                    // TODO reconnect to different agents.
+                    this._browsersHnd.sendAgents(token);
                 });
             });
 
-            _.forEach(tokens, (token) => {
-                const agentSockets = this._agentSockets[token];
+            sock.on('cluster:topology', (nids) => {
+                const cluster = this.getOrCreateCluster(nids);
 
-                if (_.isEmpty(agentSockets)) {
-                    this._agentSockets[token] = [agentSocket];
+                if (_.isNil(agentSocket.cluster)) {
+                    agentSocket.cluster = cluster;
 
-                    const browserSockets = _.filter(this._browserSockets[token], 'request._query.IgniteDemoMode');
-
-                    // First agent join after user start demo.
-                    if (_.size(browserSockets))
-                        agentSocket.runDemoCluster(token, browserSockets);
+                    _.forEach(tokens, (token) => {
+                        this._browsersHnd.sendAgents(token);
+                    });
                 }
                 else
-                    agentSockets.add(agentSocket);
+                    cluster.updateTopology(nids);
+            });
 
-                this.emitAgentsCount(token);
+            sock.on('cluster:collector', (top) => {
+
+            });
+
+            sock.on('cluster:disconnected', () => {
+                console.log('cluster:disconnected');
+
+                agentSocket.cluster = null;
+            });
+
+            _.forEach(tokens, (token) => {
+                this._agentSockets.add(token, agentSocket);
+
+                // TODO start demo if needed.
+                // const browserSockets = _.filter(this._browserSockets[token], 'request._query.IgniteDemoMode');
+                //
+                // // First agent join after user start demo.
+                // if (_.size(browserSockets))
+                //     agentSocket.runDemoCluster(token, browserSockets);
+
+                this._browsersHnd.sendAgents(token);
             });
 
             // ioSocket.on('cluster:topology', (top) => {
@@ -251,7 +310,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             if (!this.io)
                 return Promise.reject(new Error('Agent server not started yet!'));
 
-            const socks = this._agentSockets[token];
+            const socks = this._agentSockets.get(token);
 
             if (_.isEmpty(socks))
                 return Promise.reject(new Error('Failed to find connected agent for this token'));
@@ -268,14 +327,14 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             if (!this.io)
                 return Promise.reject(new Error('Agent server not started yet!'));
 
-            const agentSockets = this._agentSockets[token];
+            const agentSockets = this._agentSockets.get(token);
 
-            const socket = _.find(agentSockets, ({activeClusterIds}) => _.includes(activeClusterIds, clusterId));
+            const sock = _.find(agentSockets, (agentSock) => _.get(agentSock, 'cluster.id') === clusterId);
 
-            if (_.isNil(socket))
+            if (_.isNil(sock))
                 return Promise.reject(new Error('Failed to find connected agent for this token'));
 
-            return Promise.resolve(socket);
+            return Promise.resolve(sock);
         }
 
         tryStopDemo(browserSocket) {

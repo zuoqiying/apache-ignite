@@ -50,7 +50,7 @@ class Command {
          */
         this._params = [];
 
-        this._paramsLastIdx = 0;
+        this._paramsLastIdx = 1;
     }
 
     /**
@@ -95,6 +95,7 @@ module.exports.factory = function(_) {
             Object.assign(this, {
                 socket,
                 tokens,
+                cluster: null,
                 demo: {
                     enabled: demoEnabled,
                     browserSockets: []
@@ -140,31 +141,13 @@ module.exports.factory = function(_) {
         }
 
         restResultParse(res) {
-            const code = res.code;
+            if (res.status === 0)
+                return JSON.parse(res.data);
 
-            if (code === 401)
+            if (res.status === 2)
                 throw new Error('AgentSocket failed to authenticate in grid. Please check agent\'s login and password or node port.');
 
-            if (code !== 200)
-                throw new Error(res.error || 'Failed connect to node and execute REST command.');
-
-            const msg = JSON.parse(res.data);
-
-            if (msg.successStatus === 0)
-                return msg.response;
-
-            if (msg.successStatus === 2)
-                throw new Error('AgentSocket failed to authenticate in grid. Please check agent\'s login and password or node port.');
-
-            throw new Error(msg.error);
-        }
-
-        attachToCluster(browserSock) {
-
-        }
-
-        deattachFromCluster() {
-            
+            throw new Error(res.error);
         }
 
         /**
@@ -265,12 +248,19 @@ module.exports.factory = function(_) {
          * @param {String} cacheName Cache name.
          * @param {String} query Query.
          * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
+         * @param {Boolean} enforceJoinOrder Flag whether enforce join order is enabled.
          * @param {Boolean} local Flag whether to execute query locally.
          * @param {int} pageSize Page size.
          * @returns {Promise}
          */
-        fieldsQuery(demo, nid, cacheName, query, nonCollocatedJoins, local, pageSize) {
-            if (nonCollocatedJoins) {
+        fieldsQuery(demo, nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSize) {
+            if (enforceJoinOrder) {
+                return this.gatewayCommand(demo, nid,
+                    'org.apache.ignite.internal.visor.query.VisorQueryTask',
+                    'org.apache.ignite.internal.visor.query.VisorQueryArgV3',
+                    cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSize);
+            }
+            else if (nonCollocatedJoins) {
                 return this.gatewayCommand(demo, nid,
                     'org.apache.ignite.internal.visor.query.VisorQueryTask',
                     'org.apache.ignite.internal.visor.query.VisorQueryArgV2',

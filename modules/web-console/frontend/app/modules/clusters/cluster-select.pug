@@ -31,7 +31,7 @@ ul.nav.navbar-nav(ng-if='!IgniteDemoMode' ng-switch='ctrl.clusters.length')
             label.padding-left-dflt {{ctrl.cluster.name}}
             span.caret
         ul.dropdown-menu(role='menu')
-            li(ng-repeat='cluster in ctrl.clusters')
-                div(ng-click='ctrl.change(cluster)')
+            li(ng-repeat='item in ctrl.clusters')
+                div(ng-click='item.click()')
                     i.icon-cluster.pull-left(style='margin: 0; padding-left: 10px;')
-                    div: a {{cluster.name}}
+                    div: a {{item.name}}

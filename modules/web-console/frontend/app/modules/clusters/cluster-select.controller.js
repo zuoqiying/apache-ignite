@@ -15,17 +15,48 @@
  * limitations under the License.
  */
 
-// Controller that load notebooks in navigation bar .
-export default ['ClustersData', function(ClustersData) {
-    this.clusters = [
-        {name: 'Cluster1', click: () => {}},
-        {name: 'Cluster2', click: () => {}},
-        {name: 'Cluster3', click: () => {}}
-    ];
+export default ['$scope', 'IgniteAgentMonitor', function($scope, agentMonitor) {
+    const ctrl = this;
 
-    this.cluster = _.head(this.clusters);
+    ctrl.counter = 1;
 
-    this.change = (cluster) => {
-        this.cluster = cluster;
-    };
+    ctrl.cluster = null;
+    ctrl.clusters = [];
+
+    $scope.$watch(() => agentMonitor.cluster, (cluster) => {
+        if (_.isNil(cluster))
+            return ctrl.cluster = cluster;
+
+        ctrl.cluster = _.find(ctrl.clusters, {id: cluster.id});
+    }, true);
+
+    $scope.$watchCollection(() => agentMonitor.clusters, (clusters) => {
+        if (_.isEmpty(clusters)) {
+            ctrl.cluster = null;
+
+            return ctrl.clusters.length = 0;
+        }
+
+        const removed = _.differenceBy(ctrl.clusters, clusters, 'id');
+
+        if (_.nonEmpty(removed))
+            _.pullAll(ctrl.clusters, removed);
+
+        _.forEach(clusters, (cluster) => {
+            const id = cluster.id;
+
+            if (!_.find(ctrl.clusters, {id})) {
+                ctrl.clusters.push({
+                    id,
+                    name: `Cluster ${this.counter++}`,
+                    click: () => {
+                        agentMonitor.cluster = cluster;
+                    }
+                });
+            }
+        });
+
+        if (_.isNil(ctrl.cluster) || _.isNil(_.find(ctrl.clusters, ctrl.cluster)))
+            ctrl.cluster = _.head(ctrl.clusters);
+    });
 }];

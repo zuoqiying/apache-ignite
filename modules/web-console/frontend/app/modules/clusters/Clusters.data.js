@@ -15,6 +15,11 @@
  * limitations under the License.
  */
 
-export default [() => {
+export default class ClustersData {
+    static $inject = ['$q', 'IgniteAgentMonitor'];
 
-}];
+    constructor($q, agentMonitor) {
+        this.$q = $q;
+        this.agentMonitor = agentMonitor;
+    }
+}

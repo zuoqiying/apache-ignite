@@ -22,7 +22,7 @@ import ClustersData from './Clusters.data';
 
 
 angular.module('ignite-console.clusters', [
-    'ui.router'
+
 ])
     .directive('igniteClusterSelect', clusterSelect)
     .service('ClustersData', ClustersData);

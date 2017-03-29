@@ -17,6 +17,8 @@
 
 package org.apache.ignite.console.agent.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.HashMap;
@@ -29,8 +31,12 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.ignite.console.demo.*;
-import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.processors.rest.protocols.http.jetty.GridJettyObjectMapper;
 import org.apache.log4j.Logger;
+
+import static org.apache.ignite.internal.processors.rest.GridRestResponse.STATUS_AUTH_FAILED;
+import static org.apache.ignite.internal.processors.rest.GridRestResponse.STATUS_FAILED;
+import static org.apache.ignite.internal.processors.rest.GridRestResponse.STATUS_SUCCESS;
 
 /**
  *
@@ -38,6 +44,9 @@ import org.apache.log4j.Logger;
 public class RestExecutor {
     /** */
     private static final Logger log = Logger.getLogger(RestExecutor.class);
+
+    /** JSON object mapper. */
+    private static final ObjectMapper mapper = new GridJettyObjectMapper();
 
     /** */
     private final OkHttpClient httpClient;
@@ -117,7 +126,26 @@ public class RestExecutor {
         reqBuilder.url(urlBuilder.build());
 
         try (Response resp = httpClient.newCall(reqBuilder.build()).execute()) {
-            return RestResult.success(resp.code(), resp.body().string());
+            String content = resp.body().string();
+
+            if (resp.isSuccessful()) {
+                JsonNode node = mapper.readTree(content);
+
+                int status = node.get("successStatus").asInt();
+
+                switch (status) {
+                    case STATUS_SUCCESS:
+                        return RestResult.success(node.get("response").toString());
+
+                    default:
+                        return RestResult.fail(status, node.get("error").asText());
+                }
+            }
+
+            if (resp.code() == 401)
+                return RestResult.fail(STATUS_AUTH_FAILED, "Failed to authenticate in grid. Please check agent\'s login and password or node port.");
+
+            return RestResult.fail(STATUS_FAILED, "Failed connect to node and execute REST command.");
         }
         catch (ConnectException e) {
             throw new ConnectException("Failed connect to node and execute REST command [url=" + urlBuilder + "]");
