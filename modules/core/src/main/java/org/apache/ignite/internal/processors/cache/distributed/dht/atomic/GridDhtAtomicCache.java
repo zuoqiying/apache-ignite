@@ -1723,6 +1723,12 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         completionCb.apply(req, res);
     }
 
+    /**
+     *
+     * @param nodeId Node ID.
+     * @param req Update request.
+     * @param completionCb Completion callback.
+     */
     private void updateAllAsyncInternal00(
         final UUID nodeId,
         final GridNearAtomicAbstractUpdateRequest req,
@@ -1754,7 +1760,9 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      *
      * @param nodeId Node ID.
      * @param req Update request.
-     * @param stripeIdx Stripe index.
+     * @param idx Stripe index in stripes array.
+     * @param firstIdx First stripe index in stripes array.
+     * @param stripes Stripe numbers array.
      * @param completionCb Completion callback.
      */
     private void updateAllAsyncInternal0(
