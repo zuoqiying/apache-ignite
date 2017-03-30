@@ -15,15 +15,16 @@
     limitations under the License.
 
 mixin form-field-checkbox(label, model, name, disabled, required, tip)
-    //- TOTO: Need to use common ignite-tooltip.
-    mixin ignite-tooltip-checkbox(title, options)
-        i.tipLabel.icon-help(
-            bs-tooltip='' 
+    //- TODO: Need to use common tooltip.
+    mixin tooltip-checkbox(title, options)
+        if title
+            i.tipLabel.icon-help(
+                bs-tooltip=''
 
-            data-title=title
-            data-container=options && options.container || false
-            data-placement=options && options.placement || false
-        )
+                data-title=title
+                data-container=options && options.container || false
+                data-placement=options && options.placement || false
+            )
 
     div.checkbox.col-xs-12.col-sm-12.col-md-12
         label(id=`{{ ${name} }}Label`)
@@ -45,5 +46,5 @@ mixin form-field-checkbox(label, model, name, disabled, required, tip)
                         data-ignite-form-panel-field=''
                     )
             span #{label}
-            if tip
-                +ignite-tooltip-checkbox(tip, tooltip)
+
+            +tooltip-checkbox(tip, tipOpts)

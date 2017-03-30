@@ -14,11 +14,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-mixin ignite-tooltip(title, options)
-    i.tipField.icon-help(
-        bs-tooltip='' 
+mixin tooltip(title, options)
+    if title
+        i.tipField.icon-help(
+            bs-tooltip=''
 
-        data-title=title
-        data-container=options && options.container || false
-        data-placement=options && options.placement || false
-    )
+            data-title=title
+            data-container=options && options.container || false
+            data-placement=options && options.placement || false
+        )
