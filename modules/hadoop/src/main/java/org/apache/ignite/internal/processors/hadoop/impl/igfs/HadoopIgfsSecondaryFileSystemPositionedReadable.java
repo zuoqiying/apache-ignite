@@ -17,11 +17,16 @@
 
 package org.apache.ignite.internal.processors.hadoop.impl.igfs;
 
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PositionedReadable;
+import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
 import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystemPositionedReadable;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.typedef.internal.U;
 
 import java.io.IOException;
@@ -29,8 +34,6 @@ import java.io.IOException;
 /**
  * Secondary file system input stream wrapper which actually opens input stream only in case it is explicitly
  * requested.
- * <p>
- * The class is expected to be used only from synchronized context and therefore is not tread-safe.
  */
 public class HadoopIgfsSecondaryFileSystemPositionedReadable implements IgfsSecondaryFileSystemPositionedReadable {
     /** Secondary file system. */
@@ -42,14 +45,8 @@ public class HadoopIgfsSecondaryFileSystemPositionedReadable implements IgfsSeco
     /** Buffer size. */
     private final int bufSize;
 
-    /** Actual input stream. */
-    private FSDataInputStream in;
-
-    /** Cached error occurred during output stream open. */
-    private IOException err;
-
-    /** Flag indicating that the stream was already opened. */
-    private boolean opened;
+    /** Reference to the input stream future. */
+    private final AtomicReference<IgniteInternalFuture<FSDataInputStream>> futRef = new AtomicReference<>();
 
     /**
      * Constructor.
@@ -69,34 +66,53 @@ public class HadoopIgfsSecondaryFileSystemPositionedReadable implements IgfsSeco
 
     /** Get input stream. */
     private PositionedReadable in() throws IOException {
-        if (opened) {
-            if (err != null)
-                throw err;
-        }
-        else {
-            opened = true;
+        IgniteInternalFuture<FSDataInputStream> fut = futRef.get();
 
-            try {
-                in = fs.open(path, bufSize);
+        if (fut == null) {
+            GridFutureAdapter<FSDataInputStream> a;
+
+            fut = a = new GridFutureAdapter<>();
+
+            if (futRef.compareAndSet(null, fut)) {
+                FSDataInputStream in = fs.open(path, bufSize);
 
                 if (in == null)
-                    throw new IOException("Failed to open input stream (file system returned null): " + path);
+                    a.onDone(new IOException("Failed to open input stream (file system returned null): "
+                        + path));
+                else
+                    a.onDone(in);
             }
-            catch (IOException e) {
-                err = e;
-
-                throw err;
-            }
+            else
+                // Other thread created the future concurrently:
+                fut = futRef.get();
         }
 
-        return in;
+        assert fut != null;
+
+        try {
+            FSDataInputStream is = fut.get();
+
+            assert is != null;
+
+            return is;
+        } catch (IgniteCheckedException ice) {
+            throw new IOException(ice);
+        }
     }
 
     /**
      * Close wrapped input stream in case it was previously opened.
      */
     @Override public void close() {
-        U.closeQuiet(in);
+        IgniteInternalFuture<FSDataInputStream> f = futRef.get();
+
+        try {
+            FSDataInputStream is = f == null ? null : f.get();
+
+            U.closeQuiet(is);
+        } catch (IgniteCheckedException ice) {
+            throw new IgniteException(ice);
+        }
     }
 
     /** {@inheritDoc} */
