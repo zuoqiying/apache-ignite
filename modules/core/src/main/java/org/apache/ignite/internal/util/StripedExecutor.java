@@ -414,7 +414,7 @@ public class StripedExecutor implements ExecutorService {
     /**
      * Stripe.
      */
-    private static abstract class Stripe implements Runnable {
+    private abstract static class Stripe implements Runnable {
         /** */
         private final String igniteInstanceName;
 
@@ -535,6 +535,13 @@ public class StripedExecutor implements ExecutorService {
         abstract void execute(Runnable cmd);
 
         /**
+         * Execute the command with priority.
+         *
+         * @param cmd Command.
+         */
+        abstract void prioExecute(Runnable cmd);
+
+        /**
          * @return Next runnable.
          * @throws InterruptedException If interrupted.
          */
@@ -637,13 +644,18 @@ public class StripedExecutor implements ExecutorService {
         }
 
         /** {@inheritDoc} */
-        void execute(Runnable cmd) {
+        @Override void execute(Runnable cmd) {
             queue.add(cmd);
 
             if (parked) {
                 unparkCntr.increment();
                 LockSupport.unpark(thread);
             }
+        }
+
+        /** {@inheritDoc} */
+        @Override void prioExecute(Runnable cmd) {
+            execute(cmd);
         }
 
         /** {@inheritDoc} */
@@ -708,8 +720,13 @@ public class StripedExecutor implements ExecutorService {
         }
 
         /** {@inheritDoc} */
-        void execute(Runnable cmd) {
+        @Override void execute(Runnable cmd) {
             queue.add(cmd);
+        }
+
+        /** {@inheritDoc} */
+        @Override void prioExecute(Runnable cmd) {
+            execute(cmd);
         }
 
         /** {@inheritDoc} */
@@ -759,8 +776,13 @@ public class StripedExecutor implements ExecutorService {
         }
 
         /** {@inheritDoc} */
-        void execute(Runnable cmd) {
+        @Override void execute(Runnable cmd) {
             queue.add(cmd);
+        }
+
+        /** {@inheritDoc} */
+        @Override void prioExecute(Runnable cmd) {
+            execute(cmd);
         }
 
         /** {@inheritDoc} */
@@ -783,8 +805,18 @@ public class StripedExecutor implements ExecutorService {
      * Stripe.
      */
     public static class StripeMPSCQueue extends Stripe {
+        /** */
+        static final Runnable TRIGGER_TASK = new Runnable() {
+            @Override public void run() {
+                // No-op.
+            }
+        };
+
         /** Queue. */
         private final MPSCQueue<Runnable> queue = new MPSCQueue<>(this);
+
+        /** Priority queue. */
+        private final Queue<Runnable> prioQueue = new ConcurrentLinkedQueue<>();
 
         /** */
         private volatile long parkCntr;
@@ -810,12 +842,14 @@ public class StripedExecutor implements ExecutorService {
                 log);
         }
 
-        public void park() {
+        /** Thread park method. */
+        void park() {
             parkCntr++;
             LockSupport.park();
         }
 
-        public void unpark() {
+        /** Thread unpark method. */
+        void unpark() {
             unparkCntr.increment();
             LockSupport.unpark(thread);
         }
@@ -832,12 +866,30 @@ public class StripedExecutor implements ExecutorService {
 
         /** {@inheritDoc} */
         @Override Runnable take() throws InterruptedException {
-            return queue.take();
+            for (; ; ) {
+                Runnable prioItem = prioQueue.poll();
+
+                if (prioItem != null)
+                    return prioItem;
+
+                Runnable normalItem = queue.take();
+
+                if (normalItem == TRIGGER_TASK)
+                    continue;
+
+                return normalItem;
+            }
         }
 
         /** {@inheritDoc} */
-        void execute(Runnable cmd) {
+        @Override void execute(Runnable cmd) {
             queue.add(cmd);
+        }
+
+        /** {@inheritDoc} */
+        @Override void prioExecute(Runnable cmd) {
+            prioQueue.add(cmd);
+            queue.add(TRIGGER_TASK);
         }
 
         /** {@inheritDoc} */
