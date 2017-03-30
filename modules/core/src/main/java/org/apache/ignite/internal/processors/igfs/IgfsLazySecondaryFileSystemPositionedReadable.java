@@ -17,12 +17,17 @@
 
 package org.apache.ignite.internal.processors.igfs;
 
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.igfs.IgfsPath;
 import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystem;
 import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystemPositionedReadable;
+import org.apache.ignite.internal.IgniteInternalFuture;
+import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.typedef.internal.S;
 
 import java.io.IOException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Lazy readable entity which is opened on demand.
@@ -37,8 +42,14 @@ public class IgfsLazySecondaryFileSystemPositionedReadable implements IgfsSecond
     /** Buffer size. */
     private final int bufSize;
 
-    /** Target stream. */
-    private IgfsSecondaryFileSystemPositionedReadable target;
+    /** Lazy IgfsSecondaryFileSystemPositionedReadable value. */
+    private final LazyValue<IgfsSecondaryFileSystemPositionedReadable> lazyVal
+        = new LazyValue<IgfsSecondaryFileSystemPositionedReadable>() {
+        /** {@inheritDoc} */
+        @Override protected IgfsSecondaryFileSystemPositionedReadable create() {
+            return fs.open(path, bufSize);
+        }
+    };
 
     /**
      * Constructor.
@@ -58,20 +69,96 @@ public class IgfsLazySecondaryFileSystemPositionedReadable implements IgfsSecond
 
     /** {@inheritDoc} */
     @Override public int read(long pos, byte[] buf, int off, int len) throws IOException {
-        if (target == null)
-            target = fs.open(path, bufSize);
+        try {
+            IgfsSecondaryFileSystemPositionedReadable r = lazyVal.getOrCreate();
 
-        return target.read(pos, buf, off, len);
+            return r.read(pos, buf, off, len);
+        }
+        catch (IgniteCheckedException ice) {
+            throw new IOException(ice);
+        }
     }
 
     /** {@inheritDoc} */
     @Override public void close() throws IOException {
-        if (target != null)
-            target.close();
+        try {
+            IgfsSecondaryFileSystemPositionedReadable r = lazyVal.getAsIs();
+
+            if (r != null)
+                r.close();
+        }
+        catch (IgniteCheckedException ice) {
+            throw new IOException(ice);
+        }
     }
 
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(IgfsLazySecondaryFileSystemPositionedReadable.class, this);
+    }
+
+    /**
+     * Represents a generic purpose thread-safe lazy value container.
+     * The value is initialized on demand only once.
+     *
+     * @param <T> The value type.
+     */
+    public static abstract class LazyValue<T> {
+        /** */
+        private final AtomicReference<IgniteInternalFuture<T>> futRef = new AtomicReference<>();
+
+        /**
+         * Creates the value. This method is guaranteed to be invoked not more than once on an instance.
+         *
+         * @return The just created value. Must never return null.
+         * @throws Exception On error.
+         */
+        protected abstract T create() throws Exception;
+
+        /**
+         * Lazily gets the value or creates it as needed.
+         *
+         * @return The value.
+         * @throws IgniteCheckedException On error.
+         */
+        public T getOrCreate() throws IgniteCheckedException {
+            IgniteInternalFuture<T> fut = futRef.get();
+
+            if (fut == null) {
+                GridFutureAdapter<T> a = new GridFutureAdapter<>();
+
+                if (futRef.compareAndSet(null, a)) {
+                    try {
+                        T r = create();
+
+                        assert r != null;
+
+                        a.onDone(r);
+                    }
+                    catch (Exception e) {
+                        a.onDone(e);
+                    }
+
+                    fut = a;
+                } else
+                    fut = futRef.get();
+            }
+
+            assert fut != null;
+
+            return fut.get();
+        }
+
+        /**
+         * Gets the value, but does not invoke initialization.
+         *
+         * @return The value or null, if not yet initialized.
+         * @throws IgniteCheckedException On error.
+         */
+        public @Nullable T getAsIs() throws IgniteCheckedException {
+            IgniteInternalFuture<T> fut = futRef.get();
+
+            return fut == null ? null : fut.get();
+        }
     }
 }

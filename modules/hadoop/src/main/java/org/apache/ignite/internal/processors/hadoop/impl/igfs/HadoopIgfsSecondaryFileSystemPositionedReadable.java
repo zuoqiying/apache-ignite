@@ -17,7 +17,6 @@
 
 package org.apache.ignite.internal.processors.hadoop.impl.igfs;
 
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -25,8 +24,7 @@ import org.apache.hadoop.fs.PositionedReadable;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystemPositionedReadable;
-import org.apache.ignite.internal.IgniteInternalFuture;
-import org.apache.ignite.internal.util.future.GridFutureAdapter;
+import org.apache.ignite.internal.processors.igfs.IgfsLazySecondaryFileSystemPositionedReadable;
 import org.apache.ignite.internal.util.typedef.internal.U;
 
 import java.io.IOException;
@@ -45,8 +43,19 @@ public class HadoopIgfsSecondaryFileSystemPositionedReadable implements IgfsSeco
     /** Buffer size. */
     private final int bufSize;
 
-    /** Reference to the input stream future. */
-    private final AtomicReference<IgniteInternalFuture<FSDataInputStream>> futRef = new AtomicReference<>();
+    /** Lazy value. */
+    private final IgfsLazySecondaryFileSystemPositionedReadable.LazyValue<FSDataInputStream> lazyVal
+        = new IgfsLazySecondaryFileSystemPositionedReadable.LazyValue<FSDataInputStream>() {
+        /** {@inheritDoc} */
+        @Override protected FSDataInputStream create() throws IOException {
+            FSDataInputStream in = fs.open(path, bufSize);
+
+            if (in == null)
+                 throw new IOException("Failed to open input stream (file system returned null): " + path);
+
+            return in;
+        }
+    };
 
     /**
      * Constructor.
@@ -66,36 +75,14 @@ public class HadoopIgfsSecondaryFileSystemPositionedReadable implements IgfsSeco
 
     /** Get input stream. */
     private PositionedReadable in() throws IOException {
-        IgniteInternalFuture<FSDataInputStream> fut = futRef.get();
-
-        if (fut == null) {
-            GridFutureAdapter<FSDataInputStream> a;
-
-            fut = a = new GridFutureAdapter<>();
-
-            if (futRef.compareAndSet(null, fut)) {
-                FSDataInputStream in = fs.open(path, bufSize);
-
-                if (in == null)
-                    a.onDone(new IOException("Failed to open input stream (file system returned null): "
-                        + path));
-                else
-                    a.onDone(in);
-            }
-            else
-                // Other thread created the future concurrently:
-                fut = futRef.get();
-        }
-
-        assert fut != null;
-
         try {
-            FSDataInputStream is = fut.get();
+            FSDataInputStream is = lazyVal.getOrCreate();
 
             assert is != null;
 
             return is;
-        } catch (IgniteCheckedException ice) {
+        }
+        catch (IgniteCheckedException ice) {
             throw new IOException(ice);
         }
     }
@@ -104,10 +91,8 @@ public class HadoopIgfsSecondaryFileSystemPositionedReadable implements IgfsSeco
      * Close wrapped input stream in case it was previously opened.
      */
     @Override public void close() {
-        IgniteInternalFuture<FSDataInputStream> f = futRef.get();
-
         try {
-            FSDataInputStream is = f == null ? null : f.get();
+            FSDataInputStream is = lazyVal.getAsIs();
 
             U.closeQuiet(is);
         } catch (IgniteCheckedException ice) {
