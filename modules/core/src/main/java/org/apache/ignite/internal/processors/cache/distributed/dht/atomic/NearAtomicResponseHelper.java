@@ -77,7 +77,10 @@ public class NearAtomicResponseHelper {
                 this.res.addFailedKeys(res.failedKeys(), null);
 
             if (res.skippedIndexes() != null)
-                this.res.skippedIndexes().addAll(res.skippedIndexes());
+                for (Integer skippedIndex : res.skippedIndexes()) {
+                    this.res.addSkippedIndex(skippedIndex);
+                }
+
         }
     }
 }

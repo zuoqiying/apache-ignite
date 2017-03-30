@@ -801,7 +801,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         final byte plc,
         final IgniteRunnable msgC
     ) throws IgniteCheckedException {
-        Runnable c = new Runnable() {
+        final Runnable c = new Runnable() {
             @Override public void run() {
                 try {
                     threadProcessingMessage(true);
@@ -820,7 +820,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             }
         };
 
-        StripedExecutor stripedExecutor = ctx.getStripedExecutorService();
+        final StripedExecutor stripedExecutor = ctx.getStripedExecutorService();
 
         if (msg.topicOrdinal() == TOPIC_IO_TEST.ordinal()) {
             IgniteIoTestMessage msg0 = (IgniteIoTestMessage)msg.message();
@@ -837,21 +837,15 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             (msg.partition() != Integer.MIN_VALUE ||
                 msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE)) {
 
-            int stripe;
-
             if (msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE) {
-                GridNearAtomicFullUpdateRequest msg0 = (GridNearAtomicFullUpdateRequest)msg.message();
+                final GridNearAtomicFullUpdateRequest msg0 = (GridNearAtomicFullUpdateRequest)msg.message();
 
-                Map<Integer, int[]> map = makeStripeMap(msg0);
+                int part = msg.partition();
 
-                int idx = ThreadLocalRandom8.current().nextInt(0, msg0.size());
-
-                stripe = part2stripe.get(msg0.key(idx).partition());
+                stripedExecutor.executePrio(part, c);
             }
             else
-                stripe = msg.partition();
-
-            stripedExecutor.execute(stripe, c);
+                stripedExecutor.execute(msg.partition(), c);
 
             return;
         }
@@ -868,7 +862,12 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         }
     }
 
-    private Map<Integer, int[]> makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
+    /**
+     *
+     * @param msg Message.
+     * @return Stripe map.
+     */
+    public Map<Integer, int[]> makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
         int maxStripes = ctx.getStripedExecutorService().stripes();
 
         Map<Integer, int[]> map = new HashMap<>();

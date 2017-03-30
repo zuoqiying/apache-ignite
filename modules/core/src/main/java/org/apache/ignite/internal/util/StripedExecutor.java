@@ -194,6 +194,20 @@ public class StripedExecutor implements ExecutorService {
         }
     }
 
+    /**
+     * Execute command with priority.
+     *
+     * @param idx Index.
+     * @param cmd Command.
+     */
+    public void executePrio(int idx, Runnable cmd) {
+        assert idx >= -1 : idx;
+
+        int stripeIdx = idx == -1 ? ThreadLocalRandom.current().nextInt(stripes.length) : idx % stripes.length;
+
+        stripes[stripeIdx].executePrio(cmd);
+    }
+
     /** {@inheritDoc} */
     @Override public void shutdown() {
         signalStop();
@@ -539,7 +553,7 @@ public class StripedExecutor implements ExecutorService {
          *
          * @param cmd Command.
          */
-        abstract void prioExecute(Runnable cmd);
+        abstract void executePrio(Runnable cmd);
 
         /**
          * @return Next runnable.
@@ -654,7 +668,7 @@ public class StripedExecutor implements ExecutorService {
         }
 
         /** {@inheritDoc} */
-        @Override void prioExecute(Runnable cmd) {
+        @Override void executePrio(Runnable cmd) {
             execute(cmd);
         }
 
@@ -725,7 +739,7 @@ public class StripedExecutor implements ExecutorService {
         }
 
         /** {@inheritDoc} */
-        @Override void prioExecute(Runnable cmd) {
+        @Override void executePrio(Runnable cmd) {
             execute(cmd);
         }
 
@@ -781,7 +795,7 @@ public class StripedExecutor implements ExecutorService {
         }
 
         /** {@inheritDoc} */
-        @Override void prioExecute(Runnable cmd) {
+        @Override void executePrio(Runnable cmd) {
             execute(cmd);
         }
 
@@ -887,14 +901,14 @@ public class StripedExecutor implements ExecutorService {
         }
 
         /** {@inheritDoc} */
-        @Override void prioExecute(Runnable cmd) {
+        @Override void executePrio(Runnable cmd) {
             prioQueue.add(cmd);
             queue.add(TRIGGER_TASK);
         }
 
         /** {@inheritDoc} */
         @Override int queueSize() {
-            return queue.size();
+            return queue.size() + prioQueue.size();
         }
 
         /** {@inheritDoc} */

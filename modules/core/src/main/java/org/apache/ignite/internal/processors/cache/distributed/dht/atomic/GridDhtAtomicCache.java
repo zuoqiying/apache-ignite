@@ -1734,25 +1734,33 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         final GridNearAtomicAbstractUpdateRequest req,
         final UpdateReplyClosure completionCb
     ) {
-        if (!nodeId.equals(ctx.localNodeId()) && req.stripeMap() != null) {
-            int curStripe = Thread.currentThread() instanceof IgniteThread ? ((IgniteThread)Thread.currentThread()).stripe() : -1;
+        int curStripe = Thread.currentThread() instanceof IgniteThread ? ((IgniteThread)Thread.currentThread()).stripe() : -1;
 
-            Map<Integer, int[]> stripeMap = req.stripeMap();
+        if (!nodeId.equals(ctx.localNodeId()) && req.directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE && curStripe != -1) {
 
-            int[] stripes = new int[stripeMap.size()];
-            int idx = 0;
-            int firstIdx = -1;
+            GridNearAtomicFullUpdateRequest req0 = (GridNearAtomicFullUpdateRequest) req;
 
-            for (Integer stripe : stripeMap.keySet()) {
-                if (curStripe == stripe)
-                    firstIdx = idx;
-                stripes[idx++] = stripe;
+            if (req.stripeMap() == null) {
+                // We are in priority thread.
+                StripedExecutor stripedExecutor = ctx.kernalContext().getStripedExecutorService();
+
+                Map<Integer, int[]> map = ctx.gridIO().makeStripeMap(req0);
+
+                Runnable c = new Runnable() {
+                    @Override public void run() {
+                        updateAllAsyncInternal00(nodeId, req, completionCb);
+                    }
+                };
+
+                for (Integer stripe : map.keySet()) {
+                    stripedExecutor.execute(stripe, c);
+                }
             }
-
-            updateAllAsyncInternal0(nodeId, req, firstIdx, firstIdx, stripes, completionCb);
+            else
+                updateAllAsyncInternal0(nodeId, req, curStripe, req.stripeMap().get(curStripe), completionCb);
         }
         else
-            updateAllAsyncInternal0(nodeId, req, -1, -1, null, completionCb);
+            updateAllAsyncInternal0(nodeId, req, -1, null, completionCb);
     }
 
     /**
@@ -1760,17 +1768,15 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      *
      * @param nodeId Node ID.
      * @param req Update request.
-     * @param idx Stripe index in stripes array.
-     * @param firstIdx First stripe index in stripes array.
-     * @param stripes Stripe numbers array.
+     * @param stripeIdx Stripe index.
+     * @param stripeIdxs Indexes array.
      * @param completionCb Completion callback.
      */
     private void updateAllAsyncInternal0(
         final UUID nodeId,
         final GridNearAtomicAbstractUpdateRequest req,
-        int idx,
-        final int firstIdx,
-        final int[] stripes,
+        final int stripeIdx,
+        final int[] stripeIdxs,
         final UpdateReplyClosure completionCb
     ) {
         ClusterNode node = ctx.discovery().node(nodeId);
@@ -1791,28 +1797,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
         res.partition(req.partition());
 
-        int[] stripeIdxs = null;
-
-        if (idx != -1
-            && req.directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE
-            && req.stripeMap() != null) {
-            int stripeIdx = stripes[idx];
-            stripeIdxs = req.stripeMap().get(stripeIdx);
-
+        if (stripeIdxs != null)
             res.stripe(stripeIdx);
-
-            // start next thread
-            final int nextIdx = (idx + 1) % stripes.length;
-            if (nextIdx != firstIdx) {
-                StripedExecutor stripedExecutor = ctx.kernalContext().getStripedExecutorService();
-
-                stripedExecutor.execute(stripes[nextIdx], new Runnable() {
-                    @Override public void run() {
-                        updateAllAsyncInternal0(nodeId, req, nextIdx, firstIdx, stripes, completionCb);
-                    }
-                });
-            }
-        }
 
         assert !req.returnValue() || (req.operation() == TRANSFORM || req.size() == 1);
 
