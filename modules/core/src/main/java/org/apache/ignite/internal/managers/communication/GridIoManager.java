@@ -21,7 +21,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -34,7 +33,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -61,7 +59,6 @@ import org.apache.ignite.internal.processors.platform.message.PlatformMessageFil
 import org.apache.ignite.internal.processors.pool.PoolProcessor;
 import org.apache.ignite.internal.processors.timeout.GridTimeoutObject;
 import org.apache.ignite.internal.util.GridBoundedConcurrentLinkedHashSet;
-import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.StripedCompositeReadWriteLock;
 import org.apache.ignite.internal.util.StripedExecutor;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
@@ -195,12 +192,6 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
 
     /** */
     private final AtomicLong ioTestId = new AtomicLong();
-
-    /** */
-    private final ConcurrentHashMap8<Integer, Integer> part2stripe = new ConcurrentHashMap8<>();
-
-    /** */
-    private final AtomicInteger curStripe = new AtomicInteger();
 
     /** No-op runnable. */
     private static final IgniteRunnable NOOP = new IgniteRunnable() {
@@ -859,41 +850,6 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
 
             c.run();
         }
-    }
-
-    /**
-     *
-     * @param msg Message.
-     * @return Stripe map.
-     */
-    public Map<Integer, GridIntList> makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
-        int maxStripes = ctx.getStripedExecutorService().stripes();
-
-        Map<Integer, GridIntList> map = new HashMap<>();
-
-        for (int i = 0; i < msg.size(); i++) {
-            int part = msg.key(i).partition();
-
-            int stripe;
-
-            if (!part2stripe.containsKey(part)) {
-                stripe = curStripe.incrementAndGet() % maxStripes;
-                part2stripe.putIfAbsent(part, stripe);
-            }
-            else
-                stripe = part2stripe.get(part);
-
-            GridIntList idxs = map.get(stripe);
-
-            if (idxs == null)
-                map.put(stripe, idxs = new GridIntList());
-
-            idxs.add(i);
-        }
-
-        msg.stripeMap(map);
-
-        return map;
     }
 
     /**

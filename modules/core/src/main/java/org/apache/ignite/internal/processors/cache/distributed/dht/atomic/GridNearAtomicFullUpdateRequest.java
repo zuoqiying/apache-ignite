@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
@@ -39,7 +38,6 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.IgniteExternalizableExpiryPolicy;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
-import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.GridLongList;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.CU;
@@ -72,10 +70,6 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
     /** Values to update. */
     @GridDirectCollection(CacheObject.class)
     private List<CacheObject> vals;
-
-    /** Stripe to index mapping bytes. */
-    @GridDirectTransient
-    private Map<Integer, GridIntList> stripeMap;
 
     /** Entry processors. */
     @GridDirectTransient
@@ -362,16 +356,6 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
     /** {@inheritDoc} */
     @Override public ExpiryPolicy expiry() {
         return expiryPlc;
-    }
-
-    /** {@inheritDoc} */
-    @Override @Nullable public Map<Integer, GridIntList> stripeMap() {
-        return stripeMap;
-    }
-
-    /** {@inheritDoc} */
-    public void stripeMap(Map<Integer, GridIntList> stripeMap) {
-        this.stripeMap = stripeMap;
     }
 
     /** {@inheritDoc} */

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorResult;
@@ -106,6 +107,7 @@ import org.apache.ignite.plugin.security.SecurityPermission;
 import org.apache.ignite.thread.IgniteThread;
 import org.apache.ignite.transactions.TransactionIsolation;
 import org.jetbrains.annotations.Nullable;
+import org.jsr166.ConcurrentHashMap8;
 
 import static org.apache.ignite.IgniteSystemProperties.IGNITE_ATOMIC_DEFERRED_ACK_BUFFER_SIZE;
 import static org.apache.ignite.IgniteSystemProperties.IGNITE_ATOMIC_DEFERRED_ACK_TIMEOUT;
@@ -152,6 +154,12 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
     /** Logger. */
     private IgniteLogger msgLog;
+
+    /** */
+    private final ConcurrentHashMap8<Integer, Integer> part2stripe = new ConcurrentHashMap8<>();
+
+    /** */
+    private final AtomicInteger curStripe = new AtomicInteger();
 
     /**
      * Empty constructor required by {@link Externalizable}.
@@ -215,8 +223,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             @Override public void apply(GridNearAtomicAbstractUpdateRequest req, GridNearAtomicUpdateResponse res) {
                 if (req.writeSynchronizationMode() != FULL_ASYNC) {
-                    if (req.responseHelper() != null) {
-                        GridNearAtomicUpdateResponse res0 = req.responseHelper().addResponse(res);
+                    if (req.context() != null) {
+                        GridNearAtomicUpdateResponse res0 = req.context().addResponse(res);
 
                         if (res0 != null)
                             sendNearUpdateReply(res.nodeId(), res0);
@@ -1740,15 +1748,15 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         if (!nodeId.equals(ctx.localNodeId()) && req.directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE && curStripe != -1) {
             GridNearAtomicFullUpdateRequest req0 = (GridNearAtomicFullUpdateRequest) req;
 
-            if (req.stripeMap() == null) {
+            if (req0.context() == null) {
                 // We are in priority thread.
                 StripedExecutor stripedExecutor = ctx.kernalContext().getStripedExecutorService();
 
-                Map<Integer, GridIntList> map = ctx.gridIO().makeStripeMap(req0);
+                GridDhtPartitionTopology top = topology();
 
-                NearAtomicResponseHelper resHelper = new NearAtomicResponseHelper(req0, map.size());
+                StripeMap map = makeStripeMap(req0);
 
-                req0.responseHelper(resHelper);
+                req0.context(new NearAtomicRequestContext(map, top));
 
                 Runnable c = new Runnable() {
                     @Override public void run() {
@@ -1756,12 +1764,13 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     }
                 };
 
-                for (Integer stripe : map.keySet()) {
-                    stripedExecutor.execute(stripe, c);
-                }
+                GridIntList stripes = map.stripes();
+
+                for (int i=0; i<stripes.size(); i++)
+                    stripedExecutor.execute(stripes.get(i), c);
             }
             else
-                updateAllAsyncInternal0(nodeId, req, curStripe, req.stripeMap().get(curStripe), completionCb);
+                updateAllAsyncInternal0(nodeId, req, curStripe, req.context().mapForStripe(curStripe), completionCb);
         }
         else
             updateAllAsyncInternal0(nodeId, req, -1, null, completionCb);
@@ -1822,7 +1831,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             Collection<IgniteBiTuple<GridDhtCacheEntry, GridCacheVersion>> deleted = null;
 
             try {
-                GridDhtPartitionTopology top = topology();
+                GridDhtPartitionTopology top = req.context().topology();
 
                 top.readLock();
 
@@ -3614,9 +3623,76 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         }
     }
 
+    /**
+     *
+     * @param msg Message.
+     * @return Stripe map.
+     */
+    public StripeMap makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
+        int maxStripes = ctx.kernalContext().getStripedExecutorService().stripes();
+
+        StripeMap map = new StripeMap(maxStripes);
+
+        for (int i = 0; i < msg.size(); i++) {
+            int part = msg.key(i).partition();
+
+            int stripe;
+
+            if (!part2stripe.containsKey(part)) {
+                stripe = curStripe.incrementAndGet() % maxStripes;
+                part2stripe.putIfAbsent(part, stripe);
+            }
+            else
+                stripe = part2stripe.get(part);
+            map.add(stripe, i);
+        }
+
+        return map;
+    }
+
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(GridDhtAtomicCache.class, this, super.toString());
+    }
+
+    /**
+     * Stripe indexes.
+     */
+    public static class StripeMap {
+        /** */
+        private GridIntList[] idxs;
+        /** */
+        private GridIntList stripes = new GridIntList();
+
+        /** */
+        public StripeMap(int maxStripes) {
+            idxs = new GridIntList[maxStripes];
+        }
+
+        /** */
+        public void add(int stripe, int idx) {
+            if (idxs[stripe] == null) {
+                idxs[stripe] = new GridIntList();
+                stripes.add(stripe);
+            }
+
+            idxs[stripe].add(idx);
+        }
+
+        /** */
+        public GridIntList get(int stripe) {
+            return idxs[stripe];
+        }
+
+        /** */
+        public GridIntList stripes() {
+            return stripes;
+        }
+
+        /** */
+        public int size() {
+            return stripes.size();
+        }
     }
 
     /**

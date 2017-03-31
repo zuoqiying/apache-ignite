@@ -17,13 +17,13 @@
 
 package org.apache.ignite.internal.processors.cache.distributed.dht.atomic;
 
+import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionTopology;
+import org.apache.ignite.internal.util.GridIntList;
+
 /**
  *
  */
-public class NearAtomicResponseHelper {
-
-    /** */
-    private final GridNearAtomicFullUpdateRequest req;
+public class NearAtomicRequestContext {
 
     /** */
     private GridNearAtomicUpdateResponse res;
@@ -31,12 +31,20 @@ public class NearAtomicResponseHelper {
     /** */
     private int cnt;
 
+    /** */
+    private final GridDhtAtomicCache.StripeMap map;
+
+    /** */
+    private final GridDhtPartitionTopology top;
+
     /**
-     * @param stripeNum Stripes number.
+     * @param map Stripe map.
      */
-    public NearAtomicResponseHelper(GridNearAtomicFullUpdateRequest req, int stripeNum) {
-        this.req = req;
-        this.cnt = stripeNum;
+    public NearAtomicRequestContext(GridDhtAtomicCache.StripeMap map, GridDhtPartitionTopology top) {
+        this.map = map;
+        this.top = top;
+
+        cnt = map.size();
     }
 
     /**
@@ -45,10 +53,14 @@ public class NearAtomicResponseHelper {
      */
     public GridNearAtomicUpdateResponse addResponse(GridNearAtomicUpdateResponse res) {
         synchronized (this) {
+            if (cnt == 0)
+                return null;
+
             if (res.stripe() == -1)
                 return res;
 
             mergeResponse(res);
+
             return --cnt == 0 ? this.res : null;
         }
     }
@@ -84,7 +96,24 @@ public class NearAtomicResponseHelper {
      *
      * @return
      */
-    public GridNearAtomicFullUpdateRequest req() {
-        return req;
+    public GridDhtAtomicCache.StripeMap stripeMap() {
+        return map;
+    }
+
+    /**
+     *
+     * @param stripe
+     * @return
+     */
+    public GridIntList mapForStripe(int stripe) {
+        return map.get(stripe);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public GridDhtPartitionTopology topology() {
+        return top;
     }
 }

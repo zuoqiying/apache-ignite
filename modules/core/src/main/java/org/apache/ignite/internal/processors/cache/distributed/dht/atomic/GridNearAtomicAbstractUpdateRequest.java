@@ -19,7 +19,6 @@ package org.apache.ignite.internal.processors.cache.distributed.dht.atomic;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
@@ -35,7 +34,6 @@ import org.apache.ignite.internal.processors.cache.GridCacheOperation;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
-import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
@@ -93,7 +91,7 @@ public abstract class GridNearAtomicAbstractUpdateRequest extends GridCacheMessa
 
     /** Response helper. */
     @GridDirectTransient
-    private NearAtomicResponseHelper responseHelper;
+    private NearAtomicRequestContext context;
 
     /**
      *
@@ -420,16 +418,16 @@ public abstract class GridNearAtomicAbstractUpdateRequest extends GridCacheMessa
     /**
      * @return Response helper.
      */
-    public NearAtomicResponseHelper responseHelper() {
-        return responseHelper;
+    public NearAtomicRequestContext context() {
+        return context;
     }
 
     /**
-     * @param responseHelper Response helper.
+     * @param context Response helper.
      */
-    public void responseHelper(
-        NearAtomicResponseHelper responseHelper) {
-        this.responseHelper = responseHelper;
+    public void context(
+        NearAtomicRequestContext context) {
+        this.context = context;
     }
 
     /**
@@ -437,13 +435,6 @@ public abstract class GridNearAtomicAbstractUpdateRequest extends GridCacheMessa
      * @return Key.
      */
     public abstract KeyCacheObject key(int idx);
-
-    /**
-     * @return Stripe map.
-     */
-    @Nullable public Map<Integer, GridIntList> stripeMap() {
-        return null;
-    }
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {

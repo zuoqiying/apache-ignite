@@ -134,8 +134,8 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
         int keyNum;
         GridIntList stripeIdxs;
 
-        if (res.stripe() > -1 && req.stripeMap() != null) {
-            stripeIdxs = req.stripeMap().get(res.stripe());
+        if (res.stripe() > -1 && req.context() != null) {
+            stripeIdxs = req.context().mapForStripe(res.stripe());
             keyNum = stripeIdxs.size();
         }
         else {
