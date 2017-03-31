@@ -26,6 +26,9 @@ import java.util.Set;
 public class NearAtomicResponseHelper {
 
     /** */
+    private final GridNearAtomicFullUpdateRequest req;
+
+    /** */
     private GridNearAtomicUpdateResponse res;
 
     /** */
@@ -34,7 +37,8 @@ public class NearAtomicResponseHelper {
     /**
      * @param stripes Stripes collection.
      */
-    public NearAtomicResponseHelper(Set<Integer> stripes) {
+    public NearAtomicResponseHelper(GridNearAtomicFullUpdateRequest req, Set<Integer> stripes) {
+        this.req = req;
         this.stripes = new HashSet<>(stripes);
     }
 
@@ -74,7 +78,7 @@ public class NearAtomicResponseHelper {
                     );
 
             if (res.failedKeys() != null)
-                this.res.addFailedKeys(res.failedKeys(), null);
+                this.res.addFailedKeys(res.failedKeys(), res.error());
 
             if (res.skippedIndexes() != null)
                 for (Integer skippedIndex : res.skippedIndexes()) {
@@ -82,5 +86,13 @@ public class NearAtomicResponseHelper {
                 }
 
         }
+    }
+
+    /**
+     *
+     * @return
+     */
+    public GridNearAtomicFullUpdateRequest req() {
+        return req;
     }
 }

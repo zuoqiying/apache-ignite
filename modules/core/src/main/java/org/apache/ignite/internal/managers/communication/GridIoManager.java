@@ -57,7 +57,6 @@ import org.apache.ignite.internal.managers.deployment.GridDeployment;
 import org.apache.ignite.internal.managers.eventstorage.GridEventStorageManager;
 import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.GridNearAtomicFullUpdateRequest;
-import org.apache.ignite.internal.processors.cache.distributed.dht.atomic.NearAtomicResponseHelper;
 import org.apache.ignite.internal.processors.platform.message.PlatformMessageFilter;
 import org.apache.ignite.internal.processors.pool.PoolProcessor;
 import org.apache.ignite.internal.processors.timeout.GridTimeoutObject;
@@ -89,7 +88,6 @@ import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentHashMap8;
 import org.jsr166.ConcurrentLinkedDeque8;
-import org.jsr166.ThreadLocalRandom8;
 
 import static org.apache.ignite.events.EventType.EVT_NODE_FAILED;
 import static org.apache.ignite.events.EventType.EVT_NODE_JOINED;
@@ -899,7 +897,6 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         }
 
         msg.stripeMap(map);
-        msg.responseHelper(new NearAtomicResponseHelper(map.keySet()));
 
         return map;
     }

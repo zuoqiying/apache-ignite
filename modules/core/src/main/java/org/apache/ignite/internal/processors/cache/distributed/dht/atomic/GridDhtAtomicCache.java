@@ -1737,7 +1737,6 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         int curStripe = Thread.currentThread() instanceof IgniteThread ? ((IgniteThread)Thread.currentThread()).stripe() : -1;
 
         if (!nodeId.equals(ctx.localNodeId()) && req.directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE && curStripe != -1) {
-
             GridNearAtomicFullUpdateRequest req0 = (GridNearAtomicFullUpdateRequest) req;
 
             if (req.stripeMap() == null) {
@@ -1745,6 +1744,10 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                 StripedExecutor stripedExecutor = ctx.kernalContext().getStripedExecutorService();
 
                 Map<Integer, int[]> map = ctx.gridIO().makeStripeMap(req0);
+
+                NearAtomicResponseHelper resHelper = new NearAtomicResponseHelper(req0, map.keySet());
+
+                req0.responseHelper(resHelper);
 
                 Runnable c = new Runnable() {
                     @Override public void run() {
@@ -1820,7 +1823,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             try {
                 GridDhtPartitionTopology top = topology();
 
-                top.readLock();
+//                top.readLock();
 
                 try {
                     if (top.stopping()) {
@@ -1835,7 +1838,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     // Do not check topology version if topology was locked on near node by
                     // external transaction or explicit lock.
                     if (req.topologyLocked() || !needRemap(req.topologyVersion(), top.topologyVersion())) {
-                        locked = lockEntries(req, req.topologyVersion(), stripeIdxs);
+//                        locked = lockEntries(req, req.topologyVersion(), stripeIdxs);
+                        locked = getEntries(req, req.topologyVersion(), stripeIdxs);
 
                         boolean hasNear = ctx.discovery().cacheNearNode(node, name());
 
@@ -1923,7 +1927,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     }
                 }
                 finally {
-                    top.readUnlock();
+//                    top.readUnlock();
                 }
             }
             catch (GridCacheEntryRemovedException e) {
@@ -1932,8 +1936,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                 e.printStackTrace();
             }
             finally {
-                if (locked != null)
-                    unlockEntries(locked, req.topologyVersion());
+//                if (locked != null)
+//                    unlockEntries(locked, req.topologyVersion());
 
                 // Enqueue if necessary after locks release.
                 if (deleted != null) {
@@ -2963,6 +2967,43 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     return locked;
             }
         }
+    }
+
+    /**
+     *
+     * @param req
+     * @param topVer
+     * @param stripeIdxs
+     * @return
+     * @throws GridDhtInvalidPartitionException
+     */
+    @SuppressWarnings("ForLoopReplaceableByForEach")
+    private List<GridDhtCacheEntry> getEntries(GridNearAtomicAbstractUpdateRequest req,
+        AffinityTopologyVersion topVer,
+        int[] stripeIdxs)
+        throws GridDhtInvalidPartitionException {
+
+        int keysNum = stripeIdxs == null ? req.size() : stripeIdxs.length;
+
+        if (keysNum == 1) {
+            int idx = stripeIdxs != null ? stripeIdxs[0] : 0;
+
+            KeyCacheObject key = req.key(idx);
+
+            GridDhtCacheEntry entry = entryExx(key, topVer);
+
+            return Collections.singletonList(entry);
+        }
+        List<GridDhtCacheEntry> locked = new ArrayList<>(keysNum);
+
+        for (int i = 0; i < keysNum; i++) {
+            int idx = stripeIdxs == null ? i : stripeIdxs[i];
+
+            GridDhtCacheEntry entry = entryExx(req.key(idx), topVer);
+
+            locked.add(entry);
+        }
+        return locked;
     }
 
     /**
