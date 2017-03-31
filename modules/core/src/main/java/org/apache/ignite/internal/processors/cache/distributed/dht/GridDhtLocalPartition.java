@@ -18,7 +18,6 @@
 package org.apache.ignite.internal.processors.cache.distributed.dht;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +33,7 @@ import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.CacheEntryPredicate;
 import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.GridCacheConcurrentMap;
+import org.apache.ignite.internal.processors.cache.GridCacheConcurrentMapImpl;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
 import org.apache.ignite.internal.processors.cache.GridCacheEntryRemovedException;
@@ -130,7 +130,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
      * @param entryFactory Entry factory.
      */
     @SuppressWarnings("ExternalizableWithoutPublicNoArgConstructor")
-    GridDhtLocalPartition(final GridCacheContext cctx, int id, final GridCacheMapEntryFactory entryFactory) {
+    GridDhtLocalPartition(GridCacheContext cctx, int id, GridCacheMapEntryFactory entryFactory) {
         assert cctx != null;
 
         this.id = id;
@@ -144,82 +144,7 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
             }
         };
 
-        //map = new GridCacheConcurrentMapImpl(cctx, entryFactory, cctx.config().getStartSize() / cctx.affinity().partitions());
-
-        map = new GridCacheConcurrentMap() {
-            private final HashMap<KeyCacheObject, GridCacheMapEntry> m = new HashMap<>();
-
-            @Nullable
-            @Override
-            public GridCacheMapEntry getEntry(KeyCacheObject key) {
-                return m.get(key);
-            }
-
-            @Nullable
-            @Override
-            public GridCacheMapEntry putEntryIfObsoleteOrAbsent(AffinityTopologyVersion topVer,
-                                                                KeyCacheObject key,
-                                                                @Nullable CacheObject val,
-                                                                boolean create,
-                                                                boolean touch) {
-                GridCacheMapEntry e = entryFactory.create(cctx, topVer, key, 0, val);
-
-                m.put(key, e);
-
-                return e;
-            }
-
-            @Override
-            public boolean removeEntry(GridCacheEntryEx entry) {
-                return m.remove(entry.key()) != null;
-            }
-
-            @Override
-            public int size() {
-                return m.size();
-            }
-
-            @Override
-            public int publicSize() {
-                return m.size();
-            }
-
-            @Override
-            public void incrementPublicSize(GridCacheEntryEx e) {
-
-            }
-
-            @Override
-            public void decrementPublicSize(GridCacheEntryEx e) {
-
-            }
-
-            @Nullable
-            @Override
-            public GridCacheMapEntry randomEntry() {
-                return null;
-            }
-
-            @Override
-            public Set<KeyCacheObject> keySet(CacheEntryPredicate... filter) {
-                return m.keySet();
-            }
-
-            @Override
-            public Iterable<GridCacheMapEntry> entries(CacheEntryPredicate... filter) {
-                return m.values();
-            }
-
-            @Override
-            public Iterable<GridCacheMapEntry> allEntries(CacheEntryPredicate... filter) {
-                return m.values();
-            }
-
-            @Override
-            public Set<GridCacheMapEntry> entrySet(CacheEntryPredicate... filter) {
-                return new HashSet<>(m.values());
-            }
-        };
+        map = new GridCacheConcurrentMapImpl(cctx, entryFactory, cctx.config().getStartSize() / cctx.affinity().partitions());
 
         int delQueueSize = CU.isSystemCache(cctx.name()) ? 100 :
             Math.max(MAX_DELETE_QUEUE_SIZE / cctx.affinity().partitions(), 20);

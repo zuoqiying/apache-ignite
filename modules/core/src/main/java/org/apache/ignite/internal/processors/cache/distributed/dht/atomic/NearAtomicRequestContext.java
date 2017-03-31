@@ -59,59 +59,32 @@ public class NearAtomicRequestContext {
             if (res.stripe() == -1)
                 return res;
 
-            mergeResponse(res);
+            if (this.res == null)
+                this.res = res;
+            else
+                this.res.merge(res);
 
             return --cnt == 0 ? this.res : null;
         }
     }
 
     /**
-     * @param res Response.
-     */
-    private void mergeResponse(GridNearAtomicUpdateResponse res) {
-        if (this.res == null)
-            this.res = res;
-        else {
-            if (res.nearValuesIndexes() != null)
-                for (int i = 0; i < res.nearValuesIndexes().size(); i++)
-                    this.res.addNearValue(
-                        res.nearValuesIndexes().get(i),
-                        res.nearValue(i),
-                        res.nearTtl(i),
-                        res.nearExpireTime(i)
-                    );
-
-            if (res.failedKeys() != null)
-                this.res.addFailedKeys(res.failedKeys(), res.error());
-
-            if (res.skippedIndexes() != null)
-                for (Integer skippedIndex : res.skippedIndexes()) {
-                    this.res.addSkippedIndex(skippedIndex);
-                }
-
-        }
-    }
-
-    /**
-     *
-     * @return
+     * @return Stripe Map.
      */
     public GridDhtAtomicCache.StripeMap stripeMap() {
         return map;
     }
 
     /**
-     *
-     * @param stripe
-     * @return
+     * @param stripe Stripe number.
+     * @return Key indexes for stripe.
      */
     public GridIntList mapForStripe(int stripe) {
         return map.get(stripe);
     }
 
     /**
-     *
-     * @return
+     * @return GridDhtPartitionTopology.
      */
     public GridDhtPartitionTopology topology() {
         return top;

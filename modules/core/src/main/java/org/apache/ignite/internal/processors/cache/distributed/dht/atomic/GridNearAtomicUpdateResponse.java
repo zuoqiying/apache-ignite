@@ -350,6 +350,24 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
         errs.addFailedKeys(keys, e);
     }
 
+    /**
+     * Merge another response.
+     * @param res1 Response to merge.
+     */
+    public void merge(GridNearAtomicUpdateResponse res1) {
+        assert nodeId.equals(res1.nodeId);
+        assert futId == res1.futId;
+
+        if (res1.failedKeys() != null)
+            addFailedKeys(res1.failedKeys(), res1.error());
+
+
+        if (res1.nearUpdates != null) {
+            initNearUpdates();
+            nearUpdates.merge(res1.nearUpdates);
+        }
+    }
+
     /** {@inheritDoc}
      * @param ctx*/
     @Override public void prepareMarshal(GridCacheSharedContext ctx) throws IgniteCheckedException {

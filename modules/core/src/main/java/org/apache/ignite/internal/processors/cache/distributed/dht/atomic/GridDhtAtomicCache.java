@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorResult;
@@ -107,7 +106,6 @@ import org.apache.ignite.plugin.security.SecurityPermission;
 import org.apache.ignite.thread.IgniteThread;
 import org.apache.ignite.transactions.TransactionIsolation;
 import org.jetbrains.annotations.Nullable;
-import org.jsr166.ConcurrentHashMap8;
 
 import static org.apache.ignite.IgniteSystemProperties.IGNITE_ATOMIC_DEFERRED_ACK_BUFFER_SIZE;
 import static org.apache.ignite.IgniteSystemProperties.IGNITE_ATOMIC_DEFERRED_ACK_TIMEOUT;
@@ -156,10 +154,10 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
     private IgniteLogger msgLog;
 
     /** */
-    private final ConcurrentHashMap8<Integer, Integer> part2stripe = new ConcurrentHashMap8<>();
-
-    /** */
-    private final AtomicInteger curStripe = new AtomicInteger();
+    static int smear(int hashCode) {
+        hashCode ^= (hashCode >>> 20) ^ (hashCode >>> 12);
+        return hashCode ^ (hashCode >>> 7) ^ (hashCode >>> 4);
+    }
 
     /**
      * Empty constructor required by {@link Externalizable}.
@@ -3628,7 +3626,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      * @param msg Message.
      * @return Stripe map.
      */
-    public StripeMap makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
+    private StripeMap makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
         int maxStripes = ctx.kernalContext().getStripedExecutorService().stripes();
 
         StripeMap map = new StripeMap(maxStripes);
@@ -3636,14 +3634,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         for (int i = 0; i < msg.size(); i++) {
             int part = msg.key(i).partition();
 
-            int stripe;
+            int stripe = smear(part) % maxStripes;
 
-            if (!part2stripe.containsKey(part)) {
-                stripe = curStripe.incrementAndGet() % maxStripes;
-                part2stripe.putIfAbsent(part, stripe);
-            }
-            else
-                stripe = part2stripe.get(part);
             map.add(stripe, i);
         }
 

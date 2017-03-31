@@ -192,6 +192,57 @@ public class NearCacheUpdates implements Message {
     }
 
     /**
+     * @return Near ttl's.
+     */
+    @Nullable public GridLongList nearTtls() {
+        return nearTtls;
+    }
+
+    /**
+     * @return Near expire times.
+     */
+    @Nullable public GridLongList nearExpireTimes() {
+        return nearExpireTimes;
+    }
+
+    /**
+     * Merge another NearCacheUpdates
+     * @param upd1 NearCacheUpdates to merge.
+     */
+    public void merge(NearCacheUpdates upd1) {
+        if (upd1.nearValuesIndexes() != null) {
+            if (nearValsIdxs == null) {
+                nearValsIdxs = new ArrayList<>();
+                nearVals = new ArrayList<>();
+            }
+
+            nearValsIdxs.addAll(upd1.nearValuesIndexes());
+            nearVals.addAll(upd1.nearValues());
+        }
+
+        if (upd1.nearTtls() != null) {
+            if (nearTtls == null)
+                nearTtls = new GridLongList(upd1.nearTtls().size());
+
+            nearTtls.addAll(upd1.nearTtls());
+        }
+
+        if (upd1.nearExpireTimes() != null) {
+            if (nearExpireTimes == null)
+                nearExpireTimes = new GridLongList(upd1.nearExpireTimes().size());
+
+            nearExpireTimes.addAll(upd1.nearExpireTimes());
+        }
+
+        if (upd1.skippedIndexes() != null) {
+            if(nearSkipIdxs == null)
+                nearSkipIdxs = new ArrayList<>();
+
+            nearSkipIdxs.addAll(upd1.skippedIndexes());
+        }
+    }
+
+    /**
      * @param idx Index.
      * @return Value generated on primary node which should be put to originating node's near cache.
      */
