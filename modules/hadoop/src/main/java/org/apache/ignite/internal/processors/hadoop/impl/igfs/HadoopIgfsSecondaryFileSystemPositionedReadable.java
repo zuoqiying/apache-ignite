@@ -21,7 +21,6 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PositionedReadable;
-import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.igfs.secondary.IgfsSecondaryFileSystemPositionedReadable;
 import org.apache.ignite.internal.processors.igfs.IgfsLazySecondaryFileSystemPositionedReadable;
@@ -82,8 +81,8 @@ public class HadoopIgfsSecondaryFileSystemPositionedReadable implements IgfsSeco
 
             return is;
         }
-        catch (IgniteCheckedException ice) {
-            throw new IOException(ice);
+        catch (Exception e) {
+            throw IgfsLazySecondaryFileSystemPositionedReadable.LazyValue.asIOException(e);
         }
     }
 
@@ -95,8 +94,8 @@ public class HadoopIgfsSecondaryFileSystemPositionedReadable implements IgfsSeco
             FSDataInputStream is = lazyVal.getAsIs();
 
             U.closeQuiet(is);
-        } catch (IgniteCheckedException ice) {
-            throw new IgniteException(ice);
+        } catch (Exception e) {
+            throw new IgniteException(e);
         }
     }
 

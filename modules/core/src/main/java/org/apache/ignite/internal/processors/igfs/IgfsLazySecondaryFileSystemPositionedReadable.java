@@ -74,8 +74,8 @@ public class IgfsLazySecondaryFileSystemPositionedReadable implements IgfsSecond
 
             return r.read(pos, buf, off, len);
         }
-        catch (IgniteCheckedException ice) {
-            throw new IOException(ice);
+        catch (Exception e) {
+            throw LazyValue.asIOException(e);
         }
     }
 
@@ -87,8 +87,8 @@ public class IgfsLazySecondaryFileSystemPositionedReadable implements IgfsSecond
             if (r != null)
                 r.close();
         }
-        catch (IgniteCheckedException ice) {
-            throw new IOException(ice);
+        catch (Exception e) {
+            throw LazyValue.asIOException(e);
         }
     }
 
@@ -121,7 +121,7 @@ public class IgfsLazySecondaryFileSystemPositionedReadable implements IgfsSecond
          * @return The value.
          * @throws IgniteCheckedException On error.
          */
-        public T getOrCreate() throws IgniteCheckedException {
+        public T getOrCreate() throws Exception {
             IgniteInternalFuture<T> fut = futRef.get();
 
             if (fut == null) {
@@ -146,7 +146,12 @@ public class IgfsLazySecondaryFileSystemPositionedReadable implements IgfsSecond
 
             assert fut != null;
 
-            return fut.get();
+            try {
+                return fut.get();
+            }
+            catch (IgniteCheckedException ice) {
+                throw unwrap(ice);
+            }
         }
 
         /**
@@ -155,10 +160,46 @@ public class IgfsLazySecondaryFileSystemPositionedReadable implements IgfsSecond
          * @return The value or null, if not yet initialized.
          * @throws IgniteCheckedException On error.
          */
-        public @Nullable T getAsIs() throws IgniteCheckedException {
+        public @Nullable T getAsIs() throws Exception {
             IgniteInternalFuture<T> fut = futRef.get();
 
-            return fut == null ? null : fut.get();
+            if (fut == null)
+                return null;
+
+            try {
+                return fut.get();
+            }
+            catch (IgniteCheckedException ice) {
+                throw unwrap(ice);
+            }
+        }
+
+        /**
+         * Unwraps an exception by one level, if possible.
+         *
+         * @param ice An IgniteCheckedException possibly wrapping another exception.
+         * @return The unwrapped Exception, or the argument, if it was not possible to unwrap an exception.
+         */
+        protected Exception unwrap(IgniteCheckedException ice) {
+            Throwable t = ice.getCause();
+
+            if (t instanceof Exception)
+                return (Exception)t;
+
+            return ice;
+        }
+
+        /**
+         * Casts or wraps an exception as IOException. Utility function.
+         *
+         * @param e an Exception.
+         * @return casted or wrapped IOException.
+         */
+        public static IOException asIOException(Exception e) {
+            if (e instanceof IOException)
+                return (IOException)e;
+
+            return new IOException(e);
         }
     }
 }
