@@ -17,9 +17,6 @@
 
 package org.apache.ignite.internal.processors.cache.distributed.dht.atomic;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  *
  */
@@ -32,14 +29,14 @@ public class NearAtomicResponseHelper {
     private GridNearAtomicUpdateResponse res;
 
     /** */
-    private Set<Integer> stripes;
+    private int cnt;
 
     /**
-     * @param stripes Stripes collection.
+     * @param stripeNum Stripes number.
      */
-    public NearAtomicResponseHelper(GridNearAtomicFullUpdateRequest req, Set<Integer> stripes) {
+    public NearAtomicResponseHelper(GridNearAtomicFullUpdateRequest req, int stripeNum) {
         this.req = req;
-        this.stripes = new HashSet<>(stripes);
+        this.cnt = stripeNum;
     }
 
     /**
@@ -51,13 +48,8 @@ public class NearAtomicResponseHelper {
             if (res.stripe() == -1)
                 return res;
 
-            if (stripes.remove(res.stripe())) {
-                mergeResponse(res);
-
-                return stripes.isEmpty() ? this.res : null;
-            }
-
-            return null;
+            mergeResponse(res);
+            return --cnt == 0 ? this.res : null;
         }
     }
 

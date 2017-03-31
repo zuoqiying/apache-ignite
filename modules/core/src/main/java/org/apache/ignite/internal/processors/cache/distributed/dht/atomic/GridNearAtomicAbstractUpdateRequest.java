@@ -35,6 +35,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheOperation;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.plugin.extensions.communication.MessageReader;
@@ -440,7 +441,7 @@ public abstract class GridNearAtomicAbstractUpdateRequest extends GridCacheMessa
     /**
      * @return Stripe map.
      */
-    @Nullable public Map<Integer, int[]> stripeMap() {
+    @Nullable public Map<Integer, GridIntList> stripeMap() {
         return null;
     }
 

@@ -51,6 +51,7 @@ import org.apache.ignite.internal.processors.cache.dr.GridCacheDrInfo;
 import org.apache.ignite.internal.processors.cache.transactions.IgniteTxLocalEx;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.GridCircularBuffer;
+import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.typedef.CI2;
 import org.apache.ignite.internal.util.typedef.F;
@@ -131,11 +132,11 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
         GridNearAtomicUpdateResponse res
     ) {
         int keyNum;
-        int[] stripeIdxs;
+        GridIntList stripeIdxs;
 
         if (res.stripe() > -1 && req.stripeMap() != null) {
             stripeIdxs = req.stripeMap().get(res.stripe());
-            keyNum = stripeIdxs.length;
+            keyNum = stripeIdxs.size();
         }
         else {
             stripeIdxs = null;
@@ -163,7 +164,7 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
         String taskName = ctx.kernalContext().task().resolveTaskName(req.taskNameHash());
 
         for (int i = 0; i < keyNum; i++) {
-            int trueIdx = stripeIdxs == null ? i : stripeIdxs[i];
+            int trueIdx = stripeIdxs == null ? i : stripeIdxs.get(i);
 
             if (F.contains(skipped, trueIdx))
                 continue;

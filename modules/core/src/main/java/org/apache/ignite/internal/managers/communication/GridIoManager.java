@@ -61,6 +61,7 @@ import org.apache.ignite.internal.processors.platform.message.PlatformMessageFil
 import org.apache.ignite.internal.processors.pool.PoolProcessor;
 import org.apache.ignite.internal.processors.timeout.GridTimeoutObject;
 import org.apache.ignite.internal.util.GridBoundedConcurrentLinkedHashSet;
+import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.StripedCompositeReadWriteLock;
 import org.apache.ignite.internal.util.StripedExecutor;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
@@ -196,7 +197,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
     private final AtomicLong ioTestId = new AtomicLong();
 
     /** */
-    private final Map<Integer, Integer> part2stripe = new ConcurrentHashMap8<>();
+    private final ConcurrentHashMap8<Integer, Integer> part2stripe = new ConcurrentHashMap8<>();
 
     /** */
     private final AtomicInteger curStripe = new AtomicInteger();
@@ -865,12 +866,10 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
      * @param msg Message.
      * @return Stripe map.
      */
-    public Map<Integer, int[]> makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
+    public Map<Integer, GridIntList> makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
         int maxStripes = ctx.getStripedExecutorService().stripes();
 
-        Map<Integer, int[]> map = new HashMap<>();
-
-        int[] cnt = new int[maxStripes];
+        Map<Integer, GridIntList> map = new HashMap<>();
 
         for (int i = 0; i < msg.size(); i++) {
             int part = msg.key(i).partition();
@@ -879,21 +878,17 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
 
             if (!part2stripe.containsKey(part)) {
                 stripe = curStripe.incrementAndGet() % maxStripes;
-                part2stripe.put(part, stripe);
+                part2stripe.putIfAbsent(part, stripe);
             }
             else
                 stripe = part2stripe.get(part);
 
-            int[] idxs = map.get(stripe);
+            GridIntList idxs = map.get(stripe);
 
             if (idxs == null)
-                map.put(stripe, idxs = new int[msg.size()]);
+                map.put(stripe, idxs = new GridIntList());
 
-            idxs[cnt[stripe]++] = i;
-        }
-
-        for (Integer stripe : map.keySet()) {
-            map.put(stripe, Arrays.copyOf(map.get(stripe), cnt[stripe]));
+            idxs.add(i);
         }
 
         msg.stripeMap(map);

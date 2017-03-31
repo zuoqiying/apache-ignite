@@ -39,6 +39,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.IgniteExternalizableExpiryPolicy;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.GridLongList;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.CU;
@@ -74,7 +75,7 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
 
     /** Stripe to index mapping bytes. */
     @GridDirectTransient
-    private Map<Integer, int[]> stripeMap;
+    private Map<Integer, GridIntList> stripeMap;
 
     /** Entry processors. */
     @GridDirectTransient
@@ -364,12 +365,12 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
     }
 
     /** {@inheritDoc} */
-    @Override @Nullable public Map<Integer, int[]> stripeMap() {
+    @Override @Nullable public Map<Integer, GridIntList> stripeMap() {
         return stripeMap;
     }
 
     /** {@inheritDoc} */
-    public void stripeMap(Map<Integer, int[]> stripeMap) {
+    public void stripeMap(Map<Integer, GridIntList> stripeMap) {
         this.stripeMap = stripeMap;
     }
 
