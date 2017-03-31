@@ -29,8 +29,7 @@ public class HadoopStartup {
      * @param args Arguments.
      */
     public static void main(String[] args) {
-        //G.start("config/hadoop/default-config.xml");
-        G.start("config/hadoop/config-4862.xml");
+        G.start("config/hadoop/default-config.xml");
     }
 
     /**
