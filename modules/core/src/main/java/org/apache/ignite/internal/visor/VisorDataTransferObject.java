@@ -49,18 +49,20 @@ abstract public class VisorDataTransferObject implements Externalizable {
         out.writeInt(ver);
 
         ByteOutputStream bos = new ByteOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
 
-        writeExternalData(oos);
-        oos.flush();
+        try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            writeExternalData(oos);
 
-        int size = bos.size();
-        out.writeInt(size);
-        byte[] bytes = bos.getBytes();
+            oos.flush();
 
-        out.write(bytes, 0, size);
+            int size = bos.size();
 
-        oos.close();
+            out.writeInt(size);
+
+            byte[] bytes = bos.getBytes();
+
+            out.write(bytes, 0, size);
+        }
     }
 
     /**
@@ -75,6 +77,7 @@ abstract public class VisorDataTransferObject implements Externalizable {
     /** {@inheritDoc} */
     @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         ver = in.readInt();
+
         int size = in.readInt();
 
         byte[] buf = new byte[size];
@@ -82,10 +85,9 @@ abstract public class VisorDataTransferObject implements Externalizable {
         in.read(buf);
 
         ByteInputStream bis = new ByteInputStream(buf, size);
-        ObjectInputStream ois = new ObjectInputStream(bis);
 
-        readExternalData(ois);
-
-        ois.close();
+        try(ObjectInputStream ois = new ObjectInputStream(bis)) {
+            readExternalData(ois);
+        }
     }
 }

@@ -17,10 +17,21 @@
 
 package org.apache.ignite.internal.visor.util;
 
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
+
 /**
  * Exception wrapper for safe for transferring to Visor.
  */
-public class VisorExceptionWrapper extends Throwable {
+public class VisorExceptionWrapper extends Throwable implements Externalizable {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -32,6 +43,10 @@ public class VisorExceptionWrapper extends Throwable {
 
     /** Class name of base throwable object. */
     private String clsName;
+
+    public VisorExceptionWrapper() {
+        //
+    }
 
     /**
      * Wrap throwable by presented on Visor throwable object.
@@ -77,5 +92,69 @@ public class VisorExceptionWrapper extends Throwable {
     /** {@inheritDoc} */
     @Override public String toString() {
         return (detailMsg != null) ? (clsName + ": " + detailMsg) : clsName;
+    }
+
+    /**
+     * Save object's specific data content.
+     *
+     * @param out Output object to write data content.
+     * @throws IOException
+     */
+    protected void writeExternalData(ObjectOutput out) throws IOException {
+        U.writeString(out, detailMsg);
+
+    }
+
+    /** {@inheritDoc} */
+    @Override public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeInt(VisorDataTransferObject.FIRST_VER);
+
+//        writeExternalData(out);
+
+        ByteOutputStream bos = new ByteOutputStream();
+        try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            writeExternalData(oos);
+            oos.flush();
+
+            int size = bos.size();
+
+            out.writeInt(size);
+
+            byte[] bytes = bos.getBytes();
+
+            out.write(bytes, 0, size);
+        }
+    }
+
+    /**
+     * Load object's specific data content.
+     *
+     * @param in Input object to load data content.
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    protected void readExternalData(ObjectInput in) throws IOException, ClassNotFoundException {
+        detailMsg = U.readString(in);
+
+    }
+
+    /** {@inheritDoc} */
+    @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        System.out.println(">>>>>>>>>>>>>" + getClass().getName());
+
+        /*ver = */in.readInt();
+        //readExternalData(in);
+
+        int size = in.readInt();
+
+        byte[] buf = new byte[size];
+
+        in.read(buf);
+
+        ByteInputStream bis = new ByteInputStream(buf, size);
+
+        try(ObjectInputStream ois = new ObjectInputStream(bis)) {
+            readExternalData(ois);
+        }
     }
 }
