@@ -1743,7 +1743,9 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
     ) {
         int curStripe = Thread.currentThread() instanceof IgniteThread ? ((IgniteThread)Thread.currentThread()).stripe() : -1;
 
-        if (!nodeId.equals(ctx.localNodeId()) && req.directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE && curStripe != -1) {
+        if (!nodeId.equals(ctx.localNodeId()) &&
+            req.directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE &&
+            curStripe != -1) {
             GridNearAtomicFullUpdateRequest req0 = (GridNearAtomicFullUpdateRequest) req;
 
             if (req0.context() == null) {
@@ -1752,9 +1754,9 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                 GridDhtPartitionTopology top = topology();
 
-                StripeMap map = makeStripeMap(req0);
+                Map<Integer, GridIntList> map = req0.stripeMap();
 
-                req0.context(new NearAtomicRequestContext(map, top));
+                req0.context(new NearAtomicRequestContext(ctx.discovery().node(nodeId), map.size(), top));
 
                 Runnable c = new Runnable() {
                     @Override public void run() {
@@ -1762,13 +1764,11 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     }
                 };
 
-                GridIntList stripes = map.stripes();
-
-                for (int i=0; i<stripes.size(); i++)
-                    stripedExecutor.execute(stripes.get(i), c);
+                for (Integer stripe : map.keySet())
+                    stripedExecutor.execute(stripe, c);
             }
             else
-                updateAllAsyncInternal0(nodeId, req, curStripe, req.context().mapForStripe(curStripe), completionCb);
+                updateAllAsyncInternal0(nodeId, req, curStripe, req0.stripeMap().get(curStripe), completionCb);
         }
         else
             updateAllAsyncInternal0(nodeId, req, -1, null, completionCb);
@@ -1790,7 +1790,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         final GridIntList stripeIdxs,
         final UpdateReplyClosure completionCb
     ) {
-        ClusterNode node = ctx.discovery().node(nodeId);
+        ClusterNode node = req.context().node();
 
         if (node == null) {
             U.warn(msgLog, "Skip near update request, node originated update request left [" +

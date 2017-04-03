@@ -1052,6 +1052,8 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
             PrimaryRequestState mapped = pendingMappings.get(nodeId);
 
             if (mapped == null) {
+                int stripes = primary.attribute(ATTR_STRIPES_CNT) != null ? (int)primary.attribute(ATTR_STRIPES_CNT) : -1;
+
                 GridNearAtomicFullUpdateRequest req = new GridNearAtomicFullUpdateRequest(
                     cctx.cacheId(),
                     nodeId,
@@ -1070,7 +1072,8 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
                     skipStore,
                     keepBinary,
                     cctx.deploymentEnabled(),
-                    keys.size()
+                    keys.size(),
+                    stripes
                 );
 
                 req.partition(part);
@@ -1178,6 +1181,7 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
             skipStore,
             keepBinary,
             cctx.deploymentEnabled(),
+            1,
             1);
 
         req.addUpdateEntry(cacheKey,

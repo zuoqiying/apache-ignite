@@ -17,13 +17,15 @@
 
 package org.apache.ignite.internal.processors.cache.distributed.dht.atomic;
 
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionTopology;
-import org.apache.ignite.internal.util.GridIntList;
 
 /**
  *
  */
 public class NearAtomicRequestContext {
+    /** */
+    private final ClusterNode node;
 
     /** */
     private GridNearAtomicUpdateResponse res;
@@ -32,19 +34,17 @@ public class NearAtomicRequestContext {
     private int cnt;
 
     /** */
-    private final GridDhtAtomicCache.StripeMap map;
-
-    /** */
     private final GridDhtPartitionTopology top;
 
     /**
-     * @param map Stripe map.
+     * @param size Stripes number.
+     * @param top Partition topology.
      */
-    public NearAtomicRequestContext(GridDhtAtomicCache.StripeMap map, GridDhtPartitionTopology top) {
-        this.map = map;
+    public NearAtomicRequestContext(ClusterNode node, int size, GridDhtPartitionTopology top) {
+        this.node = node;
         this.top = top;
 
-        cnt = map.size();
+        cnt = size;
     }
 
     /**
@@ -69,24 +69,16 @@ public class NearAtomicRequestContext {
     }
 
     /**
-     * @return Stripe Map.
-     */
-    public GridDhtAtomicCache.StripeMap stripeMap() {
-        return map;
-    }
-
-    /**
-     * @param stripe Stripe number.
-     * @return Key indexes for stripe.
-     */
-    public GridIntList mapForStripe(int stripe) {
-        return map.get(stripe);
-    }
-
-    /**
      * @return GridDhtPartitionTopology.
      */
     public GridDhtPartitionTopology topology() {
         return top;
+    }
+
+    /**
+     * @return Node.
+     */
+    public ClusterNode node() {
+        return node;
     }
 }

@@ -690,6 +690,7 @@ public class GridNearAtomicSingleUpdateFuture extends GridNearAtomicAbstractUpda
                 skipStore,
                 keepBinary,
                 cctx.deploymentEnabled(),
+                1,
                 1);
         }
 

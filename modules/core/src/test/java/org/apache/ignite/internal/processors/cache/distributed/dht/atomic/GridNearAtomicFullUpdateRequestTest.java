@@ -55,7 +55,8 @@ public class GridNearAtomicFullUpdateRequestTest extends MarshallingAbstractTest
             false,
             true,
             false,
-            entryNum);
+            entryNum,
+            3);
 
         for (int i = 0; i < entryNum; i++)
             msg.addUpdateEntry(

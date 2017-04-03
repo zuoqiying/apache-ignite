@@ -21,13 +21,16 @@ import java.io.Externalizable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.internal.GridDirectCollection;
+import org.apache.ignite.internal.GridDirectMap;
 import org.apache.ignite.internal.GridDirectTransient;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.CacheEntryPredicate;
@@ -38,6 +41,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.IgniteExternalizableExpiryPolicy;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.GridLongList;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.CU;
@@ -70,6 +74,10 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
     /** Values to update. */
     @GridDirectCollection(CacheObject.class)
     private List<CacheObject> vals;
+
+    /** Stripe to index mapping bytes. */
+    @GridDirectMap(keyType = int.class, valueType = GridIntList.class)
+    private Map<Integer, GridIntList> stripeMap;
 
     /** Entry processors. */
     @GridDirectTransient
@@ -110,8 +118,18 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
     @GridDirectTransient
     private int initSize;
 
+    /** Number of stripes on remote node. */
+    @GridDirectTransient
+    private int maxStripes;
+
     /** Partition Id */
     private int partId;
+
+    /** */
+    static int smear(int hashCode) {
+        hashCode ^= (hashCode >>> 20) ^ (hashCode >>> 12);
+        return hashCode ^ (hashCode >>> 7) ^ (hashCode >>> 4);
+    }
 
     /**
      * Empty constructor required by {@link Externalizable}.
@@ -160,7 +178,8 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
         boolean skipStore,
         boolean keepBinary,
         boolean addDepInfo,
-        int maxEntryCnt
+        int maxEntryCnt,
+        int maxStripes
     ) {
         super(cacheId,
             nodeId,
@@ -186,6 +205,8 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
         // than 10, we use it.
         initSize = Math.min(maxEntryCnt, 10);
 
+        this.maxStripes = maxStripes;
+
         keys = new ArrayList<>(initSize);
     }
 
@@ -204,6 +225,20 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
         }
 
         assert val != null || op == DELETE;
+
+        if (maxStripes > 1) {
+            int stripe = smear(key.partition()) % maxStripes;
+
+            if (stripeMap == null)
+                stripeMap = new HashMap<>(maxStripes);
+
+            GridIntList idxs = stripeMap.get(stripe);
+
+            if (idxs == null)
+                stripeMap.put(stripe, idxs = new GridIntList());
+
+            idxs.add(keys.size());
+        }
 
         keys.add(key);
 
@@ -358,6 +393,13 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
         return expiryPlc;
     }
 
+    /**
+     * @return Stripe mapping.
+     */
+    @Nullable public Map<Integer, GridIntList> stripeMap() {
+        return stripeMap;
+    }
+
     /** {@inheritDoc} */
     @Override public void prepareMarshal(GridCacheSharedContext ctx) throws IgniteCheckedException {
         super.prepareMarshal(ctx);
@@ -510,6 +552,12 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
                 writer.incrementState();
 
             case 19:
+                if (!writer.writeMap("stripeMap", stripeMap, MessageCollectionItemType.INT, MessageCollectionItemType.MSG))
+                    return false;
+
+                writer.incrementState();
+
+            case 20:
                 if (!writer.writeCollection("vals", vals, MessageCollectionItemType.MSG))
                     return false;
 
@@ -604,6 +652,14 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
                 reader.incrementState();
 
             case 19:
+                stripeMap = reader.readMap("stripeMap", MessageCollectionItemType.INT, MessageCollectionItemType.MSG, false);
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 20:
                 vals = reader.readCollection("vals", MessageCollectionItemType.MSG);
 
                 if (!reader.isLastRead())
@@ -635,7 +691,7 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 20;
+        return 21;
     }
 
     /** {@inheritDoc} */
