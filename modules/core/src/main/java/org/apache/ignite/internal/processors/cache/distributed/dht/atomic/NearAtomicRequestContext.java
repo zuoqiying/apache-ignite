@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.cache.distributed.dht.atomic;
 
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionTopology;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 
 /**
  *
@@ -36,13 +37,17 @@ public class NearAtomicRequestContext {
     /** */
     private final GridDhtPartitionTopology top;
 
+    /** */
+    private final GridCacheVersion ver;
+
     /**
      * @param size Stripes number.
      * @param top Partition topology.
      */
-    public NearAtomicRequestContext(ClusterNode node, int size, GridDhtPartitionTopology top) {
+    public NearAtomicRequestContext(ClusterNode node, int size, GridDhtPartitionTopology top, GridCacheVersion ver) {
         this.node = node;
         this.top = top;
+        this.ver = ver;
 
         cnt = size;
     }
@@ -73,6 +78,14 @@ public class NearAtomicRequestContext {
      */
     public GridDhtPartitionTopology topology() {
         return top;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public GridCacheVersion ver() {
+        return ver;
     }
 
     /**

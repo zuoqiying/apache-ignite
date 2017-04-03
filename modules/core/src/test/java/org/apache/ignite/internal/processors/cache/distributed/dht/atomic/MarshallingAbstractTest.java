@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.cache.distributed.dht.atomic;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import junit.framework.TestCase;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.configuration.IgniteConfiguration;
@@ -58,6 +59,7 @@ import static org.mockito.Mockito.when;
 public abstract class MarshallingAbstractTest extends TestCase {
     /** */
     private static final byte proto = 2;
+    public static final MessageFactory[] EMPTY = {};
 
     /** */
     private GridCacheSharedContext ctx;
@@ -126,6 +128,7 @@ public abstract class MarshallingAbstractTest extends TestCase {
      */
     protected <T extends GridCacheMessage> T marshalUnmarshal(T m) throws IgniteCheckedException {
         ByteBuffer buf = ByteBuffer.allocate(64 * 1024);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
 
         m.prepareMarshal(ctx);
         m.writeTo(buf, new DirectMessageWriter(proto));
@@ -133,13 +136,16 @@ public abstract class MarshallingAbstractTest extends TestCase {
         System.out.println("Binary size: " + buf.position() + " bytes");
         buf.flip();
 
-        byte type = buf.get();
+        short type = buf.getShort();
+
         assertEquals(m.directType(), type);
 
-        MessageFactory msgFactory = new GridIoMessageFactory(null);
+        MessageFactory msgFactory = new GridIoMessageFactory(EMPTY);
+
+        DirectMessageReader reader = new DirectMessageReader(msgFactory, proto);
 
         Message mx = msgFactory.create(type);
-        mx.readFrom(buf, new DirectMessageReader(msgFactory, proto));
+        mx.readFrom(buf, reader);
         ((GridCacheMessage)mx).finishUnmarshal(ctx, U.gridClassLoader());
 
         return (T)mx;

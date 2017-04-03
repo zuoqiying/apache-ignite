@@ -1747,10 +1747,11 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                 StripedExecutor stripedExecutor = ctx.kernalContext().getStripedExecutorService();
 
                 GridDhtPartitionTopology top = topology();
+                GridCacheVersion next = ctx.versions().next(top.topologyVersion());
 
                 Map<Integer, GridIntList> map = req0.stripeMap();
 
-                req0.context(new NearAtomicRequestContext(ctx.discovery().node(nodeId), map.size(), top));
+                req0.context(new NearAtomicRequestContext(ctx.discovery().node(nodeId), map.size(), top, next));
 
                 Runnable c = new Runnable() {
                     @Override public void run() {
@@ -1846,7 +1847,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                         boolean hasNear = ctx.discovery().cacheNearNode(node, name());
 
                         // Assign next version for update inside entries lock.
-                        GridCacheVersion ver = ctx.versions().next(top.topologyVersion());
+                        GridCacheVersion ver = req.context().ver();
 
                         if (hasNear)
                             res.nearVersion(ver);
