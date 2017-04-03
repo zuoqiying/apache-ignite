@@ -17,10 +17,14 @@
 
 package org.apache.ignite.internal.visor;
 
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 
 /**
  * Base class for data transfer objects.
@@ -44,7 +48,19 @@ abstract public class VisorDataTransferObject implements Externalizable {
     @Override public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(ver);
 
-        writeExternalData(out);
+        ByteOutputStream bos = new ByteOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+
+        writeExternalData(oos);
+        oos.flush();
+
+        int size = bos.size();
+        out.writeInt(size);
+        byte[] bytes = bos.getBytes();
+
+        out.write(bytes, 0, size);
+
+        oos.close();
     }
 
     /**
@@ -59,7 +75,17 @@ abstract public class VisorDataTransferObject implements Externalizable {
     /** {@inheritDoc} */
     @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         ver = in.readInt();
+        int size = in.readInt();
 
-        readExternalData(in);
+        byte[] buf = new byte[size];
+
+        in.read(buf);
+
+        ByteInputStream bis = new ByteInputStream(buf, size);
+        ObjectInputStream ois = new ObjectInputStream(bis);
+
+        readExternalData(ois);
+
+        ois.close();
     }
 }
