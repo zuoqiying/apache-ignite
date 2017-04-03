@@ -153,12 +153,6 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
     /** Logger. */
     private IgniteLogger msgLog;
 
-    /** */
-    static int smear(int hashCode) {
-        hashCode ^= (hashCode >>> 20) ^ (hashCode >>> 12);
-        return hashCode ^ (hashCode >>> 7) ^ (hashCode >>> 4);
-    }
-
     /**
      * Empty constructor required by {@link Externalizable}.
      */
@@ -1831,7 +1825,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             try {
                 GridDhtPartitionTopology top = req.context().topology();
 
-                top.readLock();
+//                top.readLock();
 
                 try {
                     if (top.stopping()) {
@@ -1935,7 +1929,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     }
                 }
                 finally {
-                    top.readUnlock();
+//                    top.readUnlock();
                 }
             }
             catch (GridCacheEntryRemovedException e) {
@@ -3619,27 +3613,6 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             U.error(msgLog, "Failed to send near update response [futId=" + res.futureId() +
                 ", node=" + nodeId + ", res=" + res + ']', e);
         }
-    }
-
-    /**
-     *
-     * @param msg Message.
-     * @return Stripe map.
-     */
-    private StripeMap makeStripeMap(GridNearAtomicFullUpdateRequest msg) {
-        int maxStripes = ctx.kernalContext().getStripedExecutorService().stripes();
-
-        StripeMap map = new StripeMap(maxStripes);
-
-        for (int i = 0; i < msg.size(); i++) {
-            int part = msg.key(i).partition();
-
-            int stripe = smear(part) % maxStripes;
-
-            map.add(stripe, i);
-        }
-
-        return map;
     }
 
     /** {@inheritDoc} */

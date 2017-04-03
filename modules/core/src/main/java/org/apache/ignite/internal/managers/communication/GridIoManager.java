@@ -829,8 +829,6 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                 msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE)) {
 
             if (msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE) {
-                final GridNearAtomicFullUpdateRequest msg0 = (GridNearAtomicFullUpdateRequest)msg.message();
-
                 int part = msg.partition();
 
                 stripedExecutor.executePrio(part, c);
