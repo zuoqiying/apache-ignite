@@ -17,8 +17,8 @@
 
 package org.apache.ignite.internal.pagemem.wal.record.delta;
 
-import java.nio.ByteBuffer;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.database.tree.io.BPlusIO;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -30,9 +30,6 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 public class InsertRecord<L> extends PageDeltaRecord {
     /** */
     private int idx;
-
-    /** */
-    private L row;
 
     /** */
     private byte[] rowBytes;
@@ -49,7 +46,6 @@ public class InsertRecord<L> extends PageDeltaRecord {
      * @param pageId Page ID.
      * @param io IO.
      * @param idx Index.
-     * @param row Row.
      * @param rowBytes Row bytes.
      * @param rightId Right ID.
      */
@@ -58,7 +54,6 @@ public class InsertRecord<L> extends PageDeltaRecord {
         long pageId,
         BPlusIO<L> io,
         int idx,
-        L row,
         byte[] rowBytes,
         long rightId
     ) {
@@ -66,14 +61,13 @@ public class InsertRecord<L> extends PageDeltaRecord {
 
         this.io = io;
         this.idx = idx;
-        this.row = row;
         this.rowBytes = rowBytes;
         this.rightId = rightId;
     }
 
     /** {@inheritDoc} */
-    @Override public void applyDelta(ByteBuffer buf) throws IgniteCheckedException {
-        io.insert(buf, idx, row, rowBytes, rightId);
+    @Override public void applyDelta(PageMemory pageMem, long pageAddr) throws IgniteCheckedException {
+        io.insert(pageAddr, idx, null, rowBytes, rightId, false);
     }
 
     /** {@inheritDoc} */
@@ -81,20 +75,32 @@ public class InsertRecord<L> extends PageDeltaRecord {
         return RecordType.BTREE_PAGE_INSERT;
     }
 
+    /**
+     * @return IO.
+     */
     public BPlusIO<L> io() {
         return io;
     }
 
+    /**
+     * @return Index.
+     */
     public int index() {
         return idx;
     }
 
+    /**
+     * @return Right ID.
+     */
     public long rightId() {
         return rightId;
     }
 
-    public L row() {
-        return row;
+    /**
+     * @return Row bytes.
+     */
+    public byte[] rowBytes() {
+        return rowBytes;
     }
 
     /** {@inheritDoc} */

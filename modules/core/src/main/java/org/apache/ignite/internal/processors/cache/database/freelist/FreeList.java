@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.cache.database.freelist;
 
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
 
 /**
@@ -31,7 +32,20 @@ public interface FreeList {
 
     /**
      * @param link Row link.
+     * @param row New row data.
+     * @return {@code True} if was able to update row.
+     * @throws IgniteCheckedException If failed.
+     */
+    public boolean updateDataRow(long link, CacheDataRow row) throws IgniteCheckedException;
+
+    /**
+     * @param link Row link.
      * @throws IgniteCheckedException If failed.
      */
     public void removeDataRowByLink(long link) throws IgniteCheckedException;
+
+    /**
+     * @param log Logger.
+     */
+    public void dumpStatistics(IgniteLogger log);
 }

@@ -434,27 +434,37 @@ public class GridDhtPartitionDemander {
     }
 
     /**
-     * @param fut Future.
+     * @param fut Rebalance future.
      * @param assigns Assignments.
      * @throws IgniteCheckedException If failed.
-     * @return Partitions were requested.
      */
     private void requestPartitions(
         RebalanceFuture fut,
         GridDhtPreloaderAssignments assigns
     ) throws IgniteCheckedException {
+        assert fut != null;
+
         if (topologyChanged(fut)) {
             fut.cancel();
 
             return;
         }
 
-        for (Map.Entry<ClusterNode, GridDhtPartitionDemandMessage> e : assigns.entrySet()) {
-            final ClusterNode node = e.getKey();
+        synchronized (fut) {
+            if (fut.isDone())
+                return;
 
-            GridDhtPartitionDemandMessage d = e.getValue();
+            // Must add all remaining node before send first request, for avoid race between add remaining node and
+            // processing response, see checkIsDone(boolean).
+            for (Map.Entry<ClusterNode, GridDhtPartitionDemandMessage> e : assigns.entrySet()) {
+                UUID nodeId = e.getKey().id();
 
-            fut.appendPartitions(node.id(), d.partitions()); //Future preparation.
+                Collection<Integer> parts= e.getValue().partitions();
+
+                assert parts != null : "Partitions are null [cache=" + cctx.name() + ", fromNode=" + nodeId + "]";
+
+                fut.remaining.put(nodeId, new T2<>(U.currentTimeMillis(), parts));
+            }
         }
 
         for (Map.Entry<ClusterNode, GridDhtPartitionDemandMessage> e : assigns.entrySet()) {
@@ -496,12 +506,13 @@ public class GridDhtPartitionDemander {
                         initD.timeout(cctx.config().getRebalanceTimeout());
 
                         synchronized (fut) {
-                            if (!fut.isDone()) {
-                                // Future can be already cancelled at this moment and all failovers happened.
-                                // New requests will not be covered by failovers.
-                                cctx.io().sendOrderedMessage(node,
-                                    rebalanceTopics.get(cnt), initD, cctx.ioPolicy(), initD.timeout());
-                            }
+                            if (fut.isDone())
+                                return;
+
+                            // Future can be already cancelled at this moment and all failovers happened.
+                            // New requests will not be covered by failovers.
+                            cctx.io().sendOrderedMessage(node,
+                                rebalanceTopics.get(cnt), initD, cctx.ioPolicy(), initD.timeout());
                         }
 
                         if (log.isDebugEnabled())
@@ -767,8 +778,6 @@ public class GridDhtPartitionDemander {
         GridCacheEntryInfo entry,
         AffinityTopologyVersion topVer
     ) throws IgniteCheckedException {
-        cctx.shared().database().checkpointReadLock();
-
         try {
             GridCacheEntryEx cached = null;
 
@@ -789,34 +798,41 @@ public class GridDhtPartitionDemander {
                     return true;
                 }
 
-                if (preloadPred == null || preloadPred.apply(entry)) {
-                    if (cached.initialValue(
-                        entry.value(),
-                        entry.version(),
-                        entry.ttl(),
-                        entry.expireTime(),
-                        true,
-                        topVer,
-                        cctx.isDrEnabled() ? DR_PRELOAD : DR_NONE,
-                        false
-                    )) {
-                        cctx.evicts().touch(cached, topVer); // Start tracking.
+                cctx.shared().database().checkpointReadLock();
 
-                        if (cctx.events().isRecordable(EVT_CACHE_REBALANCE_OBJECT_LOADED) && !cached.isInternal())
-                            cctx.events().addEvent(cached.partition(), cached.key(), cctx.localNodeId(),
-                                (IgniteUuid)null, null, EVT_CACHE_REBALANCE_OBJECT_LOADED, entry.value(), true, null,
-                                false, null, null, null, true);
-                    }
-                    else {
-                        cctx.evicts().touch(cached, topVer); // Start tracking.
+                try {
+                    if (preloadPred == null || preloadPred.apply(entry)) {
+                        if (cached.initialValue(
+                            entry.value(),
+                            entry.version(),
+                            entry.ttl(),
+                            entry.expireTime(),
+                            true,
+                            topVer,
+                            cctx.isDrEnabled() ? DR_PRELOAD : DR_NONE,
+                            false
+                        )) {
+                            cctx.evicts().touch(cached, topVer); // Start tracking.
 
-                        if (log.isDebugEnabled())
-                            log.debug("Rebalancing entry is already in cache (will ignore) [key=" + cached.key() +
-                                ", part=" + p + ']');
+                            if (cctx.events().isRecordable(EVT_CACHE_REBALANCE_OBJECT_LOADED) && !cached.isInternal())
+                                cctx.events().addEvent(cached.partition(), cached.key(), cctx.localNodeId(),
+                                    (IgniteUuid)null, null, EVT_CACHE_REBALANCE_OBJECT_LOADED, entry.value(), true, null,
+                                    false, null, null, null, true);
+                        }
+                        else {
+                            cctx.evicts().touch(cached, topVer); // Start tracking.
+
+                            if (log.isDebugEnabled())
+                                log.debug("Rebalancing entry is already in cache (will ignore) [key=" + cached.key() +
+                                    ", part=" + p + ']');
+                        }
                     }
+                    else if (log.isDebugEnabled())
+                        log.debug("Rebalance predicate evaluated to false for entry (will ignore): " + entry);
                 }
-                else if (log.isDebugEnabled())
-                    log.debug("Rebalance predicate evaluated to false for entry (will ignore): " + entry);
+                finally {
+                    cctx.shared().database().checkpointReadUnlock();
+                }
             }
             catch (GridCacheEntryRemovedException ignored) {
                 if (log.isDebugEnabled())
@@ -836,9 +852,6 @@ public class GridDhtPartitionDemander {
         catch (IgniteCheckedException e) {
             throw new IgniteCheckedException("Failed to cache rebalanced entry (will stop rebalancing) [local=" +
                 cctx.nodeId() + ", node=" + pick.id() + ", key=" + entry.key() + ", part=" + p + ']', e);
-        }
-        finally {
-            cctx.shared().database().checkpointReadUnlock();
         }
 
         return true;
@@ -900,8 +913,9 @@ public class GridDhtPartitionDemander {
             long updateSeq) {
             assert assigns != null;
 
-            this.exchFut = assigns.exchangeFuture();
-            this.topVer = assigns.topologyVersion();
+            exchFut = assigns.exchangeFuture();
+            topVer = assigns.topologyVersion();
+
             this.cctx = cctx;
             this.log = log;
             this.startedEvtSent = startedEvtSent;
@@ -913,13 +927,13 @@ public class GridDhtPartitionDemander {
          * Dummy future. Will be done by real one.
          */
         public RebalanceFuture() {
-            this.exchFut = null;
-            this.topVer = null;
-            this.cctx = null;
-            this.log = null;
-            this.startedEvtSent = null;
-            this.stoppedEvtSent = null;
-            this.updateSeq = -1;
+            exchFut = null;
+            topVer = null;
+            cctx = null;
+            log = null;
+            startedEvtSent = null;
+            stoppedEvtSent = null;
+            updateSeq = -1;
         }
 
         /**
@@ -942,18 +956,6 @@ public class GridDhtPartitionDemander {
          */
         private boolean isInitial() {
             return topVer == null;
-        }
-
-        /**
-         * @param nodeId Node id.
-         * @param parts Parts.
-         */
-        private void appendPartitions(UUID nodeId, Collection<Integer> parts) {
-            synchronized (this) {
-                assert parts != null : "Partitions are null [cache=" + cctx.name() + ", fromNode=" + nodeId + "]";
-
-                remaining.put(nodeId, new T2<>(U.currentTimeMillis(), parts));
-            }
         }
 
         /**

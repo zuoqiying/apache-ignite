@@ -91,7 +91,7 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
         // Record this entry with partition.
         int p = cctx.affinity().partition(key);
 
-        locPart = ctx.topology().localPartition(p, topVer, true);
+        locPart = ctx.topology().localPartition(p, topVer, true, true);
 
         assert locPart != null : p;
     }
@@ -118,8 +118,8 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
     }
 
     /** {@inheritDoc} */
-    @Override protected void onUpdateFinished(Long cntr) {
-        if (cntr != null)
+    @Override protected void onUpdateFinished(long cntr) {
+        if (cctx.shared().database().persistenceEnabled())
             locPart.onUpdateReceived(cntr);
     }
 

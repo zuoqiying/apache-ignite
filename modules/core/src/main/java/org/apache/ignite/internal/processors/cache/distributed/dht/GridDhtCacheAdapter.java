@@ -1164,7 +1164,7 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
 
         /** {@inheritDoc} */
         @Override public String toString() {
-            return S.toString(PartitionEntrySet.class, this, "super", super.toString());
+            return S.toString(PartitionEntrySet.class, this, "super", super.toString(), true);
         }
     }
 
@@ -1182,14 +1182,8 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
         GridDhtLocalPartition part = topology().localPartition(entry.partition(), AffinityTopologyVersion.NONE,
             false);
 
-        if (part != null) {
-            try {
-                part.onDeferredDelete(entry.key(), ver);
-            }
-            catch (IgniteCheckedException e) {
-                U.error(log, "Failed to enqueue deleted entry [key=" + entry.key() + ", ver=" + ver + ']', e);
-            }
-        }
+        if (part != null)
+            part.onDeferredDelete(entry.key(), ver);
     }
 
     /**

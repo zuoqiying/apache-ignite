@@ -82,10 +82,9 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
     public Iterable<CacheDataStore> cacheDataStores();
 
     /**
-     * @param p Partition ID.
      * @param store Data store.
      */
-    public void destroyCacheDataStore(int p, CacheDataStore store) throws IgniteCheckedException;
+    public void destroyCacheDataStore(CacheDataStore store) throws IgniteCheckedException;
 
     /**
      * TODO: GG-10884, used on only from initialValue.
@@ -111,7 +110,7 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
      * @param val  Value.
      * @param ver  Version.
      * @param expireTime Expire time.
-     * @param partId Partition number.
+     * @param oldRow Old row if available.
      * @param part Partition.
      * @throws IgniteCheckedException If failed.
      */
@@ -120,7 +119,17 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
         CacheObject val,
         GridCacheVersion ver,
         long expireTime,
-        int partId,
+        GridDhtLocalPartition part,
+        @Nullable CacheDataRow oldRow
+    ) throws IgniteCheckedException;
+
+    /**
+     * @param key Key.
+     * @param part Partition.
+     * @throws IgniteCheckedException If failed.
+     */
+    public void updateIndexes(
+        KeyCacheObject key,
         GridDhtLocalPartition part
     ) throws IgniteCheckedException;
 
@@ -295,17 +304,23 @@ public interface IgniteCacheOffheapManager extends GridCacheManager {
 
         /**
          * @param key Key.
-         * @param part Partition.
          * @param val Value.
          * @param ver Version.
          * @param expireTime Expire time.
+         * @param oldRow Old row if available.
          * @throws IgniteCheckedException If failed.
          */
         void update(KeyCacheObject key,
-            int part,
             CacheObject val,
             GridCacheVersion ver,
-            long expireTime) throws IgniteCheckedException;
+            long expireTime,
+            @Nullable CacheDataRow oldRow) throws IgniteCheckedException;
+
+        /**
+         * @param key Key.
+         * @throws IgniteCheckedException If failed.
+         */
+        void updateIndexes(KeyCacheObject key) throws IgniteCheckedException;
 
         /**
          * @param key Key.

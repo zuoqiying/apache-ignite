@@ -354,7 +354,8 @@ public class GridServiceProcessor extends GridProcessorAdapter implements Ignite
 
             cancelFutures(depFuts, err);
             cancelFutures(undepFuts, err);
-        }finally {
+        }
+        finally {
             busyLock.unblock();
         }
 
@@ -1591,6 +1592,10 @@ public class GridServiceProcessor extends GridProcessorAdapter implements Ignite
         /** {@inheritDoc} */
         @Override public void onEvent(Event evt) {
             if (!busyLock.enterBusy())
+                return;
+
+            //Must check that threadpool was not shutdown.
+            if (depExe.isShutdown())
                 return;
 
             try {

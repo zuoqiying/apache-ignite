@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * TODO GG-11140.
  *
  * Temporary implementation, ignores configured EvictionPolicy, evictions to be reconsidered as
- * part of GG-1140.
+ * part of GG-11140.
  *
  */
 public class CacheOffheapEvictionManager extends GridCacheManagerAdapter implements CacheEvictionManager {
@@ -50,7 +50,7 @@ public class CacheOffheapEvictionManager extends GridCacheManagerAdapter impleme
                 return;
             }
 
-            boolean evicted = e.evictInternal(cctx.versions().next(), null);
+            boolean evicted = cctx.userCache() && e.evictInternal(cctx.versions().next(), null);
 
             if (evicted)
                 cctx.cache().removeEntry(e);
