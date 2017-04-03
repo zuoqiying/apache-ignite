@@ -41,7 +41,7 @@ public class VisorQueryArg extends VisorDataTransferObject {
     private boolean distributedJoins;
 
     /** Enforce join order flag. */
-    private final boolean enforceJoinOrder;
+    private boolean enforceJoinOrder;
 
     /** Flag whether to execute query locally. */
     private boolean loc;
@@ -98,7 +98,7 @@ public class VisorQueryArg extends VisorDataTransferObject {
     /**
      * @return Enforce join order flag.
      */
-    public boolean enforceJoinOrder() {
+    public boolean isEnforceJoinOrder() {
         return enforceJoinOrder;
     }
 
@@ -121,6 +121,7 @@ public class VisorQueryArg extends VisorDataTransferObject {
         U.writeString(out, cacheName);
         U.writeString(out, qryTxt);
         out.writeBoolean(distributedJoins);
+        out.writeBoolean(enforceJoinOrder);
         out.writeBoolean(loc);
         out.writeInt(pageSize);
     }
@@ -130,6 +131,7 @@ public class VisorQueryArg extends VisorDataTransferObject {
         cacheName = U.readString(in);
         qryTxt = U.readString(in);
         distributedJoins = in.readBoolean();
+        enforceJoinOrder = in.readBoolean();
         loc = in.readBoolean();
         pageSize = in.readInt();
     }

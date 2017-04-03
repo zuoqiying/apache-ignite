@@ -161,7 +161,7 @@ public class VisorQueryJob extends VisorJob<VisorQueryArg, VisorQueryTaskResult>
                 qry.setPageSize(arg.getPageSize());
                 qry.setLocal(arg.isLocal());
                 qry.setDistributedJoins(arg.isDistributedJoins());
-                qry.setEnforceJoinOrder(arg.enforceJoinOrder());
+                qry.setEnforceJoinOrder(arg.isEnforceJoinOrder());
 
                 long start = U.currentTimeMillis();
 
