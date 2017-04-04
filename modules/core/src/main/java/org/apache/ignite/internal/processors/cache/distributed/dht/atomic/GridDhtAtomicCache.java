@@ -1826,7 +1826,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             try {
                 GridDhtPartitionTopology top = req.context().topology();
 
-//                top.readLock();
+                top.readLock();
 
                 try {
                     if (top.stopping()) {
@@ -1930,7 +1930,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     }
                 }
                 finally {
-//                    top.readUnlock();
+                    top.readUnlock();
                 }
             }
             catch (GridCacheEntryRemovedException e) {
