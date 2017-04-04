@@ -20,7 +20,7 @@ import io from 'socket.io-client'; // eslint-disable-line no-unused-vars
 const maskNull = (val) => _.isEmpty(val) ? 'null' : val;
 
 export default class IgniteAgentManager {
-    static $inject = ['$rootScope', '$q', 'igniteSocketFactory', 'IgniteAgentModal'];
+    static $inject = ['$rootScope', '$q', 'igniteSocketFactory', 'AgentModal'];
 
     constructor($root, $q, socketFactory, AgentModal) {
         this.$root = $root;
@@ -28,7 +28,7 @@ export default class IgniteAgentManager {
         this.socketFactory = socketFactory;
 
         /**
-         * @type {IgniteAgentModal}
+         * @type {AgentModal}
          */
         this.AgentModal = AgentModal;
 
@@ -226,17 +226,6 @@ export default class IgniteAgentManager {
     }
 
     /**
-     * @param {Object} err
-     */
-    showNodeError(err) {
-        if (this._modalScope.showModal) {
-            this.modal.$promise.then(this.modal.show);
-
-            this.Messages.showError(err);
-        }
-    }
-
-    /**
      *
      * @param {String} event
      * @param {Object} [args]
@@ -244,7 +233,7 @@ export default class IgniteAgentManager {
      * @private
      */
     _rest(event, ...args) {
-        return this._emit(event, this.cluster.id, ...args);
+        return this._emit(event, _.get(this, 'cluster.id'), ...args);
     }
 
     /**
@@ -252,8 +241,117 @@ export default class IgniteAgentManager {
      * @param {Boolean} [mtr]
      * @returns {Promise}
      */
-    topology(attr, mtr) {
-        return this._rest('node:topology', !!attr, !!mtr);
+    topology(attr = false, mtr = false) {
+        return this._rest('node:rest', {cmd: 'top', attr, mtr});
+    }
+
+    /**
+     * @param {String} [cacheName] Cache name.
+     * @returns {Promise}
+     */
+    metadata(cacheName) {
+        return this._rest('node:rest', {cmd: 'metadata', cacheName: maskNull(cacheName)})
+            .then((caches) => {
+                let types = [];
+
+                const _compact = (className) => {
+                    return className.replace('java.lang.', '').replace('java.util.', '').replace('java.sql.', '');
+                };
+
+                const _typeMapper = (meta, typeName) => {
+                    const maskedName = _.isEmpty(meta.cacheName) ? '<default>' : meta.cacheName;
+
+                    let fields = meta.fields[typeName];
+
+                    let columns = [];
+
+                    for (const fieldName in fields) {
+                        if (fields.hasOwnProperty(fieldName)) {
+                            const fieldClass = _compact(fields[fieldName]);
+
+                            columns.push({
+                                type: 'field',
+                                name: fieldName,
+                                clazz: fieldClass,
+                                system: fieldName === '_KEY' || fieldName === '_VAL',
+                                cacheName: meta.cacheName,
+                                typeName,
+                                maskedName
+                            });
+                        }
+                    }
+
+                    const indexes = [];
+
+                    for (const index of meta.indexes[typeName]) {
+                        fields = [];
+
+                        for (const field of index.fields) {
+                            fields.push({
+                                type: 'index-field',
+                                name: field,
+                                order: index.descendings.indexOf(field) < 0,
+                                unique: index.unique,
+                                cacheName: meta.cacheName,
+                                typeName,
+                                maskedName
+                            });
+                        }
+
+                        if (fields.length > 0) {
+                            indexes.push({
+                                type: 'index',
+                                name: index.name,
+                                children: fields,
+                                cacheName: meta.cacheName,
+                                typeName,
+                                maskedName
+                            });
+                        }
+                    }
+
+                    columns = _.sortBy(columns, 'name');
+
+                    if (!_.isEmpty(indexes)) {
+                        columns = columns.concat({
+                            type: 'indexes',
+                            name: 'Indexes',
+                            cacheName: meta.cacheName,
+                            typeName,
+                            maskedName,
+                            children: indexes
+                        });
+                    }
+
+                    return {
+                        type: 'type',
+                        cacheName: meta.cacheName || '',
+                        typeName,
+                        maskedName,
+                        children: columns
+                    };
+                };
+
+                for (const meta of caches) {
+                    const cacheTypes = meta.types.map(_typeMapper.bind(null, meta));
+
+                    if (!_.isEmpty(cacheTypes))
+                        types = types.concat(cacheTypes);
+                }
+
+                return types;
+            });
+    }
+
+    /**
+     * @param {String} taskId
+     * @param {Array.<String>|String} nids
+     * @param {Array.<Object>} args
+     */
+    visorTask(taskId, nids, ...args) {
+        args = _.map(args, (arg) => maskNull(arg));
+
+        return this._rest('node:visor', taskId, maskNull(nids), ...args);
     }
 
     /**
@@ -267,25 +365,13 @@ export default class IgniteAgentManager {
      * @returns {Promise}
      */
     query(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSize) {
-        return this._rest('node:query', nid, maskNull(cacheName), maskNull(query), nonCollocatedJoins, enforceJoinOrder, local, pageSize)
-            .then(({result}) => {
-                if (_.isEmpty(result.key))
-                    return result.value;
+        return this.visorTask('fieldsQuery', nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSize)
+            .then(({key, value}) => {
+                if (_.isEmpty(key))
+                    return value;
 
-                return Promise.reject(result.key);
+                return Promise.reject(key);
             });
-    }
-
-    /**
-     * @param {String} nid Node id.
-     * @param {String} cacheName Cache name.
-     * @param {String} [query] Query if null then scan query.
-     * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
-     * @param {Boolean} local Flag whether to execute query locally.
-     * @returns {Promise}
-     */
-    queryGetAll(nid, cacheName, query, nonCollocatedJoins, local) {
-        return this._rest('node:query:getAll', nid, maskNull(cacheName), maskNull(query), nonCollocatedJoins, local);
     }
 
     /**
@@ -295,8 +381,20 @@ export default class IgniteAgentManager {
      * @returns {Promise}
      */
     queryNextPage(nid, queryId, pageSize) {
-        return this._rest('node:query:fetch', nid, queryId, pageSize)
-            .then(({result}) => result);
+        return this.visorTask('queryFetch', nid, queryId, pageSize);
+    }
+
+    /**
+     * @param {String} nid Node id.
+     * @param {String} cacheName Cache name.
+     * @param {String} [query] Query if null then scan query.
+     * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
+     * @param {Boolean} enforceJoinOrder Flag whether enforce join order is enabled.
+     * @param {Boolean} local Flag whether to execute query locally.
+     * @returns {Promise}
+     */
+    queryGetAll(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local) {
+        return this._rest('node:query:getAll', nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local);
     }
 
     /**
@@ -305,14 +403,17 @@ export default class IgniteAgentManager {
      * @returns {Promise}
      */
     queryClose(nid, queryId) {
-        return this._rest('node:query:close', nid, queryId);
+        return this.visorTask('queryClose', nid, queryId);
     }
 
     /**
-     * @param {String} [cacheName] Cache name.
-     * @returns {Promise}
+     * @param {Object} err
      */
-    metadata(cacheName) {
-        return this._rest('node:cache:metadata', maskNull(cacheName));
+    showNodeError(err) {
+        if (this._modalScope.showModal) {
+            this.modal.$promise.then(this.modal.show);
+
+            this.Messages.showError(err);
+        }
     }
 }

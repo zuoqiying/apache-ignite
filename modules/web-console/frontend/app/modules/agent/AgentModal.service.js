@@ -17,7 +17,7 @@
 
 import templateUrl from 'views/templates/agent-download.tpl.pug';
 
-export default class IgniteAgentModal {
+export default class AgentModal {
     static $inject = ['$rootScope', '$state', '$modal', 'IgniteMessages'];
 
     constructor($root, $state, $modal, Messages) {
