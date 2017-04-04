@@ -85,7 +85,7 @@ abstract public class VisorDataTransferObject implements Externalizable {
         int off = 0;
 
         while (off < size) {
-            int cnt = in.read(buf, off, size);
+            int cnt = in.read(buf, off, size - off);
 
             off += cnt;
         }
