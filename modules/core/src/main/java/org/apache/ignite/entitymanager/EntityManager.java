@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import javax.cache.Cache;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
@@ -36,8 +38,6 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiClosure;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgnitePredicate;
-import org.apache.ignite.transactions.TransactionConcurrency;
-import org.apache.ignite.transactions.TransactionIsolation;
 
 /**
  * The <code>EntityManager</code> which support only manual ids assignment.
@@ -57,7 +57,7 @@ public class EntityManager<K, V> {
     protected final String name;
 
     /** */
-    protected final Map<String, IgniteBiClosure<StringBuilder, Object, String>> incices;
+    protected final Map<String, IgniteBiClosure<StringBuilder, Object, String>> indices;
 
     /** */
     protected Ignite ignite;
@@ -75,8 +75,8 @@ public class EntityManager<K, V> {
         this.name = name;
         this.parts = partitions;
 
-        this.incices = indices == null ?
-            Collections.<String, IgniteBiClosure<StringBuilder, Object, String>>emptyMap() : indices;
+        this.indices = indices == null ?
+            Collections.<String, IgniteBiClosure<StringBuilder, Object, String>>emptyMap() : new TreeMap<>(indices); // Force indices ordering to prevent deadlocks.
 
         this.idGenerator = idGenerator;
     }
@@ -85,7 +85,7 @@ public class EntityManager<K, V> {
      * Returns cache configurations.
      */
     public CacheConfiguration[] cacheConfigurations() {
-        CacheConfiguration[] ccfgs = new CacheConfiguration[incices.size() + 1];
+        CacheConfiguration[] ccfgs = new CacheConfiguration[indices.size() + 1];
 
         int c = 0;
 
@@ -96,7 +96,7 @@ public class EntityManager<K, V> {
 
         c++;
 
-        for (Map.Entry<String, IgniteBiClosure<StringBuilder, Object, String>> idx : incices.entrySet()) {
+        for (Map.Entry<String, IgniteBiClosure<StringBuilder, Object, String>> idx : indices.entrySet()) {
             String idxName = idx.getKey();
             ccfgs[c] = new CacheConfiguration(indexCacheName(idxName));
             ccfgs[c].setCacheMode(CacheMode.PARTITIONED);
@@ -144,7 +144,7 @@ public class EntityManager<K, V> {
     protected IndexChange<K> indexChange(K key, V val) {
         IndexChange<K> idxChange = new IndexChange<>(name, key);
 
-        for (Map.Entry<String, IgniteBiClosure<StringBuilder, Object, String>> idx : incices.entrySet())
+        for (Map.Entry<String, IgniteBiClosure<StringBuilder, Object, String>> idx : indices.entrySet())
             idxChange.addChange(idx.getKey(), idx.getValue().apply(builder(), val));
 
         return idxChange;
@@ -229,7 +229,11 @@ public class EntityManager<K, V> {
         for (Map.Entry<String, String> change : changes.entrySet()) {
             IndexFieldKey idxKey = new IndexFieldKey(change.getValue(), key);
 
-            //indexCache(change.getKey()).put(idxKey, IndexFieldValue.MARKER);
+            // indexCache(change.getKey()).put(idxKey, IndexFieldValue.MARKER);
+
+            IndexFieldValue value = indexCache(change.getKey()).get(idxKey);
+            if (value != null)
+                System.out.println(value);
 
             Map<IndexFieldKey, IndexFieldValue> additions = ses.getAdditions(indexCacheName(change.getKey()));
 
@@ -259,7 +263,7 @@ public class EntityManager<K, V> {
      * @param id Id.
      */
     public boolean contains(String idxName, Object val, K id) {
-        IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
+        IgniteBiClosure<StringBuilder, Object, String> clo = indices.get(idxName);
 
         String strVal = clo.apply(builder(), val);
 
@@ -277,7 +281,7 @@ public class EntityManager<K, V> {
      */
     @SuppressWarnings("unchecked")
     public Collection<T2<K, V>> findAll(V example, String idxName) {
-        IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
+        IgniteBiClosure<StringBuilder, Object, String> clo = indices.get(idxName);
 
         String strVal = clo.apply(builder(), example);
 

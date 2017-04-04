@@ -15,51 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.entitymanager;
-
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+package org.apache.ignite.internal.util.intset;
 
 /**
- *
+ * Tests {@link GridIntSet.ArraySegment}.
  */
-public class IndexChange<K> {
-    /** */
-    private final K id;
+public class GridIntSetArraySegmentSelfTest extends GridIntSetAbstractSelfTest {
+    /** {@inheritDoc} */
+    @Override protected TestIntSet set() {
+        GridIntSet.ArraySegment seg = new GridIntSet.ArraySegment();
 
-    /** */
-    private final String name;
-
-    /** */
-    private Map<String, String> changes = new LinkedHashMap<>();
-
-    /**
-     * @param name Name.
-     * @param id   Id.
-     */
-    public IndexChange(String name, K id) {
-        this.id = id;
-        this.name = name;
-    }
-
-    /** */
-    public K id() {
-        return id;
-    }
-
-    /** */
-    public String name() {
-        return name;
-    }
-
-    /** */
-    public void addChange(String name, String val) {
-        changes.put(name, val);
-    }
-
-    /** */
-    public Map<String, String> changes() {
-        return changes;
+        return rndFill(new TestIntSetSegImpl(seg), seg.maxSize(), GridIntSet.SEGMENT_SIZE);
     }
 }

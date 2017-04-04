@@ -15,51 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.ignite.entitymanager;
+package org.apache.ignite.internal.util.intset;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import junit.framework.TestSuite;
 
-/**
- *
- */
-public class IndexChange<K> {
-    /** */
-    private final K id;
-
-    /** */
-    private final String name;
-
-    /** */
-    private Map<String, String> changes = new LinkedHashMap<>();
-
+/** */
+public class GridIntSetTestSuite extends TestSuite {
     /**
-     * @param name Name.
-     * @param id   Id.
+     * @return Suite.
+     * @throws Exception In case of error.
      */
-    public IndexChange(String name, K id) {
-        this.id = id;
-        this.name = name;
-    }
+    public static TestSuite suite() throws Exception {
+        TestSuite suite = new TestSuite("Grid IntSet Test Suite");
 
-    /** */
-    public K id() {
-        return id;
-    }
+        suite.addTestSuite(GridIntSetArraySegmentSelfTest.class);
+        suite.addTestSuite(GridIntSetBitsetSegmentSelfTest.class);
+        suite.addTestSuite(GridIntSetFlippedArraySegmentSelfTest.class);
+        suite.addTestSuite(GridIntSetContainerSelfTest.class);
 
-    /** */
-    public String name() {
-        return name;
-    }
-
-    /** */
-    public void addChange(String name, String val) {
-        changes.put(name, val);
-    }
-
-    /** */
-    public Map<String, String> changes() {
-        return changes;
+        return suite;
     }
 }

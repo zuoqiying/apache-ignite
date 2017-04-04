@@ -20,18 +20,16 @@ package org.apache.ignite.entitymanager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import javax.cache.Cache;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlQuery;
+import org.apache.ignite.internal.util.intset.GridIntSet;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiClosure;
 
-import java.util.BitSet;
 import java.util.Map;
 
 /**
@@ -57,7 +55,7 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
 
         int off = (int) (id % CAPACITY);
 
-        IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
+        IgniteBiClosure<StringBuilder, Object, String> clo = indices.get(idxName);
 
         String strVal = clo.apply(builder(), val);
 
@@ -65,7 +63,7 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
 
         IndexFieldValue idxVal = indexCache(idxName).get(idxKey);
 
-        return idxVal != null && ((BitSet)idxVal.getValue()).get(off);
+        return idxVal != null && ((GridIntSet)idxVal.getValue()).contains(off);
     }
 
     /** {@inheritDoc} */
@@ -90,9 +88,9 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
                 map.put(idxKey, (idxVal = cache.get(idxKey)));
 
             if (idxVal == null)
-                map.put(idxKey, (idxVal = new IndexFieldValue(new BitSet())));
+                map.put(idxKey, (idxVal = new IndexFieldValue(new GridIntSet())));
 
-            ((BitSet)idxVal.getValue()).set(off);
+            ((GridIntSet)idxVal.getValue()).add(off);
         }
     }
 
@@ -122,23 +120,23 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
             else
                 map.put(idxKey, idxVal);
 
-            BitSet set = (BitSet) idxVal.getValue();
+            GridIntSet set = (GridIntSet) idxVal.getValue();
 
-            assert set.cardinality() > 0;
+            assert set.size() > 0;
 
-            set.clear(off);
+            set.remove(off);
 
-            if (set.cardinality() == 0)
+            if (set.size() == 0)
                 map.put(idxKey, null); // Mark for removal.
         }
     }
 
     /** {@inheritDoc} */
     @Override public Collection<T2<Long, V>> findAll(V example, String idxName) {
-        if (incices.isEmpty())
+        if (indices.isEmpty())
             return Collections.EMPTY_LIST;
 
-        IgniteBiClosure<StringBuilder, Object, String> clo = incices.get(idxName);
+        IgniteBiClosure<StringBuilder, Object, String> clo = indices.get(idxName);
 
         String strVal = clo.apply(builder(), example);
 
@@ -155,14 +153,16 @@ public class OptimizedEntityManager<V> extends EntityManager<Long, V> {
         List<T2<Long, V>> ret = new ArrayList<>();
 
         for (Cache.Entry<IndexFieldKey, IndexFieldValue> row : rows) {
-            BitSet val = (BitSet)row.getValue().getValue();
+            GridIntSet set = (GridIntSet)row.getValue().getValue();
 
             Long seg = (Long)row.getKey().getPayload();
 
-            if (val != null) {
-                int id = -1;
+            if (set != null) {
+                GridIntSet.Iterator it = set.iterator();
 
-                while(id != Integer.MAX_VALUE && (id = val.nextSetBit(id + 1)) != -1) {
+                while (it.hasNext()) {
+                    int id = it.next();
+
                     long entityId = seg * CAPACITY + id;
 
                     V v = entityCache().get(entityId);

@@ -20,6 +20,7 @@ package org.apache.ignite.entitymanager;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.cache.Cache;
 import org.apache.ignite.Ignite;
@@ -53,9 +54,9 @@ public class Session implements AutoCloseable {
 
         this.transaction = ignite.transactions().txStart(concurrency, isolation);
 
-        additions = new HashMap<>();
+        additions = new LinkedHashMap<>();
 
-        removals = new HashMap<>();
+        removals = new LinkedHashMap<>();
     }
 
     /** */
