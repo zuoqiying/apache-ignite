@@ -61,7 +61,7 @@ public class HibernateCacheProxy implements IgniteInternalCache {
 
     /**
      * @param delegate Delegate.
-     * @param keyTransformer Key transformer.
+     * @param keyTransformer Key keyTransformer.
      */
     public HibernateCacheProxy(
         IgniteInternalCache<Object, Object> delegate,
@@ -74,9 +74,9 @@ public class HibernateCacheProxy implements IgniteInternalCache {
     }
 
     /**
-     *
+     * @return HibernateKeyTransformer
      */
-    public HibernateKeyTransformer transformer(){
+    public HibernateKeyTransformer keyTransformer(){
         return keyTransformer;
     }
 

@@ -295,7 +295,7 @@ public abstract class HibernateAccessStrategyAdapter {
     static void evict(Ignite ignite, IgniteInternalCache<Object,Object> cache, Object key) throws CacheException {
         try {
             if (cache instanceof HibernateCacheProxy)
-                key = ((HibernateCacheProxy)cache).transformer().transform(key);
+                key = ((HibernateCacheProxy)cache).keyTransformer().transform(key);
 
             ignite.compute(ignite.cluster()).call(new ClearKeyCallable(key, cache.name()));
         }
