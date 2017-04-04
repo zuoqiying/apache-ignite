@@ -190,16 +190,19 @@ module.exports.factory = function(_) {
         /**
          * Execute REST request on node.
          *
-         * @param {Command} cmd - REST command.
+         * @param {Boolean} demo Is need run command on demo node.
+         * @param {String} cmd REST command.
+         * @param {Array.<String>} args - REST command arguments.
          * @return {Promise}
          */
-        restCommand(cmd) {
-            const params = {cmd: cmd._name};
+        restCommand(demo, cmd, ...args) {
+            const params = {cmd};
 
-            for (const param of cmd._params)
-                params[param.key] = param.value;
+            _.forEach(args, (arg, idx) => {
+                params[`p${idx + 1}`] = args[idx];
+            });
 
-            return this.emitEvent('node:rest', {uri: 'ignite', params, demo: cmd.demo, method: 'GET'})
+            return this.emitEvent('node:rest', {uri: 'ignite', demo, params, method: 'GET'})
                 .then(this.restResultParse);
         }
 
@@ -216,7 +219,6 @@ module.exports.factory = function(_) {
         }
 
         /**
-         *
          * @param {Boolean} demo Is need run command on demo node.
          * @param {Boolean} attr Get attributes, if this parameter has value true. Default value: true.
          * @param {Boolean} mtr Get metrics, if this parameter has value true. Default value: false.

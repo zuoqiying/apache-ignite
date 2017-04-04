@@ -211,7 +211,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                 _.forEach(tokens, (token) => {
                     _.pull(this._agentSockets.get(token), agentSocket);
 
-                    this._browsersHnd.sendAgents(token);
+                    this._browsersHnd.agentStats(token);
                 });
             });
 
@@ -222,7 +222,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                     agentSocket.cluster = cluster;
 
                     _.forEach(tokens, (token) => {
-                        this._browsersHnd.sendAgents(token);
+                        this._browsersHnd.agentStats(token);
                     });
                 }
                 else
@@ -249,7 +249,7 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                 // if (_.size(browserSockets))
                 //     agentSocket.runDemoCluster(token, browserSockets);
 
-                this._browsersHnd.sendAgents(token);
+                this._browsersHnd.agentStats(token);
             });
 
             // ioSocket.on('cluster:topology', (top) => {
@@ -303,10 +303,27 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
                 });
         }
 
-        /**
-         * @param {String} token
-         */
-        forToken(token) {
+        agent(token, demo, clusterId) {
+            if (!this.io)
+                return Promise.reject(new Error('Agent server not started yet!'));
+
+            const socks = this._agentSockets.get(token);
+
+            if (_.isEmpty(socks))
+                return Promise.reject(new Error('Failed to find connected agent for this token'));
+
+            if (demo || _.isNil(clusterId))
+                return Promise.resolve(_.head(socks));
+
+            const sock = _.find(socks, (agentSock) => _.get(agentSock, 'cluster.id') === clusterId);
+
+            if (_.isEmpty(sock))
+                return Promise.reject(new Error('Failed to find agent connected to cluster'));
+
+            return Promise.resolve(sock);
+        }
+
+        agents(token) {
             if (!this.io)
                 return Promise.reject(new Error('Agent server not started yet!'));
 
@@ -318,39 +335,8 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             return Promise.resolve(socks);
         }
 
-        /**
-         * @param {String} token
-         * @param {String} clusterId
-         * @returns {Promise.<AgentSocket>}
-         */
-        forCluster(token, clusterId) {
-            if (!this.io)
-                return Promise.reject(new Error('Agent server not started yet!'));
-
-            const agentSockets = this._agentSockets.get(token);
-
-            const sock = _.find(agentSockets, (agentSock) => _.get(agentSock, 'cluster.id') === clusterId);
-
-            if (_.isNil(sock))
-                return Promise.reject(new Error('Failed to find connected agent for this token'));
-
-            return Promise.resolve(sock);
-        }
-
         tryStopDemo(browserSocket) {
             const agentSock = this._agentSockets.find(browserSocket);
-        }
-
-        /**
-         * @param {String} token
-         */
-        emitAgentsCount(token) {
-            const agentSockets = this._agentSockets[token];
-
-            const count = _.size(agentSockets);
-            const hasDemo = !!_.find(agentSockets, (sock) => _.get(sock, 'demo.enabled'));
-
-            _.forEach(this._browserSockets[token], (sock) => sock.emit('agent:count', {count, hasDemo}));
         }
 
         /**

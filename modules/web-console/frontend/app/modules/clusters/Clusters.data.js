@@ -16,7 +16,7 @@
  */
 
 export default class ClustersData {
-    static $inject = ['$q', 'IgniteAgentMonitor'];
+    static $inject = ['$q', 'AgentManager'];
 
     constructor($q, agentMonitor) {
         this.$q = $q;

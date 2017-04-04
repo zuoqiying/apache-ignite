@@ -261,7 +261,7 @@ angular
     $root.$meta = $meta;
     $root.gettingStarted = gettingStarted;
 }])
-.run(['$rootScope', 'IgniteAgentMonitor', ($root, agentMgr) => {
+.run(['$rootScope', 'AgentManager', ($root, agentMgr) => {
     $root.$on('user', () => agentMgr.connect());
 }])
 .run(['$rootScope', ($root) => {

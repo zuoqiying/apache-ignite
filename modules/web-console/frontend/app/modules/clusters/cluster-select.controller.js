@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export default ['$scope', 'IgniteAgentMonitor', function($scope, agentMonitor) {
+export default ['$scope', 'AgentManager', function($scope, agentMonitor) {
     const ctrl = this;
 
     ctrl.counter = 1;
