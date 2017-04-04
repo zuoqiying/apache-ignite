@@ -17,14 +17,14 @@
 
 package org.apache.ignite.internal.visor;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import org.apache.ignite.internal.util.io.GridByteArrayInputStream;
+import org.apache.ignite.internal.util.io.GridByteArrayOutputStream;
 
 /**
  * Base class for data transfer objects.
@@ -48,7 +48,7 @@ abstract public class VisorDataTransferObject implements Externalizable {
     @Override public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(ver);
 
-        ByteOutputStream bos = new ByteOutputStream();
+        GridByteArrayOutputStream bos = new GridByteArrayOutputStream();
 
         try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
             writeExternalData(oos);
@@ -59,7 +59,7 @@ abstract public class VisorDataTransferObject implements Externalizable {
 
             out.writeInt(size);
 
-            byte[] bytes = bos.getBytes();
+            byte[] bytes = bos.internalArray();
 
             out.write(bytes, 0, size);
         }
@@ -82,9 +82,14 @@ abstract public class VisorDataTransferObject implements Externalizable {
 
         byte[] buf = new byte[size];
 
-        in.read(buf);
+        int cnt;
+        int off = 0;
 
-        ByteInputStream bis = new ByteInputStream(buf, size);
+        while ((cnt = in.read(buf, off, size)) > 0) {
+            off += cnt;
+        }
+
+        GridByteArrayInputStream bis = new GridByteArrayInputStream(buf);
 
         try(ObjectInputStream ois = new ObjectInputStream(bis)) {
             readExternalData(ois);
