@@ -124,7 +124,7 @@ public class VisorFileBlock extends VisorDataTransferObject {
         out.writeLong(size);
         out.writeLong(lastModified);
         out.writeBoolean(zipped);
-        out.write(data);
+        U.writeByteArray(out, data);
     }
 
     /** {@inheritDoc} */
@@ -134,7 +134,7 @@ public class VisorFileBlock extends VisorDataTransferObject {
         size = in.readLong();
         lastModified = in.readLong();
         zipped = in.readBoolean();
-        in.read(data);
+        data = U.readByteArray(in);
     }
 
     /** {@inheritDoc} */

@@ -25,6 +25,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import org.apache.ignite.internal.util.io.GridByteArrayInputStream;
 import org.apache.ignite.internal.util.io.GridByteArrayOutputStream;
+import org.apache.ignite.internal.util.typedef.internal.U;
 
 /**
  * Base class for data transfer objects.
@@ -55,13 +56,7 @@ abstract public class VisorDataTransferObject implements Externalizable {
 
             oos.flush();
 
-            int size = bos.size();
-
-            out.writeInt(size);
-
-            byte[] bytes = bos.internalArray();
-
-            out.write(bytes, 0, size);
+            U.writeByteArray(out, bos.internalArray(), bos.size());
         }
     }
 
@@ -78,17 +73,7 @@ abstract public class VisorDataTransferObject implements Externalizable {
     @Override public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         ver = in.readInt();
 
-        int size = in.readInt();
-
-        byte[] buf = new byte[size];
-
-        int off = 0;
-
-        while (off < size) {
-            int cnt = in.read(buf, off, size - off);
-
-            off += cnt;
-        }
+        byte[] buf = U.readByteArray(in);
 
         GridByteArrayInputStream bis = new GridByteArrayInputStream(buf);
 
