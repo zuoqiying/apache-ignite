@@ -69,6 +69,7 @@ public class HibernateCacheProxy implements IgniteInternalCache {
     ) {
         assert delegate != null;
         assert keyTransformer != null;
+
         this.delegate = delegate;
         this.keyTransformer = keyTransformer;
     }
@@ -413,32 +414,6 @@ public class HibernateCacheProxy implements IgniteInternalCache {
     /** {@inheritDoc} */
     @Override public void removeAll(@Nullable Collection keys) throws IgniteCheckedException {
         delegate.removeAll(transform(keys));
-    }
-
-    /**
-     * @param keys Keys.
-     */
-    private Collection<Object> transform(Collection<Object> keys) {
-        Collection<Object> newKeys = new LinkedList<>();
-
-        for (Object o : keys)
-            newKeys.add(keyTransformer.transform(o));
-
-        return newKeys;
-    }
-
-    /**
-     *
-     */
-    private Map<Object,Object> transform(Map<Object,Object> entries) {
-        Map<Object, Object> newMap = new HashMap<>();
-
-        Set<Map.Entry<Object, Object>> ents = entries.entrySet();
-
-        for (Map.Entry<Object,Object> e: ents)
-            newMap.put(keyTransformer.transform(e.getKey()), e.getValue());
-
-        return newMap;
     }
 
     /** {@inheritDoc} */
@@ -806,5 +781,31 @@ public class HibernateCacheProxy implements IgniteInternalCache {
     /** {@inheritDoc} */
     @Override public Iterator iterator() {
         return delegate.iterator();
+    }
+
+    /**
+     * @param keys Keys.
+     */
+    private Collection<Object> transform(Collection<Object> keys) {
+        Collection<Object> res = new LinkedList<>();
+
+        for (Object o : keys)
+            res.add(keyTransformer.transform(o));
+
+        return res;
+    }
+
+    /**
+     * @param map Map.
+     */
+    private Map<Object, Object> transform(Map<Object, Object> map) {
+        Map<Object, Object> res = new HashMap<>();
+
+        Set<Map.Entry<Object, Object>> ents = map.entrySet();
+
+        for (Map.Entry<Object, Object> e : ents)
+            res.put(keyTransformer.transform(e.getKey()), e.getValue());
+
+        return res;
     }
 }
