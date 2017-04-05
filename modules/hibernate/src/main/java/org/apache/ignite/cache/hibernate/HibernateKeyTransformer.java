@@ -17,12 +17,10 @@
 
 package org.apache.ignite.cache.hibernate;
 
-import java.io.Serializable;
-
 /**
  *
  */
-public interface HibernateKeyTransformer extends Serializable {
+public interface HibernateKeyTransformer {
     /**
      * @param key Hibernate key.
      */
