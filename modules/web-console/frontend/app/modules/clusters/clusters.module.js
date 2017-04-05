@@ -18,11 +18,9 @@
 import angular from 'angular';
 
 import clusterSelect from './cluster-select.directive';
-import ClustersData from './Clusters.data';
 
 
 angular.module('ignite-console.clusters', [
 
 ])
-    .directive('igniteClusterSelect', clusterSelect)
-    .service('ClustersData', ClustersData);
+    .directive('igniteClusterSelect', clusterSelect);

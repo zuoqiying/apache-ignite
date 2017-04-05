@@ -31,7 +31,6 @@ import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
 import org.apache.ignite.internal.processors.cache.GridCacheSwapManager;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtCacheAdapter;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionTopology;
-import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionMap;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearCacheAdapter;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.lang.IgniteUuid;
@@ -110,7 +109,7 @@ public class VisorCache implements Serializable, LessNamingBean {
     private VisorCacheMetrics metrics;
 
     /** Cache partitions states. */
-    private GridDhtPartitionMap partitionsMap;
+    private VisorPartitionMap parts;
 
     /**
      * @param ignite Grid.
@@ -158,7 +157,7 @@ public class VisorCache implements Serializable, LessNamingBean {
                 GridDhtPartitionTopology top = dca.topology();
 
                 if (cfg.getCacheMode() != CacheMode.LOCAL && cfg.getBackups() > 0)
-                    partitionsMap = top.localPartitionMap();
+                    parts = new VisorPartitionMap(top.localPartitionMap());
             }
         }
 
@@ -412,8 +411,8 @@ public class VisorCache implements Serializable, LessNamingBean {
     /**
      * @return Cache partitions states.
      */
-    @Nullable public GridDhtPartitionMap partitionMap() {
-        return partitionsMap;
+    @Nullable public VisorPartitionMap partitionMap() {
+        return parts;
     }
 
     /** {@inheritDoc} */

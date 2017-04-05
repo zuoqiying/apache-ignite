@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export default ['$scope', 'AgentManager', function($scope, agentMonitor) {
+export default ['$scope', 'AgentManager', function($scope, agentMgr) {
     const ctrl = this;
 
     ctrl.counter = 1;
@@ -23,14 +23,14 @@ export default ['$scope', 'AgentManager', function($scope, agentMonitor) {
     ctrl.cluster = null;
     ctrl.clusters = [];
 
-    $scope.$watch(() => agentMonitor.cluster, (cluster) => {
+    $scope.$watch(() => agentMgr.cluster, (cluster) => {
         if (_.isNil(cluster))
             return ctrl.cluster = cluster;
 
         ctrl.cluster = _.find(ctrl.clusters, {id: cluster.id});
     }, true);
 
-    $scope.$watchCollection(() => agentMonitor.clusters, (clusters) => {
+    $scope.$watchCollection(() => agentMgr.clusters, (clusters) => {
         if (_.isEmpty(clusters)) {
             ctrl.cluster = null;
 
@@ -50,7 +50,7 @@ export default ['$scope', 'AgentManager', function($scope, agentMonitor) {
                     id,
                     name: `Cluster ${this.counter++}`,
                     click: () => {
-                        agentMonitor.cluster = cluster;
+                        agentMgr.changeCluster(cluster);
                     }
                 });
             }

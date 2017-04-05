@@ -95,6 +95,10 @@ export default class IgniteAgentManager {
         });
     }
 
+    changeCluster(cluster) {
+        this.cluster = cluster;
+    }
+
     /**
      * @returns {Promise}
      */
@@ -422,16 +426,5 @@ export default class IgniteAgentManager {
      */
     queryClose(nid, queryId) {
         return this.visorTask('queryClose', nid, queryId);
-    }
-
-    /**
-     * @param {Object} err
-     */
-    showNodeError(err) {
-        if (this._modalScope.showModal) {
-            this.modal.$promise.then(this.modal.show);
-
-            this.Messages.showError(err);
-        }
     }
 }
