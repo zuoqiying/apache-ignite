@@ -98,7 +98,7 @@ public class HibernateRegionFactory implements RegionFactory {
     private Ignite ignite;
 
     /** Default cache. */
-    private IgniteInternalCache<Object, Object> dfltCache;
+    private HibernateCacheProxy dfltCache;
 
     /** Default region access type. */
     private AccessType dfltAccessType;
@@ -167,12 +167,12 @@ public class HibernateRegionFactory implements RegionFactory {
         String dfltCacheName = props.getProperty(DFLT_CACHE_NAME_PROPERTY);
 
         if (dfltCacheName != null) {
-            dfltCache = ((IgniteKernal)ignite).getCache(dfltCacheName);
+            IgniteInternalCache<Object, Object> dfltCache = ((IgniteKernal)ignite).getCache(dfltCacheName);
 
             if (dfltCache == null)
                 throw new CacheException("Cache specified as default is not configured: " + dfltCacheName);
 
-            dfltCache = new HibernateCacheProxy(dfltCache, hibernate4transformer);
+            this.dfltCache = new HibernateCacheProxy(dfltCache, hibernate4transformer);
         }
 
         IgniteLogger log = ignite.log().getLogger(HibernateRegionFactory.class);
@@ -183,6 +183,7 @@ public class HibernateRegionFactory implements RegionFactory {
 
     /** {@inheritDoc} */
     @Override public void stop() {
+        // No-op.
     }
 
     /** {@inheritDoc} */
@@ -244,7 +245,7 @@ public class HibernateRegionFactory implements RegionFactory {
      * @return Cache for given region.
      * @throws CacheException If cache for given region is not configured.
      */
-    private IgniteInternalCache<Object, Object> regionCache(String regionName) throws CacheException {
+    private HibernateCacheProxy regionCache(String regionName) throws CacheException {
         String cacheName = regionCaches.get(regionName);
 
         if (cacheName == null) {

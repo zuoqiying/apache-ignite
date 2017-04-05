@@ -52,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  *
  */
-public class HibernateCacheProxy implements IgniteInternalCache {
+public class HibernateCacheProxy implements IgniteInternalCache<Object, Object> {
     /** Delegate. */
     private final IgniteInternalCache<Object, Object> delegate;
 
@@ -63,7 +63,7 @@ public class HibernateCacheProxy implements IgniteInternalCache {
      * @param delegate Delegate.
      * @param keyTransformer Key keyTransformer.
      */
-    public HibernateCacheProxy(
+    HibernateCacheProxy(
         IgniteInternalCache<Object, Object> delegate,
         HibernateKeyTransformer keyTransformer
     ) {
@@ -77,7 +77,7 @@ public class HibernateCacheProxy implements IgniteInternalCache {
     /**
      * @return HibernateKeyTransformer
      */
-    public HibernateKeyTransformer keyTransformer(){
+    HibernateKeyTransformer keyTransformer(){
         return keyTransformer;
     }
 
