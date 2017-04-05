@@ -15,11 +15,8 @@
     limitations under the License.
 
 mixin ignite-form-field-bsdropdown(label, model, name, disabled, required, options, tip)
-    mixin form-field-input()
-        a.btn.btn-default.dropdown-toggle(
-            id=`{{ ${name} }}Input`
-            name=`{{ ${name} }}`
-
+    .dropdown--ignite.ignite-form-field
+        .ignite-form-field__control(
             data-ng-model=model
 
             data-ng-required=required && `${required}`
@@ -27,28 +24,20 @@ mixin ignite-form-field-bsdropdown(label, model, name, disabled, required, optio
 
             bs-dropdown=''
 
-            data-trigger='hover focus' 
+            data-trigger='hover focus'
             data-placement='bottom-right'
-            data-container='.ignite-form-field__control'
+            data-container='self'
+            data-animation=''
 
             tabindex='0'
             aria-haspopup='true'
             aria-expanded='false'
         )&attributes(attributes.attributes)
-            span !{label}
-            span.caret
+            a.dropdown-toggle
+                span !{label}
+                span.caret
+
         ul.dropdown-menu(role='menu')
             li(ng-repeat=`item in ${options}`)
                 a(ng-click='') {{ item.action }}
 
-    .ignite-form-field
-        //- +ignite-form-field__label(label, name, required)
-        .ignite-form-field__control
-            if tip
-                i.tipField.icon-help(bs-tooltip='' data-title=tip)
-
-            if block
-                block
-
-            .input-tip
-                +form-field-input(attributes=attributes)

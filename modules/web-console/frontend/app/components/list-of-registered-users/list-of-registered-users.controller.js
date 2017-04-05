@@ -96,9 +96,9 @@ export default class IgniteListOfRegisteredUsersCtrl {
         $ctrl.actionOptions = [
             { action: 'Become this user', click: true },
             { action: 'Revoke admin', click: true },
-            { action: 'Grant admin', click: true },
-            { action: 'Remove user', click: true },
-            { action: 'Activity detail', click: true }
+            { action: 'Grant admin', click: true }
+            // { action: 'Remove user', click: true },
+            // { action: 'Activity detail', click: true }
         ];
 
         $ctrl._userGridOptions = {
@@ -117,6 +117,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
             rowTemplate,
             rowHeight: 46,
             selectWithCheckboxOnly: true,
+            selectionRowHeaderWidth: 52,
             enableFiltering: true,
             enableSelectAll: true,
             enableRowSelection: true,
@@ -179,7 +180,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
     }
 
     adjustHeight(rows) {
-        const height = Math.min(rows, 20) * 46 + 75;
+        const height = Math.min(rows, 20) * 48 + 75;
 
         // Remove header height.
         this.gridApi.grid.element.css('height', height + 'px');

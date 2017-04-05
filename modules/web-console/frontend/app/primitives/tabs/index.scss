@@ -48,6 +48,7 @@ ul.tabs {
 
             color: $text-color;
             font-size: $font-size;
+            font-family: Roboto;
             text-align: center;
             line-height: $height - 2*$offset-vertical;
 
@@ -81,7 +82,7 @@ ul.tabs.tabs--blue {
         }
 
         &:not(.active):hover {
-            border-color: lighten(#0067b9, 25%);
+            border-color: #94bbdd;
         }
     }
 }

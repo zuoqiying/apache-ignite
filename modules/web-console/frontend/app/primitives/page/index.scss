@@ -15,11 +15,21 @@
  * limitations under the License.
  */
 
-import './badge/index.scss';
-import './tabs/index.scss';
-import './panel/index.scss';
-import './dropdown/index.scss';
-import './ui-grid/index.scss';
-import './ui-grid-header/index.scss';
-import './ui-grid-settings/index.scss';
-import './page/index.scss';
+.docs-content {
+    header {
+        margin: 40px 0 30px;
+        border: none;
+        background-color: initial;
+
+        h1 {
+            color: #393939;
+            font-family: Roboto;
+            font-size: 24px;
+            font-weight: normal;
+            font-style: normal;
+            font-stretch: normal;
+            line-height: 24px;
+            letter-spacing: normal;
+        }
+    }
+}

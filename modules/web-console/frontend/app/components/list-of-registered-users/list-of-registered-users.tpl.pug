@@ -18,21 +18,22 @@ include /app/helpers/jade/mixins
 include /app/components/form-field-datepicker/form-field-datepicker.pug
 
 mixin grid-settings()
-    i.fa.fa-cog(data-animation='am-flip-x' bs-dropdown='' aria-haspopup='true' aria-expanded='expanded' data-auto-close='1' data-trigger='click')
-    ul.select.dropdown-menu(role='menu')
-        li(ng-repeat='item in $ctrl.gridOptions.categories|filter:{selectable:true}')
-            a(ng-click='$ctrl.toggleColumns(item, !item.visible)')
-                i.fa.fa-check-square-o.pull-left(ng-if='item.visible')
-                i.fa.fa-square-o.pull-left(ng-if='!item.visible')
-                span {{::item.name}}
-        li.divider
-        li
-            a(ng-click='$ctrl.selectAllColumns()') Select all
-        li
-            a(ng-click='$ctrl.clearAllColumns()') Clear all
-        li.divider
-        li
-            a(ng-click='$hide()') Close
+    .grid-settings
+        i.fa.fa-cog(data-animation='am-flip-x' bs-dropdown='' aria-haspopup='true' aria-expanded='expanded' data-auto-close='1' data-trigger='click')
+        ul.select.dropdown-menu(role='menu')
+            li(ng-repeat='item in $ctrl.gridOptions.categories|filter:{selectable:true}')
+                a(ng-click='$ctrl.toggleColumns(item, !item.visible)')
+                    i.fa.fa-check-square-o.pull-left(ng-if='item.visible')
+                    i.fa.fa-square-o.pull-left(ng-if='!item.visible')
+                    span {{::item.name}}
+            li.divider
+            li
+                a(ng-click='$ctrl.selectAllColumns()') Select all
+            li
+                a(ng-click='$ctrl.clearAllColumns()') Clear all
+            li.divider
+            li
+                a(ng-click='$hide()') Close
 
 
 .list-of-registered-users
@@ -50,15 +51,15 @@ mixin grid-settings()
                 span Countries
                 span.badge.badge--blue {{ $ctrl.countries.length }}
 
-    .ignite-panel.panel.panel-default
+    .panel--ignite
         .panel-heading.ui-grid-settings
-            div(ng-hide='$ctrl.selected.length')
+            .panel-title(ng-hide='$ctrl.selected.length')
                 span(ng-if='$ctrl.groupBy === "user"') List of registered users
                 span(ng-if='$ctrl.groupBy === "company"') List of registered companies
                 span(ng-if='$ctrl.groupBy === "country"') List of registered countries
                 +grid-settings
 
-            div(ng-show='$ctrl.selected.length')
+            .panel-selected(ng-show='$ctrl.selected.length')
                 .pull-right
                     +ignite-form-field-bsdropdown('Actions', '$ctrl.action', 'action', false, false, '$ctrl.actionOptions')
                 div
@@ -81,5 +82,5 @@ mixin grid-settings()
 
         .panel-collapse
             //- .ui-grid--ignite
-            .grid.ui-grid--ignite(ui-grid='$ctrl.gridOptions' ui-grid-resize-columns ui-grid-selection ui-grid-exporter ui-grid-pinning)
+            .grid.ui-grid--ignite(ui-grid='$ctrl.gridOptions' ui-grid-resize-columns ui-grid-selection ui-grid-exporter ui-grid-pinning ui-grid-grouping='false')
 //- ui-grid-resize-columns ui-grid-selection ui-grid-exporter ui-grid-pinning ui-grid-grouping
