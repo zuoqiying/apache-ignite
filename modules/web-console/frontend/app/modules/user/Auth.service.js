@@ -16,7 +16,7 @@
  */
 
 export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteErrorPopover', 'IgniteMessages', 'gettingStarted', 'User', 'AgentManager',
-    ($http, $root, $state, $window, ErrorPopover, Messages, gettingStarted, User, agentMonitor) => {
+    ($http, $root, $state, $window, ErrorPopover, Messages, gettingStarted, User, agentMgr) => {
         return {
             forgotPassword(userInfo) {
                 $http.post('/api/v1/password/forgot', userInfo)
@@ -34,8 +34,6 @@ export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteErro
                                 $root.$broadcast('user', user);
 
                                 $state.go('base.configuration.clusters');
-
-                                agentMonitor.init();
 
                                 $root.gettingStarted.tryShow();
                             });

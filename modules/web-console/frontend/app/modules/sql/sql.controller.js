@@ -1777,7 +1777,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 }
 
                 // Show a basic modal from a controller
-                $modal({scope, templateUrl: messageTemplateUrl, placement: 'center', show: true});
+                $modal({scope, templateUrl: messageTemplateUrl, show: true});
             }
         };
 
@@ -1798,7 +1798,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 }
 
                 // Show a basic modal from a controller
-                $modal({scope, templateUrl: messageTemplateUrl, placement: 'center', show: true});
+                $modal({scope, templateUrl: messageTemplateUrl, show: true});
             }
         };
     }

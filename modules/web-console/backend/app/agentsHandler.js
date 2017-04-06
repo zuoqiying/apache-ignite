@@ -234,8 +234,6 @@ module.exports.factory = function(_, fs, path, JSZip, socketio, settings, mongo,
             });
 
             sock.on('cluster:disconnected', () => {
-                console.log('cluster:disconnected');
-
                 agentSocket.cluster = null;
             });
 
