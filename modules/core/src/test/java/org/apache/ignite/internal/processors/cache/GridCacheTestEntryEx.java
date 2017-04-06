@@ -908,4 +908,12 @@ public class GridCacheTestEntryEx extends GridMetadataAwareAdapter implements Gr
     @Override public void onUnlock() {
         // No-op.
     }
+
+    @Override public void lock() {
+        // No-op.
+    }
+
+    @Override public void unlock() {
+        // No-op.
+    }
 }

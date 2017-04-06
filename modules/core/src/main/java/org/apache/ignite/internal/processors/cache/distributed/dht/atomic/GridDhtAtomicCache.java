@@ -82,7 +82,6 @@ import org.apache.ignite.internal.processors.cache.version.GridCacheVersionConfl
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionEx;
 import org.apache.ignite.internal.processors.timeout.GridTimeoutObject;
 import org.apache.ignite.internal.util.GridLongList;
-import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.future.GridEmbeddedFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
@@ -2802,10 +2801,10 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             while (true) {
                 GridDhtCacheEntry entry = entryExx(key, topVer);
 
-                GridUnsafe.monitorEnter(entry);
+                entry.lock();
 
                 if (entry.obsolete())
-                    GridUnsafe.monitorExit(entry);
+                    entry.unlock();
                 else
                     return Collections.singletonList(entry);
             }
@@ -2828,13 +2827,13 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     if (entry == null)
                         continue;
 
-                    GridUnsafe.monitorEnter(entry);
+                    entry.lock();
 
                     if (entry.obsolete()) {
                         // Unlock all locked.
                         for (int j = 0; j <= i; j++) {
                             if (locked.get(j) != null)
-                                GridUnsafe.monitorExit(locked.get(j));
+                                locked.get(j).unlock();
                         }
 
                         // Clear entries.
@@ -2883,7 +2882,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             // That's why releasing locks in the finally block..
             for (GridCacheMapEntry entry : locked) {
                 if (entry != null)
-                    GridUnsafe.monitorExit(entry);
+                    entry.unlock();
             }
         }
 

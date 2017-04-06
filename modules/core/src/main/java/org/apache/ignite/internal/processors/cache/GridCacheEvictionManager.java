@@ -66,7 +66,6 @@ import org.apache.ignite.internal.processors.timeout.GridTimeoutObjectAdapter;
 import org.apache.ignite.internal.util.F0;
 import org.apache.ignite.internal.util.GridBusyLock;
 import org.apache.ignite.internal.util.GridConcurrentHashSet;
-import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.lang.GridMetadataAwareAdapter;
 import org.apache.ignite.internal.util.lang.IgnitePair;
@@ -1012,7 +1011,7 @@ public class GridCacheEvictionManager extends GridCacheManagerAdapter {
                     continue;
 
                 // Lock entry.
-                GridUnsafe.monitorEnter(entry);
+                entry.lock();
 
                 locked.add(entry);
 
@@ -1055,7 +1054,7 @@ public class GridCacheEvictionManager extends GridCacheManagerAdapter {
             for (ListIterator<GridCacheEntryEx> it = locked.listIterator(locked.size()); it.hasPrevious();) {
                 GridCacheEntryEx e = it.previous();
 
-                GridUnsafe.monitorExit(e);
+                e.unlock();
             }
 
             // Remove entries and fire events outside the locks.

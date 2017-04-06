@@ -34,7 +34,6 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
-import org.apache.ignite.cache.CacheAtomicWriteOrderMode;
 import org.apache.ignite.cache.CacheMemoryMode;
 import org.apache.ignite.cache.eviction.EvictableEntry;
 import org.apache.ignite.internal.binary.BinaryObjectOffheapImpl;
@@ -61,6 +60,8 @@ import org.apache.ignite.internal.processors.cache.version.GridCacheVersionConfl
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionEx;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersionedEntryEx;
 import org.apache.ignite.internal.processors.dr.GridDrType;
+import org.apache.ignite.internal.util.GridUnsafe;
+import org.apache.ignite.internal.util.NonFairLock;
 import org.apache.ignite.internal.util.lang.GridClosureException;
 import org.apache.ignite.internal.util.lang.GridMetadataAwareAdapter;
 import org.apache.ignite.internal.util.lang.GridTuple;
@@ -108,6 +109,21 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
     private static final byte IS_EVICT_DISABLED = 0x10;
 
     /** */
+    private static final long LOCK_OFFS;
+
+    /**
+     *
+     */
+    static {
+        try {
+            LOCK_OFFS = GridUnsafe.objectFieldOffset(GridCacheMapEntry.class.getDeclaredField("lock"));
+        }
+        catch (NoSuchFieldException e) {
+            throw new Error(e);
+        }
+    }
+
+    /** */
     public static final GridCacheAtomicVersionComparator ATOMIC_VER_COMPARATOR = new GridCacheAtomicVersionComparator();
 
     /**
@@ -123,6 +139,8 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
      */
     // 7 * 8 /*references*/  + 2 * 8 /*long*/  + 1 * 4 /*int*/ + 1 * 1 /*byte*/ + array at parent = 85
     private static final int SIZE_OVERHEAD = 85 /*entry*/ + 32 /* version */ + 4 * 7 /* key + val */;
+
+    private static final NonFairLock nonFairLock = new NonFairLock(128);
 
     /** Static logger to avoid re-creation. Made static for test purpose. */
     protected static final AtomicReference<IgniteLogger> logRef = new AtomicReference<>();
@@ -167,6 +185,10 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
      */
     @GridToStringInclude
     protected byte flags;
+
+    /** Cache entry lock. */
+    @GridToStringExclude
+    private int lock;
 
     /**
      * @param cctx Cache context.
@@ -4826,6 +4848,15 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
     /** {@inheritDoc} */
     @Override public void onUnlock() {
         // No-op.
+    }
+    /** {@inheritDoc} */
+    @Override public void lock() {
+        nonFairLock.lock(this, LOCK_OFFS);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void unlock() {
+        nonFairLock.unlock(this, LOCK_OFFS);
     }
 
     /** {@inheritDoc} */

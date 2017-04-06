@@ -1080,4 +1080,14 @@ public interface GridCacheEntryEx {
      * Calls {@link GridDhtLocalPartition#onUnlock()} for this entry's partition.
      */
     public void onUnlock();
+
+    /**
+     * locks entry
+     */
+    void lock();
+
+    /**
+     * unlocks entry
+     */
+    void unlock();
 }

@@ -2646,6 +2646,16 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * Gets a hex string representation of the given int value.
+     *
+     * @param val Value to convert to string.
+     * @return Hex string.
+     */
+    public static String hexInt(int val) {
+        return new SB().appendHex(val).toString();
+    }
+
+    /**
      * Return byte value for certain character.
      *
      * @param ch Character

@@ -24,11 +24,8 @@ import java.nio.ByteOrder;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.ignite.IgniteSystemProperties;
-import org.jsr166.ConcurrentHashMap8;
 import sun.misc.Unsafe;
 
 /**
@@ -89,9 +86,6 @@ public abstract class GridUnsafe {
 
     /** */
     public static final long BOOLEAN_ARR_OFF = UNSAFE.arrayBaseOffset(boolean[].class);
-
-    /** */
-    private static ConcurrentHashMap8<Object, ReentrantLock> locks = new ConcurrentHashMap8<>();
 
     /**
      * Ensure singleton.
@@ -1134,45 +1128,6 @@ public abstract class GridUnsafe {
     public static Object allocateInstance(Class cls) throws InstantiationException {
         return UNSAFE.allocateInstance(cls);
     }
-
-    /**
-     * Acquires monitor lock.
-     *
-     * @param obj Object.
-     */
-  /*  public static void monitorEnter(Object obj) {
-        UNSAFE.monitorEnter(obj);
-    }*/
-
-    /**
-     * Releases monitor lock.
-     *
-     * @param obj Object.
-     */
-  /*  public static void monitorExit(Object obj) {
-        UNSAFE.monitorExit(obj);
-    }*/
-
-    public static void monitorEnter(Object obj) {
-        ReentrantLock lock = locks.get(obj);
-
-        if (lock == null) {
-            lock = new ReentrantLock();
-            locks.put(obj, lock);
-        }
-
-        lock.lock();
-    }
-
-    public static void monitorExit(Object obj) {
-        ReentrantLock lock = locks.get(obj);
-
-        if (lock != null) {
-            lock.unlock();
-            locks.remove(lock);
-        }
-    }
-
 
     /**
      * Integer CAS.
