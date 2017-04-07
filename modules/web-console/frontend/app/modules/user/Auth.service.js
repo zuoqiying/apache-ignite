@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteErrorPopover', 'IgniteMessages', 'gettingStarted', 'User', 'AgentManager',
-    ($http, $root, $state, $window, ErrorPopover, Messages, gettingStarted, User, agentMgr) => {
+export default ['Auth', ['$http', '$rootScope', '$state', '$window', 'IgniteErrorPopover', 'IgniteMessages', 'gettingStarted', 'User',
+    ($http, $root, $state, $window, ErrorPopover, Messages, gettingStarted, User) => {
         return {
             forgotPassword(userInfo) {
                 $http.post('/api/v1/password/forgot', userInfo)

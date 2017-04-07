@@ -132,7 +132,6 @@ angular
     const dialog = $modal({
         templateUrl,
         scope,
-        placement: 'center',
         show: false,
         backdrop: 'static'
     });

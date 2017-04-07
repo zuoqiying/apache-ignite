@@ -67,8 +67,6 @@ export default class IgniteAgentManager {
 
         const onDisconnect = () => {
             self.connected = false;
-
-            self.AgentModal.agentDisconnected(this.backText, this.backState);
         };
 
         self.socket.on('connect_error', onDisconnect);
@@ -76,27 +74,40 @@ export default class IgniteAgentManager {
 
         self.connected = null;
 
+        try {
+            self.cluster = JSON.parse(localStorage.cluster);
+
+            localStorage.removeItem('cluster');
+        }
+        catch (ignore) {
+            // No-op.
+        }
+
         self.socket.on('agents:stat', ({count, hasDemo, clusters}) => {
             self.connected = count > 0;
             self.hasDemo = hasDemo;
 
-            const removed = _.difference(self.clusters, clusters);
+            const removed = _.differenceBy(self.clusters, clusters, 'id');
 
-            if (_.nonEmpty(removed))
+            if (_.nonEmpty(removed)) {
                 _.pullAll(self.clusters, removed);
 
-            const added = _.difference(clusters, self.clusters);
+                if (self.cluster && _.find(removed, {id: self.cluster.id}))
+                    self.cluster.disconnect = true;
+            }
 
-            if (_.nonEmpty(added))
+            const added = _.differenceBy(clusters, self.clusters, 'id');
+
+            if (_.nonEmpty(added)) {
                 self.clusters.push(...added);
 
-            if (_.isNil(self.cluster) || _.isNil(_.find(self.clusters, self.cluster)))
+                if (self.cluster && _.find(removed, {id: self.cluster.id}))
+                    self.cluster.disconnect = false;
+            }
+
+            if (_.isNil(self.cluster))
                 self.cluster = _.head(self.clusters);
         });
-    }
-
-    changeCluster(cluster) {
-        this.cluster = cluster;
     }
 
     /**

@@ -246,10 +246,9 @@ angular
             abstract: true,
             template: baseTemplate
         })
-        .state('settings', {
+        .state('base.settings', {
             url: '/settings',
-            abstract: true,
-            template: baseTemplate
+            abstract: true
         });
 
     $urlRouterProvider.otherwise('/404');

@@ -15,7 +15,7 @@
     limitations under the License.
 
 .modal.center(tabindex='-1' role='dialog')
-    .modal-dialog(ng-switch='$ctrl.status')
+    .modal-dialog(ng-switch='ctrl.status')
         .modal-content(ng-switch-when='agentMissing')
             .modal-header.header
                 h4.modal-title
@@ -37,7 +37,7 @@
                     i.tipLabel.icon-help(ng-if=lines bs-tooltip='' data-title='The security token is used for authorization of web agent')
 
             .modal-footer
-                button.btn.btn-default(ng-click='$ctrl.back()') {{::$ctrl.backText}}
+                button.btn.btn-default(ng-click='ctrl.back()') {{::ctrl.backText}}
                 a.btn.btn-primary(href='/api/v1/downloads/agent' target='_self') Download agent
 
         .modal-content(ng-switch-when='nodeMissing')
@@ -56,4 +56,4 @@
                     li Refer to #[b README.txt] in agent folder for more information
 
             .modal-footer
-                button.btn.btn-default(ng-click='$ctrl.back()') {{::$ctrl.backText}}
+                button.btn.btn-default(ng-click='ctrl.back()') {{::ctrl.backText}}

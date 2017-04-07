@@ -23,13 +23,6 @@ export default ['$scope', 'AgentManager', function($scope, agentMgr) {
     ctrl.cluster = null;
     ctrl.clusters = [];
 
-    $scope.$watch(() => agentMgr.cluster, (cluster) => {
-        if (_.isNil(cluster))
-            return ctrl.cluster = cluster;
-
-        ctrl.cluster = _.find(ctrl.clusters, {id: cluster.id});
-    }, true);
-
     $scope.$watchCollection(() => agentMgr.clusters, (clusters) => {
         if (_.isEmpty(clusters)) {
             ctrl.cluster = null;
@@ -42,21 +35,26 @@ export default ['$scope', 'AgentManager', function($scope, agentMgr) {
         if (_.nonEmpty(removed))
             _.pullAll(ctrl.clusters, removed);
 
-        _.forEach(clusters, (cluster) => {
-            const id = cluster.id;
+        const added = _.differenceBy(clusters, ctrl.clusters, 'id');
 
-            if (!_.find(ctrl.clusters, {id})) {
-                ctrl.clusters.push({
-                    id,
-                    name: `Cluster ${this.counter++}`,
-                    click: () => {
-                        agentMgr.changeCluster(cluster);
+        _.forEach(added, (cluster) => {
+            ctrl.clusters.push({
+                id: cluster.id,
+                name: `Cluster ${this.counter++}`,
+                click: () => {
+                    try {
+                        localStorage.cluster = JSON.stringify(cluster);
                     }
-                });
-            }
+                    catch (ignore) {
+                        // No-op.
+                    }
+
+                    window.open(window.location.href, '_blank');
+                }
+            });
         });
 
-        if (_.isNil(ctrl.cluster) || _.isNil(_.find(ctrl.clusters, ctrl.cluster)))
-            ctrl.cluster = _.head(ctrl.clusters);
+        if (_.isNil(ctrl.cluster))
+            ctrl.cluster = _.find(ctrl.clusters, {id: agentMgr.cluster.id});
     });
 }];

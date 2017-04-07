@@ -33,7 +33,7 @@ export default class AgentModal {
             backdrop: 'static',
             keyboard: false,
             controller: () => self,
-            controllerAs: '$ctrl'
+            controllerAs: 'ctrl'
         });
 
         self.modal.$scope.$on('modal.hide.before', () => {
