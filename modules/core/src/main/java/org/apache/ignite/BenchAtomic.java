@@ -67,7 +67,18 @@ public class BenchAtomic {
         for (int i = 0; i < cachesCnt; i++) {
             cacheCfgs.put(i, cacheConfig(i, parts));
 
-            U.debug("Started cache: " + cacheCfgs.get(i).getName());
+            U.debug("Configured cache: " + cacheCfgs.get(i).getName());
+        }
+
+        if (System.getProperty("SEQUENTIAL") != null) {
+            U.debug("Starting caches sequentially");
+
+            for (CacheConfiguration cacheCfg : cacheCfgs.values())
+                ignite.getOrCreateCache(cacheCfg);
+        } else {
+            U.debug("Starting caches concurrently");
+
+            ignite.getOrCreateCaches(cacheCfgs.values());
         }
 
         ignite.getOrCreateCaches(cacheCfgs.values());
