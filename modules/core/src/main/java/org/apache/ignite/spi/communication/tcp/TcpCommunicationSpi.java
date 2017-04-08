@@ -2965,6 +2965,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
                         // Continue loop.
                     }
+
+                    U.error(log, "??? Exception caused handshake fail: " + X.getFullStackTrace(e));
                 }
                 catch (Exception e) {
                     if (client != null) {
@@ -2987,6 +2989,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     else if (X.hasCause(e, SocketTimeoutException.class))
                         LT.warn(log, "Connect timed out (consider increasing 'connTimeout' " +
                             "configuration property) [addr=" + addr + ", connTimeout=" + connTimeout + ']');
+
+                    U.error(log, "??? Exception caused client creation fail: " + X.getFullStackTrace(e));
 
                     if (errs == null)
                         errs = new IgniteCheckedException("Failed to connect to node (is node still alive?). " +
@@ -3029,6 +3033,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     "rmtNode=" + node +
                     ", err=" + errs +
                     ", connectErrs=" + Arrays.toString(errs.getSuppressed()) + ']');
+                U.error(log, "??? Exception caused node drop: " + X.getFullStackTrace(errs));
 
                 getSpiContext().failNode(node.id(), "TcpCommunicationSpi failed to establish connection to node [" +
                     "rmtNode=" + node +
