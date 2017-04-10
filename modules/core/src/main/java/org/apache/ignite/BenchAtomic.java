@@ -202,6 +202,7 @@ public class BenchAtomic {
         return new IgniteConfiguration()
             .setGridName(name)
             .setClientMode(client)
-            .setCommunicationSpi(commSpi);
+            .setCommunicationSpi(commSpi)
+            .setFailureDetectionTimeout(600000);
     }
 }
