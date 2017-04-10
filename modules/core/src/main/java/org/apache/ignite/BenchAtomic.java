@@ -28,6 +28,7 @@ import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.internal.NodeStoppingException;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -199,10 +200,18 @@ public class BenchAtomic {
             commSpi.setMessageQueueLimit(0);
         }
 
+        MemoryConfiguration memCfg = new MemoryConfiguration();
+
+        String prop = System.getProperty("PAGE_CACHE_SIZE");
+
+        if (prop != null)
+            memCfg.setPageCacheSize(Long.parseLong(prop));
+
         return new IgniteConfiguration()
+            .setMemoryConfiguration(memCfg)
             .setGridName(name)
             .setClientMode(client)
             .setCommunicationSpi(commSpi)
-            .setFailureDetectionTimeout(600000);
+            .setFailureDetectionTimeout(600_000);
     }
 }
