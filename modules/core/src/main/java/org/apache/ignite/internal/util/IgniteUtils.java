@@ -2844,6 +2844,14 @@ public abstract class IgniteUtils {
      * @return Encoded into byte array {@link java.util.UUID}.
      */
     public static byte[] uuidToBytes(@Nullable UUID uuid) {
+        try {
+            if (uuid == null)
+                throw new Exception();
+        }
+        catch (Exception e) {
+            U.error(null, "??? UUID == null: " + X.getFullStackTrace(e));
+        }
+
         return GridClientByteUtils.uuidToBytes(uuid);
     }
 
