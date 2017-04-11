@@ -23,6 +23,9 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheRebalanceMode;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
@@ -59,6 +62,11 @@ public class BenchAtomic {
         final int payLoad = args.length > 2 ? Integer.parseInt(args[2]) : 512;
         final int cachesCnt = args.length > 3 ? Integer.parseInt(args[3]) : 1;
         final int parts = args.length > 4 ? Integer.parseInt(args[4]) : 1024;
+
+        Logger log = Logger.getLogger("org.apache.ignite.internal.exchange.time");
+        ConsoleHandler handler = new ConsoleHandler();
+        log.addHandler(handler);
+        log.setLevel (Level.FINE);
 
         System.out.println("Params [client=" + client +
             ", threads=" + threadCnt + ", payLoad=" + payLoad + ", caches=" + cachesCnt +
@@ -222,7 +230,15 @@ public class BenchAtomic {
             discoSpi.setIpFinder(ipFinder);
         }
 
+        boolean lateAff = true;
+
+        prop = System.getProperty("LATE_AFFINITY");
+
+        if (prop != null)
+            lateAff = Boolean.parseBoolean(prop);
+
         return new IgniteConfiguration()
+            .setLateAffinityAssignment(lateAff)
             .setMemoryConfiguration(memCfg)
             .setGridName(name)
             .setClientMode(client)
