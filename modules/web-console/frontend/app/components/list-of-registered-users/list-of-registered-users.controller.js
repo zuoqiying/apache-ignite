@@ -47,6 +47,8 @@ export default class IgniteListOfRegisteredUsersCtrl {
 
         $ctrl.uiGridGroupingConstants = uiGridGroupingConstants;
 
+        User.read().then((user) => $ctrl.user = user);
+
         const becomeUser = () => {
             const user = this.gridApi.selection.getSelectedRows()[0];
 
@@ -105,27 +107,27 @@ export default class IgniteListOfRegisteredUsersCtrl {
             {
                 action: 'Become this user',
                 click: becomeUser.bind(this),
-                cond: true
+                available: true
             },
             {
                 action: 'Revoke admin',
                 click: toggleAdmin.bind(this),
-                cond: true
+                available: true
             },
             {
                 action: 'Grant admin',
                 click: toggleAdmin.bind(this),
-                cond: false
+                available: false
             },
             {
                 action: 'Remove user',
                 click: removeUser.bind(this),
-                cond: true
+                available: true
             },
             {
                 action: 'Activity detail',
                 click: showActivities.bind(this),
-                cond: true
+                available: true
             }
         ];
 
@@ -204,7 +206,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
     }
 
     adjustHeight(rows) {
-        const height = Math.min(rows, 20) * 48 + 77;
+        const height = Math.min(rows, 20) * 48 + 78;
 
         // Remove header height.
         this.gridApi.grid.element.css('height', height + 'px');
@@ -217,8 +219,13 @@ export default class IgniteListOfRegisteredUsersCtrl {
 
         if (ids.length) {
             const user = this.gridApi.selection.getSelectedRows()[0];
-            this.actionOptions[1].cond = user.admin;
-            this.actionOptions[2].cond = !user.admin;
+            const other = this.user._id !== user._id;
+
+            this.actionOptions[1].available = other && user.admin;
+            this.actionOptions[2].available = other && !user.admin;
+
+            this.actionOptions[0].available = other;
+            this.actionOptions[3].available = other;
         }
 
         if (!_.isEqual(ids, this.selected))
