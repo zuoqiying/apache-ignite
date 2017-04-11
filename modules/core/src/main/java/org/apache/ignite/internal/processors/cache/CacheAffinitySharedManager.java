@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cache.affinity.AffinityFunction;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
@@ -91,6 +92,9 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
     private WaitRebalanceInfo waitInfo;
 
     /** */
+    private IgniteLogger exchLog;
+
+    /** */
     private final Object mux = new Object();
 
     /** Pending affinity assignment futures. */
@@ -123,6 +127,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
         lateAffAssign = cctx.kernalContext().config().isLateAffinityAssignment() || cctx.database().persistenceEnabled();
 
         cctx.kernalContext().event().addLocalEventListener(discoLsnr, EVT_NODE_LEFT, EVT_NODE_FAILED);
+
+        exchLog = cctx.logger(GridDhtPartitionsExchangeFuture.EXCHANGE_LOG);
     }
 
     /**
@@ -342,6 +348,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
         throws IgniteCheckedException {
         assert !F.isEmpty(reqs) : fut;
 
+        exchLog.info("onCacheChangeRequest start [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
+
         for (DynamicCacheChangeRequest req : reqs) {
             Integer cacheId = CU.cacheId(req.cacheName());
 
@@ -384,7 +392,11 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
             Integer cacheId = CU.cacheId(req.cacheName());
 
             if (req.start()) {
+                exchLog.info("prepareCacheStart start [topVer=" + fut.topologyVersion() + ", cache=" + req.cacheName() + ']');
+
                 cctx.cache().prepareCacheStart(req, fut.topologyVersion());
+
+                exchLog.info("prepareCacheStart end [topVer=" + fut.topologyVersion() + ", cache=" + req.cacheName() + ']');
 
                 if (fut.isCacheAdded(cacheId, fut.topologyVersion())) {
                     if (fut.discoCache().cacheAffinityNodes(req.cacheName()).isEmpty())
@@ -401,6 +413,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                         if (clientCacheStarted)
                             initAffinity(cacheCtx.affinity().affinityCache(), fut, lateAffAssign);
                         else if (!req.clientStartOnly()) {
+                            exchLog.info("calculateAff start [topVer=" + fut.topologyVersion() + ", cache=" + req.cacheName() + ']');
+
                             assert fut.topologyVersion().equals(cacheCtx.startTopologyVersion());
 
                             GridAffinityAssignmentCache aff = cacheCtx.affinity().affinityCache();
@@ -411,6 +425,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                                 fut.discoveryEvent(), fut.discoCache());
 
                             aff.initialize(fut.topologyVersion(), assignment);
+
+                            exchLog.info("calculateAff end [topVer=" + fut.topologyVersion() + ", cache=" + req.cacheName() + ']');
                         }
                     }
                 }
@@ -486,6 +502,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                 });
             }
         }
+
+        exchLog.info("onCacheChangeRequest end [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
 
         return clientOnly;
     }
@@ -564,6 +582,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
         assert msg.topologyVersion() != null && msg.exchangeId() == null : msg;
         assert affCalcVer == null || affCalcVer.equals(msg.topologyVersion());
 
+        exchLog.info("onChangeAffinityMessage start [topVer=" + exchFut.topologyVersion() + ", crd=" + crd + ']');
+
         final AffinityTopologyVersion topVer = exchFut.topologyVersion();
 
         if (log.isDebugEnabled()) {
@@ -631,6 +651,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
             if (affCalcVer == null)
                 affCalcVer = msg.topologyVersion();
         }
+
+        exchLog.info("onChangeAffinityMessage end [topVer=" + exchFut.topologyVersion() + ", crd=" + crd + ']');
     }
 
     /**
@@ -832,11 +854,17 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
     private void initAffinity(GridAffinityAssignmentCache aff, GridDhtPartitionsExchangeFuture fut, boolean fetch)
         throws IgniteCheckedException {
         if (!fetch && canCalculateAffinity(aff, fut)) {
+            exchLog.info("initAffinity start [topVer=" + fut.topologyVersion() + ", cache=" + aff.cacheName() + ']');
+
             List<List<ClusterNode>> assignment = aff.calculate(fut.topologyVersion(), fut.discoveryEvent(), fut.discoCache());
 
             aff.initialize(fut.topologyVersion(), assignment);
+
+            exchLog.info("initAffinity end [topVer=" + fut.topologyVersion() + ", cache=" + aff.cacheName() + ']');
         }
         else {
+            exchLog.info("fetchAffinity start [topVer=" + fut.topologyVersion() + ", cache=" + aff.cacheName() + ']');
+
             GridDhtAssignmentFetchFuture fetchFut = new GridDhtAssignmentFetchFuture(cctx,
                 aff.cacheName(),
                 fut.topologyVersion(),
@@ -845,6 +873,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
             fetchFut.init();
 
             fetchAffinity(fut, aff, fetchFut);
+
+            exchLog.info("fetchAffinity end [topVer=" + fut.topologyVersion() + ", cache=" + aff.cacheName() + ']');
         }
     }
 
