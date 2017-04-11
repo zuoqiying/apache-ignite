@@ -17,6 +17,8 @@
 
 package org.apache.ignite.tools.classgen;
 
+import org.apache.ignite.internal.util.InternalUtil;
+
 import java.io.BufferedInputStream;
 import java.io.Externalizable;
 import java.io.File;
@@ -69,7 +71,7 @@ public class ClassesGenerator {
     }
 
     /** */
-    private final URLClassLoader ldr = (URLClassLoader)getClass().getClassLoader();
+    private final ClassLoader ldr = getClass().getClassLoader();
 
     /** */
     private final Collection<Class> classes = new TreeSet<>(new Comparator<Class>() {
@@ -112,7 +114,7 @@ public class ClassesGenerator {
     private void generate() throws Exception {
         System.out.println("Generating classnames.properties...");
 
-        for (URL url : ldr.getURLs())
+        for (URL url : InternalUtil.getUrlsByAppClassloader(ldr))
             processUrl(url);
 
         if (!errs.isEmpty()) {

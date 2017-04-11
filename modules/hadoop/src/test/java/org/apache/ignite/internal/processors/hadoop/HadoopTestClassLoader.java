@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.hadoop;
 
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.internal.util.InternalUtil;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.X;
 
@@ -32,10 +33,8 @@ import java.util.List;
  */
 public class HadoopTestClassLoader extends URLClassLoader {
     /** Parent class loader. */
-    private static final URLClassLoader APP_CLS_LDR = (URLClassLoader)HadoopTestClassLoader.class.getClassLoader();
+    private static final ClassLoader APP_CLS_LDR = HadoopTestClassLoader.class.getClassLoader();
 
-    /** */
-    private static final Collection<URL> APP_JARS = F.asList(APP_CLS_LDR.getURLs());
 
     /** All participating URLs. */
     private static final URL[] URLS;
@@ -44,7 +43,9 @@ public class HadoopTestClassLoader extends URLClassLoader {
         try {
             List<URL> res = new ArrayList<>();
 
-            for (URL url : APP_JARS) {
+            URL[] appJars = InternalUtil.getUrlsByAppClassloader(APP_CLS_LDR);
+
+            for (URL url : appJars) {
                 String urlStr = url.toString();
 
                 if (urlStr.contains("modules/hadoop/"))

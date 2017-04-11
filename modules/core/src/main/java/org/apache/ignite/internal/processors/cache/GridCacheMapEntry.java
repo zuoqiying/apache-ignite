@@ -188,7 +188,7 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
     /** Cache entry lock. */
     @GridToStringExclude
-    private int lock;
+    private volatile int lock;
 
     /**
      * @param cctx Cache context.

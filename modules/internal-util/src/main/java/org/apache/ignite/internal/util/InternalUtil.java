@@ -18,11 +18,15 @@
 package org.apache.ignite.internal.util;
 
 import sun.nio.ch.DirectBuffer;
+
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
 import sun.misc.BASE64Encoder;
 
 /**
- * Created by ezhuravl on 23.03.17.
+ * Util class for use in java < 9
  */
 public class InternalUtil {
 
@@ -41,4 +45,11 @@ public class InternalUtil {
         ((DirectBuffer)directBuffer).cleaner().clean();
     }
 
+    public static URL[] getUrlsByAppClassloader(ClassLoader classLoader) {
+        return ((URLClassLoader)classLoader).getURLs();
+    }
+
+    public static void closeAppClassloader(ClassLoader classLoader) throws IOException {
+        ((URLClassLoader)classLoader).close();
+    }
 }

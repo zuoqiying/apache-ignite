@@ -20,6 +20,7 @@ package org.apache.ignite.internal.processors.hadoop;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.util.ClassCache;
+import org.apache.ignite.internal.util.InternalUtil;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -32,6 +33,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -60,10 +62,7 @@ public class HadoopClassLoader extends URLClassLoader implements ClassCache {
         "org.apache.ignite.internal.processors.hadoop.impl.v2.HadoopShutdownHookManager";
 
     /** */
-    private static final URLClassLoader APP_CLS_LDR = (URLClassLoader)HadoopClassLoader.class.getClassLoader();
-
-    /** */
-    private static final Collection<URL> appJars = F.asList(APP_CLS_LDR.getURLs());
+    private static final ClassLoader APP_CLS_LDR = HadoopClassLoader.class.getClassLoader();
 
     /** Mutex for native libraries initialization. */
     private static final Object LIBS_MUX = new Object();
@@ -411,6 +410,7 @@ public class HadoopClassLoader extends URLClassLoader implements ClassCache {
     private static URL[] addHadoopUrls(URL[] urls) {
         Collection<URL> hadoopJars;
 
+        URL[] appJars = InternalUtil.getUrlsByAppClassloader(APP_CLS_LDR);
         try {
             hadoopJars = hadoopUrls();
         }
@@ -418,9 +418,9 @@ public class HadoopClassLoader extends URLClassLoader implements ClassCache {
             throw new RuntimeException(e);
         }
 
-        ArrayList<URL> list = new ArrayList<>(hadoopJars.size() + appJars.size() + (urls == null ? 0 : urls.length));
+        ArrayList<URL> list = new ArrayList<>(hadoopJars.size() + appJars.length + (urls == null ? 0 : urls.length));
 
-        list.addAll(appJars);
+        list.addAll(Arrays.asList(appJars));
         list.addAll(hadoopJars);
 
         if (!F.isEmpty(urls))

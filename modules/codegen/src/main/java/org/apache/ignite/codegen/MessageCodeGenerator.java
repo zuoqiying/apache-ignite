@@ -44,6 +44,7 @@ import org.apache.ignite.internal.GridDirectCollection;
 import org.apache.ignite.internal.GridDirectMap;
 import org.apache.ignite.internal.GridDirectTransient;
 import org.apache.ignite.internal.IgniteCodeGeneratingFail;
+import org.apache.ignite.internal.util.InternalUtil;
 import org.apache.ignite.internal.util.typedef.internal.SB;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteUuid;
@@ -871,9 +872,11 @@ public class MessageCodeGenerator {
                 }
             });
 
-        URLClassLoader ldr = (URLClassLoader)getClass().getClassLoader();
+        ClassLoader ldr = getClass().getClassLoader();
 
-        for (URL url : ldr.getURLs()) {
+        URL[] urls = InternalUtil.getUrlsByAppClassloader(ldr);
+
+        for (URL url : urls) {
             File file = new File(url.toURI());
 
             int prefixLen = file.getPath().length() + 1;

@@ -35,6 +35,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.compute.ComputeTask;
+import org.apache.ignite.internal.util.InternalUtil;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.spi.IgniteSpiException;
@@ -294,11 +295,9 @@ final class GridUriDeploymentFileProcessor {
         assert log != null;
 
         if (clsLdr instanceof URLClassLoader) {
-            URLClassLoader clsLdr0 = (URLClassLoader)clsLdr;
-
             try {
-                clsLdr0.close();
-                URL url = clsLdr0.getURLs()[0];
+                InternalUtil.closeAppClassloader(clsLdr);
+                URL url = InternalUtil.getUrlsByAppClassloader(clsLdr)[0];
 
                 File dir = new File(url.toURI());
 

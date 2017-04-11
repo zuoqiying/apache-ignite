@@ -967,6 +967,7 @@
                             <compilerArgs>
                                 <arg>--add-exports</arg><arg>jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED</arg>
                                 <arg>--add-exports</arg><arg>java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED</arg>
+                                <arg>--add-exports</arg><arg>java.base/jdk.internal.loader=ALL-UNNAMED</arg>
                             </compilerArgs>
                             <source>1.9</source>
                             <target>1.9</target>

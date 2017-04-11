@@ -80,6 +80,7 @@ import org.apache.ignite.internal.processors.platform.PlatformJavaObjectFactoryP
 import org.apache.ignite.internal.processors.platform.websession.PlatformDotNetSessionData;
 import org.apache.ignite.internal.processors.platform.websession.PlatformDotNetSessionLockResult;
 import org.apache.ignite.internal.processors.query.QueryUtils;
+import org.apache.ignite.internal.util.InternalUtil;
 import org.apache.ignite.internal.util.lang.GridMapEntry;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.T2;
@@ -560,7 +561,7 @@ public class BinaryContext {
         if (ldr instanceof URLClassLoader) {
             String pkgPath = pkgName.replaceAll("\\.", "/");
 
-            URL[] urls = ((URLClassLoader)ldr).getURLs();
+            URL[] urls = InternalUtil.getUrlsByAppClassloader(ldr);
 
             for (URL url : urls) {
                 String proto = url.getProtocol().toLowerCase();

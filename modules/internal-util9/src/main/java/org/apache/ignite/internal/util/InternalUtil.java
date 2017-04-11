@@ -17,9 +17,14 @@
 
 package org.apache.ignite.internal.util;
 
+import java.io.IOException;
 import java.lang.ref.Cleaner;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Base64;
+
+import jdk.internal.loader.BuiltinClassLoader;
+import jdk.internal.loader.URLClassPath;
 import sun.misc.Unsafe;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
@@ -27,7 +32,7 @@ import java.security.PrivilegedExceptionAction;
 import java.lang.reflect.Field;
 
 /**
- * Created by ezhuravl on 23.03.17.
+ * Util class for use in java >= 9
  */
 public class InternalUtil {
 
@@ -44,6 +49,26 @@ public class InternalUtil {
 
     public static void cleanDirectBuffer(ByteBuffer directBuffer) {
         UNSAFE.invokeCleaner(directBuffer);
+    }
+
+    public static URL[] getUrlsByAppClassloader(ClassLoader classLoader) {
+        try {
+            Field f = BuiltinClassLoader.class.getDeclaredField("ucp");
+            f.setAccessible(true);
+            return ((URLClassPath)f.get(classLoader)).getURLs();
+        }
+        catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+            return new URL[0];
+
+    }
+
+    public static void closeAppClassloader(ClassLoader classLoader) throws IOException {
+        // No-op
     }
 
     /**
@@ -71,5 +96,4 @@ public class InternalUtil {
             }
         }
     }
-
 }
