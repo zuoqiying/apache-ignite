@@ -17,7 +17,7 @@
 
 export default [
     {name: 'Actions', visible: false, selectable: false},
-    {name: 'User', visible: true, selectable: true},
+    {name: 'User', visible: true, selectable: false},
     {name: 'Email', visible: true, selectable: true},
     {name: 'Company', visible: true, selectable: true},
     {name: 'Country', visible: true, selectable: true},

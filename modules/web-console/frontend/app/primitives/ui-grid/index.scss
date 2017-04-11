@@ -92,6 +92,10 @@
                 text-align: left;
 
                 padding: 8px 20px;
+
+                & > i {
+                    line-height: 18px;
+                }
             }
 
             [ng-show] .ui-grid-cell-contents {
@@ -146,10 +150,6 @@
         min-width: 52px;
 
         border-width: 0;
-
-        .ui-grid-cell-contents {
-          // padding-right: 0;
-        }
     }
 
     .ui-grid-pinned-container-left .ui-grid-cell:last-child {
@@ -158,21 +158,21 @@
 
         border-width: 0;
         background-color: initial;
-
-        .ui-grid-cell-contents {
-          // padding-right: 0;
-        }
     }
 
     .ui-grid-row {
         height: $height;
 
-        &:nth-child(odd) .ui-grid-cell {
-            background-color: initial;
+        &:nth-child(odd) {
+            .ui-grid-cell {
+                background-color: initial;
+            }
         }
 
-        &:nth-child(even) .ui-grid-cell {
-            background-color: #f3f3f3;
+        &:nth-child(even) {
+            .ui-grid-cell {
+                background-color: #f9f9f9;
+            }
         }
 
         &:not(:first-child) {
@@ -180,7 +180,7 @@
         }
 
         &.ui-grid-row-selected > [ui-grid-row] > .ui-grid-cell {
-            background-color: rgba(0, 103, 185, 0.08);
+            background-color: #e5f2f9;
 
             box-shadow: 0 -1px 0 0 rgba(117, 117, 117, 0.25), 0 1px 0 0 rgba(117, 117, 117, 0.25);
         }
@@ -301,6 +301,11 @@
             .ui-grid-header-cell-row {
                 .ui-grid-header-cell {
                     border-right: none;
+                    padding-top: 12px;
+
+                    &.disabled {
+                        opacity: .5;
+                    }
                 }
             }
         }

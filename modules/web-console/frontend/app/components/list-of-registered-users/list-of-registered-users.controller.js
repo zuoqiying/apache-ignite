@@ -47,14 +47,18 @@ export default class IgniteListOfRegisteredUsersCtrl {
 
         $ctrl.uiGridGroupingConstants = uiGridGroupingConstants;
 
-        const becomeUser = (user) => {
+        const becomeUser = () => {
+            const user = this.gridApi.selection.getSelectedRows()[0];
+
             AdminData.becomeUser(user._id)
                 .then(() => User.load())
                 .then(() => $state.go('base.configuration.clusters'))
                 .then(() => NotebookData.load());
         };
 
-        const removeUser = (user) => {
+        const removeUser = () => {
+            const user = this.gridApi.selection.getSelectedRows()[0];
+
             Confirm.confirm(`Are you sure you want to remove user: "${user.userName}"?`)
                 .then(() => AdminData.removeUser(user))
                 .then(() => {
@@ -66,7 +70,9 @@ export default class IgniteListOfRegisteredUsersCtrl {
                 .then(() => $ctrl.adjustHeight($ctrl.gridOptions.data.length));
         };
 
-        const toggleAdmin = (user) => {
+        const toggleAdmin = () => {
+            const user = this.gridApi.selection.getSelectedRows()[0];
+
             if (user.adminChanging)
                 return;
 
@@ -77,7 +83,9 @@ export default class IgniteListOfRegisteredUsersCtrl {
                 .finally(() => user.adminChanging = false);
         };
 
-        const showActivities = (user) => {
+        const showActivities = () => {
+            const user = this.gridApi.selection.getSelectedRows()[0];
+
             return new ActivitiesUserDialog({ user });
         };
 
@@ -94,11 +102,31 @@ export default class IgniteListOfRegisteredUsersCtrl {
         };
 
         $ctrl.actionOptions = [
-            { action: 'Become this user', click: true },
-            { action: 'Revoke admin', click: true },
-            { action: 'Grant admin', click: true }
-            // { action: 'Remove user', click: true },
-            // { action: 'Activity detail', click: true }
+            {
+                action: 'Become this user',
+                click: becomeUser.bind(this),
+                cond: true
+            },
+            {
+                action: 'Revoke admin',
+                click: toggleAdmin.bind(this),
+                cond: true
+            },
+            {
+                action: 'Grant admin',
+                click: toggleAdmin.bind(this),
+                cond: false
+            },
+            {
+                action: 'Remove user',
+                click: removeUser.bind(this),
+                cond: true
+            },
+            {
+                action: 'Activity detail',
+                click: showActivities.bind(this),
+                cond: true
+            }
         ];
 
         $ctrl._userGridOptions = {
@@ -118,12 +146,13 @@ export default class IgniteListOfRegisteredUsersCtrl {
             rowHeight: 46,
             selectWithCheckboxOnly: true,
             selectionRowHeaderWidth: 52,
+            suppressRemoveSort: false,
             enableFiltering: true,
             enableSelectAll: true,
             enableRowSelection: true,
             enableFullRowSelection: true,
             enableColumnMenus: false,
-            multiSelect: true,
+            multiSelect: false,
             modifierKeysToMultiSelect: true,
             noUnselect: false,
             fastWatch: true,
@@ -134,11 +163,6 @@ export default class IgniteListOfRegisteredUsersCtrl {
 
                 api.selection.on.rowSelectionChanged($scope, $ctrl._updateSelected.bind($ctrl));
                 api.selection.on.rowSelectionChangedBatch($scope, $ctrl._updateSelected.bind($ctrl));
-
-                api.becomeUser = becomeUser;
-                api.removeUser = removeUser;
-                api.toggleAdmin = toggleAdmin;
-                api.showActivities = showActivities;
 
                 api.grid.registerRowsProcessor(companiesExcludeFilter, 50);
             }
@@ -180,7 +204,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
     }
 
     adjustHeight(rows) {
-        const height = Math.min(rows, 20) * 48 + 75;
+        const height = Math.min(rows, 20) * 48 + 77;
 
         // Remove header height.
         this.gridApi.grid.element.css('height', height + 'px');
@@ -190,6 +214,12 @@ export default class IgniteListOfRegisteredUsersCtrl {
 
     _updateSelected() {
         const ids = this.gridApi.selection.getSelectedRows().map(({ _id }) => _id).sort();
+
+        if (ids.length) {
+            const user = this.gridApi.selection.getSelectedRows()[0];
+            this.actionOptions[1].cond = user.admin;
+            this.actionOptions[2].cond = !user.admin;
+        }
 
         if (!_.isEqual(ids, this.selected))
             this.selected = ids;
@@ -204,6 +234,10 @@ export default class IgniteListOfRegisteredUsersCtrl {
                     col.visible = visible;
             });
         });
+
+        // Check to all selected columns.
+        this.gridOptions.selectedAll = true;
+        _.each(this._selectableColumns(), ({ visible }) => this.gridOptions.selectedAll = visible);
 
         // Workaround for this.gridApi.grid.refresh() didn't return promise.
         this.gridApi.grid.processColumnsProcessors(this.gridApi.grid.columns)
@@ -245,7 +279,6 @@ export default class IgniteListOfRegisteredUsersCtrl {
         this.groupBy = 'user';
 
         this.gridApi.grouping.clearGrouping();
-
         this.gridOptions.categories = this._userGridOptions.categories;
         this.gridOptions.columnDefs = this._userGridOptions.columnDefs;
     }
@@ -254,6 +287,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
         this.groupBy = 'company';
 
         this.gridApi.grouping.clearGrouping();
+
         this.gridApi.grouping.groupColumn('company');
         this.gridApi.grouping.aggregateColumn('user', this.uiGridGroupingConstants.aggregation.COUNT);
 
@@ -267,17 +301,18 @@ export default class IgniteListOfRegisteredUsersCtrl {
         const _categories = _.cloneDeep(categories);
         const _columnDefs = _.cloneDeep(columnDefs);
 
-        // Cut company category;
+        // Cut company category.
         const company = _categories.splice(3, 1)[0];
+        company.selectable = false;
 
-        // Hide Actions category;
+        // Hide Actions category.
         _categories.splice(0, 1);
 
         _.forEach(_.filter(_columnDefs, {displayName: 'Actions'}), (col) => {
             col.visible = false;
         });
 
-        // Add company as first column;
+        // Add company as first column.
         _categories.unshift(company);
 
         _.forEach(_columnDefs, (col) => {
@@ -290,7 +325,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
             col.customTreeAggregationFinalizerFn = (agg) => agg.rendered = agg.value;
         });
 
-        // Set grouping to last activity column
+        // Set grouping to last activity column.
         const lastactivity = _.find(_columnDefs, { name: 'lastactivity' });
 
         if (_.nonNil(lastactivity)) {
@@ -321,17 +356,18 @@ export default class IgniteListOfRegisteredUsersCtrl {
         const _categories = _.cloneDeep(categories);
         const _columnDefs = _.cloneDeep(columnDefs);
 
-        // Cut country category;
+        // Cut country category.
         const country = _categories.splice(4, 1)[0];
+        country.selectable = false;
 
-        // Hide Actions category;
+        // Hide Actions category.
         _categories.splice(0, 1);
 
         _.forEach(_.filter(_columnDefs, {displayName: 'Actions'}), (col) => {
             col.visible = false;
         });
 
-        // Add company as first column;
+        // Add company as first column.
         _categories.unshift(country);
 
         _.forEach(_columnDefs, (col) => {
@@ -344,7 +380,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
             col.customTreeAggregationFinalizerFn = (agg) => agg.rendered = agg.value;
         });
 
-        // Set grouping to last activity column
+        // Set grouping to last activity column.
         const lastactivity = _.find(_columnDefs, { name: 'lastactivity' });
 
         if (_.nonNil(lastactivity)) {

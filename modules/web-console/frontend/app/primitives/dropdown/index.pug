@@ -38,6 +38,6 @@ mixin ignite-form-field-bsdropdown(label, model, name, disabled, required, optio
                 span.caret
 
         ul.dropdown-menu(role='menu')
-            li(ng-repeat=`item in ${options}`)
-                a(ng-click='') {{ item.action }}
+            li(ng-repeat=`item in ${options}` ng-if='item.cond')
+                a(ng-click='item.click()') {{ item.action }}
 

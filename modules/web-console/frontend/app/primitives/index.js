@@ -16,6 +16,8 @@
  */
 
 import './badge/index.scss';
+import './btn/index.scss';
+import './datepicker/index.scss';
 import './tabs/index.scss';
 import './panel/index.scss';
 import './dropdown/index.scss';
