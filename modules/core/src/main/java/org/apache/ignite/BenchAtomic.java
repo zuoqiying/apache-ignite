@@ -17,6 +17,7 @@
 
 package org.apache.ignite;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -33,6 +34,8 @@ import org.apache.ignite.internal.NodeStoppingException;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.transactions.Transaction;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
@@ -207,11 +210,24 @@ public class BenchAtomic {
         if (prop != null)
             memCfg.setPageCacheSize(Long.parseLong(prop));
 
+        TcpDiscoverySpi discoSpi = new TcpDiscoverySpi();
+
+        prop = System.getProperty("JOIN_IP");
+
+        if (prop != null) {
+            TcpDiscoveryVmIpFinder ipFinder = new TcpDiscoveryVmIpFinder();
+
+            ipFinder.setAddresses(Arrays.asList(prop));
+
+            discoSpi.setIpFinder(ipFinder);
+        }
+
         return new IgniteConfiguration()
             .setMemoryConfiguration(memCfg)
             .setGridName(name)
             .setClientMode(client)
             .setCommunicationSpi(commSpi)
+            .setDiscoverySpi(discoSpi)
             .setFailureDetectionTimeout(600_000);
     }
 }
