@@ -168,8 +168,11 @@ export default class IgniteListOfRegisteredUsersCtrl {
 
                 api.core.on.filterChanged($scope, $ctrl._filteredRows.bind($ctrl));
                 api.core.on.rowsVisibleChanged($scope, $ctrl._filteredRows.bind($ctrl));
-                    
+
                 api.grid.registerRowsProcessor(companiesExcludeFilter, 50);
+
+                $scope.$watch(() => $ctrl.gridApi.grid.getVisibleRows().length, (rows) => $ctrl.adjustHeight(rows));
+                $scope.$watch(() => $ctrl.params.companiesExclude, () => $ctrl.gridApi.grid.refreshRows());
             }
         };
 
@@ -189,7 +192,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
                 });
         };
 
-        const fitlerDates = (sdt, edt) => {
+        const filterDates = (sdt, edt) => {
             $ctrl.gridOptions.exporterCsvFilename = `web_console_users_${dtFilter(sdt, 'yyyy_MM')}.csv`;
 
             const startDate = Date.UTC(sdt.getFullYear(), sdt.getMonth(), 1);
@@ -198,20 +201,14 @@ export default class IgniteListOfRegisteredUsersCtrl {
             reloadUsers({ startDate, endDate });
         };
 
-        $scope.$watch(() => $ctrl.params.companiesExclude, () => {
-            $ctrl.gridApi.grid.refreshRows();
-        });
-
-        $scope.$watch(() => $ctrl.params.startDate, (sdt) => fitlerDates(sdt, $ctrl.params.endDate));
-        $scope.$watch(() => $ctrl.params.endDate, (edt) => fitlerDates($ctrl.params.startDate, edt));
-
-        $scope.$watch(() => $ctrl.gridApi.grid.getVisibleRows().length, (length) => $ctrl.adjustHeight(length >= 20 ? 20 : length));
+        $scope.$watch(() => $ctrl.params.startDate, (sdt) => filterDates(sdt, $ctrl.params.endDate));
+        $scope.$watch(() => $ctrl.params.endDate, (edt) => filterDates($ctrl.params.startDate, edt));
     }
 
     adjustHeight(rows) {
+        // Add header height.
         const height = Math.min(rows, 20) * 48 + 78;
 
-        // Remove header height.
         this.gridApi.grid.element.css('height', height + 'px');
 
         this.gridApi.core.handleWindowResize();
@@ -254,7 +251,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
 
         // Check to all selected columns.
         this.gridOptions.selectedAll = true;
-        _.each(this._selectableColumns(), ({ visible }) => this.gridOptions.selectedAll = visible);
+        _.forEach(this._selectableColumns(), ({ visible }) => this.gridOptions.selectedAll = visible);
 
         // Workaround for this.gridApi.grid.refresh() didn't return promise.
         this.gridApi.grid.processColumnsProcessors(this.gridApi.grid.columns)
