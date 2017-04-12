@@ -980,7 +980,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
     /** {@inheritDoc} */
     @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-    @Nullable @Override public GridDhtPartitionMap2 update(
+    @Nullable @Override public boolean update(
         @Nullable GridDhtPartitionsExchangeFuture exchFut,
         GridDhtPartitionFullMap partMap,
         @Nullable Map<Integer, T2<Long, Long>> cntrMap,
@@ -997,7 +997,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
         try {
             if (stopping)
-                return null;
+                return false;
 
             if (cntrMap != null) {
                 // update local map partition counters
@@ -1028,7 +1028,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                     log.debug("Stale exchange id for full partition map update (will ignore) [lastExchId=" +
                         lastExchangeId + ", exchId=" + exchId + ']');
 
-                return null;
+                return false;
             }
 
             if (node2part != null && node2part.compareTo(partMap) >= 0) {
@@ -1036,7 +1036,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                     log.debug("Stale partition map for full partition map update (will ignore) [lastExchId=" +
                         lastExchangeId + ", exchId=" + exchId + ", curMap=" + node2part + ", newMap=" + partMap + ']');
 
-                return null;
+                return false;
             }
 
             if (exchId != null)
@@ -1185,7 +1185,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             if (changed)
                 cctx.shared().exchange().scheduleResendPartitions();
 
-            return changed ? localPartitionMap() : null;
+            return changed;
         }
         finally {
             lock.writeLock().unlock();
@@ -1194,7 +1194,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
     /** {@inheritDoc} */
     @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-    @Nullable @Override public GridDhtPartitionMap2 update(
+    @Nullable @Override public boolean update(
         @Nullable GridDhtPartitionExchangeId exchId,
         GridDhtPartitionMap2 parts,
         @Nullable Map<Integer, T2<Long, Long>> cntrMap
@@ -1207,14 +1207,16 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 log.debug("Received partition update for non-existing node (will ignore) [exchId=" + exchId +
                     ", parts=" + parts + ']');
 
-            return null;
+            return false;
         }
+
+        boolean changed = false;
 
         lock.writeLock().lock();
 
         try {
             if (stopping)
-                return null;
+                return false;
 
             if (cntrMap != null) {
                 for (Map.Entry<Integer, T2<Long, Long>> e : cntrMap.entrySet()) {
@@ -1242,7 +1244,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                     log.debug("Stale exchange id for single partition map update (will ignore) [lastExchId=" +
                         lastExchangeId + ", exchId=" + exchId + ']');
 
-                return null;
+                return false;
             }
 
             if (exchId != null)
@@ -1259,14 +1261,12 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                     log.debug("Stale update sequence for single partition map update (will ignore) [exchId=" + exchId +
                         ", curSeq=" + cur.updateSequence() + ", newSeq=" + parts.updateSequence() + ']');
 
-                return null;
+                return false;
             }
 
             long updateSeq = this.updateSeq.incrementAndGet();
 
             node2part = new GridDhtPartitionFullMap(node2part, updateSeq);
-
-            boolean changed = false;
 
             if (cur == null || !cur.equals(parts))
                 changed = true;
@@ -1311,15 +1311,15 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             if (log.isDebugEnabled())
                 log.debug("Partition map after single update: " + fullMapString());
-
-            if (changed)
-                cctx.shared().exchange().scheduleResendPartitions();
-
-            return changed ? localPartitionMap() : null;
         }
         finally {
             lock.writeLock().unlock();
         }
+
+        if (changed)
+            cctx.shared().exchange().scheduleResendPartitions();
+
+        return changed;
     }
 
     /** {@inheritDoc} */
