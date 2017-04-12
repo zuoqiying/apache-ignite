@@ -1338,7 +1338,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         cctx.database().releaseHistoryForExchange();
 
         if (super.onDone(res, err) && realExchange) {
-            exchLog.info("finidExhcange [topVer=" + topologyVersion() +
+            exchLog.info("exchange finished [topVer=" + topologyVersion() +
                 ", time1=" + duration() +
                 ", time2=" + (U.currentTimeMillis() - initTs) + ']');
 
@@ -1568,7 +1568,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         long start = U.currentTimeMillis();
 
-        exchLog.info("processFullMessage start [topVer=" + topologyVersion() + ']');
+        exchLog.info("processSingleMessage start [topVer=" + topologyVersion() + ']');
 
         synchronized (mux) {
             assert crd != null;
@@ -1594,7 +1594,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         maxTime.setIfGreater(time);
 
-        exchLog.info("processFullMessage end [topVer=" + topologyVersion() + ", time=" + time + ", maxTime=" + maxTime.get() + ']');
+        exchLog.info("processSingleMessage end [topVer=" + topologyVersion() + ", time=" + time + ", maxTime=" + maxTime.get() + ']');
 
         if (allReceived)
             onAllReceived();

@@ -909,6 +909,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
      * @throws IgniteCheckedException If failed.
      */
     public void onServerJoin(final GridDhtPartitionsExchangeFuture fut, boolean crd) throws IgniteCheckedException {
+        exchLog.info("onServerJoin start [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
+
         assert !fut.discoveryEvent().eventNode().isClient();
 
         boolean locJoin = fut.discoveryEvent().eventNode().isLocal();
@@ -924,9 +926,13 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
 
                             CacheHolder cache = cache(fut, cacheDesc);
 
+                            exchLog.info("onServerJoin calc aff start [topVer=" + fut.topologyVersion() + ", cache=" + cache.name() + ']');
+
                             List<List<ClusterNode>> newAff = cache.affinity().calculate(topVer, fut.discoveryEvent(), fut.discoCache());
 
                             cache.affinity().initialize(topVer, newAff);
+
+                            exchLog.info("onServerJoin calc aff end [topVer=" + fut.topologyVersion() + ", cache=" + cache.name() + ']');
                         }
                     });
                 }
@@ -953,6 +959,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                 }
             }
         }
+
+        exchLog.info("onServerJoin end [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
     }
 
     /**
@@ -979,6 +987,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
      * @throws IgniteCheckedException If failed.
      */
     private void fetchAffinityOnJoin(GridDhtPartitionsExchangeFuture fut) throws IgniteCheckedException {
+        exchLog.info("fetchAffinityOnJoin start [topVer=" + fut.topologyVersion() + ']');
+
         AffinityTopologyVersion topVer = fut.topologyVersion();
 
         List<GridDhtAssignmentFetchFuture> fetchFuts = new ArrayList<>();
@@ -1014,6 +1024,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
 
             fetchAffinity(fut, cctx.cacheContext(cacheId).affinity().affinityCache(), fetchFut);
         }
+
+        exchLog.info("fetchAffinityOnJoin end [topVer=" + fut.topologyVersion() + ']');
     }
 
     /**
@@ -1064,6 +1076,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
      * @return {@code True} if affinity should be assigned by coordinator.
      */
     public boolean onServerLeft(final GridDhtPartitionsExchangeFuture fut) throws IgniteCheckedException {
+        exchLog.info("onServerLeft start [topVer=" + fut.topologyVersion() + ']');
+
         ClusterNode leftNode = fut.discoveryEvent().eventNode();
 
         assert !leftNode.isClient() : leftNode;
@@ -1075,7 +1089,11 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                 if (cacheCtx.isLocal())
                     continue;
 
+                exchLog.info("onServerLeft calc aff start [topVer=" + fut.topologyVersion() + ", cache=" + cacheCtx.name() + ']');
+
                 cacheCtx.affinity().affinityCache().calculate(fut.topologyVersion(), fut.discoveryEvent(), fut.discoCache());
+
+                exchLog.info("onServerLeft calc aff end [topVer=" + fut.topologyVersion() + ", cache=" + cacheCtx.name() + ']');
             }
 
             centralizedAff = true;
@@ -1091,6 +1109,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
 
             this.waitInfo = null;
         }
+
+        exchLog.info("onServerLeft end [topVer=" + fut.topologyVersion() + ']');
 
         return centralizedAff;
     }
@@ -1261,6 +1281,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
         final Map<Object, List<List<ClusterNode>>> affCache = new HashMap<>();
 
         if (!crd) {
+            exchLog.info("initAffinityOnNodeJoin start [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
+
             for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
                 if (cacheCtx.isLocal())
                     continue;
@@ -1270,9 +1292,13 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                 initAffinityOnNodeJoin(fut, cacheCtx.affinity().affinityCache(), null, latePrimary, affCache);
             }
 
+            exchLog.info("initAffinityOnNodeJoin end [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
+
             return null;
         }
         else {
+            exchLog.info("initAffinityOnNodeJoin start [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
+
             final WaitRebalanceInfo waitRebalanceInfo = new WaitRebalanceInfo(topVer);
 
             forAllRegisteredCaches(new IgniteInClosureX<DynamicCacheDescriptor>() {
@@ -1284,6 +1310,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                     initAffinityOnNodeJoin(fut, cache.affinity(), waitRebalanceInfo, latePrimary, affCache);
                 }
             });
+
+            exchLog.info("initAffinityOnNodeJoin end [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
 
             return waitRebalanceInfo;
         }
@@ -1303,6 +1331,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
         boolean latePrimary,
         Map<Object, List<List<ClusterNode>>> affCache)
         throws IgniteCheckedException {
+        exchLog.info("initAffinityOnNodeJoin start [topVer=" + fut.topologyVersion() + ", cache=" + aff.cacheName() + ']');
+
         assert lateAffAssign;
 
         AffinityTopologyVersion topVer = fut.topologyVersion();
@@ -1348,6 +1378,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
             newAssignment = idealAssignment;
 
         aff.initialize(fut.topologyVersion(), cachedAssignment(aff, newAssignment, affCache));
+
+        exchLog.info("initAffinityOnNodeJoin end [topVer=" + fut.topologyVersion() + ", cache=" + aff.cacheName() + ']');
     }
 
     /**
@@ -1443,6 +1475,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
      */
     private Map<Integer, Map<Integer, List<UUID>>> initAffinityOnNodeLeft0(final GridDhtPartitionsExchangeFuture fut)
         throws IgniteCheckedException {
+        exchLog.info("initAffinityOnNodeLeft start [topVer=" + fut.topologyVersion() + ']');
+
         final AffinityTopologyVersion topVer = fut.topologyVersion();
 
         final WaitRebalanceInfo waitRebalanceInfo = new WaitRebalanceInfo(topVer);
@@ -1560,6 +1594,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                     ", waitCaches=" + (info != null ? cacheNames(info.waitCaches.keySet()) : null) + ']');
             }
         }
+
+        exchLog.info("initAffinityOnNodeLeft end [topVer=" + fut.topologyVersion() + ']');
 
         return assignment;
     }
