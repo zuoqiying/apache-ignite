@@ -545,7 +545,11 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             skipPreload = cctx.kernalContext().clientNode();
 
-            exchLog.info("Start exchange init [topVer=" + topVer + ", crd=" + crdNode + ']');
+            exchLog.info("Start exchange init [topVer=" + topVer +
+                ", crd=" + crdNode +
+                ", evt=" + discoEvt.type() +
+                ", customEvt=" + (discoEvt.type() == EVT_DISCOVERY_CUSTOM_EVT ? ((DiscoveryCustomEvent)discoEvt).customMessage() : null) +
+                ']');
 
             ExchangeType exchange;
 
