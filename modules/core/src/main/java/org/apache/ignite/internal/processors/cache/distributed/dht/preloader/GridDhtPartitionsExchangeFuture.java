@@ -1572,7 +1572,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         long start = U.currentTimeMillis();
 
-        exchLog.info("processSingleMessage start [topVer=" + topologyVersion() + ']');
+        exchLog.info("processSingleMessage start [topVer=" + topologyVersion() +
+            ", fromId=" + node.id() +
+            ", fromOrder=" + node.order() +
+            ']');
 
         synchronized (mux) {
             assert crd != null;
@@ -1598,7 +1601,11 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         maxTime.setIfGreater(time);
 
-        exchLog.info("processSingleMessage end [topVer=" + topologyVersion() + ", time=" + time + ", maxTime=" + maxTime.get() + ']');
+        exchLog.info("processSingleMessage end [topVer=" + topologyVersion() +
+            ", fromId=" + node.id() +
+            ", fromOrder=" + node.order() +
+            ", time=" + time +
+            ", maxTime=" + maxTime.get() + ']');
 
         if (allReceived)
             onAllReceived();
