@@ -36,15 +36,20 @@ mixin grid-settings()
         li(role='presentation' ng-class='{ active: $ctrl.groupBy === "user" }') 
             a(ng-click='$ctrl.groupByUser()') 
                 span Users
-                span.badge.badge--blue {{ $ctrl.gridOptions.data.length }}
+                span.badge.badge--blue(ng-hide='$ctrl.groupBy === "user"')
+                    | {{ $ctrl.gridOptions.data.length }}
+                span.badge.badge--blue(ng-show='$ctrl.groupBy === "user"')
+                    | {{ $ctrl.filteredRows.length }}
         li(role='presentation' ng-class='{ active: $ctrl.groupBy === "company" }')
             a(ng-click='$ctrl.groupByCompany()') 
                 span Companies
-                span.badge.badge--blue {{ $ctrl.companies.length }}
+                span.badge.badge--blue
+                    | {{ $ctrl.companies.length }}
         li(role='presentation' ng-class='{ active: $ctrl.groupBy === "country" }')
             a(ng-click='$ctrl.groupByCountry()')
                 span Countries
-                span.badge.badge--blue {{ $ctrl.countries.length }}
+                span.badge.badge--blue
+                    | {{ $ctrl.countries.length }}
 
     .panel--ignite
         .panel-heading.ui-grid-settings
