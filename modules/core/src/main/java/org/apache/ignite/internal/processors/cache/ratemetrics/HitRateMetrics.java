@@ -26,7 +26,7 @@ import org.apache.ignite.internal.util.typedef.internal.U;
  * Algorithm is based on circular array of {@link #size} hit counters, each is responsible for last corresponding time interval of
  * {@link #rateTimeInterval}/{@link #size} milliseconds. Resulting number of hits is sum of all counters.
  *
- * <p>Implementation is nonblocking and protected from lost hits.
+ * <p>Implementation is nonblocking and protected from hits loss.
  * Maximum relative error is 1/{@link #size}.
  * 2^56 - 1 hits per interval can be accumulated without numeric overflow.
  */
