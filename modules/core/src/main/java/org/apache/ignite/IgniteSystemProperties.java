@@ -553,6 +553,11 @@ public final class IgniteSystemProperties {
     public static final String IGNITE_MAX_INDEX_PAYLOAD_SIZE = "IGNITE_MAX_INDEX_PAYLOAD_SIZE";
 
     /**
+     * Time interval for calculating rebalance rate statistics, in milliseconds. Defaults to 60000.
+     */
+    public static final String IGNITE_REBALANCE_STATISTICS_TIME_INTERVAL = "IGNITE_REBALANCE_STATISTICS_TIME_INTERVAL";
+
+    /**
      * Enforces singleton.
      */
     private IgniteSystemProperties() {

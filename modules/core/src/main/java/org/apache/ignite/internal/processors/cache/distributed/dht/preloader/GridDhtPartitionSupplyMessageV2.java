@@ -74,8 +74,10 @@ public class GridDhtPartitionSupplyMessageV2 extends GridCacheMessage implements
     private Map<Integer, CacheEntryInfoCollection> infos;
 
     /** Message size. */
-    @GridDirectTransient
     private int msgSize;
+
+    /** Estimated keys count. */
+    private long estimatedKeysCnt = -1;
 
     /**
      * @param updateSeq Update sequence for this node.
@@ -90,7 +92,8 @@ public class GridDhtPartitionSupplyMessageV2 extends GridCacheMessage implements
         this.cacheId = cacheId;
         this.updateSeq = updateSeq;
         this.topVer = topVer;
-        this.addDepInfo = addDepInfo;    }
+        this.addDepInfo = addDepInfo;
+    }
 
     /**
      * Empty constructor required for {@link Externalizable}.
@@ -332,6 +335,17 @@ public class GridDhtPartitionSupplyMessageV2 extends GridCacheMessage implements
 
                 writer.incrementState();
 
+            case 9:
+                if (!writer.writeLong("estimatedKeysCnt", estimatedKeysCnt))
+                    return false;
+
+                writer.incrementState();
+
+            case 10:
+                if (!writer.writeInt("msgSize", msgSize))
+                    return false;
+
+                writer.incrementState();
         }
 
         return true;
@@ -396,6 +410,21 @@ public class GridDhtPartitionSupplyMessageV2 extends GridCacheMessage implements
 
                 reader.incrementState();
 
+            case 9:
+                estimatedKeysCnt = reader.readLong("estimatedKeysCnt");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
+
+            case 10:
+                msgSize = reader.readInt("msgSize");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
         }
 
         return reader.afterMessageRead(GridDhtPartitionSupplyMessageV2.class);
@@ -408,7 +437,21 @@ public class GridDhtPartitionSupplyMessageV2 extends GridCacheMessage implements
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 9;
+        return 11;
+    }
+
+    /**
+     * @return Estimated keys count.
+     */
+    public long estimatedKeysCount() {
+        return estimatedKeysCnt;
+    }
+
+    /**
+     * @param estimatedKeysCnt New estimated keys count.
+     */
+    public void estimatedKeysCount(long estimatedKeysCnt) {
+        this.estimatedKeysCnt = estimatedKeysCnt;
     }
 
     /** {@inheritDoc} */
