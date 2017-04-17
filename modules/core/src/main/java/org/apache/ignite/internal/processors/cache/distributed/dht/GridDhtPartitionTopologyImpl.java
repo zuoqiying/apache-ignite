@@ -849,7 +849,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 for (UUID nodeId : nodeIds) {
                     HashSet<UUID> affIds = affAssignment.getIds(p);
 
-                    if (!affIds.contains(nodeId) && hasState(p, nodeId, OWNING, MOVING, RENTING)) {
+                    if (!affIds.contains(nodeId) && hasState(p, nodeId, OWNING, MOVING)) {
                         ClusterNode n = cctx.discovery().node(nodeId);
 
                         if (n != null && (topVer.topologyVersion() < 0 || n.order() <= topVer.topologyVersion())) {
@@ -1081,7 +1081,12 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             Map<Integer, Set<UUID>> p2n = new HashMap<>(cctx.affinity().partitions(), 1.0f);
 
             for (Map.Entry<UUID, GridDhtPartitionMap2> e : partMap.entrySet()) {
-                for (Integer p : e.getValue().keySet()) {
+                for (Map.Entry<Integer, GridDhtPartitionState> e0 : e.getValue().entrySet()) {
+                    if (e0.getValue() != MOVING && e0.getValue() != OWNING)
+                        continue;
+
+                    int p = e0.getKey();
+
                     Set<UUID> ids = p2n.get(p);
 
                     if (ids == null)
@@ -1280,7 +1285,12 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             part2node = new HashMap<>(part2node);
 
             // Add new mappings.
-            for (Integer p : parts.keySet()) {
+            for (Map.Entry<Integer, GridDhtPartitionState> e : parts.entrySet()) {
+                if (e.getValue() != MOVING && e.getValue() != OWNING)
+                    continue;
+
+                int p = e.getKey();
+
                 Set<UUID> ids = part2node.get(p);
 
                 if (ids == null)
