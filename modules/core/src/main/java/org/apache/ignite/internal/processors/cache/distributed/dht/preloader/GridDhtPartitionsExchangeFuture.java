@@ -1655,6 +1655,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
         Set<Integer> haveHistory = new HashSet<>();
 
+        int partHistSuppliersSize = 0;
+
         for (Map.Entry<Integer, Long> e : minCntrs.entrySet()) {
             int p = e.getKey();
             long minCntr = e.getValue();
@@ -1674,6 +1676,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                     maxCntrObj.nodes.contains(cctx.localNodeId())) {
                     partHistSuppliers.put(cctx.localNodeId(), top.cacheId(), p, minCntr);
 
+                    partHistSuppliersSize++;
+
                     haveHistory.add(p);
 
                     continue;
@@ -1686,12 +1690,16 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                 if (histCntr != null && histCntr <= minCntr && maxCntrObj.nodes.contains(e0.getKey())) {
                     partHistSuppliers.put(e0.getKey(), top.cacheId(), p, minCntr);
 
+                    partHistSuppliersSize++;
+
                     haveHistory.add(p);
 
                     break;
                 }
             }
         }
+
+        int partsToReloadSize = 0;
 
         for (Map.Entry<Integer, CounterWithNodes> e : maxCntrs.entrySet()) {
             int p = e.getKey();
@@ -1704,9 +1712,14 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             Set<UUID> nodesToReload = top.setOwners(p, e.getValue().nodes, haveHistory.contains(p), entryLeft == 0);
 
-            for (UUID nodeId : nodesToReload)
+            for (UUID nodeId : nodesToReload) {
                 partsToReload.put(nodeId, top.cacheId(), p);
+                partsToReloadSize++;
+            }
         }
+
+        U.error(log, "??? assign partition states finished [exchId=" + exchId + "partHistSuppliersSize=" +
+            partHistSuppliersSize + ",partsToReloadSize=" + partsToReloadSize);
     }
 
     /**
