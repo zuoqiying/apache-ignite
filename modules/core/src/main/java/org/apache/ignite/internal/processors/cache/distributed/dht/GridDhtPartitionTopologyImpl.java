@@ -1288,18 +1288,15 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
                 Set<UUID> ids = part2node.get(p);
 
-                if (e.getValue() != MOVING && e.getValue() != OWNING) {
-                    if (ids != null)
-                        changed |= ids.remove(parts.nodeId());
-                }
-                else {
-                    if (ids == null)
-                        // Initialize HashSet to size 3 in anticipation that there won't be
-                        // more than 3 nodes per partition.
-                        part2node.put(p, ids = U.newHashSet(3));
+                if (e.getValue() != MOVING && e.getValue() != OWNING)
+                    continue;
 
-                    changed |= ids.add(parts.nodeId());
-                }
+                if (ids == null)
+                    // Initialize HashSet to size 3 in anticipation that there won't be
+                    // more than 3 nodes per partition.
+                    part2node.put(p, ids = U.newHashSet(3));
+
+                changed |= ids.add(parts.nodeId());
             }
 
             // Remove obsolete mappings.
