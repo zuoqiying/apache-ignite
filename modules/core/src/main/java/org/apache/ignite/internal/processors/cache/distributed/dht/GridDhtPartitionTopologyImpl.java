@@ -1282,23 +1282,24 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             node2part.put(parts.nodeId(), parts);
 
-            part2node = new HashMap<>(part2node);
-
             // Add new mappings.
             for (Map.Entry<Integer, GridDhtPartitionState> e : parts.entrySet()) {
-                if (e.getValue() != MOVING && e.getValue() != OWNING)
-                    continue;
-
                 int p = e.getKey();
 
                 Set<UUID> ids = part2node.get(p);
 
-                if (ids == null)
-                    // Initialize HashSet to size 3 in anticipation that there won't be
-                    // more than 3 nodes per partition.
-                    part2node.put(p, ids = U.newHashSet(3));
+                if (e.getValue() != MOVING && e.getValue() != OWNING) {
+                    if (ids != null)
+                        changed |= ids.remove(parts.nodeId());
+                }
+                else {
+                    if (ids == null)
+                        // Initialize HashSet to size 3 in anticipation that there won't be
+                        // more than 3 nodes per partition.
+                        part2node.put(p, ids = U.newHashSet(3));
 
-                changed |= ids.add(parts.nodeId());
+                    changed |= ids.add(parts.nodeId());
+                }
             }
 
             // Remove obsolete mappings.
