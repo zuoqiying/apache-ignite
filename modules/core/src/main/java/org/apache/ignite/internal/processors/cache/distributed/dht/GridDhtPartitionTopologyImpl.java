@@ -1183,7 +1183,8 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 log.debug("Partition map after full update: " + fullMapString());
 
             U.error(log, "??? full partition map update finished [exchId=" + exchId + ",cacheId=" + cacheId() +
-                ",cntrMap.size=" + cntrMap.size() + ",part2node.size=" + part2node.size() + ",node2part.size=" + node2part.size());
+                ",cntrMap.size=" + (cntrMap != null ? cntrMap.size() : null) + ",part2node.size=" +
+                (part2node != null ? part2node.size() : null) + ",node2part.size=" + (node2part != null ? node2part.size() : null) + "]");
 
             if (changed)
                 cctx.shared().exchange().scheduleResendPartitions();
@@ -1316,7 +1317,8 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                 log.debug("Partition map after single update: " + fullMapString());
 
             U.error(log, "??? single partition map update finished [exchId=" + exchId + ",cacheId=" + cacheId() +
-                ",cntrMap.size=" + cntrMap.size() + ",part2node.size=" + part2node.size() + ",node2part.size=" + node2part.size());
+                ",cntrMap.size=" + (cntrMap != null ? cntrMap.size() : null) + ",part2node.size=" +
+                (part2node != null ? part2node.size() : null) + ",node2part.size=" + (node2part != null ? node2part.size() : null) + "]");
         }
         finally {
             lock.writeLock().unlock();

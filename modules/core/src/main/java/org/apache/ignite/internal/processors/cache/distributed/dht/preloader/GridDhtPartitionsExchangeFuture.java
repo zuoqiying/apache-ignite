@@ -1773,7 +1773,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         }
 
         U.error(log, "??? assign partition states finished [exchId=" + exchId + "partHistSuppliersSize=" +
-            partHistSuppliersSize + ",partsToReloadSize=" + partsToReloadSize);
+            partHistSuppliersSize + ",partsToReloadSize=" + partsToReloadSize + "]");
     }
 
     /**
