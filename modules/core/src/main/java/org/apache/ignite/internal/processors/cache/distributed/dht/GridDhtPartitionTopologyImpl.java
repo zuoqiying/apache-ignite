@@ -94,6 +94,9 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
     private Map<Integer, Set<UUID>> part2node = new HashMap<>();
 
     /** */
+    private Map<Integer, Set<UUID>> diffFromAffinity = new HashMap<>();
+
+    /** */
     private GridDhtPartitionExchangeId lastExchangeId;
 
     /** */
@@ -835,6 +838,8 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         lock.readLock().lock();
 
         try {
+            assert discoCache != null;
+
             assert node2part != null && node2part.valid() : "Invalid node-to-partitions map [topVer1=" + topVer +
                 ", topVer2=" + this.topVer +
                 ", node=" + cctx.gridName() +
@@ -843,12 +848,12 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             List<ClusterNode> nodes = null;
 
-            Collection<UUID> nodeIds = part2node.get(p);
+            HashSet<UUID> affIds = affAssignment.getIds(p);
 
-            if (!F.isEmpty(nodeIds)) {
-                for (UUID nodeId : nodeIds) {
-                    HashSet<UUID> affIds = affAssignment.getIds(p);
+            Set<UUID> diffIds = diffFromAffinity.isEmpty() ? null : diffFromAffinity.get(p);
 
+            if (!F.isEmpty(diffIds)) {
+                for (UUID nodeId : diffIds) {
                     if (!affIds.contains(nodeId) && hasState(p, nodeId, OWNING, MOVING)) {
                         ClusterNode n = cctx.discovery().node(nodeId);
 
@@ -883,30 +888,24 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         AffinityTopologyVersion topVer,
         GridDhtPartitionState state,
         GridDhtPartitionState... states) {
-        Collection<UUID> allIds = topVer.topologyVersion() > 0 ? F.nodeIds(discoCache.cacheAffinityNodes(cctx.cacheId())) : null;
-
         lock.readLock().lock();
 
         try {
+            assert discoCache != null;
+
+            Collection<UUID> allIds = F.nodeIds(discoCache.cacheAffinityNodes(cctx.cacheId()));
+
             assert node2part != null && node2part.valid() : "Invalid node-to-partitions map [topVer=" + topVer +
                 ", allIds=" + allIds +
                 ", node2part=" + node2part +
                 ", cache=" + cctx.name() + ']';
 
-            Collection<UUID> nodeIds = part2node.get(p);
-
-            // Node IDs can be null if both, primary and backup, nodes disappear.
-            int size = nodeIds == null ? 0 : nodeIds.size();
-
-            if (size == 0)
+            if (allIds.isEmpty())
                 return Collections.emptyList();
 
-            List<ClusterNode> nodes = new ArrayList<>(size);
+            List<ClusterNode> nodes = new ArrayList<>(allIds.size());
 
-            for (UUID id : nodeIds) {
-                if (topVer.topologyVersion() > 0 && !F.contains(allIds, id))
-                    continue;
-
+            for (UUID id : allIds) {
                 if (hasState(p, id, state, states)) {
                     ClusterNode n = cctx.discovery().node(id);
 
@@ -1078,7 +1077,13 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             node2part = partMap;
 
+            diffFromAffinity.clear();
+
             Map<Integer, Set<UUID>> p2n = new HashMap<>(cctx.affinity().partitions(), 1.0f);
+
+            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
+
+            AffinityAssignment affAssignment = cctx.affinity().assignment(affVer);
 
             for (Map.Entry<UUID, GridDhtPartitionMap2> e : partMap.entrySet()) {
                 for (Map.Entry<Integer, GridDhtPartitionState> e0 : e.getValue().entrySet()) {
@@ -1086,6 +1091,15 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                         continue;
 
                     int p = e0.getKey();
+
+                    if (!affAssignment.getIds(p).contains(partMap.nodeId())) {
+                        Set<UUID> diffIds = diffFromAffinity.get(p);
+
+                        if (diffIds == null)
+                            diffFromAffinity.put(p, diffIds = U.newHashSet(3));
+
+                        diffIds.add(partMap.nodeId());
+                    }
 
                     Set<UUID> ids = p2n.get(p);
 
@@ -1101,8 +1115,6 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             part2node = p2n;
 
             boolean changed = false;
-
-            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
 
             GridDhtPartitionMap2 nodeMap = partMap.get(cctx.localNodeId());
 
@@ -1282,21 +1294,39 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             node2part.put(parts.nodeId(), parts);
 
+            diffFromAffinity.clear();
+
+            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
+
+            AffinityAssignment affAssignment = cctx.affinity().assignment(affVer);
+
             // Add new mappings.
             for (Map.Entry<Integer, GridDhtPartitionState> e : parts.entrySet()) {
                 int p = e.getKey();
 
                 Set<UUID> ids = part2node.get(p);
 
-                if (e.getValue() != MOVING && e.getValue() != OWNING)
-                    continue;
+                if (e.getValue() != MOVING && e.getValue() != OWNING) {
+                    if (ids != null)
+                        changed |= ids.remove(parts.nodeId());
+                }
+                else {
+                    if (!affAssignment.getIds(p).contains(parts.nodeId())) {
+                        Set<UUID> diffIds = diffFromAffinity.get(p);
 
-                if (ids == null)
-                    // Initialize HashSet to size 3 in anticipation that there won't be
-                    // more than 3 nodes per partition.
-                    part2node.put(p, ids = U.newHashSet(3));
+                        if (diffIds == null)
+                            diffFromAffinity.put(p, diffIds = U.newHashSet(3));
 
-                changed |= ids.add(parts.nodeId());
+                        changed |= diffIds.add(parts.nodeId());
+                    }
+
+                    if (ids == null)
+                        // Initialize HashSet to size 3 in anticipation that there won't be
+                        // more than 3 nodes per partition.
+                        part2node.put(p, ids = U.newHashSet(3));
+
+                    changed |= ids.add(parts.nodeId());
+                }
             }
 
             // Remove obsolete mappings.
@@ -1308,8 +1338,6 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                         changed |= ids.remove(parts.nodeId());
                 }
             }
-
-            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
 
             if (!affVer.equals(AffinityTopologyVersion.NONE) && affVer.compareTo(topVer) >= 0) {
                 List<List<ClusterNode>> aff = cctx.affinity().assignments(topVer);
