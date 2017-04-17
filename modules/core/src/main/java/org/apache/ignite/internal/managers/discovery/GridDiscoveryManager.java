@@ -88,6 +88,7 @@ import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.G;
 import org.apache.ignite.internal.util.typedef.P1;
 import org.apache.ignite.internal.util.typedef.T2;
+import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
@@ -2238,6 +2239,15 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
             @Nullable DiscoveryCustomMessage data
         ) {
             assert node != null : data;
+
+            if (type == EVT_NODE_SEGMENTED) {
+                try {
+                    throw new Exception();
+                }
+                catch (Exception e) {
+                    U.error(log, "??? EVT_NODE_SEGMENTED event created: " + X.getFullStackTrace(e));
+                }
+            }
 
             evts.add(new GridTuple6<>(type, topVer, node, discoCache, topSnapshot, data));
         }

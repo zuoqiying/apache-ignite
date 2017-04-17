@@ -24,6 +24,10 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteSpring;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cache.CacheRebalanceMode;
+import org.apache.ignite.cache.CacheWriteSynchronizationMode;
+import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.cache.eviction.lru.LruEvictionPolicy;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.ConnectorConfiguration;
@@ -31,9 +35,12 @@ import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.NearCacheConfiguration;
 import org.apache.ignite.configuration.TransactionConfiguration;
+import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsExchangeFuture;
 import org.apache.ignite.internal.util.IgniteUtils;
 import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.logger.log4j.Log4JLogger;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
+import org.apache.log4j.FileAppender;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.context.ApplicationContext;
@@ -88,65 +95,6 @@ public class IgniteNode implements BenchmarkServer {
 
         assert appCtx != null;
 
-        CacheConfiguration[] ccfgs = c.getCacheConfiguration();
-
-        if (ccfgs != null) {
-            for (CacheConfiguration cc : ccfgs) {
-                // IgniteNode can not run in CLIENT_ONLY mode,
-                // except the case when it's used inside IgniteAbstractBenchmark.
-                boolean cl = args.isClientOnly() && (args.isNearCache() || clientMode);
-
-                if (cl)
-                    c.setClientMode(true);
-
-                if (args.isNearCache()) {
-                    NearCacheConfiguration nearCfg = new NearCacheConfiguration();
-
-                    if (args.getNearCacheSize() != 0)
-                        nearCfg.setNearEvictionPolicy(new LruEvictionPolicy(args.getNearCacheSize()));
-
-                    cc.setNearConfiguration(nearCfg);
-                }
-
-                cc.setWriteSynchronizationMode(args.syncMode());
-
-                if (args.orderMode() != null)
-                    cc.setAtomicWriteOrderMode(args.orderMode());
-
-                cc.setBackups(args.backups());
-
-                if (args.restTcpPort() != 0) {
-                    ConnectorConfiguration ccc = new ConnectorConfiguration();
-
-                    ccc.setPort(args.restTcpPort());
-
-                    if (args.restTcpHost() != null)
-                        ccc.setHost(args.restTcpHost());
-
-                    c.setConnectorConfiguration(ccc);
-                }
-
-                if (args.isOffHeap()) {
-                    cc.setOffHeapMaxMemory(0);
-
-                    if (args.isOffheapValues())
-                        cc.setMemoryMode(OFFHEAP_VALUES);
-                    else
-                        cc.setEvictionPolicy(new LruEvictionPolicy(50000));
-                }
-
-                cc.setReadThrough(args.isStoreEnabled());
-
-                cc.setWriteThrough(args.isStoreEnabled());
-
-                cc.setWriteBehindEnabled(args.isWriteBehind());
-
-                BenchmarkUtils.println(cfg, "Cache configured with the following parameters: " + cc);
-            }
-        }
-        else
-            BenchmarkUtils.println(cfg, "There are no caches configured");
-
         TransactionConfiguration tc = c.getTransactionConfiguration();
 
         tc.setDefaultTxConcurrency(args.txConcurrency());
@@ -174,6 +122,21 @@ public class IgniteNode implements BenchmarkServer {
         ignite = IgniteSpring.start(c, appCtx);
 
         BenchmarkUtils.println("Configured marshaller: " + ignite.cluster().localNode().attribute(ATTR_MARSHALLER));
+
+        for (int i = 0; i < args.caches(); i++) {
+            CacheConfiguration cacheCfg = new CacheConfiguration()
+                .setName("dynamic-cache-" + i)
+                .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+                .setBackups(0)
+                .setRebalanceMode(CacheRebalanceMode.SYNC)
+                .setCopyOnRead(false)
+                .setAffinity(new RendezvousAffinityFunction(false, args.parts()))
+                .setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
+
+            ignite.getOrCreateCache(cacheCfg);
+
+            BenchmarkUtils.println("Started cache: " + cacheCfg.getName());
+        }
     }
 
     /**
@@ -181,7 +144,8 @@ public class IgniteNode implements BenchmarkServer {
      * @return Tuple with grid configuration and Spring application context.
      * @throws Exception If failed.
      */
-    private static IgniteBiTuple<IgniteConfiguration, ? extends ApplicationContext> loadConfiguration(String springCfgPath)
+    private static IgniteBiTuple<IgniteConfiguration, ? extends ApplicationContext> loadConfiguration(
+        String springCfgPath)
         throws Exception {
         URL url;
 

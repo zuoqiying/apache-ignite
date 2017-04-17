@@ -17,21 +17,28 @@
 
 package org.apache.ignite;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheRebalanceMode;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.internal.NodeStoppingException;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.transactions.Transaction;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
@@ -55,6 +62,11 @@ public class BenchAtomic {
         final int payLoad = args.length > 2 ? Integer.parseInt(args[2]) : 512;
         final int cachesCnt = args.length > 3 ? Integer.parseInt(args[3]) : 1;
         final int parts = args.length > 4 ? Integer.parseInt(args[4]) : 1024;
+
+        Logger log = Logger.getLogger("org.apache.ignite.internal.exchange.time");
+        ConsoleHandler handler = new ConsoleHandler();
+        log.addHandler(handler);
+        log.setLevel (Level.FINE);
 
         System.out.println("Params [client=" + client +
             ", threads=" + threadCnt + ", payLoad=" + payLoad + ", caches=" + cachesCnt +
@@ -199,9 +211,39 @@ public class BenchAtomic {
             commSpi.setMessageQueueLimit(0);
         }
 
+        MemoryConfiguration memCfg = new MemoryConfiguration();
+
+        String prop = System.getProperty("PAGE_CACHE_SIZE");
+
+        if (prop != null)
+            memCfg.setPageCacheSize(Long.parseLong(prop));
+
+        TcpDiscoverySpi discoSpi = new TcpDiscoverySpi();
+
+        prop = System.getProperty("JOIN_IP");
+
+        if (prop != null) {
+            TcpDiscoveryVmIpFinder ipFinder = new TcpDiscoveryVmIpFinder();
+
+            ipFinder.setAddresses(Arrays.asList(prop));
+
+            discoSpi.setIpFinder(ipFinder);
+        }
+
+        boolean lateAff = true;
+
+        prop = System.getProperty("LATE_AFFINITY");
+
+        if (prop != null)
+            lateAff = Boolean.parseBoolean(prop);
+
         return new IgniteConfiguration()
+            .setLateAffinityAssignment(lateAff)
+            .setMemoryConfiguration(memCfg)
             .setGridName(name)
             .setClientMode(client)
-            .setCommunicationSpi(commSpi);
+            .setCommunicationSpi(commSpi)
+            .setDiscoverySpi(discoSpi)
+            .setFailureDetectionTimeout(600_000);
     }
 }

@@ -179,6 +179,12 @@ public class IgniteBenchmarkArguments {
     @Parameter(names = {"-ps", "--pageSize"}, description = "Page size")
     private int pageSize = MemoryConfiguration.DFLT_PAGE_SIZE;
 
+    @Parameter(names = {"--caches"}, description = "Dynamic caches count")
+    private int caches = 1000;
+
+    @Parameter(names = {"--parts"}, description = "Partition count for dynamic caches")
+    private int parts = 1024;
+
     /**
      * @return List of enabled load test operations.
      */
@@ -427,6 +433,14 @@ public class IgniteBenchmarkArguments {
      */
     public int getPageSize() {
         return pageSize;
+    }
+
+    public int caches() {
+        return caches;
+    }
+
+    public int parts() {
+        return parts;
     }
 
     /**
