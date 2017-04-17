@@ -407,6 +407,9 @@ public class TcpDiscoveryNode extends GridMetadataAwareAdapter implements Cluste
      * @return Addresses that could be used by discovery.
      */
     public Collection<InetSocketAddress> socketAddresses() {
+        if (sockAddrs == null)
+            sockAddrs = U.toSocketAddresses(this, discPort);
+
         return sockAddrs;
     }
 
@@ -600,8 +603,6 @@ public class TcpDiscoveryNode extends GridMetadataAwareAdapter implements Cluste
         addrs = U.readCollection(in);
         hostNames = U.readCollection(in);
         discPort = in.readInt();
-
-        sockAddrs = U.toSocketAddresses(this, discPort);
 
         Object consistentIdAttr = attrs.get(ATTR_NODE_CONSISTENT_ID);
 
