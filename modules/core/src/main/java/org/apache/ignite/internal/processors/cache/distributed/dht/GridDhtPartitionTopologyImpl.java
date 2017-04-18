@@ -90,8 +90,8 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
     /** Node to partition map. */
     private GridDhtPartitionFullMap node2part;
 
-    /** Partition to node map. */
-    private Map<Integer, Set<UUID>> part2node = new HashMap<>();
+    /** */
+    private Map<Integer, Set<UUID>> diffFromAffinity = new HashMap<>();
 
     /** */
     private GridDhtPartitionExchangeId lastExchangeId;
@@ -154,8 +154,6 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
         try {
             node2part = null;
-
-            part2node = new HashMap<>();
 
             lastExchangeId = null;
 
@@ -835,6 +833,8 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         lock.readLock().lock();
 
         try {
+            assert discoCache != null;
+
             assert node2part != null && node2part.valid() : "Invalid node-to-partitions map [topVer1=" + topVer +
                 ", topVer2=" + this.topVer +
                 ", node=" + cctx.gridName() +
@@ -843,12 +843,12 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             List<ClusterNode> nodes = null;
 
-            Collection<UUID> nodeIds = part2node.get(p);
+            HashSet<UUID> affIds = affAssignment.getIds(p);
 
-            if (!F.isEmpty(nodeIds)) {
-                for (UUID nodeId : nodeIds) {
-                    HashSet<UUID> affIds = affAssignment.getIds(p);
+            Set<UUID> diffIds = diffFromAffinity.isEmpty() ? null : diffFromAffinity.get(p);
 
+            if (!F.isEmpty(diffIds)) {
+                for (UUID nodeId : diffIds) {
                     if (!affIds.contains(nodeId) && hasState(p, nodeId, OWNING, MOVING)) {
                         ClusterNode n = cctx.discovery().node(nodeId);
 
@@ -883,30 +883,24 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         AffinityTopologyVersion topVer,
         GridDhtPartitionState state,
         GridDhtPartitionState... states) {
-        Collection<UUID> allIds = topVer.topologyVersion() > 0 ? F.nodeIds(discoCache.cacheAffinityNodes(cctx.cacheId())) : null;
-
         lock.readLock().lock();
 
         try {
+            assert discoCache != null;
+
+            Collection<UUID> allIds = F.nodeIds(discoCache.cacheAffinityNodes(cctx.cacheId()));
+
             assert node2part != null && node2part.valid() : "Invalid node-to-partitions map [topVer=" + topVer +
                 ", allIds=" + allIds +
                 ", node2part=" + node2part +
                 ", cache=" + cctx.name() + ']';
 
-            Collection<UUID> nodeIds = part2node.get(p);
-
-            // Node IDs can be null if both, primary and backup, nodes disappear.
-            int size = nodeIds == null ? 0 : nodeIds.size();
-
-            if (size == 0)
+            if (allIds.isEmpty())
                 return Collections.emptyList();
 
-            List<ClusterNode> nodes = new ArrayList<>(size);
+            List<ClusterNode> nodes = new ArrayList<>(allIds.size());
 
-            for (UUID id : nodeIds) {
-                if (topVer.topologyVersion() > 0 && !F.contains(allIds, id))
-                    continue;
-
+            for (UUID id : allIds) {
                 if (hasState(p, id, state, states)) {
                     ClusterNode n = cctx.discovery().node(id);
 
@@ -1078,7 +1072,13 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             node2part = partMap;
 
-            Map<Integer, Set<UUID>> p2n = new HashMap<>(cctx.affinity().partitions(), 1.0f);
+            diffFromAffinity.clear();
+
+            int diffFromAffinitySize = 0;
+
+            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
+
+            AffinityAssignment affAssignment = cctx.affinity().assignment(affVer);
 
             for (Map.Entry<UUID, GridDhtPartitionMap2> e : partMap.entrySet()) {
                 for (Map.Entry<Integer, GridDhtPartitionState> e0 : e.getValue().entrySet()) {
@@ -1087,22 +1087,22 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
                     int p = e0.getKey();
 
-                    Set<UUID> ids = p2n.get(p);
+                    if (!affAssignment.getIds(p).contains(partMap.nodeId())) {
+                        Set<UUID> diffIds = diffFromAffinity.get(p);
 
-                    if (ids == null)
-                        // Initialize HashSet to size 3 in anticipation that there won't be
-                        // more than 3 nodes per partitions.
-                        p2n.put(p, ids = U.newHashSet(3));
+                        if (diffIds == null)
+                            diffFromAffinity.put(p, diffIds = U.newHashSet(3));
 
-                    ids.add(e.getKey());
+                        if (diffIds.add(partMap.nodeId()))
+                            diffFromAffinitySize++;
+                    }
                 }
             }
 
-            part2node = p2n;
+            if (diffFromAffinitySize > 0)
+                U.error(log, "??? diffFromAffinitySize=" + diffFromAffinitySize + " [exchId=" + exchId + ",cacheId=" + cctx.cacheId() + ",cacheName=" + cctx.name() +  "]");
 
             boolean changed = false;
-
-            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
 
             GridDhtPartitionMap2 nodeMap = partMap.get(cctx.localNodeId());
 
@@ -1186,10 +1186,6 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             if (log.isDebugEnabled())
                 log.debug("Partition map after full update: " + fullMapString());
-
-            U.error(log, "??? full partition map update finished [exchId=" + exchId + ",cacheId=" + cacheId() +
-                ",cntrMap.size=" + (cntrMap != null ? cntrMap.size() : null) + ",part2node.size=" +
-                (part2node != null ? part2node.size() : null) + ",node2part.size=" + (node2part != null ? node2part.size() : null) + "]");
 
             if (changed)
                 cctx.shared().exchange().scheduleResendPartitions();
@@ -1282,34 +1278,36 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             node2part.put(parts.nodeId(), parts);
 
+            diffFromAffinity.clear();
+
+            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
+
+            AffinityAssignment affAssignment = cctx.affinity().assignment(affVer);
+
+            int diffFromAffinitySize = 0;
+
             // Add new mappings.
             for (Map.Entry<Integer, GridDhtPartitionState> e : parts.entrySet()) {
                 int p = e.getKey();
 
-                Set<UUID> ids = part2node.get(p);
+                if (e.getValue() == MOVING || e.getValue() == OWNING) {
+                    if (!affAssignment.getIds(p).contains(parts.nodeId())) {
+                        Set<UUID> diffIds = diffFromAffinity.get(p);
 
-                if (e.getValue() != MOVING && e.getValue() != OWNING)
-                    continue;
+                        if (diffIds == null)
+                            diffFromAffinity.put(p, diffIds = U.newHashSet(3));
 
-                if (ids == null)
-                    // Initialize HashSet to size 3 in anticipation that there won't be
-                    // more than 3 nodes per partition.
-                    part2node.put(p, ids = U.newHashSet(3));
+                        if (diffIds.add(parts.nodeId())) {
+                            changed = true;
 
-                changed |= ids.add(parts.nodeId());
-            }
-
-            // Remove obsolete mappings.
-            if (cur != null) {
-                for (Integer p : F.view(cur.keySet(), F0.notIn(parts.keySet()))) {
-                    Set<UUID> ids = part2node.get(p);
-
-                    if (ids != null)
-                        changed |= ids.remove(parts.nodeId());
+                            diffFromAffinitySize++;
+                        }
+                    }
                 }
             }
 
-            AffinityTopologyVersion affVer = cctx.affinity().affinityTopologyVersion();
+            if (diffFromAffinitySize > 0)
+                U.error(log, "??? diffFromAffinitySize=" + diffFromAffinitySize + " [exchId=" + exchId + ",cacheId=" + cctx.cacheId() + ",cacheName=" + cctx.name() +  "]");
 
             if (!affVer.equals(AffinityTopologyVersion.NONE) && affVer.compareTo(topVer) >= 0) {
                 List<List<ClusterNode>> aff = cctx.affinity().assignments(topVer);
@@ -1323,10 +1321,6 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             if (log.isDebugEnabled())
                 log.debug("Partition map after single update: " + fullMapString());
-
-            U.error(log, "??? single partition map update finished [exchId=" + exchId + ",cacheId=" + cacheId() +
-                ",cntrMap.size=" + (cntrMap != null ? cntrMap.size() : null) + ",part2node.size=" +
-                (part2node != null ? part2node.size() : null) + ",node2part.size=" + (node2part != null ? node2part.size() : null) + "]");
         }
         finally {
             lock.writeLock().unlock();
@@ -1345,38 +1339,21 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         try {
             int parts = cctx.affinity().partitions();
 
-            Collection<Integer> lost = null;
+            Set<Integer> lost = new HashSet<>(parts);
 
-            for (int p = 0; p < parts; p++) {
-                boolean foundOwner = false;
+            for (int p = 0; p < parts; p++)
+                lost.add(p);
 
-                Set<UUID> nodeIds = part2node.get(p);
-
-                if (nodeIds != null) {
-                    for (UUID nodeId : nodeIds) {
-                        GridDhtPartitionMap2 partMap = node2part.get(nodeId);
-
-                        GridDhtPartitionState state = partMap.get(p);
-
-                        if (state == OWNING) {
-                            foundOwner = true;
-
-                            break;
-                        }
-                    }
-                }
-
-                if (!foundOwner) {
-                    if (lost == null)
-                        lost = new HashSet<>(parts - p, 1.0f);
-
-                    lost.add(p);
+            for (GridDhtPartitionMap2 partMap : node2part.values()) {
+                for (Map.Entry<Integer, GridDhtPartitionState> e : partMap.entrySet()) {
+                    if (e.getValue() == OWNING)
+                        lost.remove(e.getKey());
                 }
             }
 
             boolean changed = false;
 
-            if (lost != null) {
+            if (!lost.isEmpty()) {
                 PartitionLossPolicy plc = cctx.config().getPartitionLossPolicy();
 
                 assert plc != null;
@@ -1397,16 +1374,17 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
                     }
                     // Update map for remote node.
                     else if (plc != PartitionLossPolicy.IGNORE) {
-                        Set<UUID> nodeIds = part2node.get(part);
-
-                        if (nodeIds != null) {
-                            for (UUID nodeId : nodeIds) {
-                                GridDhtPartitionMap2 nodeMap = node2part.get(nodeId);
-
-                                if (nodeMap.get(part) != EVICTED)
-                                    nodeMap.put(part, LOST);
-                            }
-                        }
+                        // TODO
+//                        Set<UUID> nodeIds = part2node.get(part);
+//
+//                        if (nodeIds != null) {
+//                            for (UUID nodeId : nodeIds) {
+//                                GridDhtPartitionMap2 nodeMap = node2part.get(nodeId);
+//
+//                                if (nodeMap.get(part) != EVICTED)
+//                                    nodeMap.put(part, LOST);
+//                            }
+//                        }
                     }
 
                     if (cctx.events().isRecordable(EventType.EVT_CACHE_REBALANCE_PART_DATA_LOST))
@@ -1427,86 +1405,86 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
     /** {@inheritDoc} */
     @Override public void resetLostPartitions() {
-        lock.writeLock().lock();
+        if (cctx.config().getPartitionLossPolicy() != PartitionLossPolicy.IGNORE)
+            return;
 
-        try {
-            int parts = cctx.affinity().partitions();
-            long updSeq = updateSeq.incrementAndGet();
+        // TODO
 
-            for (int part = 0; part < parts; part++) {
-                Set<UUID> nodeIds = part2node.get(part);
-
-                if (nodeIds != null) {
-                    boolean lost = false;
-
-                    for (UUID node : nodeIds) {
-                        GridDhtPartitionMap2 map = node2part.get(node);
-
-                        if (map.get(part) == LOST) {
-                            lost = true;
-
-                            break;
-                        }
-                    }
-
-                    if (lost) {
-                        GridDhtLocalPartition locPart = localPartition(part, topVer, false);
-
-                        if (locPart != null) {
-                            boolean marked = locPart.own();
-
-                            if (marked)
-                                updateLocal(locPart.id(), locPart.state(), updSeq);
-                        }
-
-                        for (UUID nodeId : nodeIds) {
-                            GridDhtPartitionMap2 nodeMap = node2part.get(nodeId);
-
-                            if (nodeMap.get(part) == LOST)
-                                nodeMap.put(part, OWNING);
-                        }
-                    }
-                }
-            }
-
-            checkEvictions(updSeq, cctx.affinity().assignments(topVer));
-
-            cctx.needsRecovery(false);
-        }
-        finally {
-            lock.writeLock().unlock();
-        }
+//        lock.writeLock().lock();
+//
+//        try {
+//            int parts = cctx.affinity().partitions();
+//            long updSeq = updateSeq.incrementAndGet();
+//
+//            for (int part = 0; part < parts; part++) {
+//                Set<UUID> nodeIds = part2node.get(part);
+//
+//                if (nodeIds != null) {
+//                    boolean lost = false;
+//
+//                    for (UUID node : nodeIds) {
+//                        GridDhtPartitionMap2 map = node2part.get(node);
+//
+//                        if (map.get(part) == LOST) {
+//                            lost = true;
+//
+//                            break;
+//                        }
+//                    }
+//
+//                    if (lost) {
+//                        GridDhtLocalPartition locPart = localPartition(part, topVer, false);
+//
+//                        if (locPart != null) {
+//                            boolean marked = locPart.own();
+//
+//                            if (marked)
+//                                updateLocal(locPart.id(), locPart.state(), updSeq);
+//                        }
+//
+//                        for (UUID nodeId : nodeIds) {
+//                            GridDhtPartitionMap2 nodeMap = node2part.get(nodeId);
+//
+//                            if (nodeMap.get(part) == LOST)
+//                                nodeMap.put(part, OWNING);
+//                        }
+//                    }
+//                }
+//            }
+//
+//            checkEvictions(updSeq, cctx.affinity().assignments(topVer));
+//
+//            cctx.needsRecovery(false);
+//        }
+//        finally {
+//            lock.writeLock().unlock();
+//        }
     }
 
     /** {@inheritDoc} */
     @Override public Collection<Integer> lostPartitions() {
+        if (cctx.config().getPartitionLossPolicy() == PartitionLossPolicy.IGNORE)
+            return Collections.emptySet();
+
         lock.readLock().lock();
 
         try {
-            Collection<Integer> res = null;
+            Set<Integer> res = null;
 
             int parts = cctx.affinity().partitions();
 
-            for (int part = 0; part < parts; part++) {
-                Set<UUID> nodeIds = part2node.get(part);
+            for (GridDhtPartitionMap2 partMap : node2part.values()) {
+                for (Map.Entry<Integer, GridDhtPartitionState> e : partMap.entrySet()) {
+                    if (e.getValue() == LOST) {
+                        if (res == null)
+                            res = new HashSet<>(parts);
 
-                if (nodeIds != null) {
-                    for (UUID node : nodeIds) {
-                        GridDhtPartitionMap2 map = node2part.get(node);
-
-                        if (map.get(part) == LOST) {
-                            if (res == null)
-                                res = new ArrayList<>(parts - part);
-
-                            res.add(part);
-
-                            break;
-                        }
+                        res.add(e.getKey());
                     }
                 }
             }
 
-            return res == null ? Collections.<Integer>emptyList() : res;
+            return res == null ? Collections.<Integer>emptySet() : res;
         }
         finally {
             lock.readLock().unlock();
@@ -1736,13 +1714,6 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             map.updateSequence(updateSeq, topVer);
 
             map.put(p, state);
-
-            Set<UUID> ids = part2node.get(p);
-
-            if (ids == null)
-                part2node.put(p, ids = U.newHashSet(3));
-
-            ids.add(locNodeId);
         }
 
         return updateSeq;
@@ -1770,20 +1741,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             else
                 node2part = new GridDhtPartitionFullMap(node2part, node2part.updateSequence());
 
-            GridDhtPartitionMap2 parts = node2part.remove(nodeId);
-
-            if (parts != null) {
-                for (Integer p : parts.keySet()) {
-                    Set<UUID> nodeIds = part2node.get(p);
-
-                    if (nodeIds != null) {
-                        nodeIds.remove(nodeId);
-
-                        if (nodeIds.isEmpty())
-                            part2node.remove(p);
-                    }
-                }
-            }
+            node2part.remove(nodeId);
 
             consistencyCheck();
         }
@@ -2021,30 +1979,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
      * Checks consistency after all operations.
      */
     private void consistencyCheck() {
-        if (CONSISTENCY_CHECK) {
-            if (node2part == null)
-                return;
-
-            for (Map.Entry<UUID, GridDhtPartitionMap2> e : node2part.entrySet()) {
-                for (Integer p : e.getValue().keySet()) {
-                    Set<UUID> nodeIds = part2node.get(p);
-
-                    assert nodeIds != null : "Failed consistency check [part=" + p + ", nodeId=" + e.getKey() + ']';
-                    assert nodeIds.contains(e.getKey()) : "Failed consistency check [part=" + p + ", nodeId=" +
-                        e.getKey() + ", nodeIds=" + nodeIds + ']';
-                }
-            }
-
-            for (Map.Entry<Integer, Set<UUID>> e : part2node.entrySet()) {
-                for (UUID nodeId : e.getValue()) {
-                    GridDhtPartitionMap2 map = node2part.get(nodeId);
-
-                    assert map != null : "Failed consistency check [part=" + e.getKey() + ", nodeId=" + nodeId + ']';
-                    assert map.containsKey(e.getKey()) : "Failed consistency check [part=" + e.getKey() +
-                        ", nodeId=" + nodeId + ']';
-                }
-            }
-        }
+        // no-op
     }
 
     /**
