@@ -317,4 +317,6 @@ public interface GridDhtPartitionTopology {
      * @return Set of node IDs that should reload partitions.
      */
     public Set<UUID> setOwners(int p, Set<UUID> owners, boolean haveHistory, boolean updateSeq);
+
+    public void onAllReceived(GridDhtPartitionExchangeId exchId);
 }

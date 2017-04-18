@@ -1047,6 +1047,10 @@ public class GridClientPartitionTopology implements GridDhtPartitionTopology {
         return false;
     }
 
+    @Override public void onAllReceived(GridDhtPartitionExchangeId exchId) {
+        // no-op
+    }
+
     /**
      * Checks consistency after all operations.
      */

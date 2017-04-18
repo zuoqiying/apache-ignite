@@ -1194,6 +1194,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
      * @return Message.
      */
     private GridDhtPartitionsFullMessage createPartitionsMessage(Collection<ClusterNode> nodes, boolean compress) {
+        for (GridCacheContext cacheCtx : cctx.cacheContexts()) {
+            cacheCtx.topology().onAllReceived(exchId);
+        }
+
         GridCacheVersion last = lastVer.get();
 
         GridDhtPartitionsFullMessage m = cctx.exchange().createPartitionsFullMessage(
