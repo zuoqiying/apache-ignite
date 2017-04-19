@@ -182,7 +182,7 @@
         &.ui-grid-row-selected > [ui-grid-row] > .ui-grid-cell {
             background-color: #e5f2f9;
 
-            box-shadow: 0 -1px 0 0 rgba(117, 117, 117, 0.25), 0 1px 0 0 rgba(117, 117, 117, 0.25);
+            box-shadow: 0 -1px 0 0 #c6cfd8, 0 1px 0 0 #c6cfd8;
         }
     }
 
@@ -324,6 +324,15 @@
                     border-bottom: none;
                 }
             }
+        }
+    }
+
+    .ui-grid-tree-header-row {
+        font-weight: normal !important;
+
+        .ui-grid-selection-row-header-buttons {
+            opacity: .0;
+            cursor: default;
         }
     }
 }

@@ -142,6 +142,7 @@ export default class IgniteListOfRegisteredUsersCtrl {
             columnDefs,
             categories,
 
+            treeRowHeaderAlwaysVisible: true,
             headerTemplate,
             columnVirtualizationThreshold: 30,
             rowTemplate,
