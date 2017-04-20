@@ -35,6 +35,9 @@ import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheExistsException;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
+import org.apache.ignite.cache.affinity.AffinityFunction;
+import org.apache.ignite.cache.affinity.AffinityFunctionContext;
+import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
@@ -948,6 +951,37 @@ public class IgniteDynamicCacheStartSelfTest extends GridCommonAbstractTest {
         }
     }
 
+    /**  */
+    public void testGetOrCreateCollectionExceptional() throws Exception {
+        final int cacheCnt = 3;
+
+        final IgniteEx grid = grid(0);
+        final Collection<CacheConfiguration> ccfgs = new ArrayList<>();
+        final AffinityFunction aff = new ExceptionalAffinityFunction();
+
+        for (int i = 0; i < cacheCnt; ++i) {
+            final CacheConfiguration cfg = new CacheConfiguration();
+
+            cfg.setName(DYNAMIC_CACHE_NAME + Integer.toString(i));
+            cfg.setAffinity(aff);
+
+            ccfgs.add(cfg);
+
+            try {
+                grid.getOrCreateCaches(ccfgs);
+                fail("Simulated exception must be thrown");
+            }
+            catch (Exception e) {
+                grid.log().info(e.toString());
+            }
+            finally {
+                for (CacheConfiguration ccfg : ccfgs) {
+                    grid.destroyCache(ccfg.getName());
+                }
+            }
+        }
+    }
+
     /**
      * @throws Exception If failed.
      */
@@ -1335,5 +1369,23 @@ public class IgniteDynamicCacheStartSelfTest extends GridCommonAbstractTest {
         }, nodeCount(), "start-stop-cache");
 
         fut.get();
+    }
+
+    /**  */
+    private static class ExceptionalAffinityFunction extends RendezvousAffinityFunction {
+
+        /**
+         * Constructor
+         */
+        public ExceptionalAffinityFunction() {
+        }
+
+        /**
+         * Always throws simulated exception
+         * {@inheritDoc}
+         */
+        @Override public List<List<ClusterNode>> assignPartitions(AffinityFunctionContext affCtx) {
+            throw new IllegalStateException("Simulated exception");
+        }
     }
 }
