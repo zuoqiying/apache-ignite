@@ -69,14 +69,15 @@ public abstract class IgniteCacheStoreSessionWriteBehindAbstractTest extends Ign
         return null;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * @param igniteInstanceName Ignite instance name.
+     * @return Cache configuration.
+     * @throws Exception In case of error.
+     */
     @SuppressWarnings("unchecked")
-    @Override protected IgniteConfiguration getConfiguration(String igniteInstanceName) throws Exception {
-        IgniteConfiguration cfg = super.getConfiguration(igniteInstanceName);
+    protected CacheConfiguration cacheConfiguration(String igniteInstanceName) throws Exception {
+        CacheConfiguration ccfg0 = super.cacheConfiguration(igniteInstanceName);
 
-        assert cfg.getCacheConfiguration().length == 1;
-
-        CacheConfiguration ccfg0 = cfg.getCacheConfiguration()[0];
 
         ccfg0.setReadThrough(true);
         ccfg0.setWriteThrough(true);
@@ -87,14 +88,19 @@ public abstract class IgniteCacheStoreSessionWriteBehindAbstractTest extends Ign
 
         ccfg0.setCacheStoreFactory(singletonFactory(new TestStore()));
 
-        CacheConfiguration ccfg1 = cacheConfiguration(igniteInstanceName);
+        return ccfg0;
+    }
 
-        ccfg1.setReadThrough(true);
-        ccfg1.setWriteThrough(true);
-        ccfg1.setWriteBehindBatchSize(10);
-        ccfg1.setWriteBehindFlushSize(10);
-        ccfg1.setWriteBehindFlushFrequency(600);
-        ccfg1.setWriteBehindEnabled(true);
+    /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
+    @Override protected IgniteConfiguration getConfiguration(String igniteInstanceName) throws Exception {
+        IgniteConfiguration cfg = super.getConfiguration(igniteInstanceName);
+
+        assert cfg.getCacheConfiguration().length == 1;
+
+        CacheConfiguration ccfg0 = cacheConfiguration(igniteInstanceName);
+
+        CacheConfiguration ccfg1 = cacheConfiguration(igniteInstanceName);
 
         ccfg1.setName(CACHE_NAME1);
 
