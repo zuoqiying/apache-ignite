@@ -46,17 +46,21 @@ public class IgniteCacheTxStoreSessionWriteBehindCoalescingTest extends IgniteCa
         return TRANSACTIONAL;
     }
 
-    /** {@inheritDoc} */
+
+    /**
+     * @param igniteInstanceName Ignite instance name.
+     * @return Cache configuration.
+     * @throws Exception In case of error.
+     */
     @SuppressWarnings("unchecked")
-    @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
-        IgniteConfiguration result = super.getConfiguration(gridName);
+    protected CacheConfiguration cacheConfiguration(String igniteInstanceName) throws Exception {
+        CacheConfiguration ccfg = super.cacheConfiguration(igniteInstanceName);
 
-        for (CacheConfiguration ccfg : result.getCacheConfiguration()) {
-            ccfg.setWriteBehindCoalescing(false);
-            ccfg.setCacheStoreFactory(singletonFactory(new TestNonCoalescingStore()));
-        }
+        ccfg.setWriteBehindCoalescing(false);
 
-        return result;
+        ccfg.setCacheStoreFactory(singletonFactory(new TestNonCoalescingStore()));
+
+        return ccfg;
     }
 
     /**
