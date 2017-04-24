@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
@@ -30,6 +31,7 @@ import org.apache.ignite.internal.IgniteKernal;
 import org.apache.ignite.internal.TestRecordingCommunicationSpi;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsFullMessage;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsSingleMessage;
+import org.apache.ignite.lang.IgniteCallable;
 import org.apache.ignite.spi.communication.CommunicationSpi;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
@@ -40,6 +42,8 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
         IgniteConfiguration cfg = super.getConfiguration(gridName);
+
+        cfg.setPeerClassLoadingEnabled(true);
 
 //        TestRecordingCommunicationSpi spi = new TestRecordingCommunicationSpi();
 //
@@ -78,6 +82,8 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
 
             awaitPartitionMapExchange();
 
+            IgniteCache<Object, Object> cache = grid0.getOrCreateCache(new CacheConfiguration<Object, Object>());
+
 //            TestRecordingCommunicationSpi spi0 = (TestRecordingCommunicationSpi)grid0.configuration().getCommunicationSpi();
 //
 //            List<Object> objects1 = spi0.recordedMessages(false);
@@ -91,7 +97,7 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
 //            List<Object> objects2 = spi0.recordedMessages(false);
 //            List<Object> objects3 = spi1.recordedMessages(false);
 
-            LockSupport.park();
+            //LockSupport.park();
         }
         finally {
             stopAllGrids();
