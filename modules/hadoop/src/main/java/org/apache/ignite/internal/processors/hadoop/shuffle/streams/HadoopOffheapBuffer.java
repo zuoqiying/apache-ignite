@@ -91,7 +91,7 @@ public class HadoopOffheapBuffer {
      * @param size Size move on.
      * @return Old position pointer or {@code 0} if move goes beyond the end of the buffer.
      */
-    public long move(long size) {
+    protected long move0(long size) {
         assert size > 0 : size;
 
         long oldPos = posPtr;
@@ -103,6 +103,22 @@ public class HadoopOffheapBuffer {
         posPtr = newPos;
 
         return oldPos;
+    }
+
+    /**
+     * Moves the buffer position.
+     *
+     * @param size The requested position shift.
+     * @return Moved position, never null.
+     * @throws IndexOutOfBoundsException if a move beyond the buffer boundary is attempted.
+     */
+    public long move(long size) {
+        long movedPtr = move0(size);
+
+        if (movedPtr <= 0)
+            throw new IndexOutOfBoundsException("Offheap buffer move beyond the end position. Shift = " + size);
+
+        return movedPtr;
     }
 
     /**

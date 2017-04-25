@@ -206,7 +206,7 @@ public abstract class HadoopMultimapBase implements HadoopMultimap {
 
             out = new HadoopDataOutStream(mem) {
                 @Override public long move(long size) {
-                    long ptr = super.move(size);
+                    long ptr = move0(size);
 
                     if (ptr == 0) // Was not able to move - not enough free space.
                         ptr = allocateNextPage(size);

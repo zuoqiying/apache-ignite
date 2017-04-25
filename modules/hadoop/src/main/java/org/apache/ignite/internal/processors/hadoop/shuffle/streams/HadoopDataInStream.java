@@ -58,7 +58,7 @@ public class HadoopDataInStream extends InputStream implements DataInput {
     protected long move(long size) throws IOException {
         long ptr = buf.move(size);
 
-        assert ptr != 0;
+        assert ptr != 0 : "Must never be there since move throws exception in such case.";
 
         return ptr;
     }
@@ -77,7 +77,8 @@ public class HadoopDataInStream extends InputStream implements DataInput {
 
     /** {@inheritDoc} */
     @Override public long skip(long n) throws IOException {
-        move(n);
+        if (n > 0)
+            move(n);
 
         return n;
     }
@@ -89,12 +90,16 @@ public class HadoopDataInStream extends InputStream implements DataInput {
 
     /** {@inheritDoc} */
     @Override public void readFully(byte[] b, int off, int len) throws IOException {
+        if (len == 0)
+            return; // Nothing to do.
+
         mem.readBytes(move(len), b, off, len);
     }
 
     /** {@inheritDoc} */
     @Override public int skipBytes(int n) throws IOException {
-        move(n);
+        if (n > 0)
+            move(n);
 
         return n;
     }

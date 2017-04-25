@@ -55,6 +55,15 @@ public class HadoopDataOutStream extends OutputStream implements DataOutput {
         return buf.move(size);
     }
 
+    /**
+     *
+     * @param size
+     * @return Old pointer or {@code 0} if move was impossible.
+     */
+    protected final long move0(long size) {
+        return buf.move0(size);
+    }
+
     /** {@inheritDoc} */
     @Override public void write(int b) {
         writeByte(b);
@@ -67,6 +76,9 @@ public class HadoopDataOutStream extends OutputStream implements DataOutput {
 
     /** {@inheritDoc} */
     @Override public void write(byte[] b, int off, int len) {
+        if (len == 0)
+            return; // Nothing to do.
+
         GridUnsafe.copyHeapOffheap(b, GridUnsafe.BYTE_ARR_OFF + off, move(len), len);
     }
 
