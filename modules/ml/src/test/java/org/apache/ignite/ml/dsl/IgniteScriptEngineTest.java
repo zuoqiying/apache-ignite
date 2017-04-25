@@ -24,14 +24,14 @@ import org.junit.Test;
 /**
  * TODO: add description.
  */
-public class DSLEngineTest {
+public class IgniteScriptEngineTest {
     @Test
     public void testSimpleJS() throws ScriptException {
-        DSLEngine engine = new DSLEngine("nashorn");
+        IgniteScriptEngine engine = IgniteScriptEngineFactory.buildJSEngine();
 
         System.out.println("Start simple js example.");
 
-        try (Scanner scanner = new Scanner(DSLEngineTest.class.getResourceAsStream("/org/apache/ignite/dsl/js/simpleJS.js"))){
+        try (Scanner scanner = new Scanner(IgniteScriptEngineTest.class.getResourceAsStream("/org/apache/ignite/dsl/js/simpleJS.js"))){
             String rawScript = scanner.useDelimiter("\\A").next();
 
             engine.run(rawScript);
@@ -40,11 +40,11 @@ public class DSLEngineTest {
 
     @Test
     public void testSimplePython() throws ScriptException {
-        DSLEngine engine = new DSLEngine("jython");
+        IgniteScriptEngine engine = IgniteScriptEngineFactory.buildPythonEngine();
 
         System.out.println("Start simple python example.");
 
-        try (Scanner scanner = new Scanner(DSLEngineTest.class.getResourceAsStream("/org/apache/ignite/dsl/js/simpleJython.py"))){
+        try (Scanner scanner = new Scanner(IgniteScriptEngineTest.class.getResourceAsStream("/org/apache/ignite/dsl/js/simpleJython.py"))){
             String rawScript = scanner.useDelimiter("\\A").next();
 
             engine.run(rawScript);

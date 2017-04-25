@@ -23,15 +23,17 @@ import javax.script.ScriptException;
 
 /**
  * TODO: add description.
+ *
+ * @see IgniteScriptEngineFactory
  */
-public class DSLEngine {
+class IgniteScriptEngine {
     private ScriptEngine scriptEngine;
 
     /**
      *
      * @param name nashorn, python
      */
-    public DSLEngine(String name){
+    IgniteScriptEngine(String name){
         assert name != null && !name.isEmpty();
 
         scriptEngine = new ScriptEngineManager().getEngineByName(name);
