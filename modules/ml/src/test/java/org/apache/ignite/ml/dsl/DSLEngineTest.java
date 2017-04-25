@@ -29,6 +29,8 @@ public class DSLEngineTest {
     public void testSimpleJS() throws ScriptException {
         DSLEngine engine = new DSLEngine("nashorn");
 
+        System.out.println("Start simple js example.");
+
         try (Scanner scanner = new Scanner(DSLEngineTest.class.getResourceAsStream("/org/apache/ignite/dsl/js/simpleJS.js"))){
             String rawScript = scanner.useDelimiter("\\A").next();
 
@@ -39,6 +41,8 @@ public class DSLEngineTest {
     @Test
     public void testSimplePython() throws ScriptException {
         DSLEngine engine = new DSLEngine("jython");
+
+        System.out.println("Start simple python example.");
 
         try (Scanner scanner = new Scanner(DSLEngineTest.class.getResourceAsStream("/org/apache/ignite/dsl/js/simpleJython.py"))){
             String rawScript = scanner.useDelimiter("\\A").next();

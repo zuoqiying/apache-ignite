@@ -28,12 +28,15 @@ function simpleVector() {
 
         localVector.plus(1.0);
 
-        var Tracer = Java.type("org.apache.ignite.ml.math.Tracer");
-
-        print(localVector);
-
-        Tracer.showAscii(localVector);
+        printVector(localVector)
     }
+}
+
+/** Print vector using Tracer. */
+function printVector(vector) {
+    var Tracer = Java.type("org.apache.ignite.ml.math.Tracer");
+
+    Tracer.showAscii(vector);
 }
 
 simpleVector();
