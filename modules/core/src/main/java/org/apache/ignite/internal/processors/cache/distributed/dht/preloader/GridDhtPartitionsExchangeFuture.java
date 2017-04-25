@@ -2049,7 +2049,8 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
      * @param msg Partitions single message.
      */
     private void updatePartitionSingleMap(ClusterNode node, GridDhtPartitionsSingleMessage msg) {
-        msgs.put(node.id(), msg);
+        if (cctx.database().persistenceEnabled())
+            msgs.put(node.id(), msg);
 
         for (Map.Entry<Integer, GridDhtPartitionMap2> entry : msg.partitions().entrySet()) {
             Integer cacheId = entry.getKey();
