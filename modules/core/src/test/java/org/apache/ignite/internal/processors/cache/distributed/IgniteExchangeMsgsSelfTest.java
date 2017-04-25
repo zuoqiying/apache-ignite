@@ -45,11 +45,11 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
 
         cfg.setPeerClassLoadingEnabled(true);
 
-//        TestRecordingCommunicationSpi spi = new TestRecordingCommunicationSpi();
-//
-//        spi.record(GridDhtPartitionsFullMessage.class, GridDhtPartitionsSingleMessage.class);
-//
-//        cfg.setCommunicationSpi(spi);
+        TestRecordingCommunicationSpi spi = new TestRecordingCommunicationSpi();
+
+        spi.record(GridDhtPartitionsFullMessage.class, GridDhtPartitionsSingleMessage.class);
+
+        cfg.setCommunicationSpi(spi);
 
         MemoryConfiguration memCfg = new MemoryConfiguration();
 
@@ -84,20 +84,20 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
 
             IgniteCache<Object, Object> cache = grid0.getOrCreateCache(new CacheConfiguration<Object, Object>());
 
-//            TestRecordingCommunicationSpi spi0 = (TestRecordingCommunicationSpi)grid0.configuration().getCommunicationSpi();
-//
-//            List<Object> objects1 = spi0.recordedMessages(false);
+            TestRecordingCommunicationSpi spi0 = (TestRecordingCommunicationSpi)grid0.configuration().getCommunicationSpi();
+
+            List<Object> crdMessages1 = spi0.recordedMessages(false);
 
             IgniteEx grid1 = startGrid(1);
 
             awaitPartitionMapExchange();
 
-//            TestRecordingCommunicationSpi spi1 = (TestRecordingCommunicationSpi)grid1.configuration().getCommunicationSpi();
-//
-//            List<Object> objects2 = spi0.recordedMessages(false);
-//            List<Object> objects3 = spi1.recordedMessages(false);
+            TestRecordingCommunicationSpi spi1 = (TestRecordingCommunicationSpi)grid1.configuration().getCommunicationSpi();
 
-            //LockSupport.park();
+            List<Object> crdMessages2 = spi0.recordedMessages(false);
+            List<Object> messages3 = spi1.recordedMessages(false);
+
+            System.out.println();
         }
         finally {
             stopAllGrids();

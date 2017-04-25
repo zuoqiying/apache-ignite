@@ -1731,7 +1731,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
         if (node2part != null) {
             UUID locNodeId = cctx.localNodeId();
 
-        GridDhtPartitionMap2 map = node2part.get(locNodeId);
+            GridDhtPartitionMap2 map = node2part.get(locNodeId);
 
             if (map == null) {
                 map = new GridDhtPartitionMap2(locNodeId,
