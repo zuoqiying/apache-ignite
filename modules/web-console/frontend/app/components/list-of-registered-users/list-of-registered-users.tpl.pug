@@ -18,7 +18,7 @@ include /app/helpers/jade/mixins
 
 mixin grid-settings()
     .grid-settings
-        i.fa.fa-cog(data-animation='am-flip-x' bs-dropdown='' aria-haspopup='true' aria-expanded='expanded' data-auto-close='1' data-trigger='click')
+        i.fa.gear-icon(data-animation='am-flip-x' bs-dropdown='' aria-haspopup='true' aria-expanded='expanded' data-auto-close='1' data-trigger='click')
         ul.select.dropdown-menu(role='menu')
             li
                 a(ng-click='$ctrl.gridOptions.selectedAll ? $ctrl.clearAllColumns() : $ctrl.selectAllColumns()')

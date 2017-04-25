@@ -16,6 +16,8 @@
  */
 
 .ui-grid-settings {
+    color: #393939;
+
     ul.select.dropdown-menu {
         padding: 0;
 
@@ -173,6 +175,28 @@
     &-dateperiod {
         margin-left: 15px;
         margin-right: -5px;
+    }
+
+    .grid-settings {
+        i.gear-icon {
+            position: relative;
+            top: 2px;
+
+            display: block;
+            width: 16px;
+            height: 16px;
+            margin: auto;
+
+            background-image: url('/images/icons/gear.svg');
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        &:hover, &:focus {
+            i.gear-icon {
+                filter: hue-rotate(1deg) saturate(85) brightness(.66);
+            }
+        }
     }
 }
 
