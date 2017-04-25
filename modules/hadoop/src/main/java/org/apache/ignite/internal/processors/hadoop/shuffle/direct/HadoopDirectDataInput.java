@@ -60,6 +60,9 @@ public class HadoopDirectDataInput extends InputStream implements DataInput {
 
     /** {@inheritDoc} */
     @Override public void readFully(@NotNull byte[] b, int off, int len) throws IOException {
+        if (len == 0)
+            return;
+
         checkRange(len);
 
         System.arraycopy(buf, pos, b, off, len);
