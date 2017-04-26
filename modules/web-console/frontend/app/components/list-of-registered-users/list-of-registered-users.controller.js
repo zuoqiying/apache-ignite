@@ -153,7 +153,6 @@ export default class IgniteListOfRegisteredUsersCtrl {
             rowTemplate,
             rowHeight: 46,
             selectWithCheckboxOnly: true,
-            // selectionRowHeaderWidth: 52,
             suppressRemoveSort: false,
             enableFiltering: true,
             enableSelectAll: true,
