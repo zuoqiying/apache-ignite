@@ -43,13 +43,16 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
     @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
         IgniteConfiguration cfg = super.getConfiguration(gridName);
 
+        if (gridName.startsWith("client"))
+            cfg.setClientMode(true);
+
         cfg.setPeerClassLoadingEnabled(true);
 
-        TestRecordingCommunicationSpi spi = new TestRecordingCommunicationSpi();
+        //TestRecordingCommunicationSpi spi = new TestRecordingCommunicationSpi();
 
-        spi.record(GridDhtPartitionsFullMessage.class, GridDhtPartitionsSingleMessage.class);
-
-        cfg.setCommunicationSpi(spi);
+//        spi.record(GridDhtPartitionsFullMessage.class, GridDhtPartitionsSingleMessage.class);
+//
+//        cfg.setCommunicationSpi(spi);
 
         MemoryConfiguration memCfg = new MemoryConfiguration();
 
@@ -84,20 +87,50 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
 
             IgniteCache<Object, Object> cache = grid0.getOrCreateCache(new CacheConfiguration<Object, Object>());
 
-            TestRecordingCommunicationSpi spi0 = (TestRecordingCommunicationSpi)grid0.configuration().getCommunicationSpi();
-
-            List<Object> crdMessages1 = spi0.recordedMessages(false);
+//            TestRecordingCommunicationSpi spi0 = (TestRecordingCommunicationSpi)grid0.configuration().getCommunicationSpi();
+//
+//            List<Object> crdMessages1 = spi0.recordedMessages(false);
 
             IgniteEx grid1 = startGrid(1);
 
             awaitPartitionMapExchange();
 
-            TestRecordingCommunicationSpi spi1 = (TestRecordingCommunicationSpi)grid1.configuration().getCommunicationSpi();
 
-            List<Object> crdMessages2 = spi0.recordedMessages(false);
-            List<Object> messages3 = spi1.recordedMessages(false);
+            int c = 10;
 
-            System.out.println();
+            while(c-- > 0) {
+                IgniteEx grid2 = startGrid(2);
+
+                awaitPartitionMapExchange();
+
+                Thread.sleep(2_000);
+
+                stopGrid(2);
+
+                Thread.sleep(2_000);
+            }
+
+            //TestRecordingCommunicationSpi spi1 = (TestRecordingCommunicationSpi)grid1.configuration().getCommunicationSpi();
+
+//            List<Object> crdMessages2 = spi0.recordedMessages(false);
+//            List<Object> messages3 = spi1.recordedMessages(false);
+//
+//            System.out.println("clienttime 0");
+//
+//            Ignite client1 = startGrid("client1");
+//            TestRecordingCommunicationSpi spi2 = (TestRecordingCommunicationSpi)grid0.configuration().getCommunicationSpi();
+//
+//            long t1 = System.nanoTime();
+//
+//            IgniteCache<Object, Object> cache2 = client1.getOrCreateCache("x");
+//
+//            List<Object> objects = spi2.recordedMessages(false);
+//
+//            long t2 = System.nanoTime();
+//
+//            System.out.println("clienttime 1: " + (t2-t1)/1000/1000. + " ms");
+
+            LockSupport.park();
         }
         finally {
             stopAllGrids();
