@@ -72,7 +72,7 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
                 CacheConfiguration ccfg = new CacheConfiguration();
 
                 ccfg.setName("test" + i);
-                ccfg.setAffinity(new RendezvousAffinityFunction(false, 20_000));
+                ccfg.setAffinity(new RendezvousAffinityFunction(false, 64));
 
                 ccfgs.add(ccfg);
             }
@@ -84,7 +84,7 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
     }
 
     /** */
-    public void testExchange() throws Exception {
+    public void testExchange1() throws Exception {
         try {
             System.setProperty(IgniteSystemProperties.IGNITE_START_CACHES_ON_JOIN, "false");
 
@@ -96,10 +96,38 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
 
             Collection<ClusterNode> nodes = client1.cluster().forClientNodes("test0").nodes();
 
-            assertNotNull(nodes.size());
+            assertTrue(nodes.size() == 0);
 
             //Ignite client2 = startGrid("client2");
 
+        }
+        finally {
+            stopAllGrids();
+
+            System.clearProperty(IgniteSystemProperties.IGNITE_START_CACHES_ON_JOIN);
+        }
+    }
+
+    /** */
+    public void testExchange2() throws Exception {
+        try {
+            System.setProperty(IgniteSystemProperties.IGNITE_START_CACHES_ON_JOIN, "true");
+
+            IgniteEx grid0 = startGrid(0);
+
+            awaitPartitionMapExchange();
+
+            Ignite client1 = startGrid("client1");
+
+            Collection<ClusterNode> nodes = client1.cluster().forClientNodes("test0").nodes();
+
+            assertTrue(nodes.size() == 1);
+
+            Ignite client2 = startGrid("client2");
+
+            Collection<ClusterNode> nodes2 = client2.cluster().forClientNodes("test0").nodes();
+
+            assertTrue(nodes2.size() == 1);
         }
         finally {
             stopAllGrids();
