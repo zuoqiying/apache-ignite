@@ -18,17 +18,21 @@
 package org.apache.ignite.internal.processors.cache.distributed;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.cache.affinity.rendezvous.RendezvousAffinityFunction;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.IgniteKernal;
 import org.apache.ignite.internal.TestRecordingCommunicationSpi;
+import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsFullMessage;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsSingleMessage;
 import org.apache.ignite.lang.IgniteCallable;
@@ -43,8 +47,7 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
     @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
         IgniteConfiguration cfg = super.getConfiguration(gridName);
 
-        if (gridName.startsWith("client"))
-            cfg.setClientMode(true);
+        cfg.setClientMode(gridName.startsWith("client"));
 
         cfg.setPeerClassLoadingEnabled(true);
 
@@ -62,18 +65,20 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
 
         cfg.setMemoryConfiguration(memCfg);
 
-        List<CacheConfiguration> ccfgs = new ArrayList<>();
+        if (!cfg.isClientMode()) {
+            List<CacheConfiguration> ccfgs = new ArrayList<>();
 
-        for (int i = 0; i < 15; i++) {
-            CacheConfiguration ccfg = new CacheConfiguration();
+            for (int i = 0; i < 15; i++) {
+                CacheConfiguration ccfg = new CacheConfiguration();
 
-            ccfg.setName("test" + i);
-            ccfg.setAffinity(new RendezvousAffinityFunction(false, 20_000));
+                ccfg.setName("test" + i);
+                ccfg.setAffinity(new RendezvousAffinityFunction(false, 20_000));
 
-            ccfgs.add(ccfg);
+                ccfgs.add(ccfg);
+            }
+
+            cfg.setCacheConfiguration(ccfgs.toArray(new CacheConfiguration[ccfgs.size()]));
         }
-
-        cfg.setCacheConfiguration(ccfgs.toArray(new CacheConfiguration[ccfgs.size()]));
 
         return cfg;
     }
@@ -81,59 +86,25 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
     /** */
     public void testExchange() throws Exception {
         try {
+            System.setProperty(IgniteSystemProperties.IGNITE_START_CACHES_ON_JOIN, "false");
+
             IgniteEx grid0 = startGrid(0);
 
             awaitPartitionMapExchange();
 
-            IgniteCache<Object, Object> cache = grid0.getOrCreateCache(new CacheConfiguration<Object, Object>());
+            Ignite client1 = startGrid("client1");
 
-//            TestRecordingCommunicationSpi spi0 = (TestRecordingCommunicationSpi)grid0.configuration().getCommunicationSpi();
-//
-//            List<Object> crdMessages1 = spi0.recordedMessages(false);
+            Collection<ClusterNode> nodes = client1.cluster().forClientNodes("test0").nodes();
 
-            IgniteEx grid1 = startGrid(1);
+            assertNotNull(nodes.size());
 
-            awaitPartitionMapExchange();
+            //Ignite client2 = startGrid("client2");
 
-
-            int c = 10;
-
-            while(c-- > 0) {
-                IgniteEx grid2 = startGrid(2);
-
-                awaitPartitionMapExchange();
-
-                Thread.sleep(2_000);
-
-                stopGrid(2);
-
-                Thread.sleep(2_000);
-            }
-
-            //TestRecordingCommunicationSpi spi1 = (TestRecordingCommunicationSpi)grid1.configuration().getCommunicationSpi();
-
-//            List<Object> crdMessages2 = spi0.recordedMessages(false);
-//            List<Object> messages3 = spi1.recordedMessages(false);
-//
-//            System.out.println("clienttime 0");
-//
-//            Ignite client1 = startGrid("client1");
-//            TestRecordingCommunicationSpi spi2 = (TestRecordingCommunicationSpi)grid0.configuration().getCommunicationSpi();
-//
-//            long t1 = System.nanoTime();
-//
-//            IgniteCache<Object, Object> cache2 = client1.getOrCreateCache("x");
-//
-//            List<Object> objects = spi2.recordedMessages(false);
-//
-//            long t2 = System.nanoTime();
-//
-//            System.out.println("clienttime 1: " + (t2-t1)/1000/1000. + " ms");
-
-            LockSupport.park();
         }
         finally {
             stopAllGrids();
+
+            System.clearProperty(IgniteSystemProperties.IGNITE_START_CACHES_ON_JOIN);
         }
     }
 }

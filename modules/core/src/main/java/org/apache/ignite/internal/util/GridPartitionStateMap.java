@@ -24,6 +24,7 @@ import java.util.AbstractSet;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState;
 
@@ -124,13 +125,7 @@ public class GridPartitionStateMap extends AbstractMap<Integer, GridDhtPartition
 
     /** {@inheritDoc} */
     @Override public GridDhtPartitionState remove(Object key) {
-        int p = (Integer) key;
-
-        GridDhtPartitionState old = state(p);
-
-        setState((Integer)key, null);
-
-        return old;
+        return setState((Integer)key, null);
     }
 
     /** {@inheritDoc} */
@@ -146,6 +141,9 @@ public class GridPartitionStateMap extends AbstractMap<Integer, GridDhtPartition
     /** */
     private GridDhtPartitionState setState(int part, GridDhtPartitionState st) {
         GridDhtPartitionState old = state(part);
+
+        if (old == st)
+            return old;
 
         int off = part * BITS;
 
@@ -172,71 +170,5 @@ public class GridPartitionStateMap extends AbstractMap<Integer, GridDhtPartition
             st |= ((states.get(off + i) ? 1 : 0) << i);
 
         return st == 0 ? null : GridDhtPartitionState.values()[st - 1];
-    }
-
-    public static void main(String[] args) {
-        GridPartitionStateMap map = new GridPartitionStateMap();
-
-        map.put(0, GridDhtPartitionState.MOVING);
-        map.put(1, GridDhtPartitionState.RENTING);
-        map.put(2, GridDhtPartitionState.LOST);
-        map.put(3, GridDhtPartitionState.OWNING);
-        map.put(4, GridDhtPartitionState.EVICTED);
-        map.put(5, GridDhtPartitionState.MOVING);
-        map.put(6, GridDhtPartitionState.RENTING);
-        map.put(7, GridDhtPartitionState.LOST);
-        map.put(8, GridDhtPartitionState.OWNING);
-        map.put(9, GridDhtPartitionState.EVICTED);
-
-        Set<Entry<Integer, GridDhtPartitionState>> entries = map.entrySet();
-
-        System.out.println(map.size());
-
-        for (Entry<Integer, GridDhtPartitionState> entry : entries) {
-            System.out.println(entry.getKey() + " " + entry.getValue());
-
-            entry.setValue(GridDhtPartitionState.OWNING);
-        }
-
-        System.out.println(map.size());
-
-        Set<Entry<Integer, GridDhtPartitionState>> tmp = new HashSet<>();
-
-        for (Entry<Integer, GridDhtPartitionState> entry : entries) {
-            tmp.add(entry);
-
-            entry.setValue(GridDhtPartitionState.OWNING);
-        }
-
-        for (Entry<Integer, GridDhtPartitionState> entry : entries)
-            System.out.println(entry.getKey() + " " + entry.getValue());
-
-        for (Entry<Integer, GridDhtPartitionState> entry : tmp)
-            entry.setValue(GridDhtPartitionState.LOST);
-
-        for (Entry<Integer, GridDhtPartitionState> entry : entries)
-            System.out.println(entry.getKey() + " " + entry.getValue());
-
-        map.remove(5);
-
-        System.out.println(map.size());
-
-        for (Entry<Integer, GridDhtPartitionState> entry : entries)
-            System.out.println(entry.getKey() + " " + entry.getValue());
-
-        System.out.println(map.keySet().size());
-
-        for (Integer integer : map.keySet())
-            System.out.println(integer);
-
-        for (GridDhtPartitionState state : map.values())
-            System.out.println(state);
-
-        map.clear();
-
-        System.out.println(map.size());
-
-        for (Entry<Integer, GridDhtPartitionState> entry : entries)
-            System.out.println(entry.getKey() + " " + entry.getValue());
     }
 }
