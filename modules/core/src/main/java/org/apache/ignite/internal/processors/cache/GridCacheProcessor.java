@@ -823,7 +823,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
                 boolean loc = desc.locallyConfigured();
 
-                if (loc || (desc.receivedOnDiscovery() && (CU.affinityNode(locNode, filter) || startCaches))) {
+                if (loc || (desc.receivedOnDiscovery() && (CU.affinityNode(locNode, filter) || startAllCachesOnClientStart()))) {
                     boolean started = desc.onStart();
 
                     assert started : "Failed to change started flag for locally configured cache: " + desc;
@@ -2172,13 +2172,21 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         batch.clientReconnect(reconnect);
 
-        batch.startCaches(startCaches && ctx.clientNode());
+        if (!reconnect)
+            batch.startCaches(startAllCachesOnClientStart());
 
         //todo check
         // Reset random batch ID so that serialized batches with the same descriptors will be exactly the same.
         batch.id(null);
 
         return batch;
+    }
+
+    /**
+     * @return {@code True} if need locally start all existing caches on client node start.
+     */
+    private boolean startAllCachesOnClientStart() {
+        return startCaches && ctx.clientNode();
     }
 
     /** {@inheritDoc} */
@@ -2286,9 +2294,10 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                     }
                 }
 
-                if (batch.startCaches())
+                if (batch.startCaches()) {
                     for (Map.Entry<String, DynamicCacheDescriptor> entry : registeredCaches.entrySet())
                         ctx.discovery().addClientNode(entry.getKey(), joiningNodeId, false);
+                }
             }
         }
     }
