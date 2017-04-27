@@ -121,13 +121,13 @@ public class IgniteExchangeMsgsSelfTest extends GridCommonAbstractTest {
 
             Collection<ClusterNode> nodes = client1.cluster().forClientNodes("test0").nodes();
 
-            assertTrue(nodes.size() == 1);
+            assertEquals(1, nodes.size());
 
             Ignite client2 = startGrid("client2");
 
             Collection<ClusterNode> nodes2 = client2.cluster().forClientNodes("test0").nodes();
 
-            assertTrue(nodes2.size() == 1);
+            assertEquals(2, nodes2.size());
         }
         finally {
             stopAllGrids();
