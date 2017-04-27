@@ -259,6 +259,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         writeBehindFlushSize: Number,
         writeBehindFlushFrequency: Number,
         writeBehindFlushThreadCount: Number,
+        writeBehindCoalescing: Boolean,
 
         invalidate: Boolean,
         defaultLockTimeout: Number,
@@ -320,7 +321,13 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
                     maxSize: Number
                 }
             }
-        }
+        },
+        evictionFilter: String,
+        cacheEntryListenerConfigurations: [String],
+        memoryPolicyName: String,
+        sqlIndexMaxInlineSize: Number,
+        transactionManagerLookupClassName: String,
+        topologyValidator: String
     });
 
     CacheSchema.index({name: 1, space: 1}, {unique: true});
@@ -366,7 +373,8 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             userName: String
         },
         colocateMetadata: Boolean,
-        relaxedConsistency: Boolean
+        relaxedConsistency: Boolean,
+        updateFileLenOnFlush: Boolean
     });
 
     IgfsSchema.index({name: 1, space: 1}, {unique: true});
@@ -378,6 +386,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
     const ClusterSchema = new Schema({
         space: {type: ObjectId, ref: 'Space', index: true},
         name: {type: String},
+        activeOnStart: Boolean,
         localHost: String,
         discovery: {
             localAddress: String,
@@ -851,6 +860,64 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             Custom: {
                 className: String
             }
+        },
+        cacheStoreSessionListenerFactories: [String],
+        warmupClosure: String,
+        hadoopConfiguration: {
+            finishedJobInfoTtl: Number,
+            mapReducePlanner: String,
+            maxParallelTasks: Number,
+            naxTaskQueueSize: Number,
+            nativeLibraryNames: [String]
+        },
+        serviceConfigurations: [{
+            name: String,
+            service: String,
+            maxPerNodeCount: Number,
+            totalCount: Number,
+            nodeFilter: {
+                kind: {type: String, enum: ['Default', 'Exclude', 'IGFS', 'OnNodes', 'Custom']},
+                Exclude: {
+                    nodeId: String
+                },
+                IGFS: {
+                    igfs: {type: ObjectId, ref: 'Igfs'}
+                },
+                Custom: {
+                    className: String
+                }
+            },
+            cache: {type: ObjectId, ref: 'Cache'},
+            affinityKey: String
+        }],
+        cacheSanityCheckEnabled: Boolean,
+        classLoader: String,
+        consistentId: String,
+        failureDetectionTimeout: Number,
+        workDirectory: String,
+        lateAffinityAssignment: Boolean,
+        utilityCacheKeepAliveTime: Number,
+        asyncCallbackPoolSize: Number,
+        dataStreamerThreadPoolSize: Number,
+        queryThreadPoolSize: Number,
+        stripedPoolSize: Number,
+        serviceThreadPoolSize: Number,
+        utilityCacheThreadPoolSize: Number,
+        executorConfiguration: [{
+            name: String,
+            poolSize: Number
+        }],
+        memoryConfiguration: {
+            pageSize: Number,
+            systemCacheMemorySize: Number,
+            concurrencyLevel: Number,
+            defaultMemoryPolicyName: String,
+            memoryPolicies: [{
+                name: String,
+                maxSize: Number,
+                swapFilePath: String,
+                pageEvictionMode: {type: String, enum: ['DISABLED', 'RANDOM_LRU', 'RANDOM_2_LRU']}
+            }]
         }
     });
 

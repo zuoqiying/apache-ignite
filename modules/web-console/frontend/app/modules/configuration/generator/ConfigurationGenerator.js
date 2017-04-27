@@ -1771,8 +1771,6 @@ export default class IgniteConfigurationGenerator {
             return cfg;
 
         cfg.stringProperty('name')
-            .stringProperty('name', 'dataCacheName', (name) => name + '-data')
-            .stringProperty('name', 'metaCacheName', (name) => name + '-meta')
             .enumProperty('defaultMode');
 
         return cfg;
