@@ -220,7 +220,7 @@ public abstract class BinaryFieldAccessor {
 
             byte val = GridUnsafe.getByteField(obj, offset);
 
-            writer.writeByteFieldPrimitive(val);
+            writer.doWriteBytePrimitive(val);
         }
 
         /** {@inheritDoc} */
@@ -250,7 +250,7 @@ public abstract class BinaryFieldAccessor {
 
             boolean val = GridUnsafe.getBooleanField(obj, offset);
 
-            writer.writeBooleanFieldPrimitive(val);
+            writer.doWriteBooleanPrimitive(val);
         }
 
         /** {@inheritDoc} */
@@ -280,7 +280,7 @@ public abstract class BinaryFieldAccessor {
 
             short val = GridUnsafe.getShortField(obj, offset);
 
-            writer.writeShortFieldPrimitive(val);
+            writer.doWriteShortPrimitive(val);
         }
 
         /** {@inheritDoc} */
@@ -310,7 +310,7 @@ public abstract class BinaryFieldAccessor {
 
             char val = GridUnsafe.getCharField(obj, offset);
 
-            writer.writeCharFieldPrimitive(val);
+            writer.doWriteCharPrimitive(val);
         }
 
         /** {@inheritDoc} */
@@ -340,7 +340,7 @@ public abstract class BinaryFieldAccessor {
 
             int val = GridUnsafe.getIntField(obj, offset);
 
-            writer.writeIntFieldPrimitive(val);
+            writer.doWriteIntPrimitive(val);
         }
 
         /** {@inheritDoc} */
@@ -370,7 +370,7 @@ public abstract class BinaryFieldAccessor {
 
             long val = GridUnsafe.getLongField(obj, offset);
 
-            writer.writeLongFieldPrimitive(val);
+            writer.doWriteLongPrimitive(val);
         }
 
         /** {@inheritDoc} */
@@ -400,7 +400,7 @@ public abstract class BinaryFieldAccessor {
 
             float val = GridUnsafe.getFloatField(obj, offset);
 
-            writer.writeFloatFieldPrimitive(val);
+            writer.doWriteFloatPrimitive(val);
         }
 
         /** {@inheritDoc} */
@@ -430,7 +430,7 @@ public abstract class BinaryFieldAccessor {
 
             double val = GridUnsafe.getDoubleField(obj, offset);
 
-            writer.writeDoubleFieldPrimitive(val);
+            writer.doWriteDoublePrimitive(val);
         }
 
         /** {@inheritDoc} */
@@ -481,186 +481,192 @@ public abstract class BinaryFieldAccessor {
                 throw new BinaryObjectException("Failed to get value for field: " + field, e);
             }
 
+            if (val == null) {
+                writer.writeByte(GridBinaryMarshaller.NULL);
+
+                return;
+            }
+
             switch (mode(val)) {
                 case BYTE:
-                    writer.writeByteField((Byte) val);
+                    writer.doWriteBytePrimitive((byte)val);
 
                     break;
 
                 case SHORT:
-                    writer.writeShortField((Short) val);
+                    writer.doWriteShortPrimitive((short)val);
 
                     break;
 
                 case INT:
-                    writer.writeIntField((Integer) val);
+                    writer.doWriteIntPrimitive((int)val);
 
                     break;
 
                 case LONG:
-                    writer.writeLongField((Long)val);
+                    writer.doWriteLongPrimitive((long)val);
 
                     break;
 
                 case FLOAT:
-                    writer.writeFloatField((Float)val);
+                    writer.doWriteFloatPrimitive((float)val);
 
                     break;
 
                 case DOUBLE:
-                    writer.writeDoubleField((Double)val);
+                    writer.doWriteDoublePrimitive((double)val);
 
                     break;
 
                 case CHAR:
-                    writer.writeCharField((Character)val);
+                    writer.doWriteCharPrimitive((char)val);
 
                     break;
 
                 case BOOLEAN:
-                    writer.writeBooleanField((Boolean)val);
+                    writer.doWriteBooleanPrimitive((boolean)val);
 
                     break;
 
                 case DECIMAL:
-                    writer.writeDecimalField((BigDecimal)val);
+                    writer.doWriteDecimal((BigDecimal)val);
 
                     break;
 
                 case STRING:
-                    writer.writeStringField((String)val);
+                    writer.doWriteString((String)val);
 
                     break;
 
                 case UUID:
-                    writer.writeUuidField((UUID)val);
+                    writer.doWriteUuid((UUID)val);
 
                     break;
 
                 case DATE:
-                    writer.writeDateField((Date)val);
+                    writer.doWriteDate((Date)val);
 
                     break;
 
                 case TIMESTAMP:
-                    writer.writeTimestampField((Timestamp)val);
+                    writer.doWriteTimestamp((Timestamp)val);
 
                     break;
 
                 case TIME:
-                    writer.writeTimeField((Time)val);
+                    writer.doWriteTime((Time)val);
 
                     break;
 
                 case BYTE_ARR:
-                    writer.writeByteArrayField((byte[])val);
+                    writer.doWriteByteArray((byte[])val);
 
                     break;
 
                 case SHORT_ARR:
-                    writer.writeShortArrayField((short[])val);
+                    writer.doWriteShortArray((short[])val);
 
                     break;
 
                 case INT_ARR:
-                    writer.writeIntArrayField((int[])val);
+                    writer.doWriteIntArray((int[])val);
 
                     break;
 
                 case LONG_ARR:
-                    writer.writeLongArrayField((long[])val);
+                    writer.doWriteLongArray((long[])val);
 
                     break;
 
                 case FLOAT_ARR:
-                    writer.writeFloatArrayField((float[])val);
+                    writer.doWriteFloatArray((float[])val);
 
                     break;
 
                 case DOUBLE_ARR:
-                    writer.writeDoubleArrayField((double[])val);
+                    writer.doWriteDoubleArray((double[])val);
 
                     break;
 
                 case CHAR_ARR:
-                    writer.writeCharArrayField((char[])val);
+                    writer.doWriteCharArray((char[])val);
 
                     break;
 
                 case BOOLEAN_ARR:
-                    writer.writeBooleanArrayField((boolean[])val);
+                    writer.doWriteBooleanArray((boolean[])val);
 
                     break;
 
                 case DECIMAL_ARR:
-                    writer.writeDecimalArrayField((BigDecimal[])val);
+                    writer.doWriteDecimalArray((BigDecimal[])val);
 
                     break;
 
                 case STRING_ARR:
-                    writer.writeStringArrayField((String[])val);
+                    writer.doWriteStringArray((String[])val);
 
                     break;
 
                 case UUID_ARR:
-                    writer.writeUuidArrayField((UUID[])val);
+                    writer.doWriteUuidArray((UUID[])val);
 
                     break;
 
                 case DATE_ARR:
-                    writer.writeDateArrayField((Date[])val);
+                    writer.doWriteDateArray((Date[])val);
 
                     break;
 
                 case TIMESTAMP_ARR:
-                    writer.writeTimestampArrayField((Timestamp[])val);
+                    writer.doWriteTimestampArray((Timestamp[])val);
 
                     break;
 
                 case TIME_ARR:
-                    writer.writeTimeArrayField((Time[])val);
+                    writer.doWriteTimeArray((Time[])val);
 
                     break;
 
                 case OBJECT_ARR:
-                    writer.writeObjectArrayField((Object[])val);
+                    writer.doWriteObjectArray((Object[])val);
 
                     break;
 
                 case COL:
-                    writer.writeCollectionField((Collection<?>)val);
+                    writer.doWriteCollection((Collection<?>)val);
 
                     break;
 
                 case MAP:
-                    writer.writeMapField((Map<?, ?>)val);
+                    writer.doWriteMap((Map<?, ?>)val);
 
                     break;
 
                 case BINARY_OBJ:
-                    writer.writeBinaryObjectField((BinaryObjectImpl)val);
+                    writer.doWriteBinaryObject((BinaryObjectImpl)val);
 
                     break;
 
                 case ENUM:
-                    writer.writeEnumField((Enum<?>)val);
+                    writer.doWriteEnum((Enum<?>)val);
 
                     break;
 
                 case ENUM_ARR:
-                    writer.writeEnumArrayField((Object[])val);
+                    writer.doWriteEnumArray((Object[])val);
 
                     break;
 
                 case BINARY:
                 case OBJECT:
                 case PROXY:
-                    writer.writeObjectField(val);
+                    writer.doWriteObject(val);
 
                     break;
 
                 case CLASS:
-                    writer.writeClassField((Class)val);
+                    writer.doWriteClass((Class)val);
 
                     break;
 

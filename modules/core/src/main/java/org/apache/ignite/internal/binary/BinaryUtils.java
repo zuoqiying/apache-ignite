@@ -371,6 +371,8 @@ public class BinaryUtils {
      * @param val Value.
      */
     public static void writePlainObject(BinaryWriterExImpl writer, Object val) {
+        assert val != null;
+
         Byte flag = PLAIN_CLASS_TO_FLAG.get(val.getClass());
 
         if (flag == null)
@@ -378,50 +380,42 @@ public class BinaryUtils {
 
         switch (flag) {
             case GridBinaryMarshaller.BYTE:
-                writer.writeByte(flag);
-                writer.writeByte((Byte)val);
+                writer.doWriteBytePrimitive((byte)val);
 
                 break;
 
             case GridBinaryMarshaller.SHORT:
-                writer.writeByte(flag);
-                writer.writeShort((Short)val);
+                writer.doWriteShortPrimitive((short)val);
 
                 break;
 
             case GridBinaryMarshaller.INT:
-                writer.writeByte(flag);
-                writer.writeInt((Integer)val);
+                writer.doWriteIntPrimitive((int)val);
 
                 break;
 
             case GridBinaryMarshaller.LONG:
-                writer.writeByte(flag);
-                writer.writeLong((Long)val);
+                writer.doWriteLongPrimitive((long)val);
 
                 break;
 
             case GridBinaryMarshaller.FLOAT:
-                writer.writeByte(flag);
-                writer.writeFloat((Float)val);
+                writer.doWriteFloatPrimitive((float)val);
 
                 break;
 
             case GridBinaryMarshaller.DOUBLE:
-                writer.writeByte(flag);
-                writer.writeDouble((Double)val);
+                writer.doWriteDoublePrimitive((double)val);
 
                 break;
 
             case GridBinaryMarshaller.CHAR:
-                writer.writeByte(flag);
-                writer.writeChar((Character)val);
+                writer.doWriteCharPrimitive((char)val);
 
                 break;
 
             case GridBinaryMarshaller.BOOLEAN:
-                writer.writeByte(flag);
-                writer.writeBoolean((Boolean)val);
+                writer.doWriteBooleanPrimitive((boolean)val);
 
                 break;
 

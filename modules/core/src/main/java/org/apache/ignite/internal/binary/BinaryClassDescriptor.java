@@ -539,49 +539,49 @@ public class BinaryClassDescriptor {
         switch (mode) {
             case P_BYTE:
             case BYTE:
-                writer.writeByteFieldPrimitive((byte) obj);
+                writer.doWriteBytePrimitive((byte) obj);
 
                 break;
 
             case P_SHORT:
             case SHORT:
-                writer.writeShortFieldPrimitive((short)obj);
+                writer.doWriteShortPrimitive((short)obj);
 
                 break;
 
             case P_INT:
             case INT:
-                writer.writeIntFieldPrimitive((int) obj);
+                writer.doWriteIntPrimitive((int) obj);
 
                 break;
 
             case P_LONG:
             case LONG:
-                writer.writeLongFieldPrimitive((long) obj);
+                writer.doWriteLongPrimitive((long) obj);
 
                 break;
 
             case P_FLOAT:
             case FLOAT:
-                writer.writeFloatFieldPrimitive((float) obj);
+                writer.doWriteFloatPrimitive((float) obj);
 
                 break;
 
             case P_DOUBLE:
             case DOUBLE:
-                writer.writeDoubleFieldPrimitive((double) obj);
+                writer.doWriteDoublePrimitive((double) obj);
 
                 break;
 
             case P_CHAR:
             case CHAR:
-                writer.writeCharFieldPrimitive((char) obj);
+                writer.doWriteCharPrimitive((char) obj);
 
                 break;
 
             case P_BOOLEAN:
             case BOOLEAN:
-                writer.writeBooleanFieldPrimitive((boolean) obj);
+                writer.doWriteBooleanPrimitive((boolean) obj);
 
                 break;
 
