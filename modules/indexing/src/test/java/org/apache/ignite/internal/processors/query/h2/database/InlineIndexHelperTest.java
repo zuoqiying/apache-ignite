@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import junit.framework.TestCase;
 import org.apache.commons.io.Charsets;
+import org.apache.ignite.configuration.MemoryPolicyConfiguration;
 import org.apache.ignite.internal.mem.unsafe.UnsafeMemoryProvider;
 import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageMemory;
@@ -141,8 +142,8 @@ public class InlineIndexHelperTest extends TestCase {
             new UnsafeMemoryProvider(log),
             null,
             PAGE_SIZE,
-            null,
-            new MemoryMetricsImpl(null),
+            new MemoryPolicyConfiguration(),
+            new MemoryMetricsImpl(new MemoryPolicyConfiguration()),
             false);
 
         pageMem.start();
@@ -190,8 +191,8 @@ public class InlineIndexHelperTest extends TestCase {
             new UnsafeMemoryProvider(log),
             null,
             PAGE_SIZE,
-            null,
-            new MemoryMetricsImpl(null),
+            new MemoryPolicyConfiguration(),
+            new MemoryMetricsImpl(new MemoryPolicyConfiguration()),
             false);
 
         pageMem.start();
@@ -308,8 +309,8 @@ public class InlineIndexHelperTest extends TestCase {
             new UnsafeMemoryProvider(log),
             null,
             PAGE_SIZE,
-            null,
-            new MemoryMetricsImpl(null),
+            new MemoryPolicyConfiguration(),
+            new MemoryMetricsImpl(new MemoryPolicyConfiguration()),
             false);
 
         pageMem.start();

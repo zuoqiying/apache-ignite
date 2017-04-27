@@ -320,7 +320,7 @@ public class FreeListImplSelfTest extends GridCommonAbstractTest {
             null,
             pageSize,
             new MemoryPolicyConfiguration().setMaxSize(1024 * MB),
-            new MemoryMetricsImpl(null),
+            new MemoryMetricsImpl(new MemoryPolicyConfiguration()),
             true);
 
         pageMem.start();
@@ -338,7 +338,7 @@ public class FreeListImplSelfTest extends GridCommonAbstractTest {
 
         long metaPageId = pageMem.allocatePage(1, 1, PageIdAllocator.FLAG_DATA);
 
-        MemoryMetricsImpl metrics = new MemoryMetricsImpl(null);
+        MemoryMetricsImpl metrics = new MemoryMetricsImpl(new MemoryPolicyConfiguration());
 
         MemoryPolicy memPlc = new MemoryPolicy(pageMem, null, metrics, new NoOpPageEvictionTracker());
 

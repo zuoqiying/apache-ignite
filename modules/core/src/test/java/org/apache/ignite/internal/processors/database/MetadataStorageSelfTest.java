@@ -163,7 +163,7 @@ public class MetadataStorageSelfTest extends GridCommonAbstractTest {
             null,
             PAGE_SIZE,
             new MemoryPolicyConfiguration().setMaxSize(30 * 1024 * 1024),
-            new MemoryMetricsImpl(null),
+            new MemoryMetricsImpl(new MemoryPolicyConfiguration()),
             true);
     }
 }

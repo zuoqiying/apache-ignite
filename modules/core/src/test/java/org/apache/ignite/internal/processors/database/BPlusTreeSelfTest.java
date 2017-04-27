@@ -1709,7 +1709,7 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
             null,
             PAGE_SIZE,
             new MemoryPolicyConfiguration().setMaxSize(5 * 1024 * MB),
-            new MemoryMetricsImpl(null), true);
+            new MemoryMetricsImpl(new MemoryPolicyConfiguration()), true);
 
         pageMem.start();
 
