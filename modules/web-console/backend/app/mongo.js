@@ -323,10 +323,8 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             }
         },
         evictionFilter: String,
-        cacheEntryListenerConfigurations: [String],
         memoryPolicyName: String,
         sqlIndexMaxInlineSize: Number,
-        transactionManagerLookupClassName: String,
         topologyValidator: String
     });
 
