@@ -344,13 +344,6 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
                             break;
                         }
 
-                        if (req.hasKey(key)) { // Reader became backup.
-                            if (entry.markObsolete(ver))
-                                removeEntry(entry);
-
-                            break;
-                        }
-
                         CacheObject val = req.nearValue(i);
                         EntryProcessor<Object, Object, Object> entryProcessor = req.nearEntryProcessor(i);
 
@@ -406,6 +399,15 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
             }
         }
 
+        for (int i = 0; i < req.obsoleteNearKeysSize(); i++) {
+            KeyCacheObject key = req.obsoleteNearKey(i);
+
+            GridCacheEntryEx entry = peekEx(key);
+
+            if (entry != null && entry.markObsolete(ver))
+                removeEntry(entry);
+        }
+
         return nearEvicted;
     }
 
@@ -417,6 +419,7 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
         @Nullable UUID subjId,
         String taskName,
         boolean deserializeBinary,
+        boolean recovery,
         boolean skipVals,
         boolean canRemap,
         boolean needVer
@@ -439,6 +442,7 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
             subjId,
             taskName,
             deserializeBinary,
+            recovery,
             skipVals ? null : opCtx != null ? opCtx.expiry() : null,
             skipVals,
             opCtx != null && opCtx.skipStore(),
@@ -466,11 +470,6 @@ public class GridNearAtomicCache<K, V> extends GridNearCacheAdapter<K, V> {
     @SuppressWarnings("unchecked")
     @Override public IgniteInternalFuture<Boolean> putAsync0(K key, V val, @Nullable CacheEntryPredicate filter) {
         return dht.putAsync0(key, val, filter);
-    }
-
-    /** {@inheritDoc} */
-    @Nullable @Override public V tryGetAndPut(K key, V val) throws IgniteCheckedException {
-        return dht.tryGetAndPut(key, val);
     }
 
     /** {@inheritDoc} */

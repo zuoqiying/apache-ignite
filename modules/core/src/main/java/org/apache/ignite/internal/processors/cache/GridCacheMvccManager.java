@@ -81,6 +81,9 @@ public class GridCacheMvccManager extends GridCacheSharedManagerAdapter {
     /** Maxim number of removed locks. */
     private static final int MAX_REMOVED_LOCKS = 10240;
 
+    /** Maxim number of atomic IDs for thread. Must be power of two! */
+    protected static final int THREAD_RESERVE_SIZE = 0x4000;
+
     /** */
     private static final int MAX_NESTED_LSNR_CALLS = getInteger(IGNITE_MAX_NESTED_LISTENER_CALLS, 5);
 
@@ -106,9 +109,6 @@ public class GridCacheMvccManager extends GridCacheSharedManagerAdapter {
     @GridToStringExclude
     private final ConcurrentMap<GridCacheVersion, Collection<GridCacheMvccFuture<?>>> mvccFuts = newMap();
 
-    /** */
-    private final AtomicLong atomicFutId = new AtomicLong(U.currentTimeMillis());
-
     /** Pending atomic futures. */
     private final ConcurrentHashMap8<Long, GridCacheAtomicFuture<?>> atomicFuts = new ConcurrentHashMap8<>();
 
@@ -132,11 +132,21 @@ public class GridCacheMvccManager extends GridCacheSharedManagerAdapter {
     };
 
     /** Logger. */
-    @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
+    @SuppressWarnings( {"FieldAccessedSynchronizedAndUnsynchronized"})
     private IgniteLogger exchLog;
 
     /** */
     private volatile boolean stopping;
+
+    /** Global atomic id counter. */
+    protected final AtomicLong globalAtomicCnt = new AtomicLong();
+
+    /** Per thread atomic id counter. */
+    private final ThreadLocal<LongWrapper> threadAtomicCnt = new ThreadLocal<LongWrapper>() {
+        @Override protected LongWrapper initialValue() {
+            return new LongWrapper(globalAtomicCnt.getAndAdd(THREAD_RESERVE_SIZE));
+        }
+    };
 
     /** Lock callback. */
     @GridToStringExclude
@@ -252,16 +262,8 @@ public class GridCacheMvccManager extends GridCacheSharedManagerAdapter {
             for (GridCacheFuture<?> fut : activeFutures())
                 fut.onNodeLeft(discoEvt.eventNode().id());
 
-            for (GridCacheAtomicFuture<?> cacheFut : atomicFuts.values()) {
+            for (GridCacheAtomicFuture<?> cacheFut : atomicFuts.values())
                 cacheFut.onNodeLeft(discoEvt.eventNode().id());
-
-                if (cacheFut.isCancelled() || cacheFut.isDone()) {
-                    long futId = cacheFut.id();
-
-                    if (futId > -1)
-                        atomicFuts.remove(futId, cacheFut);
-                }
-            }
         }
     };
 
@@ -426,13 +428,6 @@ public class GridCacheMvccManager extends GridCacheSharedManagerAdapter {
     }
 
     /**
-     * @return ID for atomic cache update future.
-     */
-    public long atomicFutureId() {
-        return atomicFutId.incrementAndGet();
-    }
-
-    /**
      * @param futId Future ID.
      * @param fut Future.
      * @return {@code False} if future was forcibly completed with error.
@@ -509,6 +504,8 @@ public class GridCacheMvccManager extends GridCacheSharedManagerAdapter {
 
         return fut;
     }
+
+    /**
 
     /**
      * Adds future.
@@ -1172,6 +1169,20 @@ public class GridCacheMvccManager extends GridCacheSharedManagerAdapter {
     }
 
     /**
+     * @return Next future ID for atomic futures.
+     */
+    public long nextAtomicId() {
+        LongWrapper cnt = threadAtomicCnt.get();
+
+        long res = cnt.getAndIncrement();
+
+        if ((cnt.get() & (THREAD_RESERVE_SIZE - 1)) == 0)
+            cnt.set(globalAtomicCnt.getAndAdd(THREAD_RESERVE_SIZE));
+
+        return res;
+    }
+
+    /**
      *
      */
     private class FinishLockFuture extends GridFutureAdapter<Object> {
@@ -1378,6 +1389,43 @@ public class GridCacheMvccManager extends GridCacheSharedManagerAdapter {
         /** {@inheritDoc} */
         @Override public String toString() {
             return S.toString(DataStreamerFuture.class, this, super.toString());
+        }
+    }
+
+    /** Long wrapper. */
+    private static class LongWrapper {
+        /** */
+        private long val;
+
+        /**
+         * @param val Value.
+         */
+        public LongWrapper(long val) {
+            this.val = val + 1;
+
+            if (this.val == 0)
+                this.val = 1;
+        }
+
+        /**
+         * @param val Value to set.
+         */
+        public void set(long val) {
+            this.val = val;
+        }
+
+        /**
+         * @return Current value.
+         */
+        public long get() {
+            return val;
+        }
+
+        /**
+         * @return Current value (and stores incremented value).
+         */
+        public long getAndIncrement() {
+            return val++;
         }
     }
 }

@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,6 +68,7 @@ import org.apache.ignite.internal.util.lang.GridTuple3;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.X;
+import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiPredicate;
@@ -99,7 +101,7 @@ import static org.apache.ignite.internal.managers.communication.GridIoPolicy.IGF
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.MANAGEMENT_POOL;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.P2P_POOL;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.PUBLIC_POOL;
-import static org.apache.ignite.internal.managers.communication.GridIoPolicy.QUERY_POOL;
+import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SCHEMA_POOL;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SERVICE_POOL;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.SYSTEM_POOL;
 import static org.apache.ignite.internal.managers.communication.GridIoPolicy.UTILITY_CACHE_POOL;
@@ -139,7 +141,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
     private final Collection<GridDisconnectListener> disconnectLsnrs = new ConcurrentLinkedQueue<>();
 
     /** Pool processor. */
-    private PoolProcessor pools;
+    private final PoolProcessor pools;
 
     /** Discovery listener. */
     private GridLocalEventListener discoLsnr;
@@ -250,7 +252,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
 
     /** {@inheritDoc} */
     @SuppressWarnings("deprecation")
-    @Override public void start() throws IgniteCheckedException {
+    @Override public void start(boolean activeOnStart) throws IgniteCheckedException {
         assertParameter(discoDelay > 0, "discoveryStartupDelay > 0");
 
         startSpi();
@@ -702,6 +704,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                 case IGFS_POOL:
                 case DATA_STREAMER_POOL:
                 case QUERY_POOL:
+                case SCHEMA_POOL:
                 case SERVICE_POOL:
                 {
                     if (msg.isOrdered())
@@ -746,7 +749,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         Runnable c = new Runnable() {
             @Override public void run() {
                 try {
-                    threadProcessingMessage(true);
+                    threadProcessingMessage(true, msgC);
 
                     GridMessageListener lsnr = listenerGet0(msg.topic());
 
@@ -760,7 +763,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                     invokeListener(msg.policy(), lsnr, nodeId, obj);
                 }
                 finally {
-                    threadProcessingMessage(false);
+                    threadProcessingMessage(false, null);
 
                     msgC.run();
                 }
@@ -795,12 +798,12 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         final Runnable c = new Runnable() {
             @Override public void run() {
                 try {
-                    threadProcessingMessage(true);
+                    threadProcessingMessage(true, msgC);
 
                     processRegularMessage0(msg, nodeId);
                 }
                 finally {
-                    threadProcessingMessage(false);
+                    threadProcessingMessage(false, null);
 
                     msgC.run();
                 }
@@ -824,7 +827,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             return;
         }
 
-        if (plc == GridIoPolicy.SYSTEM_POOL &&
+        if (plc == GridIoPolicy.SYSTEM_POOL && msg.partition() != GridIoMessage.STRIPE_DISABLED_PART &&
             (msg.partition() != Integer.MIN_VALUE ||
                 msg.message().directType() == GridNearAtomicFullUpdateRequest.DIRECT_TYPE)) {
 
@@ -839,13 +842,38 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             return;
         }
 
+        if (msg.topicOrdinal() == TOPIC_IO_TEST.ordinal()) {
+            IgniteIoTestMessage msg0 = (IgniteIoTestMessage)msg.message();
+
+            if (msg0.processFromNioThread()) {
+                c.run();
+
+                return;
+            }
+        }
+
         try {
+            String execName = msg.executorName();
+
+            if (execName != null) {
+                Executor exec = pools.customExecutor(execName);
+
+                if (exec != null) {
+                    exec.execute(c);
+
+                    return;
+                }
+                else {
+                    LT.warn(log, "Custom executor doesn't exist (message will be processed in default " +
+                        "thread pool): " + execName);
+                }
+            }
+
             pools.poolForPolicy(plc).execute(c);
         }
         catch (RejectedExecutionException e) {
-            U.error(log, "Failed to process regular message due to execution rejection. Increase the upper bound " +
-                "on 'ExecutorService' provided by 'IgniteConfiguration.getPublicThreadPoolSize()'. " +
-                "Will attempt to process message in the listener thread instead.", e);
+            U.error(log, "Failed to process regular message due to execution rejection. Will attempt to process " +
+                "message in the listener thread instead.", e);
 
             c.run();
         }
@@ -1165,12 +1193,12 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         Runnable c = new Runnable() {
             @Override public void run() {
                 try {
-                    threadProcessingMessage(true);
+                    threadProcessingMessage(true, msgC);
 
                     unwindMessageSet(msgSet0, lsnr);
                 }
                 finally {
-                    threadProcessingMessage(false);
+                    threadProcessingMessage(false, null);
                 }
             }
         };
