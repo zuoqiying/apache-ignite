@@ -27,6 +27,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.Lock;
@@ -1170,6 +1171,16 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
     /**
      * @throws Exception If failed.
      */
+    public void testTestRandomPutRemoveMultithreaded_2_25_1() throws Exception {
+        MAX_PER_PAGE = 2;
+        CNT = 100;
+
+        doTestRandomPutRemoveMultithreaded(true);
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
     public void testTestRandomPutRemoveMultithreaded_2_50_1() throws Exception {
         MAX_PER_PAGE = 2;
         CNT = 50;
@@ -1221,6 +1232,70 @@ public class BPlusTreeSelfTest extends GridCommonAbstractTest {
         assertEquals((Long)10L, last);
 
         assertNoLocks();
+    }
+
+    /**
+     *
+     */
+    public void testConcurrentGrowDegenerateTreeAndConcurrentRemove() throws Exception {
+        int i = 24;
+
+        AtomicBoolean failed = new AtomicBoolean();
+
+        for (int k = 0; k < 1000; k++) {
+            final TestTree tree = createTestTree(true);
+
+            AtomicBoolean start = new AtomicBoolean();
+
+            AtomicInteger ready = new AtomicInteger();
+
+            Thread first = new Thread(new Runnable() {
+                @Override public void run() {
+                    ready.incrementAndGet();
+
+                    while (!start.get());
+
+                    try {
+                        tree.remove(12L);
+                    }
+                    catch (Throwable e) {
+                        e.printStackTrace();
+                        failed.set(true);
+                    }
+                }
+            });
+
+            Thread second = new Thread(new Runnable() {
+                @Override public void run() {
+                    ready.incrementAndGet();
+
+                    while (!start.get());
+
+                    try {
+                        tree.put(25L);
+                    }
+                    catch (Throwable e) {
+                        e.printStackTrace();
+                        failed.set(true);
+                    }
+                }
+            });
+
+            for (int j = 0; j < i; j++)
+                tree.put((long)j);
+
+            first.start();
+            second.start();
+
+            while (ready.get() != 2) ;
+
+            start.set(true);
+
+            first.join();
+            second.join();
+
+            assertFalse(failed.get());
+        }
     }
 
     /**

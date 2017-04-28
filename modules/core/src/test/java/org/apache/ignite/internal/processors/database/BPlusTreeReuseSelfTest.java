@@ -128,4 +128,8 @@ public class BPlusTreeReuseSelfTest extends BPlusTreeSelfTest {
             return readLocks.get().isEmpty() && writeLocks.get().isEmpty();
         }
     }
+
+    @Override public void testTestRandomPutRemoveMultithreaded_3_70_1() throws Exception {
+        super.testTestRandomPutRemoveMultithreaded_3_70_1();
+    }
 }

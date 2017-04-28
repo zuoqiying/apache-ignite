@@ -443,6 +443,10 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
             throws IgniteCheckedException {
             assert lvl == 0 : lvl; // Leaf.
 
+            // Check the triangle invariant.
+            if (io.getForward(leafAddr) != r.fwdId)
+                return RETRY;
+
             final int cnt = io.getCount(leafAddr);
 
             assert cnt <= Short.MAX_VALUE: cnt;
@@ -487,7 +491,7 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
                 if (needReplaceInner)
                     r.needReplaceInner = TRUE;
 
-                Tail<L> t = r.addTail(leafId, leafPage, leafAddr, io, 0, Tail.EXACT);
+                Tail<L> t = r.addTail(leafId, leafPage, leafAddr, io, 0, Tail.EXACT, "RemoveFromLeaf");
 
                 t.idx = (short)idx;
 
@@ -521,7 +525,7 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
 
             // Keep locks on back and leaf pages for subsequent merges.
             if (res == FOUND && r.tail != null)
-                r.addTail(backId, backPage, backAddr, io, lvl, Tail.BACK);
+                r.addTail(backId, backPage, backAddr, io, lvl, Tail.BACK, "LockBackAndRmvFromLeaf");
 
             return res;
         }
@@ -545,7 +549,7 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
             Result res = r.doLockTail(lvl);
 
             if (res == FOUND)
-                r.addTail(backId, backPage, backAddr, io, lvl, Tail.BACK);
+                r.addTail(backId, backPage, backAddr, io, lvl, Tail.BACK, "LockBackAndTail");
 
             return res;
         }
@@ -561,7 +565,7 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
         /** {@inheritDoc} */
         @Override protected Result run0(long pageId, long page, long pageAddr, BPlusIO<L> io, Remove r, int lvl)
             throws IgniteCheckedException {
-            r.addTail(pageId, page, pageAddr, io, lvl, Tail.FORWARD);
+            r.addTail(pageId, page, pageAddr, io, lvl, Tail.FORWARD, "LockTailForward");
 
             return FOUND;
         }
@@ -591,7 +595,7 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
                     return res; // Retry.
             }
 
-            r.addTail(pageId, page, pageAddr, io, lvl, Tail.EXACT);
+            r.addTail(pageId, page, pageAddr, io, lvl, Tail.EXACT, " LockTail");
 
             return FOUND;
         }
@@ -3385,8 +3389,12 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
             assert tail.type == Tail.EXACT && tail.lvl >= 0: tail;
 
             if (tail.lvl == 0) {
+                if (tail.sibling == null) {
+                    System.err.println("");
+                }
+
                 // At the bottom level we can't have a tail without a sibling, it means we have higher levels.
-                assert tail.sibling != null;
+                assert tail.sibling != null : tail;
 
                 return NOT_FOUND; // Lock upper level, we are at the bottom now.
             }
@@ -3922,6 +3930,10 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
                 assert left.type == Tail.EXACT : left.type;
                 assert left.sibling != null;
 
+                if (left.lvl != 0) {
+
+                }
+
                 left.sibling = null;
             }
 
@@ -3999,8 +4011,8 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
          * @param type Type.
          * @return Added tail.
          */
-        private Tail<L> addTail(long pageId, long page, long pageAddr, BPlusIO<L> io, int lvl, byte type) {
-            final Tail<L> t = new Tail<>(pageId, page, pageAddr, io, type, lvl);
+        private Tail<L> addTail(long pageId, long page, long pageAddr, BPlusIO<L> io, int lvl, byte type, String msg) {
+            final Tail<L> t = new Tail<>(pageId, page, pageAddr, io, type, lvl, msg);
 
             if (tail == null)
                 tail = t;
@@ -4015,11 +4027,19 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
                         tail.down = null;
                     }
 
+                    if (tail == null && t.lvl == 0) {
+                        System.err.println("");
+                    }
+
                     t.sibling = tail;
                     tail = t;
                 }
                 else {
                     assert tail.type == Tail.EXACT : tail.type;
+
+                    if (t == null && tail.lvl == 0) {
+                        System.err.println("");
+                    }
 
                     tail.sibling = t;
                 }
@@ -4182,6 +4202,8 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
         /** Only {@link #EXACT} tail can point to {@link #EXACT} tail of lower level. */
         private Tail<L> down;
 
+        private final String msg;
+
         /**
          * @param pageId Page ID.
          * @param page Page absolute pointer.
@@ -4189,8 +4211,9 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
          * @param io IO.
          * @param type Type.
          * @param lvl Level.
+         * @param msg
          */
-        private Tail(long pageId, long page, long buf, BPlusIO<L> io, byte type, int lvl) {
+        private Tail(long pageId, long page, long buf, BPlusIO<L> io, byte type, int lvl, String msg) {
             assert type == BACK || type == EXACT || type == FORWARD : type;
             assert lvl >= 0 && lvl <= Byte.MAX_VALUE : lvl;
             assert pageId != 0L;
@@ -4203,6 +4226,7 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
             this.io = io;
             this.type = type;
             this.lvl = (byte)lvl;
+            this.msg = msg;
         }
 
         /**

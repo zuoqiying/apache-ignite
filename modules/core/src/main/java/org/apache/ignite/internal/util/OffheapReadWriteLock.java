@@ -579,6 +579,7 @@ public class OffheapReadWriteLock {
         if (writersWait > MAX_WAITERS)
             throw new IllegalStateException("Failed to add write waiter (too many waiting threads): " + MAX_WAITERS);
 
+        if (readersWait < 0)
         assert readersWait >= 0 : readersWait;
         assert writersWait >= 0 : writersWait;
         assert lock >= -1;
