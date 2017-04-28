@@ -56,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_ASYNC;
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
+import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_STRIPES_CNT;
 import static org.apache.ignite.internal.processors.cache.GridCacheOperation.TRANSFORM;
 
 /**
@@ -448,7 +449,7 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
         if (rcvAll && nearEnabled) {
             if (mappings != null) {
                 for (PrimaryRequestState reqState : mappings.values()) {
-                    GridNearAtomicUpdateResponse res0 = reqState.req.response();
+                    GridNearAtomicUpdateResponse res0 = reqState.response();
 
                     assert res0 != null : reqState;
 
@@ -576,7 +577,7 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
         if (nearEnabled) {
             if (mappings != null) {
                 for (PrimaryRequestState reqState : mappings.values()) {
-                    GridNearAtomicUpdateResponse res0 = reqState.req.response();
+                    GridNearAtomicUpdateResponse res0 = reqState.response();
 
                     assert res0 != null : reqState;
 
@@ -584,9 +585,9 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
                 }
             }
             else {
-                assert singleReq != null && singleReq.req.response() != null;
+                assert singleReq != null && singleReq.response() != null;
 
-                updateNear(singleReq.req, singleReq.req.response());
+                updateNear(singleReq.req, singleReq.response());
             }
         }
 
@@ -1005,6 +1006,8 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
 
             UUID nodeId = primary.id();
 
+            int stripes = primary.attribute(ATTR_STRIPES_CNT) != null ? (int)primary.attribute(ATTR_STRIPES_CNT) : -1;
+
             PrimaryRequestState mapped = pendingMappings.get(nodeId);
 
             if (mapped == null) {
@@ -1027,7 +1030,8 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
                     keepBinary,
                     recovery,
                     cctx.deploymentEnabled(),
-                    keys.size());
+                    keys.size(),
+                    stripes);
 
                 mapped = new PrimaryRequestState(req, nodes, false);
 
@@ -1133,6 +1137,7 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
             keepBinary,
             recovery,
             cctx.deploymentEnabled(),
+            1,
             1);
 
         req.addUpdateEntry(cacheKey,

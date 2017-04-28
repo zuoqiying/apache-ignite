@@ -137,7 +137,7 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridCacheFuture
 
     /** Future ID, changes when operation is remapped. */
     @GridToStringInclude
-    protected long futId = -1;
+    protected long futId;
 
     /** Operation result. */
     protected GridCacheReturn opRes;
@@ -411,7 +411,7 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridCacheFuture
      * @return Response to notify about primary failure.
      */
     final GridNearAtomicUpdateResponse primaryFailedResponse(GridNearAtomicAbstractUpdateRequest req) {
-//        assert req == null : req;
+//        assert req.response() == null : req;
         assert req.nodeId() != null : req;
 
         if (msgLog.isDebugEnabled()) {
@@ -587,7 +587,7 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridCacheFuture
          * @return Request if need process primary fail response, {@code null} otherwise.
          */
         @Nullable GridNearAtomicAbstractUpdateRequest onPrimaryFail() {
-            if (finished() || req.nodeFailedResponse())
+            if (finished() || nodeFailedResponse())
                 return null;
 
             /*

@@ -642,6 +642,7 @@ public class GridNearAtomicSingleUpdateFuture extends GridNearAtomicAbstractUpda
                 keepBinary,
                 recovery,
                 cctx.deploymentEnabled(),
+                1,
                 1);
         }
 
@@ -671,9 +672,9 @@ public class GridNearAtomicSingleUpdateFuture extends GridNearAtomicAbstractUpda
         }
 
         if (nearEnabled) {
-            assert reqState.req.response() != null;
+            assert reqState.response() != null;
 
-            updateNear(reqState.req, reqState.req.response());
+            updateNear(reqState.req, reqState.response());
         }
 
         completeFuture(opRes, err, futId);

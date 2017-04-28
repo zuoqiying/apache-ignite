@@ -124,10 +124,9 @@ public class GridNearAtomicFullUpdateRequest extends GridNearAtomicAbstractUpdat
     /** Partition Id */
     private int partId;
 
-    /** */
-    static int smear(int hashCode) {
-        hashCode ^= (hashCode >>> 20) ^ (hashCode >>> 12);
-        return hashCode ^ (hashCode >>> 7) ^ (hashCode >>> 4);
+    /** Function to shuffle partitions */
+    static int smear(int part) {
+        return part;
     }
 
     /**

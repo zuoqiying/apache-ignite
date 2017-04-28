@@ -86,7 +86,6 @@ import org.apache.ignite.internal.util.GridIntList;
 import org.apache.ignite.internal.util.GridLongList;
 import org.apache.ignite.internal.util.GridUnsafe;
 import org.apache.ignite.internal.util.StripedExecutor;
-import org.apache.ignite.internal.util.future.GridEmbeddedFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.nio.GridNioBackPressureControl;
 import org.apache.ignite.internal.util.nio.GridNioMessageTracker;
@@ -1726,8 +1725,14 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             else
                 updateAllAsyncInternal0(nodeId, req, curStripe, req0.stripeMap().get(curStripe), completionCb);
         }
-        else
+        else {
+            GridDhtPartitionTopology top = topology();
+            GridCacheVersion next = ctx.versions().next(top.topologyVersion());
+
+            req.context(new NearAtomicRequestContext(ctx.discovery().node(nodeId), map.size(), top, next));
+
             updateAllAsyncInternal0(nodeId, req, -1, null, completionCb);
+        }
     }
 
     /**
