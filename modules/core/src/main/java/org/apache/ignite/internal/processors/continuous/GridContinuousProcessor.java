@@ -321,8 +321,6 @@ public class GridContinuousProcessor extends GridProcessorAdapter {
 
         ctx.marshallerContext().onContinuousProcessorStarted(ctx);
 
-        ctx.cacheObjects().onContinuousProcessorStarted(ctx);
-
         ctx.service().onContinuousProcessorStarted(ctx);
 
         if (log.isDebugEnabled())

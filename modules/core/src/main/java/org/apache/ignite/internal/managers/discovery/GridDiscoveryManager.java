@@ -642,6 +642,9 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
             }
         });
 
+        if (!ctx.config().isDaemon())
+            ctx.service().onContinuousProcessorStarted(ctx);
+
         spi.setDataExchange(new DiscoverySpiDataExchange() {
             @Override public Map<Integer, Serializable> collect(UUID nodeId) {
                 assert nodeId != null;
