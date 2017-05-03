@@ -893,7 +893,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                 .catch((err) => Messages.showError(err));
 
         const _startWatch = () =>
-            agentMgr.startWatch('Back to Configuration', 'base.configuration.clusters')
+            agentMgr.startClusterWatch('Back to Configuration', 'base.configuration.clusters')
                 .then(() => Loading.start('sqlLoading'))
                 .then(_refreshFn)
                 .then(() => Loading.finish('sqlLoading'))
@@ -1342,12 +1342,12 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
         const _executeRefresh = (paragraph) => {
             const args = paragraph.queryArgs;
 
-            agentMgr.awaitAgent()
+            agentMgr.awaitCluster()
                 .then(() => _closeOldQuery(paragraph))
                 .then(() => args.localNid || _chooseNode(args.cacheName, false))
                 .then((nid) => agentMgr.querySql(nid, args.cacheName, args.query, args.nonCollocatedJoins,
-                    args.enforceJoinOrder, false, !!args.localNid, args.pageSize))
-                .then(_processQueryResult.bind(this, paragraph, false))
+                    args.enforceJoinOrder, !!args.localNid, args.pageSize))
+                .then((res) => _processQueryResult(paragraph, false, res))
                 .catch((err) => paragraph.setError(err));
         };
 
@@ -1418,7 +1418,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                             ActivitiesData.post({ action: '/queries/execute' });
 
-                            return agentMgr.querySql(nid, args.cacheName, qry, nonCollocatedJoins, enforceJoinOrder, false, local, args.pageSize);
+                            return agentMgr.querySql(nid, args.cacheName, qry, nonCollocatedJoins, enforceJoinOrder, local, args.pageSize);
                         })
                         .then((res) => {
                             _processQueryResult(paragraph, true, res);
@@ -1471,9 +1471,9 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
                     ActivitiesData.post({ action: '/queries/explain' });
 
-                    return agentMgr.querySql(nid, args.cacheName, args.query, false, !!paragraph.enforceJoinOrder, false, false, args.pageSize);
+                    return agentMgr.querySql(nid, args.cacheName, args.query, false, !!paragraph.enforceJoinOrder, false, args.pageSize);
                 })
-                .then(_processQueryResult.bind(this, paragraph, true))
+                .then((res) => _processQueryResult(paragraph, true, res))
                 .catch((err) => {
                     paragraph.setError(err);
 
@@ -1484,10 +1484,10 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
 
         $scope.scan = (paragraph, local = false) => {
             const cacheName = paragraph.cacheName;
-            const caseSensitive = !!paragraph.caseSensitive;
-            const filter = paragraph.filter;
-            const prefix = caseSensitive ? SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE : SCAN_CACHE_WITH_FILTER;
-            const query = `${prefix}${filter}`;
+
+            const prefix = paragraph.caseSensitive ? SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE : SCAN_CACHE_WITH_FILTER;
+            const query = `${prefix}${paragraph.filter}`;
+
             const pageSize = paragraph.pageSize;
 
             $scope.actionAvailable(paragraph, false) && _chooseNode(cacheName, local)
@@ -1504,18 +1504,15 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
                             paragraph.queryArgs = {
                                 type: 'SCAN',
                                 cacheName,
-                                filter,
                                 query,
                                 regEx: false,
-                                caseSensitive,
-                                near: false,
                                 pageSize,
                                 localNid: local ? nid : null
                             };
 
                             ActivitiesData.post({ action: '/queries/scan' });
 
-                            return agentMgr.queryScan(nid, cacheName, query, false, caseSensitive, false, local, pageSize);
+                            return agentMgr.querySql(nid, cacheName, query, false, false, local, pageSize);
                         })
                         .then((res) => _processQueryResult(paragraph, true, res))
                         .catch((err) => {
@@ -1636,9 +1633,7 @@ export default ['$rootScope', '$scope', '$http', '$q', '$timeout', '$interval', 
             const args = paragraph.queryArgs;
 
             return Promise.resolve(args.localNid || _chooseNode(args.cacheName, false))
-                .then((nid) => args.type === 'SCAN'
-                    ? agentMgr.queryScanGetAll(nid, args.cacheName, args.query, !!args.regEx, !!args.caseSensitive, !!args.near, !!args.localNid)
-                    : agentMgr.querySqlGetAll(nid, args.cacheName, args.query, !!args.nonCollocatedJoins, !!args.enforceJoinOrder, false, !!args.localNid))
+                .then((nid) => agentMgr.querySqlGetAll(nid, args.cacheName, args.query, !!args.nonCollocatedJoins, !!args.enforceJoinOrder, !!args.localNid))
                 .then((res) => _export(paragraph.name + '-all.csv', paragraph.gridOptions.columnDefs, res.columns, res.rows))
                 .catch(Messages.showError)
                 .then(() => paragraph.ace && paragraph.ace.focus());

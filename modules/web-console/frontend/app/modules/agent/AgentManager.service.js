@@ -41,7 +41,7 @@ export default class IgniteAgentManager {
 
         this.clusters = [];
 
-        $root.$on('$stateChangeSuccess', _.bind(this.stopWatch, this));
+        $root.$on('$stateChangeSuccess', () => this.stopWatch());
 
         /**
          * Connection to backend.
@@ -128,20 +128,29 @@ export default class IgniteAgentManager {
     }
 
     /**
+     * @param states
      * @returns {Promise}
      */
-    awaitAgent() {
-        this.latchAwaitAgent = this.$q.defer();
+    awaitConnectionState(...states) {
+        this.latchAwaitStates = this.$q.defer();
 
         this.offAwaitAgent = this.$root.$watch(() => this.connectionState, (state) => {
-            if (state === State.CONNECTED) {
+            if (_.includes(states, state)) {
                 this.offAwaitAgent();
 
-                this.latchAwaitAgent.resolve();
+                this.latchAwaitStates.resolve();
             }
         });
 
-        return this.latchAwaitAgent.promise;
+        return this.latchAwaitStates.promise;
+    }
+
+    awaitCluster() {
+        return this.awaitConnectionState(State.CONNECTED);
+    }
+
+    awaitAgent() {
+        return this.awaitConnectionState(State.CONNECTED, State.CLUSTER_DISCONNECTED);
     }
 
     /**
@@ -149,7 +158,7 @@ export default class IgniteAgentManager {
      * @param {String} [backState]
      * @returns {Promise}
      */
-    startWatch(backText, backState) {
+    startAgentWatch(backText, backState) {
         const self = this;
 
         self.backText = backText;
@@ -163,18 +172,14 @@ export default class IgniteAgentManager {
 
         self.offStateWatch = this.$root.$watch(() => self.connectionState, (state) => {
             switch (state) {
+                case State.CONNECTED:
+                case State.CLUSTER_DISCONNECTED:
+                    this.AgentModal.hide();
+
+                    break;
+
                 case State.AGENT_DISCONNECTED:
                     this.AgentModal.agentDisconnected(self.backText, self.backState);
-
-                    break;
-
-                case State.CLUSTER_DISCONNECTED:
-                    self.AgentModal.clusterDisconnected(self.backText, self.backState);
-
-                    break;
-
-                case State.CONNECTED:
-                    this.AgentModal.hide();
 
                     break;
 
@@ -186,6 +191,48 @@ export default class IgniteAgentManager {
         return self.awaitAgent();
     }
 
+    /**
+     * @param {String} backText
+     * @param {String} [backState]
+     * @returns {Promise}
+     */
+    startClusterWatch(backText, backState) {
+        const self = this;
+
+        self.backText = backText;
+        self.backState = backState;
+
+        if (_.nonEmpty(self.clusters) && _.get(self.cluster, 'disconnect') === true) {
+            self.cluster = _.head(self.clusters);
+
+            self.connectionState = State.CONNECTED;
+        }
+
+        self.offStateWatch = this.$root.$watch(() => self.connectionState, (state) => {
+            switch (state) {
+                case State.CONNECTED:
+                    this.AgentModal.hide();
+
+                    break;
+
+                case State.AGENT_DISCONNECTED:
+                    this.AgentModal.agentDisconnected(self.backText, self.backState);
+
+                    break;
+
+                case State.CLUSTER_DISCONNECTED:
+                    self.AgentModal.clusterDisconnected(self.backText, self.backState);
+
+                    break;
+
+                default:
+                    // Connection to backend is not established yet.
+            }
+        });
+
+        return self.awaitCluster();
+    }
+
     stopWatch() {
         if (!_.isFunction(this.offStateWatch))
             return;
@@ -194,10 +241,10 @@ export default class IgniteAgentManager {
 
         this.AgentModal.hide();
 
-        if (this.latchAwaitAgent) {
+        if (this.latchAwaitStates) {
             this.offAwaitAgent();
 
-            this.latchAwaitAgent.reject('Agent watch stopped.');
+            this.latchAwaitStates.reject('Agent watch stopped.');
         }
     }
 
@@ -407,12 +454,13 @@ export default class IgniteAgentManager {
      * @param {String} [query] Query if null then scan query.
      * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
      * @param {Boolean} enforceJoinOrder Flag whether enforce join order is enabled.
-     * @param {Boolean} replicatedOnly Flag whether query contains only replicated tables.
      * @param {Boolean} local Flag whether to execute query locally.
      * @param {int} pageSz
      * @returns {Promise}
      */
-    querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local, pageSz) {
+    querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSz) {
+        cacheName = _.isEmpty(cacheName) ? null : cacheName;
+
         let queryPromise;
 
         if (enforceJoinOrder)
@@ -447,11 +495,10 @@ export default class IgniteAgentManager {
      * @param {String} [query] Query if null then scan query.
      * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
      * @param {Boolean} enforceJoinOrder Flag whether enforce join order is enabled.
-     * @param {Boolean} replicatedOnly Flag whether query contains only replicated tables.
      * @param {Boolean} local Flag whether to execute query locally.
      * @returns {Promise}
      */
-    querySqlGetAll(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local) {
+    querySqlGetAll(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local) {
         // Page size for query.
         const pageSz = 1024;
 
@@ -469,7 +516,7 @@ export default class IgniteAgentManager {
                 });
         };
 
-        return this.querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local, pageSz)
+        return this.querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSz)
             .then(fetchResult);
     }
 
@@ -480,59 +527,5 @@ export default class IgniteAgentManager {
      */
     queryClose(nid, queryId) {
         return this.visorTask('queryClose', nid, queryId);
-    }
-
-    /**
-     * @param {String} nid Node id.
-     * @param {String} cacheName Cache name.
-     * @param {String} filter Filter text.
-     * @param {Boolean} regEx Flag whether filter by regexp.
-     * @param {Boolean} caseSensitive Case sensitive filtration.
-     * @param {Boolean} near Scan near cache.
-     * @param {Boolean} local Flag whether to execute query locally.
-     * @param {int} pageSize Page size.
-     * @returns {Promise}
-     */
-    queryScan(nid, cacheName, filter, regEx, caseSensitive, near, local, pageSize) {
-        return this.visorTask('querySql', nid, cacheName, filter, local, pageSize)
-            .then(({key, value}) => {
-                if (_.isEmpty(key))
-                    return value;
-
-                return Promise.reject(key);
-            });
-    }
-
-    /**
-     /**
-     * @param {String} nid Node id.
-     * @param {String} cacheName Cache name.
-     * @param {String} filter Filter text.
-     * @param {Boolean} regEx Flag whether filter by regexp.
-     * @param {Boolean} caseSensitive Case sensitive filtration.
-     * @param {Boolean} near Scan near cache.
-     * @param {Boolean} local Flag whether to execute query locally.
-     * @returns {Promise}
-     */
-    queryScanGetAll(nid, cacheName, filter, regEx, caseSensitive, near, local) {
-        // Page size for query.
-        const pageSz = 1024;
-
-        const fetchResult = (acc) => {
-            if (!acc.hasMore)
-                return acc;
-
-            return this.queryNextPage(acc.responseNodeId, acc.queryId, pageSz)
-                .then((res) => {
-                    acc.rows = acc.rows.concat(res.rows);
-
-                    acc.hasMore = res.hasMore;
-
-                    return fetchResult(acc);
-                });
-        };
-
-        return this.queryScan(nid, cacheName, filter, regEx, caseSensitive, near, local, pageSz)
-            .then(fetchResult);
     }
 }
