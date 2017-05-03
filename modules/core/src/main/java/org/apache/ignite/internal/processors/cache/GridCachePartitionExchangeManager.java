@@ -1741,6 +1741,8 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                                             U.dumpThreads(log);
 
                                         dumpedObjects++;
+
+                                        exchFut.dumpDiagnosticInfo();
                                     }
                                 }
                             }
