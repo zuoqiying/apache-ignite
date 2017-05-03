@@ -46,6 +46,7 @@ import org.apache.ignite.internal.managers.communication.GridIoPolicy;
 import org.apache.ignite.internal.managers.communication.GridMessageListener;
 import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.processors.GridProcessorAdapter;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.util.GridTimerTask;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
@@ -298,6 +299,12 @@ public class ClusterProcessor extends GridProcessorAdapter {
 
     public void dumpBasicInfo(final UUID nodeId, final String msg) {
         IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.BaseClosure(ctx), msg);
+
+        listenAndLog(fut);
+    }
+
+    public void dumpExchangeInfo(final UUID nodeId, AffinityTopologyVersion topVer, final String msg) {
+        IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.ExchangeInfoClosure(ctx, topVer), msg);
 
         listenAndLog(fut);
     }

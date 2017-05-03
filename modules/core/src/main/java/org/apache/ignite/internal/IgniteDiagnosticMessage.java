@@ -18,11 +18,13 @@
 package org.apache.ignite.internal;
 
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheMapEntry;
 import org.apache.ignite.internal.processors.cache.GridCachePartitionExchangeManager;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTopologyFuture;
+import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsExchangeFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -37,6 +39,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -282,6 +285,30 @@ public class IgniteDiagnosticMessage implements Message {
             }
 
             return sb.toString();
+        }
+    }
+    public static class ExchangeInfoClosure extends BaseClosure {
+        /** */
+        private static final long serialVersionUID = 0L;
+
+        /** */
+        private final AffinityTopologyVersion topVer;
+
+        public ExchangeInfoClosure(GridKernalContext ctx, AffinityTopologyVersion topVer) {
+            super(ctx);
+
+            this.topVer = topVer;
+        }
+
+        @Override protected String dumpInfo(GridKernalContext ctx) {
+            List<GridDhtPartitionsExchangeFuture> futs = ctx.cache().context().exchange().exchangeFutures();
+
+            for (GridDhtPartitionsExchangeFuture fut : futs) {
+                if (topVer.equals(fut.topologyVersion()))
+                    return "Exchange future: " + fut;
+            }
+
+            return "Failed to find exchange future: " + topVer;
         }
     }
 

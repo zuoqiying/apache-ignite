@@ -2337,13 +2337,13 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             if (crd != null) {
                 if (!crd.isLocal()) {
-                    cctx.kernalContext().cluster().dumpBasicInfo(crd.id(), "Exchange future waiting for coordinator " +
+                    cctx.kernalContext().cluster().dumpExchangeInfo(crd.id(), topologyVersion(), "Exchange future waiting for coordinator " +
                         "response [crd=" + crd.id() + ", topVer=" + topologyVersion() + ']');
                 }
                 else if (!remaining.isEmpty()){
                     UUID nodeId = remaining.iterator().next();
 
-                    cctx.kernalContext().cluster().dumpBasicInfo(crd.id(), "Exchange future waiting for server " +
+                    cctx.kernalContext().cluster().dumpExchangeInfo(crd.id(), topologyVersion(), "Exchange future waiting for server " +
                         "response [node=" + nodeId + ", topVer=" + topologyVersion() + ']');
                 }
             }
