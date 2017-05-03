@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.cluster;
 
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -45,6 +46,7 @@ import org.apache.ignite.internal.managers.communication.GridIoPolicy;
 import org.apache.ignite.internal.managers.communication.GridMessageListener;
 import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.processors.GridProcessorAdapter;
+import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.util.GridTimerTask;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
@@ -66,7 +68,7 @@ import static org.apache.ignite.internal.IgniteVersionUtils.VER_STR;
  */
 public class ClusterProcessor extends GridProcessorAdapter {
     /** */
-    public static final String DIAGNOSTIC_LOG_CATEGORY = "org.apache.ignite.internal.diagnostic";
+    private static final String DIAGNOSTIC_LOG_CATEGORY = "org.apache.ignite.internal.diagnostic";
 
     /** */
     private static final String ATTR_UPDATE_NOTIFIER_STATUS = "UPDATE_NOTIFIER_STATUS";
@@ -99,6 +101,9 @@ public class ClusterProcessor extends GridProcessorAdapter {
 
     /** */
     private final AtomicLong diagFutId = new AtomicLong();
+
+    /** */
+    private final Object mux = new Object();
 
     /**
      * @param ctx Kernal context.
@@ -285,9 +290,34 @@ public class ClusterProcessor extends GridProcessorAdapter {
         return verChecker != null ? verChecker.latestVersion() : null;
     }
 
-    public IgniteInternalFuture<String> diagnosticInfo(final UUID nodeId,
+    public void dumpTxKeyInfo(UUID nodeId, int cacheId, Collection<KeyCacheObject> keys, final String msg) {
+        IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.TxEntriesInfoClosure(ctx, cacheId, keys), msg);
+
+        listenAndLog(fut);
+    }
+
+    public void dumpBasicInfo(final UUID nodeId, final String msg) {
+        IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.BaseClosure(ctx), msg);
+
+        listenAndLog(fut);
+    }
+
+    private void listenAndLog(IgniteInternalFuture<String> fut) {
+        fut.listen(new CI1<IgniteInternalFuture<String>>() {
+            @Override public void apply(IgniteInternalFuture<String> msgFut) {
+                try {
+                    diagnosticLog.info(msgFut.get());
+                }
+                catch (Exception e) {
+                    diagnosticLog.error("Failed to dump diagnostic info: " + e);
+                }
+            }
+        });
+    }
+
+    private IgniteInternalFuture<String> diagnosticInfo(final UUID nodeId,
         IgniteClosure<GridKernalContext, String> c,
-        final String msg) {
+        final String baseMsg) {
         final GridFutureAdapter<String> infoFut = new GridFutureAdapter<>();
 
         final IgniteInternalFuture<String> rmtFut = sendDiagnosticMessage(nodeId, c);
@@ -318,7 +348,7 @@ public class ClusterProcessor extends GridProcessorAdapter {
                             locMsg = "Failed to get info for local node: " + e;
                         }
 
-                        StringBuilder sb = new StringBuilder(msg);
+                        StringBuilder sb = new StringBuilder(baseMsg);
 
                         sb.append(U.nl());
                         sb.append("Remote node information:").append(U.nl()).append(rmtMsg0);

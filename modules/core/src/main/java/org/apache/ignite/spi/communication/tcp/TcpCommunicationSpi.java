@@ -1813,43 +1813,11 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
         }
 
         if (connectionsPerNode > 1) {
-            int idxMode = IgniteSystemProperties.getInteger("CONN_IDX_MODE", 0);
-
-            switch (idxMode) {
-                case 0: {
-                    connPlc = new ConnectionPolicy() {
-                        @Override public int connectionIndex() {
-                            return (int)(Thread.currentThread().getId() % connectionsPerNode);
-                        }
-                    };
-
-                    break;
+            connPlc = new ConnectionPolicy() {
+                @Override public int connectionIndex() {
+                    return (int)(U.safeAbs(Thread.currentThread().getId()) % connectionsPerNode);
                 }
-
-                case 1: {
-                    connPlc = new ConnectionPolicy() {
-                        @Override public int connectionIndex() {
-                            Integer threadIdx = threadConnIdx.get();
-
-                            if (threadIdx != null)
-                                return threadIdx;
-
-                            for (;;) {
-                                int idx = connIdx.get();
-                                int nextIdx = idx == connectionsPerNode - 1 ? 0 : idx + 1;
-
-                                if (connIdx.compareAndSet(idx, nextIdx)) {
-                                    threadConnIdx.set(idx);
-
-                                    return idx;
-                                }
-                            }
-                        }
-                    };
-
-                    break;
-                }
-            }
+            };
         }
         else {
             connPlc = new ConnectionPolicy() {

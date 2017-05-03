@@ -18,9 +18,13 @@
 package org.apache.ignite.internal;
 
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.GridCacheMapEntry;
 import org.apache.ignite.internal.processors.cache.GridCachePartitionExchangeManager;
+import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTopologyFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.plugin.extensions.communication.Message;
@@ -31,6 +35,7 @@ import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
 
@@ -38,6 +43,9 @@ import java.util.UUID;
  *
  */
 public class IgniteDiagnosticMessage implements Message {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** */
     private static final ThreadLocal<DateFormat> dateFormat = new ThreadLocal<DateFormat>() {
         @Override protected DateFormat initialValue() {
@@ -175,7 +183,11 @@ public class IgniteDiagnosticMessage implements Message {
     }
 
     @Override public void onAckReceived() {
+        // No-op.
+    }
 
+    @Override public String toString() {
+        return S.toString(IgniteDiagnosticMessage.class, this);
     }
 
     /**
@@ -192,7 +204,7 @@ public class IgniteDiagnosticMessage implements Message {
             this.nodeId = ctx.localNodeId();
         }
 
-        @Override public String apply(GridKernalContext ctx) {
+        @Override public final String apply(GridKernalContext ctx) {
             try {
                 StringBuilder sb = new StringBuilder();
 
@@ -220,6 +232,50 @@ public class IgniteDiagnosticMessage implements Message {
 
         protected String dumpInfo(GridKernalContext ctx) {
             return null;
+        }
+    }
+
+    public static class TxEntriesInfoClosure extends BaseClosure {
+        /** */
+        private final int cacheId;
+
+        /** */
+        private final Collection<KeyCacheObject> keys;
+
+        public TxEntriesInfoClosure(GridKernalContext ctx, int cacheId, Collection<KeyCacheObject> keys) {
+            super(ctx);
+
+            this.cacheId = cacheId;
+            this.keys = keys;
+        }
+
+        @Override protected String dumpInfo(GridKernalContext ctx) {
+            GridCacheContext cctx = ctx.cache().context().cacheContext(cacheId);
+
+            if (cctx == null)
+                return "Failed to find cache with id: " + cacheId;
+
+            try {
+                for (KeyCacheObject key : keys)
+                    key.finishUnmarshal(cctx.cacheObjectContext(), null);
+            }
+            catch (IgniteCheckedException e) {
+                ctx.cluster().diagnosticLog().error("Failed to unmarshal key: " + e, e);
+
+                return "Failed to unmarshal key: " + e;
+            }
+
+            StringBuilder sb = new StringBuilder("Cache entries [cacheId=" + cacheId + ", cacheName=" + cctx.name() + "]: ");
+
+            for (KeyCacheObject key : keys) {
+                sb.append(U.nl());
+
+                GridCacheMapEntry e = (GridCacheMapEntry)cctx.cache().peekEx(key);
+
+                sb.append("Key [key=" + key + ", entry=" + e + "]");
+            }
+
+            return sb.toString();
         }
     }
 
