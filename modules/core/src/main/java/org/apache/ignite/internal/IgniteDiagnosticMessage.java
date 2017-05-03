@@ -195,6 +195,9 @@ public class IgniteDiagnosticMessage implements Message {
      */
     public static class BaseClosure implements IgniteClosure<GridKernalContext, String> {
         /** */
+        private static final long serialVersionUID = 0L;
+
+        /** */
         protected final UUID nodeId;
 
         /**
@@ -236,6 +239,9 @@ public class IgniteDiagnosticMessage implements Message {
     }
 
     public static class TxEntriesInfoClosure extends BaseClosure {
+        /** */
+        private static final long serialVersionUID = 0L;
+
         /** */
         private final int cacheId;
 
