@@ -21,6 +21,7 @@ import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.internal.processors.cache.GridCachePartitionExchangeManager;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTopologyFuture;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.plugin.extensions.communication.Message;
@@ -38,6 +39,9 @@ import java.util.UUID;
  *
  */
 public class IgniteDiagnosticMessage implements Message {
+    /** */
+    private static final long serialVersionUID = 0L;
+
     /** */
     private static final ThreadLocal<DateFormat> dateFormat = new ThreadLocal<DateFormat>() {
         @Override protected DateFormat initialValue() {
@@ -175,7 +179,11 @@ public class IgniteDiagnosticMessage implements Message {
     }
 
     @Override public void onAckReceived() {
+        // No-op.
+    }
 
+    @Override public String toString() {
+        return S.toString(IgniteDiagnosticMessage.class, this);
     }
 
     /**
