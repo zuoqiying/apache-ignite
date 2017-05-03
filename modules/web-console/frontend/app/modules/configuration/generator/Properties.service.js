@@ -24,54 +24,61 @@ export default class IgnitePropertiesGenerator {
     _collectProperties(bean) {
         const props = [];
 
-        _.forEach(bean.arguments, (arg) => {
-            switch (arg.clsName) {
-                case 'BEAN':
-                    props.push(...this._collectProperties(arg.value));
+        // Generate properties for complex object.
+        const processItem = (item) => {
+            const itemLines = _.difference(this._collectProperties(item), props);
 
-                    break;
-                case 'PROPERTY':
-                case 'PROPERTY_CHAR':
-                case 'PROPERTY_INT':
-                    props.push(`${arg.value}=${arg.hint}`);
+            if (!_.isEmpty(itemLines)) {
+                props.push(...itemLines);
 
-                    break;
-                default:
-                    // No-op.
-            }
-        });
-
-        _.forEach(bean.properties, (prop) => {
-            switch (prop.clsName) {
-                case 'DATA_SOURCE':
-                    props.push(...this._collectProperties(prop.value));
+                if (props[props.length - 1] !== '')
                     props.push('');
+            }
+        };
+
+        // Generate properties for all objects in keys and values of map.
+        const processMapEntries = (entry) => {
+            processItem(entry.name);
+            processItem(entry.value);
+        };
+
+        // Generate properties for object.
+        const processObject = (obj) => {
+            switch (obj.clsName) {
+                case 'DATA_SOURCE':
+                    processItem(obj.value);
 
                     break;
                 case 'BEAN':
-                    props.push(...this._collectProperties(prop.value));
+                    processItem(obj.value);
 
                     break;
                 case 'PROPERTY':
                 case 'PROPERTY_CHAR':
                 case 'PROPERTY_INT':
-                    props.push(`${prop.value}=${prop.hint}`);
+                    props.push(..._.difference([`${obj.value}=${obj.hint}`], props));
 
                     break;
                 case 'ARRAY':
                 case 'COLLECTION':
-                    _.forEach(prop.items, (item) => {
-                        const itemLines = this._collectProperties(item);
+                    _.forEach(obj.items, processItem);
 
-                        if (_.intersection(props, itemLines).length !== itemLines.length)
-                            props.push(...this._collectProperties(item));
-                    });
+                    break;
+
+                case 'MAP':
+                    _.forEach(obj.entries, processMapEntries);
 
                     break;
                 default:
-                    // No-op.
+                // No-op.
             }
-        });
+        };
+
+        // Generate properties for object arguments.
+        _.forEach(_.get(bean, 'arguments'), processObject);
+
+        // Generate properties for object properties.
+        _.forEach(_.get(bean, 'properties'), processObject);
 
         return props;
     }
@@ -84,7 +91,7 @@ export default class IgnitePropertiesGenerator {
 
         const sb = new StringBuilder();
 
-        sb.append(`# ${sb.generatedBy()}`);
+        sb.append(`# ${sb.generatedBy()}`).emptyLine();
 
         _.forEach(lines, (line) => sb.append(line));
 
