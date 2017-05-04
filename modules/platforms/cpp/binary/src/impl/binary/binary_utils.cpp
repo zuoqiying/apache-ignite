@@ -108,7 +108,7 @@ namespace ignite
                 return ReadPrimitive<int8_t>(mem, pos);
             }
 
-            int8_t BinaryUtils::UnsafeReadInt8(interop::InteropMemory& mem, int32_t pos)
+            int8_t BinaryUtils::UnsafeReadInt8(InteropMemory& mem, int32_t pos)
             {
                 return UnsafeReadPrimitive<int8_t>(mem, pos);
             }
@@ -153,12 +153,12 @@ namespace ignite
                 return stream->ReadInt16();
             }
 
-            int16_t BinaryUtils::ReadInt16(interop::InteropMemory& mem, int32_t pos)
+            int16_t BinaryUtils::ReadInt16(InteropMemory& mem, int32_t pos)
             {
                 return ReadPrimitive<int16_t>(mem, pos);
             }
 
-            int16_t BinaryUtils::UnsafeReadInt16(interop::InteropMemory& mem, int32_t pos)
+            int16_t BinaryUtils::UnsafeReadInt16(InteropMemory& mem, int32_t pos)
             {
                 return UnsafeReadPrimitive<int16_t>(mem, pos);
             }
@@ -203,12 +203,12 @@ namespace ignite
                 return stream->ReadInt32();
             }
 
-            int32_t BinaryUtils::ReadInt32(interop::InteropMemory& mem, int32_t pos)
+            int32_t BinaryUtils::ReadInt32(InteropMemory& mem, int32_t pos)
             {
                 return ReadPrimitive<int32_t>(mem, pos);
             }
 
-            int32_t BinaryUtils::UnsafeReadInt32(interop::InteropMemory& mem, int32_t pos)
+            int32_t BinaryUtils::UnsafeReadInt32(InteropMemory& mem, int32_t pos)
             {
                 return UnsafeReadPrimitive<int32_t>(mem, pos);
             }
@@ -288,7 +288,7 @@ namespace ignite
                 stream->WriteDoubleArray(val, len);
             }
 
-            Guid BinaryUtils::ReadGuid(interop::InteropInputStream* stream)
+            Guid BinaryUtils::ReadGuid(InteropInputStream* stream)
             {
                 int64_t most = stream->ReadInt64();
                 int64_t least = stream->ReadInt64();
@@ -296,25 +296,25 @@ namespace ignite
                 return Guid(most, least);
             }
 
-            void BinaryUtils::WriteGuid(interop::InteropOutputStream* stream, const Guid val)
+            void BinaryUtils::WriteGuid(InteropOutputStream* stream, const Guid val)
             {
                 stream->WriteInt64(val.GetMostSignificantBits());
                 stream->WriteInt64(val.GetLeastSignificantBits());
             }
 
-            Date BinaryUtils::ReadDate(interop::InteropInputStream * stream)
+            Date BinaryUtils::ReadDate(InteropInputStream * stream)
             {
                 int64_t milliseconds = stream->ReadInt64();
 
                 return Date(milliseconds);
             }
 
-            void BinaryUtils::WriteDate(interop::InteropOutputStream* stream, const Date val)
+            void BinaryUtils::WriteDate(InteropOutputStream* stream, const Date val)
             {
                 stream->WriteInt64(val.GetMilliseconds());
             }
 
-            Timestamp BinaryUtils::ReadTimestamp(interop::InteropInputStream* stream)
+            Timestamp BinaryUtils::ReadTimestamp(InteropInputStream* stream)
             {
                 int64_t milliseconds = stream->ReadInt64();
                 int32_t nanoseconds = stream->ReadInt32();
@@ -322,28 +322,71 @@ namespace ignite
                 return Timestamp(milliseconds / 1000, (milliseconds % 1000) * 1000000 + nanoseconds);
             }
 
-            void BinaryUtils::WriteTimestamp(interop::InteropOutputStream* stream, const Timestamp val)
+            void BinaryUtils::WriteTimestamp(InteropOutputStream* stream, const Timestamp val)
             {
                 stream->WriteInt64(val.GetSeconds() * 1000 + val.GetSecondFraction() / 1000000);
                 stream->WriteInt32(val.GetSecondFraction() % 1000000);
             }
 
-            Time BinaryUtils::ReadTime(interop::InteropInputStream* stream)
+            Time BinaryUtils::ReadTime(InteropInputStream* stream)
             {
                 int64_t ms = stream->ReadInt64();
 
                 return Time(ms);
             }
 
-            void BinaryUtils::WriteTime(interop::InteropOutputStream* stream, const Time val)
+            void BinaryUtils::WriteTime(InteropOutputStream* stream, const Time val)
             {
                 stream->WriteInt64(val.GetMilliseconds());
             }
 
-            void BinaryUtils::WriteString(interop::InteropOutputStream* stream, const char* val, const int32_t len)
+            void BinaryUtils::WriteString(InteropOutputStream* stream, const char* val, const int32_t len)
             {
                 stream->WriteInt32(len);
                 stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val), len);
+            }
+
+            int32_t BinaryUtils::ReadSignedVarint(InteropInputStream* stream)
+            {
+                int32_t raw = ReadUnsignedVarint(stream);
+                // Canceling the untrick from BinaryUtils::WriteSignedVarint
+                int32_t tmp = (((raw << 31) >> 31) ^ raw) >> 1;
+                // top bit must be reflip if the original read value had it set.
+                return tmp ^ (raw & (1 << 31));
+            }
+
+            void BinaryUtils::WriteSignedVarint(InteropOutputStream* stream, int32_t val)
+            {
+                // Using ZigZag encoding. For details refer to
+                // https://developers.google.com/protocol-buffers/docs/encoding#types
+                WriteUnsignedVarint(stream, (val << 1) ^ (val >> 31));
+            }
+
+            int32_t BinaryUtils::ReadUnsignedVarint(InteropInputStream* stream)
+            {
+                int32_t accum = 0;
+                int8_t buf;
+                int32_t bitpos = 0;
+                do
+                {
+                    buf = stream->ReadInt8();
+                    accum |= (buf & 0x7F) << bitpos;
+                    bitpos += 7;
+                } while (buf & 0x80);
+
+                return accum;
+            }
+
+            void BinaryUtils::WriteUnsignedVarint(InteropOutputStream* stream, int32_t val)
+            {
+                uint32_t uval = static_cast<uint32_t>(val);
+                while ((uval & 0xFFFFFF80) != 0)
+                {
+                    stream->WriteInt8(static_cast<int8_t>((uval & 0x7F) | 0x80));
+                    uval >>= 7;
+                }
+
+                stream->WriteInt8(static_cast<int8_t>(uval & 0x7F));
             }
         }
     }

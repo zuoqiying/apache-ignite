@@ -393,7 +393,7 @@ namespace ignite
                  * Utility method to read Guid from stream.
                  *
                  * @param stream Stream.
-                 * @param res Value.
+                 * @return Value.
                  */
                 static Guid ReadGuid(interop::InteropInputStream* stream);
 
@@ -409,7 +409,7 @@ namespace ignite
                  * Utility method to read Date from stream.
                  *
                  * @param stream Stream.
-                 * @param res Value.
+                 * @return Value.
                  */
                 static Date ReadDate(interop::InteropInputStream* stream);
 
@@ -461,6 +461,50 @@ namespace ignite
                  * @param len Length.
                  */
                 static void WriteString(interop::InteropOutputStream* stream, const char* val, const int32_t len);
+
+                /**
+                 * Utility method to read signed varint from stream.
+                 *
+                 * Refer to http://code.google.com/apis/protocolbuffers/docs/encoding.html
+                 * for varint encoding details.
+                 *
+                 * @param stream Stream.
+                 * @return Value.
+                 */
+                static int32_t ReadSignedVarint(interop::InteropInputStream* stream);
+
+                /**
+                 * Utility method to write signed varint to stream.
+                 *
+                 * Refer to http://code.google.com/apis/protocolbuffers/docs/encoding.html
+                 * for varint encoding details.
+                 *
+                 * @param stream Stream.
+                 * @param val Value.
+                 */
+                static void WriteSignedVarint(interop::InteropOutputStream* stream, int32_t val);
+
+                /**
+                 * Utility method to read unsigned varint from stream.
+                 *
+                 * Refer to http://code.google.com/apis/protocolbuffers/docs/encoding.html
+                 * for varint encoding details.
+                 *
+                 * @param stream Stream.
+                 * @return Value.
+                 */
+                static int32_t ReadUnsignedVarint(interop::InteropInputStream* stream);
+
+                /**
+                 * Utility method to write unsigned varint to stream.
+                 *
+                 * Refer to http://code.google.com/apis/protocolbuffers/docs/encoding.html
+                 * for varint encoding details.
+                 *
+                 * @param stream Stream.
+                 * @param val Value.
+                 */
+                static void WriteUnsignedVarint(interop::InteropOutputStream* stream, int32_t val);
 
                 /**
                  * Get default value for the type.
