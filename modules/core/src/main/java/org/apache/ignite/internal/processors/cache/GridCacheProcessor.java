@@ -2089,6 +2089,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
     /** {@inheritDoc} */
     @Nullable @Override public Serializable collectDiscoveryData(UUID nodeId) {
+        if (!ctx.clientNode())
+            log.info("-- disco data collectDiscoveryData [join=" + nodeId + ", loc=" + ctx.localNodeId() + ']');
+
         boolean reconnect = ctx.localNodeId().equals(nodeId) && cachesOnDisconnect != null;
 
         // Collect dynamically started caches to a single object.
@@ -2192,6 +2195,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
     /** {@inheritDoc} */
     @Override public void onDiscoveryDataReceived(UUID joiningNodeId, UUID rmtNodeId, Serializable data) {
+        if (!ctx.clientNode())
+            log.info("-- disco data onDiscoveryDataReceived [join=" + joiningNodeId + ", loc=" + ctx.localNodeId() + ']');
+
         if (data instanceof DynamicCacheChangeBatch) {
             DynamicCacheChangeBatch batch = (DynamicCacheChangeBatch)data;
 
@@ -2304,7 +2310,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     }
 
     /**
-     * @param clientNodeId Client node ID.
+     * @param clientNodeId Client node ID
      * @param batch Cache change batch.
      */
     private void processClientReconnectData(UUID clientNodeId, DynamicCacheChangeBatch batch) {
