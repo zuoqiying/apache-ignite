@@ -389,6 +389,13 @@ namespace ignite
 
                 int32_t len = stream->ReadInt32();
 
+                if (!len)
+                {
+                    decimal = common::Decimal();
+
+                    return;
+                }
+
                 common::FixedSizeArray<int8_t> magnitude(len);
 
                 ReadInt8Array(stream, magnitude.GetData(), magnitude.GetSize());
