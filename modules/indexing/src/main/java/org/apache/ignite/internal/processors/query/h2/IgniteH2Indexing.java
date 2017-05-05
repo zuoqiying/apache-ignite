@@ -1956,7 +1956,8 @@ public class IgniteH2Indexing implements GridQueryIndexing {
     }
 
     /**
-     * Escapes name to be valid SQL identifier. Currently just replaces '.' and '$' sign with '_'.
+     * Escapes name to be valid SQL identifier. Currently just replaces all symbols except letters, digits
+     * and '-' sign with '_'.
      *
      * @param name Name.
      * @param escapeAll Escape flag.
@@ -1976,8 +1977,6 @@ public class IgniteH2Indexing implements GridQueryIndexing {
 
             if (!Character.isLetter(ch) && !Character.isDigit(ch) && ch != '_' &&
                 !(ch == '"' && (i == 0 || i == name.length() - 1)) && ch != '-') {
-                // Class name can also contain '$' or '.' - these should be escaped.
-                assert ch == '$' || ch == '.';
 
                 if (sb == null)
                     sb = new SB();
