@@ -67,6 +67,7 @@ public abstract class GridDhtPartitionsAbstractMessage extends GridCacheMessage 
         this.lastVer = lastVer;
     }
 
+    /** {@inheritDoc} */
     @Override public int partition() {
         return Integer.MIN_VALUE;
     }

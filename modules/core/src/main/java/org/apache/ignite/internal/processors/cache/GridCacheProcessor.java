@@ -2310,7 +2310,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     }
 
     /**
-     * @param clientNodeId Client node ID
+     * @param clientNodeId Client node ID.
      * @param batch Cache change batch.
      */
     private void processClientReconnectData(UUID clientNodeId, DynamicCacheChangeBatch batch) {
