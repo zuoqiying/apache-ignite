@@ -55,6 +55,7 @@ import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.configuration.ConnectorConfiguration;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
+import org.apache.ignite.internal.managers.communication.GridIoMessage;
 import org.apache.ignite.internal.util.GridConcurrentHashSet;
 import org.apache.ignite.internal.util.future.GridCompoundFuture;
 import org.apache.ignite.internal.util.nio.ssl.GridNioSslFilter;
@@ -1551,12 +1552,15 @@ public class GridNioServer<T> {
      */
     private abstract class AbstractNioClientWorker extends GridWorker implements GridNioWorker {
         /** Queue of change requests on this selector. */
+        @GridToStringExclude
         private final ConcurrentLinkedQueue<SessionChangeRequest> changeReqs = new ConcurrentLinkedQueue<>();
 
         /** Selector to select read events. */
+        @GridToStringExclude
         private Selector selector;
 
         /** Selected keys. */
+        @GridToStringExclude
         private SelectedSelectionKeySet selectedKeys;
 
         /** Worker index. */
@@ -1575,6 +1579,7 @@ public class GridNioServer<T> {
         private volatile long bytesSent0;
 
         /** Sessions assigned to this worker. */
+        @GridToStringExclude
         private final GridConcurrentHashSet<GridSelectorNioSessionImpl> workerSessions =
             new GridConcurrentHashSet<>();
 
@@ -2010,8 +2015,8 @@ public class GridNioServer<T> {
                         selInfo = true;
                     }
 
-                    MessageWriter writer = ses.meta(MSG_WRITER.ordinal());
-                    MessageReader reader = ses.meta(GridDirectParser.READER_META_KEY);
+//                    MessageWriter writer = ses.meta(MSG_WRITER.ordinal());
+//                    MessageReader reader = ses.meta(GridDirectParser.READER_META_KEY);
 
                     sb.append("    Connection info [")
                         .append("in=").append(ses.accepted())
@@ -2034,7 +2039,12 @@ public class GridNioServer<T> {
                                 if (cnt != 0)
                                     sb.append(", ");
 
-                                sb.append(req.message());
+                                Object msg = req.message();
+
+                                if (msg instanceof GridIoMessage)
+                                    msg = ((GridIoMessage)msg).message().getClass().getSimpleName();
+
+                                sb.append(msg);
 
                                 if (++cnt == 5)
                                     break;
@@ -2060,19 +2070,24 @@ public class GridNioServer<T> {
                         .append(", bytesRcvd0=").append(ses.bytesReceived0())
                         .append(", bytesSent=").append(ses.bytesSent())
                         .append(", bytesSent0=").append(ses.bytesSent0())
-                        .append(", opQueueSize=").append(ses.writeQueueSize())
-                        .append(", msgWriter=").append(writer != null ? writer.toString() : "null")
-                        .append(", msgReader=").append(reader != null ? reader.toString() : "null");
+                        .append(", opQueueSize=").append(ses.writeQueueSize());
+//                        .append(", msgWriter=").append(writer != null ? writer.toString() : "null")
+//                        .append(", msgReader=").append(reader != null ? reader.toString() : "null");
 
                     int cnt = 0;
 
                     for (SessionWriteRequest req : ses.writeQueue()) {
-                        if (cnt == 0)
-                            sb.append(",\n opQueue=[").append(req);
-                        else
-                            sb.append(',').append(req);
+                        Object msg = req.message();
 
-                        if (++cnt == 5) {
+                        if (msg instanceof GridIoMessage)
+                            msg = ((GridIoMessage)msg).message().getClass().getSimpleName();
+
+                        if (cnt == 0)
+                            sb.append(",\n opQueue=[").append(msg);
+                        else
+                            sb.append(',').append(msg);
+
+                        if (++cnt == 1) {
                             sb.append(']');
 
                             break;

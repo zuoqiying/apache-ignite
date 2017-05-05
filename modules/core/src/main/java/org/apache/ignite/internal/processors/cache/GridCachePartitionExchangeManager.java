@@ -1383,7 +1383,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
         U.warn(log, "Pending exchange futures:");
 
         for (GridDhtPartitionsExchangeFuture fut : exchWorker.futQ)
-            U.warn(log, ">>> " + fut);
+            U.warn(log, ">>> " + fut.shortInfo());
 
         if (!readyFuts.isEmpty()) {
             U.warn(log, "Pending affinity ready futures:");
@@ -1400,7 +1400,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
             int cnt = 0;
 
             for (GridDhtPartitionsExchangeFuture fut : exchFuts.values()) {
-                U.warn(log, ">>> " + fut);
+                U.warn(log, ">>> " + fut.shortInfo());
 
                 if (++cnt == 10)
                     break;
@@ -1415,7 +1415,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
         cctx.affinity().dumpDebugInfo();
 
         // Dump IO manager statistics.
-        cctx.gridIO().dumpStats();
+        // cctx.gridIO().dumpStats();
     }
 
     /**
@@ -1499,7 +1499,7 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                     U.warn(log, "Found long running cache operations, dump IO statistics.");
 
                     // Dump IO manager statistics.
-                    cctx.gridIO().dumpStats();
+                    // cctx.gridIO().dumpStats();
                 }
             }
             else

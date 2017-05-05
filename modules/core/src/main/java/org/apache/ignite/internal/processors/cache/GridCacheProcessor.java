@@ -148,8 +148,6 @@ import static org.apache.ignite.events.EventType.EVT_NODE_JOINED;
 import static org.apache.ignite.internal.IgniteComponentType.JTA;
 import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_CONSISTENCY_CHECK_SKIPPED;
 import static org.apache.ignite.internal.IgniteNodeAttributes.ATTR_TX_CONFIG;
-import static org.apache.ignite.internal.processors.cache.GridCacheUtils.affinityNode;
-import static org.apache.ignite.internal.processors.cache.GridCacheUtils.clientNode;
 import static org.apache.ignite.internal.processors.cache.GridCacheUtils.isNearEnabled;
 
 /**
@@ -160,6 +158,10 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     /** */
     private static final boolean startCaches =
         IgniteSystemProperties.getBoolean(IgniteSystemProperties.IGNITE_START_CACHES_ON_JOIN, false);
+
+    /** */
+    private static final boolean cacheDiscoDebug =
+        IgniteSystemProperties.getBoolean("IGNITE_CACHE_DISCOVERY_DEBUG", false);
 
     /** Null cache name. */
     private static final String NULL_NAME = U.id8(UUID.randomUUID());
@@ -2089,9 +2091,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
     /** {@inheritDoc} */
     @Nullable @Override public Serializable collectDiscoveryData(UUID nodeId) {
-        if (!ctx.clientNode())
-            log.info("-- disco data collectDiscoveryData [join=" + nodeId + ", loc=" + ctx.localNodeId() + ']');
-
         boolean reconnect = ctx.localNodeId().equals(nodeId) && cachesOnDisconnect != null;
 
         // Collect dynamically started caches to a single object.
@@ -2183,6 +2182,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         // Reset random batch ID so that serialized batches with the same descriptors will be exactly the same.
         batch.id(null);
 
+        if (cachesDiscoveryDebug())
+            log.info("Caches disco data, collected disco data [node=" + nodeId + ", data=" + batch + ']');
+
         return batch;
     }
 
@@ -2193,10 +2195,30 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         return startCaches && ctx.clientNode();
     }
 
+    private boolean cachesDiscoveryDebug() {
+        if (!cacheDiscoDebug)
+            return false;
+
+        if (ctx.clientNode())
+            return true;
+
+        ClusterNode node = ctx.discovery().localNode();
+
+        if (node == null)
+            return false;
+
+        return ctx.discovery().topologyVersion() > 100 && (node.order() == 1 || node.order() == 110);
+    }
+
     /** {@inheritDoc} */
     @Override public void onDiscoveryDataReceived(UUID joiningNodeId, UUID rmtNodeId, Serializable data) {
-        if (!ctx.clientNode())
-            log.info("-- disco data onDiscoveryDataReceived [join=" + joiningNodeId + ", loc=" + ctx.localNodeId() + ']');
+        boolean debug = cachesDiscoveryDebug();
+
+        if (debug) {
+            log.info("Caches disco data, received disco data [joiningNode=" + joiningNodeId +
+                ", rmtNodeId=" + rmtNodeId +
+                ", data=" + data + ']');
+        }
 
         if (data instanceof DynamicCacheChangeBatch) {
             DynamicCacheChangeBatch batch = (DynamicCacheChangeBatch)data;
@@ -2288,6 +2310,12 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                                 ccfg.getNodeFilter(),
                                 ccfg.getNearConfiguration() != null,
                                 ccfg.getCacheMode());
+
+                            if (debug) {
+                                log.info("Caches disco data, received disco data, add cache [joiningNode=" + joiningNodeId +
+                                    ", rmtNodeId=" + rmtNodeId +
+                                    ", cache=" + req.cacheName() + ']');
+                            }
                         }
                     }
                 }
@@ -2296,21 +2324,37 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                     for (Map.Entry<String, Map<UUID, Boolean>> entry : batch.clientNodes().entrySet()) {
                         String cacheName = entry.getKey();
 
-                        for (Map.Entry<UUID, Boolean> tup : entry.getValue().entrySet())
-                            ctx.discovery().addClientNode(cacheName, tup.getKey(), tup.getValue());
+                        for (Map.Entry<UUID, Boolean> tup : entry.getValue().entrySet()) {
+                            boolean add = ctx.discovery().addClientNode(cacheName, tup.getKey(), tup.getValue());
+
+                            if (debug && add) {
+                                log.info("Caches disco data, received disco data, add client [joiningNode=" + joiningNodeId +
+                                    ", rmtNodeId=" + rmtNodeId +
+                                    ", node=" + tup.getKey() +
+                                    ", cache=" + cacheName + ']');
+                            }
+                        }
                     }
                 }
 
                 if (batch.startCaches()) {
-                    for (Map.Entry<String, DynamicCacheDescriptor> entry : registeredCaches.entrySet())
-                        ctx.discovery().addClientNode(entry.getKey(), joiningNodeId, false);
+                    for (Map.Entry<String, DynamicCacheDescriptor> entry : registeredCaches.entrySet()) {
+                        boolean add = ctx.discovery().addClientNode(entry.getKey(), joiningNodeId, false);
+
+                        if (debug && add) {
+                            log.info("Caches disco data, received disco data, add start client [joiningNode=" + joiningNodeId +
+                                ", rmtNodeId=" + rmtNodeId +
+                                ", node=" + joiningNodeId +
+                                ", cache=" + entry.getKey() + ']');
+                        }
+                    }
                 }
             }
         }
     }
 
     /**
-     * @param clientNodeId Client node ID
+     * @param clientNodeId Client node ID.
      * @param batch Cache change batch.
      */
     private void processClientReconnectData(UUID clientNodeId, DynamicCacheChangeBatch batch) {
@@ -2941,6 +2985,13 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         DynamicCacheChangeBatch batch,
         AffinityTopologyVersion topVer
     ) {
+        boolean debug = cachesDiscoveryDebug();
+
+        if (debug) {
+            log.info("Caches disco data, onCacheChangeRequested [batch=" + batch +
+                ", topVer=" + topVer + ']');
+        }
+
         AffinityTopologyVersion newTopVer = null;
 
         boolean incMinorTopVer = false;
@@ -2993,6 +3044,11 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                         if (fut != null)
                             fut.onDone(new IgniteCheckedException("Failed to start client cache " +
                                 "(a cache with the given name is not started): " + U.maskName(req.cacheName())));
+
+                        if (debug) {
+                            log.info("Caches disco data, onCacheChangeRequested fail1 [needExchange=" + needExchange +
+                                ", cache=" + req.cacheName() + ']');
+                        }
                     }
                     else {
                         CacheConfiguration ccfg = req.startCacheConfiguration();
@@ -3026,6 +3082,11 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                             req.nearCacheConfiguration() != null);
 
                         needExchange = true;
+
+                        if (debug) {
+                            log.info("Caches disco data, onCacheChangeRequested startCache [node=" + req.initiatingNodeId() +
+                                ", cache=" + req.cacheName() + ']');
+                        }
                     }
                 }
                 else {
@@ -3041,12 +3102,24 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                         needExchange = clientReq && ctx.discovery().addClientNode(req.cacheName(),
                             req.initiatingNodeId(),
                             req.nearCacheConfiguration() != null);
+
+                        if (debug) {
+                            log.info("Caches disco data, onCacheChangeRequested client exch1 [needExchange=" + needExchange +
+                                ", node=" + node +
+                                ", clientReq=" + clientReq +
+                                ", cache=" + req.cacheName() + ']');
+                        }
                     }
                     else {
                         if (req.failIfExists()) {
                             if (fut != null)
                                 fut.onDone(new CacheExistsException("Failed to start cache " +
                                     "(a cache with the same name is already started): " + U.maskName(req.cacheName())));
+
+                            if (debug) {
+                                log.info("Caches disco data, onCacheChangeRequested fail2 [needExchange=" + needExchange +
+                                    ", cache=" + req.cacheName() + ']');
+                            }
                         }
                         else {
                             needExchange = clientReq && ctx.discovery().addClientNode(req.cacheName(),
@@ -3055,6 +3128,12 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
                             if (needExchange)
                                 req.clientStartOnly(true);
+
+                            if (debug) {
+                                log.info("Caches disco data, onCacheChangeRequested client exch2 [needExchange=" + needExchange +
+                                    ", clientReq=" + clientReq +
+                                    ", cache=" + req.cacheName() + ']');
+                            }
                         }
                     }
 
@@ -3101,6 +3180,11 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             req.exchangeNeeded(needExchange);
 
             incMinorTopVer |= needExchange;
+        }
+
+        if (debug) {
+            log.info("Caches disco data, onCacheChangeRequested done [needExchange=" + incMinorTopVer +
+                ", topVer=" + topVer + ']');
         }
 
         return incMinorTopVer;
