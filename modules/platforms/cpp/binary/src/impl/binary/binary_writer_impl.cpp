@@ -799,13 +799,7 @@ namespace ignite
             template<>
             void BinaryWriterImpl::WriteTopObject(const std::string& obj)
             {
-                const char* obj0 = obj.c_str();
-
-                int32_t len = static_cast<int32_t>(obj.size());
-
-                stream->WriteInt8(IGNITE_TYPE_STRING);
-
-                BinaryUtils::WriteString(stream, obj0, len);
+                WriteTopObject0<std::string>(obj, BinaryUtils::WriteString, IGNITE_TYPE_STRING);
             }
 
             void BinaryWriterImpl::PostWrite()

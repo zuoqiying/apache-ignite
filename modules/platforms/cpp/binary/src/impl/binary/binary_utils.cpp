@@ -341,10 +341,46 @@ namespace ignite
                 stream->WriteInt64(val.GetMilliseconds());
             }
 
+            int32_t BinaryUtils::ReadString(InteropInputStream* stream, char* buf, const int32_t len)
+            {
+                int32_t realLen = stream->ReadInt32();
+
+                if (buf && len >= realLen)
+                {
+                    stream->ReadInt8Array(reinterpret_cast<int8_t*>(buf), realLen);
+
+                    if (len > realLen)
+                        buf[realLen] = 0; // Set NULL terminator if possible.
+                }
+                else
+                    stream->Position(stream->Position() - 4 - 1);
+
+                return realLen;
+            }
+
             void BinaryUtils::WriteString(InteropOutputStream* stream, const char* val, const int32_t len)
             {
                 stream->WriteInt32(len);
                 stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val), len);
+            }
+
+            void BinaryUtils::ReadString(InteropInputStream* stream, std::string& val)
+            {
+                int32_t realLen = stream->ReadInt32();
+
+                if (realLen > 0)
+                {
+                    val.resize(realLen, 0);
+
+                    stream->ReadInt8Array(reinterpret_cast<int8_t*>(&val[0]), realLen);
+                }
+            }
+
+            void BinaryUtils::WriteString(InteropOutputStream* stream, const std::string& val)
+            {
+                int32_t len = static_cast<int32_t>(val.size());
+                stream->WriteInt32(len);
+                stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val.data()), len);
             }
 
             void BinaryUtils::ReadDecimal(InteropInputStream* stream, common::Decimal& decimal)

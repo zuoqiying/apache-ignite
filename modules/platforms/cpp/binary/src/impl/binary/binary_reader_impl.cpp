@@ -535,20 +535,8 @@ namespace ignite
             {
                 int8_t hdr = stream->ReadInt8();
 
-                if (hdr == IGNITE_TYPE_STRING) {
-                    int32_t realLen = stream->ReadInt32();
-
-                    if (res && len >= realLen) {
-                        stream->ReadInt8Array(reinterpret_cast<int8_t*>(res), realLen);
-
-                        if (len > realLen)
-                            *(res + realLen) = 0; // Set NULL terminator if possible.
-                    }
-                    else
-                        stream->Position(stream->Position() - 4 - 1);
-
-                    return realLen;
-                }
+                if (hdr == IGNITE_TYPE_STRING)
+                    return BinaryUtils::ReadString(stream, res, len);
                 else if (hdr != IGNITE_HDR_NULL)
                     ThrowOnInvalidHeader(IGNITE_TYPE_ARRAY, hdr);
 
@@ -865,32 +853,9 @@ namespace ignite
             template<>
             std::string BinaryReaderImpl::ReadTopObject<std::string>()
             {
-                int8_t typeId = stream->ReadInt8();
-
-                if (typeId == IGNITE_TYPE_STRING)
-                {
-                    int32_t realLen = stream->ReadInt32();
-
-                    std::string res;
-
-                    if (realLen > 0)
-                    {
-                        res.resize(realLen, 0);
-
-                        stream->ReadInt8Array(reinterpret_cast<int8_t*>(&res[0]), realLen);
-                    }
-
-                    return res;
-                }
-                else if (typeId == IGNITE_HDR_NULL)
-                    return std::string();
-                else
-                {
-                    int32_t pos = stream->Position() - 1;
-
-                    IGNITE_ERROR_FORMATTED_3(IgniteError::IGNITE_ERR_BINARY, "Invalid header", "position", pos,
-                        "expected", static_cast<int>(IGNITE_TYPE_STRING), "actual", static_cast<int>(typeId))
-                }
+                std::string res;
+                ReadTopObject0<std::string>(IGNITE_TYPE_STRING, BinaryUtils::ReadString, res);
+                return res;
             }
 
             template <typename T>

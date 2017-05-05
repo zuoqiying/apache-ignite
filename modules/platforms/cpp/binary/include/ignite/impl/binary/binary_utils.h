@@ -453,6 +453,16 @@ namespace ignite
                  * @param val Value.
                  */
                 static void WriteTime(interop::InteropOutputStream* stream, const Time val);
+                
+                /**
+                 * Utility method to read string from stream.
+                 *
+                 * @param stream Stream.
+                 * @param buf Buffer.
+                 * @param len Length.
+                 * @return Size.
+                 */
+                static int32_t ReadString(interop::InteropInputStream* stream, char* buf, const int32_t len);
 
                 /**
                  * Utility method to write string to stream.
@@ -462,6 +472,22 @@ namespace ignite
                  * @param len Length.
                  */
                 static void WriteString(interop::InteropOutputStream* stream, const char* val, const int32_t len);
+
+                /**
+                 * Utility method to read string from stream.
+                 *
+                 * @param stream Stream.
+                 * @param val Value.
+                 */
+                static void ReadString(interop::InteropInputStream* stream, std::string& val);
+
+                /**
+                 * Utility method to write string to stream.
+                 *
+                 * @param stream Stream.
+                 * @param val Value.
+                 */
+                static void WriteString(interop::InteropOutputStream* stream, const std::string& val);
 
                 /**
                  * Read decimal value using reader.
