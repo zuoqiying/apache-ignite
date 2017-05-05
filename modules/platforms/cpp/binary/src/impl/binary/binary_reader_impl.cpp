@@ -431,6 +431,30 @@ namespace ignite
                 return realLen;
             }
 
+            void BinaryReaderImpl::ReadDecimal(common::Decimal& res)
+            {
+                CheckRawMode(true);
+                CheckSingleMode(true);
+
+                ReadNullable(stream, BinaryUtils::ReadDecimal, IGNITE_TYPE_DECIMAL, res);
+            }
+
+            void BinaryReaderImpl::ReadDecimal(const char * fieldName, common::Decimal & res)
+            {
+                CheckRawMode(false);
+                CheckSingleMode(true);
+
+                int32_t fieldId = idRslvr->GetFieldId(typeId, fieldName);
+                int32_t fieldPos = FindField(fieldId);
+
+                if (fieldPos <= 0)
+                    res = common::Decimal();
+
+                stream->Position(fieldPos);
+
+                ReadNullable(stream, BinaryUtils::ReadDecimal, IGNITE_TYPE_DECIMAL, res);
+            }
+
             void BinaryReaderImpl::ReadTimeArrayInternal(interop::InteropInputStream* stream, Time* res, const int32_t len)
             {
                 for (int i = 0; i < len; i++)
@@ -831,6 +855,14 @@ namespace ignite
             }
 
             template<>
+            common::Decimal BinaryReaderImpl::ReadTopObject<common::Decimal>()
+            {
+                common::Decimal res;
+                ReadTopObject0<common::Decimal>(IGNITE_TYPE_DECIMAL, BinaryUtils::ReadDecimal, res);
+                return res;
+            }
+
+            template<>
             std::string BinaryReaderImpl::ReadTopObject<std::string>()
             {
                 int8_t typeId = stream->ReadInt8();
@@ -862,7 +894,39 @@ namespace ignite
             }
 
             template <typename T>
-            T BinaryReaderImpl::ReadTopObject0(const int8_t expHdr, T(*func)(ignite::impl::interop::InteropInputStream*))
+            T BinaryReaderImpl::ReadNullable(InteropInputStream* stream,
+                T(*func)(InteropInputStream*), const int8_t expHdr)
+            {
+                int8_t hdr = stream->ReadInt8();
+
+                if (hdr == expHdr)
+                    return func(stream);
+                else if (hdr == IGNITE_HDR_NULL)
+                    return T();
+                else
+                {
+                    ThrowOnInvalidHeader(stream->Position() - 1, expHdr, hdr);
+
+                    return T();
+                }
+            }
+
+            template <typename T>
+            void BinaryReaderImpl::ReadNullable(InteropInputStream* stream,
+                void(*func)(InteropInputStream*, T&), const int8_t expHdr, T& res)
+            {
+                int8_t hdr = stream->ReadInt8();
+
+                if (hdr == expHdr)
+                    func(stream, res);
+                else if (hdr == IGNITE_HDR_NULL)
+                    res = T();
+                else
+                    ThrowOnInvalidHeader(stream->Position() - 1, expHdr, hdr);
+            }
+
+            template <typename T>
+            T BinaryReaderImpl::ReadTopObject0(const int8_t expHdr, T(*func)(InteropInputStream*))
             {
                 int8_t typeId = stream->ReadInt8();
 
@@ -874,8 +938,26 @@ namespace ignite
                 {
                     int32_t pos = stream->Position() - 1;
 
-                    IGNITE_ERROR_FORMATTED_3(IgniteError::IGNITE_ERR_BINARY,
-                        "Invalid header", "position", pos, "expected", (int)expHdr, "actual", (int)typeId)
+                    IGNITE_ERROR_FORMATTED_3(IgniteError::IGNITE_ERR_BINARY, "Invalid header",
+                        "position", pos, "expected", static_cast<int>(expHdr), "actual", static_cast<int>(typeId))
+                }
+            }
+
+            template <typename T>
+            void BinaryReaderImpl::ReadTopObject0(const int8_t expHdr, void(*func)(InteropInputStream*, T&), T& res)
+            {
+                int8_t typeId = stream->ReadInt8();
+
+                if (typeId == expHdr)
+                    func(stream, res);
+                else if (typeId == IGNITE_HDR_NULL)
+                    res = BinaryUtils::GetDefaultValue<T>();
+                else
+                {
+                    int32_t pos = stream->Position() - 1;
+
+                    IGNITE_ERROR_FORMATTED_3(IgniteError::IGNITE_ERR_BINARY, "Invalid header",
+                        "position", pos, "expected", static_cast<int>(expHdr), "actual", static_cast<int>(typeId))
                 }
             }
 

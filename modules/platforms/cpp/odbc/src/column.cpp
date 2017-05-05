@@ -266,7 +266,7 @@ namespace ignite
                 {
                     common::Decimal res;
 
-                    utility::ReadDecimal(reader, res);
+                    reader.ReadDecimal(res);
 
                     sizeTmp = res.GetMagnitudeLength() + 8;
 
@@ -467,7 +467,7 @@ namespace ignite
                 {
                     common::Decimal res;
 
-                    utility::ReadDecimal(reader, res);
+                    reader.ReadDecimal(res);
 
                     dataBuf.PutDecimal(res);
 

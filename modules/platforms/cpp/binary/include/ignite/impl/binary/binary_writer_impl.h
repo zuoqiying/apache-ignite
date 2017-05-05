@@ -456,6 +456,21 @@ namespace ignite
                 void WriteTimeArray(const char* fieldName, const Time* val, const int32_t len);
 
                 /**
+                 * Write Decimal. Maps to "Decimal" type in Java.
+                 *
+                 * @param val Value.
+                 */
+                void WriteDecimal(const common::Decimal& val);
+
+                /**
+                 * Write Decimal. Maps to "Decimal" type in Java.
+                 *
+                 * @param fieldName Field name.
+                 * @param val Value.
+                 */
+                void WriteDecimal(const char* fieldName, const common::Decimal& val);
+
+                /**
                  * Write string.
                  *
                  * @param val String.
@@ -974,11 +989,17 @@ namespace ignite
                  * @param hdr Header.
                  */
                 template<typename T>
-                void WriteTopObject0(const T obj, void(*func)(impl::interop::InteropOutputStream*, T), const int8_t hdr)
-                {
-                    stream->WriteInt8(hdr);
-                    func(stream, obj);
-                }
+                void WriteTopObject0(const T obj, void (*func)(impl::interop::InteropOutputStream*, T), const int8_t hdr);
+
+                /**
+                 * Write primitive value.
+                 *
+                 * @param obj Value.
+                 * @param func Stream function.
+                 * @param hdr Header.
+                 */
+                template<typename T>
+                void WriteTopObject0(const T obj, void (*func)(impl::interop::InteropOutputStream*, const T&), const int8_t hdr);
             };
 
             template<>
@@ -1016,6 +1037,9 @@ namespace ignite
 
             template<>
             void IGNITE_IMPORT_EXPORT BinaryWriterImpl::WriteTopObject(const Time& obj);
+
+            template<>
+            void IGNITE_IMPORT_EXPORT BinaryWriterImpl::WriteTopObject(const common::Decimal& obj);
 
             template<>
             void IGNITE_IMPORT_EXPORT BinaryWriterImpl::WriteTopObject(const std::string& obj);

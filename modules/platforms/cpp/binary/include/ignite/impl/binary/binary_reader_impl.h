@@ -22,18 +22,19 @@
 
 #include <ignite/common/common.h>
 #include <ignite/common/fixed_size_array.h>
+#include <ignite/common/decimal.h>
 
-#include "ignite/impl/interop/interop_input_stream.h"
-#include "ignite/impl/binary/binary_common.h"
-#include "ignite/impl/binary/binary_id_resolver.h"
-#include "ignite/impl/binary/binary_schema.h"
-#include "ignite/common/utils.h"
-#include "ignite/binary/binary_consts.h"
-#include "ignite/binary/binary_type.h"
-#include "ignite/guid.h"
-#include "ignite/date.h"
-#include "ignite/timestamp.h"
-#include "ignite/time.h"
+#include <ignite/impl/interop/interop_input_stream.h>
+#include <ignite/impl/binary/binary_common.h>
+#include <ignite/impl/binary/binary_id_resolver.h>
+#include <ignite/impl/binary/binary_schema.h>
+#include <ignite/common/utils.h>
+#include <ignite/binary/binary_consts.h>
+#include <ignite/binary/binary_type.h>
+#include <ignite/guid.h>
+#include <ignite/date.h>
+#include <ignite/timestamp.h>
+#include <ignite/time.h>
 
 namespace ignite
 {
@@ -552,6 +553,21 @@ namespace ignite
                  *     -1 will be returned in case array in stream was null.
                  */
                 int32_t ReadTimeArray(const char* fieldName, Time* res, const int32_t len);
+
+                /**
+                 * Read Decimal. Maps to "Decimal" type in Java.
+                 *
+                 * @param res Result.
+                 */
+                void ReadDecimal(common::Decimal& res);
+
+                /**
+                 * Read Decimal. Maps to "Decimal" type in Java.
+                 *
+                 * @param fieldName Field name.
+                 * @param res Result.
+                 */
+                void ReadDecimal(const char* fieldName, common::Decimal& res);
 
                 /**
                  * Read string.
@@ -1298,24 +1314,24 @@ namespace ignite
                 template<typename T>
                 static T ReadNullable(
                     interop::InteropInputStream* stream,
-                    T(*func)(interop::InteropInputStream*), 
+                    T (*func)(interop::InteropInputStream*),
                     const int8_t expHdr
-                )
-                {
-                    {
-                        int8_t hdr = stream->ReadInt8();
+                );
 
-                        if (hdr == expHdr)
-                            return func(stream);
-                        else if (hdr == IGNITE_HDR_NULL)
-                            return T();
-                        else {
-                            ThrowOnInvalidHeader(stream->Position() - 1, expHdr, hdr);
-
-                            return T();
-                        }
-                    }
-                }
+                /**
+                 * Read nullable value.
+                 *
+                 * @param stream Stream.
+                 * @param func Function to be invoked on stream.
+                 * @param expHdr Expected header.
+                 */
+                template<typename T>
+                static void ReadNullable(
+                    interop::InteropInputStream* stream,
+                    void(*func)(interop::InteropInputStream*, T&),
+                    const int8_t expHdr,
+                    T& res
+                );
 
                 /**
                  * Seek field with the given ID.
@@ -1401,9 +1417,20 @@ namespace ignite
                  *
                  * @param expHdr Expected header.
                  * @param func Function to be applied to the stream.
+                 * @return Result.
                  */
                 template<typename T>
-                T ReadTopObject0(const int8_t expHdr, T (*func)(ignite::impl::interop::InteropInputStream*));
+                T ReadTopObject0(const int8_t expHdr, T(*func)(interop::InteropInputStream*));
+                
+                /**
+                 * Read value.
+                 *
+                 * @param expHdr Expected header.
+                 * @param func Function to be applied to the stream.
+                 * @param res Result.
+                 */
+                template<typename T>
+                void ReadTopObject0(const int8_t expHdr, void(*func)(interop::InteropInputStream*, T&), T& res);
             };
 
             template<>
@@ -1441,6 +1468,9 @@ namespace ignite
 
             template<>
             Time IGNITE_IMPORT_EXPORT BinaryReaderImpl::ReadTopObject<Time>();
+
+            template<>
+            common::Decimal IGNITE_IMPORT_EXPORT BinaryReaderImpl::ReadTopObject<common::Decimal>();
 
             template<>
             std::string IGNITE_IMPORT_EXPORT BinaryReaderImpl::ReadTopObject<std::string>();

@@ -17,10 +17,11 @@
 
 #include <time.h>
 
-#include "ignite/ignite_error.h"
+#include <ignite/common/fixed_size_array.h>
+#include <ignite/ignite_error.h>
 
-#include "ignite/impl/interop/interop.h"
-#include "ignite/impl/binary/binary_utils.h"
+#include <ignite/impl/interop/interop.h>
+#include <ignite/impl/binary/binary_utils.h>
 
 using namespace ignite::impl::interop;
 using namespace ignite::impl::binary;
@@ -344,6 +345,48 @@ namespace ignite
             {
                 stream->WriteInt32(len);
                 stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val), len);
+            }
+
+            void BinaryUtils::ReadDecimal(InteropInputStream* stream, common::Decimal& decimal)
+            {
+                int32_t scale = stream->ReadInt32();
+
+                int32_t len = stream->ReadInt32();
+
+                common::FixedSizeArray<int8_t> magnitude(len);
+
+                ReadInt8Array(stream, magnitude.GetData(), magnitude.GetSize());
+
+                int32_t sign = 1;
+
+                if (magnitude[0] < 0)
+                {
+                    magnitude[0] &= 0x7F;
+
+                    sign = -1;
+                }
+
+                common::Decimal res(magnitude.GetData(), magnitude.GetSize(), scale, sign);
+
+                decimal.Swap(res);
+            }
+
+            void BinaryUtils::WriteDecimal(InteropOutputStream* stream, const common::Decimal& decimal)
+            {
+                const common::BigInteger &unscaled = decimal.GetUnscaledValue();
+
+                stream->WriteInt32(decimal.GetScale());
+
+                common::FixedSizeArray<int8_t> magnitude;
+
+                unscaled.MagnitudeToBytes(magnitude);
+
+                if (unscaled.GetSign() == -1)
+                    magnitude[0] |= -0x80;
+
+                stream->WriteInt32(magnitude.GetSize());
+
+                WriteInt8Array(stream, magnitude.GetData(), magnitude.GetSize());
             }
 
             int32_t BinaryUtils::ReadSignedVarint(InteropInputStream* stream)

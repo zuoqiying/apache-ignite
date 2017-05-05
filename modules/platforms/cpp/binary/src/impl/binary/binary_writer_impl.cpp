@@ -451,6 +451,28 @@ namespace ignite
                     stream->WriteInt8(IGNITE_HDR_NULL);
             }
 
+            void BinaryWriterImpl::WriteDecimal(const common::Decimal& val)
+            {
+                CheckRawMode(true);
+                CheckSingleMode(true);
+
+                stream->WriteInt8(IGNITE_TYPE_DECIMAL);
+
+                BinaryUtils::WriteDecimal(stream, val);
+            }
+
+            void BinaryWriterImpl::WriteDecimal(const char* fieldName, const common::Decimal& val)
+            {
+                CheckRawMode(false);
+                CheckSingleMode(true);
+
+                WriteFieldId(fieldName, IGNITE_TYPE_DECIMAL);
+
+                stream->WriteInt8(IGNITE_TYPE_DECIMAL);
+
+                BinaryUtils::WriteDecimal(stream, val);
+            }
+
             void BinaryWriterImpl::WriteString(const char* val, const int32_t len)
             {
                 CheckRawMode(true);
@@ -682,6 +704,20 @@ namespace ignite
                     metaHnd->OnFieldWritten(fieldId, fieldName, fieldTypeId);
             }
 
+            template <typename T>
+            void BinaryWriterImpl::WriteTopObject0(const T obj, void(*func)(InteropOutputStream*, T), const int8_t hdr)
+            {
+                stream->WriteInt8(hdr);
+                func(stream, obj);
+            }
+
+            template <typename T>
+            void BinaryWriterImpl::WriteTopObject0(const T obj, void(*func)(InteropOutputStream*, const T&), const int8_t hdr)
+            {
+                stream->WriteInt8(hdr);
+                func(stream, obj);
+            }
+
             template <>
             void BinaryWriterImpl::WriteTopObject<int8_t>(const int8_t& obj)
             {
@@ -752,6 +788,12 @@ namespace ignite
             void BinaryWriterImpl::WriteTopObject<Time>(const Time& obj)
             {
                 WriteTopObject0<Time>(obj, BinaryUtils::WriteTime, IGNITE_TYPE_TIME);
+            }
+
+            template<>
+            void BinaryWriterImpl::WriteTopObject(const common::Decimal& obj)
+            {
+                WriteTopObject0<common::Decimal>(obj, BinaryUtils::WriteDecimal, IGNITE_TYPE_DECIMAL);
             }
 
             template<>

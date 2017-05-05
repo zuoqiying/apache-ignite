@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include <ignite/common/utils.h>
+#include <ignite/common/decimal.h>
 
 #include <ignite/guid.h>
 #include <ignite/date.h>
@@ -463,6 +464,22 @@ namespace ignite
                 static void WriteString(interop::InteropOutputStream* stream, const char* val, const int32_t len);
 
                 /**
+                 * Read decimal value using reader.
+                 *
+                 * @param stream Stream.
+                 * @param decimal Decimal value.
+                 */
+                static void ReadDecimal(interop::InteropInputStream* stream, common::Decimal& decimal);
+
+                /**
+                 * Write decimal value using writer.
+                 *
+                 * @param stream Stream.
+                 * @param decimal Decimal value.
+                 */
+                static void WriteDecimal(interop::InteropOutputStream* stream, const common::Decimal& decimal);
+
+                /**
                  * Utility method to read signed varint from stream.
                  *
                  * Refer to http://code.google.com/apis/protocolbuffers/docs/encoding.html
@@ -592,6 +609,12 @@ namespace ignite
             inline Time BinaryUtils::GetDefaultValue<Time>()
             {
                 return Time();
+            }
+
+            template<>
+            inline common::Decimal BinaryUtils::GetDefaultValue<common::Decimal>()
+            {
+                return common::Decimal();
             }
 
             template<>
