@@ -239,6 +239,7 @@
             <excludes>
                 <exclude>**/package.html</exclude>
                 <exclude>src/test/**</exclude>
+                <exclude>src/main/java/ml/**</exclude>
             </excludes>
         </fileSet>
 
