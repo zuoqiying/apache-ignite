@@ -29,20 +29,44 @@ using namespace impl::interop;
 using namespace impl::binary;
 using namespace boost::unit_test;
 
-template<typename T, typename W, typename R>
-void WriteReadType(const T& val, W wc, R rc)
+template<typename T>
+void WriteReadType(const T& val, void(*wc)(InteropOutputStream*, T), T(*rc)(InteropInputStream*))
 {
     InteropUnpooledMemory mem(1024);
     InteropOutputStream out(&mem);
 
+    BOOST_CHECKPOINT("Writing attempt");
     wc(&out, val);
 
     out.Synchronize();
 
     InteropInputStream in(&mem);
 
-    int32_t res = rc(&in);
+    BOOST_CHECKPOINT("Reading attempt");
+    T res = rc(&in);
 
+    BOOST_CHECKPOINT("Comparation and output");
+    BOOST_CHECK_EQUAL(val, res);
+}
+
+template<typename T>
+void WriteReadType(const T& val, void(*wc)(InteropOutputStream*, const T&), void(*rc)(InteropInputStream*, T&))
+{
+    InteropUnpooledMemory mem(1024);
+    InteropOutputStream out(&mem);
+
+    BOOST_CHECKPOINT("Writing attempt");
+    wc(&out, val);
+
+    out.Synchronize();
+
+    InteropInputStream in(&mem);
+
+    T res;
+    BOOST_CHECKPOINT("Reading attempt");
+    rc(&in, res);
+
+    BOOST_CHECKPOINT("Comparation and output");
     BOOST_CHECK_EQUAL(val, res);
 }
 
@@ -56,44 +80,251 @@ void WriteReadUnsignedVarint(int32_t val)
     WriteReadType(val, BinaryUtils::WriteUnsignedVarint, BinaryUtils::ReadUnsignedVarint);
 }
 
+void WriteReadDecimal(const common::Decimal& val)
+{
+    WriteReadType(val, BinaryUtils::WriteDecimal, BinaryUtils::ReadDecimal);
+}
+
 BOOST_AUTO_TEST_SUITE(BinaryUtilsTestSuite)
 
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest)
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_0)
 {
     WriteReadSignedVarint(0);
+}
 
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_1)
+{
     WriteReadSignedVarint(1);
-    WriteReadSignedVarint(42);
-    WriteReadSignedVarint(100);
-    WriteReadSignedVarint(100000000);
-    WriteReadSignedVarint(999999999);
-    WriteReadSignedVarint(1926348257);
+}
 
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_42)
+{
+    WriteReadSignedVarint(42);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_100)
+{
+    WriteReadSignedVarint(100);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_100000000)
+{
+    WriteReadSignedVarint(100000000);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_999999999)
+{
+    WriteReadSignedVarint(999999999);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_1926348257)
+{
+    WriteReadSignedVarint(1926348257);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N1)
+{
     WriteReadSignedVarint(-1);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N42)
+{
     WriteReadSignedVarint(-42);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N100)
+{
     WriteReadSignedVarint(-100);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N100000000)
+{
     WriteReadSignedVarint(-100000000);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N999999999)
+{
     WriteReadSignedVarint(-999999999);
+}
+
+BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N1926348257)
+{
     WriteReadSignedVarint(-1926348257);
 }
 
-BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest)
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_0)
 {
     WriteReadUnsignedVarint(0);
+}
 
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_1)
+{
     WriteReadUnsignedVarint(1);
-    WriteReadUnsignedVarint(42);
-    WriteReadUnsignedVarint(100);
-    WriteReadUnsignedVarint(100000000);
-    WriteReadUnsignedVarint(999999999);
-    WriteReadUnsignedVarint(1926348257);
+}
 
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_42)
+{
+    WriteReadUnsignedVarint(42);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_100)
+{
+    WriteReadUnsignedVarint(100);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_100000000)
+{
+    WriteReadUnsignedVarint(100000000);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_999999999)
+{
+    WriteReadUnsignedVarint(999999999);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_1926348257)
+{
+    WriteReadUnsignedVarint(1926348257);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_N1)
+{
     WriteReadUnsignedVarint(-1);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_N42)
+{
     WriteReadUnsignedVarint(-42);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_N100)
+{
     WriteReadUnsignedVarint(-100);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_N100000000)
+{
     WriteReadUnsignedVarint(-100000000);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_N999999999)
+{
     WriteReadUnsignedVarint(-999999999);
+}
+
+BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_N1926348257)
+{
     WriteReadUnsignedVarint(-1926348257);
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_Default)
+{
+    WriteReadDecimal(common::Decimal());
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_0)
+{
+    WriteReadDecimal(common::Decimal(0));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_1)
+{
+    WriteReadDecimal(common::Decimal(1));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_42)
+{
+    WriteReadDecimal(common::Decimal(42));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_100)
+{
+    WriteReadDecimal(common::Decimal(100));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_100000000)
+{
+    WriteReadDecimal(common::Decimal(100000000));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_999999999)
+{
+    WriteReadDecimal(common::Decimal(999999999));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_1926348257)
+{
+    WriteReadDecimal(common::Decimal(1926348257));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_23905684076350439_6529643986)
+{
+    WriteReadDecimal(common::Decimal("23905684076350439.6529643986"));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_394865902635896426758746893625963458967946783645868346258768374658763284_017395679043650265460235602345)
+{
+    WriteReadDecimal(common::Decimal("394865902635896426758746893625963458967946783645868346258768374658763284.017395679043650265460235602345"));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_99999999999999999999999999999999999999999999999999_9999999999999999999999999999999999999999999999999999999)
+{
+    WriteReadDecimal(common::Decimal("99999999999999999999999999999999999999999999999999.9999999999999999999999999999999999999999999999999999999"));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_0_00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
+{
+    WriteReadDecimal(common::Decimal("0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N1)
+{
+    WriteReadDecimal(common::Decimal(-1));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N42)
+{
+    WriteReadDecimal(common::Decimal(-42));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N100)
+{
+    WriteReadDecimal(common::Decimal(-100));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N100000000)
+{
+    WriteReadDecimal(common::Decimal(-100000000));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N999999999)
+{
+    WriteReadDecimal(common::Decimal(-999999999));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N1926348257)
+{
+    WriteReadDecimal(common::Decimal(-1926348257));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N23905684076350439_6529643986)
+{
+    WriteReadDecimal(common::Decimal("-23905684076350439.6529643986"));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N394865902635896426758746893625963458967946783645868346258768374658763284_017395679043650265460235602345)
+{
+    WriteReadDecimal(common::Decimal("-394865902635896426758746893625963458967946783645868346258768374658763284.017395679043650265460235602345"));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N99999999999999999999999999999999999999999999999999_9999999999999999999999999999999999999999999999999999999)
+{
+    WriteReadDecimal(common::Decimal("-99999999999999999999999999999999999999999999999999.9999999999999999999999999999999999999999999999999999999"));
+}
+
+BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N0_00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
+{
+    WriteReadDecimal(common::Decimal("-0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
