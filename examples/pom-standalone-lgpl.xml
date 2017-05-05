@@ -105,23 +105,6 @@
         </profile>
 
         <profile>
-            <id>ml</id>
-
-            <properties>
-                <ml.folder>src/main/ml</ml.folder>
-                <java.ver>1.8</java.ver>
-            </properties>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.ignite</groupId>
-                    <artifactId>ignite-ml</artifactId>
-                    <version>to_be_replaced_by_ignite_version</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
             <id>scala</id>
 
             <properties>
