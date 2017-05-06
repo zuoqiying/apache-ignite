@@ -1483,6 +1483,8 @@ class ClientImpl extends TcpDiscoveryImpl {
 
                                 nodeAdded = false;
 
+                                delayDiscoData.clear();
+
                                 IgniteClientDisconnectedCheckedException err =
                                     new IgniteClientDisconnectedCheckedException(null, "Failed to ping node, " +
                                     "client node disconnected.");
