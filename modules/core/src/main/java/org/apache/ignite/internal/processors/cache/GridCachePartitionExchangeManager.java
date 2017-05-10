@@ -1414,6 +1414,8 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
 
         cctx.affinity().dumpDebugInfo();
 
+        cctx.io().dumpPendingMessages();
+
         // Dump IO manager statistics.
         // cctx.gridIO().dumpStats();
     }
@@ -1485,6 +1487,8 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                     }
                 }
             }
+
+            cctx.io().dumpPendingMessages();
 
             if (found) {
                 if (longRunningOpsDumpCnt < GridDhtPartitionsExchangeFuture.DUMP_PENDING_OBJECTS_THRESHOLD) {

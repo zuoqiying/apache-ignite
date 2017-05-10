@@ -48,6 +48,7 @@ import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.processors.GridProcessorAdapter;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.GridTimerTask;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
@@ -289,6 +290,12 @@ public class ClusterProcessor extends GridProcessorAdapter {
      */
     public String latestVersion() {
         return verChecker != null ? verChecker.latestVersion() : null;
+    }
+
+    public void dumpRemoteTxInfo(UUID nodeId, GridCacheVersion dhtVer, GridCacheVersion nearVer, final String msg) {
+        IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.TxInfoClosure(ctx, dhtVer, nearVer), msg);
+
+        listenAndLog(fut);
     }
 
     public void dumpTxKeyInfo(UUID nodeId, int cacheId, Collection<KeyCacheObject> keys, final String msg) {

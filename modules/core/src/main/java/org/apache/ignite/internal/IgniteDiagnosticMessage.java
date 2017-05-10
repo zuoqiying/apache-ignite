@@ -25,6 +25,8 @@ import org.apache.ignite.internal.processors.cache.GridCachePartitionExchangeMan
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtTopologyFuture;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsExchangeFuture;
+import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
+import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -287,6 +289,7 @@ public class IgniteDiagnosticMessage implements Message {
             return sb.toString();
         }
     }
+
     public static class ExchangeInfoClosure extends BaseClosure {
         /** */
         private static final long serialVersionUID = 0L;
@@ -309,6 +312,54 @@ public class IgniteDiagnosticMessage implements Message {
             }
 
             return "Failed to find exchange future: " + topVer;
+        }
+    }
+
+    public static class TxInfoClosure extends BaseClosure {
+        /** */
+        private static final long serialVersionUID = 0L;
+
+        /** */
+        private final GridCacheVersion dhtVer;
+
+        /** */
+        private final GridCacheVersion nearVer;
+
+        public TxInfoClosure(GridKernalContext ctx,
+                             GridCacheVersion dhtVer,
+                             GridCacheVersion nearVer) {
+            super(ctx);
+
+            this.dhtVer = dhtVer;
+            this.nearVer = nearVer;
+        }
+
+        @Override protected String dumpInfo(GridKernalContext ctx) {
+            StringBuilder b = new StringBuilder();
+
+            b.append("Related transactions [dhtVer=" + dhtVer + ", nearVer=" + nearVer + "]: ");
+
+            boolean found = false;
+
+            for (IgniteInternalTx tx : ctx.cache().context().tm().activeTransactions()) {
+                if (dhtVer.equals(tx.xidVersion()) || nearVer.equals(tx.nearXidVersion())) {
+                    found = true;
+
+                    b.append(U.nl());
+                    b.append("Found related ttx [ver=" + tx.xidVersion() +
+                        ", nearVer=" + tx.nearXidVersion() +
+                        ", topVer=" + tx.topologyVersion() +
+                        ", state=" + tx.state() +
+                        ", fullTx=" + tx + "]");
+                }
+            }
+
+            if (!found) {
+                b.append(U.nl());
+                b.append("Failed to find related transactions.");
+            }
+
+            return b.toString();
         }
     }
 
