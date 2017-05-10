@@ -462,7 +462,7 @@ export default class IgniteAgentManager {
      */
     querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local, pageSz) {
         if (this.ignite2x) {
-            return this.visorTask('querySql', nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local, pageSz)
+            return this.visorTask('querySqlX2', nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local, pageSz)
                 .then(({error, result}) => {
                     if (_.isEmpty(error))
                         return result;
@@ -569,7 +569,16 @@ export default class IgniteAgentManager {
                 });
         }
 
-        return this.visorTask('querySql', nid, cacheName, filter, local, pageSize);
+        /** Prefix for node local key for SCAN near queries. */
+        const SCAN_CACHE_WITH_FILTER = 'VISOR_SCAN_CACHE_WITH_FILTER';
+
+        /** Prefix for node local key for SCAN near queries. */
+        const SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE = 'VISOR_SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE';
+
+        const prefix = caseSensitive ? SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE : SCAN_CACHE_WITH_FILTER;
+        const query = `${prefix}${filter}`;
+
+        return this.querySql(nid, cacheName, query, false, false, false, local, pageSize);
     }
 
     /**
