@@ -1146,15 +1146,7 @@ namespace ignite
                  * @return Result.
                  */
                 template<typename T>
-                T ReadRaw(T(*func)(interop::InteropInputStream*))
-                {
-                    {
-                        CheckRawMode(true);
-                        CheckSingleMode(true);
-
-                        return func(stream);
-                    }
-                }
+                T ReadRaw(T (*func)(interop::InteropInputStream*));
 
                 /**
                  * Read single value.
@@ -1167,40 +1159,11 @@ namespace ignite
                  */
                 template<typename T>
                 T Read(
-                    const char* fieldName, 
-                    T(*func) (interop::InteropInputStream*), 
-                    const int8_t expHdr, 
+                    const char* fieldName,
+                    T (*func)(interop::InteropInputStream*),
+                    const int8_t expHdr,
                     T dflt
-                )
-                {
-                    {
-                        CheckRawMode(false);
-                        CheckSingleMode(true);
-
-                        int32_t fieldId = idRslvr->GetFieldId(typeId, fieldName);
-                        int32_t fieldPos = FindField(fieldId);
-
-                        if (fieldPos <= 0)
-                            return dflt;
-
-                        stream->Position(fieldPos);
-
-                        int8_t typeId = stream->ReadInt8();
-                        
-                        if (typeId == IGNITE_HDR_NULL)
-                            return dflt;
-
-                        if (typeId != expHdr)
-                        {
-                            int32_t pos = stream->Position();
-
-                            IGNITE_ERROR_FORMATTED_3(IgniteError::IGNITE_ERR_BINARY, "Invalid type ID", 
-                                "position", pos, "expected", static_cast<int>(expHdr), "actual", static_cast<int>(typeId))
-                        }
-
-                        return func(stream);
-                    }
-                }
+                );
 
                 /**
                  * Read array in raw mode.
@@ -1215,17 +1178,9 @@ namespace ignite
                 int32_t ReadRawArray(
                     T* res,
                     const int32_t len,
-                    void(*func)(interop::InteropInputStream*, T* const, const int32_t),
+                    void (*func)(interop::InteropInputStream*, T* const, const int32_t),
                     const int8_t expHdr
-                )
-                {
-                    {
-                        CheckRawMode(true);
-                        CheckSingleMode(true);
-
-                        return ReadArrayInternal(res, len, stream, func, expHdr);
-                    }
-                }
+                );
 
                 /**
                  * Read array.
@@ -1241,28 +1196,10 @@ namespace ignite
                 int32_t ReadArray(
                     const char* fieldName,
                     T* res,
-                    const int32_t len,                    
-                    void(*func)(interop::InteropInputStream*, T* const, const int32_t),
+                    const int32_t len,
+                    void (*func)(interop::InteropInputStream*, T* const, const int32_t),
                     const int8_t expHdr
-                )
-                {
-                    {
-                        CheckRawMode(false);
-                        CheckSingleMode(true);
-                        
-                        int32_t fieldId = idRslvr->GetFieldId(typeId, fieldName);
-                        int32_t fieldPos = FindField(fieldId);
-
-                        if (fieldPos <= 0)
-                            return -1;
-
-                        stream->Position(fieldPos);
-
-                        int32_t realLen = ReadArrayInternal(res, len, stream, func, expHdr);
-
-                        return realLen;
-                    }
-                }
+                );
 
                 /**
                  * Internal read array routine.
@@ -1279,30 +1216,9 @@ namespace ignite
                     T* res,
                     const int32_t len,
                     interop::InteropInputStream* stream,
-                    void(*func)(interop::InteropInputStream*, T* const, const int32_t),
+                    void (*func)(interop::InteropInputStream*, T* const, const int32_t),
                     const int8_t expHdr
-                )
-                {
-                    {
-                        int8_t hdr = stream->ReadInt8();
-
-                        if (hdr == expHdr)
-                        {
-                            int32_t realLen = stream->ReadInt32();
-
-                            if (realLen == 0 || (res && len >= realLen))
-                                func(stream, res, realLen);
-                            else
-                                stream->Position(stream->Position() - 5);
-
-                            return realLen;
-                        }
-                        else if (hdr != IGNITE_HDR_NULL)
-                            ThrowOnInvalidHeader(stream->Position() - 1, expHdr, hdr);
-
-                        return -1;
-                    }
-                }
+                );
 
                 /**
                  * Read nullable value.
