@@ -202,12 +202,16 @@ module.exports.factory = (_, socketio, configure, errors) => {
             this.registerVisorTask('querySql', internalVisor('query.VisorQueryTask'), internalVisor('query.VisorQueryArg'));
             this.registerVisorTask('querySqlV2', internalVisor('query.VisorQueryTask'), internalVisor('query.VisorQueryArgV2'));
             this.registerVisorTask('querySqlV3', internalVisor('query.VisorQueryTask'), internalVisor('query.VisorQueryArgV3'));
+            this.registerVisorTask('querySqlX2', internalVisor('query.VisorQueryTask'), internalVisor('query.VisorQueryTaskArg'));
 
-            this.registerVisorTask('queryFetch', internalVisor('query.VisorQueryNextPageTask'),
-                'org.apache.ignite.lang.IgniteBiTuple', 'java.lang.String', 'java.lang.Integer');
+            this.registerVisorTask('queryScan', internalVisor('query.VisorScanQueryTask'), internalVisor('query.VisorScanQueryTaskArg'));
 
-            this.registerVisorTask('queryClose', internalVisor('query.VisorQueryCleanupTask'),
-                'java.util.Map', 'java.util.UUID', 'java.util.Set');
+            this.registerVisorTask('queryFetch', internalVisor('query.VisorQueryNextPageTask'), 'org.apache.ignite.lang.IgniteBiTuple', 'java.lang.String', 'java.lang.Integer');
+            this.registerVisorTask('queryFetchX2', internalVisor('query.VisorQueryNextPageTask'), internalVisor('query.VisorQueryNextPageTaskArg'));
+
+            this.registerVisorTask('queryClose', internalVisor('query.VisorQueryCleanupTask'), 'java.util.Map', 'java.util.UUID', 'java.util.Set');
+            this.registerVisorTask('queryCloseX2', internalVisor('query.VisorQueryCleanupTask'), internalVisor('query.VisorQueryCleanupTaskArg'));
+
 
             // Return command result from grid to browser.
             sock.on('node:visor', (clusterId, taskId, nids, ...args) => {
