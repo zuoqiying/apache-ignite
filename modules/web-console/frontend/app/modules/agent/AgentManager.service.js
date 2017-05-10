@@ -560,7 +560,7 @@ export default class IgniteAgentManager {
      */
     queryScan(nid, cacheName, filter, regEx, caseSensitive, near, local, pageSize) {
         if (this.ignite2x) {
-            return this.visorTask('queryScan', nid, cacheName, filter, regEx, caseSensitive, near, local, pageSize)
+            return this.visorTask('queryScanX2', nid, cacheName, filter, regEx, caseSensitive, near, local, pageSize)
                 .then(({error, result}) => {
                     if (_.isEmpty(error))
                         return result;
@@ -569,13 +569,7 @@ export default class IgniteAgentManager {
                 });
         }
 
-        return this.visorTask('querySql', nid, cacheName, filter, local, pageSize)
-            .then(({key, value}) => {
-                if (_.isEmpty(key))
-                    return value;
-
-                return Promise.reject(key);
-            });
+        return this.visorTask('querySql', nid, cacheName, filter, local, pageSize);
     }
 
     /**
