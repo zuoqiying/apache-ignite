@@ -19,6 +19,8 @@
 #   define BOOST_TEST_DYN_LINK
 #endif
 
+#include <string>
+
 #include <boost/test/unit_test.hpp>
 
 #include "ignite/ignite.h"
