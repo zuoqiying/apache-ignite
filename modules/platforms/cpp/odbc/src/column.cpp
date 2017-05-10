@@ -27,7 +27,7 @@ namespace
 
     bool GetObjectLength(InteropInputStream& stream, int32_t& len)
     {
-        InteropStreamPositionGuard<InteropInputStream> guard(stream);
+        InputStreamPositionGuard guard(stream);
 
         int8_t hdr = stream.ReadInt8();
 
@@ -147,7 +147,7 @@ namespace ignite
             if (!stream)
                 return;
 
-            InteropStreamPositionGuard<InteropInputStream> guard(*stream);
+            InputStreamPositionGuard guard(*stream);
 
             int32_t sizeTmp = 0;
 
@@ -342,7 +342,7 @@ namespace ignite
             if (!stream)
                 return SqlResult::AI_ERROR;
 
-            InteropStreamPositionGuard<InteropInputStream> guard(*stream);
+            InputStreamPositionGuard guard(*stream);
 
             stream->Position(startPos);
 

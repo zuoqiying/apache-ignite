@@ -21,6 +21,7 @@
 #include <ignite/ignite_error.h>
 
 #include <ignite/impl/interop/interop.h>
+#include <ignite/impl/interop/interop_stream_position_guard.h>
 #include <ignite/impl/binary/binary_utils.h>
 
 using namespace ignite::impl::interop;
@@ -343,6 +344,8 @@ namespace ignite
 
             int32_t BinaryUtils::ReadString(InteropInputStream* stream, char* buf, const int32_t len)
             {
+                InputStreamPositionGuard guard(*stream);
+
                 int32_t realLen = ReadUnsignedVarint(stream);
 
                 if (buf && len >= realLen)
@@ -351,9 +354,9 @@ namespace ignite
 
                     if (len > realLen)
                         buf[realLen] = 0; // Set NULL terminator if possible.
+
+                    guard.Release();
                 }
-                else
-                    stream->Position(stream->Position() - 4 - 1);
 
                 return realLen;
             }

@@ -537,7 +537,8 @@ namespace ignite
 
                 if (hdr == IGNITE_TYPE_STRING)
                     return BinaryUtils::ReadString(stream, res, len);
-                else if (hdr != IGNITE_HDR_NULL)
+
+                if (hdr != IGNITE_HDR_NULL)
                     ThrowOnInvalidHeader(IGNITE_TYPE_ARRAY, hdr);
 
                 return -1;
@@ -661,7 +662,7 @@ namespace ignite
 
             CollectionType::Type BinaryReaderImpl::ReadCollectionType()
             {
-                InteropStreamPositionGuard<InteropInputStream> positionGuard(*stream);
+                InputStreamPositionGuard positionGuard(*stream);
                 
                 return ReadCollectionTypeUnprotected();
             }
@@ -671,7 +672,7 @@ namespace ignite
                 CheckRawMode(false);
                 CheckSingleMode(true);
 
-                InteropStreamPositionGuard<InteropInputStream> positionGuard(*stream);
+                InputStreamPositionGuard positionGuard(*stream);
 
                 int32_t fieldId = idRslvr->GetFieldId(typeId, fieldName);
                 int32_t fieldPos = FindField(fieldId);
@@ -703,7 +704,7 @@ namespace ignite
 
             int32_t BinaryReaderImpl::ReadCollectionSize()
             {
-                InteropStreamPositionGuard<InteropInputStream> positionGuard(*stream);
+                InputStreamPositionGuard positionGuard(*stream);
 
                 return ReadCollectionSizeUnprotected();
             }
@@ -713,7 +714,7 @@ namespace ignite
                 CheckRawMode(false);
                 CheckSingleMode(true);
 
-                InteropStreamPositionGuard<InteropInputStream> positionGuard(*stream);
+                InputStreamPositionGuard positionGuard(*stream);
 
                 int32_t fieldId = idRslvr->GetFieldId(typeId, fieldName);
                 int32_t fieldPos = FindField(fieldId);
@@ -736,7 +737,7 @@ namespace ignite
                 CheckRawMode(true);
                 CheckSingleMode(true);
 
-                InteropStreamPositionGuard<InteropInputStream> positionGuard(*stream);
+                InputStreamPositionGuard positionGuard(*stream);
 
                 int8_t hdr = stream->ReadInt8();
 
@@ -936,12 +937,16 @@ namespace ignite
 
                 if (hdr == expHdr)
                 {
-                    int32_t realLen = stream->ReadInt32();
+                    InputStreamPositionGuard guard(*stream);
+
+                    int32_t realLen = BinaryUtils::ReadUnsignedVarint(stream);
 
                     if (realLen == 0 || (res && len >= realLen))
+                    {
                         func(stream, res, realLen);
-                    else
-                        stream->Position(stream->Position() - 5);
+
+                        guard.Release();
+                    }
 
                     return realLen;
                 }
@@ -1024,7 +1029,7 @@ namespace ignite
 
             int32_t BinaryReaderImpl::FindField(const int32_t fieldId)
             {
-                InteropStreamPositionGuard<InteropInputStream> streamGuard(*stream);
+                InputStreamPositionGuard streamGuard(*stream);
 
                 stream->Position(footerBegin);
 
