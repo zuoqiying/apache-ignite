@@ -343,7 +343,7 @@ namespace ignite
 
             int32_t BinaryUtils::ReadString(InteropInputStream* stream, char* buf, const int32_t len)
             {
-                int32_t realLen = stream->ReadInt32();
+                int32_t realLen = ReadUnsignedVarint(stream);
 
                 if (buf && len >= realLen)
                 {
@@ -360,13 +360,13 @@ namespace ignite
 
             void BinaryUtils::WriteString(InteropOutputStream* stream, const char* val, const int32_t len)
             {
-                stream->WriteInt32(len);
+                WriteUnsignedVarint(stream, len);
                 stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val), len);
             }
 
             void BinaryUtils::ReadString(InteropInputStream* stream, std::string& val)
             {
-                int32_t realLen = stream->ReadInt32();
+                int32_t realLen = ReadUnsignedVarint(stream);
 
                 if (realLen > 0)
                 {
@@ -379,7 +379,7 @@ namespace ignite
             void BinaryUtils::WriteString(InteropOutputStream* stream, const std::string& val)
             {
                 int32_t len = static_cast<int32_t>(val.size());
-                stream->WriteInt32(len);
+                WriteUnsignedVarint(stream, len);
                 stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val.data()), len);
             }
 
