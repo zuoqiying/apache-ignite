@@ -85,6 +85,11 @@ void WriteReadDecimal(const common::Decimal& val)
     WriteReadType(val, BinaryUtils::WriteDecimal, BinaryUtils::ReadDecimal);
 }
 
+void WriteReadString(const std::string& val)
+{
+    WriteReadType(val, BinaryUtils::WriteString, BinaryUtils::ReadString);
+}
+
 BOOST_AUTO_TEST_SUITE(BinaryUtilsTestSuite)
 
 BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_0)
@@ -325,6 +330,30 @@ BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N9999999999999999999999999999999999999
 BOOST_AUTO_TEST_CASE(DecimalWriteReadTest_N0_00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
 {
     WriteReadDecimal(common::Decimal("-0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"));
+}
+
+BOOST_AUTO_TEST_CASE(StringWriteReadTest_Empty)
+{
+    WriteReadString("");
+}
+
+BOOST_AUTO_TEST_CASE(StringWriteReadTest_Short)
+{
+    WriteReadString("Lorem ipsum");
+}
+
+BOOST_AUTO_TEST_CASE(StringWriteReadTest_Long)
+{
+    WriteReadString("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce vestibulum dui erat. Maecenas "
+        "auctor venenatis pharetra. Nunc vitae posuere lectus. Sed nec ante ultricies lorem volutpat vehicula. Vivamus "
+        "eu sollicitudin diam. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. "
+        "Aenean sagittis auctor ipsum a aliquet. Sed ac lectus ex.");
+}
+
+BOOST_AUTO_TEST_CASE(StringWriteReadTest_VeryLong)
+{
+    std::string val(200000, '.');
+    WriteReadString(val);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
