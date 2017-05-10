@@ -175,17 +175,17 @@ public abstract class WALRecord {
         }
     }
 
-    /** */
+    /** Serialized record size, calculated in serializer */
     private int size;
 
-    /** */
+    /** Overall WAL records size in this chain */
     private int chainSize;
 
-    /** */
+    /** Link to previous WAL record in chain */
     @GridToStringExclude
     private WALRecord prev;
 
-    /** */
+    /** WAL record start position in file */
     private long pos;
 
     /**
