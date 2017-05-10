@@ -115,7 +115,8 @@ const DFLT_CACHE = {
         databaseFieldType: {
             clsName: 'java.sql.Types'
         }
-    }
+    },
+    memoryPolicyName: 'default'
 };
 
 export default class IgniteCacheDefaults {

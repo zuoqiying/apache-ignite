@@ -81,6 +81,7 @@ export default class IgniteConfigurationGenerator {
         this.clusterLogger(cluster.logger, cfg);
         this.clusterODBC(cluster.odbc, cfg);
         this.clusterMarshaller(cluster, cfg);
+        this.clusterMemory(cluster.memoryConfiguration, cfg);
         this.clusterMetrics(cluster, cfg);
         this.clusterTime(cluster, cfg);
         this.clusterPools(cluster, cfg);
@@ -1161,6 +1162,42 @@ export default class IgniteConfigurationGenerator {
         return cfg;
     }
 
+    // Generate logger group.
+    static clusterMemory(memoryConfiguration, cfg = this.igniteConfigurationBean()) {
+        const memoryBean = new Bean('org.apache.ignite.configuration.MemoryConfiguration', 'memoryConfiguration', memoryConfiguration, clusterDflts.memoryConfiguration);
+
+        memoryBean.intProperty('systemCacheInitialSize')
+            .intProperty('systemCacheMaxSize')
+            .intProperty('pageSize')
+            .intProperty('concurrencyLevel')
+            .stringProperty('defaultMemoryPolicyName')
+            .intProperty('defaultMemoryPolicySize');
+
+        const policies = [];
+
+        _.forEach(_.get(memoryConfiguration, 'memoryPolicies'), (plc) => {
+            const plcBean = new Bean('org.apache.ignite.configuration.MemoryPolicyConfiguration', 'policy', plc, clusterDflts.memoryConfiguration.memoryPolicies);
+
+            plcBean.stringProperty('name')
+                .intProperty('initialSize')
+                .intProperty('maxSize')
+                .stringProperty('swapFilePath')
+                .enumProperty('pageEvictionMode')
+                .intProperty('evictionThreshold')
+                .intProperty('emptyPagesPoolSize')
+                .boolProperty('metricsEnabled');
+
+            policies.push(plcBean);
+        });
+
+        if (!_.isEmpty(policies))
+            memoryBean.arrayProperty('memoryPolicies', 'policies', policies, 'org.apache.ignite.configuration.MemoryPolicyConfiguration');
+
+        cfg.beanProperty('memoryConfiguration', memoryBean);
+
+        return cfg;
+    }
+
     // Generate IGFSs configs.
     static clusterIgfss(igfss, cfg = this.igniteConfigurationBean()) {
         const igfsCfgs = _.map(igfss, (igfs) => {
@@ -1485,6 +1522,8 @@ export default class IgniteConfigurationGenerator {
     // Generate cache memory group.
     static cacheMemory(cache, ccfg = this.cacheConfigurationBean(cache)) {
         this._evictionPolicy(ccfg, 'evictionPolicy', cache.evictionPolicy, cacheDflts.evictionPolicy);
+
+        ccfg.stringProperty('memoryPolicyName');
 
         return ccfg;
     }

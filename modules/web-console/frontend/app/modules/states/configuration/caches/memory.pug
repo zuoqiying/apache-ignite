@@ -31,6 +31,9 @@ include /app/helpers/jade/mixins
         .panel-body(ng-if=`ui.isPanelLoaded('${form}')`)
             .col-sm-6
                 .settings-row
+                    +text('Memory policy name:', model + '.memoryPolicyName', '"MemoryPolicyName"', 'false', 'default',
+                        'Name of memory policy configuration for this cache')
+                .settings-row
                     +checkbox('On-heap cache enabled', `${model}.onheapCacheEnabled`, '"onheapCacheEnabled"', 'On-heap cache enabled flag')
                 .settings-row(ng-show=`${model}.onheapCacheEnabled`)
                     +evictionPolicy(`${model}.evictionPolicy`, '"evictionPolicy"', 'true', 'false',

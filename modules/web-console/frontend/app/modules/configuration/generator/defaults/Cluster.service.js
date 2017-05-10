@@ -280,6 +280,23 @@ const DFLT_CLUSTER = {
             nodeWeight: 10,
             useWeights: false
         }
+    },
+    memoryConfiguration: {
+        systemCacheInitialSize: 41943040,
+        systemCacheMaxSize: 104857600,
+        pageSize: 2048,
+        defaultMemoryPolicyName: 'default',
+        memoryPolicies: {
+            name: 'default',
+            initialSize: 268435456,
+            pageEvictionMode: {
+                clsName: 'org.apache.ignite.configuration.DataPageEvictionMode',
+                value: 'DISABLED'
+            },
+            evictionThreshold: 0.9,
+            emptyPagesPoolSize: 100,
+            metricsEnabled: false
+        }
     }
 };
 

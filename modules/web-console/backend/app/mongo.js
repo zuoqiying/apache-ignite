@@ -902,15 +902,21 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             poolSize: Number
         }],
         memoryConfiguration: {
+            systemCacheInitialSize: Number,
+            systemCacheMaxSize: Number,
             pageSize: Number,
-            systemCacheMemorySize: Number,
             concurrencyLevel: Number,
             defaultMemoryPolicyName: String,
+            defaultMemoryPolicySize: Number,
             memoryPolicies: [{
                 name: String,
+                initialSize: Number,
                 maxSize: Number,
                 swapFilePath: String,
-                pageEvictionMode: {type: String, enum: ['DISABLED', 'RANDOM_LRU', 'RANDOM_2_LRU']}
+                pageEvictionMode: {type: String, enum: ['DISABLED', 'RANDOM_LRU', 'RANDOM_2_LRU']},
+                evictionThreshold: Number,
+                emptyPagesPoolSize: Number,
+                metricsEnabled: Boolean
             }]
         }
     });

@@ -49,7 +49,10 @@ export default ['clustersController', [
                 trustManagers: []
             },
             transactionConfiguration: {},
-            collision: {}
+            collision: {},
+            memoryConfiguration: {
+                memoryPolicies: []
+            }
         };
 
         const pairFields = {
@@ -149,6 +152,8 @@ export default ['clustersController', [
                     else
                         $scope.backupItem.checkpointSpi = [newCheckpointCfg];
                 }
+                else if (field.type === 'memoryPolicies')
+                    $scope.backupItem.memoryConfiguration.memoryPolicies.push({});
                 else
                     LegacyTable.tableNewItem(field);
             }
@@ -285,6 +290,9 @@ export default ['clustersController', [
                             scanners: []
                         }};
                     }
+
+                    if (!cluster.memoryConfiguration)
+                        cluster.memoryConfiguration = { memoryPolicies: [] };
                 });
 
                 if ($state.params.linkId)
@@ -602,6 +610,31 @@ export default ['clustersController', [
             }));
         }
 
+        function checkMemoryConfiguration(item) {
+            const memory = item.memoryConfiguration;
+
+            if ((memory.systemCacheMaxSize || 104857600) < (memory.systemCacheInitialSize || 41943040))
+                return ErrorPopover.show('systemCacheMaxSize', 'System cache maximum size should be greater than initial size', $scope.ui, 'memoryConfiguration');
+
+            const pageSize = memory.pageSize;
+
+            if (pageSize > 0 && (pageSize & (pageSize - 1) !== 0)) {
+                ErrorPopover.show('MemoryConfigurationPageSize', 'Page size must be power of 2', $scope.ui, 'memoryConfiguration');
+
+                return false;
+            }
+
+            return _.isNil(_.find(memory.memoryPolicies, (curPlc, curIx) => {
+                if (_.find(memory.memoryPolicies, (plc, ix) => curIx > ix && (curPlc.name || 'default') === (plc.name || 'default'))) {
+                    ErrorPopover.show('MemoryPolicyName' + curIx, 'Memory policy with that name is already configured', $scope.ui, 'memoryConfiguration');
+
+                    return true;
+                }
+
+                return false;
+            }));
+        }
+
         function checkODBC(item) {
             if (_.get(item, 'odbc.odbcEnabled') && _.get(item, 'marshaller.kind'))
                 return ErrorPopover.show('odbcEnabledInput', 'ODBC can only be used with BinaryMarshaller', $scope.ui, 'odbcConfiguration');
@@ -667,6 +700,9 @@ export default ['clustersController', [
                 return false;
 
             if (!checkLoadBalancingConfiguration(item))
+                return false;
+
+            if (!checkMemoryConfiguration(item))
                 return false;
 
             if (!checkODBC(item))
