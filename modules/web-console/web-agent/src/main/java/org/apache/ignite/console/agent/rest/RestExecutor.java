@@ -189,7 +189,7 @@ public class RestExecutor {
         Map<String, Object> params = new HashMap<>(3);
 
         params.put("cmd", "top");
-        params.put("attr", full);
+        params.put("attr", true);
         params.put("mtr", full);
 
         return sendRequest(demo, "ignite", params, "GET", null, null);

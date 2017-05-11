@@ -114,11 +114,8 @@ module.exports.factory = (_, socketio, configure, errors) => {
                         acc.count += 1;
                         acc.hasDemo |= _.get(agentSock, 'demo.enabled');
 
-                        if (agentSock.cluster) {
-                            acc.clusters.push({
-                                id: agentSock.cluster.id
-                            });
-                        }
+                        if (agentSock.cluster)
+                            acc.clusters.push(agentSock.cluster);
 
                         return acc;
                     }, {count: 0, hasDemo: false, clusters: []});

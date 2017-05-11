@@ -33,16 +33,22 @@ export default class IgniteAgentManager {
         this.$root = $root;
         this.$q = $q;
         this.socketFactory = socketFactory;
-        this.ignite2x = true;
 
         /**
          * @type {AgentModal}
          */
         this.AgentModal = AgentModal;
 
-        this.clusters = [];
-
         $root.$on('$stateChangeSuccess', () => this.stopWatch());
+
+        this.ignite2x = false;
+
+        $root.$watch(() => _.get(this, 'cluster.clusterVersion'), (ver) => {
+            if (_.isEmpty(ver))
+                return;
+
+            this.ignite2x = ver.startsWith('2.');
+        }, true);
 
         /**
          * Connection to backend.
