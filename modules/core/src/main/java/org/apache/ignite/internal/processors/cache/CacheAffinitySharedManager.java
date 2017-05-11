@@ -348,7 +348,17 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
             if (req.stop()) {
                 DynamicCacheDescriptor desc = registeredCaches.remove(cacheId);
 
-                assert desc != null : cacheId;
+                if (desc == null) {
+                    for (DynamicCacheChangeRequest request : reqs) {
+                        System.err.println(cctx.gridName() + " " + registeredCaches.size());
+
+                        for (DynamicCacheDescriptor d : registeredCaches.values()) {
+                            System.err.println(d.cacheConfiguration().getName());
+                        }
+                    }
+                }
+
+                assert desc != null : cacheId + " " + cctx.localNodeId();
             }
             else if (req.start() && !req.clientStartOnly()) {
                 DynamicCacheDescriptor desc = new DynamicCacheDescriptor(cctx.kernalContext(),

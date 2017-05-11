@@ -535,10 +535,13 @@ public class GridAffinityAssignmentCache {
                 log.debug("Will wait for topology version [locNodeId=" + ctx.localNodeId() +
                 ", topVer=" + topVer + ']');
 
+            long start = System.currentTimeMillis();
             IgniteInternalFuture<AffinityTopologyVersion> fut = readyFuture(topVer);
 
             if (fut != null)
                 fut.get();
+
+            System.err.println("!!!! " + (System.currentTimeMillis() - start));
         }
         catch (IgniteCheckedException e) {
             throw new IgniteException("Failed to wait for affinity ready future for topology version: " + topVer,

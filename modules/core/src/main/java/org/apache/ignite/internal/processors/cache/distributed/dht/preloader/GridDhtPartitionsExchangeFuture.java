@@ -520,6 +520,19 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         assert exchId.nodeId().equals(discoEvt.eventNode().id()) : this;
         assert !dummy && !forcePreload : this;
 
+        if (discoEvt.type() == EVT_DISCOVERY_CUSTOM_EVT) {
+            DiscoveryCustomMessage msg = ((DiscoveryCustomEvent)discoEvt).customMessage();
+
+            if (msg instanceof DynamicCacheChangeBatch) {
+                assert !F.isEmpty(reqs);
+
+                DynamicCacheChangeRequest next = reqs.iterator().next();
+                System.err.println("start = " + next.start() + ", stop = " + next.stop() + ", cacheId = " + CU.cacheId(next.cacheName()));
+            }
+        }
+
+        System.err.println(cctx.localNodeId() + " - " + exchId);
+
         try {
             AffinityTopologyVersion topVer = topologyVersion();
 
@@ -556,13 +569,15 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                         SnapshotOperation op = snapshotOperationMsg.snapshotOperation();
 
                         if (op.type() == SnapshotOperationType.RESTORE) {
-                            if (reqs != null)
-                                reqs = new ArrayList<>(reqs);
-                            else
-                                reqs = new ArrayList<>();
+                            assert reqs == null;
+
+                            reqs = new ArrayList<>();
 
                             List<DynamicCacheChangeRequest> destroyRequests = getStopCacheRequests(
                                 cctx.cache(), op.cacheNames(), cctx.localNodeId());
+
+
+                            Thread.sleep(10000);
 
                             reqs.addAll(destroyRequests);
 
