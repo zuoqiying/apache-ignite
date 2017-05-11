@@ -45,6 +45,7 @@ public class DynamicCacheChangeRequest implements Serializable {
     private String cacheName;
 
     /** Cache start configuration. */
+    @GridToStringExclude
     private CacheConfiguration startCfg;
 
     /** Cache type. */
@@ -54,6 +55,7 @@ public class DynamicCacheChangeRequest implements Serializable {
     private UUID initiatingNodeId;
 
     /** Near cache configuration. */
+    @GridToStringExclude
     private NearCacheConfiguration nearCacheCfg;
 
     /** Start only client cache, do not start data nodes. */
@@ -372,6 +374,11 @@ public class DynamicCacheChangeRequest implements Serializable {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(DynamicCacheChangeRequest.class, this, "cacheName", cacheName());
+        return "CacheChangeRequest [cacheName=" + cacheName() +
+            ", cfg=" + (startCfg != null) +
+            ", clientStartOnly=" + clientStartOnly +
+            ", close=" + close +
+            ", stop=" + stop +
+            ']';
     }
 }

@@ -17,12 +17,15 @@
 
 package org.apache.ignite.internal.processors.cache;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -106,7 +109,7 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
     private int retryCnt;
 
     /** Indexed class handlers. */
-    private volatile Map<Integer, IgniteBiInClosure[]> idxClsHandlers = new HashMap<>();
+    private final ConcurrentMap<Integer, IgniteBiInClosure[]> idxClsHandlers = new ConcurrentHashMap<>();
 
     /** Handler registry. */
     private ConcurrentMap<ListenerKey, IgniteBiInClosure<UUID, GridCacheMessage>>
@@ -124,6 +127,23 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
 
     /** Deployment enabled. */
     private boolean depEnabled;
+
+    /** */
+    private final List<GridCacheMessage> pendingMsgs = new ArrayList<>();
+
+    public void dumpPendingMessages() {
+        synchronized (pendingMsgs) {
+            if (pendingMsgs.isEmpty())
+                return;
+
+            log.info("Pending cache messages waiting for exchange [" +
+                "readyVer=" + cctx.exchange().readyAffinityVersion() +
+                ", discoVer=" + cctx.discovery().topologyVersion() + ']');
+
+            for (GridCacheMessage msg : pendingMsgs)
+                log.info("Message [waitVer=" + msg.topologyVersion() + ", msg=" + msg + ']');
+        }
+    }
 
     /** Message listener. */
     private GridMessageListener lsnr = new GridMessageListener() {
@@ -211,10 +231,19 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
             }
 
             if (fut != null && !fut.isDone()) {
+                synchronized (pendingMsgs) {
+                    if (pendingMsgs.size() < 100)
+                        pendingMsgs.add(cacheMsg);
+                }
+
                 fut.listen(new CI1<IgniteInternalFuture<?>>() {
                     @Override public void apply(IgniteInternalFuture<?> t) {
                         cctx.kernalContext().closure().runLocalSafe(new Runnable() {
                             @Override public void run() {
+                                synchronized (pendingMsgs) {
+                                    pendingMsgs.remove(cacheMsg);
+                                }
+
                                 IgniteLogger log = cacheMsg.messageLogger(cctx);
 
                                 if (log.isDebugEnabled()) {
@@ -286,6 +315,15 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
             }
             else
                 U.error(log, msg0.toString());
+
+            try {
+                cacheMsg.onClassError(new IgniteCheckedException("Failed to find message handler for message: " + cacheMsg));
+
+                processFailedMessage(nodeId, cacheMsg, c);
+            }
+            catch (Exception e) {
+                U.error(log, "Failed to process failed message: " + e, e);
+            }
 
             return;
         }
@@ -1154,14 +1192,14 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
         int msgIdx = messageIndex(type);
 
         if (msgIdx != -1) {
-            Map<Integer, IgniteBiInClosure[]> idxClsHandlers0 = idxClsHandlers;
-
-            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers0.get(cacheId);
+            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers.get(cacheId);
 
             if (cacheClsHandlers == null) {
                 cacheClsHandlers = new IgniteBiInClosure[GridCacheMessage.MAX_CACHE_MSG_LOOKUP_INDEX];
 
-                idxClsHandlers0.put(cacheId, cacheClsHandlers);
+                IgniteBiInClosure[] old = idxClsHandlers.putIfAbsent(cacheId, cacheClsHandlers);
+
+                assert old == null;
             }
 
             if (cacheClsHandlers[msgIdx] != null)
@@ -1170,7 +1208,9 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
 
             cacheClsHandlers[msgIdx] = c;
 
-            idxClsHandlers = idxClsHandlers0;
+            boolean replace = idxClsHandlers.replace(cacheId, cacheClsHandlers, cacheClsHandlers);
+
+            assert replace;
 
             return;
         }
