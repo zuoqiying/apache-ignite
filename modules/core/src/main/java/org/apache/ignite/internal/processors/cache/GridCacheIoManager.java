@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -108,7 +109,7 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
     private int retryCnt;
 
     /** Indexed class handlers. */
-    private volatile Map<Integer, IgniteBiInClosure[]> idxClsHandlers = new HashMap<>();
+    private final ConcurrentMap<Integer, IgniteBiInClosure[]> idxClsHandlers = new ConcurrentHashMap<>();
 
     /** Handler registry. */
     private ConcurrentMap<ListenerKey, IgniteBiInClosure<UUID, GridCacheMessage>>
@@ -314,6 +315,15 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
             }
             else
                 U.error(log, msg0.toString());
+
+            try {
+                cacheMsg.onClassError(new IgniteCheckedException("Failed to find message handler for message: " + cacheMsg));
+
+                processFailedMessage(nodeId, cacheMsg, c);
+            }
+            catch (Exception e) {
+                U.error(log, "Failed to process failed message: " + e, e);
+            }
 
             return;
         }
@@ -1182,14 +1192,14 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
         int msgIdx = messageIndex(type);
 
         if (msgIdx != -1) {
-            Map<Integer, IgniteBiInClosure[]> idxClsHandlers0 = idxClsHandlers;
-
-            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers0.get(cacheId);
+            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers.get(cacheId);
 
             if (cacheClsHandlers == null) {
                 cacheClsHandlers = new IgniteBiInClosure[GridCacheMessage.MAX_CACHE_MSG_LOOKUP_INDEX];
 
-                idxClsHandlers0.put(cacheId, cacheClsHandlers);
+                IgniteBiInClosure[] old = idxClsHandlers.putIfAbsent(cacheId, cacheClsHandlers);
+
+                assert old == null;
             }
 
             if (cacheClsHandlers[msgIdx] != null)
@@ -1198,7 +1208,9 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
 
             cacheClsHandlers[msgIdx] = c;
 
-            idxClsHandlers = idxClsHandlers0;
+            boolean replace = idxClsHandlers.replace(cacheId, cacheClsHandlers, cacheClsHandlers);
+
+            assert replace;
 
             return;
         }

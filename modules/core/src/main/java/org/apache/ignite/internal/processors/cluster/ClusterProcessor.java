@@ -70,6 +70,9 @@ import static org.apache.ignite.internal.IgniteVersionUtils.VER_STR;
  */
 public class ClusterProcessor extends GridProcessorAdapter {
     /** */
+    private static final boolean DIAGNOSTIC_ENABLED = IgniteSystemProperties.getBoolean("IGNITE_DIAGNOSTIC_ENABLED", true);
+
+    /** */
     private static final String DIAGNOSTIC_LOG_CATEGORY = "org.apache.ignite.internal.diagnostic";
 
     /** */
@@ -293,24 +296,36 @@ public class ClusterProcessor extends GridProcessorAdapter {
     }
 
     public void dumpRemoteTxInfo(UUID nodeId, GridCacheVersion dhtVer, GridCacheVersion nearVer, final String msg) {
+        if (!DIAGNOSTIC_ENABLED)
+            return;
+
         IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.TxInfoClosure(ctx, dhtVer, nearVer), msg);
 
         listenAndLog(fut);
     }
 
     public void dumpTxKeyInfo(UUID nodeId, int cacheId, Collection<KeyCacheObject> keys, final String msg) {
+        if (!DIAGNOSTIC_ENABLED)
+            return;
+
         IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.TxEntriesInfoClosure(ctx, cacheId, keys), msg);
 
         listenAndLog(fut);
     }
 
     public void dumpBasicInfo(final UUID nodeId, final String msg) {
+        if (!DIAGNOSTIC_ENABLED)
+            return;
+
         IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.BaseClosure(ctx), msg);
 
         listenAndLog(fut);
     }
 
     public void dumpExchangeInfo(final UUID nodeId, AffinityTopologyVersion topVer, final String msg) {
+        if (!DIAGNOSTIC_ENABLED)
+            return;
+
         IgniteInternalFuture<String> fut = diagnosticInfo(nodeId, new IgniteDiagnosticMessage.ExchangeInfoClosure(ctx, topVer), msg);
 
         listenAndLog(fut);
