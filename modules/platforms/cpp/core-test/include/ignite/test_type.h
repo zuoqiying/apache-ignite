@@ -82,6 +82,27 @@ namespace ignite
                 one.i8ArrayField == two.i8ArrayField;
         }
 
+        friend std::ostream& operator<<(std::ostream& os, const TestType& obj)
+        {
+            os << "TestType["
+                << "i8Field=" << static_cast<int>(obj.i8Field) << ", "
+                << "i16Field=" << obj.i16Field << ", "
+                << "i32Field=" << obj.i32Field << ", "
+                << "i64Field=" << obj.i64Field << ", "
+                << "strField=" << obj.strField << ", "
+                << "floatField=" << obj.floatField << ", "
+                << "doubleField=" << obj.doubleField << ", "
+                << "boolField=" << obj.boolField << ", "
+                << "guidField=" << obj.guidField << ", "
+                << "dateField=" << obj.dateField.GetMilliseconds() << ", "
+                << "timeField=" << obj.timeField.GetMilliseconds() << ", "
+                << "timestampField=" << obj.timestampField.GetMilliseconds() << "." << std::setw(9) 
+                                     << std::setfill('0') << obj.timestampField.GetSecondFraction() << ", "
+                << "i8ArrayField=" << obj.i8ArrayField.size() << "]";
+
+            return os;
+        }
+
         bool allNulls;
         int8_t i8Field;
         int16_t i16Field;

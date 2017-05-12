@@ -28,9 +28,9 @@
 #include <ignite/impl/binary/binary_common.h>
 #include <ignite/impl/binary/binary_id_resolver.h>
 #include <ignite/impl/binary/binary_schema.h>
-#include <ignite/common/utils.h>
+#include <ignite/impl/binary/binary_utils.h>
+
 #include <ignite/binary/binary_consts.h>
-#include <ignite/binary/binary_type.h>
 #include <ignite/guid.h>
 #include <ignite/date.h>
 #include <ignite/timestamp.h>
@@ -933,78 +933,15 @@ namespace ignite
 
                         case IGNITE_HDR_FULL:
                         {
-                            typedef ignite::binary::BinaryType<T> BType;
-
-                            int8_t protoVer = stream->ReadInt8();
-
-                            if (protoVer != IGNITE_PROTO_VER) {
-                                IGNITE_ERROR_2(ignite::IgniteError::IGNITE_ERR_BINARY, 
-                                               "Unsupported binary protocol version: ", protoVer);
-                            }
-
-                            int16_t flags = stream->ReadInt16();
-
-                            if (flags & IGNITE_BINARY_FLAG_COMPACT_FOOTER) {
-                                IGNITE_ERROR_2(ignite::IgniteError::IGNITE_ERR_BINARY,
-                                    "Unsupported binary protocol flag: IGNITE_BINARY_FLAG_COMPACT_FOOTER: ", 
-                                    IGNITE_BINARY_FLAG_COMPACT_FOOTER);
-                            }
-
-                            int32_t typeId = stream->ReadInt32();
-                            int32_t hashCode = stream->ReadInt32();
-                            int32_t len = stream->ReadInt32();
-
-                            // Ignoring Schema Id for now.
-                            stream->ReadInt32();
-
-                            int32_t schemaOrRawOff = stream->ReadInt32();
-
-                            int32_t rawOff;
-                            int32_t footerBegin;
-
-                            if (flags & IGNITE_BINARY_FLAG_HAS_SCHEMA)
-                                footerBegin = pos + schemaOrRawOff;
-                            else
-                                footerBegin = pos + len;
-
-                            BinaryOffsetType::Type schemaType;
-
-                            if (flags & IGNITE_BINARY_FLAG_OFFSET_ONE_BYTE)
-                                schemaType = BinaryOffsetType::ONE_BYTE;
-                            else if (flags & IGNITE_BINARY_FLAG_OFFSET_TWO_BYTES)
-                                schemaType = BinaryOffsetType::TWO_BYTES;
-                            else
-                                schemaType = BinaryOffsetType::FOUR_BYTES;
-
-                            int32_t footerEnd;
-
-                            if (flags & IGNITE_BINARY_FLAG_HAS_RAW &&
-                                flags & IGNITE_BINARY_FLAG_HAS_SCHEMA)
-                            {
-                                // 4 is the size of RawOffset field at the end of the packet.
-                                footerEnd = pos + len - 4;
-
-                                rawOff = stream->ReadInt32(footerEnd);
-                            }
-                            else
-                            {
-                                footerEnd = pos + len;
-
-                                rawOff = schemaOrRawOff;
-                            }
-
-                            bool usrType = (flags & IGNITE_BINARY_FLAG_USER_TYPE) != 0;
-
                             TemplatedBinaryIdResolver<T> idRslvr;
-                            BinaryReaderImpl readerImpl(stream, &idRslvr, pos, usrType,
-                                                        typeId, hashCode, len, rawOff,
-                                                        footerBegin, footerEnd, schemaType);
-                            ignite::binary::BinaryReader reader(&readerImpl);
+                            BinaryReaderImpl readerImpl(stream, &idRslvr, pos);
 
                             T val;
-                            BType::Read(reader, val);
+                            ignite::binary::BinaryReader reader(&readerImpl);
 
-                            stream->Position(pos + len);
+                            ignite::binary::BinaryType<T>::Read(reader, val);
+
+                            stream->Position(pos + readerImpl.len);
 
                             return val;
                         }
@@ -1015,19 +952,6 @@ namespace ignite
                                            "Unexpected header during deserialization: ", (hdr & 0xFF));
                         }
                     }
-                }
-
-                /**
-                 * Get NULL value for the given type.
-                 */
-                template<typename T>
-                T GetNull() const
-                {
-                    T res;
-
-                    ignite::binary::BinaryType<T>::GetNull(res);
-
-                    return res;
                 }
 
                 /**
@@ -1153,7 +1077,7 @@ namespace ignite
                  *
                  * @param fieldName Field name.
                  * @param func Function to be invoked on stream.
-                 * @param epxHdr Expected header.
+                 * @param expHdr Expected header.
                  * @param dflt Default value returned if field is not found.
                  * @return Result.
                  */
@@ -1250,6 +1174,15 @@ namespace ignite
                 );
 
                 /**
+                 * Get NULL value for the given type.
+                 */
+                template<typename T>
+                static T GetNull()
+                {
+                    return BinaryUtils::GetDefaultValue<T>();
+                }
+
+                /**
                  * Seek field with the given ID.
                  *
                  * @param fieldId Field ID.
@@ -1287,6 +1220,18 @@ namespace ignite
                  * @param expSes Expected session ID.
                  */
                 void CheckSession(int32_t expSes) const;
+
+                /**
+                 * Constructor.
+                 * Init reader internal state from object header.
+                 * Assuming that current stream position is at object header
+                 * beginning.
+                 *
+                 * @param stream Interop stream.
+                 * @param idRslvr Binary ID resolver.
+                 * @param pos Object position in the stream.
+                 */
+                BinaryReaderImpl(interop::InteropInputStream* stream, BinaryIdResolver* idRslvr, int32_t pos);
 
                 /**
                  * Throw an error due to invalid header.
@@ -1390,72 +1335,6 @@ namespace ignite
 
             template<>
             std::string IGNITE_IMPORT_EXPORT BinaryReaderImpl::ReadTopObject<std::string>();
-
-            template<>
-            inline int8_t BinaryReaderImpl::GetNull() const
-            {
-                return 0;
-            }
-
-            template<>
-            inline int16_t BinaryReaderImpl::GetNull() const
-            {
-                return 0;
-            }
-
-            template<>
-            inline int32_t BinaryReaderImpl::GetNull() const
-            {
-                return 0;
-            }
-
-            template<>
-            inline int64_t BinaryReaderImpl::GetNull() const
-            {
-                return 0;
-            }
-
-            template<>
-            inline float BinaryReaderImpl::GetNull() const
-            {
-                return 0.0f;
-            }
-
-            template<>
-            inline double BinaryReaderImpl::GetNull() const
-            {
-                return 0.0;
-            }
-
-            template<>
-            inline Guid BinaryReaderImpl::GetNull() const
-            {
-                return Guid();
-            }
-
-            template<>
-            inline Date BinaryReaderImpl::GetNull() const
-            {
-                return Date();
-            }
-
-            template<>
-            inline Timestamp BinaryReaderImpl::GetNull() const
-            {
-                return Timestamp();
-            }
-
-            template<>
-            inline Time BinaryReaderImpl::GetNull() const
-            {
-                return Time();
-            }
-
-            template<>
-            inline std::string BinaryReaderImpl::GetNull() const
-            {
-                return std::string();
-            }
         }
     }
 }

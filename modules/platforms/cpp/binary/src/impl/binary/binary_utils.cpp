@@ -342,10 +342,8 @@ namespace ignite
                 stream->WriteInt64(val.GetMilliseconds());
             }
 
-            int32_t BinaryUtils::ReadString(InteropInputStream* stream, char* buf, const int32_t len)
+            int32_t BinaryUtils::ReadString(InteropInputStream* stream, char* buf, const int32_t len, InputStreamPositionGuard& guard)
             {
-                InputStreamPositionGuard guard(*stream);
-
                 int32_t realLen = ReadUnsignedVarint(stream);
 
                 if (buf && len >= realLen)

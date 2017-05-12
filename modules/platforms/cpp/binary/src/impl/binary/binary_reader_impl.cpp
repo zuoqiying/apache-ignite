@@ -16,14 +16,15 @@
  */
 
 #include <ignite/ignite_error.h>
+#include <ignite/binary/binary_type.h>
+#include <ignite/binary/binary_reader.h>
 
-#include "ignite/impl/interop/interop.h"
-#include "ignite/impl/interop/interop_stream_position_guard.h"
-#include "ignite/impl/binary/binary_common.h"
-#include "ignite/impl/binary/binary_id_resolver.h"
-#include "ignite/impl/binary/binary_reader_impl.h"
-#include "ignite/impl/binary/binary_utils.h"
-#include "ignite/binary/binary_type.h"
+#include <ignite/common/utils.h>
+#include <ignite/impl/interop/interop_stream_position_guard.h>
+#include <ignite/impl/binary/binary_common.h>
+#include <ignite/impl/binary/binary_id_resolver.h>
+#include <ignite/impl/binary/binary_reader_impl.h>
+#include <ignite/impl/binary/binary_utils.h>
 
 using namespace ignite::impl::interop;
 using namespace ignite::impl::binary;
@@ -533,10 +534,12 @@ namespace ignite
 
             int32_t BinaryReaderImpl::ReadStringInternal(char* res, const int32_t len)
             {
+                InputStreamPositionGuard guard(*stream);
+
                 int8_t hdr = stream->ReadInt8();
 
                 if (hdr == IGNITE_TYPE_STRING)
-                    return BinaryUtils::ReadString(stream, res, len);
+                    return BinaryUtils::ReadString(stream, res, len, guard);
 
                 if (hdr != IGNITE_HDR_NULL)
                     ThrowOnInvalidHeader(IGNITE_TYPE_ARRAY, hdr);
@@ -1142,6 +1145,65 @@ namespace ignite
                     IGNITE_ERROR_1(IgniteError::IGNITE_ERR_BINARY,
                         "Containter read session has been finished or is not started yet.");
                 }
+            }
+
+            BinaryReaderImpl::BinaryReaderImpl(InteropInputStream* stream, BinaryIdResolver* idRslvr, int32_t pos) :
+                stream(stream), idRslvr(idRslvr), pos(pos), usrType(true), typeId(0),
+                hashCode(0), len(0), rawOff(0), rawMode(false), elemIdGen(0), elemId(0),
+                elemCnt(-1), elemRead(0), footerBegin(0), footerEnd(0), schemaType(BinaryOffsetType::FOUR_BYTES)
+            {
+                int8_t protoVer = stream->ReadInt8();
+
+                if (protoVer != IGNITE_PROTO_VER) {
+                    IGNITE_ERROR_2(ignite::IgniteError::IGNITE_ERR_BINARY,
+                        "Unsupported binary protocol version: ", protoVer);
+                }
+
+                int16_t flags = stream->ReadInt16();
+
+                if (flags & IGNITE_BINARY_FLAG_COMPACT_FOOTER) {
+                    IGNITE_ERROR_2(ignite::IgniteError::IGNITE_ERR_BINARY,
+                        "Unsupported binary protocol flag: IGNITE_BINARY_FLAG_COMPACT_FOOTER: ",
+                        IGNITE_BINARY_FLAG_COMPACT_FOOTER);
+                }
+
+                typeId = stream->ReadInt32();
+                hashCode = stream->ReadInt32();
+                len = stream->ReadInt32();
+
+                // Ignoring Schema Id for now.
+                stream->ReadInt32();
+
+                int32_t schemaOrRawOff = stream->ReadInt32();
+
+                if (flags & IGNITE_BINARY_FLAG_HAS_SCHEMA)
+                    footerBegin = pos + schemaOrRawOff;
+                else
+                    footerBegin = pos + len;
+
+                if (flags & IGNITE_BINARY_FLAG_OFFSET_ONE_BYTE)
+                    schemaType = BinaryOffsetType::ONE_BYTE;
+                else if (flags & IGNITE_BINARY_FLAG_OFFSET_TWO_BYTES)
+                    schemaType = BinaryOffsetType::TWO_BYTES;
+                else
+                    schemaType = BinaryOffsetType::FOUR_BYTES;
+
+                if (flags & IGNITE_BINARY_FLAG_HAS_RAW &&
+                    flags & IGNITE_BINARY_FLAG_HAS_SCHEMA)
+                {
+                    // 4 is the size of RawOffset field at the end of the packet.
+                    footerEnd = pos + len - 4;
+
+                    rawOff = stream->ReadInt32(footerEnd);
+                }
+                else
+                {
+                    footerEnd = pos + len;
+
+                    rawOff = schemaOrRawOff;
+                }
+
+                usrType = (flags & IGNITE_BINARY_FLAG_USER_TYPE) != 0;
             }
 
             void BinaryReaderImpl::ThrowOnInvalidHeader(int32_t pos, int8_t expHdr, int8_t hdr)

@@ -29,6 +29,7 @@
 #include <ignite/time.h>
 
 #include <ignite/binary/binary_type.h>
+#include <ignite/impl/interop/interop_stream_position_guard.h>
 
 namespace ignite
 {
@@ -460,9 +461,10 @@ namespace ignite
                  * @param stream Stream.
                  * @param buf Buffer.
                  * @param len Length.
+                 * @param guard Stream guard.
                  * @return Size.
                  */
-                static int32_t ReadString(interop::InteropInputStream* stream, char* buf, const int32_t len);
+                static int32_t ReadString(interop::InteropInputStream* stream, char* buf, const int32_t len, interop::InputStreamPositionGuard& guard);
 
                 /**
                  * Utility method to write string to stream.

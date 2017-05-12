@@ -18,6 +18,10 @@
 #ifndef _IGNITE_IMPL_INTEROP_INTEROP_STREAM_POSITION_GUARD
 #define _IGNITE_IMPL_INTEROP_INTEROP_STREAM_POSITION_GUARD
 
+#include <stdint.h>
+
+#include <ignite/common/common.h>
+
 namespace ignite
 {
     namespace impl
@@ -28,7 +32,7 @@ namespace ignite
              * Interop stream position guard.
              */
             template<typename T>
-            class IGNITE_IMPORT_EXPORT InteropStreamPositionGuard {
+            class InteropStreamPositionGuard {
             public:
                 /**
                  * Create new position guard and saves current stream position.
