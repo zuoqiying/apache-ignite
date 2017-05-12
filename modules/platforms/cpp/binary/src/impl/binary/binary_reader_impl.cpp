@@ -936,12 +936,12 @@ namespace ignite
             int32_t BinaryReaderImpl::ReadArrayInternal(T* res, const int32_t len, InteropInputStream* stream,
                 void (*func)(InteropInputStream*, T* const, const int32_t), const int8_t expHdr)
             {
+                InputStreamPositionGuard guard(*stream);
+
                 int8_t hdr = stream->ReadInt8();
 
                 if (hdr == expHdr)
                 {
-                    InputStreamPositionGuard guard(*stream);
-
                     int32_t realLen = BinaryUtils::ReadUnsignedVarint(stream);
 
                     if (realLen == 0 || (res && len >= realLen))

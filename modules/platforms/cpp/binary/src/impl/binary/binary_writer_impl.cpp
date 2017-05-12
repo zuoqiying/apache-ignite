@@ -18,7 +18,6 @@
 #include <ignite/ignite_error.h>
 
 #include "ignite/impl/binary/binary_writer_impl.h"
-#include "ignite/impl/interop/interop_stream_position_guard.h"
 
 using namespace ignite::impl::interop;
 using namespace ignite::impl::binary;
@@ -223,7 +222,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_UUID);
-                    stream->WriteInt32(len);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
 
                     for (int i = 0; i < len; i++)
                     {
@@ -257,7 +256,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_UUID);
-                    stream->WriteInt32(len);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
 
                     for (int i = 0; i < len; i++)
                         WriteTopObject(val[i]);
@@ -286,7 +285,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_DATE);
-                    stream->WriteInt32(len);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
 
                     for (int i = 0; i < len; i++)
                     {
@@ -320,7 +319,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_DATE);
-                    stream->WriteInt32(len);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
 
                     for (int i = 0; i < len; i++)
                         WriteTopObject(val[i]);
@@ -347,7 +346,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_TIMESTAMP);
-                    stream->WriteInt32(len);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
 
                     for (int i = 0; i < len; i++)
                     {
@@ -381,7 +380,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_TIMESTAMP);
-                    stream->WriteInt32(len);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
 
                     for (int i = 0; i < len; i++)
                         WriteTopObject(val[i]);
@@ -408,7 +407,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_TIME);
-                    stream->WriteInt32(len);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
 
                     for (int i = 0; i < len; i++)
                     {
@@ -442,7 +441,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_TIME);
-                    stream->WriteInt32(len);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
 
                     for (int i = 0; i < len; i++)
                         WriteTopObject(val[i]);
@@ -606,7 +605,7 @@ namespace ignite
                 return elemId;
             }
 
-            int32_t BinaryWriterImpl::WriteMap(ignite::binary::MapType::Type typ)
+            int32_t BinaryWriterImpl::WriteMap(MapType::Type typ)
             {
                 StartContainerSession(true);
 
@@ -617,7 +616,7 @@ namespace ignite
                 return elemId;
             }
 
-            int32_t BinaryWriterImpl::WriteMap(const char* fieldName, ignite::binary::MapType::Type typ)
+            int32_t BinaryWriterImpl::WriteMap(const char* fieldName, MapType::Type typ)
             {
                 StartContainerSession(false);
 
@@ -702,6 +701,67 @@ namespace ignite
 
                 if (metaHnd)
                     metaHnd->OnFieldWritten(fieldId, fieldName, fieldTypeId);
+            }
+
+            template<typename T>
+            void BinaryWriterImpl::WritePrimitiveRaw(const T val, void (*func)(InteropOutputStream*, T))
+            {
+                CheckRawMode(true);
+                CheckSingleMode(true);
+
+                func(stream, val);
+            }
+
+            template<typename T>
+            void BinaryWriterImpl::WritePrimitiveArrayRaw(const T* val, const int32_t len,
+                void (*func)(InteropOutputStream*, const T*, const int32_t), const int8_t hdr)
+            {
+                CheckRawMode(true);
+                CheckSingleMode(true);
+
+                if (val)
+                {
+                    stream->WriteInt8(hdr);
+                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    func(stream, val, len);
+                }
+                else
+                    stream->WriteInt8(IGNITE_HDR_NULL);
+            }
+
+            template<typename T>
+            void BinaryWriterImpl::WritePrimitive(const char* fieldName, const T val,
+                void (*func)(InteropOutputStream*, T), const int8_t typ, const int32_t len)
+            {
+                CheckRawMode(false);
+                CheckSingleMode(true);
+
+                WriteFieldId(fieldName, typ);
+
+                stream->WriteInt8(typ);
+
+                func(stream, val);
+            }
+
+            template<typename T>
+            void BinaryWriterImpl::WritePrimitiveArray(const char* fieldName, const T* val, const int32_t len,
+                void (*func)(InteropOutputStream*, const T*, const int32_t), const int8_t hdr, const int32_t lenShift)
+            {
+                CheckRawMode(false);
+                CheckSingleMode(true);
+
+                WriteFieldId(fieldName, hdr);
+
+                if (val)
+                {
+                    stream->WriteInt8(hdr);
+                    BinaryUtils::WriteUnsignedVarint(stream ,len);
+                    func(stream, val, len);
+                }
+                else
+                {
+                    stream->WriteInt8(IGNITE_HDR_NULL);
+                }
             }
 
             template <typename T>

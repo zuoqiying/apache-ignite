@@ -21,6 +21,7 @@
 #include <string>
 
 #include "ignite/ignite.h"
+#include "ignite/test_utils.h"
 
 namespace ignite
 {
@@ -94,10 +95,9 @@ namespace ignite
                 << "doubleField=" << obj.doubleField << ", "
                 << "boolField=" << obj.boolField << ", "
                 << "guidField=" << obj.guidField << ", "
-                << "dateField=" << obj.dateField.GetMilliseconds() << ", "
-                << "timeField=" << obj.timeField.GetMilliseconds() << ", "
-                << "timestampField=" << obj.timestampField.GetMilliseconds() << "." << std::setw(9) 
-                                     << std::setfill('0') << obj.timestampField.GetSecondFraction() << ", "
+                << "dateField=" << obj.dateField << ", "
+                << "timeField=" << obj.timeField << ", "
+                << "timestampField=" << obj.timestampField << ", "
                 << "i8ArrayField=" << obj.i8ArrayField.size() << "]";
 
             return os;
