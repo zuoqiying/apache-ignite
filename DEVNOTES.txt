@@ -1,25 +1,30 @@
 Ignite Fabric Maven Build Instructions
 ======================================
-Without LGPL dependencies (default):
-  mvn clean package -DskipTests
+To compile and package:
+  mvn clean package -Pall-java,all-scala,licenses -DskipTests
 
-Without LGPL dependencies and Scala 2.10:
-  mvn clean package -DskipTests -Dscala-2.10
+To generate javadocs:
+  mvn initialize -Pjavadoc
 
-With LGPL dependencies:
-  mvn clean package -DskipTests -Prelease,lgpl -Dignite.edition=fabric-lgpl
+To generate javadocs with LGPL:
+  mvn initialize -Pjavadoc,lgpl
 
-With LGPL dependencies and Scala 2.10:
-  mvn clean package -DskipTests -Prelease,lgpl -Dignite.edition=fabric-lgpl -Dscala-2.10
+To assembly without LGPL dependencies (default):
+  mvn initialize -Prelease -DskipTests
 
-With LGPL dependencies and Scala 2.10 and Ignite-Yardstick:
-  mvn clean package -DskipTests -Prelease,lgpl,yardstick -Dignite.edition=fabric-lgpl -Dscala-2.10
+To assembly with LGPL dependencies (default):
+  mvn initialize -Prelease,lgpl -Dignite.edition=fabric-lgpl -DskipTests
 
 With Apache Ignite.NET:
   Build Apache Ignite.NET as described at modules/platforms/dotnet/DEVNOTES.txt.
 
-  Then build Ignite Fabric with Apache Ignite.NET:
-  mvn clean package -DskipTests -DclientDocs
+  Then build and assembly Ignite Fabric with Apache Ignite.NET:
+
+  mvn clean package -Pall-java,all-scala,licenses -DskipTests -DclientDocs
+
+  mvn initialize -Pjavadoc
+
+  mvn initialize -Prelease -DskipTests
 
   Note that 'doxygen' should be installed before running this command.
 
