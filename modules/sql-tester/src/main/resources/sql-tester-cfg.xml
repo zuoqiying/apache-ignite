@@ -27,10 +27,10 @@
                 <bean class="org.apache.ignite.sqltester.QueryTypeConfiguration">
                     <property name="type" value="IGNITE" />
                     <property name="connectionString">
-                        <value>jdbc:ignite:cfg://cache=query@modules/sql-tester/src/main/resources/ignite-jdbc-config.xml</value>
+                        <value>jdbc:ignite:cfg://cache=query@/home/oleg/gg/incubator-ignite/modules/sql-tester/src/main/resources/ignite-jdbc-config.xml</value>
                     </property>
                     <property name="dbInitScriptPath">
-                        <value>/Users/alex/dev/gg/incubator-ignite/modules/sql-tester/src/main/resources/ignite-insert.sql</value>
+                        <value>/home/oleg/gg/incubator-ignite/modules/sql-tester/src/main/resources/ignite-insert.sql</value>
                     </property>
                 </bean>
             </list>

@@ -16,17 +16,19 @@ import java.util.*;
  */
 public class IgniteSqlTester {
     public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
-        if (F.isEmpty(args) || args.length != 2)
-            throw new IgniteException();
+        //if (F.isEmpty(args) || args.length != 2)
+        //    throw new IgniteException();
 
-        String configPath = args[0];
+        //String configPath = args[0];
+        String configPath = "../incubator-ignite/modules/sql-tester/src/main/resources/sql-tester-cfg.xml";
 
         // Initialize Spring factory.
         FileSystemXmlApplicationContext ctx = new FileSystemXmlApplicationContext(configPath);
 
         SqlTesterConfiguration cfg = ctx.getBean(SqlTesterConfiguration.class);
 
-        String testPath = args[1];
+        //String testPath = args[1];
+        String testPath = "../incubator-ignite/modules/sql-tester/src/main/resources/test-script.sql";
 
         {
             Set<QueryTestType> types = new HashSet<>();
