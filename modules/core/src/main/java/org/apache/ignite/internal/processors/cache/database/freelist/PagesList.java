@@ -288,6 +288,13 @@ public abstract class PagesList extends DataStructure {
 
                                 curIo = PagesListMetaIO.VERSIONS.forPage(curPageAddr);
 
+                                if (PageIO.getType(curPageAddr) == 0)
+                                    assert false : "??? type == 0 " + curPage.fullId();
+                                else if (PageIO.getPageId(curPageAddr) == 0)
+                                    assert false : "??? pageId == 0 " + curPage.fullId();
+                                else if (PageIdUtils.tag(PageIO.getPageId(curPageAddr)) == 0)
+                                    assert false : "??? tag == 0 " + curPage.fullId() + ", " + PageIO.getPageId(curPageAddr);
+
                                 curIo.resetCount(curPageAddr);
                             }
 
