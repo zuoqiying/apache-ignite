@@ -174,27 +174,6 @@
             padding: 10px 20px;
 
             border-top: 1px solid $table-border-color;
-
-            .btn.btn-info {
-                height: 36px;
-                padding: 0 19px;
-
-                outline: none;
-                border-color: #0067b9;
-                background-color: #0067b9;
-
-                font-family: Roboto;
-
-                &:hover, &:focus {
-                    border-color: #004983;
-                    background-color: #004983;                    
-                }
-
-                &:active {
-                    outline: none;
-                    box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.5);
-                }
-            }
         }
     }
 }
