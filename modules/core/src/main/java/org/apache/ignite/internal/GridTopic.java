@@ -102,7 +102,10 @@ public enum GridTopic {
     TOPIC_IO_TEST,
 
     /** */
-    TOPIC_HADOOP_MSG;
+    TOPIC_HADOOP_MSG,
+
+    /** */
+    TOPIC_INTERNAL_DIAGNOSTIC;
 
     /** Enum values. */
     private static final GridTopic[] VALS = values();
