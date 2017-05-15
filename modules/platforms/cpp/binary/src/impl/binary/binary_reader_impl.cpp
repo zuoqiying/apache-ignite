@@ -544,6 +544,8 @@ namespace ignite
                 if (hdr != IGNITE_HDR_NULL)
                     ThrowOnInvalidHeader(IGNITE_TYPE_ARRAY, hdr);
 
+                guard.Release();
+
                 return -1;
             }
 
@@ -956,6 +958,8 @@ namespace ignite
 
                 if (hdr != IGNITE_HDR_NULL)
                     ThrowOnInvalidHeader(stream->Position() - 1, expHdr, hdr);
+
+                guard.Release();
 
                 return -1;
             }
