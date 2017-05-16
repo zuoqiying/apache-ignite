@@ -17,6 +17,8 @@
 
 import io from 'socket.io-client'; // eslint-disable-line no-unused-vars
 
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+
 const maskNull = (val) => _.isNil(val) ? 'null' : val;
 
 const State = {
@@ -39,9 +41,18 @@ export default class IgniteAgentManager {
          */
         this.AgentModal = AgentModal;
 
-        this.clusters = [];
+        this.promises = new Set();
 
         $root.$on('$stateChangeSuccess', () => this.stopWatch());
+
+        this.ignite2x = false;
+
+        $root.$watch(() => _.get(this, 'cluster.clusterVersion'), (ver) => {
+            if (_.isEmpty(ver))
+                return;
+
+            this.ignite2x = ver.startsWith('2.');
+        }, true);
 
         /**
          * Connection to backend.
@@ -49,7 +60,7 @@ export default class IgniteAgentManager {
          */
         this.socket = null;
 
-        this.connectionState = State.INIT;
+        this.connectionState = new BehaviorSubject(State.INIT);
 
         /**
          * Has agent with enabled demo mode.
@@ -111,11 +122,11 @@ export default class IgniteAgentManager {
             }
 
             if (count === 0)
-                self.connectionState = State.AGENT_DISCONNECTED;
-            else {
-                self.connectionState = self.$root.IgniteDemoMode || _.get(self.cluster, 'disconnect') === false ?
-                    State.CONNECTED : State.CLUSTER_DISCONNECTED;
-            }
+                self.connectionState.next(State.AGENT_DISCONNECTED);
+            else if (self.$root.IgniteDemoMode || _.get(self.cluster, 'disconnect') === false)
+                self.connectionState.next(State.CONNECTED);
+            else
+                self.connectionState.next(State.CLUSTER_DISCONNECTED);
         });
     }
 
@@ -132,17 +143,23 @@ export default class IgniteAgentManager {
      * @returns {Promise}
      */
     awaitConnectionState(...states) {
-        this.latchAwaitStates = this.$q.defer();
+        const defer = this.$q.defer();
 
-        this.offAwaitAgent = this.$root.$watch(() => this.connectionState, (state) => {
-            if (_.includes(states, state)) {
-                this.offAwaitAgent();
+        this.promises.add(defer);
 
-                this.latchAwaitStates.resolve();
+        const subscription = this.connectionState.subscribe({
+            next: (state) => {
+                if (_.includes(states, state))
+                    defer.resolve();
             }
         });
 
-        return this.latchAwaitStates.promise;
+        return defer.promise
+            .finally(() => {
+                subscription.unsubscribe();
+
+                this.promises.delete(defer);
+            });
     }
 
     awaitCluster() {
@@ -167,24 +184,26 @@ export default class IgniteAgentManager {
         if (_.nonEmpty(self.clusters) && _.get(self.cluster, 'disconnect') === true) {
             self.cluster = _.head(self.clusters);
 
-            self.connectionState = State.CONNECTED;
+            self.connectionState.next(State.CONNECTED);
         }
 
-        self.offStateWatch = this.$root.$watch(() => self.connectionState, (state) => {
-            switch (state) {
-                case State.CONNECTED:
-                case State.CLUSTER_DISCONNECTED:
-                    this.AgentModal.hide();
+        self.modalSubscription = this.connectionState.subscribe({
+            next: (state) => {
+                switch (state) {
+                    case State.CONNECTED:
+                    case State.CLUSTER_DISCONNECTED:
+                        this.AgentModal.hide();
 
-                    break;
+                        break;
 
-                case State.AGENT_DISCONNECTED:
-                    this.AgentModal.agentDisconnected(self.backText, self.backState);
+                    case State.AGENT_DISCONNECTED:
+                        this.AgentModal.agentDisconnected(self.backText, self.backState);
 
-                    break;
+                        break;
 
-                default:
+                    default:
                     // Connection to backend is not established yet.
+                }
             }
         });
 
@@ -205,28 +224,30 @@ export default class IgniteAgentManager {
         if (_.nonEmpty(self.clusters) && _.get(self.cluster, 'disconnect') === true) {
             self.cluster = _.head(self.clusters);
 
-            self.connectionState = State.CONNECTED;
+            self.connectionState.next(State.CONNECTED);
         }
 
-        self.offStateWatch = this.$root.$watch(() => self.connectionState, (state) => {
-            switch (state) {
-                case State.CONNECTED:
-                    this.AgentModal.hide();
+        self.modalSubscription = this.connectionState.subscribe({
+            next: (state) => {
+                switch (state) {
+                    case State.CONNECTED:
+                        this.AgentModal.hide();
 
-                    break;
+                        break;
 
-                case State.AGENT_DISCONNECTED:
-                    this.AgentModal.agentDisconnected(self.backText, self.backState);
+                    case State.AGENT_DISCONNECTED:
+                        this.AgentModal.agentDisconnected(self.backText, self.backState);
 
-                    break;
+                        break;
 
-                case State.CLUSTER_DISCONNECTED:
-                    self.AgentModal.clusterDisconnected(self.backText, self.backState);
+                    case State.CLUSTER_DISCONNECTED:
+                        self.AgentModal.clusterDisconnected(self.backText, self.backState);
 
-                    break;
+                        break;
 
-                default:
+                    default:
                     // Connection to backend is not established yet.
+                }
             }
         });
 
@@ -234,18 +255,11 @@ export default class IgniteAgentManager {
     }
 
     stopWatch() {
-        if (!_.isFunction(this.offStateWatch))
-            return;
-
-        this.offStateWatch();
+        this.modalSubscription && this.modalSubscription.unsubscribe();
 
         this.AgentModal.hide();
 
-        if (this.latchAwaitStates) {
-            this.offAwaitAgent();
-
-            this.latchAwaitStates.reject('Agent watch stopped.');
-        }
+        this.promises.forEach((promise) => promise.reject('Agent watch stopped.'));
     }
 
     /**
@@ -454,11 +468,22 @@ export default class IgniteAgentManager {
      * @param {String} [query] Query if null then scan query.
      * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
      * @param {Boolean} enforceJoinOrder Flag whether enforce join order is enabled.
+     * @param {Boolean} replicatedOnly Flag whether query contains only replicated tables.
      * @param {Boolean} local Flag whether to execute query locally.
      * @param {int} pageSz
      * @returns {Promise}
      */
-    querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSz) {
+    querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local, pageSz) {
+        if (this.ignite2x) {
+            return this.visorTask('querySqlX2', nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local, pageSz)
+                .then(({error, result}) => {
+                    if (_.isEmpty(error))
+                        return result;
+
+                    return Promise.reject(error);
+                });
+        }
+
         cacheName = _.isEmpty(cacheName) ? null : cacheName;
 
         let queryPromise;
@@ -495,10 +520,11 @@ export default class IgniteAgentManager {
      * @param {String} [query] Query if null then scan query.
      * @param {Boolean} nonCollocatedJoins Flag whether to execute non collocated joins.
      * @param {Boolean} enforceJoinOrder Flag whether enforce join order is enabled.
+     * @param {Boolean} replicatedOnly Flag whether query contains only replicated tables.
      * @param {Boolean} local Flag whether to execute query locally.
      * @returns {Promise}
      */
-    querySqlGetAll(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local) {
+    querySqlGetAll(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local) {
         // Page size for query.
         const pageSz = 1024;
 
@@ -516,7 +542,7 @@ export default class IgniteAgentManager {
                 });
         };
 
-        return this.querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, local, pageSz)
+        return this.querySql(nid, cacheName, query, nonCollocatedJoins, enforceJoinOrder, replicatedOnly, local, pageSz)
             .then(fetchResult);
     }
 
@@ -526,6 +552,78 @@ export default class IgniteAgentManager {
      * @returns {Promise}
      */
     queryClose(nid, queryId) {
+        if (this.ignite2x) {
+            return this.visorTask('queryClose', nid, 'java.util.Map', 'java.util.UUID', 'java.util.Collection',
+                nid + '=' + queryId);
+        }
+
         return this.visorTask('queryClose', nid, queryId);
+    }
+
+    /**
+     * @param {String} nid Node id.
+     * @param {String} cacheName Cache name.
+     * @param {String} filter Filter text.
+     * @param {Boolean} regEx Flag whether filter by regexp.
+     * @param {Boolean} caseSensitive Case sensitive filtration.
+     * @param {Boolean} near Scan near cache.
+     * @param {Boolean} local Flag whether to execute query locally.
+     * @param {int} pageSize Page size.
+     * @returns {Promise}
+     */
+    queryScan(nid, cacheName, filter, regEx, caseSensitive, near, local, pageSize) {
+        if (this.ignite2x) {
+            return this.visorTask('queryScanX2', nid, cacheName, filter, regEx, caseSensitive, near, local, pageSize)
+                .then(({error, result}) => {
+                    if (_.isEmpty(error))
+                        return result;
+
+                    return Promise.reject(error);
+                });
+        }
+
+        /** Prefix for node local key for SCAN near queries. */
+        const SCAN_CACHE_WITH_FILTER = 'VISOR_SCAN_CACHE_WITH_FILTER';
+
+        /** Prefix for node local key for SCAN near queries. */
+        const SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE = 'VISOR_SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE';
+
+        const prefix = caseSensitive ? SCAN_CACHE_WITH_FILTER_CASE_SENSITIVE : SCAN_CACHE_WITH_FILTER;
+        const query = `${prefix}${filter}`;
+
+        return this.querySql(nid, cacheName, query, false, false, false, local, pageSize);
+    }
+
+    /**
+     /**
+     * @param {String} nid Node id.
+     * @param {String} cacheName Cache name.
+     * @param {String} filter Filter text.
+     * @param {Boolean} regEx Flag whether filter by regexp.
+     * @param {Boolean} caseSensitive Case sensitive filtration.
+     * @param {Boolean} near Scan near cache.
+     * @param {Boolean} local Flag whether to execute query locally.
+     * @returns {Promise}
+     */
+    queryScanGetAll(nid, cacheName, filter, regEx, caseSensitive, near, local) {
+        // Page size for query.
+        const pageSz = 1024;
+
+        const fetchResult = (acc) => {
+            if (!acc.hasMore)
+                return acc;
+
+            return this.queryNextPage(acc.responseNodeId, acc.queryId, pageSz)
+                .then((res) => {
+                    acc.rows = acc.rows.concat(res.rows);
+
+                    acc.hasMore = res.hasMore;
+
+                    return fetchResult(acc);
+                });
+        };
+
+        return this.queryScan(nid, cacheName, filter, regEx, caseSensitive, near, local, pageSz)
+            .then(fetchResult);
     }
 }
