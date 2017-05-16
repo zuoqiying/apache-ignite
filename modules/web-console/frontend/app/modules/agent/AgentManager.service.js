@@ -43,8 +43,6 @@ export default class IgniteAgentManager {
 
         this.promises = new Set();
 
-        $root.$on('$stateChangeSuccess', () => this.stopWatch());
-
         this.ignite2x = false;
 
         $root.$watch(() => _.get(this, 'cluster.clusterVersion'), (ver) => {
@@ -184,24 +182,26 @@ export default class IgniteAgentManager {
         if (_.nonEmpty(self.clusters) && _.get(self.cluster, 'disconnect') === true) {
             self.cluster = _.head(self.clusters);
 
-            self.connectionState = State.CONNECTED;
+            self.connectionState.next(State.CONNECTED);
         }
 
-        self.offStateWatch = this.$root.$watch(() => self.connectionState, (state) => {
-            switch (state) {
-                case State.CONNECTED:
-                case State.CLUSTER_DISCONNECTED:
-                    this.AgentModal.hide();
+        self.modalSubscription = this.connectionState.subscribe({
+            next: (state) => {
+                switch (state) {
+                    case State.CONNECTED:
+                    case State.CLUSTER_DISCONNECTED:
+                        this.AgentModal.hide();
 
-                    break;
+                        break;
 
-                case State.AGENT_DISCONNECTED:
-                    this.AgentModal.agentDisconnected(self.backText, self.backState);
+                    case State.AGENT_DISCONNECTED:
+                        this.AgentModal.agentDisconnected(self.backText, self.backState);
 
-                    break;
+                        break;
 
-                default:
+                    default:
                     // Connection to backend is not established yet.
+                }
             }
         });
 
@@ -222,28 +222,30 @@ export default class IgniteAgentManager {
         if (_.nonEmpty(self.clusters) && _.get(self.cluster, 'disconnect') === true) {
             self.cluster = _.head(self.clusters);
 
-            self.connectionState = State.CONNECTED;
+            self.connectionState.next(State.CONNECTED);
         }
 
-        self.offStateWatch = this.$root.$watch(() => self.connectionState, (state) => {
-            switch (state) {
-                case State.CONNECTED:
-                    this.AgentModal.hide();
+        self.modalSubscription = this.connectionState.subscribe({
+            next: (state) => {
+                switch (state) {
+                    case State.CONNECTED:
+                        this.AgentModal.hide();
 
-                    break;
+                        break;
 
-                case State.AGENT_DISCONNECTED:
-                    this.AgentModal.agentDisconnected(self.backText, self.backState);
+                    case State.AGENT_DISCONNECTED:
+                        this.AgentModal.agentDisconnected(self.backText, self.backState);
 
-                    break;
+                        break;
 
-                case State.CLUSTER_DISCONNECTED:
-                    self.AgentModal.clusterDisconnected(self.backText, self.backState);
+                    case State.CLUSTER_DISCONNECTED:
+                        self.AgentModal.clusterDisconnected(self.backText, self.backState);
 
-                    break;
+                        break;
 
-                default:
+                    default:
                     // Connection to backend is not established yet.
+                }
             }
         });
 
@@ -251,6 +253,8 @@ export default class IgniteAgentManager {
     }
 
     stopWatch() {
+        this.modalSubscription && this.modalSubscription.unsubscribe();
+
         this.AgentModal.hide();
 
         this.promises.forEach((promise) => promise.reject('Agent watch stopped.'));
