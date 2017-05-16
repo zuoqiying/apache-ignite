@@ -17,6 +17,8 @@
 
 import io from 'socket.io-client'; // eslint-disable-line no-unused-vars
 
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+
 const maskNull = (val) => _.isNil(val) ? 'null' : val;
 
 const State = {
@@ -39,6 +41,8 @@ export default class IgniteAgentManager {
          */
         this.AgentModal = AgentModal;
 
+        this.promises = new Set();
+
         $root.$on('$stateChangeSuccess', () => this.stopWatch());
 
         this.ignite2x = false;
@@ -56,7 +60,7 @@ export default class IgniteAgentManager {
          */
         this.socket = null;
 
-        this.connectionState = State.INIT;
+        this.connectionState = new BehaviorSubject(State.INIT);
 
         /**
          * Has agent with enabled demo mode.
@@ -118,11 +122,11 @@ export default class IgniteAgentManager {
             }
 
             if (count === 0)
-                self.connectionState = State.AGENT_DISCONNECTED;
-            else {
-                self.connectionState = self.$root.IgniteDemoMode || _.get(self.cluster, 'disconnect') === false ?
-                    State.CONNECTED : State.CLUSTER_DISCONNECTED;
-            }
+                self.connectionState.next(State.AGENT_DISCONNECTED);
+            else if (self.$root.IgniteDemoMode || _.get(self.cluster, 'disconnect') === false)
+                self.connectionState.next(State.CONNECTED);
+            else
+                self.connectionState.next(State.CLUSTER_DISCONNECTED);
         });
     }
 
@@ -139,17 +143,23 @@ export default class IgniteAgentManager {
      * @returns {Promise}
      */
     awaitConnectionState(...states) {
-        this.latchAwaitStates = this.$q.defer();
+        const defer = this.$q.defer();
 
-        this.offAwaitAgent = this.$root.$watch(() => this.connectionState, (state) => {
-            if (_.includes(states, state)) {
-                this.offAwaitAgent();
+        this.promises.add(defer);
 
-                this.latchAwaitStates.resolve();
+        const subscription = this.connectionState.subscribe({
+            next: (state) => {
+                if (_.includes(states, state))
+                    defer.resolve();
             }
         });
 
-        return this.latchAwaitStates.promise;
+        return defer.promise
+            .finally(() => {
+                subscription.unsubscribe();
+
+                this.promises.delete(defer);
+            });
     }
 
     awaitCluster() {
@@ -241,18 +251,9 @@ export default class IgniteAgentManager {
     }
 
     stopWatch() {
-        if (!_.isFunction(this.offStateWatch))
-            return;
-
-        this.offStateWatch();
-
         this.AgentModal.hide();
 
-        if (this.latchAwaitStates) {
-            this.offAwaitAgent();
-
-            this.latchAwaitStates.reject('Agent watch stopped.');
-        }
+        this.promises.forEach((promise) => promise.reject('Agent watch stopped.'));
     }
 
     /**
