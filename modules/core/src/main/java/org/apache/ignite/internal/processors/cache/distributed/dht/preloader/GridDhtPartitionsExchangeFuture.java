@@ -1358,10 +1358,6 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         }
 
         if (super.onDone(res, err) && realExchange) {
-            exchLog.info("exchange finished [topVer=" + topologyVersion() +
-                ", time1=" + duration() +
-                ", time2=" + (U.currentTimeMillis() - initTs) + ']');
-
             if (log.isDebugEnabled())
                 log.debug("Completed partition exchange [localNode=" + cctx.localNodeId() + ", exchange= " + this +
                     "duration=" + duration() + ", durationFromInit=" + (U.currentTimeMillis() - initTs) + ']');
@@ -2355,6 +2351,9 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         }
     }
 
+    /**
+     * @return Short information string.
+     */
     public String shortInfo() {
         return "GridDhtPartitionsExchangeFuture [topVer=" + topologyVersion() +
             ", evt=" + (discoEvt != null ? discoEvt.type() : -1) +

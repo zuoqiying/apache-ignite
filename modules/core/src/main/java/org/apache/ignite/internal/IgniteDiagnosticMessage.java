@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.internal.managers.communication.GridIoMessageFactory;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheMapEntry;
@@ -66,11 +67,25 @@ public class IgniteDiagnosticMessage implements Message {
     /** */
     private byte[] cBytes;
 
+    /**
+     * Required by {@link GridIoMessageFactory}.
+     */
     public IgniteDiagnosticMessage() {
         // No-op.
     }
 
-    public static IgniteDiagnosticMessage createRequest(GridKernalContext ctx, IgniteClosure<GridKernalContext, String> c, long futId) throws IgniteCheckedException {
+    /**
+     * @param ctx Context.
+     * @param c Closure to run.
+     * @param futId Future ID.
+     * @return Request message.
+     * @throws IgniteCheckedException If failed.
+     */
+    public static IgniteDiagnosticMessage createRequest(GridKernalContext ctx,
+        IgniteClosure<GridKernalContext, String> c,
+        long futId)
+        throws IgniteCheckedException
+    {
         byte[] cBytes = U.marshal(ctx.config().getMarshaller(), c);
 
         IgniteDiagnosticMessage msg = new IgniteDiagnosticMessage();
@@ -81,6 +96,11 @@ public class IgniteDiagnosticMessage implements Message {
         return msg;
     }
 
+    /**
+     * @param msg0 Message.
+     * @param futId Future ID.
+     * @return Response message.
+     */
     public static IgniteDiagnosticMessage createResponse(String msg0, long futId) {
         IgniteDiagnosticMessage msg = new IgniteDiagnosticMessage();
 
@@ -90,24 +110,40 @@ public class IgniteDiagnosticMessage implements Message {
         return msg;
     }
 
-    public IgniteClosure<GridKernalContext, String> unmarshalClosure(GridKernalContext ctx) throws IgniteCheckedException {
+    /**
+     * @param ctx Context.
+     * @return Unmarshalled closure.
+     * @throws IgniteCheckedException If failed.
+     */
+    public IgniteClosure<GridKernalContext, String> unmarshalClosure(GridKernalContext ctx)
+        throws IgniteCheckedException {
         assert cBytes != null;
 
         return U.unmarshal(ctx, cBytes, null);
     }
 
+    /**
+     * @return Future ID.
+     */
     public long futureId() {
         return futId;
     }
 
+    /**
+     * @return {@code True} if this is request message.
+     */
     public boolean request() {
         return cBytes != null;
     }
 
+    /**
+     * @return Message string.
+     */
     public String message() {
         return msg;
     }
 
+    /** {@inheritDoc} */
     @Override public boolean writeTo(ByteBuffer buf, MessageWriter writer) {
         writer.setBuffer(buf);
 
@@ -142,6 +178,7 @@ public class IgniteDiagnosticMessage implements Message {
         return true;
     }
 
+    /** {@inheritDoc} */
     @Override public boolean readFrom(ByteBuffer buf, MessageReader reader) {
         reader.setBuffer(buf);
 
@@ -178,20 +215,19 @@ public class IgniteDiagnosticMessage implements Message {
         return reader.afterMessageRead(IgniteDiagnosticMessage.class);
     }
 
+    /** {@inheritDoc} */
     @Override public byte directType() {
         return -46;
     }
 
+    /** {@inheritDoc} */
     @Override public byte fieldsCount() {
         return 3;
     }
 
+    /** {@inheritDoc} */
     @Override public void onAckReceived() {
         // No-op.
-    }
-
-    @Override public String toString() {
-        return S.toString(IgniteDiagnosticMessage.class, this);
     }
 
     /**
@@ -211,6 +247,7 @@ public class IgniteDiagnosticMessage implements Message {
             this.nodeId = ctx.localNodeId();
         }
 
+        /** {@inheritDoc} */
         @Override public final String apply(GridKernalContext ctx) {
             try {
                 StringBuilder sb = new StringBuilder();
@@ -237,11 +274,18 @@ public class IgniteDiagnosticMessage implements Message {
             }
         }
 
+        /**
+         * @param ctx Context.
+         * @return Message.
+         */
         protected String dumpInfo(GridKernalContext ctx) {
             return null;
         }
     }
 
+    /**
+     *
+     */
     public static class TxEntriesInfoClosure extends BaseClosure {
         /** */
         private static final long serialVersionUID = 0L;
@@ -252,6 +296,11 @@ public class IgniteDiagnosticMessage implements Message {
         /** */
         private final Collection<KeyCacheObject> keys;
 
+        /**
+         * @param ctx Context.
+         * @param cacheId Cache ID.
+         * @param keys Keys.
+         */
         public TxEntriesInfoClosure(GridKernalContext ctx, int cacheId, Collection<KeyCacheObject> keys) {
             super(ctx);
 
@@ -259,6 +308,7 @@ public class IgniteDiagnosticMessage implements Message {
             this.keys = keys;
         }
 
+        /** {@inheritDoc} */
         @Override protected String dumpInfo(GridKernalContext ctx) {
             GridCacheContext cctx = ctx.cache().context().cacheContext(cacheId);
 
@@ -282,13 +332,16 @@ public class IgniteDiagnosticMessage implements Message {
 
                 GridCacheMapEntry e = (GridCacheMapEntry)cctx.cache().peekEx(key);
 
-                sb.append("Key [key=" + key + ", entry=" + e + "]");
+                sb.append("Key [key=").append(key).append(", entry=").append(e).append("]");
             }
 
             return sb.toString();
         }
     }
 
+    /**
+     *
+     */
     public static class ExchangeInfoClosure extends BaseClosure {
         /** */
         private static final long serialVersionUID = 0L;
@@ -296,12 +349,17 @@ public class IgniteDiagnosticMessage implements Message {
         /** */
         private final AffinityTopologyVersion topVer;
 
+        /**
+         * @param ctx Context.
+         * @param topVer Exchange version.
+         */
         public ExchangeInfoClosure(GridKernalContext ctx, AffinityTopologyVersion topVer) {
             super(ctx);
 
             this.topVer = topVer;
         }
 
+        /** {@inheritDoc} */
         @Override protected String dumpInfo(GridKernalContext ctx) {
             List<GridDhtPartitionsExchangeFuture> futs = ctx.cache().context().exchange().exchangeFutures();
 
@@ -314,6 +372,9 @@ public class IgniteDiagnosticMessage implements Message {
         }
     }
 
+    /**
+     *
+     */
     public static class TxInfoClosure extends BaseClosure {
         /** */
         private static final long serialVersionUID = 0L;
@@ -324,19 +385,26 @@ public class IgniteDiagnosticMessage implements Message {
         /** */
         private final GridCacheVersion nearVer;
 
+        /**
+         * @param ctx Context.
+         * @param dhtVer Tx dht version.
+         * @param nearVer Tx near version.
+         */
         public TxInfoClosure(GridKernalContext ctx,
-                             GridCacheVersion dhtVer,
-                             GridCacheVersion nearVer) {
+            GridCacheVersion dhtVer,
+            GridCacheVersion nearVer) {
             super(ctx);
 
             this.dhtVer = dhtVer;
             this.nearVer = nearVer;
         }
 
+        /** {@inheritDoc} */
         @Override protected String dumpInfo(GridKernalContext ctx) {
             StringBuilder b = new StringBuilder();
 
-            b.append("Related transactions [dhtVer=" + dhtVer + ", nearVer=" + nearVer + "]: ");
+            b.append("Related transactions [dhtVer=").append(dhtVer).
+                append(", nearVer=").append(nearVer).append("]: ");
 
             boolean found = false;
 
@@ -345,11 +413,12 @@ public class IgniteDiagnosticMessage implements Message {
                     found = true;
 
                     b.append(U.nl());
-                    b.append("Found related ttx [ver=" + tx.xidVersion() +
-                        ", nearVer=" + tx.nearXidVersion() +
-                        ", topVer=" + tx.topologyVersion() +
-                        ", state=" + tx.state() +
-                        ", fullTx=" + tx + "]");
+                    b.append("Found related ttx [ver=").append(tx.xidVersion()).
+                        append(", nearVer=").append(tx.nearXidVersion()).
+                        append(", topVer=").append(tx.topologyVersion()).
+                        append(", state=").append(tx.state()).
+                        append(", fullTx=").append(tx).
+                        append("]");
                 }
             }
 
@@ -362,7 +431,11 @@ public class IgniteDiagnosticMessage implements Message {
         }
     }
 
-    public static String dumpNodeBasicInfo(GridKernalContext ctx) {
+    /**
+     * @param ctx Context.
+     * @return Node information string.
+     */
+    static String dumpNodeBasicInfo(GridKernalContext ctx) {
         StringBuilder sb = new StringBuilder("General node info [id=").append(ctx.localNodeId());
 
         sb.append(", client=").append(ctx.clientNode());
@@ -374,6 +447,10 @@ public class IgniteDiagnosticMessage implements Message {
         return sb.toString();
     }
 
+    /**
+     * @param ctx Context.
+     * @return Exchange information string.
+     */
     static String dumpExchangeInfo(GridKernalContext ctx) {
         GridCachePartitionExchangeManager exchMgr = ctx.cache().context().exchange();
 
@@ -387,6 +464,11 @@ public class IgniteDiagnosticMessage implements Message {
         return sb.toString();
     }
 
+    /**
+     * @param ctx Context.
+     * @param nodeId Target node ID.
+     * @return Communication information future.
+     */
     public static IgniteInternalFuture<String> dumpCommunicationInfo(GridKernalContext ctx, UUID nodeId) {
         if (ctx.config().getCommunicationSpi() instanceof TcpCommunicationSpi)
             return ((TcpCommunicationSpi) ctx.config().getCommunicationSpi()).dumpNodeStatistics(nodeId);
@@ -399,5 +481,10 @@ public class IgniteDiagnosticMessage implements Message {
      */
     private static String formatTime(long time) {
         return dateFormat.get().format(new Date(time));
+    }
+
+    /** {@inheritDoc} */
+    @Override public String toString() {
+        return S.toString(IgniteDiagnosticMessage.class, this);
     }
 }

@@ -705,6 +705,7 @@ public class GridNioServer<T> {
     /**
      *
      */
+    @SuppressWarnings("ForLoopReplaceableByForEach")
     public void dumpStats() {
         U.warn(log, "NIO server statistics [readerSesBalanceCnt=" + readerMoveCnt.get() +
             ", writerSesBalanceCnt=" + writerMoveCnt.get() + ']');
@@ -713,6 +714,12 @@ public class GridNioServer<T> {
             clientWorkers.get(i).offer(new NioOperationFuture<Void>(null, NioOperation.DUMP_STATS));
     }
 
+    /**
+     * @param msg Message to add.
+     * @param p Session predicate.
+     * @return Future.
+     */
+    @SuppressWarnings("ForLoopReplaceableByForEach")
     public IgniteInternalFuture<String> dumpNodeStats(final String msg, IgnitePredicate<GridNioSession> p) {
         GridCompoundFuture<String, String> fut = new GridCompoundFuture<>(new IgniteReducer<String, String>() {
             private final StringBuilder sb = new StringBuilder(msg);
@@ -1858,7 +1865,7 @@ public class GridNioServer<T> {
                                     StringBuilder sb = new StringBuilder();
 
                                     try {
-                                        dumpStats(sb, (IgnitePredicate<GridNioSession>)req.msg);
+                                        dumpStats(sb, (IgnitePredicate<GridNioSession>)req.msg, true);
                                     }
                                     finally {
                                         req.onDone(sb.toString());
@@ -1868,7 +1875,7 @@ public class GridNioServer<T> {
                                     try {
                                         StringBuilder sb = new StringBuilder();
 
-                                        dumpStats(sb, null);
+                                        dumpStats(sb, null, false);
 
                                         U.warn(log, sb.toString());
                                     }
@@ -1982,6 +1989,10 @@ public class GridNioServer<T> {
             }
         }
 
+        /**
+         * @param sb Message builder.
+         * @param keys Keys.
+         */
         private void dumpSelectorInfo(StringBuilder sb, Set<SelectionKey> keys) {
             sb.append(">> Selector info [idx=").append(idx)
                 .append(", keysCnt=").append(keys.size())
@@ -1993,9 +2004,13 @@ public class GridNioServer<T> {
         }
 
         /**
-         *
+         * @param sb Message builder.
+         * @param p Optional session predicate.
+         * @param shortInfo Short info flag.
          */
-        private void dumpStats(StringBuilder sb, @Nullable IgnitePredicate<GridNioSession> p) {
+        private void dumpStats(StringBuilder sb,
+            @Nullable IgnitePredicate<GridNioSession> p,
+            boolean shortInfo) {
             Set<SelectionKey> keys = selector.keys();
 
             boolean selInfo = p == null;
@@ -2014,9 +2029,6 @@ public class GridNioServer<T> {
 
                         selInfo = true;
                     }
-
-//                    MessageWriter writer = ses.meta(MSG_WRITER.ordinal());
-//                    MessageReader reader = ses.meta(GridDirectParser.READER_META_KEY);
 
                     sb.append("    Connection info [")
                         .append("in=").append(ses.accepted())
@@ -2041,7 +2053,7 @@ public class GridNioServer<T> {
 
                                 Object msg = req.message();
 
-                                if (msg instanceof GridIoMessage)
+                                if (shortInfo && msg instanceof GridIoMessage)
                                     msg = ((GridIoMessage)msg).message().getClass().getSimpleName();
 
                                 sb.append(msg);
@@ -2071,15 +2083,21 @@ public class GridNioServer<T> {
                         .append(", bytesSent=").append(ses.bytesSent())
                         .append(", bytesSent0=").append(ses.bytesSent0())
                         .append(", opQueueSize=").append(ses.writeQueueSize());
-//                        .append(", msgWriter=").append(writer != null ? writer.toString() : "null")
-//                        .append(", msgReader=").append(reader != null ? reader.toString() : "null");
+
+                    if (!shortInfo) {
+                        MessageWriter writer = ses.meta(MSG_WRITER.ordinal());
+                        MessageReader reader = ses.meta(GridDirectParser.READER_META_KEY);
+
+                        sb.append(", msgWriter=").append(writer != null ? writer.toString() : "null")
+                            .append(", msgReader=").append(reader != null ? reader.toString() : "null");
+                    }
 
                     int cnt = 0;
 
                     for (SessionWriteRequest req : ses.writeQueue()) {
                         Object msg = req.message();
 
-                        if (msg instanceof GridIoMessage)
+                        if (shortInfo && msg instanceof GridIoMessage)
                             msg = ((GridIoMessage)msg).message().getClass().getSimpleName();
 
                         if (cnt == 0)
@@ -2087,7 +2105,7 @@ public class GridNioServer<T> {
                         else
                             sb.append(',').append(msg);
 
-                        if (++cnt == 1) {
+                        if (++cnt == 5) {
                             sb.append(']');
 
                             break;

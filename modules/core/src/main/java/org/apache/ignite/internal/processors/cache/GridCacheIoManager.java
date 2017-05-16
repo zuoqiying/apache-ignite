@@ -131,6 +131,9 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
     /** */
     private final List<GridCacheMessage> pendingMsgs = new ArrayList<>();
 
+    /**
+     *
+     */
     public void dumpPendingMessages() {
         synchronized (pendingMsgs) {
             if (pendingMsgs.isEmpty())

@@ -1700,6 +1700,10 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
             nioSrvr.dumpStats();
     }
 
+    /**
+     * @param sb Message builder.
+     * @param dstNodeId Target node ID.
+     */
     private void dumpInfo(StringBuilder sb, UUID dstNodeId) {
         sb.append("Communication SPI recovery descriptors: ").append(U.nl());
 
@@ -1771,12 +1775,6 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
             }
         }
     }
-
-    /** */
-    private final ThreadLocal<Integer> threadConnIdx = new ThreadLocal<>();
-
-    /** */
-    private final AtomicInteger connIdx = new AtomicInteger();
 
     /** {@inheritDoc} */
     @Override public Map<String, Object> getNodeAttributes() throws IgniteSpiException {

@@ -632,7 +632,6 @@ public final class GridDhtColocatedLockFuture extends GridCompoundIdentityFuture
                     synchronized (m) {
                         return "[node=" + m.node().id() +
                             ", rcvRes=" + m.rcvRes +
-                            ", remapVer=" + m.remapTopVer +
                             ", loc=" + m.node().isLocal() +
                             ", done=" + f.isDone() + "]";
                     }

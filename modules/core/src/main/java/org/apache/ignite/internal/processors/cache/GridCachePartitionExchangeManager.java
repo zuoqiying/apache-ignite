@@ -1417,7 +1417,8 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
         cctx.io().dumpPendingMessages();
 
         // Dump IO manager statistics.
-        // cctx.gridIO().dumpStats();
+        if (IgniteSystemProperties.getBoolean(IgniteSystemProperties.IGNITE_IO_DUMP_ON_TIMEOUT, false))
+            cctx.gridIO().dumpStats();
     }
 
     /**
@@ -1503,7 +1504,8 @@ public class GridCachePartitionExchangeManager<K, V> extends GridCacheSharedMana
                     U.warn(log, "Found long running cache operations, dump IO statistics.");
 
                     // Dump IO manager statistics.
-                    // cctx.gridIO().dumpStats();
+                    if (IgniteSystemProperties.getBoolean(IgniteSystemProperties.IGNITE_IO_DUMP_ON_TIMEOUT, false))
+                        cctx.gridIO().dumpStats();
                 }
             }
             else

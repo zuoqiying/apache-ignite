@@ -776,7 +776,8 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                     "response [node=" + nodeId +
                     ", key=" + key +
                     ", futId=" + futId +
-                    ", topVer=" + topVer + ']');
+                    ", topVer=" + topVer + ']',
+                    null);
         }
     }
 
