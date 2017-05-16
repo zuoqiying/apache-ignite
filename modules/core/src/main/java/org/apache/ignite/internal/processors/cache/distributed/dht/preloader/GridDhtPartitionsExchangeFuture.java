@@ -113,6 +113,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     public static final int DUMP_PENDING_OBJECTS_THRESHOLD =
         IgniteSystemProperties.getInteger(IgniteSystemProperties.IGNITE_DUMP_PENDING_OBJECTS_THRESHOLD, 10);
 
+    /** */
     public static final String EXCHANGE_LOG = "org.apache.ignite.internal.exchange.time";
 
     /** */
