@@ -109,7 +109,7 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
     private int retryCnt;
 
     /** Indexed class handlers. */
-    private final ConcurrentMap<Integer, IgniteBiInClosure[]> idxClsHandlers = new ConcurrentHashMap<>();
+    private volatile Map<Integer, IgniteBiInClosure[]> idxClsHandlers = new HashMap<>();
 
     /** Handler registry. */
     private ConcurrentMap<ListenerKey, IgniteBiInClosure<UUID, GridCacheMessage>>
@@ -1195,14 +1195,14 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
         int msgIdx = messageIndex(type);
 
         if (msgIdx != -1) {
-            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers.get(cacheId);
+            Map<Integer, IgniteBiInClosure[]> idxClsHandlers0 = idxClsHandlers;
+
+            IgniteBiInClosure[] cacheClsHandlers = idxClsHandlers0.get(cacheId);
 
             if (cacheClsHandlers == null) {
                 cacheClsHandlers = new IgniteBiInClosure[GridCacheMessage.MAX_CACHE_MSG_LOOKUP_INDEX];
 
-                IgniteBiInClosure[] old = idxClsHandlers.putIfAbsent(cacheId, cacheClsHandlers);
-
-                assert old == null;
+                idxClsHandlers0.put(cacheId, cacheClsHandlers);
             }
 
             if (cacheClsHandlers[msgIdx] != null)
@@ -1211,9 +1211,7 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
 
             cacheClsHandlers[msgIdx] = c;
 
-            boolean replace = idxClsHandlers.replace(cacheId, cacheClsHandlers, cacheClsHandlers);
-
-            assert replace;
+            idxClsHandlers = idxClsHandlers0;
 
             return;
         }
