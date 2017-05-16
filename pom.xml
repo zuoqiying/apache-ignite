@@ -233,9 +233,6 @@
 
         <profile>
             <id>dev-libs</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
