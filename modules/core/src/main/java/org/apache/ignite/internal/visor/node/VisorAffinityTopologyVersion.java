@@ -29,6 +29,9 @@ import org.apache.ignite.internal.visor.VisorDataTransferObject;
  */
 public class VisorAffinityTopologyVersion extends VisorDataTransferObject {
     /** */
+    private static final long serialVersionUID = 0L;
+
+    /** */
     private long topVer;
 
     /** */
