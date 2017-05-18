@@ -269,7 +269,6 @@ public class VisorNodeDataCollectorJobResult extends VisorDataTransferObject {
         errCnt = in.readLong();
         readyTopVer = (VisorAffinityTopologyVersion)in.readObject();
         hasPendingExchange = in.readBoolean();
-
     }
 
     /** {@inheritDoc} */

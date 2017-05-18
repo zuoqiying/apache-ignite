@@ -208,10 +208,6 @@ public class VisorCache extends VisorDataTransferObject {
         return c;
     }
 
-    public void setMode(CacheMode mode) {
-        this.mode = mode;
-    }
-
     /**
      * @return Cache name.
      */
