@@ -1330,7 +1330,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             long updateSeq = this.updateSeq.incrementAndGet();
 
-            node2part = new GridDhtPartitionFullMap(node2part, updateSeq);
+            node2part.updateSequence(updateSeq);
 
             boolean changed = false;
 
