@@ -38,6 +38,13 @@ public interface IgniteWriteAheadLogManager extends GridCacheSharedManager, Igni
     public boolean isFullSync();
 
     /**
+     * For debug only: print reserved/locked statistics.
+     *
+     * @return short statistics
+     */
+    public String getReservedStat();
+
+    /**
      * Resumes logging after start. When WAL manager is started, it will skip logging any updates until this
      * method is called to avoid logging changes induced by the state restore procedure.
      */
