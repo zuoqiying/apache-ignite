@@ -114,8 +114,8 @@ public class VisorNodeDataCollectorTask extends VisorMultiNodeTask<VisorNodeData
         if (jobRes.getIgfssEx() != null)
             taskRes.getIgfssEx().put(nid, new VisorExceptionWrapper(jobRes.getIgfssEx()));
 
-        taskRes.readyAffinityVersions().put(nid, jobRes.readyAffinityVersion());
+        taskRes.getReadyAffinityVersions().put(nid, jobRes.getReadyAffinityVersion());
 
-        taskRes.pendingExchanges().put(nid, jobRes.hasPendingExchange());
+        taskRes.getPendingExchanges().put(nid, jobRes.isHasPendingExchange());
     }
 }

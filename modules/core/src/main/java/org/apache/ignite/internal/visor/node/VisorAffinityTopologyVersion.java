@@ -17,14 +17,17 @@
 
 package org.apache.ignite.internal.visor.node;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.util.typedef.internal.S;
+import org.apache.ignite.internal.visor.VisorDataTransferObject;
 
 /**
  * Data transfer object for {@link AffinityTopologyVersion}
  */
-public class VisorAffinityTopologyVersion implements Serializable {
+public class VisorAffinityTopologyVersion extends VisorDataTransferObject {
     /** */
     private static final long serialVersionUID = 0L;
 
@@ -63,6 +66,18 @@ public class VisorAffinityTopologyVersion implements Serializable {
      */
     public int getMinorTopologyVersion() {
         return minorTopVer;
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void writeExternalData(ObjectOutput out) throws IOException {
+        out.writeLong(topVer);
+        out.writeInt(minorTopVer);
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void readExternalData(byte protoVer, ObjectInput in) throws IOException, ClassNotFoundException {
+        topVer = in.readLong();
+        minorTopVer = in.readInt();
     }
 
     /** {@inheritDoc} */
