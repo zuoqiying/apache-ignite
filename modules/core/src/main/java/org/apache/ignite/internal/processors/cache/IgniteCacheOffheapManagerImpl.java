@@ -31,7 +31,6 @@ import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.DataPageEvictionMode;
 import org.apache.ignite.internal.NodeStoppingException;
 import org.apache.ignite.internal.pagemem.FullPageId;
-import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.pagemem.PageUtils;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
@@ -54,7 +53,6 @@ import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtLocalP
 import org.apache.ignite.internal.processors.cache.local.GridLocalCache;
 import org.apache.ignite.internal.processors.cache.query.GridCacheQueryManager;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
-import org.apache.ignite.internal.processors.query.QueryUtils;
 import org.apache.ignite.internal.util.GridAtomicLong;
 import org.apache.ignite.internal.util.GridCloseableIteratorAdapter;
 import org.apache.ignite.internal.util.GridEmptyCloseableIterator;
@@ -70,6 +68,7 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.lang.IgnitePredicate;
+import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.pagemem.PageIdAllocator.FLAG_IDX;
@@ -438,8 +437,52 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
 
     /** {@inheritDoc} */
     @Override public int onUndeploy(ClassLoader ldr) {
-        // TODO: GG-11141.
-        return 0;
+        IgniteUuid ldrId = cctx.deploy().getClassLoaderId(ldr);
+
+        assert ldrId != null;
+
+        int undeployCnt = 0;
+
+        Iterator<CacheDataStore> dataStores = cacheData(true, true, null);
+
+        while (dataStores.hasNext()) {
+            CacheDataStore store = dataStores.next();
+
+            try {
+                GridCursor<? extends CacheDataRow> cur = store.cursor();
+
+                while (cur.next()) {
+                    CacheDataRow row = cur.get();
+
+                    IgniteUuid valLdrId = row.valueClassLoaderId();
+                    IgniteUuid keyLdrId = row.keyClassLoaderId();
+
+                    if (keyLdrId != null && ldrId.equals(keyLdrId)) {
+                        if (log.isTraceEnabled())
+                            log.trace("onUndeploy remove key [ldrId=" + ldrId + ']');
+
+                        store.remove(row.key(), store.partId());
+
+                        undeployCnt++;
+                    }
+                    else {
+                        if (valLdrId != null && ldrId.equals(valLdrId)) {
+                            store.remove(row.key(), store.partId());
+
+                            if (log.isTraceEnabled())
+                                log.trace("onUndeploy remove value [ldrId=" + ldrId + ']');
+
+                            undeployCnt++;
+                        }
+                    }
+                }
+            }
+            catch (IgniteCheckedException e) {
+                U.error(log, "Failed to clear cache swap space on undeploy.", e);
+            }
+        }
+
+        return undeployCnt;
     }
 
     /** {@inheritDoc} */
@@ -977,12 +1020,15 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             CacheObject val,
             GridCacheVersion ver,
             long expireTime,
-            @Nullable CacheDataRow oldRow) throws IgniteCheckedException
-        {
+            @Nullable CacheDataRow oldRow,
+            @Nullable IgniteUuid keyClsLdrId,
+            @Nullable IgniteUuid valClsLdrId) throws IgniteCheckedException {
             int cacheId = cctx.memoryPolicy().config().getPageEvictionMode() == DataPageEvictionMode.DISABLED ?
                 0 : cctx.cacheId();
 
-            DataRow dataRow = new DataRow(key, val, ver, partId, expireTime, cacheId);
+            DataRow dataRow = new DataRow(key, val, ver, partId, expireTime, cacheId, keyClsLdrId, valClsLdrId);
+
+            dataRow.deploymentEnabled(cctx.deploymentEnabled());
 
             if (canUpdateOldRow(oldRow, dataRow) && rowStore.updateRow(oldRow.link(), dataRow))
                 dataRow.link(oldRow.link());
@@ -1016,7 +1062,20 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
                 int cacheId = cctx.memoryPolicy().config().getPageEvictionMode() != DataPageEvictionMode.DISABLED ?
                     cctx.cacheId() : 0;
 
-                DataRow dataRow = new DataRow(key, val, ver, p, expireTime, cacheId);
+                IgniteUuid keyClsLdrId = null;
+                IgniteUuid valClsLdrId = null;
+
+                if (cctx.deploymentEnabled()) {
+                    if (val != null) {
+                        valClsLdrId = cctx.deploy().getClassLoaderId(
+                            U.detectObjectClassLoader(val.value(cctx.cacheObjectContext(), false)));
+                    }
+
+                    keyClsLdrId = cctx.deploy().getClassLoaderId(
+                        U.detectObjectClassLoader(key.value(cctx.cacheObjectContext(), false)));
+                }
+
+                DataRow dataRow = new DataRow(key, val, ver, p, expireTime, cacheId, keyClsLdrId, valClsLdrId);
 
                 CacheObjectContext coCtx = cctx.cacheObjectContext();
 
@@ -1366,8 +1425,18 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
          * @param ver Version.
          * @param part Partition.
          * @param expireTime Expire time.
+         * @param keyClsLdrId Class loader ID for entry key.
+         * @param valClsLdrId Class loader ID for entry value.
+         * @param cacheId Cache ID.
          */
-        DataRow(KeyCacheObject key, CacheObject val, GridCacheVersion ver, int part, long expireTime, int cacheId) {
+        DataRow(KeyCacheObject key,
+            CacheObject val,
+            GridCacheVersion ver,
+            int part,
+            long expireTime,
+            int cacheId,
+            @Nullable IgniteUuid keyClsLdrId,
+            @Nullable IgniteUuid valClsLdrId) {
             super(0);
 
             this.hash = key.hashCode();
@@ -1376,6 +1445,8 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             this.ver = ver;
             this.part = part;
             this.expireTime = expireTime;
+            this.keyClsLdrId = keyClsLdrId;
+            this.valClsLdrId = valClsLdrId;
             this.cacheId = cacheId;
         }
 

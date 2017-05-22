@@ -20,6 +20,7 @@ package org.apache.ignite.internal.processors.cache.database;
 import org.apache.ignite.internal.processors.cache.CacheObject;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
+import org.apache.ignite.lang.IgniteUuid;
 
 /**
  * Cache data row.
@@ -44,6 +45,21 @@ public interface CacheDataRow extends CacheSearchRow {
      * @return Expire time.
      */
     public long expireTime();
+
+    /**
+     * @return P2p enabled flag.
+     */
+    public boolean deploymentEnabled();
+
+    /**
+     * @return Key class loader ID.
+     */
+    public IgniteUuid keyClassLoaderId();
+
+    /**
+     * @return Value class loader ID.
+     */
+    public IgniteUuid valueClassLoaderId();
 
     /**
      * @return Partition for this key.

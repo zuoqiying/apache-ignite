@@ -556,21 +556,21 @@ public class FreeListImpl extends PagesList implements FreeList, ReuseList {
 
     /** {@inheritDoc} */
     @Override public void addForRecycle(ReuseBag bag) throws IgniteCheckedException {
-        assert reuseList == this: "not allowed to be a reuse list";
+        assert reuseList == this : "not allowed to be a reuse list";
 
         put(bag, 0, 0, 0L, REUSE_BUCKET);
     }
 
     /** {@inheritDoc} */
     @Override public long takeRecycledPage() throws IgniteCheckedException {
-        assert reuseList == this: "not allowed to be a reuse list";
+        assert reuseList == this : "not allowed to be a reuse list";
 
         return takeEmptyPage(REUSE_BUCKET, null);
     }
 
     /** {@inheritDoc} */
     @Override public long recycledPagesCount() throws IgniteCheckedException {
-        assert reuseList == this: "not allowed to be a reuse list";
+        assert reuseList == this : "not allowed to be a reuse list";
 
         return storedPagesCount(REUSE_BUCKET);
     }
@@ -584,7 +584,10 @@ public class FreeListImpl extends PagesList implements FreeList, ReuseList {
         int keyLen = row.key().valueBytesLength(null);
         int valLen = row.value().valueBytesLength(null);
 
-        return keyLen + valLen + CacheVersionIO.size(row.version(), false) + 8 + (row.cacheId() == 0 ? 0 : 4);
+        return keyLen + valLen + CacheVersionIO.size(row.version(), false)
+            + 8                                                                                                        // Expire Time
+            + (row.cacheId() == 0 ? 0 : 4)                                                                             // Cache Id
+            + (row.deploymentEnabled() ? PageUtils.sizeIgniteUuids(row.keyClassLoaderId(), row.valueClassLoaderId()) : 0); // UUID class loaders for key and value
     }
 
     /** {@inheritDoc} */

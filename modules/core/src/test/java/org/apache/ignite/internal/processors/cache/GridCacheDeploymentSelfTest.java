@@ -62,9 +62,6 @@ public class GridCacheDeploymentSelfTest extends GridCommonAbstractTest {
     protected static final String TEST_TASK_3 = "org.apache.ignite.tests.p2p.CacheDeploymentTestTask3";
 
     /** Test value 1. */
-    protected static final String TEST_KEY = "org.apache.ignite.tests.p2p.CacheDeploymentTestKey";
-
-    /** Test value 1. */
     protected static final String TEST_VALUE_1 = "org.apache.ignite.tests.p2p.CacheDeploymentTestValue";
 
     /** Test value 2. */

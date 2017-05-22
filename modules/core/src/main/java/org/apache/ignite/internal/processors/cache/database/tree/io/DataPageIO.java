@@ -32,6 +32,7 @@ import org.apache.ignite.internal.processors.cache.database.CacheDataRow;
 import org.apache.ignite.internal.processors.cache.database.tree.util.PageHandler;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.typedef.internal.SB;
+import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -1031,12 +1032,22 @@ public class DataPageIO extends PageIO {
     ) throws IgniteCheckedException {
         final int keySize = row.key().valueBytesLength(null);
         final int valSize = row.value().valueBytesLength(null);
+        final int keyClsLdrSize = row.deploymentEnabled() ? PageUtils.sizeIgniteUuid(row.keyClassLoaderId()) : 0;
+        final int valClsLdrSize = row.deploymentEnabled() ? PageUtils.sizeIgniteUuid(row.valueClassLoaderId()) : 0;
 
-        int written = writeFragment(row, buf, rowOff, payloadSize, EntryPart.CACHE_ID, keySize, valSize);
-        written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.KEY, keySize, valSize);
-        written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.EXPIRE_TIME, keySize, valSize);
-        written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.VALUE, keySize, valSize);
-        written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.VERSION, keySize, valSize);
+        int written = writeFragment(row, buf, rowOff, payloadSize, EntryPart.CACHE_ID, keySize, valSize, keyClsLdrSize, valClsLdrSize);
+        written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.KEY, keySize, valSize, keyClsLdrSize, valClsLdrSize);
+
+        if (row.deploymentEnabled())
+            written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.KEY_CLS_LDR_ID, keySize, valSize, keyClsLdrSize, valClsLdrSize);
+
+        written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.EXPIRE_TIME, keySize, valSize, keyClsLdrSize, valClsLdrSize);
+
+        if (row.deploymentEnabled())
+            written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.VAL_CLS_LDR_ID, keySize, valSize, keyClsLdrSize, valClsLdrSize);
+
+        written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.VALUE, keySize, valSize, keyClsLdrSize, valClsLdrSize);
+        written += writeFragment(row, buf, rowOff + written, payloadSize - written, EntryPart.VERSION, keySize, valSize, keyClsLdrSize, valClsLdrSize);
 
         assert written == payloadSize;
     }
@@ -1057,7 +1068,9 @@ public class DataPageIO extends PageIO {
         final int payloadSize,
         final EntryPart type,
         final int keySize,
-        final int valSize
+        final int valSize,
+        final int keyClsLdrSize,
+        final int valClsLdrSize
     ) throws IgniteCheckedException {
         if (payloadSize == 0)
             return 0;
@@ -1080,21 +1093,33 @@ public class DataPageIO extends PageIO {
 
                 break;
 
-            case EXPIRE_TIME:
+            case KEY_CLS_LDR_ID:
                 prevLen = cacheIdSize + keySize;
-                curLen = cacheIdSize + keySize + 8;
+                curLen = cacheIdSize + keySize + keyClsLdrSize;
+
+                break;
+
+            case EXPIRE_TIME:
+                prevLen = cacheIdSize + keyClsLdrSize + keySize;
+                curLen = cacheIdSize + keyClsLdrSize + keySize + 8;
+
+                break;
+
+            case VAL_CLS_LDR_ID:
+                prevLen = cacheIdSize + keyClsLdrSize + keySize + 8;
+                curLen = cacheIdSize + keyClsLdrSize + keySize + valClsLdrSize + 8;
 
                 break;
 
             case VALUE:
-                prevLen = cacheIdSize + keySize + 8;
-                curLen = cacheIdSize + keySize + valSize + 8;
+                prevLen = cacheIdSize + keyClsLdrSize + keySize + valClsLdrSize + 8;
+                curLen = cacheIdSize + keyClsLdrSize + keySize + valClsLdrSize + valSize  + 8;
 
                 break;
 
             case VERSION:
-                prevLen = cacheIdSize + keySize + valSize + 8;
-                curLen = cacheIdSize + keySize + valSize + CacheVersionIO.size(row.version(), false) + 8;
+                prevLen = cacheIdSize + keyClsLdrSize + keySize + valClsLdrSize + valSize  + 8;
+                curLen = cacheIdSize + keyClsLdrSize + keySize + valClsLdrSize + valSize + CacheVersionIO.size(row.version(), false) + 8;
 
                 break;
 
@@ -1109,6 +1134,9 @@ public class DataPageIO extends PageIO {
 
         if (type == EntryPart.EXPIRE_TIME)
             writeExpireTimeFragment(buf, row.expireTime(), rowOff, len, prevLen);
+        else if (type == EntryPart.KEY_CLS_LDR_ID || type == EntryPart.VAL_CLS_LDR_ID)
+            writeUuidFragment(buf, (type == EntryPart.KEY_CLS_LDR_ID ? row.keyClassLoaderId() : row.valueClassLoaderId()),
+                rowOff, len, prevLen);
         else if (type == EntryPart.CACHE_ID)
             writeCacheIdFragment(buf, row.cacheId(), rowOff, len, prevLen);
         else if (type != EntryPart.VERSION) {
@@ -1175,6 +1203,45 @@ public class DataPageIO extends PageIO {
     }
 
     /**
+     * @param buf Byte buffer.
+     * @param uuid Ignite UUID.
+     * @param rowOff Row offset.
+     * @param len Length.
+     * @param prevLen previous length.
+     */
+    private void writeUuidFragment(ByteBuffer buf, IgniteUuid uuid, int rowOff, int len, int prevLen) {
+        int size = PageUtils.sizeIgniteUuid(uuid);
+
+        if (size <= len)
+            writeUuidToBuffer(buf, uuid);
+        else {
+            ByteBuffer timeBuf = ByteBuffer.allocate(size);
+
+            timeBuf.order(buf.order());
+
+            writeUuidToBuffer(timeBuf, uuid);
+
+            buf.put(timeBuf.array(), rowOff - prevLen, len);
+        }
+    }
+
+    /**
+     * @param buf Buffer.
+     * @param uuid Ignite UUID.
+     */
+    private void writeUuidToBuffer(ByteBuffer buf, IgniteUuid uuid) {
+        buf.put(uuid == null ? (byte)0 : (byte)1);
+
+        if (uuid != null) {
+            assert uuid.globalId() != null;
+
+            buf.putLong(uuid.globalId().getMostSignificantBits());
+            buf.putLong(uuid.globalId().getLeastSignificantBits());
+            buf.putLong(uuid.localId());
+        }
+    }
+
+    /**
      * @param buf Buffer.
      * @param cacheId Cache ID.
      * @param rowOff Row offset.
@@ -1215,6 +1282,12 @@ public class DataPageIO extends PageIO {
 
         /** */
         EXPIRE_TIME,
+
+        /** */
+        KEY_CLS_LDR_ID,
+
+        /** */
+        VAL_CLS_LDR_ID,
 
         /** */
         CACHE_ID
@@ -1404,11 +1477,21 @@ public class DataPageIO extends PageIO {
             }
 
             addr += row.key().putValue(addr);
+
+            if (row.deploymentEnabled())
+                addr += PageUtils.putIgniteUuid(addr, row.keyClassLoaderId());
         }
-        else
+        else {
             addr += (2 + cacheIdSize + row.key().valueBytesLength(null));
 
+            if (row.deploymentEnabled())
+                addr += PageUtils.sizeIgniteUuid(row.keyClassLoaderId());
+        }
+
         addr += row.value().putValue(addr);
+
+        if (row.deploymentEnabled())
+            addr += PageUtils.putIgniteUuid(addr, row.valueClassLoaderId());
 
         CacheVersionIO.write(addr, row.version(), false);
         addr += CacheVersionIO.size(row.version(), false);

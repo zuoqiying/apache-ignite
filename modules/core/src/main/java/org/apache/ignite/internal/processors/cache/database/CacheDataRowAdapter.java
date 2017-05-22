@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.processors.cache.database;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.configuration.DataPageEvictionMode;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
@@ -28,6 +29,7 @@ import org.apache.ignite.internal.processors.cache.CacheObjectContext;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.IncompleteCacheObject;
+import org.apache.ignite.internal.processors.cache.IncompleteIgniteUuidObject;
 import org.apache.ignite.internal.processors.cache.IncompleteObject;
 import org.apache.ignite.internal.processors.cache.KeyCacheObject;
 import org.apache.ignite.internal.processors.cache.database.tree.io.CacheVersionIO;
@@ -38,6 +40,7 @@ import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteUuid;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.internal.pagemem.PageIdUtils.itemId;
@@ -62,6 +65,20 @@ public class CacheDataRowAdapter implements CacheDataRow {
     /** */
     protected long expireTime = -1;
 
+    /** Class loader for the key. If peer-classloading disabled then {@code null}, otherwise classloader UUID. */
+    @GridToStringInclude
+    protected IgniteUuid keyClsLdrId;
+
+    /** Class loader for the val. If peer-classloading disabled then {@code null}, otherwise classloader UUID. */
+    @GridToStringInclude
+    protected IgniteUuid valClsLdrId;
+
+    /** Deployment enabled flag. */
+    private transient boolean depEnabled;
+
+    /** Null object. */
+    private static IgniteUuid NULL_OBJECT = new IgniteUuid(new UUID(-1L, -1L), -1L);
+
     /** */
     @GridToStringInclude
     protected GridCacheVersion ver;
@@ -69,6 +86,9 @@ public class CacheDataRowAdapter implements CacheDataRow {
     /** */
     @GridToStringInclude
     protected int cacheId;
+
+    /** */
+    private boolean keyRead;
 
     /**
      * @param link Link.
@@ -214,20 +234,48 @@ public class CacheDataRowAdapter implements CacheDataRow {
         if (coctx == null)
             coctx = sharedCtx.cacheContext(cacheId).cacheObjectContext();
 
-        // Read key.
-        if (key == null) {
-            incomplete = readIncompleteKey(coctx, buf, (IncompleteCacheObject)incomplete);
+        boolean depEnabled = coctx.addDeploymentInfo();
+        IncompleteCacheObject keyIncomplete = null;
 
-            if (key == null || keyOnly)
+        // Read key.
+        if ((key == null && !depEnabled) || (!keyRead && depEnabled)) {
+            keyIncomplete = readIncompleteKey(coctx, buf, (IncompleteCacheObject)incomplete);
+            incomplete = keyIncomplete;
+
+            if (((key == null || keyOnly) && !depEnabled)
+                || (!incomplete.isReady() && depEnabled))
+                return incomplete;
+
+            keyRead = true;
+            incomplete = null;
+        }
+
+        // Read key classloader id.
+        if (depEnabled && keyClsLdrId == null) {
+            incomplete = readIncompleteClassLoaderUuid(coctx, buf, incomplete, keyIncomplete);
+
+            if (keyClsLdrId == null || keyOnly)
                 return incomplete;
 
             incomplete = null;
+
+            this.depEnabled = true;
         }
 
         if (expireTime == -1) {
             incomplete = readIncompleteExpireTime(buf, incomplete);
 
             if (expireTime == -1)
+                return incomplete;
+
+            incomplete = null;
+        }
+
+        // Read val classloader id.
+        if (depEnabled && valClsLdrId == null) {
+            incomplete = readIncompleteClassLoaderUuid(coctx, buf, incomplete, null);
+
+            if (valClsLdrId == null)
                 return incomplete;
 
             incomplete = null;
@@ -276,6 +324,9 @@ public class CacheDataRowAdapter implements CacheDataRow {
         int len = PageUtils.getInt(addr, off);
         off += 4;
 
+        boolean depEnabled = coctx.addDeploymentInfo();
+        this.depEnabled = depEnabled;
+
         if (rowData != RowData.NO_KEY) {
             byte type = PageUtils.getByte(addr, off);
             off++;
@@ -283,13 +334,24 @@ public class CacheDataRowAdapter implements CacheDataRow {
             byte[] bytes = PageUtils.getBytes(addr, off, len);
             off += len;
 
-            key = coctx.processor().toKeyCacheObject(coctx, type, bytes);
+            if (depEnabled) {
+                keyClsLdrId = PageUtils.getIgniteUuid(addr, off);
+                off += PageUtils.sizeIgniteUuid(keyClsLdrId);
+
+                key = coctx.processor().toKeyCacheObject(coctx, type, bytes, keyClsLdrId);
+            }
+            else
+                key = coctx.processor().toKeyCacheObject(coctx, type, bytes);
 
             if (rowData == RowData.KEY_ONLY)
                 return;
         }
-        else
+        else {
             off += len + 1;
+
+            if (depEnabled)
+                off += PageUtils.sizeIgniteUuid(PageUtils.getByte(addr, off));
+        }
 
         len = PageUtils.getInt(addr, off);
         off += 4;
@@ -300,7 +362,15 @@ public class CacheDataRowAdapter implements CacheDataRow {
         byte[] bytes = PageUtils.getBytes(addr, off, len);
         off += len;
 
-        val = coctx.processor().toCacheObject(coctx, type, bytes);
+        if (!depEnabled)
+            val = coctx.processor().toCacheObject(coctx, type, bytes);
+        else {
+            valClsLdrId = PageUtils.getIgniteUuid(addr, off);
+
+            off += PageUtils.sizeIgniteUuid(valClsLdrId);
+
+            val = coctx.processor().toCacheObject(coctx, type, bytes, valClsLdrId);
+        }
 
         ver = CacheVersionIO.read(addr + off, false);
 
@@ -362,9 +432,12 @@ public class CacheDataRowAdapter implements CacheDataRow {
         incomplete = coctx.processor().toKeyCacheObject(coctx, buf, incomplete);
 
         if (incomplete.isReady()) {
-            key = (KeyCacheObject)incomplete.object();
+            // If p2p enabled then convert data to key cache object when class loader id will be read.
+            if (!coctx.addDeploymentInfo()) {
+                key = (KeyCacheObject)incomplete.object();
 
-            assert key != null;
+                assert key != null;
+            }
         }
         else
             assert !buf.hasRemaining();
@@ -384,7 +457,7 @@ public class CacheDataRowAdapter implements CacheDataRow {
         ByteBuffer buf,
         IncompleteCacheObject incomplete
     ) throws IgniteCheckedException {
-        incomplete = coctx.processor().toCacheObject(coctx, buf, incomplete);
+        incomplete = coctx.processor().toCacheObject(coctx, buf, incomplete, valueClassLoaderId());
 
         if (incomplete.isReady()) {
             val = incomplete.object();
@@ -491,6 +564,133 @@ public class CacheDataRowAdapter implements CacheDataRow {
     }
 
     /**
+     * @param buf Buffer.
+     * @param incomplete Incomplete object.
+     * @param keyIncomplete Key incomplete object
+     * @return Incomplete object.
+     * @throws IgniteCheckedException If failed.
+     */
+    private IncompleteObject<?> readIncompleteClassLoaderUuid(
+        CacheObjectContext coctx,
+        ByteBuffer buf,
+        IncompleteObject<?> incomplete,
+        IncompleteCacheObject keyIncomplete
+    ) throws IgniteCheckedException {
+        if (incomplete == null) {
+            int remaining = buf.remaining();
+
+            if (remaining == 0) {
+                if (keyIncomplete == null)
+                    return null;
+                else
+                    // Need to save keyIncomplete object.
+                    return new IncompleteIgniteUuidObject(keyIncomplete);
+            }
+
+            byte isNull = buf.get();
+
+            if (isNull == 0) {
+                if (keyIncomplete != null) {
+                    assert keyIncomplete.isReady();
+
+                    key = coctx.processor().toKeyCacheObject(coctx, keyIncomplete.type(), keyIncomplete.data());
+
+                    keyClsLdrId = NULL_OBJECT;
+                }
+                else
+                    valClsLdrId = NULL_OBJECT;
+
+                return null;
+            }
+
+            // One byte was read above.
+            int size = PageUtils.IGNITE_UUID_SIZE - 1;
+
+            if (remaining >= size) {
+                // If the whole version is on a single page, just read it.
+                long mostSigBits = buf.getLong();
+                long leastSigBits = buf.getLong();
+                long locId = buf.getLong();
+
+                IgniteUuid uuid = new IgniteUuid(new UUID(mostSigBits, leastSigBits), locId);
+
+                if (keyIncomplete != null) {
+                    assert keyIncomplete.isReady();
+
+                    keyClsLdrId = uuid;
+
+                    key = coctx.processor().toKeyCacheObject(coctx, keyIncomplete.type(), keyIncomplete.data(),
+                        keyClsLdrId);
+                }
+                else
+                    valClsLdrId = uuid;
+
+                assert !buf.hasRemaining(): buf.remaining();
+
+                return null;
+            }
+
+            // We have to read multipart Ignite UUID.
+            incomplete = new IncompleteIgniteUuidObject(new byte[size], keyIncomplete);
+        }
+
+        incomplete.readData(buf);
+
+        assert incomplete instanceof IncompleteIgniteUuidObject;
+
+        IncompleteIgniteUuidObject incomplete0 = (IncompleteIgniteUuidObject)incomplete;
+        keyIncomplete = incomplete0.incompleteObject();
+
+        if (incomplete0.isReady()) {
+            IgniteUuid uuid = null;
+
+            byte[] data = incomplete0.data();
+
+            if (incomplete0.isHeadOnly()) {
+                assert data.length != 0;
+
+                boolean isNull = data[0] == 0;
+
+                if (isNull)
+                    uuid = null;
+                else {
+                    // One byte was read above.
+                    int size = PageUtils.IGNITE_UUID_SIZE - 1;
+
+                    // We have to read multipart Ignite UUID.
+                    incomplete = new IncompleteIgniteUuidObject(new byte[size], keyIncomplete);
+                }
+            }
+            else {
+                final ByteBuffer uuidBuf = ByteBuffer.wrap(data);
+
+                uuidBuf.order(buf.order());
+
+                long mostSigBits = buf.getLong();
+                long leastSigBits = buf.getLong();
+                long locId = buf.getLong();
+
+                uuid = new IgniteUuid(new UUID(mostSigBits, leastSigBits), locId);
+            }
+
+            if (keyIncomplete != null) {
+                assert keyIncomplete.isReady();
+
+                keyClsLdrId = uuid == null ? NULL_OBJECT : uuid;
+
+                key = coctx.processor().toKeyCacheObject(coctx, keyIncomplete.type(), keyIncomplete.data(),
+                    uuid);
+            }
+            else
+                valClsLdrId = uuid == null ? NULL_OBJECT : uuid;
+        }
+
+        assert !buf.hasRemaining();
+
+        return incomplete;
+    }
+
+    /**
      * @return {@code True} if entry is ready.
      */
     public boolean isReady() {
@@ -520,9 +720,31 @@ public class CacheDataRowAdapter implements CacheDataRow {
 
     /** {@inheritDoc} */
     @Override public CacheObject value() {
-        assert val != null : "Value is not ready: " + this;
+        assert val != null || depEnabled : "Value is not ready: " + this;
 
         return val;
+    }
+
+    /**
+     * @param depEnabled Deployment enabled flag.
+     */
+    public void deploymentEnabled(boolean depEnabled) {
+        this.depEnabled = depEnabled;
+    }
+
+    /** {@inheritDoc} */
+    @Override public IgniteUuid keyClassLoaderId() {
+        return keyClsLdrId == NULL_OBJECT ? null : keyClsLdrId;
+    }
+
+    /** {@inheritDoc} */
+    @Override public IgniteUuid valueClassLoaderId() {
+        return valClsLdrId == NULL_OBJECT ? null : valClsLdrId;
+    }
+
+    /** {@inheritDoc} */
+    @Override public boolean deploymentEnabled() {
+        return depEnabled;
     }
 
     /** {@inheritDoc} */

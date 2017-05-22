@@ -74,6 +74,7 @@ import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiClosure;
 import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionDeadlockException;
 import org.apache.ignite.transactions.TransactionIsolation;
@@ -647,7 +648,19 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                         dhtVer = explicitVer != null ? explicitVer : writeVersion();
 
                                     if (cctx.wal() != null && !writeEntries().isEmpty()
-                                        && op != NOOP && op != RELOAD && op != READ)
+                                        && op != NOOP && op != RELOAD && op != READ) {
+                                        IgniteUuid valClsLdrId = null;
+                                        IgniteUuid keyClsLdrId = null;
+
+                                        if (cacheCtx.deploymentEnabled()) {
+                                            if (val != null)
+                                                valClsLdrId = cacheCtx.deploy().getClassLoaderId(
+                                                    U.detectObjectClassLoader(val.value(cacheCtx.cacheObjectContext(), false)));
+
+                                            keyClsLdrId = cacheCtx.deploy().getClassLoaderId(
+                                                U.detectObjectClassLoader(cached.key().value(cacheCtx.cacheObjectContext(), false)));
+                                        }
+
                                         ptr = cctx.wal().log(new DataRecord(new DataEntry(
                                             cacheCtx.cacheId(),
                                             txEntry.key(),
@@ -657,7 +670,11 @@ public abstract class IgniteTxLocalAdapter extends IgniteTxAdapter implements Ig
                                             writeVersion(),
                                             0,
                                             txEntry.key().partition(),
-                                            txEntry.updateCounter())));
+                                            txEntry.updateCounter(),
+                                            cacheCtx.deploymentEnabled(),
+                                            keyClsLdrId,
+                                            valClsLdrId)));
+                                    }
 
                                     if (op == CREATE || op == UPDATE) {
                                         GridCacheUpdateTxResult updRes = cached.innerSet(
