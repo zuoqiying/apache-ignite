@@ -86,6 +86,7 @@ import org.apache.ignite.spi.IgniteSpiException;
 import org.apache.ignite.spi.communication.CommunicationListener;
 import org.apache.ignite.spi.communication.CommunicationSpi;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
+import org.apache.ignite.thread.IgniteThreadFactory;
 import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentHashMap8;
 import org.jsr166.ConcurrentLinkedDeque8;
@@ -447,7 +448,8 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         final boolean procFromNioThread,
         final List<ClusterNode> nodes
     ) {
-        ExecutorService svc = Executors.newFixedThreadPool(threads + 1);
+        ExecutorService svc = Executors.newFixedThreadPool(threads + 1,
+            new IgniteThreadFactory(ctx.gridName(), "io-test"));
 
         final AtomicBoolean warmupFinished = new AtomicBoolean();
         final AtomicBoolean done = new AtomicBoolean();
