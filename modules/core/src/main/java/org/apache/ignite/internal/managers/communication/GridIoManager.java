@@ -456,6 +456,10 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
         final long sleepDuration = 5000;
         final byte[] payLoad = new byte[payLoadSize];
         final Map<UUID, long[]>[] res = new Map[threads];
+        final Map<UUID, LongAdder8> lats = new HashMap<>();
+
+        for (ClusterNode node : nodes)
+            lats.put(node.id(), new LongAdder8());
 
         boolean failed = true;
 
@@ -511,7 +515,9 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                             Thread.sleep(sleepDuration);
                         }
 
-                        // At this point all threads have finished the test and stored data to the result map.
+                        // At this point all threads have finished the test and
+                        // stored data to the resulting array of maps.
+                        // Need to iterate it over and sum values for all threads.
                         Map<UUID, long[]> res0 = new HashMap<>();
 
                         for (Map<UUID, long[]> r : res) {
@@ -527,21 +533,7 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
                             }
                         }
 
-                        StringBuilder b = new StringBuilder("IO test results " +
-                            "[range=" + (maxLatency / (1000 * rangesCnt)) + "mcs]");
-
-                        b.append(U.nl());
-
-                        for (Entry<UUID, long[]> e : res0.entrySet()) {
-                            ClusterNode node = ctx.discovery().node(e.getKey());
-
-                            b.append("    ").append(e.getKey()).append(" (addrs=")
-                                .append(node != null ? node.addresses().toString() : "n/a").append(')')
-                                .append(Arrays.toString(e.getValue())).append(U.nl());
-                        }
-
-                        if (log.isInfoEnabled())
-                            log.info(b.toString());
+                        printIoTestResults(maxLatency / (1000 * rangesCnt), res0, lats);
                     }
                     catch (InterruptedException | BrokenBarrierException e) {
                         U.error(log, "IO test failed.", e);
@@ -585,6 +577,8 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
 
                                 long latency = System.nanoTime() - start;
 
+                                lats.get(node.id()).add(latency);
+
                                 cnt.increment();
 
                                 long[] latencies = res0.get(node.id());
@@ -622,6 +616,55 @@ public class GridIoManager extends GridManagerAdapter<CommunicationSpi<Serializa
             if (failed)
                 U.shutdownNow(GridIoManager.class, svc, log);
         }
+    }
+
+    /**
+     * @param binLatencyMcs Bin latency in microseconds.
+     * @param res Resulting map.
+     * @param lats
+     */
+    private void printIoTestResults(long binLatencyMcs, Map<UUID, long[]> res, Map<UUID, LongAdder8> lats) {
+        StringBuilder b = new StringBuilder(U.nl())
+            .append("IO test results (round-trip count per each latency bin) " +
+                "[binLatency=" + binLatencyMcs + "mcs]")
+            .append(U.nl());
+
+        for (Entry<UUID, long[]> e : res.entrySet()) {
+            ClusterNode node = ctx.discovery().node(e.getKey());
+
+            b.append("Node ID: ").append(e.getKey()).append(" (addrs=")
+                .append(node != null ? node.addresses().toString() : "n/a").append(')').append(U.nl());
+            b.append("Total latency(ms): ").append(lats.get(e.getKey()).sum() / 1000 / 1000).append(U.nl());
+            b.append("Latency bin, mcs | Count exclusive | Percentage exclusive | " +
+                "Count inclusive | Percentage inclusive").append(U.nl());
+
+            long[] nodeRes = e.getValue();
+
+            long sum = 0;
+
+            for (int i = 0; i < nodeRes.length; i++)
+                sum += nodeRes[i];
+
+            long curSum = 0;
+
+            for (int i = 0; i < nodeRes.length; i++) {
+                curSum += nodeRes[i];
+
+                if (i < nodeRes.length - 1)
+                    b.append(String.format("<%11d mcs | %15d | %19.6f%% | %15d | %19.6f%%\n",
+                        (i + 1) * binLatencyMcs,
+                        nodeRes[i], (100.0 * nodeRes[i]) / sum,
+                        curSum, (100.0 * curSum) / sum));
+                else
+                    b.append(String.format(">%11d mcs | %15d | %19.6f%% | %15d | %19.6f%%\n",
+                        i * binLatencyMcs,
+                        nodeRes[i], (100.0 * nodeRes[i]) / sum,
+                        curSum, (100.0 * curSum) / sum));
+            }
+        }
+
+        if (log.isInfoEnabled())
+            log.info(b.toString());
     }
 
     /** {@inheritDoc} */
