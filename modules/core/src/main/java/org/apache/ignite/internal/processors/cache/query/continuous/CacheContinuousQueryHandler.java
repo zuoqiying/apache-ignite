@@ -940,7 +940,7 @@ public class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler 
         private static final CacheContinuousQueryEntry HOLE = new CacheContinuousQueryEntry();
 
         /** */
-        private final static int MAX_BUFF_SIZE = 100;
+        private final static int MAX_BUFF_SIZE = Integer.MAX_VALUE;
 
         /** */
         private IgniteLogger log;
@@ -1125,15 +1125,15 @@ public class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler 
                             break;
                     }
                 }
-            }
 
-            if (log.isDebugEnabled()) {
-                log.debug("Will send to listener the following events [entries=" + entries +
-                    ", lastFiredEvt=" + lastFiredEvt +
-                    ", curTop=" + curTop +
-                    ", entUpdCnt=" + entry.updateCounter() +
-                    ", partId=" + entry.partition() +
-                    ", pendingEvts=" + pendingEvts + ']');
+                if (log.isDebugEnabled()) {
+                    log.debug("Will send to listener the following events [entries=" + entries +
+                        ", lastFiredEvt=" + lastFiredEvt +
+                        ", curTop=" + curTop +
+                        ", entUpdCnt=" + entry.updateCounter() +
+                        ", partId=" + entry.partition() +
+                        ", pendingEvts=" + pendingEvts + ']');
+                }
             }
 
             return entries;
