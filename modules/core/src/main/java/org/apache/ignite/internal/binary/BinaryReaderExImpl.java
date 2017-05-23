@@ -1723,7 +1723,7 @@ public class BinaryReaderExImpl implements BinaryReader, BinaryRawReaderEx, Bina
             if (fieldIdLen != BinaryUtils.FIELD_ID_LEN) {
                 BinaryTypeImpl type = (BinaryTypeImpl)ctx.metadata(typeId);
 
-                if (type == null || type.metadata() == null) {
+                if (type == null || type.metadata() == null || type.metadata().schemas().isEmpty()) {
                     if (IgniteSystemProperties.getBoolean(IgniteSystemProperties.IGNITE_USE_LOCAL_BINARY_MARSHALLER_CACHE, false)) {
                         BinaryClassDescriptor desc = ctx.descriptorForTypeId(true, typeId, getClass().getClassLoader(), false);
 
@@ -1733,8 +1733,7 @@ public class BinaryReaderExImpl implements BinaryReader, BinaryRawReaderEx, Bina
                         throw new BinaryObjectException("Cannot find metadata for object with compact footer: " +
                             typeId);
                 }
-
-                if (schema == null) {
+                else {
                     for (BinarySchema typeSchema : type.metadata().schemas()) {
                         if (schemaId == typeSchema.schemaId()) {
                             schema = typeSchema;
@@ -1742,11 +1741,11 @@ public class BinaryReaderExImpl implements BinaryReader, BinaryRawReaderEx, Bina
                             break;
                         }
                     }
-
-                    if (schema == null)
-                        throw new BinaryObjectException("Cannot find schema for object with compact footer [" +
-                            "typeId=" + typeId + ", schemaId=" + schemaId + ']');
                 }
+
+                if (schema == null)
+                    throw new BinaryObjectException("Cannot find schema for object with compact footer [" +
+                        "typeId=" + typeId + ", schemaId=" + schemaId + ']');
             }
             else
                 schema = createSchema();

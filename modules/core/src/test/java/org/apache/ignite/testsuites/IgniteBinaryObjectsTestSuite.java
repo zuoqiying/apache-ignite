@@ -26,7 +26,7 @@ import org.apache.ignite.internal.binary.BinaryFieldsHeapSelfTest;
 import org.apache.ignite.internal.binary.BinaryFieldsOffheapSelfTest;
 import org.apache.ignite.internal.binary.BinaryFooterOffsetsHeapSelfTest;
 import org.apache.ignite.internal.binary.BinaryFooterOffsetsOffheapSelfTest;
-import org.apache.ignite.internal.binary.BinaryMarshallerLocalMetadataCache;
+import org.apache.ignite.internal.binary.BinaryMarshallerLocalMetadataCacheTest;
 import org.apache.ignite.internal.binary.BinaryMarshallerSelfTest;
 import org.apache.ignite.internal.binary.BinaryObjectBuilderAdditionalSelfTest;
 import org.apache.ignite.internal.binary.BinaryObjectBuilderDefaultMappersSelfTest;
@@ -148,7 +148,7 @@ public class IgniteBinaryObjectsTestSuite extends TestSuite {
 
         suite.addTestSuite(GridCacheBinaryObjectUserClassloaderSelfTest.class);
 
-        suite.addTestSuite(BinaryMarshallerLocalMetadataCache.class);
+        suite.addTestSuite(BinaryMarshallerLocalMetadataCacheTest.class);
 
         return suite;
     }

@@ -702,9 +702,11 @@ public class CacheObjectBinaryProcessorImpl extends IgniteCacheObjectProcessorIm
             });
         else {
             if (locMetadataCache != null) {
-                ArrayList<BinaryType> res = new ArrayList<>();
+                ConcurrentHashMap8.ValuesView<BinaryMetadataKey, BinaryMetadata> vals = locMetadataCache.values();
 
-                for (BinaryMetadata metadata : locMetadataCache.values())
+                ArrayList<BinaryType> res = new ArrayList<>(vals.size());
+
+                for (BinaryMetadata metadata : vals)
                     res.add(metadata.wrap(binaryCtx));
 
                 return res;
