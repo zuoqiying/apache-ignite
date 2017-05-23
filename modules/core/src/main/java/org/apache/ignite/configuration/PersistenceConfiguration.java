@@ -47,6 +47,24 @@ public class PersistenceConfiguration implements Serializable {
     /** */
     private static final int DFLT_WAL_SEGMENT_SIZE = 64 * 1024 * 1024;
 
+    /** Default wal mode. */
+    private static final String DFLT_WAL_MODE = "DEFAULT";
+
+    /** Default thread local buffer size. */
+    private static final int DFLT_TLB_SIZE = 128 * 1024;
+
+    /** Default Wal flush frequency. */
+    private static final int DFLT_WAL_FLUSH_FREQ = 2000;
+
+    /** Default wal fsync delay. */
+    private static final int DFLT_WAL_FSYNC_DELAY = 1;
+
+    /** Default wal record iterator buffer size. */
+    private static final int DFLT_WAL_RECORD_ITERATOR_BUFFER_SIZE = 64 * 1024 * 1024;
+
+    /** Default wal always write full pages. */
+    private static final boolean DFLT_WAL_ALWAYS_WRITE_FULL_PAGES = false;
+
     /** */
     private String persistenceStorePath;
 
@@ -76,6 +94,24 @@ public class PersistenceConfiguration implements Serializable {
 
     /** Write-ahead log archive path. */
     private String walArchivePath;
+
+    /** Wal mode. */
+    private String walMode = DFLT_WAL_MODE;
+
+    /** WAl thread local buffer size. */
+    private int tlbSize = DFLT_TLB_SIZE;
+
+    /** Wal flush frequency. */
+    private int walFlushFreq = DFLT_WAL_FLUSH_FREQ;
+
+    /** Wal fsync delay. */
+    private int walFsyncDelay = DFLT_WAL_FSYNC_DELAY;
+
+    /** Wal record iterator buffer size. */
+    private int walRecordIterBuffSize = DFLT_WAL_RECORD_ITERATOR_BUFFER_SIZE;
+
+    /** Always write full pages. */
+    private boolean alwaysWriteFullPages = DFLT_WAL_ALWAYS_WRITE_FULL_PAGES;
 
     /**
      *
@@ -283,6 +319,102 @@ public class PersistenceConfiguration implements Serializable {
      */
     public PersistenceConfiguration setWalArchivePath(String walArchivePath) {
         this.walArchivePath = walArchivePath;
+
+        return this;
+    }
+
+    /**
+     *
+     */
+    public String getWalMode() {
+        return walMode == null || walMode.isEmpty() ? DFLT_WAL_MODE : walMode;
+    }
+
+    /**
+     * @param walMode Wal mode.
+     */
+    public PersistenceConfiguration setWalMode(String walMode) {
+        this.walMode = walMode;
+
+        return this;
+    }
+
+    /**
+     *
+     */
+    public int getTlbSize() {
+        return tlbSize <= 0 ? DFLT_TLB_SIZE : tlbSize;
+    }
+
+    /**
+     * @param tlbSize Tlb size.
+     */
+    public PersistenceConfiguration setTlbSize(int tlbSize) {
+        this.tlbSize = tlbSize;
+
+        return this;
+    }
+
+    /**
+     *
+     */
+    public int getWalFlushFrequency() {
+        return walFlushFreq;
+    }
+
+    /**
+     * @param walFlushFreq Wal flush frequency.
+     */
+    public PersistenceConfiguration setWalFlushFrequency(int walFlushFreq) {
+        this.walFlushFreq = walFlushFreq;
+
+        return this;
+    }
+
+    /**
+     *
+     */
+    public int getWalFsyncDelay() {
+        return walFsyncDelay <= 0 ? DFLT_WAL_FSYNC_DELAY : walFsyncDelay;
+    }
+
+    /**
+     * @param walFsyncDelay Wal fsync delay.
+     */
+    public PersistenceConfiguration setWalFsyncDelay(int walFsyncDelay) {
+        this.walFsyncDelay = walFsyncDelay;
+
+        return this;
+    }
+
+    /**
+     *
+     */
+    public int getWalRecordIteratorBufferSize() {
+        return walRecordIterBuffSize <= 0 ? DFLT_WAL_RECORD_ITERATOR_BUFFER_SIZE : walRecordIterBuffSize;
+    }
+
+    /**
+     * @param walRecordIterBuffSize Wal record iterator buffer size.
+     */
+    public PersistenceConfiguration setWalRecordIteratorBufferSize(int walRecordIterBuffSize) {
+        this.walRecordIterBuffSize = walRecordIterBuffSize;
+
+        return this;
+    }
+
+    /**
+     *
+     */
+    public boolean isAlwaysWriteFullPages() {
+        return alwaysWriteFullPages;
+    }
+
+    /**
+     * @param alwaysWriteFullPages Always write full pages.
+     */
+    public PersistenceConfiguration setAlwaysWriteFullPages(boolean alwaysWriteFullPages) {
+        this.alwaysWriteFullPages = alwaysWriteFullPages;
 
         return this;
     }
