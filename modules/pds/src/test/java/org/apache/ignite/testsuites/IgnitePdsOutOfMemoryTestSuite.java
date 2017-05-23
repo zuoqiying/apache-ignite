@@ -18,7 +18,7 @@
 package org.apache.ignite.testsuites;
 
 import junit.framework.TestSuite;
-import org.apache.ignite.cache.database.IgnitePersistentStoreWalTlbSelfTest;
+import org.apache.ignite.cache.database.db.wal.IgnitePdsWalTlbTest;
 
 /**
  *
@@ -31,7 +31,7 @@ public class IgnitePdsOutOfMemoryTestSuite extends TestSuite {
     public static TestSuite suite() throws Exception {
         TestSuite suite = new TestSuite("Ignite Persistent Store OOM Test Suite");
 
-        suite.addTestSuite(IgnitePersistentStoreWalTlbSelfTest.class);
+        suite.addTestSuite(IgnitePdsWalTlbTest.class);
 
         return suite;
     }
