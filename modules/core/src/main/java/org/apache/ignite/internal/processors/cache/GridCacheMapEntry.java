@@ -2051,6 +2051,10 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
         Long updateCntr0 = null;
 
         synchronized (this) {
+            if (!CU.isSystemCache(cctx.name()))
+                log.info("GridCacheMapEntry#innerUpdate:2055 [updateCntr=" + updateCntr + ", cacheName="
+                    + cctx.name() + ", partId=" + partition() + "].");
+
             boolean internal = isInternal() || !context().userCache();
 
             Map<UUID, CacheContinuousQueryListener> lsnrs = cctx.continuousQueries().updateListeners(internal, false);
@@ -2277,6 +2281,12 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                                 evtVal = (CacheObject)writeObj;
 
                             updateCntr0 = nextPartCounter(topVer);
+
+                            if (!CU.isSystemCache(cctx.name()))
+                                log.info("GridCacheMapEntry#innerUpdate:2286 [updateCntr0=" + updateCntr0 +
+                                    ", updateCntr=" + updateCntr +
+                                    ", cacheName=" + cctx.name() +
+                                    ", partId=" + partition() + "].");
 
                             if (updateCntr != null)
                                 updateCntr0 = updateCntr;
@@ -2535,6 +2545,12 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 if (updateCntr != null)
                     updateCntr0 = updateCntr;
 
+                if (!CU.isSystemCache(cctx.name()))
+                    log.info("GridCacheMapEntry#innerUpdate:2549 [updateCntr0=" + updateCntr0 +
+                        ", updateCntr=" + updateCntr +
+                        ", cacheName=" + cctx.name() +
+                        ", partId=" + partition() + "].");
+
                 drReplicate(drType, updated, newVer, topVer);
 
                 recordNodeId(affNodeId, topVer);
@@ -2628,6 +2644,12 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
                 if (updateCntr != null)
                     updateCntr0 = updateCntr;
+
+                if (!CU.isSystemCache(cctx.name()))
+                    log.info("GridCacheMapEntry#innerUpdate:2649 [updateCntr0=" + updateCntr0 +
+                        ", updateCntr=" + updateCntr +
+                        ", cacheName=" + cctx.name() +
+                        ", partId=" + partition() + "].");
 
                 drReplicate(drType, null, newVer, topVer);
 
@@ -3525,8 +3547,13 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
 
                 long updateCntr = 0;
 
-                if (!preload)
+                if (!preload) {
                     updateCntr = nextPartCounter(topVer);
+
+                    if (!CU.isSystemCache(cctx.name()))
+                        log.info("GridCacheMapEntry#initialValue [updateCntr=" + updateCntr + ", cacheName="
+                            + cctx.name() + ", partId=" + partition() + "].");
+                }
 
                 drReplicate(drType, val, ver, topVer);
 

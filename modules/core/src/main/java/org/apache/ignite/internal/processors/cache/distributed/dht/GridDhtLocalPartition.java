@@ -646,11 +646,21 @@ public class GridDhtLocalPartition implements Comparable<GridDhtLocalPartition>,
         while (true) {
             long val0 = cntr.get();
 
-            if (val0 >= val)
-                break;
+            if (val0 >= val) {
+                if (!CU.isSystemCache(cctx.name()))
+                    log.info("GridDhtLocalPartition#updateCounter:651 [newVal=" + val + ", val="
+                        + val0 + ", partId=" + id + "].");
 
-            if (cntr.compareAndSet(val0, val))
                 break;
+            }
+
+            if (cntr.compareAndSet(val0, val)) {
+                if (!CU.isSystemCache(cctx.name()))
+                    log.info("GridDhtLocalPartition#updateCounter:659 [newVal=" + val + ", val="
+                        + val0 + ", partId=" + id + "].");
+
+                break;
+            }
         }
     }
 
