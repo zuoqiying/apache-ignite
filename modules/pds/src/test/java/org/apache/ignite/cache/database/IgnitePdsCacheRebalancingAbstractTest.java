@@ -361,8 +361,6 @@ public abstract class IgnitePdsCacheRebalancingAbstractTest extends GridCommonAb
      * @throws Exception If failed.
      */
     public void testTopologyChangesWithConstantLoad() throws Exception {
-        fail("only for one run, must be removed soon");
-
         final int entriesCnt = 10_000;
         int maxNodesCount = 4;
         int topChanges = 20;
