@@ -324,7 +324,10 @@ public class PersistenceConfiguration implements Serializable {
     }
 
     /**
+     * Type define behavior wal fsync.
+     * Different type provide different guarantees for consistency.
      *
+     * @return WAL mode.
      */
     public String getWalMode() {
         return walMode == null || walMode.isEmpty() ? DFLT_WAL_MODE : walMode;
@@ -340,7 +343,10 @@ public class PersistenceConfiguration implements Serializable {
     }
 
     /**
+     * Property define size thread local buffer.
+     * Each thread which write to wal have thread local buffer for serialize recode before write in wal.
      *
+     * @return Thread local buffer size.
      */
     public int getTlbSize() {
         return tlbSize <= 0 ? DFLT_TLB_SIZE : tlbSize;
@@ -356,7 +362,10 @@ public class PersistenceConfiguration implements Serializable {
     }
 
     /**
+     *  Property define how often will be fsync.
+     *  In background mode, exist thread which do fsync by timeout.
      *
+     * @return Flush frequency.
      */
     public int getWalFlushFrequency() {
         return walFlushFreq;
@@ -388,7 +397,10 @@ public class PersistenceConfiguration implements Serializable {
     }
 
     /**
+     *  Property define how many bytes iterator read from
+     *  disk (for one reading), during go ahead wal.
      *
+     * @return Record iterator buffer size.
      */
     public int getWalRecordIteratorBufferSize() {
         return walRecordIterBuffSize <= 0 ? DFLT_WAL_RECORD_ITERATOR_BUFFER_SIZE : walRecordIterBuffSize;
