@@ -25,6 +25,7 @@ import java.io.ObjectStreamException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.ConnectException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -32,11 +33,15 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -82,6 +87,8 @@ import org.apache.ignite.internal.util.typedef.C1;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.P1;
 import org.apache.ignite.internal.util.typedef.T2;
+import org.apache.ignite.internal.util.typedef.T4;
+import org.apache.ignite.internal.util.typedef.T5;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.A;
 import org.apache.ignite.internal.util.typedef.internal.LT;
@@ -234,6 +241,165 @@ class ServerImpl extends TcpDiscoveryImpl {
     /** Mutex. */
     private final Object mux = new Object();
 
+    private final Object msgMux = new Object();
+
+    private MessagePrinter printer;
+
+    private final DateFormat format = new SimpleDateFormat("MM-dd'T'HH-mm-ss-SSS");
+
+    /** Sent messages. */
+    private final List<T4<Long, TcpDiscoveryAbstractMessage, Integer, String>> sentMessages = new ArrayList<>();
+
+    /** Received messages. */
+    private final List<T4<Long, TcpDiscoveryAbstractMessage, Integer, String>> receivedMessages = new ArrayList<>();
+
+
+    /**
+     * @param msg Message.
+     */
+    private void messageSent(TcpDiscoveryAbstractMessage msg, Socket sock) {
+        synchronized (msgMux) {
+            sentMessages.add(new T4<>(System.currentTimeMillis(), msg, (Integer)null, remote(sock)));
+        }
+    }
+
+    /**
+     * @param sock Socket.
+     */
+    private String remote(Socket sock) {
+        InetSocketAddress addr = (InetSocketAddress)sock.getRemoteSocketAddress();
+
+        return addr.getAddress().getHostAddress() + ":" + addr.getPort();
+    }
+
+    /**
+     * @param receipt Receipt.
+     * @param sock Socket.
+     */
+    private void receiptSent(int receipt, Socket sock) {
+        synchronized (msgMux) {
+            sentMessages.add(new T4<>(System.currentTimeMillis(), (TcpDiscoveryAbstractMessage)null, receipt, remote(sock)));
+        }
+    }
+
+    /**
+     * @param receipt Receipt.
+     * @param sock Socket.
+     */
+    private void receiptReceived(int receipt, Socket sock) {
+        synchronized (msgMux) {
+            receivedMessages.add(new T4<>(System.currentTimeMillis(), (TcpDiscoveryAbstractMessage)null, receipt, remote(sock)));
+        }
+    }
+
+    /**
+     * @param msg Message.
+     */
+    private void messageReceived(TcpDiscoveryAbstractMessage msg, Socket sock) {
+        synchronized (msgMux) {
+            receivedMessages.add(new T4<>(System.currentTimeMillis(), msg, (Integer)null, remote(sock)));
+        }
+    }
+
+    /**
+     *
+     */
+    private void printMessages() {
+        List<T4<Long, TcpDiscoveryAbstractMessage, Integer, String>> sent = new ArrayList<>();
+        List<T4<Long, TcpDiscoveryAbstractMessage, Integer, String>> received = new ArrayList<>();
+
+        List<T5<Long, TcpDiscoveryAbstractMessage, Integer, String, Boolean>> all = new ArrayList<>();
+
+        synchronized (msgMux) {
+            sent.addAll(sentMessages);
+            received.addAll(receivedMessages);
+
+            sentMessages.clear();
+            receivedMessages.clear();
+        }
+
+        for (T4<Long, TcpDiscoveryAbstractMessage, Integer, String> msg : sent)
+            all.add(new T5<>(msg.get1(), msg.get2(), msg.get3(), msg.get4(), true));
+
+        for (T4<Long, TcpDiscoveryAbstractMessage, Integer, String> msg : received)
+            all.add(new T5<>(msg.get1(), msg.get2(), msg.get3(), msg.get4(), false));
+
+        Collections.sort(all, new Comparator<T5<Long, TcpDiscoveryAbstractMessage, Integer, String, Boolean>>() {
+            @Override public int compare(T5<Long, TcpDiscoveryAbstractMessage, Integer, String, Boolean> o1,
+                T5<Long, TcpDiscoveryAbstractMessage, Integer, String, Boolean> o2) {
+                return o1.get1().compareTo(o2.get1());
+            }
+        });
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Discovery messages: \n");
+
+        for (T5<Long, TcpDiscoveryAbstractMessage, Integer, String, Boolean> msg : all) {
+            sb.append(msg.get1()).append(", ")
+                .append(msg.get5() ? "SENT" : "RECEIVED")
+                .append(", ")
+                .append(format.format(new Date(msg.get1())))
+                .append(", ")
+                .append(msg.get4())
+                .append(", ")
+                .append(msg.get2())
+                .append(", ")
+                .append(msg.get3())
+                .append('\n');
+        }
+
+//        sb.append("Sent messages: \n");
+//
+//        append(sent, sb);
+//
+//        sb.append("Received messages: \n");
+//
+//        append(received, sb);
+
+        log.info(sb.toString());
+    }
+
+    /**
+     * @param msgs Msgs.
+     * @param sb Sb.
+     */
+    private void append(List<T4<Long, TcpDiscoveryAbstractMessage, Integer, String>> msgs, StringBuilder sb) {
+        for (T4<Long, TcpDiscoveryAbstractMessage, Integer, String> msg : msgs) {
+            sb.append(msg.get1()).append(", ")
+                .append(new Date(msg.get1()))
+                .append(", ")
+                .append(msg.get2())
+                .append(", ")
+                .append(msg.get3())
+                .append(", ")
+                .append(msg.get4())
+                .append('\n');
+        }
+    }
+
+    /**
+     *
+     */
+    private class MessagePrinter extends Thread {
+        public MessagePrinter() {
+            setName("disco-msg-printer");
+        }
+
+        @Override public void run() {
+            try {
+                while (!isInterrupted()) {
+                    sleep(10_000);
+
+                    printMessages();
+                }
+            }
+            catch (InterruptedException e) {
+                log.error("Message printer stopped", e);
+            }
+        }
+    }
+
     /** Discovery state. */
     protected TcpDiscoverySpiState spiState = DISCONNECTED;
 
@@ -319,6 +485,9 @@ class ServerImpl extends TcpDiscoveryImpl {
 
         msgWorker = new RingMessageWorker();
         msgWorker.start();
+
+        printer = new MessagePrinter();
+        printer.start();
 
         tcpSrvr = new TcpServer();
 
@@ -442,6 +611,9 @@ class ServerImpl extends TcpDiscoveryImpl {
 
         U.interrupt(msgWorker);
         U.join(msgWorker, log);
+
+        U.interrupt(printer);
+        U.join(printer, log);
 
         for (ClientMessageWorker clientWorker : clientMsgWorkers.values()) {
             U.interrupt(clientWorker);
@@ -659,11 +831,17 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                         openedSock = true;
 
-                        spi.writeToSocket(sock, new TcpDiscoveryPingRequest(locNodeId, clientNodeId),
+                        TcpDiscoveryPingRequest pingReq = new TcpDiscoveryPingRequest(locNodeId, clientNodeId);
+
+                        spi.writeToSocket(sock, pingReq,
                             timeoutHelper.nextTimeoutChunk(spi.getSocketTimeout()));
+
+                        messageSent(pingReq, sock);
 
                         TcpDiscoveryPingResponse res = spi.readMessage(sock, null, timeoutHelper.nextTimeoutChunk(
                             spi.getAckTimeout()));
+
+                        messageReceived(res, sock);
 
                         if (locNodeId.equals(res.creatorNodeId())) {
                             if (log.isDebugEnabled())
@@ -1138,8 +1316,12 @@ class ServerImpl extends TcpDiscoveryImpl {
                 // Handshake.
                 spi.writeToSocket(sock, req, timeoutHelper.nextTimeoutChunk(spi.getSocketTimeout()));
 
+                messageSent(req, sock);
+
                 TcpDiscoveryHandshakeResponse res = spi.readMessage(sock, null, timeoutHelper.nextTimeoutChunk(
                     ackTimeout0));
+
+                messageReceived(res, sock);
 
                 if (msg instanceof TcpDiscoveryJoinRequestMessage) {
                     boolean ignore = false;
@@ -1175,6 +1357,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                 spi.writeToSocket(sock, msg, timeoutHelper.nextTimeoutChunk(spi.getSocketTimeout()));
 
+                messageSent(msg, sock);
+
                 long tstamp0 = U.currentTimeMillis();
 
                 if (debugMode)
@@ -1191,6 +1375,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                 joinReqSent = msg instanceof TcpDiscoveryJoinRequestMessage;
 
                 int receipt = spi.readReceipt(sock, timeoutHelper.nextTimeoutChunk(ackTimeout0));
+
+                receiptReceived(receipt, sock);
 
                 spi.stats.onMessageSent(msg, tstamp0 - tstamp, U.currentTimeMillis() - tstamp0);
 
@@ -2778,11 +2964,17 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 openSock = true;
 
                                 // Handshake.
-                                spi.writeToSocket(sock, out, new TcpDiscoveryHandshakeRequest(locNodeId),
+                                TcpDiscoveryHandshakeRequest handshakeReq = new TcpDiscoveryHandshakeRequest(locNodeId);
+
+                                spi.writeToSocket(sock, out, handshakeReq,
                                     timeoutHelper.nextTimeoutChunk(spi.getSocketTimeout()));
+
+                                messageSent(handshakeReq, sock);
 
                                 TcpDiscoveryHandshakeResponse res = spi.readMessage(sock, null,
                                     timeoutHelper.nextTimeoutChunk(ackTimeout0));
+
+                                messageReceived(res, sock);
 
                                 if (locNodeId.equals(res.creatorNodeId())) {
                                     if (log.isDebugEnabled())
@@ -2932,6 +3124,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                                     try {
                                         spi.writeToSocket(sock, out, pendingMsg, timeoutHelper.nextTimeoutChunk(
                                             spi.getSocketTimeout()));
+
+                                        messageSent(pendingMsg, sock);
                                     }
                                     finally {
                                         clearNodeAddedMessage(pendingMsg);
@@ -2940,6 +3134,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                                     long tstamp0 = U.currentTimeMillis();
 
                                     int res = spi.readReceipt(sock, timeoutHelper.nextTimeoutChunk(ackTimeout0));
+
+                                    receiptReceived(res, sock);
 
                                     spi.stats.onMessageSent(pendingMsg, tstamp0 - tstamp, U.currentTimeMillis() - tstamp0);
 
@@ -2986,9 +3182,13 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                                 spi.writeToSocket(sock, out, msg, timeoutHelper.nextTimeoutChunk(spi.getSocketTimeout()));
 
+                                messageSent(msg, sock);
+
                                 long tstamp0 = U.currentTimeMillis();
 
                                 int res = spi.readReceipt(sock, timeoutHelper.nextTimeoutChunk(ackTimeout0));
+
+                                receiptReceived(res, sock);
 
                                 spi.stats.onMessageSent(msg, tstamp0 - tstamp, U.currentTimeMillis() - tstamp0);
 
@@ -4511,6 +4711,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                         spi.writeToSocket(sock, out, msg, spi.failureDetectionTimeoutEnabled() ?
                             spi.failureDetectionTimeout() : spi.getSocketTimeout());
 
+                        messageSent(msg, sock);
+
                         if (log.isDebugEnabled())
                             log.debug("Sent verified node left message to leaving node: " + msg);
                     }
@@ -5629,6 +5831,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                     TcpDiscoveryAbstractMessage msg = spi.readMessage(sock, in, spi.netTimeout);
 
+                    messageReceived(msg, sock);
+
                     // Ping.
                     if (msg instanceof TcpDiscoveryPingRequest) {
                         if (!spi.isNodeStopping0()) {
@@ -5647,6 +5851,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                             }
 
                             spi.writeToSocket(sock, res, timeoutHelper.nextTimeoutChunk(spi.getSocketTimeout()));
+
+                            messageSent(res, sock);
                         }
                         else if (log.isDebugEnabled())
                             log.debug("Ignore ping request, node is stopping.");
@@ -5669,6 +5875,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                     spi.writeToSocket(sock, res, spi.failureDetectionTimeoutEnabled() ?
                         spi.failureDetectionTimeout() : spi.getSocketTimeout());
+
+                    messageSent(res, sock);
 
                     // It can happen if a remote node is stopped and it has a loopback address in the list of addresses,
                     // the local node sends a handshake request message on the loopback address, so we get here.
@@ -5791,6 +5999,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                         TcpDiscoveryAbstractMessage msg = U.unmarshal(spi.marshaller(), in,
                             U.resolveClassLoader(spi.ignite().configuration()));
 
+                        messageReceived(msg, sock);
+
                         msg.senderNodeId(nodeId);
 
                         DebugLogger debugLog = messageLogger(msg);
@@ -5805,6 +6015,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                         if (msg instanceof TcpDiscoveryConnectionCheckMessage) {
                             spi.writeToSocket(msg, sock, RES_OK, sockTimeout);
+
+                            receiptSent(RES_OK, sock);
 
                             continue;
                         }
@@ -5828,6 +6040,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 if (state == CONNECTED) {
                                     spi.writeToSocket(msg, sock, RES_OK, sockTimeout);
 
+                                    receiptSent(RES_OK, sock);
+
                                     if (clientMsgWrk.getState() == State.NEW)
                                         clientMsgWrk.start();
 
@@ -5838,6 +6052,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 else {
                                     spi.writeToSocket(msg, sock, RES_CONTINUE_JOIN, sockTimeout);
 
+                                    receiptSent(RES_CONTINUE_JOIN, sock);
+
                                     break;
                                 }
                             }
@@ -5845,6 +6061,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                         else if (msg instanceof TcpDiscoveryDuplicateIdMessage) {
                             // Send receipt back.
                             spi.writeToSocket(msg, sock, RES_OK, sockTimeout);
+
+                            receiptSent(RES_OK, sock);
 
                             boolean ignored = false;
 
@@ -5875,6 +6093,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                             // Send receipt back.
                             spi.writeToSocket(msg, sock, RES_OK, sockTimeout);
 
+                            receiptSent(RES_OK, sock);
+
                             boolean ignored = false;
 
                             TcpDiscoverySpiState state = null;
@@ -5904,6 +6124,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                             // Send receipt back.
                             spi.writeToSocket(msg, sock, RES_OK, sockTimeout);
 
+                            receiptSent(RES_OK, sock);
+
                             boolean ignored = false;
 
                             TcpDiscoverySpiState state = null;
@@ -5932,6 +6154,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                         else if (msg instanceof TcpDiscoveryLoopbackProblemMessage) {
                             // Send receipt back.
                             spi.writeToSocket(msg, sock, RES_OK, sockTimeout);
+
+                            receiptSent(RES_OK, sock);
 
                             boolean ignored = false;
 
@@ -5984,8 +6208,11 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                             clientMsgWrk.addMessage(ack);
                         }
-                        else
+                        else {
                             spi.writeToSocket(msg, sock, RES_OK, sockTimeout);
+
+                            receiptSent(RES_OK, sock);
+                        }
 
                         if (heartbeatMsg != null)
                             processClientHeartbeatMessage(heartbeatMsg);
@@ -6091,6 +6318,8 @@ class ServerImpl extends TcpDiscoveryImpl {
             if (state == CONNECTED) {
                 spi.writeToSocket(msg, sock, RES_OK, sockTimeout);
 
+                receiptSent(RES_OK, sock);
+
                 if (log.isDebugEnabled())
                     log.debug("Responded to join request message [msg=" + msg + ", res=" + RES_OK + ']');
 
@@ -6127,6 +6356,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                     res = RES_CONTINUE_JOIN;
 
                 spi.writeToSocket(msg, sock, res, sockTimeout);
+
+                receiptSent(res, sock);
 
                 if (log.isDebugEnabled())
                     log.debug("Responded to join request message [msg=" + msg + ", res=" + res + ']');
@@ -6307,6 +6538,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                         spi.writeToSocket(sock, msg, msgBytes, spi.failureDetectionTimeoutEnabled() ?
                             spi.failureDetectionTimeout() : spi.getSocketTimeout());
+
+                        messageSent(msg, sock);
                     }
                 }
                 else {
@@ -6318,6 +6551,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                     spi.writeToSocket(sock, msg, msgBytes, spi.failureDetectionTimeoutEnabled() ?
                         spi.failureDetectionTimeout() : spi.getSocketTimeout());
+
+                    messageSent(msg, sock);
                 }
 
                 boolean clientFailed = msg instanceof TcpDiscoveryNodeFailedMessage &&
