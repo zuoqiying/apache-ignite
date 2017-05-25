@@ -1357,20 +1357,18 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                     keepBinary);
             }
 
-            if (lsnrCol != null) {
-                cctx.continuousQueries().onEntryUpdated(
-                    lsnrCol,
-                    key,
-                    val,
-                    old,
-                    internal,
-                    partition(),
-                    tx.local(),
-                    false,
-                    updateCntr0,
-                    null,
-                    topVer);
-            }
+            cctx.continuousQueries().onEntryUpdated(
+                lsnrCol,
+                key,
+                val,
+                old,
+                internal,
+                partition(),
+                tx.local(),
+                false,
+                updateCntr0,
+                null,
+                topVer);
 
             cctx.dataStructures().onEntryUpdated(key, false, keepBinary);
         }
@@ -1558,20 +1556,18 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                     keepBinary);
             }
 
-            if (lsnrCol != null) {
-                cctx.continuousQueries().onEntryUpdated(
-                    lsnrCol,
-                    key,
-                    null,
-                    old,
-                    internal,
-                    partition(),
-                    tx.local(),
-                    false,
-                    updateCntr0,
-                    null,
-                    topVer);
-            }
+            cctx.continuousQueries().onEntryUpdated(
+                lsnrCol,
+                key,
+                null,
+                old,
+                internal,
+                partition(),
+                tx.local(),
+                false,
+                updateCntr0,
+                null,
+                topVer);
 
             cctx.dataStructures().onEntryUpdated(key, true, keepBinary);
 
@@ -2281,6 +2277,7 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                                 updateCntr0 = updateCntr;
 
                             cctx.continuousQueries().onEntryUpdated(
+                                lsnrs,
                                 key,
                                 evtVal,
                                 prevVal,
@@ -2661,13 +2658,17 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 updateMetrics(op, metrics);
 
             // Continuous query filter should be perform under lock.
-            if (lsnrs != null) {
-                CacheObject evtVal = cctx.unwrapTemporary(updated);
-                CacheObject evtOldVal = cctx.unwrapTemporary(oldVal);
-
-                cctx.continuousQueries().onEntryUpdated(lsnrs, key, evtVal, evtOldVal, internal,
-                    partition(), primary, false, updateCntr0, fut, topVer);
-            }
+            cctx.continuousQueries().onEntryUpdated(lsnrs,
+                key,
+                lsnrs != null ? cctx.<CacheObject>unwrapTemporary(updated) : null,
+                lsnrs != null ? cctx.<CacheObject>unwrapTemporary(oldVal) : null,
+                internal,
+                partition(),
+                primary,
+                false,
+                updateCntr0,
+                fut,
+                topVer);
 
             cctx.dataStructures().onEntryUpdated(key, op == GridCacheOperation.DELETE, keepBinary);
 
