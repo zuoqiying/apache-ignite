@@ -183,23 +183,36 @@ public class CacheContinuousQueryManager extends GridCacheManagerAdapter {
         AffinityTopologyVersion topVer) {
         assert lsnrs != null;
 
-        for (CacheContinuousQueryListener lsnr : lsnrs.values()) {
-            CacheContinuousQueryEntry e0 = new CacheContinuousQueryEntry(
-                cctx.cacheId(),
-                UPDATED,
-                key,
-                null,
-                null,
-                lsnr.keepBinary(),
-                partId,
-                updCntr,
-                topVer);
+        for (CacheContinuousQueryListener lsnr : lsnrs.values())
+            skipUpdateEvent(key, partId, updCntr, primary, topVer, lsnr);
+    }
 
-            CacheContinuousQueryEvent evt = new CacheContinuousQueryEvent<>(
-                cctx.kernalContext().cache().jcache(cctx.name()), cctx, e0);
+    /**
+     *
+     * @param key Entry key.
+     * @param partId Partition ID.
+     * @param updCntr Update counter.
+     * @param primary Primary flag.
+     * @param topVer Topology version.
+     * @param lsnr Listener.
+     */
+    private void skipUpdateEvent(KeyCacheObject key, int partId, long updCntr, boolean primary,
+        AffinityTopologyVersion topVer, CacheContinuousQueryListener lsnr) {
+        CacheContinuousQueryEntry e0 = new CacheContinuousQueryEntry(
+            cctx.cacheId(),
+            UPDATED,
+            key,
+            null,
+            null,
+            lsnr.keepBinary(),
+            partId,
+            updCntr,
+            topVer);
 
-            lsnr.skipUpdateEvent(evt, topVer, primary);
-        }
+        CacheContinuousQueryEvent evt = new CacheContinuousQueryEvent<>(
+            cctx.kernalContext().cache().jcache(cctx.name()), cctx, e0);
+
+        lsnr.skipUpdateEvent(evt, topVer, primary);
     }
 
     /**
@@ -295,56 +308,65 @@ public class CacheContinuousQueryManager extends GridCacheManagerAdapter {
         throws IgniteCheckedException
     {
         assert key != null;
-        assert lsnrCol != null;
 
-        boolean hasNewVal = newVal != null;
-        boolean hasOldVal = oldVal != null;
+        if (lsnrCol != null) {
+            boolean hasNewVal = newVal != null;
+            boolean hasOldVal = oldVal != null;
 
-        if (!hasNewVal && !hasOldVal) {
-            skipUpdateEvent(lsnrCol, key, partId, updateCntr, primary, topVer);
+            if (!hasNewVal && !hasOldVal) {
+                skipUpdateEvent(lsnrCol, key, partId, updateCntr, primary, topVer);
 
-            return;
-        }
-
-        EventType evtType = !hasNewVal ? REMOVED : !hasOldVal ? CREATED : UPDATED;
-
-        boolean initialized = false;
-
-        boolean recordIgniteEvt = primary && !internal && cctx.gridEvents().isRecordable(EVT_CACHE_QUERY_OBJECT_READ);
-
-        for (CacheContinuousQueryListener lsnr : lsnrCol.values()) {
-            if (preload && !lsnr.notifyExisting())
-                continue;
-
-            if (!initialized) {
-                if (lsnr.oldValueRequired()) {
-                    oldVal = (CacheObject)cctx.unwrapTemporary(oldVal);
-
-                    if (oldVal != null)
-                        oldVal.finishUnmarshal(cctx.cacheObjectContext(), cctx.deploy().globalLoader());
-                }
-
-                if (newVal != null)
-                    newVal.finishUnmarshal(cctx.cacheObjectContext(), cctx.deploy().globalLoader());
-
-                initialized = true;
+                return;
             }
 
-            CacheContinuousQueryEntry e0 = new CacheContinuousQueryEntry(
-                cctx.cacheId(),
-                evtType,
-                key,
-                newVal,
-                lsnr.oldValueRequired() ? oldVal : null,
-                lsnr.keepBinary(),
-                partId,
-                updateCntr,
-                topVer);
+            EventType evtType = !hasNewVal ? REMOVED : !hasOldVal ? CREATED : UPDATED;
 
-            CacheContinuousQueryEvent evt = new CacheContinuousQueryEvent<>(
-                cctx.kernalContext().cache().jcache(cctx.name()), cctx, e0);
+            boolean initialized = false;
 
-            lsnr.onEntryUpdated(evt, primary, recordIgniteEvt, fut);
+            boolean recordIgniteEvt = primary && !internal && cctx.gridEvents().isRecordable(EVT_CACHE_QUERY_OBJECT_READ);
+
+            for (CacheContinuousQueryListener lsnr : lsnrCol.values()) {
+                if (preload && !lsnr.notifyExisting())
+                    continue;
+
+                if (!initialized) {
+                    if (lsnr.oldValueRequired()) {
+                        oldVal = (CacheObject)cctx.unwrapTemporary(oldVal);
+
+                        if (oldVal != null)
+                            oldVal.finishUnmarshal(cctx.cacheObjectContext(), cctx.deploy().globalLoader());
+                    }
+
+                    if (newVal != null)
+                        newVal.finishUnmarshal(cctx.cacheObjectContext(), cctx.deploy().globalLoader());
+
+                    initialized = true;
+                }
+
+                CacheContinuousQueryEntry e0 = new CacheContinuousQueryEntry(
+                    cctx.cacheId(),
+                    evtType,
+                    key,
+                    newVal,
+                    lsnr.oldValueRequired() ? oldVal : null,
+                    lsnr.keepBinary(),
+                    partId,
+                    updateCntr,
+                    topVer);
+
+                CacheContinuousQueryEvent evt = new CacheContinuousQueryEvent<>(
+                    cctx.kernalContext().cache().jcache(cctx.name()), cctx, e0);
+
+                lsnr.onEntryUpdated(evt, primary, recordIgniteEvt, fut);
+            }
+        }
+        else {
+            Map<UUID, CacheContinuousQueryListener> lsnr0 = updateListeners(internal, preload);
+
+            if (lsnr0 != null) {
+                for (Map.Entry<UUID, CacheContinuousQueryListener> e : lsnr0.entrySet())
+                    skipUpdateEvent(key, partId, updateCntr, primary, topVer, e.getValue());
+            }
         }
     }
 
@@ -1189,7 +1211,7 @@ public class CacheContinuousQueryManager extends GridCacheManagerAdapter {
         /**
          * @param lsnrs Listeners.
          */
-        public BackupCleaner(Map<UUID, CacheContinuousQueryListener> lsnrs, GridKernalContext ctx) {
+        BackupCleaner(Map<UUID, CacheContinuousQueryListener> lsnrs, GridKernalContext ctx) {
             this.lsnrs = lsnrs;
             this.ctx = ctx;
         }

@@ -560,13 +560,15 @@ public class CacheContinuousQueryHandler<K, V> implements GridContinuousHandler 
     /**
      * Wait topology.
      */
-    public void waitTopologyFuture(GridKernalContext ctx) throws IgniteCheckedException {
+    void waitTopologyFuture(GridKernalContext ctx) throws IgniteCheckedException {
         GridCacheContext<K, V> cctx = cacheContext(ctx);
 
         if (!cctx.isLocal()) {
-            cacheContext(ctx).affinity().affinityReadyFuture(initTopVer).get();
+            GridCacheAffinityManager aff = cctx.affinity();
 
-            for (int partId = 0; partId < cacheContext(ctx).affinity().partitions(); partId++)
+            aff.affinityReadyFuture(initTopVer).get();
+
+            for (int partId = 0; partId < aff.partitions(); partId++)
                 getOrCreatePartitionRecovery(ctx, partId);
         }
     }
