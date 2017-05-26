@@ -23,7 +23,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.cache.Cache;
-import javax.cache.configuration.Factory;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.event.CacheEntryListenerException;
 import javax.cache.event.CacheEntryUpdatedListener;
@@ -36,7 +35,6 @@ import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.cache.affinity.Affinity;
 import org.apache.ignite.cache.query.ContinuousQuery;
 import org.apache.ignite.cache.query.QueryCursor;
-import org.apache.ignite.cache.store.CacheStore;
 import org.apache.ignite.cache.store.CacheStoreAdapter;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
@@ -140,7 +138,7 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
      * @throws Exception If failed.
      */
     public void testAtomicOnheap() throws Exception {
-        CacheConfiguration<Object, Object> ccfg = cacheConfiguration(ATOMIC, ONHEAP_TIERED, PRIMARY_SYNC);
+        CacheConfiguration<Integer, Integer> ccfg = cacheConfiguration(ATOMIC, ONHEAP_TIERED, PRIMARY_SYNC);
 
         doConcurrentStart(ccfg);
     }
@@ -149,7 +147,7 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
      * @throws Exception If failed.
      */
     public void testAtomicOffheap() throws Exception {
-        CacheConfiguration<Object, Object> ccfg = cacheConfiguration(ATOMIC, OFFHEAP_TIERED, PRIMARY_SYNC);
+        CacheConfiguration<Integer, Integer> ccfg = cacheConfiguration(ATOMIC, OFFHEAP_TIERED, PRIMARY_SYNC);
 
         doConcurrentStart(ccfg);
     }
@@ -258,11 +256,11 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
      * @param writeMode Cache write mode.
      * @return Cache configuration.
      */
-    protected CacheConfiguration<Object, Object> cacheConfiguration(
+    protected CacheConfiguration<Integer, Integer> cacheConfiguration(
         CacheAtomicityMode atomicityMode,
         CacheMemoryMode memoryMode,
         CacheWriteSynchronizationMode writeMode) {
-        CacheConfiguration<Object, Object> ccfg = new CacheConfiguration<>();
+        CacheConfiguration<Integer, Integer> ccfg = new CacheConfiguration<>();
 
         ccfg.setName("test-cache-" + atomicityMode + "-" + memoryMode);
         ccfg.setAtomicityMode(atomicityMode);
@@ -271,8 +269,7 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
         ccfg.setAtomicWriteOrderMode(PRIMARY);
 
         ccfg.setWriteThrough(true);
-        ccfg.setCacheStoreFactory((Factory<? extends CacheStore<? super Object, ? super Object>>)
-            FactoryBuilder.factoryOf(TestCacheStore.class));
+        ccfg.setCacheStoreFactory(FactoryBuilder.factoryOf(TestCacheStore.class));
 
         return ccfg;
     }
