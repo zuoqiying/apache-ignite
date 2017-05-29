@@ -2066,6 +2066,12 @@ public class GridCacheContext<K, V> implements Externalizable {
      * @return {@code True} if it is possible directly read offheap instead of using {@link GridCacheEntryEx#innerGet}.
      */
     public boolean offheapRead(IgniteCacheExpiryPolicy expiryPlc, boolean readers) {
+
+        log.info("offheapRead [expiryPlc=" + expiryPlc +
+                (expiryPlc != null ? ", expiryPlc.hasAccessTtl=" + expiryPlc.hasAccessTtl() : "") +
+            ", readers=" + readers + ", offheapTired=" + offheapTiered() +
+            ", isSwapOrOffheapEnabled=" + isSwapOrOffheapEnabled() + ", cache=" + name() + ']');
+
         return offheapTiered() &&
             isSwapOrOffheapEnabled() &&
             (expiryPlc == null || !expiryPlc.hasAccessTtl()) &&

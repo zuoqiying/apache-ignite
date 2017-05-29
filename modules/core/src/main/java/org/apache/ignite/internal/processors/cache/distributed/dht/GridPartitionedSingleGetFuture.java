@@ -357,6 +357,8 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
      * @return {@code True} if future completed.
      */
     private boolean localGet(AffinityTopologyVersion topVer, int part) {
+        log.info("localGet [topVer=" + topVer + ", part=" + part + ", cache=" + cctx.name() + ']');
+
         assert cctx.affinityNode() : this;
 
         GridDhtCacheAdapter colocated = cctx.dht();
@@ -371,13 +373,21 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
 
                 boolean skipEntry = false;
 
+                log.info("localGet loop [offheapRead=" + offheapRead + ", cache=" + cctx.name() + ']');
+
                 if (offheapRead) {
                     GridCacheSwapEntry swapEntry = cctx.swap().readSwapEntry(key);
+
+                    log.info("localGet loop [offheapRead=" + offheapRead + ", swapEntry=" + swapEntry + ", cache=" + cctx.name() + ']');
 
                     if (swapEntry != null) {
                         long expireTime = swapEntry.expireTime();
 
-                        if (expireTime == 0 || expireTime > U.currentTimeMillis()) {
+                        long currTime = U.currentTimeMillis();
+
+                        log.info("localGet loop [expireTime=" + expireTime + ", currTime=" + currTime + ", cache=" + cctx.name() + ']');
+
+                        if (expireTime == 0 || expireTime > currTime) {
                             skipEntry = true;
 
                             v = swapEntry.value();
@@ -399,7 +409,12 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                     }
                 }
 
+                log.info("localGet loop [offheapRead=" + offheapRead + ", skipEntry=" + skipEntry + ", cache=" + cctx.name() + ']');
+
                 if (!skipEntry) {
+                    log.info("localGet loop sync read access [colocated.context().isSwapOrOffheapEnabled()=" +
+                        colocated.context().isSwapOrOffheapEnabled() + ", cache=" + cctx.name() + ']');
+
                     GridCacheEntryEx entry = colocated.context().isSwapOrOffheapEnabled() ? colocated.entryEx(key) :
                         colocated.peekEx(key);
 
