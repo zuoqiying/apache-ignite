@@ -429,7 +429,7 @@ namespace Apache.Ignite.Core.Impl.Binary
         /// Descriptor.
         /// </returns>
         public IBinaryTypeDescriptor GetDescriptor(bool userType, int typeId, bool requiresType = false,
-            string typeName = null, string knownType = null)
+            string typeName = null, Type knownType = null)
         {
             BinaryFullTypeDescriptor desc;
 
@@ -448,7 +448,7 @@ namespace Apache.Ignite.Core.Impl.Binary
 
                 if (type == null && _ignite != null)
                 {
-                    var typeName = typeName ?? _ignite.BinaryProcessor.GetTypeName(typeId);
+                    typeName = typeName ?? _ignite.BinaryProcessor.GetTypeName(typeId);
 
                     if (typeName != null)
                     {
