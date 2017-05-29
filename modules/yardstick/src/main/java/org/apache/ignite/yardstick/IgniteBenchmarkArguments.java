@@ -167,6 +167,14 @@ public class IgniteBenchmarkArguments {
     private String additionalCachesName;
 
     /** */
+    @Parameter(names = {"-pc", "--partitionedCachesNumber"}, description = "Number of partitioned caches")
+    private int partitionedCachesNumber = 1;
+
+    /** */
+    @Parameter(names = {"-rc", "--replicatedCachesNumber"}, description = "Number of replicated caches")
+    private int replicatedCachesNumber = 1;
+
+    /** */
     @Parameter(names = {"-pp", "--printPartitionStats"}, description = "Print partition statistics")
     private boolean printPartStats;
 
@@ -177,6 +185,10 @@ public class IgniteBenchmarkArguments {
     /** */
     @Parameter(names = {"-ps", "--pageSize"}, description = "Page size")
     private int pageSize = MemoryConfiguration.DFLT_PAGE_SIZE;
+
+    /** */
+    @Parameter(names = {"-prt", "--partitions"}, description = "Number of cache partitions")
+    private int partitions = 10;
 
     /**
      * @return List of enabled load test operations.
@@ -419,6 +431,27 @@ public class IgniteBenchmarkArguments {
      */
     public String additionalCachesName() {
         return additionalCachesName;
+    }
+
+    /**
+     * @return Number of partitioned caches.
+     */
+    public int partitionedCachesNumber() {
+        return partitionedCachesNumber;
+    }
+
+    /**
+     * @return Number of replicated caches.
+     */
+    public int replicatedCachesNumber() {
+        return replicatedCachesNumber;
+    }
+
+    /**
+     * @return Number of cache partitions.
+     */
+    public int partitions() {
+        return partitions;
     }
 
     /**
