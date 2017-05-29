@@ -364,8 +364,8 @@ public class CacheContinuousQueryManager extends GridCacheManagerAdapter {
             Map<UUID, CacheContinuousQueryListener> lsnr0 = updateListeners(internal, preload);
 
             if (lsnr0 != null) {
-                for (Map.Entry<UUID, CacheContinuousQueryListener> e : lsnr0.entrySet())
-                    skipUpdateEvent(key, partId, updateCntr, primary, topVer, e.getValue());
+                for (CacheContinuousQueryListener lsnr : lsnr0.values())
+                    skipUpdateEvent(key, partId, updateCntr, primary, topVer, lsnr);
             }
         }
     }
