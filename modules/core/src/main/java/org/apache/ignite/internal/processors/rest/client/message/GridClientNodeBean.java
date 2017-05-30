@@ -60,6 +60,9 @@ public class GridClientNodeBean implements Externalizable {
     /** Node caches. */
     private Collection<GridClientCacheBean> caches;
 
+    /** Node order within grid topology */
+    private long order;
+
     /**
      * Gets node ID.
      *
@@ -200,6 +203,31 @@ public class GridClientNodeBean implements Externalizable {
         this.tcpPort = tcpPort;
     }
 
+    /**
+     * Node order within grid topology. Discovery SPIs that support node ordering will
+     * assign a proper order to each node and will guarantee that discovery event notifications
+     * for new nodes will come in proper order. All other SPIs not supporting ordering
+     * may choose to return node startup time here.
+     * <p>
+     * <b>NOTE</b>: in cases when discovery SPI doesn't support ordering Ignite cannot
+     * guarantee that orders on all nodes will be unique or chronologically correct.
+     * If such guarantee is required - make sure use discovery SPI that provides ordering.
+     *
+     * @return Node startup order.
+     */
+    public long getOrder() {
+        return order;
+    }
+
+    /**
+     * Set node order within grid topology
+     *
+     * @param order Node order within grid topology
+     */
+    public void setOrder(long order) {
+        this.order = order;
+    }
+
     /** {@inheritDoc} */
     @Override public int hashCode() {
         return nodeId != null ? nodeId.hashCode() : 0;
@@ -252,6 +280,8 @@ public class GridClientNodeBean implements Externalizable {
 
         out.writeObject(String.valueOf(consistentId));
         out.writeObject(metrics);
+
+        out.writeLong(order);
     }
 
     /** {@inheritDoc} */
@@ -287,6 +317,8 @@ public class GridClientNodeBean implements Externalizable {
 
         consistentId = in.readObject();
         metrics = (GridClientNodeMetricsBean)in.readObject();
+
+        order = in.readLong();
     }
 
     /** {@inheritDoc} */
