@@ -24,6 +24,8 @@ import org.apache.ignite.cache.query.annotations.QuerySqlField;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.MemoryConfiguration;
+import org.apache.ignite.configuration.MemoryPolicyConfiguration;
+import org.apache.ignite.configuration.PersistentStoreConfiguration;
 import org.apache.ignite.internal.processors.cache.database.tree.BPlusTree;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -135,6 +137,24 @@ public abstract class IgniteDbAbstractTest extends GridCommonAbstractTest {
         cfg.setDiscoverySpi(discoSpi);
         cfg.setMarshaller(null);
 
+        MemoryConfiguration memCfg = new MemoryConfiguration();
+
+        memCfg.setConcurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
+        memCfg.setPageSize(1024);
+
+        MemoryPolicyConfiguration memPlcCfg = new MemoryPolicyConfiguration();
+
+        memPlcCfg.setName("dfltMemPlc");
+        memPlcCfg.setMaxSize(100 * 1024 * 1024);
+        memPlcCfg.setInitialSize(100 * 1024 * 1024);
+        memPlcCfg.setSwapFilePath("work/swap");
+
+        memCfg.setMemoryPolicies(memPlcCfg);
+        memCfg.setDefaultMemoryPolicyName("dfltMemPlc");
+
+        cfg.setMemoryConfiguration(memCfg);
+        cfg.setPersistentStoreConfiguration(new PersistentStoreConfiguration());
+
         configure(cfg);
 
         return cfg;
@@ -171,6 +191,22 @@ public abstract class IgniteDbAbstractTest extends GridCommonAbstractTest {
 //
 //        BPlusTree.rnd = new Random(seed);
 
+        startGrids();
+    }
+
+    /** {@inheritDoc} */
+    @Override protected void afterTest() throws Exception {
+        BPlusTree.rnd = null;
+
+        stopAllGrids();
+
+        deleteRecursively(U.resolveWorkDirectory(U.defaultWorkDirectory(), "db", false));
+    }
+
+    /**
+     * @throws Exception If failed.
+     */
+    protected void startGrids() throws Exception {
         startGrids(gridCount());
 
         if (withClientNearCache()) {
@@ -184,13 +220,13 @@ public abstract class IgniteDbAbstractTest extends GridCommonAbstractTest {
         awaitPartitionMapExchange();
     }
 
-    /** {@inheritDoc} */
-    @Override protected void afterTest() throws Exception {
-        BPlusTree.rnd = null;
-
+    /**
+     * @throws Exception If failed.
+     */
+    protected void restartGrids() throws Exception {
         stopAllGrids();
 
-        deleteRecursively(U.resolveWorkDirectory(U.defaultWorkDirectory(), "db", false));
+        startGrids();
     }
 
     /**
