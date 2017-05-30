@@ -21,6 +21,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +55,7 @@ import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.CollectionConfiguration;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.events.Event;
+import org.apache.ignite.internal.GridComponent;
 import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
@@ -82,6 +84,7 @@ import org.apache.ignite.internal.util.typedef.internal.GPR;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.internal.processors.cluster.IgniteChangeGlobalStateSupport;
+import org.apache.ignite.spi.discovery.DiscoveryDataBag;
 import org.jetbrains.annotations.Nullable;
 import org.jsr166.ConcurrentHashMap8;
 
@@ -163,6 +166,9 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
 
     /** */
     private volatile UUID qryId;
+
+    /** */
+    private volatile UUID gridId;
 
     /** Listener. */
     private final GridLocalEventListener lsnr = new GridLocalEventListener() {
@@ -257,6 +263,9 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
             dsCacheCtx = atomicsCache.context();
         }
 
+        if (gridId == null)
+            gridId = UUID.randomUUID();
+
         initLatch.countDown();
     }
 
@@ -341,6 +350,39 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
             if (v instanceof IgniteChangeGlobalStateSupport)
                 ((IgniteChangeGlobalStateSupport)v).onDeActivate(ctx);
         }
+    }
+
+    @Nullable @Override public DiscoveryDataExchangeType discoveryDataType() {
+        return DiscoveryDataExchangeType.DATASTRUCTURE_PROC;
+    }
+
+    @Override public void collectJoiningNodeData(DiscoveryDataBag dataBag) {
+//        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override public void collectGridNodeData(DiscoveryDataBag dataBag) {
+        Serializable commonData = dataBag.gridDiscoveryData(discoveryDataType().ordinal()).commonData();
+
+        if (commonData == null) {
+            assert gridId != null;
+
+            dataBag.addGridCommonData(discoveryDataType().ordinal(), gridId);
+        }
+        else {
+            assert gridId.equals(commonData);
+        }
+    }
+
+    @Override public void onGridDataReceived(DiscoveryDataBag.GridDiscoveryData data) {
+        Serializable commonData = data.commonData();
+
+        assert commonData != null && commonData instanceof UUID;
+
+        gridId = (UUID) commonData;
+    }
+
+    @Override public void onJoiningNodeDataReceived(DiscoveryDataBag.JoiningNodeDiscoveryData data) {
+//        throw new UnsupportedOperationException("Not implemented");
     }
 
     /**
@@ -467,7 +509,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
                     dsCacheCtx.gate().leave();
                 }
             }
-        }, new DataStructureInfo(name, ATOMIC_SEQ, null), create, IgniteAtomicSequence.class);
+        }, new DataStructureInfo(name, ATOMIC_SEQ, null, gridId), create, IgniteAtomicSequence.class);
     }
 
     /**
@@ -566,7 +608,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
                     dsCacheCtx.gate().leave();
                 }
             }
-        }, new DataStructureInfo(name, ATOMIC_LONG, null), create, IgniteAtomicLong.class);
+        }, new DataStructureInfo(name, ATOMIC_LONG, null, gridId), create, IgniteAtomicLong.class);
     }
 
     /**
@@ -669,7 +711,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
         if (dsMap == null || !dsMap.containsKey(name))
             return;
 
-        final DataStructureInfo dsInfo = new DataStructureInfo(name, type, null);
+        final DataStructureInfo dsInfo = new DataStructureInfo(name, type, null, gridId);
 
         IgniteCheckedException err = validateDataStructure(dsMap, dsInfo, false);
 
@@ -779,7 +821,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
                     dsCacheCtx.gate().leave();
                 }
             }
-        }, new DataStructureInfo(name, ATOMIC_REF, null), create, IgniteAtomicReference.class);
+        }, new DataStructureInfo(name, ATOMIC_REF, null, gridId), create, IgniteAtomicReference.class);
     }
 
     /**
@@ -881,7 +923,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
                     dsCacheCtx.gate().leave();
                 }
             }
-        }, new DataStructureInfo(name, ATOMIC_STAMPED, null), create, IgniteAtomicStamped.class);
+        }, new DataStructureInfo(name, ATOMIC_STAMPED, null, gridId), create, IgniteAtomicStamped.class);
     }
 
     /**
@@ -941,7 +983,8 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
 
         DataStructureInfo dsInfo = new DataStructureInfo(name,
             QUEUE,
-            cfg != null ? new QueueInfo(cacheName, cfg.isCollocated(), cap) : null);
+            cfg != null ? new QueueInfo(cacheName, cfg.isCollocated(), cap) : null,
+            gridId);
 
         final int cap0 = cap;
 
@@ -1224,7 +1267,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
                     dsCacheCtx.gate().leave();
                 }
             }
-        }, new DataStructureInfo(name, COUNT_DOWN_LATCH, null), create, GridCacheCountDownLatchEx.class);
+        }, new DataStructureInfo(name, COUNT_DOWN_LATCH, null, gridId), create, GridCacheCountDownLatchEx.class);
     }
 
     /**
@@ -1345,7 +1388,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
                     dsCacheCtx.gate().leave();
                 }
             }
-        }, new DataStructureInfo(name, SEMAPHORE, null), create, GridCacheSemaphoreEx.class);
+        }, new DataStructureInfo(name, SEMAPHORE, null, gridId), create, GridCacheSemaphoreEx.class);
     }
 
     /**
@@ -1462,7 +1505,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
                     dsCacheCtx.gate().leave();
                 }
             }
-        }, new DataStructureInfo(name, REENTRANT_LOCK, null), create, GridCacheLockEx.class);
+        }, new DataStructureInfo(name, REENTRANT_LOCK, null, gridId), create, GridCacheLockEx.class);
     }
 
     /**
@@ -1680,7 +1723,8 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
 
         DataStructureInfo dsInfo = new DataStructureInfo(name,
             SET,
-            cfg != null ? new CollectionInfo(cacheName, cfg.isCollocated()) : null);
+            cfg != null ? new CollectionInfo(cacheName, cfg.isCollocated()) : null,
+            gridId);
 
         final boolean create = cfg != null;
 
@@ -2044,6 +2088,9 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
         /** */
         private Object info;
 
+        /** */
+        private UUID gridId;
+
         /**
          * Required by {@link Externalizable}.
          */
@@ -2056,10 +2103,11 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
          * @param type Data structure type.
          * @param info Data structure information.
          */
-        DataStructureInfo(String name, DataStructureType type, Externalizable info) {
+        DataStructureInfo(String name, DataStructureType type, Externalizable info, @Nullable UUID gridId) {
             this.name = name;
             this.type = type;
             this.info = info;
+            this.gridId = gridId;
         }
 
         /**
@@ -2106,6 +2154,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
             U.writeString(out, name);
             U.writeEnum(out, type);
             out.writeObject(info);
+            U.writeUuid(out, gridId);
         }
 
         /** {@inheritDoc} */
@@ -2113,6 +2162,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
             name = U.readString(in);
             type = DataStructureType.fromOrdinal(in.readByte());
             info = in.readObject();
+            gridId = U.readUuid(in);
         }
 
         /** {@inheritDoc} */
