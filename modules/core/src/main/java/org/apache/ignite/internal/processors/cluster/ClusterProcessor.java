@@ -188,7 +188,7 @@ public class ClusterProcessor extends GridProcessorAdapter {
                         IgniteDiagnosticMessage res = IgniteDiagnosticMessage.createResponse(resMsg, msg0.futureId());
 
                         try {
-                            ctx.io().send(node, GridTopic.TOPIC_INTERNAL_DIAGNOSTIC, res, GridIoPolicy.SYSTEM_POOL);
+                            ctx.io().sendToGridTopic(node, GridTopic.TOPIC_INTERNAL_DIAGNOSTIC, res, GridIoPolicy.SYSTEM_POOL);
                         }
                         catch (ClusterTopologyCheckedException ignore) {
                             if (diagnosticLog.isDebugEnabled()) {
@@ -501,7 +501,7 @@ public class ClusterProcessor extends GridProcessorAdapter {
 
             diagnosticFuturesMap().put(msg.futureId(), fut);
 
-            ctx.io().send(nodeId, GridTopic.TOPIC_INTERNAL_DIAGNOSTIC, msg, GridIoPolicy.SYSTEM_POOL);
+            ctx.io().sendToGridTopic(nodeId, GridTopic.TOPIC_INTERNAL_DIAGNOSTIC, msg, GridIoPolicy.SYSTEM_POOL);
 
             return fut;
         }

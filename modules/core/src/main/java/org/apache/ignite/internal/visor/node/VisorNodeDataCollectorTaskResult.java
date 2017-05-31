@@ -34,7 +34,6 @@ import org.apache.ignite.internal.visor.event.VisorGridEvent;
 import org.apache.ignite.internal.visor.igfs.VisorIgfs;
 import org.apache.ignite.internal.visor.igfs.VisorIgfsEndpoint;
 import org.apache.ignite.internal.visor.util.VisorExceptionWrapper;
-import org.apache.ignite.internal.LessNamingBean;
 
 /**
  * Data collector task result.

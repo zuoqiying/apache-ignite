@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -138,7 +139,7 @@ class ClientImpl extends TcpDiscoveryImpl {
     private final ConcurrentMap<UUID, TcpDiscoveryNode> rmtNodes = new ConcurrentHashMap8<>();
 
     /** */
-    private final LinkedHashMap<UUID, Map<Integer, byte[]>> delayDiscoData = new LinkedHashMap<>();
+    private final LinkedHashSet<DiscoveryDataPacket> delayDiscoData = new LinkedHashSet<>();
 
     /** Topology history. */
     private final NavigableMap<Long, Collection<ClusterNode>> topHist = new TreeMap<>();
@@ -1925,9 +1926,9 @@ class ClientImpl extends TcpDiscoveryImpl {
 
                         DiscoveryDataPacket dataPacket = msg.gridDiscoveryData();
 
-                        if (dataPacket != null && dataPacket.hasJoiningNodeData()) {
+                        if (dataPacket != null) {
                             if (joining())
-                                delayDiscoData.put(newNodeId, data);
+                                delayDiscoData.add(dataPacket);
                             else
                                 spi.onExchange(dataPacket, U.resolveClassLoader(spi.ignite().configuration()));
                         }
@@ -1955,9 +1956,8 @@ class ClientImpl extends TcpDiscoveryImpl {
                         spi.onExchange(dataContainer, U.resolveClassLoader(spi.ignite().configuration()));
 
                     if (!delayDiscoData.isEmpty()) {
-                        for (Map.Entry<UUID, Map<Integer, byte[]>> entry : delayDiscoData.entrySet())
-                            spi.onExchange(entry.getKey(), entry.getKey(), entry.getValue(),
-                                    U.resolveClassLoader(spi.ignite().configuration()));
+                        for (DiscoveryDataPacket dataPacket : delayDiscoData)
+                            spi.onExchange(dataPacket, U.resolveClassLoader(spi.ignite().configuration()));
 
                         delayDiscoData.clear();
                     }

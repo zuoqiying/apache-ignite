@@ -44,7 +44,6 @@ import javax.management.MBeanServer;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteSystemProperties;
-import org.apache.ignite.cache.CacheAtomicWriteOrderMode;
 import org.apache.ignite.cache.CacheExistsException;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.cache.CacheRebalanceMode;
@@ -2220,7 +2219,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
      */
     private Serializable getDiscoveryData(UUID joiningNodeId) {
         if (!sharedCtx.kernalContext().state().active()) {
-            if (ctx.localNodeId().equals(nodeId))
+            if (ctx.localNodeId().equals(joiningNodeId))
                 return sharedCtx.gridConfig().getCacheConfiguration();
         }
 
@@ -2487,25 +2486,24 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                 }
             }
 
-                for (String name : batch.restartingCaches())
-                    registeredCaches.remove(name);
+            for (String name : batch.restartingCaches())
+                registeredCaches.remove(name);
 
-                restartingCaches.addAll(batch.restartingCaches());
+            restartingCaches.addAll(batch.restartingCaches());
 
-                if (!F.isEmpty(batch.clientNodes())) {
-                    for (Map.Entry<String, Map<UUID, Boolean>> entry : batch.clientNodes().entrySet()) {
-                        String cacheName = entry.getKey();
+            if (!F.isEmpty(batch.clientNodes())) {
+                for (Map.Entry<String, Map<UUID, Boolean>> entry : batch.clientNodes().entrySet()) {
+                    String cacheName = entry.getKey();
 
-                        if (!restartingCaches.contains(cacheName))
-                            for (Map.Entry<UUID, Boolean> tup : entry.getValue().entrySet())
-                                ctx.discovery().addClientNode(cacheName, tup.getKey(), tup.getValue());
-                    }
+                    if (!restartingCaches.contains(cacheName))
+                        for (Map.Entry<UUID, Boolean> tup : entry.getValue().entrySet())
+                            ctx.discovery().addClientNode(cacheName, tup.getKey(), tup.getValue());
                 }
+            }
 
-                if (batch.startCaches()) {
-                    for (Map.Entry<String, DynamicCacheDescriptor> entry : registeredCaches.entrySet())
-                        ctx.discovery().addClientNode(entry.getKey(), joiningNodeId, false);
-                }
+            if (batch.startCaches()) {
+                for (Map.Entry<String, DynamicCacheDescriptor> entry : registeredCaches.entrySet())
+                    ctx.discovery().addClientNode(entry.getKey(), joiningNodeId, false);
             }
         }
     }
@@ -3235,7 +3233,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
                         startDesc.startTopologyVersion(newTopVer);
 
-                        restartingCaches.remove(maskNull(ccfg.getName()));
+                        restartingCaches.remove(ccfg.getName());
 
                         DynamicCacheDescriptor old = cacheDescriptor(ccfg.getName(), startDesc);
 
@@ -3312,7 +3310,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                         DynamicCacheDescriptor old = registeredCaches.remove(req.cacheName());
 
                         if (req.restart())
-                            restartingCaches.add(maskNull(req.cacheName()));
+                            restartingCaches.add(req.cacheName());
 
                         assert old != null : "Dynamic cache map was concurrently modified [req=" + req + ']';
 

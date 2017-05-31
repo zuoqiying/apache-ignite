@@ -17,6 +17,7 @@
 
 package org.apache.ignite.internal.managers.discovery;
 
+import java.io.Serializable;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -664,57 +665,32 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
 
                 Map<Integer, Serializable> data = new HashMap<>();
 
-                Serializable val = ctx.state().collectDiscoveryData(nodeId);
+                ctx.state().collectGridNodeData(dataBag);
 
-                int type = ctx.state().discoveryDataType().ordinal();
-
-                assert val != null;
-
-                data.put(type, val);
 
                 for (GridComponent comp : ctx.components()) {
                     if (comp instanceof GridClusterStateProcessor)
                         continue;
 
-                    Serializable compData = comp.collectDiscoveryData(nodeId);
-
-                    if (compData != null) {
-                        assert comp.discoveryDataType() != null;
-
-                        data.put(comp.discoveryDataType().ordinal(), compData);
-                    }
+                    comp.collectGridNodeData(dataBag);
                 }
 
                 return dataBag;
             }
 
-            @Override public void onExchange(UUID joiningNodeId, UUID nodeId, Map<Integer, Serializable> data) {
+            @Override public void onExchange(DiscoveryDataBag dataBag) {
                 GridClusterStateProcessor stateProc = ctx.state();
 
                 int type = stateProc.discoveryDataType().ordinal();
 
-                Serializable data0 = data.get(type);
+                stateProc.onGridDataReceived(dataBag.gridDiscoveryData(type));
 
-                if (data0 != null)
-                    stateProc.onDiscoveryDataReceived(joiningNodeId, nodeId, data0);
+                for (GridComponent comp : ctx.components()) {
+                    if (comp.discoveryDataType() == null)
+                        continue;
 
-                for (Map.Entry<Integer, Serializable> e : data.entrySet()) {
-                    GridComponent comp = null;
-
-                    for (GridComponent c : ctx.components()) {
-                        if (c.discoveryDataType() != null && c.discoveryDataType().ordinal() == e.getKey()) {
-                            comp = c;
-
-                            break;
-                        }
-                    }
-
-                    if (comp != null && !(comp instanceof GridClusterStateProcessor))
-                        comp.onDiscoveryDataReceived(joiningNodeId, nodeId, e.getValue());
-                    else {
-                        if (log.isDebugEnabled())
-                            log.debug("Received discovery data for unknown component: " + e.getKey());
-                    }
+                    if (!(comp instanceof GridClusterStateProcessor))
+                        comp.onGridDataReceived(dataBag.gridDiscoveryData(comp.discoveryDataType().ordinal()));
                 }
             }
         });

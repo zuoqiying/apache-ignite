@@ -880,7 +880,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
                 nodes.addAll(affNodes);
 
-                for (Map.Entry<UUID, GridDhtPartitionMap2> entry : node2part.entrySet()) {
+                for (Map.Entry<UUID, GridDhtPartitionMap> entry : node2part.entrySet()) {
                     GridDhtPartitionState state = entry.getValue().get(p);
 
                     ClusterNode n = cctx.discovery().node(entry.getKey());
@@ -1127,7 +1127,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             if (diffFromAffinityVer.compareTo(affVer) <= 0) {
                 AffinityAssignment affAssignment = cctx.affinity().assignment(affVer);
 
-                for (Map.Entry<UUID, GridDhtPartitionMap2> e : partMap.entrySet()) {
+                for (Map.Entry<UUID, GridDhtPartitionMap> e : partMap.entrySet()) {
                     for (Map.Entry<Integer, GridDhtPartitionState> e0 : e.getValue().entrySet()) {
                         int p = e0.getKey();
 
@@ -1155,7 +1155,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             boolean changed = false;
 
-            GridDhtPartitionMap2 nodeMap = partMap.get(cctx.localNodeId());
+            GridDhtPartitionMap nodeMap = partMap.get(cctx.localNodeId());
 
             if (nodeMap != null && cctx.shared().database().persistenceEnabled()) {
                 for (Map.Entry<Integer, GridDhtPartitionState> e : nodeMap.entrySet()) {
@@ -1448,7 +1448,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             }
         }
         else {
-            for (Map.Entry<UUID, GridDhtPartitionMap2> e : node2part.entrySet()) {
+            for (Map.Entry<UUID, GridDhtPartitionMap> e : node2part.entrySet()) {
                 UUID nodeId = e.getKey();
 
                 for (Map.Entry<Integer, GridDhtPartitionState> e0 : e.getValue().entrySet()) {
@@ -1490,7 +1490,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
             for (int p = 0; p < parts; p++)
                 lost.add(p);
 
-            for (GridDhtPartitionMap2 partMap : node2part.values()) {
+            for (GridDhtPartitionMap partMap : node2part.values()) {
                 for (Map.Entry<Integer, GridDhtPartitionState> e : partMap.entrySet()) {
                     if (e.getValue() == OWNING)
                         lost.remove(e.getKey());
@@ -1616,7 +1616,7 @@ import static org.apache.ignite.internal.processors.cache.distributed.dht.GridDh
 
             int parts = cctx.affinity().partitions();
 
-            for (GridDhtPartitionMap2 partMap : node2part.values()) {
+            for (GridDhtPartitionMap partMap : node2part.values()) {
                 for (Map.Entry<Integer, GridDhtPartitionState> e : partMap.entrySet()) {
                     if (e.getValue() == LOST) {
                         if (res == null)

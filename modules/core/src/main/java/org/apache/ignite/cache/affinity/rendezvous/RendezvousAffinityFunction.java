@@ -99,9 +99,6 @@ public class RendezvousAffinityFunction implements AffinityFunction, Externaliza
      *  is primary). */
     private IgniteBiPredicate<ClusterNode, List<ClusterNode>> affinityBackupFilter;
 
-    /** Hash ID resolver. */
-    private AffinityNodeHashResolver hashIdRslvr = null;
-
     /** Logger instance. */
     @LoggerResource
     private transient IgniteLogger log;

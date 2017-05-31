@@ -281,11 +281,9 @@ public class GridDhtPartitionMap implements Comparable<GridDhtPartitionMap>, Ext
 
         Set<Map.Entry<Integer, GridDhtPartitionState>> entries = map.entrySet();
 
-        for (int i = 0; i < size; i++) {
-            int ordinal = in.readByte();
-            int part = in.readShort();
-
-            put(part, GridDhtPartitionState.fromOrdinal(ordinal));
+        for (Map.Entry<Integer, GridDhtPartitionState> entry : entries) {
+            if (entry.getValue() == MOVING)
+                moving++;
         }
 
         long ver = in.readLong();

@@ -24,6 +24,7 @@ import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteInternalFuture;
@@ -31,8 +32,9 @@ import org.apache.ignite.internal.TestRecordingCommunicationSpi;
 import org.apache.ignite.internal.managers.communication.GridIoMessage;
 import org.apache.ignite.internal.processors.cache.distributed.dht.preloader.GridDhtPartitionsFullMessage;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteBiPredicate;
 import org.apache.ignite.lang.IgnitePredicate;
-import org.apache.ignite.marshaller.optimized.OptimizedMarshaller;
+import org.apache.ignite.plugin.extensions.communication.Message;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
@@ -103,16 +105,16 @@ public class CacheClientsConcurrentStartTest extends GridCommonAbstractTest {
 
         cfg.setCommunicationSpi(new TestRecordingCommunicationSpi());
 
-        if (getTestGridIndex(gridName) >= SRV_CNT)
-            cfg.setClientMode(true);
-        else {
+//TODO        if (getTestGridIndex(gridName) >= SRV_CNT)
+//            cfg.setClientMode(true);
+//        else {
             CacheConfiguration ccfgs[] = new CacheConfiguration[CACHES / 2];
 
             for (int i = 0; i < ccfgs.length; i++)
                 ccfgs[i] = cacheConfiguration("cache-" + i);
 
             cfg.setCacheConfiguration(ccfgs);
-        }
+//        }
 
         return cfg;
     }
@@ -147,9 +149,9 @@ public class CacheClientsConcurrentStartTest extends GridCommonAbstractTest {
         startGrids(SRV_CNT);
 
         for (int i = 0; i < SRV_CNT; i++) {
-            ((TestRecordingCommunicationSpi)ignite(i).configuration().getCommunicationSpi()).blockMessages(new IgnitePredicate<GridIoMessage>() {
-                @Override public boolean apply(GridIoMessage msg) {
-                    if (msg.message() instanceof GridDhtPartitionsFullMessage) {
+            ((TestRecordingCommunicationSpi)ignite(i).configuration().getCommunicationSpi()).blockMessages(new IgniteBiPredicate<ClusterNode, Message>() {
+                @Override public boolean apply(ClusterNode node, Message msg) {
+                    if (msg instanceof GridDhtPartitionsFullMessage) {
                         try {
                             U.sleep(ThreadLocalRandom.current().nextLong(500) + 100);
                         }

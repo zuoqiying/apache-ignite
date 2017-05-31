@@ -46,7 +46,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import org.apache.ignite.Ignite;
@@ -61,6 +60,7 @@ import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.events.Event;
 import org.apache.ignite.internal.IgniteClientDisconnectedCheckedException;
+import org.apache.ignite.internal.IgniteDiagnosticAware;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
 import org.apache.ignite.internal.cluster.ClusterTopologyCheckedException;
@@ -239,7 +239,7 @@ import static org.apache.ignite.internal.util.nio.GridNioSessionMetaKey.SSL_META
  */
 @IgniteSpiMultipleInstancesSupport(true)
 @IgniteSpiConsistencyChecked(optional = false)
-public class TcpCommunicationSpi extends IgniteSpiAdapter implements CommunicationSpi<Message> {
+public class TcpCommunicationSpi extends IgniteSpiAdapter implements CommunicationSpi<Message>, IgniteDiagnosticAware {
     /** IPC error message. */
     public static final String OUT_OF_RESOURCES_TCP_MSG = "Failed to allocate shared memory segment " +
         "(switching to TCP, may be slower).";
@@ -1798,7 +1798,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter implements Communicati
     /**
      * Dumps SPI per-connection stats to logs.
      */
-    @Override public void dumpStats() {
+    @Override public void dumpDiagnosticInfo() {
         IgniteLogger log = this.log;
 
         if (log != null) {
@@ -4908,7 +4908,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter implements Communicati
 
         /** {@inheritDoc} */
         @Override public void dumpStats() {
-            TcpCommunicationSpi.this.dumpStats();
+            TcpCommunicationSpi.this.dumpDiagnosticInfo();
         }
 
         /** {@inheritDoc} */
