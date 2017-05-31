@@ -20,6 +20,7 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.ignite.MemoryMetrics;
 import org.apache.ignite.configuration.MemoryPolicyConfiguration;
 import org.apache.ignite.internal.processors.cache.database.MemoryMetricsImpl;
+import org.apache.ignite.internal.processors.cache.ratemetrics.HitRateMetrics;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 import static java.lang.Thread.sleep;
@@ -55,18 +56,31 @@ public class MemoryMetricsSelfTest extends GridCommonAbstractTest {
      */
     public void testAllocationRateSingleThreaded() throws Exception {
         threadsCnt = 1;
-        memMetrics.rateTimeInterval(10);
+        memMetrics.rateTimeInterval(5);
 
         CountDownLatch startLatch = new CountDownLatch(1);
 
-        startAllocationThreads(startLatch, 340, 50);
+        initialSleep();
+
+        startAllocationThreads(startLatch, 170, 50);
         AllocationRateWatcher watcher = startWatcherThread(startLatch, 20);
 
         startLatch.countDown();
 
         joinAllThreads();
 
-        assertEquals(4, watcher.rateDropsCntr);
+        assertTrue(watcher.rateDropsCntr < 6);
+    }
+
+    /**
+     * As rate calculator {@link HitRateMetrics implementation} is bound to absolute time,
+     * test runner needs to start in "round" time, e.g. 10 seconds but not 10 seconds 500 milliseconds.
+     */
+    private void initialSleep() throws InterruptedException {
+        long initSleep = 1000 - (System.currentTimeMillis() % 1000);
+
+        if (initSleep > 0)
+            Thread.sleep(initSleep);
     }
 
     /**
@@ -78,6 +92,8 @@ public class MemoryMetricsSelfTest extends GridCommonAbstractTest {
         memMetrics.rateTimeInterval(5);
 
         CountDownLatch startLatch = new CountDownLatch(1);
+
+        initialSleep();
 
         startAllocationThreads(startLatch, 7_800, 1);
 
@@ -94,6 +110,8 @@ public class MemoryMetricsSelfTest extends GridCommonAbstractTest {
         threadsCnt = 8;
 
         CountDownLatch restartLatch = new CountDownLatch(1);
+
+        initialSleep();
 
         startAllocationThreads(restartLatch, 8_000, 1);
 
@@ -150,7 +168,7 @@ public class MemoryMetricsSelfTest extends GridCommonAbstractTest {
         for (int i = 0; i < 10; i++) {
             Thread.sleep(25);
 
-            memMetrics.subIntervals((2 + i * 5) % 3 + 1);
+            memMetrics.subIntervals((2 + i * 5) % 3 + 2);
         }
 
         joinAllThreads();

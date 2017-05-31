@@ -74,6 +74,7 @@ import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.IgniteTransactions;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.MemoryMetrics;
+import org.apache.ignite.PersistentStoreMetrics;
 import org.apache.ignite.cache.affinity.Affinity;
 import org.apache.ignite.cluster.ClusterGroup;
 import org.apache.ignite.cluster.ClusterMetrics;
@@ -3403,6 +3404,18 @@ public class IgniteKernal implements IgniteEx, IgniteMXBean, Externalizable {
 
         try {
             return ctx.cache().context().database().memoryMetrics();
+        }
+        finally {
+            unguard();
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override public PersistentStoreMetrics persistenceMetrics() {
+        guard();
+
+        try {
+            return ctx.cache().context().database().persistenceStoreMetrics();
         }
         finally {
             unguard();

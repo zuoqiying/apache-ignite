@@ -16,12 +16,10 @@
  */
 package org.apache.ignite.internal.processors.cache.database;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import org.apache.ignite.MemoryMetrics;
 import org.apache.ignite.configuration.MemoryPolicyConfiguration;
 import org.apache.ignite.internal.processors.cache.database.freelist.FreeListImpl;
-import org.apache.ignite.internal.util.IgniteUtils;
+import org.apache.ignite.internal.processors.cache.ratemetrics.HitRateMetrics;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.jsr166.LongAdder8;
 
@@ -41,26 +39,20 @@ public class MemoryMetricsImpl implements MemoryMetrics {
     private final LongAdder8 largeEntriesPages = new LongAdder8();
 
     /** */
-    private volatile boolean metricsEnabled;
-
-    /** */
-    private volatile int subInts = 5;
-
-    /** */
-    private volatile LongAdder8[] allocRateCounters = new LongAdder8[subInts];
-
-    /** */
-    private final AtomicInteger counterIdx = new AtomicInteger(0);
-
-    /** */
-    private final AtomicLong lastUpdTime = new AtomicLong(0);
-
-    /** */
-    private final MemoryPolicyConfiguration memPlcCfg;
+    protected volatile boolean metricsEnabled;
 
     /** Time interval (in seconds) when allocations/evictions are counted to calculate rate.
      * Default value is 60 seconds. */
     private volatile int rateTimeInterval = 60;
+
+    /** Number of subintervals the whole rateTimeInteval is split into to calculate rate. */
+    private volatile int subInts = 5;
+
+    /** Allocation rate calculator. */
+    private volatile HitRateMetrics allocRate = new HitRateMetrics(60_000, 5);
+
+    /** */
+    private final MemoryPolicyConfiguration memPlcCfg;
 
     /**
      * @param memPlcCfg MemoryPolicyConfiguration.
@@ -69,9 +61,6 @@ public class MemoryMetricsImpl implements MemoryMetrics {
         this.memPlcCfg = memPlcCfg;
 
         metricsEnabled = memPlcCfg.isMetricsEnabled();
-
-        for (int i = 0; i < subInts; i++)
-            allocRateCounters[i] = new LongAdder8();
     }
 
     /** {@inheritDoc} */
@@ -89,12 +78,7 @@ public class MemoryMetricsImpl implements MemoryMetrics {
         if (!metricsEnabled)
             return 0;
 
-        float res = 0;
-
-        for (int i = 0; i < subInts; i++)
-            res += allocRateCounters[i].floatValue();
-
-        return res / rateTimeInterval;
+        return ((float) allocRate.getRate()) / rateTimeInterval;
     }
 
     /** {@inheritDoc} */
@@ -127,12 +111,7 @@ public class MemoryMetricsImpl implements MemoryMetrics {
         if (metricsEnabled) {
             totalAllocatedPages.increment();
 
-            try {
-                updateAllocationRateMetrics();
-            }
-            catch (ArrayIndexOutOfBoundsException | NullPointerException ignored) {
-                // No-op.
-            }
+            updateAllocationRateMetrics();
         }
     }
 
@@ -140,103 +119,7 @@ public class MemoryMetricsImpl implements MemoryMetrics {
      *
      */
     private void updateAllocationRateMetrics() {
-        if (subInts != allocRateCounters.length)
-            return;
-
-        long lastUpdT = lastUpdTime.get();
-        long currT = IgniteUtils.currentTimeMillis();
-
-        int currIdx = counterIdx.get();
-
-        long deltaT = currT - lastUpdT;
-
-        int subInts = this.subInts;
-
-        LongAdder8[] rateCntrs = allocRateCounters;
-
-        for (int i = 1; i <= subInts; i++) {
-            if (deltaT < subInt(i)) {
-                if (i > 1) {
-                    if (!lastUpdTime.compareAndSet(lastUpdT, currT)) {
-                        rateCntrs[counterIdx.get()].increment();
-
-                        break;
-                    }
-                }
-
-                if (rotateIndex(currIdx, i - 1)) {
-                    currIdx = counterIdx.get();
-
-                    resetCounters(currIdx, i - 1);
-
-                    rateCntrs[currIdx].increment();
-
-                    break;
-                }
-                else {
-                    rateCntrs[counterIdx.get()].increment();
-
-                    break;
-                }
-            }
-            else if (i == subInts && lastUpdTime.compareAndSet(lastUpdT, currT))
-                resetAll();
-
-            if (currIdx != counterIdx.get()) {
-                rateCntrs[counterIdx.get()].increment();
-
-                break;
-            }
-        }
-    }
-
-    /**
-     * @param intervalNum Interval number.
-     */
-    private int subInt(int intervalNum) {
-        return (rateTimeInterval * 1000 * intervalNum) / subInts;
-    }
-
-    /**
-     * @param idx Index.
-     * @param rotateStep Rotate step.
-     */
-    private boolean rotateIndex(int idx, int rotateStep) {
-        if (rotateStep == 0)
-            return true;
-
-        int subInts = this.subInts;
-
-        assert rotateStep < subInts;
-
-        int nextIdx = (idx + rotateStep) % subInts;
-
-        return counterIdx.compareAndSet(idx, nextIdx);
-    }
-
-    /**
-     *
-     */
-    private void resetAll() {
-        LongAdder8[] cntrs = allocRateCounters;
-
-        for (LongAdder8 cntr : cntrs)
-            cntr.reset();
-    }
-
-    /**
-     * @param currIdx Current index.
-     * @param resettingCntrs Resetting allocRateCounters.
-     */
-    private void resetCounters(int currIdx, int resettingCntrs) {
-        if (resettingCntrs == 0)
-            return;
-
-        for (int j = 0; j < resettingCntrs; j++) {
-            int cleanIdx = currIdx - j >= 0 ? currIdx - j : currIdx - j + subInts;
-
-            allocRateCounters[cleanIdx].reset();
-        }
+        allocRate.onHit();
     }
 
     /**
@@ -274,6 +157,7 @@ public class MemoryMetricsImpl implements MemoryMetrics {
      */
     public void rateTimeInterval(int rateTimeInterval) {
         this.rateTimeInterval = rateTimeInterval;
+        allocRate = new HitRateMetrics(rateTimeInterval * 1000, subInts);
     }
 
     /**
@@ -292,13 +176,7 @@ public class MemoryMetricsImpl implements MemoryMetrics {
         if (rateIntervalMs / subInts < 10)
             subInts = rateIntervalMs / 10;
 
-        LongAdder8[] newCounters = new LongAdder8[subInts];
-
-        for (int i = 0; i < subInts; i++)
-            newCounters[i] = new LongAdder8();
-
-        this.subInts = subInts;
-        allocRateCounters = newCounters;
+        allocRate = new HitRateMetrics(rateIntervalMs, subInts);
     }
 
     /**

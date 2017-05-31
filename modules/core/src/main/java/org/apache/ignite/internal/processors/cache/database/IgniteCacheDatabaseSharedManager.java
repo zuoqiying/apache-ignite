@@ -28,6 +28,7 @@ import javax.management.JMException;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.MemoryMetrics;
+import org.apache.ignite.PersistentStoreMetrics;
 import org.apache.ignite.configuration.DataPageEvictionMode;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.MemoryConfiguration;
@@ -276,7 +277,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
         if (dfltMemPlcName == null)
             dfltMemPlcName = DFLT_MEM_PLC_DEFAULT_NAME;
 
-        MemoryMetricsImpl memMetrics = new MemoryMetricsImpl(memPlcCfg);
+        MemoryMetricsImpl memMetrics = createMemoryMetrics(memPlcCfg);
 
         MemoryPolicy memPlc = initMemory(memCfg, memPlcCfg, memMetrics);
 
@@ -289,6 +290,14 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
         else if (memPlcName.equals(DFLT_MEM_PLC_DEFAULT_NAME))
             U.warn(log, "Memory Policy with name 'default' isn't used as a default. " +
                     "Please check Memory Policies configuration.");
+    }
+
+    /**
+     * @param memPlcCfg Memory policy configuration.
+     * @return instance of Memory Metrics for the given configuration.
+     */
+    protected MemoryMetricsImpl createMemoryMetrics(MemoryPolicyConfiguration memPlcCfg) {
+        return new MemoryMetricsImpl(memPlcCfg);
     }
 
     /**
@@ -551,6 +560,13 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
         }
         else
             return Collections.emptyList();
+    }
+
+    /**
+     *
+     */
+    public PersistentStoreMetrics persistenceStoreMetrics() {
+        return null;
     }
 
     /**

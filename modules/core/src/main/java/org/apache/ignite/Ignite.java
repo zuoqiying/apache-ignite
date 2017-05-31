@@ -622,4 +622,9 @@ public interface Ignite extends AutoCloseable {
      * @return Collection of {@link MemoryMetrics}
      */
     public Collection<MemoryMetrics> memoryMetrics();
+
+    /**
+     * @return
+     */
+    public PersistentStoreMetrics persistenceMetrics();
 }

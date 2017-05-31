@@ -61,6 +61,7 @@ import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.IgniteSystemProperties;
+import org.apache.ignite.PersistentStoreMetrics;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.DataPageEvictionMode;
 import org.apache.ignite.configuration.IgniteConfiguration;
@@ -267,6 +268,9 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
     /** Snapshot manager. */
     private IgniteCacheSnapshotManager snapshotMgr;
 
+    /** */
+    private PersistentStoreMetricsImpl persStoreMetrics;
+
     /**
      * @param ctx Kernal context.
      */
@@ -293,6 +297,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                 return tmpWriteBuf;
             }
         };
+
+        persStoreMetrics = new PersistentStoreMetricsImpl();
     }
 
     /**
@@ -568,11 +574,16 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
     }
 
     /** {@inheritDoc} */
+    @Override protected MemoryMetricsImpl createMemoryMetrics(MemoryPolicyConfiguration memPlcCfg) {
+        return new PersistenceMemoryMetricsImpl(memPlcCfg);
+    }
+
+    /** {@inheritDoc} */
     @Override protected PageMemory createPageMemory(
         DirectMemoryProvider memProvider,
         MemoryConfiguration memCfg,
         MemoryPolicyConfiguration plcCfg,
-        MemoryMetricsImpl memMetrics
+        final MemoryMetricsImpl memMetrics
     ) {
         return new PageMemoryImpl(
             memProvider,
@@ -591,6 +602,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                     storeMgr.write(fullId.cacheId(), fullId.pageId(), pageBuf, tag);
 
                     snapshotMgr.flushDirtyPageHandler(fullId, pageBuf, tag);
+
+                    ((PersistenceMemoryMetricsImpl)memMetrics).incrementEvictedPages();
                 }
             },
             new GridInClosure3X<Long,FullPageId, PageMemoryEx>() {
@@ -602,7 +615,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                   snapshotMgr.onChangeTrackerPage(page,fullId,pageMem);
                 }
             },
-            this
+            this,
+            (PersistenceMemoryMetricsImpl) memMetrics
         );
     }
 
@@ -1817,6 +1831,11 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                 }
             });
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override public PersistentStoreMetrics persistenceStoreMetrics() {
+        return persStoreMetrics;
     }
 
     /**

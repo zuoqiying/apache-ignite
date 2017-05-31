@@ -55,6 +55,7 @@ import org.apache.ignite.internal.pagemem.wal.WALPointer;
 import org.apache.ignite.internal.pagemem.wal.record.WALRecord;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter;
+import org.apache.ignite.internal.processors.cache.database.PersistentStoreMetricsImpl;
 import org.apache.ignite.internal.processors.cache.database.wal.record.HeaderRecord;
 import org.apache.ignite.internal.processors.cache.database.wal.serializer.RecordV1Serializer;
 import org.apache.ignite.internal.util.GridCloseableIteratorAdapter;
@@ -181,6 +182,9 @@ public class FileWriteAheadLogManager extends GridCacheSharedManagerAdapter impl
     /** */
     private ThreadLocal<WALPointer> lastWALPtr = new ThreadLocal<>();
 
+    /** */
+    private PersistentStoreMetricsImpl persStoreMetrics;
+
     /**
      * @param ctx Kernal context.
      */
@@ -192,7 +196,6 @@ public class FileWriteAheadLogManager extends GridCacheSharedManagerAdapter impl
         assert dbCfg != null : "WAL should not be created if persistence is disabled.";
 
         this.dbCfg = dbCfg;
-        this.igCfg = igCfg;
 
         maxWalSegmentSize = dbCfg.getWalSegmentSize();
 
@@ -224,6 +227,8 @@ public class FileWriteAheadLogManager extends GridCacheSharedManagerAdapter impl
                 if (log.isInfoEnabled())
                     log.info("Started write-ahead log manager [mode=" + mode + ']');
             }
+
+            persStoreMetrics = (PersistentStoreMetricsImpl) cctx.database().persistenceStoreMetrics();
         }
     }
 

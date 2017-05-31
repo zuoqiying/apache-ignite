@@ -55,6 +55,7 @@ import org.apache.ignite.internal.pagemem.wal.record.delta.InitNewPageRecord;
 import org.apache.ignite.internal.pagemem.wal.record.delta.PageDeltaRecord;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.database.CheckpointLockStateChecker;
+import org.apache.ignite.internal.processors.cache.database.PersistenceMemoryMetricsImpl;
 import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
 import org.apache.ignite.internal.processors.cache.database.tree.io.TrackingPageIO;
 import org.apache.ignite.internal.processors.cache.database.wal.crc.IgniteDataIntegrityViolationException;
@@ -221,6 +222,9 @@ public class PageMemoryImpl implements PageMemoryEx {
     /** */
     private long[] sizes;
 
+    /** */
+    private PersistenceMemoryMetricsImpl memMetrics;
+
     /**
      * @param directMemoryProvider Memory allocator to use.
      * @param sharedCtx Cache shared context.
@@ -235,7 +239,8 @@ public class PageMemoryImpl implements PageMemoryEx {
         int pageSize,
         GridInClosure3X<FullPageId, ByteBuffer, Integer> flushDirtyPage,
         GridInClosure3X<Long, FullPageId, PageMemoryEx> changeTracker,
-        CheckpointLockStateChecker stateChecker
+        CheckpointLockStateChecker stateChecker,
+        PersistenceMemoryMetricsImpl memMetrics
     ) {
         assert sharedCtx != null;
 
@@ -257,6 +262,8 @@ public class PageMemoryImpl implements PageMemoryEx {
         sysPageSize = pageSize + PAGE_OVERHEAD;
 
         rwLock = new OffheapReadWriteLock(128);
+
+        this.memMetrics = memMetrics;
     }
 
     /** {@inheritDoc} */
@@ -554,6 +561,8 @@ public class PageMemoryImpl implements PageMemoryEx {
                 if (!restore) {
                     try {
                         ByteBuffer buf = wrapPointer(pageAddr, pageSize());
+
+                        memMetrics.incrementReloadedPages();
 
                         storeMgr.read(cacheId, pageId, buf);
                     }
