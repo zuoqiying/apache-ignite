@@ -119,7 +119,7 @@ export default class IgniteVersion {
      * @param {String | Array.<String>} ranges Version ranges to compare with.
      * @returns {Boolean} `True` if node version is equal or greater than specified range.
      */
-    static since(target, ...ranges) {
+    since(target, ...ranges) {
         const targetVer = parse(target);
 
         return !!_.find(ranges, (range) => {
@@ -140,8 +140,8 @@ export default class IgniteVersion {
      * @param {String} ranges Version ranges to compare with.
      * @return {Boolean} `True` if node version before than specified version.
      */
-    static before(target, ...ranges) {
-        return !IgniteVersion.since(target, ...ranges);
+    before(target, ...ranges) {
+        return !this.since(target, ...ranges);
     }
 
     get igniteVersion() {
@@ -154,6 +154,6 @@ export default class IgniteVersion {
      * @returns {Boolean} `True` if configuration version is equal or greater than specified range.
      */
     igniteVersionIn(...ranges) {
-        return IgniteVersion.since(this.igniteVersion, ...ranges);
+        return this.since(this.igniteVersion, ...ranges);
     }
 }

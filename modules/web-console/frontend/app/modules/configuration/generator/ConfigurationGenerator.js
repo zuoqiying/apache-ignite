@@ -25,13 +25,13 @@ import IgniteCacheDefaults from './defaults/Cache.service';
 import IgniteIGFSDefaults from './defaults/IGFS.service';
 
 import JavaTypes from '../../../services/JavaTypes.service';
-import Version from 'app/modules/configuration/Version.service';
+import VersionService from 'app/modules/configuration/Version.service';
 
 const clusterDflts = new IgniteClusterDefaults();
 const cacheDflts = new IgniteCacheDefaults();
 const igfsDflts = new IgniteIGFSDefaults();
-
 const javaTypes = new JavaTypes(clusterDflts, cacheDflts, igfsDflts);
+const versionService = new VersionService();
 
 export default class IgniteConfigurationGenerator {
     static eventGrps = new IgniteEventGroups();
@@ -2207,6 +2207,6 @@ export default class IgniteConfigurationGenerator {
      * @return {Function}
      */
     static targetSince(targetVer) {
-        return Version.since.bind(Version, targetVer);
+        return versionService.since.bind(versionService, targetVer);
     }
 }
