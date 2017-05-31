@@ -105,16 +105,16 @@ public class CacheClientsConcurrentStartTest extends GridCommonAbstractTest {
 
         cfg.setCommunicationSpi(new TestRecordingCommunicationSpi());
 
-//TODO        if (getTestGridIndex(gridName) >= SRV_CNT)
-//            cfg.setClientMode(true);
-//        else {
+        if (getTestIgniteInstanceIndex(gridName) >= SRV_CNT)
+            cfg.setClientMode(true);
+        else {
             CacheConfiguration ccfgs[] = new CacheConfiguration[CACHES / 2];
 
             for (int i = 0; i < ccfgs.length; i++)
                 ccfgs[i] = cacheConfiguration("cache-" + i);
 
             cfg.setCacheConfiguration(ccfgs);
-//        }
+        }
 
         return cfg;
     }

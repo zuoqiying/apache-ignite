@@ -97,7 +97,7 @@ public class CacheStartOnJoinTest extends GridCommonAbstractTest {
             private boolean delay = true;
 
             @Override protected void startMessageProcess(TcpDiscoveryAbstractMessage msg) {
-//TODO                if (getTestGridName(0).equals(ignite.name())) {
+                if (getTestIgniteInstanceName(0).equals(ignite.name())) {
                     if (msg instanceof TcpDiscoveryJoinRequestMessage) {
                         TcpDiscoveryJoinRequestMessage msg0 = (TcpDiscoveryJoinRequestMessage)msg;
 
@@ -109,7 +109,7 @@ public class CacheStartOnJoinTest extends GridCommonAbstractTest {
                             doSleep(5000);
                         }
                     }
-//                }
+                }
 
                 super.startMessageProcess(msg);
             }
