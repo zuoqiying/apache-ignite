@@ -97,6 +97,9 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
     @GridToStringExclude
     private GridCacheSharedContext<?, ?> sharedCtx;
 
+    /** Joining node state. */
+    private volatile ClusterState joiningNodeState;
+
     //todo may be add init latch
 
     /** Listener. */
@@ -223,9 +226,12 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
     /** {@inheritDoc} */
     @Override public void onDiscoveryDataReceived(UUID joiningNodeId, UUID rmtNodeId, Serializable data) {
         assert data != null;
+        assert data instanceof ClusterState;
 
         if (ctx.localNodeId().equals(joiningNodeId))
             globalState = (ClusterState)data;
+        else
+            joiningNodeState = (ClusterState)data;
     }
 
     /**
@@ -314,6 +320,19 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         }
 
         return cgsFut;
+    }
+
+    /**
+     *
+     */
+    public boolean joiningNodeActive() {
+        assert joiningNodeState != null;
+
+        boolean res = joiningNodeState == ACTIVE;
+
+        joiningNodeState = null;
+
+        return res;
     }
 
     /**

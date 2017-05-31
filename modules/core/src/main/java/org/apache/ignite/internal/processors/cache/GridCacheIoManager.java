@@ -1191,7 +1191,8 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
     public void addHandler(
         int cacheId,
         Class<? extends GridCacheMessage> type,
-        IgniteBiInClosure<UUID, ? extends GridCacheMessage> c) {
+        IgniteBiInClosure<UUID, ? extends GridCacheMessage> c
+    ) {
         int msgIdx = messageIndex(type);
 
         if (msgIdx != -1) {
