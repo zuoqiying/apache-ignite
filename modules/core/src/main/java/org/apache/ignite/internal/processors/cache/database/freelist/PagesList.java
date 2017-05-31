@@ -73,6 +73,9 @@ public abstract class PagesList extends DataStructure {
     /** */
     protected final AtomicLong[] bucketsSize;
 
+    /** */
+    protected volatile boolean changed;
+
     /** Page ID to store list metadata. */
     private final long metaPageId;
 
@@ -125,16 +128,15 @@ public abstract class PagesList extends DataStructure {
      * @param buckets Number of buckets.
      * @param wal Write ahead log manager.
      * @param metaPageId Metadata page ID.
-     * @throws IgniteCheckedException If failed.
      */
-    public PagesList(
+    protected PagesList(
         int cacheId,
         String name,
         PageMemory pageMem,
         int buckets,
         IgniteWriteAheadLogManager wal,
         long metaPageId
-    ) throws IgniteCheckedException {
+    ) {
         super(cacheId, pageMem, wal);
 
         this.name = name;
@@ -245,6 +247,8 @@ public abstract class PagesList extends DataStructure {
                     assert ok;
 
                     bucketsSize[bucket].set(bucketSize);
+
+                    changed = true;
                 }
             }
         }
@@ -263,6 +267,9 @@ public abstract class PagesList extends DataStructure {
         PagesListMetaIO curIo = null;
 
         long nextPageId = metaPageId;
+
+        if (!changed)
+            return;
 
         try {
             for (int bucket = 0; bucket < buckets; bucket++) {
@@ -341,6 +348,8 @@ public abstract class PagesList extends DataStructure {
                 releasePage(pageId, page);
             }
         }
+
+        changed = false;
     }
 
     /**
@@ -673,7 +682,7 @@ public abstract class PagesList extends DataStructure {
         if (idx == -1)
             handlePageFull(pageId, page, pageAddr, io, dataId, dataPage, dataAddr, bucket);
         else {
-            bucketsSize[bucket].incrementAndGet();
+            incrementBucketSize(bucket);
 
             if (needWalDeltaRecord(pageId, page, null))
                 wal.log(new PagesListAddPageRecord(cacheId, pageId, dataId));
@@ -734,7 +743,7 @@ public abstract class PagesList extends DataStructure {
                     pageId, 0L));
 
             // In reuse bucket the page itself can be used as a free page.
-            bucketsSize[bucket].incrementAndGet();
+            incrementBucketSize(bucket);
 
             updateTail(bucket, pageId, newDataId);
         }
@@ -777,7 +786,7 @@ public abstract class PagesList extends DataStructure {
                     if (needWalDeltaRecord(dataId, data, null))
                         wal.log(new DataPageSetFreeListPageRecord(cacheId, dataId, nextId));
 
-                    bucketsSize[bucket].incrementAndGet();
+                    incrementBucketSize(bucket);
 
                     updateTail(bucket, pageId, nextId);
                 }
@@ -863,7 +872,7 @@ public abstract class PagesList extends DataStructure {
 
                         // In reuse bucket the page itself can be used as a free page.
                         if (isReuseBucket(bucket))
-                            bucketsSize[bucket].incrementAndGet();
+                            incrementBucketSize(bucket);
 
                         // Switch to this new page, which is now a part of our list
                         // to add the rest of the bag to the new page.
@@ -883,7 +892,7 @@ public abstract class PagesList extends DataStructure {
                     if (needWalDeltaRecord(prevId, prevPage, walPlc))
                         wal.log(new PagesListAddPageRecord(cacheId, prevId, nextId));
 
-                    bucketsSize[bucket].incrementAndGet();
+                    incrementBucketSize(bucket);
                 }
             }
         }
@@ -1026,7 +1035,7 @@ public abstract class PagesList extends DataStructure {
                     long pageId = io.takeAnyPage(tailAddr);
 
                     if (pageId != 0L) {
-                        bucketsSize[bucket].decrementAndGet();
+                        decrementBucketSize(bucket);
 
                         if (needWalDeltaRecord(tailId, tailPage, null))
                             wal.log(new PagesListRemovePageRecord(cacheId, tailId, pageId));
@@ -1069,7 +1078,7 @@ public abstract class PagesList extends DataStructure {
 
                         assert ok == TRUE : ok;
 
-                        bucketsSize[bucket].decrementAndGet();
+                        decrementBucketSize(bucket);
 
                         if (initIoVers != null) {
                             dataPageId = PageIdUtils.changeType(tailId, FLAG_DATA);
@@ -1154,7 +1163,7 @@ public abstract class PagesList extends DataStructure {
                 if (!rmvd)
                     return false;
 
-                bucketsSize[bucket].decrementAndGet();
+                decrementBucketSize(bucket);
 
                 if (needWalDeltaRecord(pageId, page, null))
                     wal.log(new PagesListRemovePageRecord(cacheId, pageId, dataId));
@@ -1392,6 +1401,32 @@ public abstract class PagesList extends DataStructure {
         finally {
             releasePage(prevId, prevPage);
         }
+    }
+
+    /**
+     * Increments bucket size and updates changed flag.
+     *
+     * @param bucket Bucket number.
+     */
+    private void incrementBucketSize(int bucket) {
+        bucketsSize[bucket].incrementAndGet();
+
+        // Ok to have a race here, see the field javadoc.
+        if (!changed)
+            changed = true;
+    }
+
+    /**
+     * Increments bucket size and updates changed flag.
+     *
+     * @param bucket Bucket number.
+     */
+    private void decrementBucketSize(int bucket) {
+        bucketsSize[bucket].decrementAndGet();
+
+        // Ok to have a race here, see the field javadoc.
+        if (!changed)
+            changed = true;
     }
 
     /**

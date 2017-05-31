@@ -946,6 +946,8 @@ public class IgniteKernal implements IgniteEx, IgniteMXBean, Externalizable {
                     provider.start(ctx.plugins().pluginContextForProvider(provider));
                 }
 
+                ctx.cluster().initListeners();
+
                 // Start platform plugins.
                 if (ctx.config().getPlatformConfiguration() != null)
                     startProcessor(new PlatformPluginProcessor(ctx));fillNodeAttributes(clusterProc.updateNotifierEnabled());}
@@ -3957,6 +3959,20 @@ public class IgniteKernal implements IgniteEx, IgniteMXBean, Externalizable {
             }
 
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override public void runIoTest(
+        long warmup,
+        long duration,
+        int threads,
+        long maxLatency,
+        int rangesCnt,
+        int payLoadSize,
+        boolean procFromNioThread
+    ) {
+        ctx.io().runIoTest(warmup, duration, threads, maxLatency, rangesCnt, payLoadSize, procFromNioThread,
+            new ArrayList(ctx.cluster().get().forServers().forRemotes().nodes()));
     }
 
     /** {@inheritDoc} */

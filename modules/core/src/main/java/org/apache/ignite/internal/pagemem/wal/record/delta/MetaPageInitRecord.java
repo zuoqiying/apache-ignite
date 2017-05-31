@@ -67,10 +67,8 @@ public class MetaPageInitRecord extends InitNewPageRecord {
         return reuseListRoot;
     }
 
-    /**
-     * @return IO type.
-     */
-    public int ioType() {
+    /** {@inheritDoc} */
+    @Override public int ioType() {
         return ioType;
     }
 

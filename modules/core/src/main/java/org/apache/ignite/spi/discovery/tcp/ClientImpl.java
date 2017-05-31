@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -135,6 +136,9 @@ class ClientImpl extends TcpDiscoveryImpl {
 
     /** Remote nodes. */
     private final ConcurrentMap<UUID, TcpDiscoveryNode> rmtNodes = new ConcurrentHashMap8<>();
+
+    /** */
+    private final LinkedHashMap<UUID, Map<Integer, byte[]>> delayDiscoData = new LinkedHashMap<>();
 
     /** Topology history. */
     private final NavigableMap<Long, Collection<ClusterNode>> topHist = new TreeMap<>();
@@ -1751,6 +1755,8 @@ class ClientImpl extends TcpDiscoveryImpl {
 
             nodeAdded = false;
 
+            delayDiscoData.clear();
+
             IgniteClientDisconnectedCheckedException err =
                 new IgniteClientDisconnectedCheckedException(null, "Failed to ping node, " +
                     "client node disconnected.");
@@ -1919,8 +1925,12 @@ class ClientImpl extends TcpDiscoveryImpl {
 
                         DiscoveryDataPacket dataPacket = msg.gridDiscoveryData();
 
-                        if (dataPacket != null && dataPacket.hasJoiningNodeData())
-                            spi.onExchange(dataPacket, U.resolveClassLoader(spi.ignite().configuration()));
+                        if (dataPacket != null && dataPacket.hasJoiningNodeData()) {
+                            if (joining())
+                                delayDiscoData.put(newNodeId, data);
+                            else
+                                spi.onExchange(dataPacket, U.resolveClassLoader(spi.ignite().configuration()));
+                        }
                     }
                 }
                 else {
@@ -1943,6 +1953,14 @@ class ClientImpl extends TcpDiscoveryImpl {
 
                     if (dataContainer != null)
                         spi.onExchange(dataContainer, U.resolveClassLoader(spi.ignite().configuration()));
+
+                    if (!delayDiscoData.isEmpty()) {
+                        for (Map.Entry<UUID, Map<Integer, byte[]>> entry : delayDiscoData.entrySet())
+                            spi.onExchange(entry.getKey(), entry.getKey(), entry.getValue(),
+                                    U.resolveClassLoader(spi.ignite().configuration()));
+
+                        delayDiscoData.clear();
+                    }
 
                     locNode.setAttributes(msg.clientNodeAttributes());
                     locNode.visible(true);

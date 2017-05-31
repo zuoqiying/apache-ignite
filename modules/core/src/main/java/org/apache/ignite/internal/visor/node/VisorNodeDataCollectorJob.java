@@ -24,6 +24,7 @@ import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.FileSystemConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
+import org.apache.ignite.internal.processors.cache.GridCachePartitionExchangeManager;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
 import org.apache.ignite.internal.processors.igfs.IgfsProcessorAdapter;
@@ -241,6 +242,11 @@ public class VisorNodeDataCollectorJob extends VisorJob<VisorNodeDataCollectorTa
     protected VisorNodeDataCollectorJobResult run(VisorNodeDataCollectorJobResult res,
         VisorNodeDataCollectorTaskArg arg) {
         res.setGridName(ignite.name());
+
+        GridCachePartitionExchangeManager<Object, Object> exchange = ignite.context().cache().context().exchange();
+
+        res.readyAffinityVersion(new VisorAffinityTopologyVersion(exchange.readyAffinityVersion()));
+        res.hasPendingExchange(exchange.hasPendingExchange());
 
         res.setTopologyVersion(ignite.cluster().topologyVersion());
 

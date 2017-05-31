@@ -71,6 +71,7 @@ import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.internal.processors.cluster.GridClusterStateProcessor;
 import org.apache.ignite.internal.processors.jobmetrics.GridJobMetrics;
 import org.apache.ignite.internal.processors.security.SecurityContext;
 import org.apache.ignite.internal.processors.service.GridServiceProcessor;
@@ -661,36 +662,58 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                 assert dataBag != null;
                 assert dataBag.joiningNodeId() != null;
 
-                if (ctx.localNodeId().equals(dataBag.joiningNodeId())) {
-                    for (GridComponent c : ctx.components())
-                        c.collectJoiningNodeData(dataBag);
-                }
-                else {
-                    for (GridComponent c : ctx.components())
-                        c.collectGridNodeData(dataBag);
+                Map<Integer, Serializable> data = new HashMap<>();
+
+                Serializable val = ctx.state().collectDiscoveryData(nodeId);
+
+                int type = ctx.state().discoveryDataType().ordinal();
+
+                assert val != null;
+
+                data.put(type, val);
+
+                for (GridComponent comp : ctx.components()) {
+                    if (comp instanceof GridClusterStateProcessor)
+                        continue;
+
+                    Serializable compData = comp.collectDiscoveryData(nodeId);
+
+                    if (compData != null) {
+                        assert comp.discoveryDataType() != null;
+
+                        data.put(comp.discoveryDataType().ordinal(), compData);
+                    }
                 }
 
                 return dataBag;
             }
 
-            @Override public void onExchange(DiscoveryDataBag dataBag) {
-                if (ctx.localNodeId().equals(dataBag.joiningNodeId())) {
-                    //NodeAdded msg reached joining node after round-trip over the ring
-                    for (GridComponent c : ctx.components()) {
-                        if (c.discoveryDataType() != null)
-                            c.onGridDataReceived(dataBag.gridDiscoveryData(c.discoveryDataType().ordinal()));
-                    }
-                }
-                else {
-                    //discovery data from newly joined node has to be applied to the current old node
-                    for (GridComponent c : ctx.components()) {
-                        if (c.discoveryDataType() != null) {
-                            JoiningNodeDiscoveryData data =
-                                    dataBag.newJoinerDiscoveryData(c.discoveryDataType().ordinal());
+            @Override public void onExchange(UUID joiningNodeId, UUID nodeId, Map<Integer, Serializable> data) {
+                GridClusterStateProcessor stateProc = ctx.state();
 
-                            if (data != null)
-                                c.onJoiningNodeDataReceived(data);
+                int type = stateProc.discoveryDataType().ordinal();
+
+                Serializable data0 = data.get(type);
+
+                if (data0 != null)
+                    stateProc.onDiscoveryDataReceived(joiningNodeId, nodeId, data0);
+
+                for (Map.Entry<Integer, Serializable> e : data.entrySet()) {
+                    GridComponent comp = null;
+
+                    for (GridComponent c : ctx.components()) {
+                        if (c.discoveryDataType() != null && c.discoveryDataType().ordinal() == e.getKey()) {
+                            comp = c;
+
+                            break;
                         }
+                    }
+
+                    if (comp != null && !(comp instanceof GridClusterStateProcessor))
+                        comp.onDiscoveryDataReceived(joiningNodeId, nodeId, e.getValue());
+                    else {
+                        if (log.isDebugEnabled())
+                            log.debug("Received discovery data for unknown component: " + e.getKey());
                     }
                 }
             }
@@ -1066,7 +1089,7 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
             locMarshStrSerVer2;
 
         boolean locDelayAssign = locNode.attribute(ATTR_LATE_AFFINITY_ASSIGNMENT);
-        boolean locActiveOnStart = locNode.attribute(ATTR_ACTIVE_ON_START);
+
 
         Boolean locSrvcCompatibilityEnabled = locNode.attribute(ATTR_SERVICES_COMPATIBILITY_MODE);
 
@@ -1154,6 +1177,7 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                     ", rmtAddrs=" + U.addressesAsString(n) + ']');
             }
 
+           /* boolean locActiveOnStart = locNode.attribute(ATTR_ACTIVE_ON_START);
             boolean rmtActiveOnStart = n.attribute(ATTR_ACTIVE_ON_START);
 
             if (locActiveOnStart != rmtActiveOnStart) {
@@ -1163,7 +1187,7 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                     ", rmtId8=" + U.id8(n.id()) +
                     ", rmtActiveOnStart=" + rmtActiveOnStart +
                     ", rmtAddrs=" + U.addressesAsString(n) + ']');
-            }
+            }*/
 
             Boolean rmtSrvcCompatibilityEnabled = n.attribute(ATTR_SERVICES_COMPATIBILITY_MODE);
 

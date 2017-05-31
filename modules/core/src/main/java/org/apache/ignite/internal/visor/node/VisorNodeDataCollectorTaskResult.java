@@ -34,6 +34,7 @@ import org.apache.ignite.internal.visor.event.VisorGridEvent;
 import org.apache.ignite.internal.visor.igfs.VisorIgfs;
 import org.apache.ignite.internal.visor.igfs.VisorIgfsEndpoint;
 import org.apache.ignite.internal.visor.util.VisorExceptionWrapper;
+import org.apache.ignite.internal.LessNamingBean;
 
 /**
  * Data collector task result.
@@ -88,6 +89,13 @@ public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
         // No-op.
     }
 
+    /** Topology version of latest completed partition exchange from nodes. */
+    private Map<UUID, VisorAffinityTopologyVersion> readyTopVers = new HashMap<>();
+
+    /** Whether pending exchange future exists from nodes. */
+    private Map<UUID, Boolean> pendingExchanges = new HashMap<>();
+
+
     /**
      * @return {@code true} If no data was collected.
      */
@@ -103,7 +111,9 @@ public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
             cachesEx.isEmpty() &&
             igfss.isEmpty() &&
             igfsEndpoints.isEmpty() &&
-            igfssEx.isEmpty();
+            igfssEx.isEmpty() &&
+            readyTopVers.isEmpty() &&
+            pendingExchanges.isEmpty();
     }
 
     /**
@@ -236,6 +246,20 @@ public class VisorNodeDataCollectorTaskResult extends VisorDataTransferObject {
         igfss = U.readMap(in);
         igfsEndpoints = U.readMap(in);
         igfssEx = U.readMap(in);
+    }
+
+    /**
+     * @return Topology version of latest completed partition exchange from nodes.
+     */
+    public Map<UUID, VisorAffinityTopologyVersion> readyAffinityVersions() {
+        return readyTopVers;
+    }
+
+    /**
+     * @return Whether pending exchange future exists from nodes.
+     */
+    public Map<UUID, Boolean> pendingExchanges() {
+        return pendingExchanges;
     }
 
     /** {@inheritDoc} */

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
@@ -69,6 +70,12 @@ public class VisorNodeDataCollectorJobResult extends VisorDataTransferObject {
 
     /** Errors count. */
     private long errCnt;
+
+    /** Topology version of latest completed partition exchange. */
+    private VisorAffinityTopologyVersion readyTopVer;
+
+    /** Whether pending exchange future exists. */
+    private boolean hasPendingExchange;
 
     /**
      * Default constructor.
@@ -201,6 +208,34 @@ public class VisorNodeDataCollectorJobResult extends VisorDataTransferObject {
      */
     public void setErrorCount(long errCnt) {
         this.errCnt = errCnt;
+    }
+
+    /**
+     * @return Topology version of latest completed partition exchange.
+     */
+    public VisorAffinityTopologyVersion readyAffinityVersion() {
+        return readyTopVer;
+    }
+
+    /**
+     * @param readyTopVer Topology version of latest completed partition exchange.
+     */
+    public void readyAffinityVersion(VisorAffinityTopologyVersion readyTopVer) {
+        this.readyTopVer = readyTopVer;
+    }
+
+    /**
+     * @return Whether pending exchange future exists.
+     */
+    public boolean hasPendingExchange() {
+        return hasPendingExchange;
+    }
+
+    /**
+     * @param hasPendingExchange Whether pending exchange future exists.
+     */
+    public void hasPendingExchange(boolean hasPendingExchange) {
+        this.hasPendingExchange = hasPendingExchange;
     }
 
     /** {@inheritDoc} */
