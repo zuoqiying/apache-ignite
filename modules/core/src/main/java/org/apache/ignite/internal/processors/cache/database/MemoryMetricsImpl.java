@@ -185,4 +185,18 @@ public class MemoryMetricsImpl implements MemoryMetrics {
     void freeList(FreeListImpl freeList) {
         this.freeList = freeList;
     }
+
+    /**
+     * @return rateTimeInterval
+     */
+    protected int getRateTimeInterval() {
+        return rateTimeInterval;
+    }
+
+    /**
+     *
+     */
+    protected int getSubIntervals() {
+        return subInts;
+    }
 }

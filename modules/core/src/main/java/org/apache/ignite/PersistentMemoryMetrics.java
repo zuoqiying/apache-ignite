@@ -19,7 +19,7 @@ package org.apache.ignite;
 /**
  *
  */
-public interface PersistenceMemoryMetrics extends MemoryMetrics {
+public interface PersistentMemoryMetrics extends MemoryMetrics {
     /**
      *
      */

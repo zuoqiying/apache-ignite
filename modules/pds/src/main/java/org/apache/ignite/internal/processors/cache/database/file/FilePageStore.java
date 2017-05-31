@@ -32,6 +32,7 @@ import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.store.PageStore;
+import org.apache.ignite.internal.processors.cache.database.PersistentMemoryMetricsImpl;
 import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
 import org.apache.ignite.internal.processors.cache.database.wal.crc.IgniteDataIntegrityViolationException;
 import org.apache.ignite.internal.processors.cache.database.wal.crc.PureJavaCrc32;
@@ -74,6 +75,9 @@ public class FilePageStore implements PageStore {
     private final int pageSize;
 
     /** */
+    private PersistentMemoryMetricsImpl memMetrics;
+
+    /** */
     private volatile boolean inited;
 
     /** */
@@ -91,7 +95,7 @@ public class FilePageStore implements PageStore {
     /**
      * @param file File.
      */
-    public FilePageStore(byte type, File file, MemoryConfiguration cfg) {
+    public FilePageStore(byte type, File file, MemoryConfiguration cfg, PersistentMemoryMetricsImpl memMetrics) {
         this.type = type;
 
         cfgFile = file;
@@ -100,6 +104,8 @@ public class FilePageStore implements PageStore {
         allocated = new AtomicLong();
 
         pageSize = dbCfg.getPageSize();
+
+        this.memMetrics = memMetrics;
     }
 
     /** {@inheritDoc} */
@@ -496,6 +502,8 @@ public class FilePageStore implements PageStore {
     /** {@inheritDoc} */
     @Override public long allocatePage() throws IgniteCheckedException {
         init();
+
+        memMetrics.incrementPagesOnDisk();
 
         long off = allocPage();
 

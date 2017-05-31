@@ -46,6 +46,8 @@ import org.apache.ignite.internal.pagemem.store.PageStore;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter;
 import org.apache.ignite.internal.processors.cache.database.IgniteCacheSnapshotManager;
+import org.apache.ignite.internal.processors.cache.database.MemoryMetricsImpl;
+import org.apache.ignite.internal.processors.cache.database.PersistentMemoryMetricsImpl;
 import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.marshaller.Marshaller;
@@ -378,10 +380,15 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
         if (dirExisted && !idxFile.exists())
             cachesWithoutIdx.add(CU.cacheId(ccfg.getName()));
 
+        PersistentMemoryMetricsImpl memMetrics = (PersistentMemoryMetricsImpl) cctx
+            .database()
+            .memoryPolicy(ccfg.getMemoryPolicyName())
+            .memoryMetrics();
+
         FilePageStore idxStore = new FilePageStore(
             PageMemory.FLAG_IDX,
             idxFile,
-            cctx.kernalContext().config().getMemoryConfiguration());
+            cctx.kernalContext().config().getMemoryConfiguration(), memMetrics);
 
         FilePageStore[] partStores = new FilePageStore[ccfg.getAffinity().partitions()];
 
@@ -389,7 +396,8 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
             FilePageStore partStore = new FilePageStore(
                 PageMemory.FLAG_DATA,
                 new File(cacheWorkDir, String.format(PART_FILE_TEMPLATE, partId)),
-                cctx.kernalContext().config().getMemoryConfiguration()
+                cctx.kernalContext().config().getMemoryConfiguration(),
+                memMetrics
             );
 
             partStores[partId] = partStore;

@@ -16,14 +16,15 @@
  */
 package org.apache.ignite.internal.processors.cache.database;
 
-import org.apache.ignite.PersistenceMemoryMetrics;
+import org.apache.ignite.PersistentMemoryMetrics;
 import org.apache.ignite.configuration.MemoryPolicyConfiguration;
 import org.apache.ignite.internal.processors.cache.ratemetrics.HitRateMetrics;
+import org.jsr166.LongAdder8;
 
 /**
  *
  */
-public class PersistenceMemoryMetricsImpl extends MemoryMetricsImpl implements PersistenceMemoryMetrics {
+public class PersistentMemoryMetricsImpl extends MemoryMetricsImpl implements PersistentMemoryMetrics {
     /** */
     private HitRateMetrics pageEvictionRate;
 
@@ -31,25 +32,41 @@ public class PersistenceMemoryMetricsImpl extends MemoryMetricsImpl implements P
     private HitRateMetrics pageReloadRate;
 
     /** */
-    private long pageEvictionReloadInterval;
+    private LongAdder8 dirtyPages = new LongAdder8();
 
-    public PersistenceMemoryMetricsImpl(MemoryPolicyConfiguration memPlcCfg) {
+    /** */
+    private LongAdder8 pagesOnDisk = new LongAdder8();
+
+    /**
+     * @param memPlcCfg Mem policy config.
+     */
+    public PersistentMemoryMetricsImpl(MemoryPolicyConfiguration memPlcCfg) {
         super(memPlcCfg);
+
+        pageEvictionRate = new HitRateMetrics(getRateTimeInterval(), getSubIntervals());
+
+        pageReloadRate = new HitRateMetrics(getRateTimeInterval(), getSubIntervals());
     }
 
     /** {@inheritDoc} */
     @Override public long getPageEvictionRate() {
         if (metricsEnabled)
-            return pageEvictionRate.getRate() / pageEvictionReloadInterval;
+            return pageEvictionRate.getRate() / getRateTimeInterval();
 
         return 0;
     }
 
+    /**
+     *
+     */
     void incrementEvictedPages() {
         if (metricsEnabled)
             pageEvictionRate.onHit();
     }
 
+    /**
+     *
+     */
     public void incrementReloadedPages() {
         if (metricsEnabled)
             pageReloadRate.onHit();
@@ -58,32 +75,56 @@ public class PersistenceMemoryMetricsImpl extends MemoryMetricsImpl implements P
     /** {@inheritDoc} */
     @Override public long getPageReloadRate() {
         if (metricsEnabled)
-            return pageReloadRate.getRate() / pageEvictionReloadInterval;
+            return pageReloadRate.getRate() / getRateTimeInterval();
 
         return 0;
     }
 
     /** {@inheritDoc} */
     @Override public long getDirtyPagesAmount() {
-        return 0;
+        if (metricsEnabled)
+            return dirtyPages.longValue();
+
+        return 0L;
     }
 
     /** {@inheritDoc} */
     @Override public long getPagesOnDiskAmount() {
-        return 0;
+        if (metricsEnabled)
+            return pagesOnDisk.longValue();
+
+        return 0L;
     }
 
     /**
      *
      */
-    public void incrementDirty() {
-
+    public void incrementDirtyPages() {
+        if (metricsEnabled)
+            dirtyPages.increment();
     }
 
     /**
      *
      */
-    public void decrementDirty() {
+    public void decrementDirtyPages() {
+        if (metricsEnabled)
+            dirtyPages.decrement();
+    }
 
+    /**
+     *
+     */
+    public void resetDirtyPages() {
+        if (metricsEnabled)
+            dirtyPages.reset();
+    }
+
+    /**
+     *
+     */
+    public void incrementPagesOnDisk() {
+        if (metricsEnabled)
+            pagesOnDisk.increment();
     }
 }

@@ -55,7 +55,7 @@ import org.apache.ignite.internal.pagemem.wal.record.delta.InitNewPageRecord;
 import org.apache.ignite.internal.pagemem.wal.record.delta.PageDeltaRecord;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.database.CheckpointLockStateChecker;
-import org.apache.ignite.internal.processors.cache.database.PersistenceMemoryMetricsImpl;
+import org.apache.ignite.internal.processors.cache.database.PersistentMemoryMetricsImpl;
 import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
 import org.apache.ignite.internal.processors.cache.database.tree.io.TrackingPageIO;
 import org.apache.ignite.internal.processors.cache.database.wal.crc.IgniteDataIntegrityViolationException;
@@ -223,7 +223,7 @@ public class PageMemoryImpl implements PageMemoryEx {
     private long[] sizes;
 
     /** */
-    private PersistenceMemoryMetricsImpl memMetrics;
+    private PersistentMemoryMetricsImpl memMetrics;
 
     /**
      * @param directMemoryProvider Memory allocator to use.
@@ -240,7 +240,7 @@ public class PageMemoryImpl implements PageMemoryEx {
         GridInClosure3X<FullPageId, ByteBuffer, Integer> flushDirtyPage,
         GridInClosure3X<Long, FullPageId, PageMemoryEx> changeTracker,
         CheckpointLockStateChecker stateChecker,
-        PersistenceMemoryMetricsImpl memMetrics
+        PersistentMemoryMetricsImpl memMetrics
     ) {
         assert sharedCtx != null;
 
@@ -778,6 +778,8 @@ public class PageMemoryImpl implements PageMemoryEx {
             seg.dirtyPages = new GridConcurrentHashSet<>();
         }
 
+        memMetrics.resetDirtyPages();
+
         return new GridMultiCollectionWrapper<>(collections);
     }
 
@@ -1273,11 +1275,19 @@ public class PageMemoryImpl implements PageMemoryEx {
         boolean wasDirty = PageHeader.dirty(absPtr, dirty);
 
         if (dirty) {
-            if (!wasDirty || forceAdd)
-                segment(pageId.cacheId(), pageId.pageId()).dirtyPages.add(pageId);
+            if (!wasDirty || forceAdd) {
+                boolean added = segment(pageId.cacheId(), pageId.pageId()).dirtyPages.add(pageId);
+
+                if (added)
+                    memMetrics.incrementDirtyPages();
+            }
         }
-        else
-            segment(pageId.cacheId(), pageId.pageId()).dirtyPages.remove(pageId);
+        else {
+            boolean removed = segment(pageId.cacheId(), pageId.pageId()).dirtyPages.remove(pageId);
+
+            if (removed)
+                memMetrics.decrementDirtyPages();
+        }
     }
 
     /**
