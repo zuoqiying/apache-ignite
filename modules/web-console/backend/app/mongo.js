@@ -101,7 +101,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
 
     // Define Domain model schema.
     const DomainModelSchema = new Schema({
-        space: {type: ObjectId, ref: 'Space', index: true},
+        space: {type: ObjectId, ref: 'Space', index: true, required: true},
         caches: [{type: ObjectId, ref: 'Cache'}],
         queryMetadata: {type: String, enum: ['Annotations', 'Configuration']},
         kind: {type: String, enum: ['query', 'store', 'both']},
@@ -139,12 +139,13 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
 
     // Define Cache schema.
     const CacheSchema = new Schema({
-        space: {type: ObjectId, ref: 'Space', index: true},
+        space: {type: ObjectId, ref: 'Space', index: true, required: true},
         name: {type: String},
         clusters: [{type: ObjectId, ref: 'Cluster'}],
         domains: [{type: ObjectId, ref: 'DomainModel'}],
         cacheMode: {type: String, enum: ['PARTITIONED', 'REPLICATED', 'LOCAL']},
         atomicityMode: {type: String, enum: ['ATOMIC', 'TRANSACTIONAL']},
+        partitionLossPolicy: {type: String, enum: ['READ_ONLY_SAFE', 'READ_ONLY_ALL', 'READ_WRITE_SAFE', 'READ_WRITE_ALL', 'IGNORE']},
 
         affinity: {
             kind: {type: String, enum: ['Default', 'Rendezvous', 'Fair', 'Custom']},
@@ -183,6 +184,8 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         offHeapMaxMemory: Number,
         startSize: Number,
         swapEnabled: Boolean,
+
+        onheapCacheEnabled: Boolean,
 
         evictionPolicy: {
             kind: {type: String, enum: ['LRU', 'FIFO', 'SORTED']},
@@ -260,6 +263,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         writeBehindFlushSize: Number,
         writeBehindFlushFrequency: Number,
         writeBehindFlushThreadCount: Number,
+        writeBehindCoalescing: {type: Boolean, default: true},
 
         invalidate: Boolean,
         defaultLockTimeout: Number,
@@ -273,6 +277,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         sqlFunctionClasses: [String],
         snapshotableIndex: Boolean,
         queryDetailMetricsSize: Number,
+        queryParallelism: Number,
         statisticsEnabled: Boolean,
         managementEnabled: Boolean,
         readFromBackup: Boolean,
@@ -321,7 +326,11 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
                     maxSize: Number
                 }
             }
-        }
+        },
+        evictionFilter: String,
+        memoryPolicyName: String,
+        sqlIndexMaxInlineSize: Number,
+        topologyValidator: String
     });
 
     CacheSchema.index({name: 1, space: 1}, {unique: true});
@@ -330,7 +339,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
     result.Cache = mongoose.model('Cache', CacheSchema);
 
     const IgfsSchema = new Schema({
-        space: {type: ObjectId, ref: 'Space', index: true},
+        space: {type: ObjectId, ref: 'Space', index: true, required: true},
         name: {type: String},
         clusters: [{type: ObjectId, ref: 'Cluster'}],
         affinnityGroupSize: Number,
@@ -371,7 +380,8 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             userName: String
         },
         colocateMetadata: Boolean,
-        relaxedConsistency: Boolean
+        relaxedConsistency: Boolean,
+        updateFileLengthOnFlush: Boolean
     });
 
     IgfsSchema.index({name: 1, space: 1}, {unique: true});
@@ -381,8 +391,9 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
 
     // Define Cluster schema.
     const ClusterSchema = new Schema({
-        space: {type: ObjectId, ref: 'Space', index: true},
+        space: {type: ObjectId, ref: 'Space', index: true, required: true},
         name: {type: String},
+        activeOnStart: {type: Boolean, default: true},
         localHost: String,
         discovery: {
             localAddress: String,
@@ -872,6 +883,82 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             Custom: {
                 className: String
             }
+        },
+        warmupClosure: String,
+        hadoopConfiguration: {
+            mapReducePlanner: {
+                kind: {type: String, enum: ['Weighted', 'Custom']},
+                Weighted: {
+                    localMapperWeight: Number,
+                    remoteMapperWeight: Number,
+                    localReducerWeight: Number,
+                    remoteReducerWeight: Number,
+                    preferLocalReducerThresholdWeight: Number
+                },
+                Custom: {
+                    className: String
+                }
+            },
+            finishedJobInfoTtl: Number,
+            maxParallelTasks: Number,
+            maxTaskQueueSize: Number,
+            nativeLibraryNames: [String]
+        },
+        serviceConfigurations: [{
+            name: String,
+            service: String,
+            maxPerNodeCount: Number,
+            totalCount: Number,
+            nodeFilter: {
+                kind: {type: String, enum: ['Default', 'Exclude', 'IGFS', 'OnNodes', 'Custom']},
+                Exclude: {
+                    nodeId: String
+                },
+                IGFS: {
+                    igfs: {type: ObjectId, ref: 'Igfs'}
+                },
+                Custom: {
+                    className: String
+                }
+            },
+            cache: {type: ObjectId, ref: 'Cache'},
+            affinityKey: String
+        }],
+        cacheSanityCheckEnabled: {type: Boolean, default: true},
+        classLoader: String,
+        consistentId: String,
+        failureDetectionTimeout: Number,
+        clientFailureDetectionTimeout: Number,
+        workDirectory: String,
+        lateAffinityAssignment: Boolean,
+        utilityCacheKeepAliveTime: Number,
+        asyncCallbackPoolSize: Number,
+        dataStreamerThreadPoolSize: Number,
+        queryThreadPoolSize: Number,
+        stripedPoolSize: Number,
+        serviceThreadPoolSize: Number,
+        utilityCacheThreadPoolSize: Number,
+        executorConfiguration: [{
+            name: String,
+            size: Number
+        }],
+        memoryConfiguration: {
+            systemCacheInitialSize: Number,
+            systemCacheMaxSize: Number,
+            pageSize: Number,
+            concurrencyLevel: Number,
+            defaultMemoryPolicyName: String,
+            defaultMemoryPolicySize: Number,
+            memoryPolicies: [{
+                name: String,
+                initialSize: Number,
+                maxSize: Number,
+                swapFilePath: String,
+                pageEvictionMode: {type: String, enum: ['DISABLED', 'RANDOM_LRU', 'RANDOM_2_LRU']},
+                evictionThreshold: Number,
+                emptyPagesPoolSize: Number,
+                metricsEnabled: Boolean
+            }]
         }
     });
 
@@ -882,7 +969,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
 
     // Define Notebook schema.
     const NotebookSchema = new Schema({
-        space: {type: ObjectId, ref: 'Space', index: true},
+        space: {type: ObjectId, ref: 'Space', index: true, required: true},
         name: String,
         expandedParagraphs: [Number],
         paragraphs: [{

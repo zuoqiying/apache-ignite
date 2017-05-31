@@ -18,9 +18,40 @@
 import infoMessageTemplateUrl from 'views/templates/message.tpl.pug';
 
 // Controller for Caches screen.
-export default ['cachesController', [
-    '$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteInput', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils', 'IgniteLegacyTable',
-    function($scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Confirm, Input, Loading, ModelNormalizer, UnsavedChangesGuard, Resource, ErrorPopover, FormUtils, LegacyTable) {
+export default ['$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteInput', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils', 'IgniteLegacyTable', 'IgniteVersion',
+    function($scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Confirm, Input, Loading, ModelNormalizer, UnsavedChangesGuard, Resource, ErrorPopover, FormUtils, LegacyTable, Version) {
+        this.configuration = Version.igniteVersionIn.bind(Version);
+
+        const rebuildDropdowns = () => {
+            $scope.affinityFunction = [
+                {value: 'Rendezvous', label: 'Rendezvous'},
+                {value: 'Custom', label: 'Custom'},
+                {value: null, label: 'Default'}
+            ];
+
+            if (this.configuration(['1.0.0', '2.0.0']))
+                $scope.affinityFunction.splice(1, 0, {value: 'Fair', label: 'Fair'});
+        };
+
+        rebuildDropdowns();
+
+        const filterModel = () => {
+            if ($scope.backupItem) {
+                if (this.configuration('2.0.0')) {
+                    if (_.get($scope.backupItem, 'affinity.kind') === 'Fair')
+                        $scope.backupItem.affinity.kind = null;
+                }
+            }
+        };
+
+        Version.apiVer.subscribe({
+            next: () => {
+                rebuildDropdowns();
+
+                filterModel();
+            }
+        });
+
         UnsavedChangesGuard.install($scope);
 
         const emptyCache = {empty: true};
@@ -34,6 +65,7 @@ export default ['cachesController', [
                     hibernateProperties: []
                 }
             },
+            writeBehindCoalescing: true,
             nearConfiguration: {},
             sqlFunctionClasses: []
         };
@@ -284,6 +316,8 @@ export default ['cachesController', [
                 setOffHeapMode($scope.backupItem);
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
+
+                filterModel();
 
                 if (LegacyUtils.getQueryVariable('new'))
                     $state.go('base.configuration.caches');
@@ -616,4 +650,4 @@ export default ['cachesController', [
                 });
         };
     }
-]];
+];

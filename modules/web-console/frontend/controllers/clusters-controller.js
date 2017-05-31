@@ -16,16 +16,68 @@
  */
 
 // Controller for Clusters screen.
-export default ['clustersController', [
-    '$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteInput', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteEventGroups', 'DemoInfo', 'IgniteLegacyTable', 'IgniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils',
-    function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Input, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable, Resource, ErrorPopover, FormUtils) {
+export default ['$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteInput', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteEventGroups', 'DemoInfo', 'IgniteLegacyTable', 'IgniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils', 'IgniteVersion',
+    function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Input, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable, Resource, ErrorPopover, FormUtils, Version) {
+        let __original_value;
+
+        this.configuration = Version.igniteVersionIn.bind(Version);
+
+        const rebuildDropdowns = () => {
+            $scope.eventStorage = [
+                {value: 'Memory', label: 'Memory'},
+                {value: 'Custom', label: 'Custom'}
+            ];
+
+            $scope.marshallerVariant = [
+                {value: 'JdkMarshaller', label: 'JdkMarshaller'},
+                {value: null, label: 'Default'}
+            ];
+
+            if (this.configuration('2.0.0')) {
+                $scope.eventStorage.push({value: null, label: 'Disabled'});
+
+                $scope.eventGroups = _.filter(igniteEventGroups, ({value}) => value !== 'EVTS_SWAPSPACE');
+            }
+            else {
+                $scope.eventGroups = igniteEventGroups;
+
+                $scope.marshallerVariant.splice(0, 0, {value: 'OptimizedMarshaller', label: 'OptimizedMarshaller'});
+            }
+        };
+
+        rebuildDropdowns();
+
+        const filterModel = () => {
+            if ($scope.backupItem) {
+                if (this.configuration('2.0.0')) {
+                    const evtGrps = _.map($scope.eventGroups, 'value');
+
+                    _.remove(__original_value, (evtGrp) => !_.includes(evtGrps, evtGrp));
+                    _.remove($scope.backupItem.includeEventTypes, (evtGrp) => !_.includes(evtGrps, evtGrp));
+
+                    if (_.get($scope.backupItem, 'marshaller.kind') === 'OptimizedMarshaller')
+                        $scope.backupItem.marshaller.kind = null;
+                }
+                else if ($scope.backupItem && !_.get($scope.backupItem, 'eventStorage.kind'))
+                    _.set($scope.backupItem, 'eventStorage.kind', 'Memory');
+            }
+        };
+
+        Version.apiVer.subscribe({
+            next: () => {
+                rebuildDropdowns();
+
+                filterModel();
+            }
+        });
+
         UnsavedChangesGuard.install($scope);
 
         const emptyCluster = {empty: true};
 
-        let __original_value;
-
         const blank = {
+            activeOnStart: true,
+            cacheSanityCheckEnabled: true,
             atomicConfiguration: {},
             binaryConfiguration: {},
             cacheKeyConfiguration: [],
@@ -50,7 +102,15 @@ export default ['clustersController', [
             },
             swapSpaceSpi: {},
             transactionConfiguration: {},
-            collision: {}
+            collision: {},
+            memoryConfiguration: {
+                memoryPolicies: []
+            },
+            hadoopConfiguration: {
+                nativeLibraryNames: []
+            },
+            serviceConfigurations: [],
+            executorConfiguration: []
         };
 
         const pairFields = {
@@ -150,6 +210,12 @@ export default ['clustersController', [
                     else
                         $scope.backupItem.checkpointSpi = [newCheckpointCfg];
                 }
+                else if (field.type === 'memoryPolicies')
+                    $scope.backupItem.memoryConfiguration.memoryPolicies.push({});
+                else if (field.type === 'serviceConfigurations')
+                    $scope.backupItem.serviceConfigurations.push({});
+                else if (field.type === 'executorConfigurations')
+                    $scope.backupItem.executorConfiguration.push({});
                 else
                     LegacyTable.tableNewItem(field);
             }
@@ -237,8 +303,6 @@ export default ['clustersController', [
             {value: null, label: 'Not set'}
         ];
 
-        $scope.eventGroups = igniteEventGroups;
-
         $scope.clusters = [];
 
         function _clusterLbl(cluster) {
@@ -282,9 +346,6 @@ export default ['clustersController', [
                     if (!cluster.logger)
                         cluster.logger = {Log4j: { mode: 'Default'}};
 
-                    if (!cluster.eventStorage)
-                        cluster.eventStorage = { kind: 'Memory' };
-
                     if (!cluster.peerClassLoadingLocalClassPathExclude)
                         cluster.peerClassLoadingLocalClassPathExclude = [];
 
@@ -294,6 +355,18 @@ export default ['clustersController', [
                             scanners: []
                         }};
                     }
+
+                    if (!cluster.memoryConfiguration)
+                        cluster.memoryConfiguration = { memoryPolicies: [] };
+
+                    if (!cluster.hadoopConfiguration)
+                        cluster.hadoopConfiguration = { nativeLibraryNames: [] };
+
+                    if (!cluster.serviceConfigurations)
+                        cluster.serviceConfigurations = [];
+
+                    if (!cluster.executorConfiguration)
+                        cluster.executorConfiguration = [];
                 });
 
                 if ($state.params.linkId)
@@ -337,6 +410,9 @@ export default ['clustersController', [
                             (selCache) => selCache === cache.value
                         )
                     );
+
+                    $scope.clusterCachesEmpty = _.clone($scope.clusterCaches);
+                    $scope.clusterCachesEmpty.push({label: 'Not set'});
                 }, true);
 
                 $scope.$watch('ui.activePanels.length', () => {
@@ -358,6 +434,7 @@ export default ['clustersController', [
             });
 
         $scope.clusterCaches = [];
+        $scope.clusterCachesEmpty = [];
 
         $scope.selectItem = function(item, backup) {
             function selectItem() {
@@ -389,6 +466,8 @@ export default ['clustersController', [
 
                 __original_value = ModelNormalizer.normalize($scope.backupItem);
 
+                filterModel();
+
                 if (LegacyUtils.getQueryVariable('new'))
                     $state.go('base.configuration.clusters');
             }
@@ -411,7 +490,6 @@ export default ['clustersController', [
                 communication: {tcpNoDelay: true},
                 connector: {noDelay: true},
                 collision: {kind: 'Noop', JobStealing: {stealingEnabled: true}, PriorityQueue: {starvationPreventionEnabled: true}},
-                eventStorage: {kind: 'Memory'},
                 failoverSpi: [],
                 logger: {Log4j: { mode: 'Default'}},
                 caches: linkId && _.find($scope.caches, {value: linkId}) ? [linkId] : [],
@@ -612,6 +690,36 @@ export default ['clustersController', [
             }));
         }
 
+        function checkMemoryConfiguration(item) {
+            const memory = item.memoryConfiguration;
+
+            if ((memory.systemCacheMaxSize || 104857600) < (memory.systemCacheInitialSize || 41943040))
+                return ErrorPopover.show('systemCacheMaxSize', 'System cache maximum size should be greater than initial size', $scope.ui, 'memoryConfiguration');
+
+            const pageSize = memory.pageSize;
+
+            if (pageSize > 0 && (pageSize & (pageSize - 1) !== 0)) {
+                ErrorPopover.show('MemoryConfigurationPageSize', 'Page size must be power of 2', $scope.ui, 'memoryConfiguration');
+
+                return false;
+            }
+
+            const dfltPlc = memory.defaultMemoryPolicyName;
+
+            if (!_.isEmpty(dfltPlc) && !_.find(memory.memoryPolicies, (plc) => plc.name === dfltPlc))
+                return ErrorPopover.show('defaultMemoryPolicyName', 'Memory policy with that name should be configured', $scope.ui, 'memoryConfiguration');
+
+            return _.isNil(_.find(memory.memoryPolicies, (curPlc, curIx) => {
+                if (_.find(memory.memoryPolicies, (plc, ix) => curIx > ix && (curPlc.name || 'default') === (plc.name || 'default'))) {
+                    ErrorPopover.show('MemoryPolicyName' + curIx, 'Memory policy with that name is already configured', $scope.ui, 'memoryConfiguration');
+
+                    return true;
+                }
+
+                return false;
+            }));
+        }
+
         function checkODBC(item) {
             if (_.get(item, 'odbc.odbcEnabled') && _.get(item, 'marshaller.kind'))
                 return ErrorPopover.show('odbcEnabledInput', 'ODBC can only be used with BinaryMarshaller', $scope.ui, 'odbcConfiguration');
@@ -639,6 +747,18 @@ export default ['clustersController', [
             return true;
         }
 
+        function checkServiceConfiguration(item) {
+            return _.isNil(_.find(_.get(item, 'serviceConfigurations'), (curSrv, curIx) => {
+                if (_.find(item.serviceConfigurations, (srv, ix) => curIx > ix && curSrv.name === srv.name)) {
+                    ErrorPopover.show('ServiceName' + curIx, 'Service configuration with that name is already configured', $scope.ui, 'serviceConfiguration');
+
+                    return true;
+                }
+
+                return false;
+            }));
+        }
+
         function checkSslConfiguration(item) {
             const r = item.connector;
 
@@ -662,7 +782,15 @@ export default ['clustersController', [
             if (item.rebalanceThreadPoolSize && item.systemThreadPoolSize && item.systemThreadPoolSize <= item.rebalanceThreadPoolSize)
                 return ErrorPopover.show('rebalanceThreadPoolSizeInput', 'Rebalance thread pool size exceed or equals System thread pool size!', $scope.ui, 'pools');
 
-            return true;
+            return _.isNil(_.find(_.get(item, 'executorConfiguration'), (curExec, curIx) => {
+                if (_.find(item.executorConfiguration, (srv, ix) => curIx > ix && curExec.name === srv.name)) {
+                    ErrorPopover.show('ExecutorName' + curIx, 'Executor configuration with that name is already configured', $scope.ui, 'pools');
+
+                    return true;
+                }
+
+                return false;
+            }));
         }
 
         // Check cluster logical consistency.
@@ -699,10 +827,16 @@ export default ['clustersController', [
             if (!checkLoadBalancingConfiguration(item))
                 return false;
 
+            if (!checkMemoryConfiguration(item))
+                return false;
+
             if (!checkODBC(item))
                 return false;
 
             if (!checkSwapConfiguration(item))
+                return false;
+
+            if (!checkServiceConfiguration(item))
                 return false;
 
             if (!checkSslConfiguration(item))
@@ -850,4 +984,4 @@ export default ['clustersController', [
                 });
         };
     }
-]];
+];

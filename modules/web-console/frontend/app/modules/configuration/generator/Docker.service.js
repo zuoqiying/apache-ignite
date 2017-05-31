@@ -37,11 +37,11 @@ export default class IgniteDockerGenerator {
      * Generate Docker file for cluster.
      *
      * @param {Object} cluster Cluster.
-     * @param {String} ver Ignite version.
+     * @param {Object} targetVer
      */
-    generate(cluster, ver) {
+    generate(cluster, targetVer) {
         return [
-            this.from(cluster, ver),
+            this.from(cluster, targetVer),
             '',
             '# Set config uri for node.',
             `ENV CONFIG_URI config/${cluster.name}-server.xml`,

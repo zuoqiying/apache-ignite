@@ -17,6 +17,8 @@
 
 const DFLT_CLUSTER = {
     localHost: '0.0.0.0',
+    activeOnStart: true,
+    cacheSanityCheckEnabled: true,
     discovery: {
         localPort: 47500,
         localPortRange: 100,
@@ -170,6 +172,8 @@ const DFLT_CLUSTER = {
             maximumFailoverAttempts: 5
         }
     },
+    failureDetectionTimeout: 10000,
+    clientFailureDetectionTimeout: 30000,
     logger: {
         Log4j: {
             level: {
@@ -285,6 +289,41 @@ const DFLT_CLUSTER = {
             nodeWeight: 10,
             useWeights: false
         }
+    },
+    memoryConfiguration: {
+        systemCacheInitialSize: 41943040,
+        systemCacheMaxSize: 104857600,
+        pageSize: 2048,
+        defaultMemoryPolicyName: 'default',
+        memoryPolicies: {
+            name: 'default',
+            initialSize: 268435456,
+            pageEvictionMode: {
+                clsName: 'org.apache.ignite.configuration.DataPageEvictionMode',
+                value: 'DISABLED'
+            },
+            evictionThreshold: 0.9,
+            emptyPagesPoolSize: 100,
+            metricsEnabled: false
+        }
+    },
+    utilityCacheKeepAliveTime: 60000,
+    hadoopConfiguration: {
+        mapReducePlanner: {
+            Weighted: {
+                localMapperWeight: 100,
+                remoteMapperWeight: 100,
+                localReducerWeight: 100,
+                remoteReducerWeight: 100,
+                preferLocalReducerThresholdWeight: 200
+            }
+        },
+        finishedJobInfoTtl: 30000,
+        maxTaskQueueSize: 8192
+    },
+    serviceConfigurations: {
+        maxPerNodeCount: 0,
+        totalCount: 0
     }
 };
 

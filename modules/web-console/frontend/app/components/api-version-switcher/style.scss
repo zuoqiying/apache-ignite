@@ -15,23 +15,27 @@
  * limitations under the License.
  */
 
-import Worker from 'worker?inline=true!./summary.worker';
+api-version-switcher {
+    display: inline-flex;
+    align-items: center;
 
-export default ['$q', function($q) {
-    return function(message) {
-        const defer = $q.defer();
-        const worker = new Worker();
+    .btn-ignite {
+        border-radius: 9px;
+        min-height: 0;
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 17px;
+        padding-top: 0;
+        padding-bottom: 1px;
+    }
 
-        worker.postMessage(message);
+    .icon-help {
+        margin-left: 5px;
+        font-size: 16px;
+    }
 
-        worker.onmessage = (e) => {
-            defer.resolve(e.data);
-        };
-
-        worker.onerror = (err) => {
-            defer.reject(err);
-        };
-
-        return defer.promise;
-    };
-}];
+    .dropdown-menu a {
+        // Fixes style leak from above
+        font-size: 14px !important;
+    }
+}

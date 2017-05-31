@@ -568,12 +568,17 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
                     break;
                 case 'EVENT_TYPES':
-                    if (prop.eventTypes.length === 1)
-                        this._setProperty(sb, id, prop.name, _.head(prop.eventTypes));
-                    else {
-                        sb.append(`int[] ${prop.id} = new int[${_.head(prop.eventTypes)}.length`);
+                    if (prop.eventTypes.length === 1) {
+                        const evtGrp = _.head(prop.eventTypes);
 
-                        _.forEach(_.tail(prop.eventTypes), (evtGrp) => {
+                        this._setProperty(sb, id, prop.name, evtGrp.label);
+                    }
+                    else {
+                        const evtGrp = _.map(prop.eventTypes, 'label');
+
+                        sb.append(`int[] ${prop.id} = new int[${_.head(evtGrp)}.length`);
+
+                        _.forEach(_.tail(evtGrp), (evtGrp) => {
                             sb.append(`    + ${evtGrp}.length`);
                         });
 
@@ -583,12 +588,12 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
 
                         sb.append('int k = 0;');
 
-                        _.forEach(prop.eventTypes, (evtGrp, evtIdx) => {
+                        _.forEach(evtGrp, (evtGrp, evtIdx) => {
                             sb.emptyLine();
 
                             sb.append(`System.arraycopy(${evtGrp}, 0, ${prop.id}, k, ${evtGrp}.length);`);
 
-                            if (evtIdx < prop.eventTypes.length - 1)
+                            if (evtIdx < evtGrp.length - 1)
                                 sb.append(`k += ${evtGrp}.length;`);
                         });
 
@@ -778,6 +783,9 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
                     if (this._isBean(prop.typeClsName))
                         _.forEach(prop.items, (item) => imports.push(...this.collectBeanImports(item)));
 
+                    if (prop.typeClsName === 'java.lang.Class')
+                        _.forEach(prop.items, (item) => imports.push(item));
+
                     break;
                 case 'COLLECTION':
                     imports.push(prop.typeClsName);
@@ -820,8 +828,8 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
         _.forEach(bean.properties, (prop) => {
             switch (prop.clsName) {
                 case 'EVENT_TYPES':
-                    _.forEach(prop.eventTypes, (value) => {
-                        const evtGrp = _.find(this.eventGroups, {value});
+                    _.forEach(prop.eventTypes, (grp) => {
+                        const evtGrp = _.find(this.eventGroups, { value: grp.value });
 
                         imports.push(`${evtGrp.class}.${evtGrp.value}`);
                     });
@@ -1032,10 +1040,11 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
         return sb;
     }
 
-    static cluster(cluster, pkg, clsName, client) {
-        const cfg = this.generator.igniteConfiguration(cluster, client);
+    static cluster(cluster, targetVer, pkg, clsName, client) {
+        const cfg = this.generator.igniteConfiguration(cluster, targetVer, client);
 
-        const clientNearCaches = client ? _.filter(cluster.caches, (cache) => _.get(cache, 'clientNearConfiguration.enabled')) : [];
+        const clientNearCaches = client ? _.filter(cluster.caches, (cache) =>
+            cache.mode === 'PARTITIONED' && _.get(cache, 'clientNearConfiguration.enabled')) : [];
 
         return this.igniteConfiguration(cfg, pkg, clsName, clientNearCaches);
     }

@@ -14,11 +14,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-.admin-page.row
-    .docs-content
-        header
-            h1 Admin panel
-        .docs-body
-            .row
-                .col-xs-12
-                    ignite-list-of-registered-users(data-options='ctrl.data')
+.btn-ignite.btn-ignite--primary(
+    bs-dropdown='$ctrl.dropdown'
+    data-trigger='hover focus'
+    bs-on-before-show='$ctrl.onDropdownShow'
+    bs-on-before-hide='$ctrl.onDropdownHide'
+    data-container='self'
+    ng-class='{"active": $ctrl.isActive }'
+)
+    | {{$ctrl.currentVersion}}
+    span.icon-right.fa.fa-caret-down
+    
+i.icon-help(
+    bs-tooltip=''
+    data-title='Web Console supports multiple Ignite versions.<br /> \
+                Select version you need to configure cluster.'
+    data-placement='right'
+)

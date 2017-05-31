@@ -20,7 +20,7 @@ import _ from 'lodash';
 import template from './ui-ace-spring.pug';
 import controller from './ui-ace-spring.controller';
 
-export default ['igniteUiAceSpring', [() => {
+export default ['igniteUiAceSpring', ['IgniteVersion', (Version) => {
     const link = (scope, $el, attrs, [ctrl, igniteUiAceTabs, formCtrl, ngModelCtrl]) => {
         if (formCtrl && ngModelCtrl)
             formCtrl.$removeControl(ngModelCtrl);
@@ -43,6 +43,10 @@ export default ['igniteUiAceSpring', [() => {
         scope.$watch('master', () => {
             ctrl.data = _.isNil(scope.master) ? null : ctrl.generate(scope.master, scope.detail).asString();
         }, noDeepWatch);
+
+        Version.apiVer.subscribe({
+            next: () => ctrl.data = _.isNil(scope.master) ? null : ctrl.generate(scope.master, scope.detail).asString()
+        });
     };
 
     return {

@@ -18,7 +18,7 @@
 import template from './ui-ace-java.pug';
 import controller from './ui-ace-java.controller';
 
-export default ['igniteUiAceJava', [() => {
+export default ['igniteUiAceJava', ['IgniteVersion', (Version) => {
     const link = (scope, $el, attrs, [ctrl, igniteUiAceTabs, formCtrl, ngModelCtrl]) => {
         if (formCtrl && ngModelCtrl)
             formCtrl.$removeControl(ngModelCtrl);
@@ -40,6 +40,10 @@ export default ['igniteUiAceJava', [() => {
         scope.$watch('master', () => {
             ctrl.data = _.isNil(scope.master) ? null : ctrl.generate(scope.master, scope.detail).asString();
         }, noDeepWatch);
+
+        Version.apiVer.subscribe({
+            next: () => ctrl.data = _.isNil(scope.master) ? null : ctrl.generate(scope.master, scope.detail).asString()
+        });
     };
 
     return {

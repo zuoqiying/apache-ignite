@@ -15,23 +15,11 @@
  * limitations under the License.
  */
 
-import Worker from 'worker?inline=true!./summary.worker';
+import angular from 'angular';
+import component from './component';
 
-export default ['$q', function($q) {
-    return function(message) {
-        const defer = $q.defer();
-        const worker = new Worker();
-
-        worker.postMessage(message);
-
-        worker.onmessage = (e) => {
-            defer.resolve(e.data);
-        };
-
-        worker.onerror = (err) => {
-            defer.reject(err);
-        };
-
-        return defer.promise;
-    };
-}];
+export default angular
+    .module('ignite-console.api-version-switcher', [
+        'ignite-console.configuration'
+    ])
+    .component('apiVersionSwitcher', component);
