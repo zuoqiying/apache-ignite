@@ -2237,26 +2237,28 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                 for (CacheConfiguration cfg : (CacheConfiguration[])data)
                     onJoinStaticCacheCfgs.putIfAbsent(cfg.getName(), cfg);
             }
+
+            return;
         }
+
         // In cluster when new node joining.
+
+        // Cluster active.
+        if (ctx.state().active()) {
+            // Receive from active node.
+            if (ctx.state().joiningNodeActive())
+                onReceiveOnActiveFromActivate(joiningNodeId, rmtNodeId, data);
+            else
+                // Receive from inActive node.
+                onReceiveOnActiveFromInActivate(joiningNodeId, rmtNodeId, data);
+        }
         else {
-            // Cluster active.
-            if (ctx.state().active()) {
+            // Cluster inActive.
+            if (ctx.state().joiningNodeActive())
+                onReceiveOnInActiveFromActivate(joiningNodeId, rmtNodeId, data);
+            else
                 // Receive from active node.
-                if (ctx.state().joiningNodeActive())
-                    onReceiveOnActiveFromActivate(joiningNodeId, rmtNodeId, data);
-                else
-                    // Receive from inActive node.
-                    onReceiveOnActiveFromInActivate(joiningNodeId, rmtNodeId, data);
-            }
-            else {
-                // Cluster inActive.
-                if (ctx.state().joiningNodeActive())
-                    onReceiveOnInActiveFromActivate(joiningNodeId, rmtNodeId, data);
-                else
-                    // Receive from active node.
-                    onReceiveOnInActiveFromInActivate(joiningNodeId, rmtNodeId, data);
-            }
+                onReceiveOnInActiveFromInActivate(joiningNodeId, rmtNodeId, data);
         }
     }
 
