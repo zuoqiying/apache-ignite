@@ -35,6 +35,7 @@ import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.events.Event;
+import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
@@ -350,6 +351,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
 
         exchLog.info("onCacheChangeRequest start [topVer=" + fut.topologyVersion() + ", crd=" + crd + ']');
 
+        GridKernalContext ctx = cctx.kernalContext();
+
         for (DynamicCacheChangeRequest req : reqs) {
             Integer cacheId = CU.cacheId(req.cacheName());
 
@@ -359,7 +362,7 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                 assert desc != null : cacheId;
             }
             else if (req.start() && !req.clientStartOnly()) {
-                DynamicCacheDescriptor desc = new DynamicCacheDescriptor(cctx.kernalContext(),
+                DynamicCacheDescriptor desc = new DynamicCacheDescriptor(ctx,
                     req.startCacheConfiguration(),
                     req.cacheType(),
                     false,
@@ -384,6 +387,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
         });
 
         Set<Integer> stoppedCaches = null;
+
+        boolean systemCacheRestarted = false;
 
         for (DynamicCacheChangeRequest req : reqs) {
             if (!(req.clientStartOnly() || req.close()))
@@ -495,7 +500,7 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
             if (notify) {
                 final AffinityTopologyVersion topVer = affCalcVer;
 
-                cctx.kernalContext().closure().runLocalSafe(new Runnable() {
+                ctx.closure().runLocalSafe(new Runnable() {
                     @Override public void run() {
                         onCacheStopped(topVer);
                     }
