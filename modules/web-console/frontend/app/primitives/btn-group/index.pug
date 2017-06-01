@@ -19,7 +19,7 @@ mixin btn-group(disabled, options, tip)
         button.btn.btn-primary(
             ng-click=`${options[0].click}`
 
-            data-ng-disabled=disabled && `${disabled}` || `!${options}.length`
+            data-ng-disabled=disabled && `${disabled}`
 
             bs-tooltip=''
             data-title=tip
@@ -28,7 +28,7 @@ mixin btn-group(disabled, options, tip)
             data-placement='bottom'
         ) #{options[0].text}
         button.btn.dropdown-toggle.btn-primary(
-            data-ng-disabled=disabled && `${disabled}` || `!${options}.length`
+            data-ng-disabled=disabled && `${disabled}` || `!${JSON.stringify(options)}.length`
 
             bs-dropdown=`${JSON.stringify(options)}`
 
