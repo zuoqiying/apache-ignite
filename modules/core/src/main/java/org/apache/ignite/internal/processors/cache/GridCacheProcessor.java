@@ -2327,7 +2327,8 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                                     req.cacheName(),
                                     ccfg.getNodeFilter(),
                                     ccfg.getNearConfiguration() != null,
-                                    ccfg.getCacheMode());
+                                    ccfg.getCacheMode()
+                                );
                             }
                         }
                         else {
