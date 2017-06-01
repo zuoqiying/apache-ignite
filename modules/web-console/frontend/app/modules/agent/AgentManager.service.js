@@ -45,12 +45,14 @@ export default class IgniteAgentManager {
 
         this.ignite2x = false;
 
-        $root.$watch(() => _.get(this, 'cluster.clusterVersion'), (ver) => {
-            if (_.isEmpty(ver))
-                return;
+        if (!$root.IgniteDemoMode) {
+            $root.$watch(() => _.get(this, 'cluster.clusterVersion'), (ver) => {
+                if (_.isEmpty(ver))
+                    return;
 
-            this.ignite2x = ver.startsWith('2.');
-        }, true);
+                this.ignite2x = ver.startsWith('2.');
+            }, true);
+        }
 
         /**
          * Connection to backend.
