@@ -250,11 +250,11 @@ public class GridDhtPartitionMap implements Comparable<GridDhtPartitionMap>, Ext
         for (Map.Entry<Integer, GridDhtPartitionState> entry : map.entrySet()) {
             int ordinal = entry.getValue().ordinal();
 
-            assert ordinal == (ordinal & 0x7);
+            assert ordinal == (ordinal & 0x3);
             assert entry.getKey() < CacheConfiguration.MAX_PARTITIONS_COUNT : entry.getKey();
 
-            out.writeByte(ordinal);
-            out.writeShort(entry.getKey());
+            int coded = (ordinal << 14) | entry.getKey();
+            out.writeShort((short)coded);
 
             i++;
         }
@@ -277,13 +277,17 @@ public class GridDhtPartitionMap implements Comparable<GridDhtPartitionMap>, Ext
 
         updateSeq = in.readLong();
 
-        map = (GridPartitionStateMap)in.readObject();
+        int size = in.readInt();
 
-        Set<Map.Entry<Integer, GridDhtPartitionState>> entries = map.entrySet();
+        map = new GridPartitionStateMap();
 
-        for (Map.Entry<Integer, GridDhtPartitionState> entry : entries) {
-            if (entry.getValue() == MOVING)
-                moving++;
+        for (int i = 0; i < size; i++) {
+            int entry = in.readShort() & 0xFFFF;
+
+            int part = entry & 0x3FFF;
+            int ordinal = entry >> 14;
+
+            put(part, GridDhtPartitionState.fromOrdinal(ordinal));
         }
 
         long ver = in.readLong();
