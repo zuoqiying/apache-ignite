@@ -509,6 +509,9 @@ export default class IgniteAgentManager {
      * @returns {Promise}
      */
     queryNextPage(nid, queryId, pageSize) {
+        if (this.ignite2x)
+            return this.visorTask('queryFetchX2', nid, queryId, pageSize);
+
         return this.visorTask('queryFetch', nid, queryId, pageSize);
     }
 
