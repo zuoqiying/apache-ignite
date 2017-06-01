@@ -1568,7 +1568,7 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             debugExchangeState("onAffinityInitialized createPartitionsMessage start", topologyVersion());
 
-            GridDhtPartitionsFullMessage m = createPartitionsMessage(null, false);
+            GridDhtPartitionsFullMessage m = createPartitionsMessage(null, IGNITE_USE_COMPRESSION_FOR_FULL_MAP);
 
             debugExchangeState("onAffinityInitialized createPartitionsMessage finish", topologyVersion());
 
