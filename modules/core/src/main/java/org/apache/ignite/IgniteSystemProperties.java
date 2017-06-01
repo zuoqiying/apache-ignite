@@ -561,6 +561,9 @@ public final class IgniteSystemProperties {
     /** */
     public static final String IGNITE_START_CACHES_ON_JOIN = "IGNITE_START_CACHES_ON_JOIN";
 
+    /** */
+    public static final String IGNITE_USE_COMPRESSION_FOR_FULL_MAP = "IGNITE_USE_COMPRESSION_FOR_FULL_MAP";
+
     /**
      * Enforces singleton.
      */

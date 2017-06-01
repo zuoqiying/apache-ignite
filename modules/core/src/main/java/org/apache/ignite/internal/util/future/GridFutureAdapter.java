@@ -328,7 +328,7 @@ public class GridFutureAdapter<R> extends AbstractQueuedSynchronizer implements 
      * @param res Result.
      * @return {@code True} if result was set by this call.
      */
-    public final boolean onDone(@Nullable R res) {
+    public boolean onDone(@Nullable R res) {
         return onDone(res, null);
     }
 

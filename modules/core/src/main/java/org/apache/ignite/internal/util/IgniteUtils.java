@@ -3039,6 +3039,16 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * Formats relative duration.
+     * @param t1 Start time.
+     * @param t2 Finish time.
+     * @return duration in millis.
+     */
+    public static String duration(long t1, long t2) {
+        return String.valueOf((t2 - t1) / 1000 / 1000.);
+    }
+
+    /**
      * Verifier always returns successful result for any host.
      */
     private static class DeploymentHostnameVerifier implements HostnameVerifier {

@@ -766,8 +766,19 @@ class ServerImpl extends TcpDiscoveryImpl {
     /** {@inheritDoc} */
     @Override public void sendCustomEvent(DiscoverySpiCustomMessage evt) {
         try {
+            long t1 = System.nanoTime();
+
+            byte[] bytes = U.marshal(spi.marshaller(), evt);
+
+            Object delegate = U.field(evt, "delegate");
+
+            if (delegate != null)
+                log.info("Custom message marshal time [cls=" + delegate.getClass() +
+                    ", size=" + bytes.length +
+                    ", time=" + U.duration(t1, System.nanoTime()) + " ms]");
+
             msgWorker.addMessage(new TcpDiscoveryCustomEventMessage(getLocalNodeId(), evt,
-                U.marshal(spi.marshaller(), evt)));
+                bytes));
         }
         catch (IgniteCheckedException e) {
             throw new IgniteSpiException("Failed to marshal custom event: " + evt, e);
@@ -5387,8 +5398,16 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                 if (node != null) {
                     try {
+                        long t1 = System.nanoTime();
+
                         DiscoverySpiCustomMessage msgObj = msg.message(spi.marshaller(),
                             U.resolveClassLoader(spi.ignite().configuration()));
+
+                        Object delegate = U.field(msgObj, "delegate");
+
+                        log.info("Custom message unmarshal time [cls=" + (delegate == null ? null : delegate.getClass()) +
+                            ", size=" + msg.messageBytes().length +
+                            ", time=" + U.duration(t1, System.nanoTime()) + " ms]");
 
                         lsnr.onDiscovery(DiscoveryCustomEvent.EVT_DISCOVERY_CUSTOM_EVT,
                             msg.topologyVersion(),

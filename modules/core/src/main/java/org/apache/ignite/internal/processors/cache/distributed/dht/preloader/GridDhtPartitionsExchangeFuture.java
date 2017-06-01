@@ -112,6 +112,10 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
         IgniteSystemProperties.getInteger(IgniteSystemProperties.IGNITE_DUMP_PENDING_OBJECTS_THRESHOLD, 10);
 
     /** */
+    public static final boolean IGNITE_USE_COMPRESSION_FOR_FULL_MAP =
+        IgniteSystemProperties.getBoolean(IgniteSystemProperties.IGNITE_USE_COMPRESSION_FOR_FULL_MAP, true);
+
+    /** */
     public static final String EXCHANGE_LOG = "org.apache.ignite.internal.exchange.time";
 
     /** */
@@ -1562,7 +1566,11 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
 
             Map<Integer, Map<Integer, List<UUID>>> assignmentChange = fut.get();
 
+            debugExchangeState("onAffinityInitialized createPartitionsMessage start", topologyVersion());
+
             GridDhtPartitionsFullMessage m = createPartitionsMessage(null, false);
+
+            debugExchangeState("onAffinityInitialized createPartitionsMessage finish", topologyVersion());
 
             CacheAffinityChangeMessage msg = new CacheAffinityChangeMessage(exchId, m, assignmentChange);
 
@@ -1992,6 +2000,22 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
     }
 
     /**
+     * Prints exchange state.
+     *
+     * @param message Message.
+     * @param topVer Topology version.
+     */
+    private void debugExchangeState(String message, AffinityTopologyVersion topVer) {
+        exchLog.info(message + " [topVer=" + topVer +
+            ", crd=" + crd +
+            ", evt=" + discoEvt.type() +
+            ", node=" + discoEvt.node() +
+            ", evtNode=" + discoEvt.node() +
+            ", customEvt=" + (discoEvt.type() == EVT_DISCOVERY_CUSTOM_EVT ? ((DiscoveryCustomEvent)discoEvt).customMessage() : null) +
+            ']');
+    }
+
+    /**
      * Affinity change message callback, processed from the same thread as {@link #onNodeLeft}.
      *
      * @param node Message sender node.
@@ -2009,20 +2033,32 @@ public class GridDhtPartitionsExchangeFuture extends GridFutureAdapter<AffinityT
                     assert centralizedAff;
 
                     if (crd.equals(node)) {
+                        debugExchangeState("onAffinityChangeMessage onExchangeChangeAffinityMessage start", msg.topologyVersion());
+
                         cctx.affinity().onExchangeChangeAffinityMessage(GridDhtPartitionsExchangeFuture.this,
                             crd.isLocal(),
                             msg);
 
+                        debugExchangeState("onAffinityChangeMessage onExchangeChangeAffinityMessage finish", msg.topologyVersion());
+
                         if (!crd.isLocal()) {
+                            debugExchangeState("onAffinityChangeMessage updatePartitionFullMap start", msg.topologyVersion());
+
                             GridDhtPartitionsFullMessage partsMsg = msg.partitionsMessage();
 
                             assert partsMsg != null : msg;
                             assert partsMsg.lastVersion() != null : partsMsg;
 
                             updatePartitionFullMap(partsMsg);
+
+                            debugExchangeState("onAffinityChangeMessage updatePartitionFullMap finish", msg.topologyVersion());
                         }
 
+                        debugExchangeState("onAffinityChangeMessage onDone start", msg.topologyVersion());
+
                         onDone(topologyVersion());
+
+                        debugExchangeState("onAffinityChangeMessage onDone finish", msg.topologyVersion());
                     }
                     else {
                         if (log.isDebugEnabled()) {
