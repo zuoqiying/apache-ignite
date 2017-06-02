@@ -461,7 +461,7 @@ export default ['$rootScope', '$scope', '$http', '$state', '$filter', '$timeout'
 
                 $scope.importDomain.loadingOptions = LOADING_JDBC_DRIVERS;
 
-                agentMgr.startAgentWatch('Back to Domain models', 'import domain model from database')
+                agentMgr.startAgentWatch('Back to Domain models')
                     .then(() => {
                         ActivitiesData.post({
                             group: 'configuration',

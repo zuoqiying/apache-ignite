@@ -25,11 +25,11 @@ export default ['$scope', 'IgniteVersion', 'IgniteDockerGenerator', function($sc
         if (!$scope.cluster)
             return;
 
-        ctrl.data = docker.generate($scope.cluster, Version.apiVer.getValue());
+        ctrl.data = docker.generate($scope.cluster, Version.currentSbj.getValue());
     };
 
     // Setup watchers.
-    Version.apiVer.subscribe({
+    Version.currentSbj.subscribe({
         next: clusterWatcher
     });
 

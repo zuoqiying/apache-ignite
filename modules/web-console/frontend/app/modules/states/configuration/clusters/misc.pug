@@ -36,7 +36,7 @@ include /app/helpers/jade/mixins
                         or IGNITE_HOME environment variable or system property.')
 
                 //- Since ignite 2.0
-                div(ng-show='$ctrl.configuration("2.0.0")')
+                div(ng-show='$ctrl.available("2.0.0")')
                     .settings-row
                         +text('Consistent ID:', model + '.consistentId', '"ConsistentId"', 'false', 'Input consistent ID', 'Consistent globally unique node ID which survives node restarts')
                     .settings-row

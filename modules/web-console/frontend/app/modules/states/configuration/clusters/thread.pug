@@ -62,7 +62,7 @@ include /app/helpers/jade/mixins
                         'Striped pool size that should be used for cache requests processing')
 
                 //- Since ignite 2.0
-                div(ng-if='$ctrl.configuration("2.0.0")')
+                div(ng-if='$ctrl.available("2.0.0")')
                     .settings-row
                         +number('Data streamer:', model + '.dataStreamerThreadPoolSize', '"dataStreamerThreadPoolSize"', 'true', 'max(8, availableProcessors)', '1',
                             'Size of thread pool that is in charge of processing data stream messages')

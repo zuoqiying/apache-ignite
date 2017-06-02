@@ -38,7 +38,7 @@ include /app/helpers/jade/mixins
     .panel-collapse(role='tabpanel' bs-collapse-target id=`${form}`)
         .panel-body(ng-if=`ui.isPanelLoaded('${form}')`)
             .col-sm-6
-                .settings-row(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                .settings-row(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     +dropdown('Function:', `${affModel}.kind`, '"AffinityKind"', 'true', 'Default', 'affinityFunction',
                         'Key topology resolver to provide mapping from keys to nodes\
                         <ul>\
@@ -47,7 +47,7 @@ include /app/helpers/jade/mixins
                             <li>Custom - Custom implementation of key affinity fynction<br/></li>\
                             <li>Default - By default rendezvous affinity function  with 1024 partitions is used<br/></li>\
                         </ul>')
-                .settings-row(ng-if='$ctrl.configuration("2.0.0")')
+                .settings-row(ng-if='$ctrl.available("2.0.0")')
                     +dropdown('Function:', `${affModel}.kind`, '"AffinityKind"', 'true', 'Default', 'affinityFunction',
                         'Key topology resolver to provide mapping from keys to nodes\
                         <ul>\
@@ -82,7 +82,7 @@ include /app/helpers/jade/mixins
                         'Provide custom affinity key for any given key')
 
                 //- Since ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration("2.0.0")')
+                .settings-row(ng-if='$ctrl.available("2.0.0")')
                     +java-class('Topology validator:', model + '.topologyValidator', '"topologyValidator"', 'true', 'false', 'Topology validator')
 
             .col-sm-6

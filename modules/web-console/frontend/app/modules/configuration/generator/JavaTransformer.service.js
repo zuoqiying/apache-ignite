@@ -829,9 +829,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
             switch (prop.clsName) {
                 case 'EVENT_TYPES':
                     _.forEach(prop.eventTypes, (grp) => {
-                        const evtGrp = _.find(this.eventGroups, { value: grp.value });
-
-                        imports.push(`${evtGrp.class}.${evtGrp.value}`);
+                        imports.push(`${grp.class}.${grp.value}`);
                     });
 
                     break;

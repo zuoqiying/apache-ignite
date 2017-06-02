@@ -39,7 +39,7 @@ include /app/helpers/jade/mixins
                         If <b>0</b> then lock acquisition will never timeout')
 
                 //- Removed in ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])' ng-hide=`${model}.atomicityMode === 'TRANSACTIONAL'`)
+                .settings-row(ng-if='$ctrl.available(["1.0.0", "2.0.0"])' ng-hide=`${model}.atomicityMode === 'TRANSACTIONAL'`)
                     +dropdown('Entry versioning:', `${model}.atomicWriteOrderMode`, '"atomicWriteOrderMode"', 'true', 'Choose versioning',
                         '[\
                             {value: "CLOCK", label: "CLOCK"},\

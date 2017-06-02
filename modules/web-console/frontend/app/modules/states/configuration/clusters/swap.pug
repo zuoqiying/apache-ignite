@@ -21,7 +21,7 @@ include /app/helpers/jade/mixins
 -var swapModel = model + '.swapSpaceSpi'
 -var fileSwapModel = swapModel + '.FileSwapSpaceSpi'
 
-.panel.panel-default(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])' ng-form=form novalidate)
+.panel.panel-default(ng-if='$ctrl.available(["1.0.0", "2.0.0"])' ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click=`ui.loadPanel('${form}')`)
         ignite-form-panel-chevron
         label Swap

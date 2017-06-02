@@ -20,12 +20,12 @@ export default ['IgniteVersion', 'SpringTransformer', function(Version, spring) 
 
     delete ctrl.data;
 
-    const targetSince = Version.igniteVersionIn.bind(Version);
+    const targetSince = Version.available.bind(Version);
 
     // Setup generator.
     switch (ctrl.generator) {
         case 'igniteConfiguration':
-            ctrl.generate = (cluster) => spring.cluster(cluster, Version.igniteVersion, ctrl.client === 'true');
+            ctrl.generate = (cluster) => spring.cluster(cluster, Version.current, ctrl.client === 'true');
 
             break;
         case 'clusterCaches':

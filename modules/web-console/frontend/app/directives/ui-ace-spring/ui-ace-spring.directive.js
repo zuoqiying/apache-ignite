@@ -39,14 +39,14 @@ export default ['igniteUiAceSpring', ['IgniteVersion', (Version) => {
 
         const noDeepWatch = !(typeof attrs.noDeepWatch !== 'undefined');
 
-        // Setup watchers.
-        scope.$watch('master', () => {
+        const next = () => {
             ctrl.data = _.isNil(scope.master) ? null : ctrl.generate(scope.master, scope.detail).asString();
-        }, noDeepWatch);
+        };
 
-        Version.apiVer.subscribe({
-            next: () => ctrl.data = _.isNil(scope.master) ? null : ctrl.generate(scope.master, scope.detail).asString()
-        });
+        // Setup watchers.
+        scope.$watch('master', next, noDeepWatch);
+
+        Version.currentSbj.subscribe({next});
     };
 
     return {

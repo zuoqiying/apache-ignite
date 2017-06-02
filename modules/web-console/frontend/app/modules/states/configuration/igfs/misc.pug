@@ -56,11 +56,11 @@ mixin table-igfs-path-mode-edit(prefix, focusId, index)
                     +number('Block size:', `${model}.blockSize`, '"blockSize"', 'true', '65536', '0', 'File data block size in bytes')
 
                 //- Since ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration("2.0.0")')
+                .settings-row(ng-if='$ctrl.available("2.0.0")')
                     +number('Buffer size:', `${model}.streamBufferSize`, '"streamBufferSize"', 'true', '65536', '0', 'Read/write buffer size for IGFS stream operations in bytes')
 
                 //- Removed in ignite 2.0
-                div(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                div(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     .settings-row
                         +number('Stream buffer size:', `${model}.streamBufferSize`, '"streamBufferSize"', 'true', '65536', '0', 'Read/write buffer size for IGFS stream operations in bytes')
                     .settings-row
@@ -80,7 +80,7 @@ mixin table-igfs-path-mode-edit(prefix, focusId, index)
                     +number('Sequential reads before prefetch:', `${model}.sequentialReadsBeforePrefetch`, '"sequentialReadsBeforePrefetch"', 'true', '0', '0', 'Amount of sequential block reads before prefetch is triggered')
 
                 //- Removed in ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                .settings-row(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     +number('Trash purge timeout:', `${model}.trashPurgeTimeout`, '"trashPurgeTimeout"', 'true', '1000', '0', 'Maximum timeout awaiting for trash purging in case data cache oversize is detected')
 
                 .settings-row
@@ -92,7 +92,7 @@ mixin table-igfs-path-mode-edit(prefix, focusId, index)
                         operations, or you do not know how exactly users will use your system')
 
                 //- Since ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration("2.0.0")')
+                .settings-row(ng-if='$ctrl.available("2.0.0")')
                     +checkbox('Update file length on flush', model + '.updateFileLengthOnFlush', '"updateFileLengthOnFlush"', 'Update file length on flush flag')
 
                 .settings-row

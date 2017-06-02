@@ -34,14 +34,14 @@ include /app/helpers/jade/mixins
     .panel-collapse(role='tabpanel' bs-collapse-target id=`${form}`)
         .panel-body(ng-if=`ui.isPanelLoaded('${form}')`)
             .col-sm-6
-                .settings-row(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                .settings-row(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     +dropdown('Event storage:', modelEventStorageKind, '"eventStorageKind"', 'true', 'Disabled', 'eventStorage',
                     'Regulate how grid store events locally on node\
                     <ul>\
                         <li>Memory - All events are kept in the FIFO queue in-memory</li>\
                         <li>Custom - Custom implementation of event storage SPI</li>\
                     </ul>')
-                .settings-row(ng-if='$ctrl.configuration("2.0.0")')
+                .settings-row(ng-if='$ctrl.available("2.0.0")')
                     +dropdown('Event storage:', modelEventStorageKind, '"eventStorageKind"', 'true', 'Disabled', 'eventStorage',
                     'Regulate how grid store events locally on node\
                     <ul>\

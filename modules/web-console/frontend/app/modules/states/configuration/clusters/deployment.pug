@@ -117,7 +117,7 @@ include /app/helpers/jade/mixins
                             | Not defined
 
                 //- Since ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration("2.0.0")')
+                .settings-row(ng-if='$ctrl.available("2.0.0")')
                     +java-class('Class loader:', model + '.classLoader', '"classLoader"', 'true', 'false',
                         'Loader which will be used for instantiating execution context')
 

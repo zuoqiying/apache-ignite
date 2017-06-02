@@ -99,9 +99,9 @@ export default class IgniteVersion {
             // No-op.
         }
 
-        this.apiVer = new BehaviorSubject(current);
+        this.currentSbj = new BehaviorSubject(current);
 
-        this.apiVer.subscribe({
+        this.currentSbj.subscribe({
             next: (ver) => {
                 try {
                     localStorage.setItem('configurationVersion', ver.ignite);
@@ -114,10 +114,17 @@ export default class IgniteVersion {
     }
 
     /**
+     * @return {String} Target Ignite version.
+     */
+    get current() {
+        return this.currentSbj.getValue().ignite;
+    }
+
+    /**
      * Check if version in range
      * @param {String} target Target version.
      * @param {String | Array.<String>} ranges Version ranges to compare with.
-     * @returns {Boolean} `True` if node version is equal or greater than specified range.
+     * @returns {Boolean} `True` if version is equal or greater than specified range.
      */
     since(target, ...ranges) {
         const targetVer = parse(target);
@@ -135,17 +142,13 @@ export default class IgniteVersion {
     }
 
     /**
-     * Check whether node version before than specified version.
+     * Check whether version before than specified version.
      * @param {String} target Target version.
      * @param {String} ranges Version ranges to compare with.
-     * @return {Boolean} `True` if node version before than specified version.
+     * @return {Boolean} `True` if version before than specified version.
      */
     before(target, ...ranges) {
         return !this.since(target, ...ranges);
-    }
-
-    get igniteVersion() {
-        return this.apiVer.getValue().ignite;
     }
 
     /**
@@ -153,7 +156,7 @@ export default class IgniteVersion {
      * @param {String|Array.<String>} ranges Version ranges to compare with.
      * @returns {Boolean} `True` if configuration version is equal or greater than specified range.
      */
-    igniteVersionIn(...ranges) {
-        return this.since(this.igniteVersion, ...ranges);
+    available(...ranges) {
+        return this.since(this.current, ...ranges);
     }
 }

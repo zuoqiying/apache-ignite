@@ -20,7 +20,7 @@ import infoMessageTemplateUrl from 'views/templates/message.tpl.pug';
 // Controller for Caches screen.
 export default ['$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'IgniteLegacyUtils', 'IgniteMessages', 'IgniteConfirm', 'IgniteInput', 'IgniteLoading', 'IgniteModelNormalizer', 'IgniteUnsavedChangesGuard', 'IgniteConfigurationResource', 'IgniteErrorPopover', 'IgniteFormUtils', 'IgniteLegacyTable', 'IgniteVersion',
     function($scope, $http, $state, $filter, $timeout, $modal, LegacyUtils, Messages, Confirm, Input, Loading, ModelNormalizer, UnsavedChangesGuard, Resource, ErrorPopover, FormUtils, LegacyTable, Version) {
-        this.configuration = Version.igniteVersionIn.bind(Version);
+        this.available = Version.available.bind(Version);
 
         const rebuildDropdowns = () => {
             $scope.affinityFunction = [
@@ -29,7 +29,7 @@ export default ['$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'I
                 {value: null, label: 'Default'}
             ];
 
-            if (this.configuration(['1.0.0', '2.0.0']))
+            if (this.available(['1.0.0', '2.0.0']))
                 $scope.affinityFunction.splice(1, 0, {value: 'Fair', label: 'Fair'});
         };
 
@@ -37,14 +37,14 @@ export default ['$scope', '$http', '$state', '$filter', '$timeout', '$modal', 'I
 
         const filterModel = () => {
             if ($scope.backupItem) {
-                if (this.configuration('2.0.0')) {
+                if (this.available('2.0.0')) {
                     if (_.get($scope.backupItem, 'affinity.kind') === 'Fair')
                         $scope.backupItem.affinity.kind = null;
                 }
             }
         };
 
-        Version.apiVer.subscribe({
+        Version.currentSbj.subscribe({
             next: () => {
                 rebuildDropdowns();
 

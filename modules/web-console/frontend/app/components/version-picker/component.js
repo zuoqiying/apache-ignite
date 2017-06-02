@@ -24,7 +24,8 @@ export default {
         static $inject = ['IgniteVersion', '$scope'];
 
         constructor(Version, $scope) {
-            this.Version = Version;
+            this.currentSbj = Version.currentSbj;
+            this.supportedVersions = Version.supportedVersions;
 
             const dropdownToggle = (active) => {
                 this.isActive = active;
@@ -38,14 +39,12 @@ export default {
         }
 
         $onInit() {
-            const supportedVersions = this.Version.supportedVersions;
-
-            this.dropdown = _.map(supportedVersions, (ver) => ({
+            this.dropdown = _.map(this.supportedVersions, (ver) => ({
                 text: ver.label,
-                click: () => this.Version.apiVer.next(ver)
+                click: () => this.currentSbj.next(ver)
             }));
 
-            this.Version.apiVer.subscribe({
+            this.currentSbj.subscribe({
                 next: (ver) => this.currentVersion = ver.label
             });
         }

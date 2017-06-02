@@ -57,7 +57,7 @@ include /app/helpers/jade/mixins
                     +number('Thread priority:', `${model}.threadPriority`, '"threadPriority"', 'true', '10', '1', 'Thread priority for all threads started by SPI')
 
                 //- Removed in ignite 2.0
-                div(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                div(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     .settings-row
                         +number('Heartbeat frequency:', `${model}.heartbeatFrequency`, '"heartbeatFrequency"', 'true', '2000', '1', 'Heartbeat messages issuing frequency')
                     .settings-row

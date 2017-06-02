@@ -35,7 +35,7 @@ include /app/helpers/jade/mixins
         .panel-body(ng-if=`ui.isPanelLoaded('${form}')`)
             .col-sm-6
                 .settings-row
-                    div(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                    div(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                         +dropdown('Marshaller:', marshaller + '.kind', '"kind"', 'true', 'Default', 'marshallerVariant',
                             'Instance of marshaller to use in grid<br/>\
                             <ul>\
@@ -43,7 +43,7 @@ include /app/helpers/jade/mixins
                                 <li>JdkMarshaller - Marshaller based on JDK serialization mechanism</li>\
                                 <li>Default - BinaryMarshaller serialize and deserialize all objects in the binary format</li>\
                             </ul>')
-                    div(ng-if='$ctrl.configuration("2.0.0")')
+                    div(ng-if='$ctrl.available("2.0.0")')
                         +dropdown('Marshaller:', marshaller + '.kind', '"kind"', 'true', 'Default', 'marshallerVariant',
                             'Instance of marshaller to use in grid<br/>\
                             <ul>\
@@ -71,7 +71,7 @@ include /app/helpers/jade/mixins
                     +checkbox('Marshal local jobs', `${model}.marshalLocalJobs`, '"marshalLocalJobs"', 'If this flag is enabled, jobs mapped to local node will be marshalled as if it was remote node')
 
                 //- Removed in ignite 2.0
-                div(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                div(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     .settings-row
                         +number('Keep alive time:', `${model}.marshallerCacheKeepAliveTime`, '"marshallerCacheKeepAliveTime"', 'true', '10000', '0',
                             'Keep alive time of thread pool that is in charge of processing marshaller messages')

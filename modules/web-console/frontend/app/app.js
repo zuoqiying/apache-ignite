@@ -115,7 +115,7 @@ import './components/input-dialog';
 import webConsoleHeader from './components/web-console-header';
 import webConsoleFooter from './components/web-console-footer';
 import igniteIcon from './components/ignite-icon';
-import apiVersionSwitcher from './components/api-version-switcher';
+import versionPicker from './components/version-picker';
 
 // Inject external modules.
 import IgniteModules from 'IgniteModules/index';
@@ -176,7 +176,7 @@ angular
     webConsoleHeader.name,
     webConsoleFooter.name,
     igniteIcon.name,
-    apiVersionSwitcher.name,
+    versionPicker.name,
     // Ignite modules.
     IgniteModules.name
 ])

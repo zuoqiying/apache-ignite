@@ -22,14 +22,14 @@ export default ['IgniteVersion', 'JavaTransformer', function(Version, java) {
 
     const client = ctrl.client === 'true';
 
-    const targetSince = Version.igniteVersionIn.bind(Version);
+    const available = Version.available.bind(Version);
 
     // Setup generator.
     switch (ctrl.generator) {
         case 'igniteConfiguration':
             const clsName = client ? 'ClientConfigurationFactory' : 'ServerConfigurationFactory';
 
-            ctrl.generate = (cluster) => java.cluster(cluster, Version.igniteVersion, 'config', clsName, client);
+            ctrl.generate = (cluster) => java.cluster(cluster, Version.current, 'config', clsName, client);
 
             break;
         case 'clusterCaches':
@@ -41,9 +41,9 @@ export default ['IgniteVersion', 'JavaTransformer', function(Version, java) {
                     return acc;
                 }, []);
 
-                const cfg = java.generator.clusterGeneral(cluster, targetSince);
+                const cfg = java.generator.clusterGeneral(cluster, available);
 
-                java.generator.clusterCaches(cluster, clusterCaches, null, targetSince, false, cfg);
+                java.generator.clusterCaches(cluster, clusterCaches, null, available, false, cfg);
 
                 return java.toSection(cfg);
             };
@@ -59,7 +59,7 @@ export default ['IgniteVersion', 'JavaTransformer', function(Version, java) {
                     return acc;
                 }, []);
 
-                return java[ctrl.generator](cache, cacheDomains, targetSince);
+                return java[ctrl.generator](cache, cacheDomains, available);
             };
 
             break;
@@ -97,11 +97,11 @@ export default ['IgniteVersion', 'JavaTransformer', function(Version, java) {
                     return acc;
                 }, []);
 
-                return java.clusterIgfss(clusterIgfss, targetSince);
+                return java.clusterIgfss(clusterIgfss, available);
             };
 
             break;
         default:
-            ctrl.generate = (master) => java[ctrl.generator](master, targetSince);
+            ctrl.generate = (master) => java[ctrl.generator](master, available);
     }
 }];

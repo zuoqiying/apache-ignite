@@ -48,7 +48,7 @@ include /app/helpers/jade/mixins
                         </ul>')
 
                 //- Removed in ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                .settings-row(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     +number('On-heap cache for off-heap indexes:', `${model}.sqlOnheapRowCacheSize`, '"sqlOnheapRowCacheSize"', 'true', '10240', '1',
                         'Number of SQL rows which will be cached onheap to avoid deserialization on each SQL index access')
 
@@ -107,7 +107,7 @@ include /app/helpers/jade/mixins
                             | Not defined
 
                 //- Removed in ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                .settings-row(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     +checkbox('Snapshotable index', `${model}.snapshotableIndex`, '"snapshotableIndex"',
                         'Flag indicating whether SQL indexes should support snapshots')
 
@@ -118,7 +118,7 @@ include /app/helpers/jade/mixins
                         Escaped names will be used for creation internal structures in Ignite SQL engine.')
 
                 //- Since ignite 2.0
-                div(ng-if='$ctrl.configuration("2.0.0")')
+                div(ng-if='$ctrl.available("2.0.0")')
                     .settings-row
                         +number('Query parallelism', model + '.queryParallelism', '"queryParallelism"', 'true', '1', '1',
                             'A hint to query execution engine on desired degree of parallelism within a single node')

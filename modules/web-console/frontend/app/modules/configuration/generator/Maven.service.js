@@ -141,17 +141,19 @@ export default class IgniteMavenGenerator {
     /**
      * Generate pom.xml.
      *
-     * @param cluster Cluster  to take info about dependencies.
-     * @param igniteVer Version for Ignite dependencies.
-     * @returns {string} Generated content.
+     * @param {Object} cluster Cluster  to take info about dependencies.
+     * @param {Object} targetVer Target version for dependencies.
+     * @returns {String} Generated content.
      */
-    generate(cluster, igniteVer) {
+    generate(cluster, targetVer) {
         const caches = cluster.caches;
         const deps = [];
         const storeDeps = [];
         const excludeGroupIds = ['org.apache.ignite'];
 
         const blobStoreFactory = {cacheStoreFactory: {kind: 'CacheHibernateBlobStoreFactory'}};
+
+        const igniteVer = targetVer.ignite;
 
         _.forEach(caches, (cache) => {
             if (cache.cacheStoreFactory && cache.cacheStoreFactory.kind)

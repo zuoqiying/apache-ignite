@@ -42,7 +42,7 @@ include /app/helpers/jade/mixins
                     +cacheMode('Mode:', `${model}.cacheMode`, '"cacheMode"', 'PARTITIONED')
 
                 //- Since ignite 2.0
-                .settings-row(ng-if='$ctrl.configuration("2.0.0")')
+                .settings-row(ng-if='$ctrl.available("2.0.0")')
                     +dropdown('Partition loss policy:', model + '.partitionLossPolicy', '"partitionLossPolicy"', 'true', 'IGNORE',
                         '[\
                             {value: "READ_ONLY_SAFE", label: "READ_ONLY_SAFE"},\

@@ -15,27 +15,11 @@
  * limitations under the License.
  */
 
-api-version-switcher {
-    display: inline-flex;
-    align-items: center;
+import angular from 'angular';
+import component from './component';
 
-    .btn-ignite {
-        border-radius: 9px;
-        min-height: 0;
-        font-size: 12px;
-        font-weight: bold;
-        line-height: 17px;
-        padding-top: 0;
-        padding-bottom: 1px;
-    }
-
-    .icon-help {
-        margin-left: 5px;
-        font-size: 16px;
-    }
-
-    .dropdown-menu a {
-        // Fixes style leak from above
-        font-size: 14px !important;
-    }
-}
+export default angular
+    .module('ignite-console.version-picker', [
+        'ignite-console.configuration'
+    ])
+    .component('versionPicker', component);

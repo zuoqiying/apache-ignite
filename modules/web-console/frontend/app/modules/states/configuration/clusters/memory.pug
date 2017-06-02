@@ -20,7 +20,7 @@ include /app/helpers/jade/mixins
 -var model = 'backupItem.memoryConfiguration'
 -var memoryPolicies = model + '.memoryPolicies'
 
-.panel.panel-default(ng-if='$ctrl.configuration("2.0.0")' ng-form=form novalidate)
+.panel.panel-default(ng-if='$ctrl.available("2.0.0")' ng-form=form novalidate)
     .panel-heading(bs-collapse-toggle ng-click=`ui.loadPanel('${form}')`)
         ignite-form-panel-chevron
         label Memory configuration

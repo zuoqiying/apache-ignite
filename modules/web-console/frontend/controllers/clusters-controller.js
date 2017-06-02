@@ -20,7 +20,7 @@ export default ['$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLe
     function($root, $scope, $http, $state, $timeout, LegacyUtils, Messages, Confirm, Input, Loading, ModelNormalizer, UnsavedChangesGuard, igniteEventGroups, DemoInfo, LegacyTable, Resource, ErrorPopover, FormUtils, Version) {
         let __original_value;
 
-        this.configuration = Version.igniteVersionIn.bind(Version);
+        this.available = Version.available.bind(Version);
 
         const rebuildDropdowns = () => {
             $scope.eventStorage = [
@@ -33,7 +33,7 @@ export default ['$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLe
                 {value: null, label: 'Default'}
             ];
 
-            if (this.configuration('2.0.0')) {
+            if (this.available('2.0.0')) {
                 $scope.eventStorage.push({value: null, label: 'Disabled'});
 
                 $scope.eventGroups = _.filter(igniteEventGroups, ({value}) => value !== 'EVTS_SWAPSPACE');
@@ -49,7 +49,7 @@ export default ['$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLe
 
         const filterModel = () => {
             if ($scope.backupItem) {
-                if (this.configuration('2.0.0')) {
+                if (this.available('2.0.0')) {
                     const evtGrps = _.map($scope.eventGroups, 'value');
 
                     _.remove(__original_value, (evtGrp) => !_.includes(evtGrps, evtGrp));
@@ -63,7 +63,7 @@ export default ['$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLe
             }
         };
 
-        Version.apiVer.subscribe({
+        Version.currentSbj.subscribe({
             next: () => {
                 rebuildDropdowns();
 

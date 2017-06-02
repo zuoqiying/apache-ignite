@@ -25,11 +25,11 @@ export default ['$scope', 'IgniteVersion', 'IgniteMavenGenerator', function($sco
         if (!value)
             return;
 
-        ctrl.data = maven.generate($scope.cluster, Version.apiVer.getValue());
+        ctrl.data = maven.generate($scope.cluster, Version.currentSbj.getValue());
     };
 
     // Setup watchers.
-    Version.apiVer.subscribe({
+    Version.currentSbj.subscribe({
         next: clusterWatcher
     });
 

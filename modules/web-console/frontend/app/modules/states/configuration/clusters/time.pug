@@ -30,7 +30,7 @@ include /app/helpers/jade/mixins
         .panel-body(ng-if=`ui.isPanelLoaded('${form}')`)
             .col-sm-6
                 //- Removed in ignite 2.0
-                div(ng-if='$ctrl.configuration(["1.0.0", "2.0.0"])')
+                div(ng-if='$ctrl.available(["1.0.0", "2.0.0"])')
                     .settings-row
                         +number('Samples size:', `${model}.clockSyncSamples`, '"clockSyncSamples"', 'true', '8', '0',
                             'Number of samples used to synchronize clocks between different nodes<br/>\
