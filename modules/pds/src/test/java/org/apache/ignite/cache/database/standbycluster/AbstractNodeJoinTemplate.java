@@ -76,27 +76,27 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
     /**
      *
      */
-    public abstract JoinNodeTestBuilder withOutConfigurationTemplate() throws Exception;
+    public abstract JoinNodeTestPlanBuilder withOutConfigurationTemplate() throws Exception;
 
     /**
      *
      */
-    public abstract JoinNodeTestBuilder staticCacheConfigurationOnJoinTemplate() throws Exception;
+    public abstract JoinNodeTestPlanBuilder staticCacheConfigurationOnJoinTemplate() throws Exception;
 
     /**
      *
      */
-    public abstract JoinNodeTestBuilder staticCacheConfigurationInClusterTemplate() throws Exception;
+    public abstract JoinNodeTestPlanBuilder staticCacheConfigurationInClusterTemplate() throws Exception;
 
     /**
      *
      */
-    public abstract JoinNodeTestBuilder staticCacheConfigurationSameOnBothTemplate() throws Exception;
+    public abstract JoinNodeTestPlanBuilder staticCacheConfigurationSameOnBothTemplate() throws Exception;
 
     /**
      *
      */
-    public abstract JoinNodeTestBuilder staticCacheConfigurationDifferentOnBothTemplate() throws Exception;
+    public abstract JoinNodeTestPlanBuilder staticCacheConfigurationDifferentOnBothTemplate() throws Exception;
 
     /**
      *
@@ -170,8 +170,8 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
     /**
      *
      */
-    protected JoinNodeTestBuilder builder() {
-        return JoinNodeTestBuilder.builder();
+    protected JoinNodeTestPlanBuilder builder() {
+        return JoinNodeTestPlanBuilder.builder();
     }
 
     /**
@@ -234,7 +234,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
     /**
      *
      */
-    public static class JoinNodeTestBuilder extends GridCommonAbstractTest {
+    public static class JoinNodeTestPlanBuilder extends GridCommonAbstractTest {
         /** String plan builder. */
         private final StringBuilder strPlanBuilder = new StringBuilder().append("**** Execution plan ****\n");
 
@@ -277,7 +277,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public JoinNodeTestBuilder clusterConfiguration(IgniteConfiguration... cfgs) throws Exception {
+        public JoinNodeTestPlanBuilder clusterConfiguration(IgniteConfiguration... cfgs) throws Exception {
             clusterCfg = cfgs;
 
             strPlanBuilder.append("Start cluster:\n");
@@ -305,7 +305,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public JoinNodeTestBuilder nodeConfiguration(IgniteConfiguration cfg) {
+        public JoinNodeTestPlanBuilder nodeConfiguration(IgniteConfiguration cfg) {
             nodeCfg = cfg;
 
             strPlanBuilder.append("Join node: ")
@@ -327,7 +327,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          * @param func Func.
          */
-        public JoinNodeTestBuilder nodeConfiguration(
+        public JoinNodeTestPlanBuilder nodeConfiguration(
             IgniteClosure<IgniteConfiguration, IgniteConfiguration> func
         ) {
 
@@ -339,7 +339,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public JoinNodeTestBuilder afterClusterStarted(Runnable r) {
+        public JoinNodeTestPlanBuilder afterClusterStarted(Runnable r) {
             strPlanBuilder.append("Check after cluster start\n");
 
             afterClusterStarted = r;
@@ -350,7 +350,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public JoinNodeTestBuilder afterNodeJoin(Runnable r) {
+        public JoinNodeTestPlanBuilder afterNodeJoin(Runnable r) {
             strPlanBuilder.append("Check after node join")
                 .append("\n");
 
@@ -362,7 +362,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public JoinNodeTestBuilder stateAfterJoin(boolean state) {
+        public JoinNodeTestPlanBuilder stateAfterJoin(boolean state) {
             strPlanBuilder.append("Check state on all nodes after join, must be ")
                 .append(state ? "<<active>>" : "<<inactive>>")
                 .append(" \n");
@@ -375,7 +375,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public JoinNodeTestBuilder afterActivate(Runnable r) {
+        public JoinNodeTestPlanBuilder afterActivate(Runnable r) {
             strPlanBuilder.append("Check after activate")
                 .append("\n");
 
@@ -387,7 +387,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public JoinNodeTestBuilder afterDeActivate(Runnable r) {
+        public JoinNodeTestPlanBuilder afterDeActivate(Runnable r) {
             strPlanBuilder.append("Check after deActivate")
                 .append("\n");
 
@@ -399,7 +399,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          * @param end End.
          */
-        public JoinNodeTestBuilder setEnd(Runnable end) {
+        public JoinNodeTestPlanBuilder setEnd(Runnable end) {
             strPlanBuilder.append("Check before stop")
                 .append("\n");
 
@@ -411,10 +411,10 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public void build() throws Exception {
+        public void execute() throws Exception {
             try {
                 if (state == stateDefault)
-                    fail("State after join must be specific. See JoinNodeTestBuilder.stateAfterJoin(boolean).");
+                    fail("State after join must be specific. See JoinNodeTestPlanBuilder.stateAfterJoin(boolean).");
 
                 System.out.println(strPlanBuilder.append("********************").toString());
 
@@ -472,8 +472,8 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /**
          *
          */
-        public static JoinNodeTestBuilder builder() {
-            return new JoinNodeTestBuilder();
+        public static JoinNodeTestPlanBuilder builder() {
+            return new JoinNodeTestPlanBuilder();
         }
 
         /**

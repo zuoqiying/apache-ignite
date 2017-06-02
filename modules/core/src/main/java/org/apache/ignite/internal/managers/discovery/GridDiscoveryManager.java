@@ -700,15 +700,18 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
             }
 
             @Override public void onExchange(DiscoveryDataBag dataBag) {
+                assert dataBag != null;
+                assert dataBag.joiningNodeId() != null;
+
                 if (ctx.localNodeId().equals(dataBag.joiningNodeId())) {
-                    //NodeAdded msg reached joining node after round-trip over the ring
+                    // NodeAdded msg reached joining node after round-trip over the ring.
                     for (GridComponent c : ctx.components()) {
                         if (c.discoveryDataType() != null)
                             c.onGridDataReceived(dataBag.gridDiscoveryData(c.discoveryDataType().ordinal()));
                     }
                 }
                 else {
-                    //discovery data from newly joined node has to be applied to the current old node
+                    // Discovery data from newly joined node has to be applied to the current old node.
                     for (GridComponent c : ctx.components()) {
                         if (c.discoveryDataType() != null) {
                             JoiningNodeDiscoveryData data =

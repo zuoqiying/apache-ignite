@@ -29,8 +29,8 @@ import org.junit.Assert;
  */
 public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
     /** {@inheritDoc} */
-    @Override public AbstractNodeJoinTemplate.JoinNodeTestBuilder withOutConfigurationTemplate() throws Exception {
-        JoinNodeTestBuilder b = builder();
+    @Override public JoinNodeTestPlanBuilder withOutConfigurationTemplate() throws Exception {
+        JoinNodeTestPlanBuilder b = builder();
 
         b.clusterConfiguration(
             cfg(name(0)).setActiveOnStart(true),
@@ -54,8 +54,8 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
     }
 
     /** {@inheritDoc} */
-    @Override public JoinNodeTestBuilder staticCacheConfigurationOnJoinTemplate() throws Exception {
-        JoinNodeTestBuilder b = builder();
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationOnJoinTemplate() throws Exception {
+        JoinNodeTestPlanBuilder b = builder();
 
         b.clusterConfiguration(
             cfg(name(0)).setActiveOnStart(true),
@@ -81,8 +81,8 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
     }
 
     /** {@inheritDoc} */
-    @Override public JoinNodeTestBuilder staticCacheConfigurationInClusterTemplate() throws Exception {
-        JoinNodeTestBuilder b = builder();
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationInClusterTemplate() throws Exception {
+        JoinNodeTestPlanBuilder b = builder();
 
         b.clusterConfiguration(
             cfg(name(0))
@@ -108,8 +108,8 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
     }
 
     /** {@inheritDoc} */
-    @Override public JoinNodeTestBuilder staticCacheConfigurationSameOnBothTemplate() throws Exception {
-        JoinNodeTestBuilder b = builder();
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationSameOnBothTemplate() throws Exception {
+        JoinNodeTestPlanBuilder b = builder();
 
         b.clusterConfiguration(
             cfg(name(0))
@@ -137,8 +137,8 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
     }
 
     /** {@inheritDoc} */
-    @Override public JoinNodeTestBuilder staticCacheConfigurationDifferentOnBothTemplate() throws Exception {
-        JoinNodeTestBuilder b = builder();
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationDifferentOnBothTemplate() throws Exception {
+        JoinNodeTestPlanBuilder b = builder();
 
         b.clusterConfiguration(
             cfg(name(0))
@@ -186,49 +186,49 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
 
     /** {@inheritDoc} */
     @Override public void testJoinWithOutConfiguration() throws Exception {
-        withOutConfigurationTemplate().build();
+        withOutConfigurationTemplate().execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testStaticCacheConfigurationOnJoin() throws Exception {
-        staticCacheConfigurationOnJoinTemplate().build();
+        staticCacheConfigurationOnJoinTemplate().execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testStaticCacheConfigurationInCluster() throws Exception {
-        staticCacheConfigurationInClusterTemplate().build();
+        staticCacheConfigurationInClusterTemplate().execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testStaticCacheConfigurationSameOnBoth() throws Exception {
-        staticCacheConfigurationSameOnBothTemplate().build();
+        staticCacheConfigurationSameOnBothTemplate().execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testStaticCacheConfigurationDifferentOnBoth() throws Exception {
-        staticCacheConfigurationDifferentOnBothTemplate().build();
+        staticCacheConfigurationDifferentOnBothTemplate().execute();
     }
 
     // Client node join.
 
     /** {@inheritDoc} */
     @Override public void testJoinClientWithOutConfiguration() throws Exception {
-        withOutConfigurationTemplate().nodeConfiguration(setClient).build();
+        withOutConfigurationTemplate().nodeConfiguration(setClient).execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testJoinClientStaticCacheConfigurationOnJoin() throws Exception {
-        staticCacheConfigurationOnJoinTemplate().nodeConfiguration(setClient).build();
+        staticCacheConfigurationOnJoinTemplate().nodeConfiguration(setClient).execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testJoinClientStaticCacheConfigurationInCluster() throws Exception {
-        staticCacheConfigurationInClusterTemplate().nodeConfiguration(setClient).build();
+        staticCacheConfigurationInClusterTemplate().nodeConfiguration(setClient).execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testJoinClientStaticCacheConfigurationSameOnBoth() throws Exception {
-        staticCacheConfigurationSameOnBothTemplate().nodeConfiguration(setClient).build();
+        staticCacheConfigurationSameOnBothTemplate().nodeConfiguration(setClient).execute();
     }
 
     /** {@inheritDoc} */
@@ -259,6 +259,6 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
                         }
                     }
                 }
-            ).build();
+            ).execute();
     }
 }
