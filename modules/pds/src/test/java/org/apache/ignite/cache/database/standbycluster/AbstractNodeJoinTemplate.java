@@ -1,0 +1,559 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.ignite.cache.database.standbycluster;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.PersistentStoreConfiguration;
+import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
+import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.lang.IgniteClosure;
+import org.apache.ignite.lang.IgniteInClosure;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
+import org.junit.Assert;
+
+import static org.apache.ignite.internal.util.IgniteUtils.field;
+
+/**
+ *
+ */
+public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
+    /** Cache 1. */
+    protected static final String cache1 = "cache1";
+
+    /** Cache 2. */
+    protected static final String cache2 = "cache2";
+
+    //Todo Cache with node filter.
+    protected static final String cache3 = "cache3";
+
+    /** Caches info. */
+    public static final String CACHES_INFO = "cachesInfo";
+
+    /** Registered caches. */
+    public static final String REGISTERED_CACHES = "registeredCaches";
+
+    /** Caches. */
+    public static final String CACHES = "caches";
+
+    /**
+     * @param ig Ig.
+     */
+    protected static Map<String, DynamicCacheDescriptor> cacheDescriptors(IgniteEx ig) {
+        return field(field(ig.context().cache(), CACHES_INFO), REGISTERED_CACHES);
+    }
+
+    /**
+     * @param ig Ig.
+     */
+    protected static Map<String, GridCacheAdapter> caches(IgniteEx ig){
+        return field(ig.context().cache(), CACHES);
+    }
+
+    /**
+     *
+     */
+    public abstract JoinNodeTestBuilder withOutConfigurationTemplate() throws Exception;
+
+    /**
+     *
+     */
+    public abstract JoinNodeTestBuilder staticCacheConfigurationOnJoinTemplate() throws Exception;
+
+    /**
+     *
+     */
+    public abstract JoinNodeTestBuilder staticCacheConfigurationInClusterTemplate() throws Exception;
+
+    /**
+     *
+     */
+    public abstract JoinNodeTestBuilder staticCacheConfigurationSameOnBothTemplate() throws Exception;
+
+    /**
+     *
+     */
+    public abstract JoinNodeTestBuilder staticCacheConfigurationDifferentOnBothTemplate() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testJoinWithOutConfiguration() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testStaticCacheConfigurationOnJoin() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testStaticCacheConfigurationInCluster() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testStaticCacheConfigurationSameOnBoth() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testStaticCacheConfigurationDifferentOnBoth() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testJoinClientWithOutConfiguration() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testJoinClientStaticCacheConfigurationOnJoin() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testJoinClientStaticCacheConfigurationInCluster() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testJoinClientStaticCacheConfigurationSameOnBoth() throws Exception;
+
+    /**
+     *
+     */
+    public abstract void testJoinClientStaticCacheConfigurationDifferentOnBoth() throws Exception;
+
+    /**
+     * @param idx Index.
+     */
+    protected String name(int idx) {
+        return getTestIgniteInstanceName(idx);
+    }
+
+    /**
+     * @param name Name.
+     */
+    protected IgniteConfiguration cfg(String name) throws Exception {
+        try {
+            return getConfiguration(name);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     *
+     */
+    protected JoinNodeTestBuilder builder() {
+        return JoinNodeTestBuilder.builder();
+    }
+
+    /**
+     * @param cfgs Cfgs.
+     */
+    protected static <T> T[] buildConfiguration(T... cfgs) {
+        return cfgs;
+    }
+
+    /**
+     *
+     */
+    protected CacheConfiguration atomicCfg() {
+        return new CacheConfiguration(cache1)
+            .setAtomicityMode(CacheAtomicityMode.ATOMIC);
+    }
+
+    /**
+     *
+     */
+    protected CacheConfiguration transactionCfg() {
+        return new CacheConfiguration(cache2)
+            .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
+    }
+
+    /**
+     *
+     */
+    protected CacheConfiguration[] allCacheConfigurations() {
+        return buildConfiguration(atomicCfg(), transactionCfg());
+    }
+
+    /** Set client. */
+    protected final IgniteClosure<IgniteConfiguration, IgniteConfiguration> setClient =
+        new IgniteClosure<IgniteConfiguration, IgniteConfiguration>() {
+            @Override public IgniteConfiguration apply(IgniteConfiguration cfg) {
+                return cfg.setClientMode(true);
+            }
+        };
+
+    /** Ip finder. */
+    private static final TcpDiscoveryIpFinder ipFinder = new TcpDiscoveryVmIpFinder(true);
+
+    /** {@inheritDoc} */
+    @Override protected IgniteConfiguration getConfiguration(String name) throws Exception {
+        return super.getConfiguration(name)
+            .setDiscoverySpi(
+                new TcpDiscoverySpi()
+                    .setIpFinder(ipFinder)
+            );
+    }
+
+    /** {@inheritDoc} */
+    protected IgniteConfiguration persistentCfg(IgniteConfiguration cfg) throws Exception {
+        cfg.setPersistentStoreConfiguration(new PersistentStoreConfiguration());
+
+        return cfg;
+    }
+
+    /**
+     *
+     */
+    public static class JoinNodeTestBuilder extends GridCommonAbstractTest {
+        /** String plan builder. */
+        private final StringBuilder strPlanBuilder = new StringBuilder().append("**** Execution plan ****\n");
+
+        /** Nodes. */
+        protected List<String> nodes = new ArrayList<>(4);
+
+        /** Cluster config. */
+        private IgniteConfiguration[] clusterCfg;
+
+        /** Node config. */
+        private IgniteConfiguration nodeCfg;
+
+        /** State default. */
+        private static final Boolean stateDefault = new Boolean(true);
+
+        /** State. */
+        private Boolean state = stateDefault;
+
+        /** Noop. */
+        private static final Runnable Noop = new Runnable() {
+            @Override public void run() {
+            }
+        };
+
+        /** After cluster started. */
+        private Runnable afterClusterStarted = Noop;
+
+        /** After node join. */
+        private Runnable afterNodeJoin = Noop;
+
+        /** After activate. */
+        private Runnable afterActivate = Noop;
+
+        /** After de activate. */
+        private Runnable afterDeActivate = Noop;
+
+        /** End. */
+        private Runnable end = Noop;
+
+        /**
+         *
+         */
+        public JoinNodeTestBuilder clusterConfiguration(IgniteConfiguration... cfgs) throws Exception {
+            clusterCfg = cfgs;
+
+            strPlanBuilder.append("Start cluster:\n");
+
+            for (IgniteConfiguration cfg : cfgs) {
+                strPlanBuilder.append("node: ")
+                    .append(cfg.getIgniteInstanceName())
+                    .append(" activeOnStart - ")
+                    .append(cfg.isActiveOnStart())
+                    .append("\n");
+
+                CacheConfiguration[] ccfgs = cfg.getCacheConfiguration();
+
+                if (ccfgs != null) {
+                    for (CacheConfiguration ccfg : ccfgs)
+                        strPlanBuilder.append("  cache - ")
+                            .append(ccfg.getName())
+                            .append("\n");
+                }
+            }
+
+            return this;
+        }
+
+        /**
+         *
+         */
+        public JoinNodeTestBuilder nodeConfiguration(IgniteConfiguration cfg) {
+            nodeCfg = cfg;
+
+            strPlanBuilder.append("Join node: ")
+                .append(cfg.getIgniteInstanceName())
+                .append(cfg.isClientMode() != null && cfg.isClientMode() ? " (client)" : "")
+                .append(" activeOnStart - ")
+                .append(cfg.isActiveOnStart())
+                .append("\n");
+
+            CacheConfiguration[] ccfgs = cfg.getCacheConfiguration();
+
+            if (ccfgs != null)
+                for (CacheConfiguration ccfg : ccfgs)
+                    strPlanBuilder.append("  cache - ").append(ccfg.getName()).append("\n");
+
+            return this;
+        }
+
+        /**
+         * @param func Func.
+         */
+        public JoinNodeTestBuilder nodeConfiguration(
+            IgniteClosure<IgniteConfiguration, IgniteConfiguration> func
+        ) {
+
+            nodeCfg = func.apply(nodeCfg);
+
+            return this;
+        }
+
+        /**
+         *
+         */
+        public JoinNodeTestBuilder afterClusterStarted(Runnable r) {
+            strPlanBuilder.append("Check after cluster start\n");
+
+            afterClusterStarted = r;
+
+            return this;
+        }
+
+        /**
+         *
+         */
+        public JoinNodeTestBuilder afterNodeJoin(Runnable r) {
+            strPlanBuilder.append("Check after node join")
+                .append("\n");
+
+            afterNodeJoin = r;
+
+            return this;
+        }
+
+        /**
+         *
+         */
+        public JoinNodeTestBuilder stateAfterJoin(boolean state) {
+            strPlanBuilder.append("Check state on all nodes after join, must be ")
+                .append(state ? "<<active>>" : "<<inactive>>")
+                .append(" \n");
+
+            this.state = state;
+
+            return this;
+        }
+
+        /**
+         *
+         */
+        public JoinNodeTestBuilder afterActivate(Runnable r) {
+            strPlanBuilder.append("Check after activate")
+                .append("\n");
+
+            afterActivate = r;
+
+            return this;
+        }
+
+        /**
+         *
+         */
+        public JoinNodeTestBuilder afterDeActivate(Runnable r) {
+            strPlanBuilder.append("Check after deActivate")
+                .append("\n");
+
+            afterDeActivate = r;
+
+            return this;
+        }
+
+        /**
+         * @param end End.
+         */
+        public JoinNodeTestBuilder setEnd(Runnable end) {
+            strPlanBuilder.append("Check before stop")
+                .append("\n");
+
+            this.end = end;
+
+            return this;
+        }
+
+        /**
+         *
+         */
+        public void build() throws Exception {
+            try {
+                if (state == stateDefault)
+                    fail("State after join must be specific. See JoinNodeTestBuilder.stateAfterJoin(boolean).");
+
+                System.out.println(strPlanBuilder.append("********************").toString());
+
+                IgniteConfiguration[] cfgs = clusterCfg;
+
+                for (IgniteConfiguration cfg : cfgs) {
+                    startGrid(cfg);
+
+                    nodes.add(cfg.getIgniteInstanceName());
+                }
+
+                afterClusterStarted.run();
+
+                startGrid(nodeCfg);
+
+                nodes.add(nodeCfg.getIgniteInstanceName());
+
+                afterNodeJoin.run();
+
+                for (IgniteEx ig : grids())
+                    assertEquals((boolean)state, ig.active());
+
+                if (!state) {
+                    grid(nodes.get(0)).active(true);
+
+                    afterActivate.run();
+                }
+                else {
+                    grid(nodes.get(0)).active(false);
+
+                    afterDeActivate.run();
+
+                    grid(nodes.get(0)).active(true);
+                }
+
+                end.run();
+            }
+            finally {
+                stopAllGrids();
+            }
+        }
+
+        /**
+         *
+         */
+        protected List<IgniteEx> grids() {
+            List<IgniteEx> res = new ArrayList<>();
+
+            for (String name : nodes)
+                res.add(grid(name));
+
+            return res;
+        }
+
+        /**
+         *
+         */
+        public static JoinNodeTestBuilder builder() {
+            return new JoinNodeTestBuilder();
+        }
+
+        /**
+         *
+         */
+        public Runnable checkCacheOnlySystem() {
+            return onAllNode(new IgniteInClosure<IgniteEx>() {
+                @Override public void apply(IgniteEx ig) {
+                    Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                    Assert.assertEquals(2, desc.size());
+
+                    Assert.assertNull(ig.context().cache().cache(cache1));
+                    Assert.assertNull(ig.context().cache().cache(cache2));
+
+                    Map<String, GridCacheAdapter> caches = caches(ig);
+
+                    Assert.assertEquals(2, caches.size());
+                }
+            });
+        }
+
+        /**
+         *
+         */
+        public Runnable checkCacheEmpty() {
+            return onAllNode(new IgniteInClosure<IgniteEx>() {
+                @Override public void apply(IgniteEx ig) {
+                    Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                    Assert.assertTrue(desc.isEmpty());
+
+                    Assert.assertNull(ig.context().cache().cache(cache1));
+                    Assert.assertNull(ig.context().cache().cache(cache2));
+
+                    Map<String, GridCacheAdapter> caches = caches(ig);
+
+                    Assert.assertEquals(0, caches.size());
+                }
+            });
+        }
+
+        /**
+         *
+         */
+        public Runnable checkCacheNotEmpty() {
+            return onAllNode(new IgniteInClosure<IgniteEx>() {
+                @Override public void apply(IgniteEx ig) {
+                    Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                    Assert.assertEquals(4, desc.size());
+
+                    Assert.assertNotNull(ig.context().cache().cache(cache1));
+                    Assert.assertNotNull(ig.context().cache().cache(cache2));
+
+                    Map<String, GridCacheAdapter> caches = caches(ig);
+
+                    Assert.assertEquals(4, caches.size());
+                }
+            });
+        }
+
+        /**
+         * @param cls Closure.
+         */
+        private Runnable onAllNode(final IgniteInClosure<IgniteEx> cls) {
+            return new Runnable() {
+                @Override public void run() {
+                    for (IgniteEx ig : grids()) {
+                        try {
+                            cls.apply(ig);
+                        }
+                        catch (AssertionError e) {
+                            System.out.println("Assertion on " + ig.name());
+
+                            throw e;
+                        }
+                    }
+                }
+            };
+        }
+    }
+}

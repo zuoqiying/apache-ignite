@@ -771,6 +771,17 @@ public abstract class GridAbstractTest extends TestCase {
     }
 
     /**
+     * Starts new grid with given configuration.
+     *
+     * @param cfg Ignite configuration.
+     * @return Started grid.
+     * @throws Exception If anything failed.
+     */
+    protected IgniteEx startGrid(IgniteConfiguration cfg) throws Exception {
+        return (IgniteEx)startGrid(cfg.getIgniteInstanceName(), cfg, null);
+    }
+
+    /**
      * Starts new grid with given index and Spring application context.
      *
      * @param idx Index of the grid to start.
