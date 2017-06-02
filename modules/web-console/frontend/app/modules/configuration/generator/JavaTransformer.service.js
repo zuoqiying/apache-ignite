@@ -815,7 +815,7 @@ export default class IgniteJavaTransformer extends AbstractTransformer {
     }
 
     static _prepareImports(imports) {
-        return _.sortedUniq(_.sortBy(_.filter(imports, (cls) => !cls.startsWith('java.lang.') && _.includes(cls, '.'))));
+        return _.sortedUniq(_.sortBy(_.filter(imports, (cls) => !_.startsWith(cls, 'java.lang.') && _.includes(cls, '.'))));
     }
 
     /**
