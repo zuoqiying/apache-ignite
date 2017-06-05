@@ -217,7 +217,7 @@ public class IgniteDiagnosticMessage implements Message {
 
     /** {@inheritDoc} */
     @Override public short directType() {
-        return -54;
+        return -61;
     }
 
     /** {@inheritDoc} */
