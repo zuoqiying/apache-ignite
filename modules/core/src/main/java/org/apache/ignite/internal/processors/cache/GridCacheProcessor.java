@@ -183,9 +183,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     /** Map of proxies. */
     private final ConcurrentMap<String, IgniteCacheProxy<?, ?>> jCacheProxies;
 
-    /** Restarting caches */
-    private final Set<String> restartingCaches = new GridConcurrentHashSet<>();
-
     /** Caches stop sequence. */
     private final Deque<String> stopSeq;
 
@@ -203,6 +200,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
     /** Cache templates. */
     private ConcurrentMap<String, DynamicCacheDescriptor> registeredTemplates = new ConcurrentHashMap<>();
+
+    /** Restarting caches */
+    private final Set<String> restartingCaches = new GridConcurrentHashSet<>();
 
     /** On join batches. */
     private ConcurrentMap<UUID, CacheConfiguration[]> onJoinStaticCacheCfgs = new ConcurrentHashMap<>();
