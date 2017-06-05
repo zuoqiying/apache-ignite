@@ -70,10 +70,10 @@ class ClusterCachesInfo {
     /** */
     private Map<String, DynamicCacheDescriptor> cachesOnDisconnect;
 
-    /** */
+    /** Local cache info */
     private CacheJoinNodeDiscoveryData joinDiscoData;
 
-    /** */
+    /** Cluster cache info */
     private CacheNodeCommonDiscoveryData gridData;
 
     /** */
@@ -105,7 +105,12 @@ class ClusterCachesInfo {
      * @throws IgniteCheckedException If failed.
      */
     void onKernalStart(boolean checkConsistency) throws IgniteCheckedException {
-        if (checkConsistency && joinDiscoData != null && gridData != null) {
+        if (!ctx.isDaemon())
+            return;
+
+        assert joinDiscoData != null;
+
+        if (checkConsistency  && gridData != null) {
             for (CacheJoinNodeDiscoveryData.CacheInfo locCacheInfo : joinDiscoData.caches().values()) {
                 CacheConfiguration locCfg = locCacheInfo.config();
 
@@ -119,6 +124,7 @@ class ClusterCachesInfo {
         joinDiscoData = null;
         gridData = null;
     }
+
     /**
      * Checks that remote caches has configuration compatible with the local.
      *
@@ -158,7 +164,7 @@ class ClusterCachesInfo {
             }
 
             CU.checkAttributeMismatch(log, rmtAttr.cacheName(), rmt, "cacheAffinity", "Cache affinity",
-                    locAttr.cacheAffinityClassName(), rmtAttr.cacheAffinityClassName(), true);
+                locAttr.cacheAffinityClassName(), rmtAttr.cacheAffinityClassName(), true);
 
             CU.checkAttributeMismatch(log, rmtAttr.cacheName(), rmt, "cacheAffinityMapper",
                 "Cache affinity mapper", locAttr.cacheAffinityMapperClassName(),
@@ -770,7 +776,7 @@ class ClusterCachesInfo {
                     clientReconnectReqs.put(data.joiningNodeId(), (CacheClientReconnectDiscoveryData)joiningNodeData);
                 }
                 else
-                    processClientReconnectData((CacheClientReconnectDiscoveryData) joiningNodeData, data.joiningNodeId());
+                    processClientReconnectData((CacheClientReconnectDiscoveryData)joiningNodeData, data.joiningNodeId());
             }
             else if (joiningNodeData instanceof CacheJoinNodeDiscoveryData)
                 processJoiningNode((CacheJoinNodeDiscoveryData)joiningNodeData, data.joiningNodeId());
@@ -892,7 +898,7 @@ class ClusterCachesInfo {
 
         Set<String> stoppedCaches = new HashSet<>();
 
-        for(Map.Entry<String, DynamicCacheDescriptor> e : cachesOnDisconnect.entrySet()) {
+        for (Map.Entry<String, DynamicCacheDescriptor> e : cachesOnDisconnect.entrySet()) {
             DynamicCacheDescriptor desc = e.getValue();
 
             String cacheName = e.getKey();

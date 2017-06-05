@@ -820,9 +820,11 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
      * @param descs Cache descriptors.
      * @throws IgniteCheckedException If failed.
      */
-    public void initStartedCaches(boolean crd,
+    public void initStartedCaches(
+        boolean crd,
         final GridDhtPartitionsExchangeFuture fut,
-        Collection<DynamicCacheDescriptor> descs) throws IgniteCheckedException {
+        Collection<DynamicCacheDescriptor> descs
+    ) throws IgniteCheckedException {
         for (DynamicCacheDescriptor desc : descs) {
             if (!registeredCaches.containsKey(desc.cacheId()))
                 registeredCaches.put(desc.cacheId(), desc);

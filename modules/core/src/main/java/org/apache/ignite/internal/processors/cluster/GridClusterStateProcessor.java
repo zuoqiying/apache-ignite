@@ -127,10 +127,8 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
     }
 
     /** {@inheritDoc} */
-    @Override public void start(boolean activeOnStart) throws IgniteCheckedException {
-        super.start(activeOnStart);
-
-        globalState = activeOnStart ? ACTIVE : INACTIVE;
+    @Override public void start() throws IgniteCheckedException {
+        globalState = ctx.config().isActiveOnStart() ? ACTIVE : INACTIVE;
         cacheProc = ctx.cache();
         sharedCtx = cacheProc.context();
 

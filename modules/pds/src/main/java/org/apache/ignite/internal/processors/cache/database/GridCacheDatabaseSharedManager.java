@@ -96,6 +96,7 @@ import org.apache.ignite.internal.pagemem.wal.record.delta.PartitionMetaStateRec
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.ClusterState;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.database.file.FilePageStoreManager;
 import org.apache.ignite.internal.processors.cache.database.pagemem.PageMemoryEx;
@@ -406,32 +407,37 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
     /** {@inheritDoc} */
     @Override protected void onKernalStart0(boolean reconnect) throws IgniteCheckedException {
-        if (!reconnect && !cctx.kernalContext().clientNode() && cctx.kernalContext().state().active()) {
-            Collection<String> cacheNames = new HashSet<>();
+        if (reconnect || cctx.kernalContext().clientNode() && !cctx.kernalContext().state().active())
+            return;
 
-            for (CacheConfiguration ccfg : cctx.kernalContext().config().getCacheConfiguration())
-                if (CU.isSystemCache(ccfg.getName())) {
-                    storeMgr.initializeForCache(ccfg);
+        GridCacheProcessor cachePrc = cctx.kernalContext().cache();
 
-                    cacheNames.add(ccfg.getName());
-                }
+        // Todo join local info.
 
-            for (CacheConfiguration ccfg : cctx.kernalContext().config().getCacheConfiguration())
-                if (!CU.isSystemCache(ccfg.getName())) {
-                    storeMgr.initializeForCache(ccfg);
+        Collection<String> cacheNames = new HashSet<>();
 
-                    cacheNames.add(ccfg.getName());
-                }
+        for (CacheConfiguration ccfg : cctx.kernalContext().config().getCacheConfiguration())
+            if (CU.isSystemCache(ccfg.getName())) {
+                storeMgr.initializeForCache(ccfg);
 
-            for (String name : cctx.pageStore().savedCacheNames()) {
-                CacheConfiguration ccfg = cctx.pageStore().readConfiguration(name);
-
-                if (ccfg != null && !cacheNames.contains(name))
-                    storeMgr.initializeForCache(ccfg);
+                cacheNames.add(ccfg.getName());
             }
 
-            readCheckpointAndRestoreMemory();
+        for (CacheConfiguration ccfg : cctx.kernalContext().config().getCacheConfiguration())
+            if (!CU.isSystemCache(ccfg.getName())) {
+                storeMgr.initializeForCache(ccfg);
+
+                cacheNames.add(ccfg.getName());
+            }
+
+        for (String name : cctx.pageStore().savedCacheNames()) {
+            CacheConfiguration ccfg = cctx.pageStore().readConfiguration(name);
+
+            if (ccfg != null && !cacheNames.contains(name))
+                storeMgr.initializeForCache(ccfg);
         }
+
+        readCheckpointAndRestoreMemory();
     }
 
     /** {@inheritDoc} */
