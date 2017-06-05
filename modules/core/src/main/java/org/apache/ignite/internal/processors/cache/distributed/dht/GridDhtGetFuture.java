@@ -166,7 +166,7 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
      * Initializes future.
      */
     void init() {
-        GridDhtFuture<Object> fut = cctx.dht().dhtPreloader().request(keys.keySet(), topVer);
+        GridDhtFuture<Object> fut = cctx.group().preloader().request(cctx, keys.keySet(), topVer);
 
         if (fut != null) {
             if (!F.isEmpty(fut.invalidPartitions())) {
@@ -176,7 +176,7 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
                 retries.addAll(fut.invalidPartitions());
             }
 
-        fut.listen(new CI1<IgniteInternalFuture<Object>>() {
+            fut.listen(new CI1<IgniteInternalFuture<Object>>() {
             @Override public void apply(IgniteInternalFuture<Object> fut) {
                 try {
                     fut.get();
@@ -292,9 +292,11 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
      */
     private boolean map(KeyCacheObject key) {
         try {
+            int keyPart = cctx.affinity().partition(key);
+
             GridDhtLocalPartition part = topVer.topologyVersion() > 0 ?
-                cache().topology().localPartition(cctx.affinity().partition(key), topVer, true) :
-                cache().topology().localPartition(key, false);
+                cache().topology().localPartition(keyPart, topVer, true) :
+                cache().topology().localPartition(keyPart);
 
             if (part == null)
                 return false;

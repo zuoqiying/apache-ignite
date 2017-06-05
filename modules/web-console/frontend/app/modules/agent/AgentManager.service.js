@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import io from 'socket.io-client'; // eslint-disable-line no-unused-vars
+import maskNull from 'app/core/utils/maskNull';
 
-const maskNull = (val) => _.isNil(val) ? 'null' : val;
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 const State = {
     INIT: 'INIT',
@@ -45,12 +46,14 @@ export default class IgniteAgentManager {
 
         this.ignite2x = false;
 
-        $root.$watch(() => _.get(this, 'cluster.clusterVersion'), (ver) => {
-            if (_.isEmpty(ver))
-                return;
+        if (!$root.IgniteDemoMode) {
+            $root.$watch(() => _.get(this, 'cluster.clusterVersion'), (ver) => {
+                if (_.isEmpty(ver))
+                    return;
 
-            this.ignite2x = ver.startsWith('2.');
-        }, true);
+                this.ignite2x = ver.startsWith('2.');
+            }, true);
+        }
 
         /**
          * Connection to backend.
@@ -509,6 +512,9 @@ export default class IgniteAgentManager {
      * @returns {Promise}
      */
     queryNextPage(nid, queryId, pageSize) {
+        if (this.ignite2x)
+            return this.visorTask('queryFetchX2', nid, queryId, pageSize);
+
         return this.visorTask('queryFetch', nid, queryId, pageSize);
     }
 
