@@ -17,7 +17,12 @@
 
 package org.apache.ignite.cache.database.standbycluster.join;
 
+import java.util.Map;
 import org.apache.ignite.cache.database.standbycluster.AbstractNodeJoinTemplate;
+import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
+import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.junit.Assert;
 
 /**
  *
@@ -40,7 +45,7 @@ public class JoinInActiveNodeToInActiveCluster extends AbstractNodeJoinTemplate 
         ).stateAfterJoin(
             false
         ).afterActivate(
-            b.checkCacheNotEmpty()
+            b.checkCacheOnlySystem()
         );
 
         return b;

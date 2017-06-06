@@ -154,14 +154,14 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
 
                         Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
 
-                        Assert.assertEquals(4, desc.size());
+                        Assert.assertEquals(3, desc.size());
 
                         Assert.assertNotNull(ig.context().cache().cache(cache1));
                         Assert.assertNull(ig.context().cache().cache(cache2));
 
                         Map<String, GridCacheAdapter> caches = caches(ig);
 
-                        Assert.assertEquals(4, caches.size());
+                        Assert.assertEquals(3, caches.size());
                     }
                 }
             }
@@ -223,7 +223,32 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
 
     /** {@inheritDoc} */
     @Override public void testJoinClientStaticCacheConfigurationInCluster() throws Exception {
-        staticCacheConfigurationInClusterTemplate().nodeConfiguration(setClient).execute();
+        staticCacheConfigurationInClusterTemplate()
+            .nodeConfiguration(setClient)
+            .afterNodeJoin(new Runnable() {
+                @Override public void run() {
+                    for (int i = 0; i < 3; i++) {
+                        IgniteEx ig = grid(name(i));
+
+                        Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                        Assert.assertEquals(4, desc.size());
+
+                        if (!ig.context().discovery().localNode().isClient()) {
+                            Assert.assertNotNull(ig.context().cache().cache(cache1));
+                            Assert.assertNotNull(ig.context().cache().cache(cache2));
+                        }
+                        else {
+                            Assert.assertNull(ig.context().cache().cache(cache1));
+                            Assert.assertNull(ig.context().cache().cache(cache2));
+                        }
+
+                        Map<String, GridCacheAdapter> caches = caches(ig);
+
+                        Assert.assertEquals(4, caches.size());
+                    }
+                }
+            }).execute();
     }
 
     /** {@inheritDoc} */
@@ -243,19 +268,19 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
 
                             Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
 
-                            Assert.assertEquals(5, desc.size());
+                            Assert.assertEquals(4, desc.size());
 
-                            if (i != 3)
+                            if (!ig.context().discovery().localNode().isClient())
                                 Assert.assertNotNull(ig.context().cache().cache(cache1));
 
                             Assert.assertNotNull(ig.context().cache().cache(cache2));
 
                             Map<String, GridCacheAdapter> caches = caches(ig);
 
-                            if (i != 3)
-                                Assert.assertEquals(5, caches.size());
-                            else
+                            if (!ig.context().discovery().localNode().isClient())
                                 Assert.assertEquals(4, caches.size());
+                            else
+                                Assert.assertEquals(3, caches.size());
                         }
                     }
                 }
