@@ -116,7 +116,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
         initPageMemoryPolicies(memCfg);
 
-        registerMetricsMBeans();
+        //registerMetricsMBeans();
 
         startMemoryPolicies();
 
@@ -141,9 +141,11 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
      * @param memPlcCfg Memory policy configuration.
      * @param cfg Ignite configuration.
      */
-    private void registerMetricsMBean(MemoryMetricsImpl memMetrics,
+    private void registerMetricsMBean(
+        MemoryMetricsImpl memMetrics,
         MemoryPolicyConfiguration memPlcCfg,
-        IgniteConfiguration cfg) {
+        IgniteConfiguration cfg
+    ) {
         try {
             U.registerMBean(
                     cfg.getMBeanServer(),
@@ -651,7 +653,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
                 IgniteConfiguration cfg = cctx.gridConfig();
 
-                try {
+              /*  try {
                     cfg.getMBeanServer().unregisterMBean(
                         U.makeMBeanName(
                             cfg.getIgniteInstanceName(),
@@ -661,7 +663,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
                 catch (JMException e) {
                     U.error(log, "Failed to unregister MBean for memory metrics: " +
                         memPlc.memoryMetrics().getName(), e);
-                }
+                }*/
             }
         }
     }
@@ -931,12 +933,12 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
     /** {@inheritDoc} */
     @Override public void onActivate(GridKernalContext kctx) throws IgniteCheckedException {
-        // No-op.
+        start0();
     }
 
     /** {@inheritDoc} */
     @Override public void onDeActivate(GridKernalContext kctx) throws IgniteCheckedException {
-        // No-op.
+        stop0(true);
     }
 
     /**

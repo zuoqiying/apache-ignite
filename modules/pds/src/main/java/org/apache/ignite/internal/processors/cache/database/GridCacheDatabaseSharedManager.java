@@ -407,7 +407,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
     /** {@inheritDoc} */
     @Override protected void onKernalStart0(boolean reconnect) throws IgniteCheckedException {
-        if (reconnect || cctx.kernalContext().clientNode() && !cctx.kernalContext().state().active())
+        if (reconnect || cctx.kernalContext().clientNode() || !cctx.kernalContext().state().active())
             return;
 
         GridCacheProcessor cachePrc = cctx.kernalContext().cache();
@@ -448,12 +448,37 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             log.debug("Activate database manager [id=" + cctx.localNodeId() +
                 " topVer=" + cctx.discovery().topologyVersionEx() + " ]");
 
-        if (!cctx.kernalContext().clientNode()) {
-            readCheckpointAndRestoreMemory();
+        GridCacheProcessor cachePrc = cctx.kernalContext().cache();
 
-            if (log.isDebugEnabled())
-                log.debug("Restore state after activation [nodeId=" + cctx.localNodeId() + " ]");
+        // Todo join local info.
+
+        Collection<String> cacheNames = new HashSet<>();
+
+        for (CacheConfiguration ccfg : cctx.kernalContext().config().getCacheConfiguration())
+            if (CU.isSystemCache(ccfg.getName())) {
+                storeMgr.initializeForCache(ccfg);
+
+                cacheNames.add(ccfg.getName());
+            }
+
+        for (CacheConfiguration ccfg : cctx.kernalContext().config().getCacheConfiguration())
+            if (!CU.isSystemCache(ccfg.getName())) {
+                storeMgr.initializeForCache(ccfg);
+
+                cacheNames.add(ccfg.getName());
+            }
+
+        for (String name : cctx.pageStore().savedCacheNames()) {
+            CacheConfiguration ccfg = cctx.pageStore().readConfiguration(name);
+
+            if (ccfg != null && !cacheNames.contains(name))
+                storeMgr.initializeForCache(ccfg);
         }
+
+        readCheckpointAndRestoreMemory();
+
+        if (log.isDebugEnabled())
+            log.debug("Restore state after activation [nodeId=" + cctx.localNodeId() + " ]");
     }
 
     /** {@inheritDoc} */

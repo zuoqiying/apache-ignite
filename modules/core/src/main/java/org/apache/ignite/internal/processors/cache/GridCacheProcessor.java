@@ -663,15 +663,21 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         addCacheOnJoinFromPersistentStore(caches, templates);
 
-        CacheJoinNodeDiscoveryData discoData = new CacheJoinNodeDiscoveryData(IgniteUuid.randomUuid(),
+        CacheJoinNodeDiscoveryData discoData = new CacheJoinNodeDiscoveryData(
+            IgniteUuid.randomUuid(),
             caches,
             templates,
-            startAllCachesOnClientStart());
+            startAllCachesOnClientStart()
+        );
+
+        ctx.state().addJoinNodeDate(discoData);
 
         cachesInfo.onStart(discoData);
 
         if (log.isDebugEnabled())
             log.debug("Started cache processor.");
+
+        ctx.state().cacheProcessorStarted();
     }
 
     /**
@@ -1761,7 +1767,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             for (DynamicCacheDescriptor desc : started) {
                 IgnitePredicate<ClusterNode> filter = desc.cacheConfiguration().getNodeFilter();
 
-                if (CU.affinityNode(ctx.discovery().localNode(), filter)) {
+                if (CU.affinityNode(ctx.discovery().localNode(), filter) || CU.isSystemCache(desc.cacheName())) {
                     prepareCacheStart(
                         desc.cacheConfiguration(),
                         null,
@@ -2135,7 +2141,29 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
     /** {@inheritDoc} */
     @Override public void collectGridNodeData(DiscoveryDataBag dataBag) {
-        cachesInfo.collectGridNodeData(dataBag);
+        if (ctx.state().active())
+            cachesInfo.collectGridNodeData(dataBag);
+        else
+            ctx.state().collectGridNodeData0(dataBag);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onJoiningNodeDataReceived(JoiningNodeDiscoveryData data) {
+        if (ctx.state().active())
+            cachesInfo.onJoiningNodeDataReceived(data);
+
+        ctx.state().onJoiningNodeDataReceived0(data);
+    }
+
+    /** {@inheritDoc} */
+    @Override public void onGridDataReceived(GridDiscoveryData data) {
+        if (ctx.state().active()){
+            cachesInfo.addJoinInfo();
+
+            cachesInfo.onGridDataReceived(data);
+        }
+
+        ctx.state().onGridDataReceived0(data);
     }
 
     /**
@@ -2143,16 +2171,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
      */
     private boolean startAllCachesOnClientStart() {
         return START_CLIENT_CACHES && ctx.clientNode();
-    }
-
-    /** {@inheritDoc} */
-    @Override public void onJoiningNodeDataReceived(JoiningNodeDiscoveryData data) {
-        cachesInfo.onJoiningNodeDataReceived(data);
-    }
-
-    /** {@inheritDoc} */
-    @Override public void onGridDataReceived(GridDiscoveryData data) {
-        cachesInfo.onGridDataReceived(data);
     }
 
     /**
@@ -2640,7 +2658,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         return req;
     }
 
-    private CacheType cacheType(String cacheName) {
+    public CacheType cacheType(String cacheName) {
         if (CU.isUtilityCache(cacheName))
             return CacheType.UTILITY;
         else if (internalCaches.contains(cacheName))

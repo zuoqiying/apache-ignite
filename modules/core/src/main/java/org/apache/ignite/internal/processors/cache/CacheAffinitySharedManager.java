@@ -391,7 +391,8 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
 
             NearCacheConfiguration nearCfg = null;
 
-            if (cctx.localNodeId().equals(req.initiatingNodeId())) {
+            if (cctx.localNodeId().equals(req.initiatingNodeId()) ||
+                exchActions.newClusterState() == ClusterState.ACTIVE) {
                 startCache = true;
 
                 nearCfg = req.nearCacheConfiguration();

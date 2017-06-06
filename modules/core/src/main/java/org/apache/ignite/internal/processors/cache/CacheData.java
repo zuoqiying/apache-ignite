@@ -163,6 +163,13 @@ public class CacheData implements Serializable {
         return rcvdFrom;
     }
 
+    /**
+     * @return Flags.
+     */
+    public byte flags() {
+        return flags;
+    }
+
     /** {@inheritDoc} */
     @Override public String toString() {
         return S.toString(CacheData.class, this, "cacheName", cacheCfg.getName());

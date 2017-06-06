@@ -18,6 +18,7 @@
 package org.apache.ignite.cache.database.standbycluster;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.ignite.cache.CacheAtomicityMode;
@@ -28,6 +29,7 @@ import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteCallable;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
@@ -284,6 +286,24 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         /** After de activate. */
         private Runnable afterDeActivate = Noop;
 
+        private IgniteCallable<List<CacheConfiguration>> dynamicCacheStart =
+            new IgniteCallable<List<CacheConfiguration>>() {
+                @Override public List<CacheConfiguration> call() throws Exception {
+                    return Collections.emptyList();
+                }
+            };
+
+        private IgniteCallable<List<String>> dynamicCacheStop =
+            new IgniteCallable<List<String>>() {
+                @Override public List<String> call() throws Exception {
+                    return Collections.emptyList();
+                }
+            };
+
+        private Runnable afterDynamicCacheStarted = Noop;
+
+        private Runnable afterDynamicCacheStopped = Noop;
+
         /** End. */
         private Runnable end = Noop;
 
@@ -409,6 +429,42 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
             return this;
         }
 
+        public JoinNodeTestPlanBuilder dynamicCacheStart(IgniteCallable<List<CacheConfiguration>> caches){
+            strPlanBuilder.append("Dynamic caches start")
+                .append("\n");
+
+            dynamicCacheStart = caches;
+
+            return this;
+        }
+
+        public JoinNodeTestPlanBuilder afterDynamicCacheStarted(Runnable r){
+            strPlanBuilder.append("Check after dynamic caches start")
+                .append("\n");
+
+            afterDynamicCacheStarted = r;
+
+            return this;
+        }
+
+        public JoinNodeTestPlanBuilder dynamicCacheStop(IgniteCallable<List<String>> caches){
+            strPlanBuilder.append("Dynamic caches stop")
+                .append("\n");
+
+            dynamicCacheStop = caches;
+
+            return this;
+        }
+
+        public JoinNodeTestPlanBuilder afterDynamicCacheStopped(Runnable r){
+            strPlanBuilder.append("Check after dynamic caches stop")
+                .append("\n");
+
+            afterDynamicCacheStopped = r;
+
+            return this;
+        }
+
         /**
          * @param end End.
          */
@@ -482,6 +538,14 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
 
                     grid(nodes.get(0)).active(true);
                 }
+
+                grid(nodes.get(0)).createCaches(dynamicCacheStart.call());
+
+                afterDynamicCacheStarted.run();
+
+                grid(nodes.get(0)).destroyCaches(dynamicCacheStop.call());
+
+                afterDynamicCacheStopped.run();
 
                 System.out.println(">>> Finish check");
 

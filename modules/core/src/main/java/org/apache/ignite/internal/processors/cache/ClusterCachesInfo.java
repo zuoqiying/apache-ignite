@@ -96,7 +96,9 @@ class ClusterCachesInfo {
      */
     void onStart(CacheJoinNodeDiscoveryData joinDiscoData) {
         this.joinDiscoData = joinDiscoData;
+    }
 
+    public void addJoinInfo(){
         processJoiningNode(joinDiscoData, ctx.localNodeId());
     }
 
@@ -105,7 +107,7 @@ class ClusterCachesInfo {
      * @throws IgniteCheckedException If failed.
      */
     void onKernalStart(boolean checkConsistency) throws IgniteCheckedException {
-        if (!ctx.isDaemon())
+        if (ctx.isDaemon())
             return;
 
         assert joinDiscoData != null;
@@ -583,6 +585,9 @@ class ClusterCachesInfo {
             if (node.id().equals(ctx.discovery().localNode().id())) {
                 if (gridData == null) { // First node starts.
                     assert joinDiscoData != null || !ctx.state().active();
+
+                    if (ctx.state().active())
+                        addJoinInfo();
 
                     initStartCachesForLocalJoin(true);
                 }

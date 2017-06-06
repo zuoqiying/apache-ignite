@@ -728,7 +728,7 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                     stateProc.onJoiningNodeDataReceived(data0);
 
                     for (GridComponent c : ctx.components()) {
-                        if (c.discoveryDataType() != null) {
+                        if (c.discoveryDataType() != null && c != stateProc) {
                             JoiningNodeDiscoveryData data = dataBag.newJoinerDiscoveryData(
                                 c.discoveryDataType().ordinal());
 
@@ -1196,17 +1196,6 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                     ", locDelayAssign=" + locDelayAssign +
                     ", rmtId8=" + U.id8(n.id()) +
                     ", rmtLateAssign=" + rmtLateAssign +
-                    ", rmtAddrs=" + U.addressesAsString(n) + ']');
-            }
-
-            boolean rmtActiveOnStart = n.attribute(ATTR_ACTIVE_ON_START);
-
-            if (locActiveOnStart != rmtActiveOnStart) {
-                throw new IgniteCheckedException("Remote node has active on start flag different from local " +
-                    "[locId8=" + U.id8(locNode.id()) +
-                    ", locActiveOnStart=" + locActiveOnStart +
-                    ", rmtId8=" + U.id8(n.id()) +
-                    ", rmtActiveOnStart=" + rmtActiveOnStart +
                     ", rmtAddrs=" + U.addressesAsString(n) + ']');
             }
 
