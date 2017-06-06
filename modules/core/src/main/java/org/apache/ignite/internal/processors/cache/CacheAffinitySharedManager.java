@@ -406,6 +406,9 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                 if (startCache) {
                     cctx.cache().prepareCacheStart(cacheDesc, nearCfg, fut.topologyVersion());
 
+                    if (exchActions.newClusterState() == null)
+                        cctx.kernalContext().state().onCacheStart(req);
+
                     if (fut.cacheAddedOnExchange(cacheDesc.cacheId(), cacheDesc.receivedFrom())) {
                         if (fut.discoCache().cacheAffinityNodes(req.cacheName()).isEmpty())
                             U.quietAndWarn(log, "No server nodes found for cache client: " + req.cacheName());

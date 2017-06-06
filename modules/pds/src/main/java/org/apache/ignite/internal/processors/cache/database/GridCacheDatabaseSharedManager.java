@@ -442,7 +442,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
     /** {@inheritDoc} */
     @Override public void onActivate(GridKernalContext kctx) throws IgniteCheckedException {
-        super.onActivate(kctx);
+        start0();
 
         if (log.isDebugEnabled())
             log.debug("Activate database manager [id=" + cctx.localNodeId() +
@@ -483,7 +483,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
     /** {@inheritDoc} */
     @Override public void onDeActivate(GridKernalContext kctx) throws IgniteCheckedException {
-        super.onDeActivate(kctx);
+        stop0(true);
 
         if (log.isDebugEnabled())
             log.debug("DeActivate database manager [id=" + cctx.localNodeId() +

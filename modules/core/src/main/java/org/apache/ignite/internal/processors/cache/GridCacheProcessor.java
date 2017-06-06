@@ -1974,6 +1974,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                 try {
                     stopCtx = prepareCacheStop(action.request(), forceClose);
                     destroy = action.request().destroy();
+
+                    if (exchActions.newClusterState() == null)
+                        ctx.state().onCacheStop(action.request());
                 }
                 finally {
                     sharedCtx.database().checkpointReadUnlock();

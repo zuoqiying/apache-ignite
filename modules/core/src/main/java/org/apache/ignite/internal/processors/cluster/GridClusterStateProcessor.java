@@ -333,14 +333,31 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         return cgsFut;
     }
 
+    public void onCacheStart(DynamicCacheChangeRequest req) {
+        CacheInfo cacheInfo = cacheData.get(req.cacheName());
+
+        if (cacheInfo == null)
+            cacheData.put(req.cacheName(),
+                new CacheInfo(
+                    req.startCacheConfiguration(),
+                    req.cacheType(), req.sql(),
+                    (byte)0)
+            );
+    }
+
+    public void onCacheStop(DynamicCacheChangeRequest req) {
+        CacheInfo cacheInfo = cacheData.get(req.cacheName());
+
+        if (cacheInfo != null)
+            cacheData.remove(req.cacheName());
+    }
+
     private Map<String, CacheConfiguration> allCaches() {
         Map<String, CacheConfiguration> cfgs = new HashMap<>();
 
-        for (Map<String, CacheInfo> data : cacheData.values()) {
-            for (Map.Entry<String, CacheInfo> entry : data.entrySet())
-                if (cfgs.get(entry.getKey()) == null)
-                    cfgs.put(entry.getKey(), entry.getValue().config());
-        }
+        for (Map.Entry<String, CacheInfo> entry : cacheData.entrySet())
+            if (cfgs.get(entry.getKey()) == null)
+                cfgs.put(entry.getKey(), entry.getValue().config());
 
         return cfgs;
     }
@@ -424,10 +441,10 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
 
         // First node started (coordinator).
         if (ctx.discovery().serverNodes(AffinityTopologyVersion.NONE).get(0).isLocal())
-            cacheData.put(ctx.localNodeId(), localCacheData.caches());
+            cacheData.putAll(localCacheData.caches());
     }
 
-    private final ConcurrentHashMap<UUID, Map<String, CacheInfo>> cacheData = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CacheInfo> cacheData = new ConcurrentHashMap<>();
 
     private volatile CacheJoinNodeDiscoveryData localCacheData;
 
@@ -444,7 +461,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
     public void onJoiningNodeDataReceived0(JoiningNodeDiscoveryData data) {
         CacheJoinNodeDiscoveryData data0 = (CacheJoinNodeDiscoveryData)data.joiningNodeData();
 
-        cacheData.put(data.joiningNodeId(), data0.caches());
+        cacheData.putAll(data0.caches());
     }
 
     public void onGridDataReceived0(DiscoveryDataBag.GridDiscoveryData data) {
@@ -456,7 +473,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
 
             Map<String, CacheInfo> cacheInfos = new HashMap<>();
 
-            for (Map.Entry<String, CacheData> entry : caches.entrySet()){
+            for (Map.Entry<String, CacheData> entry : caches.entrySet()) {
                 CacheData val = entry.getValue();
 
                 CacheInfo info = new CacheInfo(
@@ -469,21 +486,16 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
                 cacheInfos.put(entry.getKey(), info);
             }
 
-            cacheData.put(ctx.localNodeId(), cacheInfos);
+            cacheData.putAll(cacheInfos);
 
         } // Receive data from inactive cluster.
         else if (data.commonData() instanceof Map) {
-            Map<UUID, Map<String, CacheInfo>> data0 = (Map<UUID, Map<String, CacheInfo>>)data.commonData();
+            Map<String, CacheInfo> data0 = (Map<String, CacheInfo>)data.commonData();
 
             cacheData.putAll(data0);
         }
 
-        Map<String, CacheInfo> oldInfos = cacheData.get(ctx.localNodeId());
-
-        if (oldInfos != null)
-            oldInfos.putAll(localCacheData.caches());
-        else
-            cacheData.put(ctx.localNodeId(), localCacheData.caches());
+        cacheData.putAll(localCacheData.caches());
     }
 
     /**
