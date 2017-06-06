@@ -659,10 +659,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         addCacheOnJoinFromConfig(caches, templates);
 
-        // Todo check read persistent configuration, must lock before read.
-
-        addCacheOnJoinFromPersistentStore(caches, templates);
-
         CacheJoinNodeDiscoveryData discoData = new CacheJoinNodeDiscoveryData(
             IgniteUuid.randomUuid(),
             caches,
@@ -746,40 +742,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             cfgs[i] = cfg;
 
             addCacheOnJoin(cfg, false, caches, templates);
-        }
-    }
-
-    /**
-     * @param caches Caches map.
-     * @param templates Templates map.
-     * @throws IgniteCheckedException If failed.
-     */
-    private void addCacheOnJoinFromPersistentStore(
-        Map<String, CacheInfo> caches,
-        Map<String, CacheInfo> templates
-    ) throws IgniteCheckedException {
-        assert !ctx.config().isDaemon();
-
-        if (!sharedCtx.database().persistenceEnabled())
-            return;
-
-        Set<String> savedCacheNames = sharedCtx.pageStore().savedCacheNames();
-
-        savedCacheNames.removeAll(caches.keySet());
-
-        savedCacheNames.removeAll(internalCaches);
-
-        if (!F.isEmpty(savedCacheNames)) {
-            if (log.isInfoEnabled())
-                log.info("Register persistent caches: " + savedCacheNames);
-
-            for (String name : savedCacheNames) {
-                CacheConfiguration cfg = sharedCtx.pageStore().readConfiguration(name);
-
-                // TODO IGNITE-5306 - set correct SQL flag below.
-                if (cfg != null)
-                    addCacheOnJoin(cfg, false, caches, templates);
-            }
         }
     }
 
@@ -2581,84 +2543,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         fut.markInitialized();
 
         return fut;
-    }
-
-    /**
-     *
-     */
-    public Collection<DynamicCacheChangeRequest> startAllCachesRequests() throws IgniteCheckedException {
-        List<DynamicCacheChangeRequest> reqs = new ArrayList<>();
-
-        if (!ctx.config().isDaemon() &&
-            sharedCtx.pageStore() != null &&
-            sharedCtx.database().persistenceEnabled()) {
-            Set<String> savedCacheNames = sharedCtx.pageStore().savedCacheNames();
-
-            for (String name : savedCacheNames) {
-                CacheConfiguration cfg = sharedCtx.pageStore().readConfiguration(name);
-
-                if (cfg != null)
-                    reqs.add(createRequest(cfg, false));
-            }
-
-            for (CacheConfiguration cfg : ctx.config().getCacheConfiguration()) {
-                if (!savedCacheNames.contains(cfg.getName()))
-                    reqs.add(createRequest(cfg, true));
-            }
-        }
-        else {
-            for (CacheConfiguration cfg : ctx.config().getCacheConfiguration())
-                reqs.add(createRequest(cfg, true));
-        }
-
-        return reqs;
-    }
-
-    /**
-     *
-     */
-    public Collection<DynamicCacheChangeRequest> stopAllCachesRequests(){
-        List<DynamicCacheChangeRequest> reqs = new ArrayList<>();
-
-        for (String cacheName : cacheNames()) {
-            DynamicCacheChangeRequest req = DynamicCacheChangeRequest.stopRequest(ctx, cacheName, false, false);
-
-            reqs.add(req);
-        }
-
-        return reqs;
-    }
-
-    /**
-     * @param cfg Cache configuration.
-     */
-    private DynamicCacheChangeRequest createRequest(
-        CacheConfiguration cfg,
-        boolean needInit
-    ) throws IgniteCheckedException {
-        assert cfg != null;
-        assert cfg.getName() != null;
-
-        cloneCheckSerializable(cfg);
-
-        if (needInit){
-            CacheObjectContext cacheObjCtx = ctx.cacheObjects().contextForCache(cfg);
-
-            initialize(cfg, cacheObjCtx);
-        }
-
-        String cacheName = cfg.getName();
-
-        DynamicCacheChangeRequest req = new DynamicCacheChangeRequest(UUID.randomUUID(), cacheName, ctx.localNodeId());
-
-        req.startCacheConfiguration(cfg);
-        req.template(cfg.getName().endsWith("*"));
-        req.nearCacheConfiguration(cfg.getNearConfiguration());
-        req.deploymentId(IgniteUuid.randomUuid());
-        req.schema(new QuerySchema(cfg.getQueryEntities()));
-        req.cacheType(cacheType(cacheName));
-
-        return req;
     }
 
     public CacheType cacheType(String cacheName) {
