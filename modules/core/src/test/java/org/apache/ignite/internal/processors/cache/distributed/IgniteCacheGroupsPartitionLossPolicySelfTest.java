@@ -134,10 +134,11 @@ public class IgniteCacheGroupsPartitionLossPolicySelfTest extends GridCommonAbst
     }
 
     /**
-     * See also https://issues.apache.org/jira/browse/IGNITE-5078
      * @throws Exception if failed.
      */
     public void testIgnore() throws Exception {
+        fail("https://issues.apache.org/jira/browse/IGNITE-5078");
+
         prepareTopology();
 
         String cacheName = ThreadLocalRandom.current().nextBoolean() ? CACHE_1 : CACHE_2;

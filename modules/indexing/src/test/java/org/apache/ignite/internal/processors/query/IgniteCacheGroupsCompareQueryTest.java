@@ -25,7 +25,6 @@ import org.apache.ignite.internal.processors.query.h2.sql.BaseH2CompareQueryTest
  *
  */
 public class IgniteCacheGroupsCompareQueryTest extends BaseH2CompareQueryTest {
-
     /**
      * Creates new cache configuration.
      *
@@ -38,7 +37,7 @@ public class IgniteCacheGroupsCompareQueryTest extends BaseH2CompareQueryTest {
     @Override protected CacheConfiguration cacheConfiguration(String name, CacheMode mode, Class<?> clsK, Class<?> clsV) {
         CacheConfiguration<?,?> cc = super.cacheConfiguration(name, mode, clsK, clsV);
 
-        if(ORG.equals(name) || PERS.equals(name) || PURCH.equals(name))
+        if (ORG.equals(name) || PERS.equals(name) || PURCH.equals(name))
             cc.setGroupName("group");
 
         return cc;

@@ -20,9 +20,10 @@ package org.apache.ignite.internal.processors.cache;
 import org.apache.ignite.configuration.NearCacheConfiguration;
 
 /**
- * Topology validator test
+ * Topology validator test.
  */
-public class IgniteTopologyValidatorNearPartitionedAtomicCacheGroupsTest extends IgniteTopologyValidatorPartitionedAtomicCacheGroupsTest {
+public class IgniteTopologyValidatorNearPartitionedAtomicCacheGroupsTest extends
+    IgniteTopologyValidatorPartitionedAtomicCacheGroupsTest {
     /** {@inheritDoc} */
     @Override protected NearCacheConfiguration nearConfiguration() {
         return new NearCacheConfiguration();

@@ -20,9 +20,10 @@ package org.apache.ignite.internal.processors.cache;
 import org.apache.ignite.cache.CacheMode;
 
 /**
- * Topology validator test
+ * Topology validator test.
  */
-public class IgniteTopologyValidatorReplicatedTxCacheGroupsTest extends IgniteTopologyValidatorAbstractTxCacheGroupsTest {
+public class IgniteTopologyValidatorReplicatedTxCacheGroupsTest extends
+    IgniteTopologyValidatorAbstractTxCacheGroupsTest {
     /** {@inheritDoc} */
     @Override protected CacheMode cacheMode() {
         return CacheMode.REPLICATED;

@@ -24,9 +24,10 @@ import org.apache.ignite.configuration.NearCacheConfiguration;
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
 
 /**
- * Topology validator test
+ * Topology validator test.
  */
-public class IgniteTopologyValidatorPartitionedAtomicCacheGroupsTest extends IgniteTopologyValidatorCacheGroupsAbstractTest {
+public class IgniteTopologyValidatorPartitionedAtomicCacheGroupsTest extends
+    IgniteTopologyValidatorCacheGroupsAbstractTest {
     /** {@inheritDoc} */
     @Override protected CacheMode cacheMode() {
         return CacheMode.PARTITIONED;

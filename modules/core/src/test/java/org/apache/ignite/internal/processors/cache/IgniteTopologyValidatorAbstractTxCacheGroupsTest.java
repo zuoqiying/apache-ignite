@@ -20,15 +20,17 @@ package org.apache.ignite.internal.processors.cache;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.configuration.NearCacheConfiguration;
 import org.apache.ignite.transactions.Transaction;
-import org.apache.ignite.transactions.TransactionConcurrency;
-import org.apache.ignite.transactions.TransactionIsolation;
 
 import static org.apache.ignite.cache.CacheAtomicityMode.TRANSACTIONAL;
+import static org.apache.ignite.transactions.TransactionConcurrency.OPTIMISTIC;
+import static org.apache.ignite.transactions.TransactionConcurrency.PESSIMISTIC;
+import static org.apache.ignite.transactions.TransactionIsolation.REPEATABLE_READ;
 
 /**
  * Topology validator test
  */
-public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest extends IgniteTopologyValidatorCacheGroupsAbstractTest {
+public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest
+    extends IgniteTopologyValidatorCacheGroupsAbstractTest {
     /** {@inheritDoc} */
     @Override protected CacheAtomicityMode atomicityMode() {
         return TRANSACTIONAL;
@@ -41,7 +43,7 @@ public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest extends I
 
     /** {@inheritDoc} */
     @Override public void testTopologyValidator() throws Exception {
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.OPTIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(OPTIMISTIC, REPEATABLE_READ)) {
             putValid(CACHE_NAME_1);
             putValid(CACHE_NAME_3);
             commitFailed(tx);
@@ -50,15 +52,15 @@ public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest extends I
         assertEmpty(CACHE_NAME_1); // rolled back
         assertEmpty(CACHE_NAME_3); // rolled back
 
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(PESSIMISTIC, REPEATABLE_READ)) {
             putInvalid(CACHE_NAME_1);
         }
 
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(PESSIMISTIC, REPEATABLE_READ)) {
             putInvalid(CACHE_NAME_3);
         }
 
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(PESSIMISTIC, REPEATABLE_READ)) {
             putValid(DEFAULT_CACHE_NAME);
             putInvalid(CACHE_NAME_1);
         }
@@ -67,7 +69,7 @@ public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest extends I
 
         startGrid(1);
 
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.OPTIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(OPTIMISTIC, REPEATABLE_READ)) {
             putValid(CACHE_NAME_1);
             putValid(CACHE_NAME_3);
             tx.commit();
@@ -76,7 +78,7 @@ public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest extends I
         remove(CACHE_NAME_1);
         remove(CACHE_NAME_3);
 
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(PESSIMISTIC, REPEATABLE_READ)) {
             putValid(CACHE_NAME_1);
             putValid(CACHE_NAME_3);
             tx.commit();
@@ -87,14 +89,14 @@ public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest extends I
 
         startGrid(2);
 
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(PESSIMISTIC, REPEATABLE_READ)) {
             putValid(CACHE_NAME_3);
             putInvalid(CACHE_NAME_1);
         }
 
         assertEmpty(CACHE_NAME_3); // rolled back
 
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.OPTIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(OPTIMISTIC, REPEATABLE_READ)) {
             putValid(CACHE_NAME_1);
             putValid(CACHE_NAME_3);
             commitFailed(tx);
@@ -103,8 +105,7 @@ public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest extends I
         assertEmpty(CACHE_NAME_1); // rolled back
         assertEmpty(CACHE_NAME_3); // rolled back
 
-
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.OPTIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(OPTIMISTIC, REPEATABLE_READ)) {
             putValid(DEFAULT_CACHE_NAME);
             putValid(CACHE_NAME_3);
             tx.commit();
@@ -113,7 +114,7 @@ public abstract class IgniteTopologyValidatorAbstractTxCacheGroupsTest extends I
         remove(DEFAULT_CACHE_NAME);
         remove(CACHE_NAME_3);
 
-        try (Transaction tx = grid(0).transactions().txStart(TransactionConcurrency.PESSIMISTIC, TransactionIsolation.REPEATABLE_READ)) {
+        try (Transaction tx = grid(0).transactions().txStart(PESSIMISTIC, REPEATABLE_READ)) {
             putValid(DEFAULT_CACHE_NAME);
             putValid(CACHE_NAME_3);
             tx.commit();

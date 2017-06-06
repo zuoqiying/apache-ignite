@@ -76,8 +76,10 @@ public abstract class IgniteTopologyValidatorCacheGroupsAbstractTest extends Ign
         return icfg.setCacheConfiguration(F.concat(ccfgs, ccfg3, ccfg4));
     }
 
+    /**
+     * @throws Exception If failed.
+     */
     public void testTopologyValidator() throws Exception {
-
         putValid(DEFAULT_CACHE_NAME);
         remove(DEFAULT_CACHE_NAME);
 

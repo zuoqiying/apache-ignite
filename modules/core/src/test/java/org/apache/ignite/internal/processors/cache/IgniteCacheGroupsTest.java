@@ -2112,9 +2112,8 @@ public class IgniteCacheGroupsTest extends GridCommonAbstractTest {
 
         assertEquals(data.size(), data0.size());
 
-        for (Map.Entry<Integer, Integer> entry : data.entrySet()) {
+        for (Map.Entry<Integer, Integer> entry : data.entrySet())
             assertEquals(entry.getValue(), data0.get(entry.getKey()));
-        }
 
         assertTrue(cache.containsKeys(data.keySet()));
 
@@ -2135,9 +2134,8 @@ public class IgniteCacheGroupsTest extends GridCommonAbstractTest {
 
         assertEquals(data.size(), data0.size());
 
-        for (Map.Entry<Integer, Integer> entry : data.entrySet()) {
+        for (Map.Entry<Integer, Integer> entry : data.entrySet())
             assertEquals(entry.getValue(), data0.get(entry.getKey()));
-        }
 
         assertTrue((Boolean)cache.containsKeysAsync(data.keySet()).get(ASYNC_TIMEOUT));
 
