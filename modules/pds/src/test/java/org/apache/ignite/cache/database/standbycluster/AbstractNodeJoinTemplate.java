@@ -27,6 +27,7 @@ import org.apache.ignite.configuration.PersistentStoreConfiguration;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
@@ -147,6 +148,18 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
      *
      */
     public abstract void testJoinClientStaticCacheConfigurationDifferentOnBoth() throws Exception;
+
+    @Override protected void beforeTest() throws Exception {
+        super.beforeTest();
+
+        deleteRecursively(U.resolveWorkDirectory(U.defaultWorkDirectory(), "db", false));
+    }
+
+    @Override protected void afterTest() throws Exception {
+        super.afterTest();
+
+        deleteRecursively(U.resolveWorkDirectory(U.defaultWorkDirectory(), "db", false));
+    }
 
     /**
      * @param idx Index.
