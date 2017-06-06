@@ -433,35 +433,57 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
 
                 IgniteConfiguration[] cfgs = clusterCfg;
 
+                System.out.println(">>> Start cluster");
+
                 for (IgniteConfiguration cfg : cfgs) {
                     startGrid(cfg);
 
                     nodes.add(cfg.getIgniteInstanceName());
                 }
 
+                System.out.println(">>> Check after cluster started");
+
                 afterClusterStarted.run();
+
+                System.out.println(">>> Start new node");
 
                 startGrid(nodeCfg);
 
                 nodes.add(nodeCfg.getIgniteInstanceName());
 
+                System.out.println(">>> Check after new node join in cluster");
+
                 afterNodeJoin.run();
+
+                System.out.println(">>> Check cluster state on all nodes");
 
                 for (IgniteEx ig : grids())
                     assertEquals((boolean)state, ig.active());
 
                 if (!state) {
+                    System.out.println(">>> Activate cluster");
+
                     grid(nodes.get(0)).active(true);
+
+                    System.out.println(">>> Check after cluster activated");
 
                     afterActivate.run();
                 }
                 else {
+                    System.out.println(">>> DeActivate cluster");
+
                     grid(nodes.get(0)).active(false);
+
+                    System.out.println(">>> Check after cluster deActivated");
 
                     afterDeActivate.run();
 
+                    System.out.println(">>> Activate cluster");
+
                     grid(nodes.get(0)).active(true);
                 }
+
+                System.out.println(">>> Finish check");
 
                 end.run();
             }
