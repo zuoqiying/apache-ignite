@@ -663,34 +663,37 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
                 assert dataBag != null;
                 assert dataBag.joiningNodeId() != null;
 
-                Map<Integer, Serializable> data = new HashMap<>();
-
-                ctx.state().collectGridNodeData(dataBag);
-
-
-                for (GridComponent comp : ctx.components()) {
-                    if (comp instanceof GridClusterStateProcessor)
-                        continue;
-
-                    comp.collectGridNodeData(dataBag);
+                if (ctx.localNodeId().equals(dataBag.joiningNodeId())) {
+                    for (GridComponent c : ctx.components())
+                        c.collectJoiningNodeData(dataBag);
+                }
+                else {
+                    for (GridComponent c : ctx.components())
+                        c.collectGridNodeData(dataBag);
                 }
 
                 return dataBag;
             }
 
             @Override public void onExchange(DiscoveryDataBag dataBag) {
-                GridClusterStateProcessor stateProc = ctx.state();
+                if (ctx.localNodeId().equals(dataBag.joiningNodeId())) {
+                    //NodeAdded msg reached joining node after round-trip over the ring
+                    for (GridComponent c : ctx.components()) {
+                        if (c.discoveryDataType() != null)
+                            c.onGridDataReceived(dataBag.gridDiscoveryData(c.discoveryDataType().ordinal()));
+                    }
+                }
+                else {
+                    //discovery data from newly joined node has to be applied to the current old node
+                    for (GridComponent c : ctx.components()) {
+                        if (c.discoveryDataType() != null) {
+                            JoiningNodeDiscoveryData data =
+                                    dataBag.newJoinerDiscoveryData(c.discoveryDataType().ordinal());
 
-                int type = stateProc.discoveryDataType().ordinal();
-
-                stateProc.onGridDataReceived(dataBag.gridDiscoveryData(type));
-
-                for (GridComponent comp : ctx.components()) {
-                    if (comp.discoveryDataType() == null)
-                        continue;
-
-                    if (!(comp instanceof GridClusterStateProcessor))
-                        comp.onGridDataReceived(dataBag.gridDiscoveryData(comp.discoveryDataType().ordinal()));
+                            if (data != null)
+                                c.onJoiningNodeDataReceived(data);
+                        }
+                    }
                 }
             }
         });
