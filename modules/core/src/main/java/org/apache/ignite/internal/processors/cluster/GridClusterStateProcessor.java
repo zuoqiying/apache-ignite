@@ -138,7 +138,9 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
 
     /** {@inheritDoc} */
     @Override public void start() throws IgniteCheckedException {
-        globalState = ctx.config().isActiveOnStart() ? ACTIVE : INACTIVE;
+        // Start first node as inactive if persistent enable.
+        globalState = ctx.config().isPersistentStoreEnabled() ? INACTIVE :
+            ctx.config().isActiveOnStart() ? ACTIVE : INACTIVE;
 
         ctx.discovery().setCustomEventListener(
             ChangeGlobalStateMessage.class, new CustomEventListener<ChangeGlobalStateMessage>() {
@@ -281,16 +283,15 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         if (ctx.clientNode()) {
             AffinityTopologyVersion topVer = ctx.discovery().topologyVersionEx();
 
-            IgniteCompute comp = ((ClusterGroupAdapter)ctx.cluster().get().forServers())
-                .compute().withAsync();
+            IgniteCompute comp = ((ClusterGroupAdapter)ctx.cluster().get().forServers()).compute();
 
             if (log.isInfoEnabled())
                 log.info("Send " + prettyStr(activate) + " request from client node [id=" +
                     ctx.localNodeId() + " topVer=" + topVer + " ]");
 
-            comp.run(new ClientChangeGlobalStateComputeRequest(activate));
+            IgniteFuture<Void> fut = comp.runAsync(new ClientChangeGlobalStateComputeRequest(activate));
 
-            comp.future().listen(new CI1<IgniteFuture>() {
+            fut.listen(new CI1<IgniteFuture>() {
                 @Override public void apply(IgniteFuture fut) {
                     try {
                         fut.get();

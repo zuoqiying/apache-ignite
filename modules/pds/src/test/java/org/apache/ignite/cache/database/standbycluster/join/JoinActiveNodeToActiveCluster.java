@@ -234,21 +234,47 @@ public class JoinActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
      *
      */
     @Override public void testJoinClientWithOutConfiguration() throws Exception {
-        withOutConfigurationTemplate().nodeConfiguration(setClient).execute();
+        joinClientWithOutConfigurationTemplate().execute();
     }
 
     /**
      *
      */
     @Override public void testJoinClientStaticCacheConfigurationOnJoin() throws Exception {
-        staticCacheConfigurationOnJoinTemplate().nodeConfiguration(setClient).execute();
+        joinClientStaticCacheConfigurationOnJoinTemplate().execute();
     }
 
     /**
      *
      */
     @Override public void testJoinClientStaticCacheConfigurationInCluster() throws Exception {
-        staticCacheConfigurationInClusterTemplate()
+        joinClientStaticCacheConfigurationInClusterTemplate().execute();
+    }
+
+    /**
+     *
+     */
+    @Override public void testJoinClientStaticCacheConfigurationSameOnBoth() throws Exception {
+        joinClientStaticCacheConfigurationSameOnBothTemplate().execute();
+    }
+
+    /**
+     *
+     */
+    @Override public void testJoinClientStaticCacheConfigurationDifferentOnBoth() throws Exception {
+        joinClientStaticCacheConfigurationDifferentOnBothTemplate().execute();
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientWithOutConfigurationTemplate() throws Exception {
+        return withOutConfigurationTemplate().nodeConfiguration(setClient);
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationOnJoinTemplate() throws Exception {
+        return staticCacheConfigurationOnJoinTemplate().nodeConfiguration(setClient);
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationInClusterTemplate() throws Exception {
+        return staticCacheConfigurationInClusterTemplate()
             .nodeConfiguration(setClient)
             .afterNodeJoin(
                 new Runnable() {
@@ -274,21 +300,11 @@ public class JoinActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
                             Assert.assertEquals(4, caches.size());
                         }
                     }
-                }).execute();
+                });
     }
 
-    /**
-     *
-     */
-    @Override public void testJoinClientStaticCacheConfigurationSameOnBoth() throws Exception {
-        staticCacheConfigurationSameOnBothTemplate().nodeConfiguration(setClient).execute();
-    }
-
-    /**
-     *
-     */
-    @Override public void testJoinClientStaticCacheConfigurationDifferentOnBoth() throws Exception {
-        staticCacheConfigurationDifferentOnBothTemplate()
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationDifferentOnBothTemplate() throws Exception {
+        return staticCacheConfigurationDifferentOnBothTemplate()
             .nodeConfiguration(setClient)
             .afterNodeJoin(new Runnable() {
                 @Override public void run() {
@@ -312,6 +328,10 @@ public class JoinActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
                             Assert.assertEquals(3, caches.size());
                     }
                 }
-            }).execute();
+            });
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationSameOnBothTemplate() throws Exception {
+        return staticCacheConfigurationSameOnBothTemplate().nodeConfiguration(setClient);
     }
 }

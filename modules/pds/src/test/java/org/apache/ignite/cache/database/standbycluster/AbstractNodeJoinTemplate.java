@@ -101,6 +101,18 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
      */
     public abstract JoinNodeTestPlanBuilder staticCacheConfigurationDifferentOnBothTemplate() throws Exception;
 
+    // Client node join.
+
+    public abstract JoinNodeTestPlanBuilder joinClientWithOutConfigurationTemplate() throws Exception;
+
+    public abstract JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationOnJoinTemplate() throws Exception;
+
+    public abstract JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationInClusterTemplate() throws Exception;
+
+    public abstract JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationSameOnBothTemplate() throws Exception;
+
+    public abstract JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationDifferentOnBothTemplate() throws Exception;
+
     /**
      *
      */

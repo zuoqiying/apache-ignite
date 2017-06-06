@@ -28,4 +28,54 @@ public class JoinActiveNodeToActiveClusterWithPersistence extends JoinActiveNode
     @Override protected IgniteConfiguration cfg(String name) throws Exception {
         return persistentCfg(super.cfg(name));
     }
+
+    private JoinNodeTestPlanBuilder persistent(JoinNodeTestPlanBuilder b) {
+        b.afterClusterStarted(
+            b.checkCacheEmpty()
+        ).stateAfterJoin(
+            false
+        ).afterNodeJoin(
+            b.checkCacheEmpty()
+        ).afterActivate(
+            b.checkCacheNotEmpty()
+        );
+
+        return b;
+    }
+
+    @Override public JoinNodeTestPlanBuilder withOutConfigurationTemplate() throws Exception {
+        return persistent(super.withOutConfigurationTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationOnJoinTemplate() throws Exception {
+        return persistent(super.staticCacheConfigurationOnJoinTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationInClusterTemplate() throws Exception {
+        return persistent(super.staticCacheConfigurationInClusterTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationSameOnBothTemplate() throws Exception {
+        return persistent(super.staticCacheConfigurationSameOnBothTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationDifferentOnBothTemplate() throws Exception {
+        return persistent(super.staticCacheConfigurationDifferentOnBothTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientWithOutConfigurationTemplate() throws Exception {
+        return persistent(super.joinClientWithOutConfigurationTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationOnJoinTemplate() throws Exception {
+        return persistent(super.joinClientStaticCacheConfigurationOnJoinTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationInClusterTemplate() throws Exception {
+        return persistent( super.joinClientStaticCacheConfigurationInClusterTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationDifferentOnBothTemplate() throws Exception {
+        return persistent(super.joinClientStaticCacheConfigurationDifferentOnBothTemplate());
+    }
 }

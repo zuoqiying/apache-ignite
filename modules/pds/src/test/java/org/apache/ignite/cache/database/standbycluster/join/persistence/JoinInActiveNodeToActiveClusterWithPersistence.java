@@ -28,4 +28,34 @@ public class JoinInActiveNodeToActiveClusterWithPersistence extends JoinInActive
     @Override protected IgniteConfiguration cfg(String name) throws Exception {
         return persistentCfg(super.cfg(name));
     }
+
+    private JoinNodeTestPlanBuilder persistent(JoinNodeTestPlanBuilder b) {
+        b.afterClusterStarted(
+            b.checkCacheEmpty()
+        ).stateAfterJoin(
+            false
+        ).afterNodeJoin(
+            b.checkCacheEmpty()
+        ).afterActivate(
+            b.checkCacheNotEmpty()
+        );
+
+        return b;
+    }
+
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationOnJoinTemplate() throws Exception {
+        return persistent(super.staticCacheConfigurationOnJoinTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationInClusterTemplate() throws Exception {
+        return persistent(super.staticCacheConfigurationInClusterTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationSameOnBothTemplate() throws Exception {
+        return persistent(super.staticCacheConfigurationSameOnBothTemplate());
+    }
+
+    @Override public JoinNodeTestPlanBuilder staticCacheConfigurationDifferentOnBothTemplate() throws Exception {
+        return persistent(super.staticCacheConfigurationDifferentOnBothTemplate());
+    }
 }

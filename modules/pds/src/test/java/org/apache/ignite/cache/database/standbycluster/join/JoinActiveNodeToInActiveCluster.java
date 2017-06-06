@@ -181,26 +181,47 @@ public class JoinActiveNodeToInActiveCluster extends AbstractNodeJoinTemplate {
 
     /** {@inheritDoc} */
     @Override public void testJoinClientWithOutConfiguration() throws Exception {
-        withOutConfigurationTemplate().nodeConfiguration(setClient).execute();
+        joinClientWithOutConfigurationTemplate().execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testJoinClientStaticCacheConfigurationOnJoin() throws Exception {
-        staticCacheConfigurationOnJoinTemplate().nodeConfiguration(setClient).execute();
+        joinClientStaticCacheConfigurationOnJoinTemplate().execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testJoinClientStaticCacheConfigurationInCluster() throws Exception {
-        staticCacheConfigurationInClusterTemplate().nodeConfiguration(setClient).execute();
+        joinClientStaticCacheConfigurationInClusterTemplate().execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testJoinClientStaticCacheConfigurationSameOnBoth() throws Exception {
-        staticCacheConfigurationSameOnBothTemplate().nodeConfiguration(setClient).execute();
+        joinClientStaticCacheConfigurationSameOnBothTemplate().execute();
     }
 
     /** {@inheritDoc} */
     @Override public void testJoinClientStaticCacheConfigurationDifferentOnBoth() throws Exception {
-        staticCacheConfigurationDifferentOnBothTemplate().nodeConfiguration(setClient).execute();
+        joinClientStaticCacheConfigurationDifferentOnBothTemplate().execute();
     }
+
+    @Override public JoinNodeTestPlanBuilder joinClientWithOutConfigurationTemplate() throws Exception {
+        return withOutConfigurationTemplate().nodeConfiguration(setClient);
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationOnJoinTemplate() throws Exception {
+        return staticCacheConfigurationOnJoinTemplate().nodeConfiguration(setClient);
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationInClusterTemplate() throws Exception {
+        return staticCacheConfigurationInClusterTemplate().nodeConfiguration(setClient);
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationDifferentOnBothTemplate() throws Exception {
+        return staticCacheConfigurationDifferentOnBothTemplate().nodeConfiguration(setClient);
+    }
+
+    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationSameOnBothTemplate() throws Exception {
+        return staticCacheConfigurationSameOnBothTemplate().nodeConfiguration(setClient);
+    }
+
 }
