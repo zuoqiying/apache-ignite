@@ -80,7 +80,7 @@ public class JoinActiveNodeToActiveClusterWithPersistence extends JoinActiveNode
     }
 
     @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationInClusterTemplate() throws Exception {
-        return persistent( super.joinClientStaticCacheConfigurationInClusterTemplate());
+        return persistent(super.joinClientStaticCacheConfigurationInClusterTemplate());
     }
 
     @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationDifferentOnBothTemplate() throws Exception {

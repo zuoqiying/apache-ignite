@@ -18,7 +18,7 @@
 package org.apache.ignite.cache.database.standbycluster;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.ignite.cache.CacheAtomicityMode;
@@ -26,8 +26,10 @@ import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.PersistentStoreConfiguration;
 import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
 import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
+import org.apache.ignite.internal.util.typedef.CI1;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteCallable;
 import org.apache.ignite.lang.IgniteClosure;
@@ -52,6 +54,10 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
 
     //Todo Cache with node filter.
     protected static final String cache3 = "cache3";
+
+    protected static final String cache4 = "cache4";
+
+    protected static final String cache5 = "cache5";
 
     /** Caches info. */
     public static final String CACHES_INFO = "cachesInfo";
@@ -166,11 +172,15 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
     @Override protected void beforeTest() throws Exception {
         super.beforeTest();
 
+        stopAllGrids();
+
         deleteRecursively(U.resolveWorkDirectory(U.defaultWorkDirectory(), "db", false));
     }
 
     @Override protected void afterTest() throws Exception {
         super.afterTest();
+
+        stopAllGrids();
 
         deleteRecursively(U.resolveWorkDirectory(U.defaultWorkDirectory(), "db", false));
     }
@@ -301,14 +311,14 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         private IgniteCallable<List<CacheConfiguration>> dynamicCacheStart =
             new IgniteCallable<List<CacheConfiguration>>() {
                 @Override public List<CacheConfiguration> call() throws Exception {
-                    return Collections.emptyList();
+                    return Arrays.asList(new CacheConfiguration(cache4), new CacheConfiguration(cache5));
                 }
             };
 
         private IgniteCallable<List<String>> dynamicCacheStop =
             new IgniteCallable<List<String>>() {
                 @Override public List<String> call() throws Exception {
-                    return Collections.emptyList();
+                    return Arrays.asList(cache4, cache5);
                 }
             };
 
@@ -525,13 +535,15 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
 
                 System.out.println(">>> Check cluster state on all nodes");
 
+                IgniteEx crd = grid(nodes.get(0));
+
                 for (IgniteEx ig : grids())
                     assertEquals((boolean)state, ig.active());
 
                 if (!state) {
                     System.out.println(">>> Activate cluster");
 
-                    grid(nodes.get(0)).active(true);
+                    crd.active(true);
 
                     System.out.println(">>> Check after cluster activated");
 
@@ -540,7 +552,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
                 else {
                     System.out.println(">>> DeActivate cluster");
 
-                    grid(nodes.get(0)).active(false);
+                    crd.active(false);
 
                     System.out.println(">>> Check after cluster deActivated");
 
@@ -548,16 +560,46 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
 
                     System.out.println(">>> Activate cluster");
 
-                    grid(nodes.get(0)).active(true);
+                    crd.active(true);
                 }
 
-                grid(nodes.get(0)).createCaches(dynamicCacheStart.call());
+                AffinityTopologyVersion next0Ver = nextMinorVersion(crd);
+
+                crd.createCaches(dynamicCacheStart.call());
+
+                awaitTopologyVersion(next0Ver);
 
                 afterDynamicCacheStarted.run();
 
-                grid(nodes.get(0)).destroyCaches(dynamicCacheStop.call());
+                onAllNode(new CI1<IgniteEx>() {
+                    @Override public void apply(IgniteEx ig) {
+                        if (ig.context().discovery().localNode().isClient())
+                            return;
+
+                        Assert.assertNotNull(ig.context().cache().cache(cache4));
+                        Assert.assertNotNull(ig.context().cache().cache(cache5));
+
+                    }
+                });
+
+                AffinityTopologyVersion next1Ver = nextMinorVersion(crd);
+
+                crd.destroyCaches(dynamicCacheStop.call());
 
                 afterDynamicCacheStopped.run();
+
+                awaitTopologyVersion(next1Ver);
+
+                onAllNode(new CI1<IgniteEx>() {
+                    @Override public void apply(IgniteEx ig) {
+                        if (ig.context().discovery().localNode().isClient())
+                            return;
+
+                        Assert.assertNull(ig.context().cache().cache(cache4));
+                        Assert.assertNull(ig.context().cache().cache(cache5));
+
+                    }
+                });
 
                 System.out.println(">>> Finish check");
 
@@ -566,6 +608,36 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
             finally {
                 stopAllGrids();
             }
+        }
+
+        private AffinityTopologyVersion nextMinorVersion(IgniteEx ig){
+            AffinityTopologyVersion cur = ig.context().discovery().topologyVersionEx();
+
+           return new AffinityTopologyVersion(cur.topologyVersion(), cur.minorTopologyVersion() + 1);
+        }
+
+        private void awaitTopologyVersion(final AffinityTopologyVersion ver){
+            onAllNode(new CI1<IgniteEx>() {
+                @Override public void apply(IgniteEx ig) {
+                    while (true) {
+                        AffinityTopologyVersion locTopVer = ig.context().cache().context().exchange().readyAffinityVersion();
+
+                        if (locTopVer.compareTo(ver) < 0){
+                            System.out.println("Top ready " + locTopVer + " on " + ig.localNode().id());
+
+                            try {
+                                Thread.sleep(100);
+                            }
+                            catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+                        else
+                            break;
+                    }
+                }
+            }).run();
+
         }
 
         /**
