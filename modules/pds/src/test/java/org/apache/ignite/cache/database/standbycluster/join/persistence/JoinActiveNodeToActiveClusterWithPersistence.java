@@ -51,6 +51,14 @@ public class JoinActiveNodeToActiveClusterWithPersistence extends JoinActiveNode
         return b;
     }
 
+    @Override public void testJoinWithOutConfiguration() throws Exception {
+        withOutConfigurationTemplate().execute();
+    }
+
+    @Override public void testJoinClientWithOutConfiguration() throws Exception {
+        joinClientWithOutConfigurationTemplate().execute();
+    }
+
     @Override public JoinNodeTestPlanBuilder staticCacheConfigurationOnJoinTemplate() throws Exception {
         return persistent(super.staticCacheConfigurationOnJoinTemplate());
     }

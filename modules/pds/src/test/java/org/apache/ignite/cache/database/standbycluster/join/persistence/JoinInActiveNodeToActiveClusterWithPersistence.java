@@ -43,6 +43,10 @@ public class JoinInActiveNodeToActiveClusterWithPersistence extends JoinInActive
         return b;
     }
 
+    @Override public JoinNodeTestPlanBuilder withOutConfigurationTemplate() throws Exception {
+        return persistent(super.withOutConfigurationTemplate());
+    }
+
     @Override public JoinNodeTestPlanBuilder staticCacheConfigurationOnJoinTemplate() throws Exception {
         return persistent(super.staticCacheConfigurationOnJoinTemplate());
     }
