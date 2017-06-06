@@ -251,6 +251,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
                 sharedCtx.database().onDeActivate(ctx);
             }
             catch (IgniteCheckedException e) {
+                // Todo Need handler correct .
                 e.printStackTrace();
             }
         }
@@ -338,8 +339,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         CacheInfo cacheInfo = cacheData.get(req.cacheName());
 
         if (cacheInfo == null)
-            cacheData.put(req.cacheName(),
-                new CacheInfo(
+            cacheData.put(req.cacheName(), new CacheInfo(
                     req.startCacheConfiguration(),
                     req.cacheType(), req.sql(),
                     (byte)0)
@@ -730,17 +730,15 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         Exception ex = null;
 
         try {
-            if (!client) {
-                sharedCtx.database().onDeActivate(ctx);
+            sharedCtx.database().onDeActivate(ctx);
 
-                if (sharedCtx.pageStore() != null)
-                    sharedCtx.pageStore().onDeActivate(ctx);
+            if (sharedCtx.pageStore() != null)
+                sharedCtx.pageStore().onDeActivate(ctx);
 
-                if (sharedCtx.wal() != null)
-                    sharedCtx.wal().onDeActivate(ctx);
+            if (sharedCtx.wal() != null)
+                sharedCtx.wal().onDeActivate(ctx);
 
-                sharedCtx.affinity().removeAllCacheInfo();
-            }
+            sharedCtx.affinity().removeAllCacheInfo();
         }
         catch (Exception e) {
             ex = e;
