@@ -502,11 +502,15 @@ class ClusterCachesInfo {
 
                 assert desc != null : cache.name();
 
-                cachesInfo.put(cache.name(), new CacheClientReconnectDiscoveryData.CacheInfo(desc.cacheConfiguration(),
-                    desc.cacheType(),
-                    desc.deploymentId(),
-                    cache.context().isNear(),
-                    (byte)0));
+                cachesInfo.put(
+                    cache.name(),
+                    new CacheClientReconnectDiscoveryData.CacheInfo(
+                        desc.cacheConfiguration(),
+                        desc.cacheType(),
+                        desc.deploymentId(),
+                        cache.context().isNear(),
+                        (byte)0)
+                );
             }
 
             return new CacheClientReconnectDiscoveryData(cachesInfo);
@@ -937,7 +941,7 @@ class ClusterCachesInfo {
     /**
      * @return {@code True} if client node is currently in disconnected state.
      */
-    private boolean disconnectedState() {
+    public boolean disconnectedState() {
         return cachesOnDisconnect != null;
     }
 
@@ -946,7 +950,8 @@ class ClusterCachesInfo {
      * @return {@code True} if cache with given name if system cache which should always survive client node disconnect.
      */
     private boolean surviveReconnect(String cacheName) {
-        return CU.isUtilityCache(cacheName) || CU.isAtomicsCache(cacheName);
+        //return CU.isUtilityCache(cacheName) || CU.isAtomicsCache(cacheName);
+        return false;
     }
 
     /**

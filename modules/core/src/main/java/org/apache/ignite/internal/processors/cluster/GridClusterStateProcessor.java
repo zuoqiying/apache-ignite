@@ -46,6 +46,7 @@ import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.pagemem.store.IgnitePageStoreManager;
 import org.apache.ignite.internal.processors.GridProcessorAdapter;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.CacheClientReconnectDiscoveryData;
 import org.apache.ignite.internal.processors.cache.CacheData;
 import org.apache.ignite.internal.processors.cache.CacheJoinNodeDiscoveryData;
 import org.apache.ignite.internal.processors.cache.CacheJoinNodeDiscoveryData.CacheInfo;
@@ -466,9 +467,16 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
     }
 
     public void onJoiningNodeDataReceived0(JoiningNodeDiscoveryData data) {
-        CacheJoinNodeDiscoveryData data0 = (CacheJoinNodeDiscoveryData)data.joiningNodeData();
+        if (data instanceof CacheJoinNodeDiscoveryData) {
+            CacheJoinNodeDiscoveryData data0 = (CacheJoinNodeDiscoveryData)data.joiningNodeData();
 
-        cacheData.putAll(data0.caches());
+            cacheData.putAll(data0.caches());
+        }
+        else if (data instanceof CacheClientReconnectDiscoveryData) {
+            CacheClientReconnectDiscoveryData data0 = (CacheClientReconnectDiscoveryData)data;
+
+            //Todo impl.
+        }
     }
 
     public void onGridDataReceived0(DiscoveryDataBag.GridDiscoveryData data) {

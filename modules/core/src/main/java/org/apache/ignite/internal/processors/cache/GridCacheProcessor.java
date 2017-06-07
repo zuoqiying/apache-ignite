@@ -2123,8 +2123,9 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
     /** {@inheritDoc} */
     @Override public void onGridDataReceived(GridDiscoveryData data) {
-        if (ctx.state().active()){
-            cachesInfo.addJoinInfo();
+        if (ctx.state().active()) {
+            if (!cachesInfo.disconnectedState())
+                cachesInfo.addJoinInfo();
 
             cachesInfo.onGridDataReceived(data);
         }
