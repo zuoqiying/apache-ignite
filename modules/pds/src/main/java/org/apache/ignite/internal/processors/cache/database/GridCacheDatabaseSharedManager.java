@@ -447,21 +447,6 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
         initDataBase();
 
-        if (!cctx.kernalContext().clientNode()) {
-            IgnitePageStoreManager store = cctx.pageStore();
-
-            assert store instanceof FilePageStoreManager : "Invalid page store manager was created: " + store;
-
-            storeMgr = (FilePageStoreManager)store;
-
-            cpDir = Paths.get(storeMgr.workDir().getAbsolutePath(), "cp").toFile();
-
-            if (!U.mkdirs(cpDir))
-                throw new IgniteCheckedException("Could not create directory for checkpoint metadata: " + cpDir);
-
-            fileLockHolder = new FileLockHolder(storeMgr.workDir().getPath(), cctx.kernalContext(), log);
-        }
-
         if (log.isDebugEnabled())
             log.debug("Activate database manager [id=" + cctx.localNodeId() +
                 " topVer=" + cctx.discovery().topologyVersionEx() + " ]");
@@ -3149,8 +3134,9 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                         if (content == null)
                             content = readContent();
 
-                        log.warning("Failed to acquire file lock (already locked by " + content
-                            + "), will try again in 1s: " + file.getAbsolutePath());
+                        log.warning("Failed to acquire file lock (local nodeId:" + ctx.localNodeId()
+                            + ", already locked by " + content + "), will try again in 1s: "
+                            + file.getAbsolutePath());
                     }
 
                     U.sleep(1000);

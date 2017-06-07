@@ -449,6 +449,12 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
 
     private volatile CacheJoinNodeDiscoveryData localCacheData;
 
+    public boolean isLocalConfigure(String cacheName){
+        assert localCacheData != null;
+
+        return localCacheData.caches().containsKey(cacheName) || localCacheData.templates().containsKey(cacheName);
+    }
+
     public void addJoinNodeDate(CacheJoinNodeDiscoveryData data) {
         localCacheData = data;
     }
@@ -513,7 +519,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         if (exchActions.newClusterState() != null) {
             ChangeGlobalStateContext cgsCtx = lastCgsCtx;
 
-            assert cgsCtx != null : exchActions;
+            assert cgsCtx != null : topVer;
 
             cgsCtx.topologyVersion(topVer);
 
@@ -611,8 +617,11 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         }
 
         try {
-            if (!client)
+            if (!client){
+                System.out.println("db manager "+sharedCtx.database().getClass().getSimpleName());
+
                 sharedCtx.database().lock();
+            }
 
             IgnitePageStoreManager pageStore = sharedCtx.pageStore();
 
@@ -668,10 +677,10 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
 
             return e;
         }
-        finally {
+    /*    finally {
             if (!client)
                 sharedCtx.database().unLock();
-        }
+        }*/
     }
 
     /**
