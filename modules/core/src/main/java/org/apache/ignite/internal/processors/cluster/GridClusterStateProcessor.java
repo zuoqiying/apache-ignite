@@ -617,11 +617,8 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         }
 
         try {
-            if (!client){
-                System.out.println("db manager "+sharedCtx.database().getClass().getSimpleName());
-
+            if (!client)
                 sharedCtx.database().lock();
-            }
 
             IgnitePageStoreManager pageStore = sharedCtx.pageStore();
 
