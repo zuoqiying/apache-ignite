@@ -61,6 +61,8 @@ public class IgniteCacheWithIndexingTestSuite extends TestSuite {
         suite.addTestSuite(GridCacheOffheapIndexEntryEvictTest.class);
         suite.addTestSuite(CacheIndexStreamerTest.class);
 
+        suite.addTestSuite(GridCacheFullTextQuerySelfTest.class);
+
         suite.addTestSuite(CacheConfigurationP2PTest.class);
 
         suite.addTestSuite(IgniteCacheConfigurationPrimitiveTypesSelfTest.class);
