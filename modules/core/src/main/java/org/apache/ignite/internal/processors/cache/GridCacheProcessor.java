@@ -1867,7 +1867,8 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
             sharedCtx.removeCacheContext(ctx);
 
-            onKernalStop(cache, req.destroy());
+            // Todo cancel = true?
+            onKernalStop(cache, true);
 
             stopCache(cache, true, req.destroy());
 

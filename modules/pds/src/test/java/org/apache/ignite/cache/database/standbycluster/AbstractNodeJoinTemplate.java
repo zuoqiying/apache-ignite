@@ -363,7 +363,7 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
         public JoinNodeTestPlanBuilder nodeConfiguration(IgniteConfiguration cfg) {
             nodeCfg = cfg;
 
-            strPlanBuilder.append("Join node: ")
+            strPlanBuilder.append("Join node:\n")
                 .append(cfg.getIgniteInstanceName())
                 .append(cfg.isClientMode() != null && cfg.isClientMode() ? " (client)" : "")
                 .append(" activeOnStart - ")
