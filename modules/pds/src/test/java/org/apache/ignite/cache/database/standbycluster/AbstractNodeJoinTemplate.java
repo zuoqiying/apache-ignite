@@ -620,7 +620,8 @@ public abstract class AbstractNodeJoinTemplate extends GridCommonAbstractTest {
             onAllNode(new CI1<IgniteEx>() {
                 @Override public void apply(IgniteEx ig) {
                     while (true) {
-                        AffinityTopologyVersion locTopVer = ig.context().cache().context().exchange().readyAffinityVersion();
+                        AffinityTopologyVersion locTopVer = ig.context().cache().context()
+                            .exchange().readyAffinityVersion();
 
                         if (locTopVer.compareTo(ver) < 0){
                             System.out.println("Top ready " + locTopVer + " on " + ig.localNode().id());

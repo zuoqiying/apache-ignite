@@ -276,7 +276,30 @@ public class JoinActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
     @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationInClusterTemplate() throws Exception {
         return staticCacheConfigurationInClusterTemplate()
             .nodeConfiguration(setClient)
-            .afterNodeJoin(
+            .afterActivate(new Runnable() {
+                @Override public void run() {
+                    for (int i = 0; i < 3; i++) {
+                        IgniteEx ig = grid(name(i));
+
+                        Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                        Assert.assertEquals(4, desc.size());
+
+                        if (!ig.context().discovery().localNode().isClient()) {
+                            Assert.assertNotNull(ig.context().cache().cache(cache1));
+                            Assert.assertNotNull(ig.context().cache().cache(cache2));
+                        }
+                        else {
+                            Assert.assertNull(ig.context().cache().cache(cache1));
+                            Assert.assertNull(ig.context().cache().cache(cache2));
+                        }
+
+                        Map<String, GridCacheAdapter> caches = caches(ig);
+
+                        Assert.assertEquals(4, caches.size());
+                    }
+                }
+            }).afterNodeJoin(
                 new Runnable() {
                     @Override public void run() {
                         for (int i = 0; i < 3; i++) {
@@ -300,13 +323,84 @@ public class JoinActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
                             Assert.assertEquals(4, caches.size());
                         }
                     }
-                });
+                }).setEnd(new Runnable() {
+                @Override public void run() {
+                    for (int i = 0; i < 3; i++) {
+                        IgniteEx ig = grid(name(i));
+
+                        Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                        Assert.assertEquals(4, desc.size());
+
+                        if (!ig.context().discovery().localNode().isClient()) {
+                            Assert.assertNotNull(ig.context().cache().cache(cache1));
+                            Assert.assertNotNull(ig.context().cache().cache(cache2));
+                        }
+                        else {
+                            Assert.assertNull(ig.context().cache().cache(cache1));
+                            Assert.assertNull(ig.context().cache().cache(cache2));
+                        }
+
+                        Map<String, GridCacheAdapter> caches = caches(ig);
+
+                        Assert.assertEquals(4, caches.size());
+                    }
+                }
+            });
     }
 
-    @Override public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationDifferentOnBothTemplate() throws Exception {
+    @Override
+    public JoinNodeTestPlanBuilder joinClientStaticCacheConfigurationDifferentOnBothTemplate() throws Exception {
         return staticCacheConfigurationDifferentOnBothTemplate()
             .nodeConfiguration(setClient)
+            .afterActivate(new Runnable() {
+                @Override public void run() {
+                    for (int i = 0; i < 3; i++) {
+                        IgniteEx ig = grid(name(i));
+
+                        Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                        Assert.assertEquals(4, desc.size());
+
+                        if (!ig.context().discovery().localNode().isClient()) {
+                            Assert.assertNotNull(ig.context().cache().cache(cache1));
+                            Assert.assertNotNull(ig.context().cache().cache(cache2));
+                        }
+                        else {
+                            Assert.assertNull(ig.context().cache().cache(cache1));
+                            Assert.assertNotNull(ig.context().cache().cache(cache2));
+                        }
+
+                        Map<String, GridCacheAdapter> caches = caches(ig);
+
+                        Assert.assertEquals(4, caches.size());
+                    }
+                }
+            })
             .afterNodeJoin(new Runnable() {
+                @Override public void run() {
+                    for (int i = 0; i < 4; i++) {
+                        IgniteEx ig = grid(name(i));
+
+                        Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                        Assert.assertEquals(4, desc.size());
+
+                        if (!ig.context().discovery().localNode().isClient())
+                            Assert.assertNotNull(ig.context().cache().cache(cache1));
+
+                        Assert.assertNotNull(ig.context().cache().cache(cache2));
+
+                        Map<String, GridCacheAdapter> caches = caches(ig);
+
+                        if (!ig.context().discovery().localNode().isClient())
+                            Assert.assertEquals(4, caches.size());
+                        else
+                            Assert.assertEquals(3, caches.size());
+                    }
+                }
+            })
+            .setEnd(new Runnable() {
                 @Override public void run() {
                     for (int i = 0; i < 4; i++) {
                         IgniteEx ig = grid(name(i));

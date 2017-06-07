@@ -198,10 +198,14 @@ public class IgniteStandByClusterTest extends GridCommonAbstractTest {
     @Override protected void beforeTest() throws Exception {
         super.beforeTest();
 
+        stopAllGrids();
+
         deleteRecursively(U.resolveWorkDirectory(U.defaultWorkDirectory(), "db", true));
     }
     @Override protected void afterTest() throws Exception {
         super.beforeTest();
+
+        stopAllGrids();
 
         deleteRecursively(U.resolveWorkDirectory(U.defaultWorkDirectory(), "db", true));
     }

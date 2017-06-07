@@ -270,6 +270,29 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
                         Assert.assertEquals(4, caches.size());
                     }
                 }
+            }).setEnd(new Runnable() {
+                @Override public void run() {
+                    for (int i = 0; i < 3; i++) {
+                        IgniteEx ig = grid(name(i));
+
+                        Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                        Assert.assertEquals(4, desc.size());
+
+                        if (!ig.context().discovery().localNode().isClient()) {
+                            Assert.assertNotNull(ig.context().cache().cache(cache1));
+                            Assert.assertNotNull(ig.context().cache().cache(cache2));
+                        }
+                        else {
+                            Assert.assertNull(ig.context().cache().cache(cache1));
+                            Assert.assertNull(ig.context().cache().cache(cache2));
+                        }
+
+                        Map<String, GridCacheAdapter> caches = caches(ig);
+
+                        Assert.assertEquals(4, caches.size());
+                    }
+                }
             });
     }
 
@@ -281,6 +304,30 @@ public class JoinInActiveNodeToActiveCluster extends AbstractNodeJoinTemplate {
         return  staticCacheConfigurationDifferentOnBothTemplate()
             .nodeConfiguration(setClient)
             .afterNodeJoin(
+                new Runnable() {
+                    @Override public void run() {
+                        for (int i = 0; i < 4; i++) {
+                            IgniteEx ig = grid(name(i));
+
+                            Map<String, DynamicCacheDescriptor> desc = cacheDescriptors(ig);
+
+                            Assert.assertEquals(4, desc.size());
+
+                            if (!ig.context().discovery().localNode().isClient())
+                                Assert.assertNotNull(ig.context().cache().cache(cache1));
+
+                            Assert.assertNotNull(ig.context().cache().cache(cache2));
+
+                            Map<String, GridCacheAdapter> caches = caches(ig);
+
+                            if (!ig.context().discovery().localNode().isClient())
+                                Assert.assertEquals(4, caches.size());
+                            else
+                                Assert.assertEquals(3, caches.size());
+                        }
+                    }
+                }
+            ).setEnd(
                 new Runnable() {
                     @Override public void run() {
                         for (int i = 0; i < 4; i++) {
