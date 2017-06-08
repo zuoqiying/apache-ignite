@@ -367,6 +367,8 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
     private Collection<DynamicCacheChangeRequest> startAllCachesRequests() {
         assert !ctx.config().isDaemon();
 
+        Map<String, CacheConfiguration> allCacheCfgs = allCaches();
+
         final List<DynamicCacheChangeRequest> reqs = new ArrayList<>();
 
         if (sharedCtx.pageStore() != null && sharedCtx.database().persistenceEnabled()) {
@@ -379,14 +381,14 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
                     reqs.add(createRequest(cfg));
             }
 
-            for (CacheConfiguration cfg : allCaches().values())
+            for (CacheConfiguration cfg : allCacheCfgs.values())
                 if (!savedCacheNames.contains(cfg.getName()))
                     reqs.add(createRequest(cfg));
 
             return reqs;
         }
         else {
-            for (CacheConfiguration cfg : allCaches().values())
+            for (CacheConfiguration cfg : allCacheCfgs.values())
                 reqs.add(createRequest(cfg));
 
             return reqs;
@@ -476,6 +478,10 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
             CacheClientReconnectDiscoveryData data0 = (CacheClientReconnectDiscoveryData)data;
 
             //Todo impl.
+        }else {
+            CacheJoinNodeDiscoveryData data0 = (CacheJoinNodeDiscoveryData)data.joiningNodeData();
+
+            cacheData.putAll(data0.caches());
         }
     }
 

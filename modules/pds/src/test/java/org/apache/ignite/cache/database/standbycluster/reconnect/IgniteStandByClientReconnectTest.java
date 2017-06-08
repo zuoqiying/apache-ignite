@@ -17,8 +17,10 @@
 
 package org.apache.ignite.cache.database.standbycluster.reconnect;
 
+import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.ignite.cluster.ClusterNode;
@@ -29,6 +31,7 @@ import org.apache.ignite.events.Event;
 import org.apache.ignite.events.EventType;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
+import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.spi.discovery.DiscoverySpiCustomMessage;
@@ -74,12 +77,23 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         new CacheConfiguration(ccfg2staticWithFilterName).setNodeFilter(new FilterNode(nodeClient));
 
     private final CacheConfiguration ccfg3staticWithFilter =
-        new CacheConfiguration(ccfg2staticWithFilterName).setNodeFilter(new FilterNode(node1));
+        new CacheConfiguration(ccfg3staticWithFilterName).setNodeFilter(new FilterNode(node1));
 
     private final CacheConfiguration ccfgDynamic = new CacheConfiguration(ccfgDynamicName);
 
     private final CacheConfiguration ccfgDynamicWithFilter =
         new CacheConfiguration(ccfgDynamicWithFilterName).setNodeFilter(new FilterNode(node2));
+
+    private static final Set<String> staticCacheNames = Sets.newHashSet(
+        ccfg1staticName, ccfg2staticName, ccfg3staticName,
+        ccfg1staticWithFilterName, ccfg2staticWithFilterName, ccfg3staticWithFilterName
+    );
+
+    private static final Set<String> allCacheNames = Sets.newHashSet(
+        ccfg1staticName, ccfg2staticName, ccfg3staticName,
+        ccfg1staticWithFilterName, ccfg2staticWithFilterName, ccfg3staticWithFilterName,
+        ccfgDynamicName, ccfgDynamicWithFilterName
+    );
 
     @Override protected IgniteConfiguration getConfiguration(String name) throws Exception {
         IgniteConfiguration cfg = super.getConfiguration(name);
@@ -135,6 +149,15 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         Assert.assertNotNull(client.cache(ccfg1staticWithFilterName));
     }
 
+    private void checkDescriptors(IgniteEx ig, Set<String> cacheNames) {
+        Collection<DynamicCacheDescriptor> descs = ig.context().cache().cacheDescriptors();
+
+        assertEquals(9, descs.size());
+
+        for (DynamicCacheDescriptor desc : descs)
+            assertTrue(cacheNames.contains(desc.cacheName()));
+    }
+
     private void checkAllCaches() {
         IgniteEx ig1 = grid(node1);
         IgniteEx ig2 = grid(node2);
@@ -166,6 +189,10 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
 
         client.active(true);
 
+        checkDescriptors(ig1, staticCacheNames);
+        checkDescriptors(ig2, staticCacheNames);
+        checkDescriptors(client, staticCacheNames);
+
         checkStaticCaches();
 
         client.createCache(ccfgDynamic);
@@ -175,6 +202,10 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         assertTrue(ig1.active());
         assertTrue(ig2.active());
         assertTrue(client.active());
+
+        checkDescriptors(ig1, allCacheNames);
+        checkDescriptors(ig2, allCacheNames);
+        checkDescriptors(client, allCacheNames);
 
         final CountDownLatch disconnectedLatch = new CountDownLatch(1);
         final CountDownLatch reconnectedLatch = new CountDownLatch(1);
@@ -222,6 +253,10 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         assertTrue(ig2.active());
         assertTrue(client.active());
 
+        checkDescriptors(ig1, allCacheNames);
+        checkDescriptors(ig2, allCacheNames);
+        checkDescriptors(client, allCacheNames);
+
         checkAllCaches();
     }
 
@@ -240,9 +275,17 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
 
         checkStaticCaches();
 
+        checkDescriptors(ig1, staticCacheNames);
+        checkDescriptors(ig2, staticCacheNames);
+        checkDescriptors(client, staticCacheNames);
+
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
+
+        checkDescriptors(ig1, allCacheNames);
+        checkDescriptors(ig2, allCacheNames);
+        checkDescriptors(client, allCacheNames);
 
         assertTrue(ig1.active());
         assertTrue(ig2.active());
@@ -299,6 +342,10 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         assertTrue(ig2.active());
         assertTrue(client.active());
 
+        checkDescriptors(ig1, allCacheNames);
+        checkDescriptors(ig2, allCacheNames);
+        checkDescriptors(client, allCacheNames);
+
         checkAllCaches();
     }
 
@@ -353,6 +400,9 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         assertTrue(ig1.active());
         assertTrue(ig2.active());
 
+        checkDescriptors(ig1, staticCacheNames);
+        checkDescriptors(ig2, staticCacheNames);
+
         activateLatch.countDown();
 
         reconnectedLatch.await(10, TimeUnit.SECONDS);
@@ -363,9 +413,16 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
 
         checkStaticCaches();
 
+        checkDescriptors(ig1, staticCacheNames);
+        checkDescriptors(ig2, staticCacheNames);
+
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
+
+        checkDescriptors(ig1, allCacheNames);
+        checkDescriptors(ig2, allCacheNames);
+        checkDescriptors(client, allCacheNames);
 
         checkAllCaches();
     }
@@ -426,11 +483,19 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         assertTrue(ig2.active());
         assertTrue(client.active());
 
+        checkDescriptors(ig1, staticCacheNames);
+        checkDescriptors(ig2, staticCacheNames);
+        checkDescriptors(client, staticCacheNames);
+
         checkStaticCaches();
 
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
+
+        checkDescriptors(ig1, allCacheNames);
+        checkDescriptors(ig2, allCacheNames);
+        checkDescriptors(client, allCacheNames);
 
         checkAllCaches();
     }
