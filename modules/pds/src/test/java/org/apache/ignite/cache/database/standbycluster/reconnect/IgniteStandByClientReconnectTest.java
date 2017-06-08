@@ -19,6 +19,7 @@ package org.apache.ignite.cache.database.standbycluster.reconnect;
 
 import com.google.common.collect.Sets;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -32,6 +33,7 @@ import org.apache.ignite.events.EventType;
 import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
 import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
+import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.spi.discovery.DiscoverySpiCustomMessage;
@@ -152,10 +154,17 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
     private void checkDescriptors(IgniteEx ig, Set<String> cacheNames) {
         Collection<DynamicCacheDescriptor> descs = ig.context().cache().cacheDescriptors();
 
-        assertEquals(9, descs.size());
+        assertEquals("Node name: " + ig.name(), cacheNames.size() + 2, descs.size());
+
+        int systemCnt = 0;
 
         for (DynamicCacheDescriptor desc : descs)
-            assertTrue(cacheNames.contains(desc.cacheName()));
+            if (!CU.isSystemCache(desc.cacheName()))
+                assertTrue(desc.cacheName(), cacheNames.contains(desc.cacheName()));
+            else
+                systemCnt++;
+
+        assertEquals(2, systemCnt);
     }
 
     private void checkAllCaches() {
@@ -179,6 +188,8 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
 
         startNodes(activateLatch);
 
+        info(">>>> star grid");
+
         IgniteEx ig1 = grid(node1);
         IgniteEx ig2 = grid(node2);
         IgniteEx client = grid(nodeClient);
@@ -189,6 +200,8 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
 
         client.active(true);
 
+        info(">>>> activate grid");
+
         checkDescriptors(ig1, staticCacheNames);
         checkDescriptors(ig2, staticCacheNames);
         checkDescriptors(client, staticCacheNames);
@@ -198,6 +211,8 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
+
+        info(">>>> dynamic start 2 caches");
 
         assertTrue(ig1.active());
         assertTrue(ig2.active());
@@ -232,6 +247,8 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
             }
         }, EventType.EVT_CLIENT_NODE_DISCONNECTED, EventType.EVT_CLIENT_NODE_RECONNECTED);
 
+        info(">>>> stop servers");
+
         stopGrid("node1");
         stopGrid("node2");
 
@@ -240,6 +257,8 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         ig1 = startGrid(getConfiguration("node1"));
         ig2 = startGrid(getConfiguration("node2"));
 
+        info(">>>> activate new servers");
+
         ig1.active(true);
 
         assertTrue(ig1.active());
@@ -247,7 +266,11 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
 
         activateLatch.countDown();
 
+        info(">>>> reconnect client");
+
         reconnectedLatch.await(10, TimeUnit.SECONDS);
+
+        info(">>>> client reconnected");
 
         assertTrue(ig1.active());
         assertTrue(ig2.active());
@@ -352,12 +375,14 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
     public void testInActiveClientReconnectToActiveCluster() throws Exception {
         CountDownLatch activateLatch = new CountDownLatch(1);
 
+        // Start nodes.
         startNodes(activateLatch);
 
         IgniteEx ig1 = grid(node1);
         IgniteEx ig2 = grid(node2);
         IgniteEx client = grid(nodeClient);
 
+        // Check all nodes inactive.
         assertTrue(!ig1.active());
         assertTrue(!ig2.active());
         assertTrue(!client.active());
@@ -387,22 +412,26 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
             }
         }, EventType.EVT_CLIENT_NODE_DISCONNECTED, EventType.EVT_CLIENT_NODE_RECONNECTED);
 
-        stopGrid("node1");
-        stopGrid("node2");
+        // Stop server nodes.
+        stopGrid(node1);
+        stopGrid(node2);
 
         disconnectedLatch.await(10, TimeUnit.SECONDS);
 
-        ig1 = startGrid(getConfiguration("node1"));
-        ig2 = startGrid(getConfiguration("node2"));
+        ig1 = startGrid(getConfiguration(node1));
+        ig2 = startGrid(getConfiguration(node2));
 
+        // New two server nodes started, they have only system caches.
         ig1.active(true);
 
         assertTrue(ig1.active());
         assertTrue(ig2.active());
 
-        checkDescriptors(ig1, staticCacheNames);
-        checkDescriptors(ig2, staticCacheNames);
+        // Only system caches present.
+        checkDescriptors(ig1, Collections.<String>emptySet());
+        checkDescriptors(ig2, Collections.<String>emptySet());
 
+        // Client have all static caches from first server nodes and himself.
         activateLatch.countDown();
 
         reconnectedLatch.await(10, TimeUnit.SECONDS);

@@ -314,7 +314,11 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
 
             reqs.add(changeGlobalStateReq);
 
-            reqs.addAll(activate ? startAllCachesRequests() : stopAllCachesRequests());
+            List<DynamicCacheChangeRequest> cacheReqs = activate ? startAllCachesRequests() : stopAllCachesRequests();
+
+            reqs.addAll(cacheReqs);
+
+            printCacheInfo(cacheReqs, activate);
 
             ChangeGlobalStateMessage changeGlobalStateMsg = new ChangeGlobalStateMessage(
                 requestId, ctx.localNodeId(), activate, new DynamicCacheChangeBatch(reqs));
@@ -334,6 +338,28 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         }
 
         return cgsFut;
+    }
+
+    private void printCacheInfo(List<DynamicCacheChangeRequest> reqs, boolean active) {
+        assert reqs != null;
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("[");
+
+        for (int i = 0; i < reqs.size() - 1; i++)
+            sb.append(reqs.get(i).cacheName()).append(", ");
+
+        sb.append(reqs.get(reqs.size() - 1).cacheName());
+
+        sb.append("]");
+
+        sb.append(" ").append(reqs.size())
+            .append(" caches will be ")
+            .append(active ? "started" : "stopped");
+
+        if (log.isInfoEnabled())
+            log.info(sb.toString());
     }
 
     public void onCacheStart(DynamicCacheChangeRequest req) {
@@ -364,10 +390,10 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         return cfgs;
     }
 
-    private Collection<DynamicCacheChangeRequest> startAllCachesRequests() {
+    private List<DynamicCacheChangeRequest> startAllCachesRequests() {
         assert !ctx.config().isDaemon();
 
-        Map<String, CacheConfiguration> allCacheCfgs = allCaches();
+        Collection<CacheConfiguration> cacheCfgs = allCaches().values();
 
         final List<DynamicCacheChangeRequest> reqs = new ArrayList<>();
 
@@ -381,14 +407,14 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
                     reqs.add(createRequest(cfg));
             }
 
-            for (CacheConfiguration cfg : allCacheCfgs.values())
+            for (CacheConfiguration cfg : cacheCfgs)
                 if (!savedCacheNames.contains(cfg.getName()))
                     reqs.add(createRequest(cfg));
 
             return reqs;
         }
         else {
-            for (CacheConfiguration cfg : allCacheCfgs.values())
+            for (CacheConfiguration cfg : cacheCfgs)
                 reqs.add(createRequest(cfg));
 
             return reqs;
@@ -413,10 +439,12 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         return req;
     }
 
-    private Collection<DynamicCacheChangeRequest> stopAllCachesRequests() {
-        List<DynamicCacheChangeRequest> reqs = new ArrayList<>();
+    private List<DynamicCacheChangeRequest> stopAllCachesRequests() {
+        Collection<CacheConfiguration> cacheCfgs = allCaches().values();
 
-        for (CacheConfiguration cfg : allCaches().values()) {
+        List<DynamicCacheChangeRequest> reqs = new ArrayList<>(cacheCfgs.size());
+
+        for (CacheConfiguration cfg : cacheCfgs) {
             DynamicCacheChangeRequest req = stopRequest(ctx, cfg.getName(), false, false);
 
             reqs.add(req);
@@ -469,19 +497,19 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
     }
 
     public void onJoiningNodeDataReceived0(JoiningNodeDiscoveryData data) {
-        if (data instanceof CacheJoinNodeDiscoveryData) {
-            CacheJoinNodeDiscoveryData data0 = (CacheJoinNodeDiscoveryData)data.joiningNodeData();
+        if (data.hasJoiningNodeData()) {
+            if (data.joiningNodeData() instanceof CacheJoinNodeDiscoveryData) {
+                CacheJoinNodeDiscoveryData data0 = (CacheJoinNodeDiscoveryData)data.joiningNodeData();
 
-            cacheData.putAll(data0.caches());
-        }
-        else if (data instanceof CacheClientReconnectDiscoveryData) {
-            CacheClientReconnectDiscoveryData data0 = (CacheClientReconnectDiscoveryData)data;
+                cacheData.putAll(data0.caches());
+            }
+            else if (data.joiningNodeData() instanceof CacheClientReconnectDiscoveryData) {
+                CacheClientReconnectDiscoveryData data0 = (CacheClientReconnectDiscoveryData)data.joiningNodeData();
 
-            //Todo impl.
-        }else {
-            CacheJoinNodeDiscoveryData data0 = (CacheJoinNodeDiscoveryData)data.joiningNodeData();
-
-            cacheData.putAll(data0.caches());
+                //Todo impl.
+            }
+            else
+                assert false;
         }
     }
 
@@ -604,7 +632,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         GridChangeGlobalStateFuture af = cgsLocFut.get();
 
         if (af != null && af.requestId.equals(actx.requestId)) {
-            IgniteCheckedException e = new IgniteCheckedException("see suppressed");
+            IgniteCheckedException e = new IgniteCheckedException("Fail " + prettyStr(actx.activate), null, false);
 
             for (Map.Entry<UUID, Exception> entry : exs.entrySet())
                 e.addSuppressed(entry.getValue());

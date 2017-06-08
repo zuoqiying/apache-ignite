@@ -1729,6 +1729,7 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             for (DynamicCacheDescriptor desc : started) {
                 IgnitePredicate<ClusterNode> filter = desc.cacheConfiguration().getNodeFilter();
 
+                //Todo check second condition.
                 if (CU.affinityNode(ctx.discovery().localNode(), filter) || CU.isSystemCache(desc.cacheName())) {
                     prepareCacheStart(
                         desc.cacheConfiguration(),

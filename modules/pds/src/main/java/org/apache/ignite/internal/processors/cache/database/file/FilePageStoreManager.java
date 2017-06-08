@@ -303,6 +303,34 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
     private CacheStoreHolder initForCache(CacheConfiguration ccfg) throws IgniteCheckedException {
         File cacheWorkDir = new File(storeWorkDir, CACHE_DIR_PREFIX + ccfg.getName());
 
+        boolean dirExisted = checkAndInitCacheWorkDir(cacheWorkDir);
+
+        File idxFile = new File(cacheWorkDir, INDEX_FILE_NAME);
+
+        if (dirExisted && !idxFile.exists())
+            cachesWithoutIdx.add(CU.cacheId(ccfg.getName()));
+
+        FilePageStore idxStore = new FilePageStore(
+            PageMemory.FLAG_IDX,
+            idxFile,
+            cctx.kernalContext().config().getMemoryConfiguration());
+
+        FilePageStore[] partStores = new FilePageStore[ccfg.getAffinity().partitions()];
+
+        for (int partId = 0; partId < partStores.length; partId++) {
+            FilePageStore partStore = new FilePageStore(
+                PageMemory.FLAG_DATA,
+                new File(cacheWorkDir, String.format(PART_FILE_TEMPLATE, partId)),
+                cctx.kernalContext().config().getMemoryConfiguration()
+            );
+
+            partStores[partId] = partStore;
+        }
+
+        return new CacheStoreHolder(idxStore, partStores);
+    }
+
+    private boolean checkAndInitCacheWorkDir(File cacheWorkDir) throws IgniteCheckedException {
         boolean dirExisted = false;
 
         if (!cacheWorkDir.exists()) {
@@ -336,7 +364,8 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
                     catch (IOException e) {
                         throw new IgniteCheckedException(e);
                     }
-                } else {
+                }
+                else {
                     U.warn(log, "Ignite node crashed during the snapshot restore process " +
                         "(there is a snapshot restore lock file left for cache). Will remove both the lock file and " +
                         "incomplete cache directory [cacheDir=" + cacheWorkDir.getAbsolutePath() + ']');
@@ -358,44 +387,7 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
                 dirExisted = true;
         }
 
-        File file = new File(cacheWorkDir, CACHE_CONF_FILENAME);
-
-        if (!file.exists() || file.length() == 0) {
-            try {
-                file.createNewFile();
-
-                try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {
-                    marshaller.marshal(ccfg, stream);
-                }
-            }
-            catch (IOException ex) {
-                throw new IgniteCheckedException("Failed to persist cache configuration: " + ccfg.getName(), ex);
-            }
-        }
-
-        File idxFile = new File(cacheWorkDir, INDEX_FILE_NAME);
-
-        if (dirExisted && !idxFile.exists())
-            cachesWithoutIdx.add(CU.cacheId(ccfg.getName()));
-
-        FilePageStore idxStore = new FilePageStore(
-            PageMemory.FLAG_IDX,
-            idxFile,
-            cctx.kernalContext().config().getMemoryConfiguration());
-
-        FilePageStore[] partStores = new FilePageStore[ccfg.getAffinity().partitions()];
-
-        for (int partId = 0; partId < partStores.length; partId++) {
-            FilePageStore partStore = new FilePageStore(
-                PageMemory.FLAG_DATA,
-                new File(cacheWorkDir, String.format(PART_FILE_TEMPLATE, partId)),
-                cctx.kernalContext().config().getMemoryConfiguration()
-            );
-
-            partStores[partId] = partStore;
-        }
-
-        return new CacheStoreHolder(idxStore, partStores);
+        return dirExisted;
     }
 
     /** {@inheritDoc} */
@@ -472,6 +464,28 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
         }
         catch (IOException | IgniteCheckedException e) {
             throw new IllegalStateException("Failed to read cache configuration from disk for cache: " + cacheName, e);
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override public void saveConfiguration(CacheConfiguration cfg) throws IgniteCheckedException {
+        File cacheWorkDir = new File(storeWorkDir, CACHE_DIR_PREFIX + cfg.getName());
+
+        checkAndInitCacheWorkDir(cacheWorkDir);
+
+        File file = new File(cacheWorkDir, CACHE_CONF_FILENAME);
+
+        if (!file.exists() || file.length() == 0) {
+            try {
+                file.createNewFile();
+
+                try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {
+                    marshaller.marshal(cfg, stream);
+                }
+            }
+            catch (IOException ex) {
+                throw new IgniteCheckedException("Failed to persist cache configuration: " + cfg.getName(), ex);
+            }
         }
     }
 
