@@ -440,20 +440,19 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         assertTrue(ig2.active());
         assertTrue(client.active());
 
-        checkStaticCaches();
-
-        checkDescriptors(ig1, staticCacheNames);
-        checkDescriptors(ig2, staticCacheNames);
+        checkDescriptors(ig1, Collections.<String>emptySet());
+        checkDescriptors(ig2, Collections.<String>emptySet());
+        checkDescriptors(client, Collections.<String>emptySet());
 
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
 
-        checkDescriptors(ig1, allCacheNames);
-        checkDescriptors(ig2, allCacheNames);
-        checkDescriptors(client, allCacheNames);
+        Set<String> exp2 = Sets.newHashSet(ccfgDynamicName, ccfgDynamicWithFilterName);
 
-        checkAllCaches();
+        checkDescriptors(ig1, exp2);
+        checkDescriptors(ig2, exp2);
+        checkDescriptors(client, exp2);
     }
 
     public void testInActiveClientReconnectToInActiveCluster() throws Exception {
@@ -512,21 +511,19 @@ public class IgniteStandByClientReconnectTest extends GridCommonAbstractTest {
         assertTrue(ig2.active());
         assertTrue(client.active());
 
-        checkDescriptors(ig1, staticCacheNames);
-        checkDescriptors(ig2, staticCacheNames);
-        checkDescriptors(client, staticCacheNames);
-
-        checkStaticCaches();
+        checkDescriptors(ig1, Collections.<String>emptySet());
+        checkDescriptors(ig2, Collections.<String>emptySet());
+        checkDescriptors(client, Collections.<String>emptySet());
 
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
 
-        checkDescriptors(ig1, allCacheNames);
-        checkDescriptors(ig2, allCacheNames);
-        checkDescriptors(client, allCacheNames);
+        Set<String> exp2 = Sets.newHashSet(ccfgDynamicName, ccfgDynamicWithFilterName);
 
-        checkAllCaches();
+        checkDescriptors(ig1, exp2);
+        checkDescriptors(ig2, exp2);
+        checkDescriptors(client, exp2);
     }
 
     private static class FilterNode implements IgnitePredicate<ClusterNode> {

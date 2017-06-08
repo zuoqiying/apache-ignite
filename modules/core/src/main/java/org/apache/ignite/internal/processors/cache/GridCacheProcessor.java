@@ -641,8 +641,10 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         initializeInternalCacheNames();
 
-        sharedCtx = createSharedContext(
-            ctx, CU.startStoreSessionListeners(ctx, ctx.config().getCacheStoreSessionListenerFactories()));
+        Collection<CacheStoreSessionListener> sessionListeners =
+            CU.startStoreSessionListeners(ctx, ctx.config().getCacheStoreSessionListenerFactories());
+
+        sharedCtx = createSharedContext(ctx, sessionListeners);
 
         transactions = new IgniteTransactionsImpl(sharedCtx);
 
@@ -666,14 +668,12 @@ public class GridCacheProcessor extends GridProcessorAdapter {
             startAllCachesOnClientStart()
         );
 
-        ctx.state().addJoinNodeDate(discoData);
-
         cachesInfo.onStart(discoData);
 
         if (log.isDebugEnabled())
             log.debug("Started cache processor.");
 
-        ctx.state().cacheProcessorStarted();
+        ctx.state().cacheProcessorStarted(discoData);
     }
 
     /**

@@ -191,7 +191,11 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         ctx.event().addLocalEventListener(lsr, EVT_NODE_LEFT, EVT_NODE_FAILED);
     }
 
-    public void cacheProcessorStarted() {
+    public void cacheProcessorStarted(CacheJoinNodeDiscoveryData data) {
+        assert data != null;
+
+        localCacheData = data;
+
         cacheProc = ctx.cache();
         sharedCtx = cacheProc.context();
 
@@ -486,10 +490,6 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         return localCacheData.caches().containsKey(cacheName) || localCacheData.templates().containsKey(cacheName);
     }
 
-    public void addJoinNodeDate(CacheJoinNodeDiscoveryData data) {
-        localCacheData = data;
-    }
-
     // Invoke if cluster inactive.
     public void collectGridNodeData0(DiscoveryDataBag dataBag) {
         if (!dataBag.commonDataCollectedFor(CACHE_PROC.ordinal()))
@@ -506,10 +506,8 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
             else if (data.joiningNodeData() instanceof CacheClientReconnectDiscoveryData) {
                 CacheClientReconnectDiscoveryData data0 = (CacheClientReconnectDiscoveryData)data.joiningNodeData();
 
-                //Todo impl.
+                //Todo think how handler?
             }
-            else
-                assert false;
         }
     }
 
