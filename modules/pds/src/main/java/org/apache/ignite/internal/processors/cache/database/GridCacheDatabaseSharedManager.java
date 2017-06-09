@@ -322,8 +322,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
     @Override protected void start0() throws IgniteCheckedException {
         snapshotMgr = cctx.snapshot();
 
-        if (cctx.kernalContext().state().active())
-            initDataBase();
+        assert !cctx.kernalContext().state().active() : "Cluster with persistent must starting as inactive.";
 
         if (!cctx.kernalContext().clientNode()) {
             IgnitePageStoreManager store = cctx.pageStore();
