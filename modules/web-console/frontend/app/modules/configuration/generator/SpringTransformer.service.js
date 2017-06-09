@@ -171,7 +171,7 @@ export default class IgniteSpringTransformer extends AbstractTransformer {
      * @returns {StringBuilder}
      */
     static _setProperties(sb, bean) {
-        _.forEach(_.get(bean, 'properties'), (prop, idx) => {
+        _.forEach(bean.properties, (prop, idx) => {
             switch (prop.clsName) {
                 case 'DATA_SOURCE':
                     const valAttr = prop.name === 'dataSource' ? 'ref' : 'value';
