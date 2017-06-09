@@ -63,7 +63,7 @@ WORKDIR /opt/web-console
 COPY build .
 
 # Install node modules.
-RUN cd /opt/web-console/frontend && npm install --no-optional && npm run build
+RUN cd /opt/web-console/frontend && npm install --no-optional --prod && npm run build
 RUN cd /opt/web-console/backend && npm install --only=production --no-optional
 
 # Returns to base path.
