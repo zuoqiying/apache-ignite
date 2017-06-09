@@ -214,6 +214,8 @@ const DFLT_CLUSTER = {
     },
     odbcConfiguration: {
         endpointAddress: '0.0.0.0:10800..10810',
+        socketSendBufferSize: 0,
+        socketReceiveBufferSize: 0,
         maxOpenCursors: 128
     },
     eventStorage: {
@@ -304,7 +306,9 @@ const DFLT_CLUSTER = {
             },
             evictionThreshold: 0.9,
             emptyPagesPoolSize: 100,
-            metricsEnabled: false
+            metricsEnabled: false,
+            subIntervals: 5,
+            rateTimeInterval: 60000
         }
     },
     utilityCacheKeepAliveTime: 60000,
@@ -324,6 +328,27 @@ const DFLT_CLUSTER = {
     serviceConfigurations: {
         maxPerNodeCount: 0,
         totalCount: 0
+    },
+    longQueryWarningTimeout: 3000,
+    sqlConnectorConfiguration: {
+        port: 10800,
+        portRange: 100,
+        socketSendBufferSize: 0,
+        socketReceiveBufferSize: 0,
+        tcpNoDelay: true,
+        maxOpenCursorsPerConnection: 128
+    },
+    persistenceStoreConfiguration: {
+        checkpointingFrequency: 180000,
+        lockWaitTime: 10000,
+        checkpointingPageBufferSize: 268435456,
+        checkpointingThreads: 1,
+        walHistorySize: 20,
+        walSegments: 10,
+        walSegmentSize: 67108864,
+        subIntervals: 5,
+        rateTimeInterval: 60000,
+        metricsEnabled: false
     }
 };
 

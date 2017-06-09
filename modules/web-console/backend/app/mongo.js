@@ -143,6 +143,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         name: {type: String},
         clusters: [{type: ObjectId, ref: 'Cluster'}],
         domains: [{type: ObjectId, ref: 'DomainModel'}],
+        groupName: String,
         cacheMode: {type: String, enum: ['PARTITIONED', 'REPLICATED', 'LOCAL']},
         atomicityMode: {type: String, enum: ['ATOMIC', 'TRANSACTIONAL']},
         partitionLossPolicy: {type: String, enum: ['READ_ONLY_SAFE', 'READ_ONLY_ALL', 'READ_WRITE_SAFE', 'READ_WRITE_ALL', 'IGNORE']},
@@ -551,7 +552,18 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         atomicConfiguration: {
             backups: Number,
             cacheMode: {type: String, enum: ['LOCAL', 'REPLICATED', 'PARTITIONED']},
-            atomicSequenceReserveSize: Number
+            atomicSequenceReserveSize: Number,
+            affinity: {
+                kind: {type: String, enum: ['Default', 'Rendezvous', 'Custom']},
+                Rendezvous: {
+                    affinityBackupFilter: String,
+                    partitions: Number,
+                    excludeNeighbors: Boolean
+                },
+                Custom: {
+                    className: String
+                }
+            }
         },
         binaryConfiguration: {
             idMapper: String,
@@ -689,7 +701,10 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         odbc: {
             odbcEnabled: Boolean,
             endpointAddress: String,
-            maxOpenCursors: Number
+            socketSendBufferSize: Number,
+            socketReceiveBufferSize: Number,
+            maxOpenCursors: Number,
+            threadPoolSize: Number
         },
         attributes: [{name: String, value: String}],
         collision: {
@@ -957,8 +972,38 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
                 pageEvictionMode: {type: String, enum: ['DISABLED', 'RANDOM_LRU', 'RANDOM_2_LRU']},
                 evictionThreshold: Number,
                 emptyPagesPoolSize: Number,
-                metricsEnabled: Boolean
+                metricsEnabled: Boolean,
+                subIntervals: Number,
+                rateTimeInterval: Number
             }]
+        },
+        longQueryWarningTimeout: Number,
+        sqlConnectorConfiguration: {
+            enabled: Boolean,
+            host: String,
+            port: Number,
+            portRange: Number,
+            socketSendBufferSize: Number,
+            socketReceiveBufferSize: Number,
+            tcpNoDelay: {type: Boolean, default: true},
+            maxOpenCursorsPerConnection: Number,
+            threadPoolSize: Number
+        },
+        persistenceStoreConfiguration: {
+            enabled: Boolean,
+            persistenceStorePath: String,
+            checkpointingFrequency: Number,
+            lockWaitTime: Number,
+            checkpointingPageBufferSize: Number,
+            checkpointingThreads: Number,
+            walHistorySize: Number,
+            walSegments: Number,
+            walSegmentSize: Number,
+            walStorePath: String,
+            walArchivePath: String,
+            subIntervals: Number,
+            rateTimeInterval: Number,
+            metricsEnabled: Boolean
         }
     });
 

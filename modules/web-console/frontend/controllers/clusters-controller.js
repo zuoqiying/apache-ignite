@@ -110,7 +110,10 @@ export default ['$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLe
                 nativeLibraryNames: []
             },
             serviceConfigurations: [],
-            executorConfiguration: []
+            executorConfiguration: [],
+            sqlConnectorConfiguration: {
+                tcpNoDelay: true
+            }
         };
 
         const pairFields = {
@@ -301,6 +304,12 @@ export default ['$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLe
         $scope.swapSpaceSpis = [
             {value: 'FileSwapSpaceSpi', label: 'File-based swap'},
             {value: null, label: 'Not set'}
+        ];
+
+        $scope.affinityFunction = [
+            {value: 'Rendezvous', label: 'Rendezvous'},
+            {value: 'Custom', label: 'Custom'},
+            {value: null, label: 'Default'}
         ];
 
         $scope.clusters = [];
@@ -710,10 +719,32 @@ export default ['$rootScope', '$scope', '$http', '$state', '$timeout', 'IgniteLe
                 return ErrorPopover.show('defaultMemoryPolicyName', 'Memory policy with that name should be configured', $scope.ui, 'memoryConfiguration');
 
             return _.isNil(_.find(memory.memoryPolicies, (curPlc, curIx) => {
+                if (curPlc.name === 'sysMemPlc') {
+                    ErrorPopover.show('MemoryPolicyName' + curIx, '"sysMemPlc" policy name is reserved for internal use', $scope.ui, 'memoryConfiguration');
+
+                    return true;
+                }
+
                 if (_.find(memory.memoryPolicies, (plc, ix) => curIx > ix && (curPlc.name || 'default') === (plc.name || 'default'))) {
                     ErrorPopover.show('MemoryPolicyName' + curIx, 'Memory policy with that name is already configured', $scope.ui, 'memoryConfiguration');
 
                     return true;
+                }
+
+                if (curPlc.maxSize && curPlc.maxSize < (curPlc.initialSize || 268435456)) {
+                    ErrorPopover.show('MemoryPolicyMaxSize' + curIx, 'Maximum size should be greater than initial size', $scope.ui, 'memoryConfiguration');
+
+                    return true;
+                }
+
+                if (curPlc.maxSize) {
+                    const maxPoolSize = Math.floor(curPlc.maxSize / (memory.pageSize || 2048) / 10);
+
+                    if (maxPoolSize < (curPlc.emptyPagesPoolSize || 100)) {
+                        ErrorPopover.show('MemoryPolicyEmptyPagesPoolSize' + curIx, 'Evicted pages pool size should be lesser than ' + maxPoolSize, $scope.ui, 'memoryConfiguration');
+
+                        return true;
+                    }
                 }
 
                 return false;
