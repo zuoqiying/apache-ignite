@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
 import javax.cache.configuration.Factory;
 import javax.cache.configuration.FactoryBuilder;
@@ -85,6 +86,9 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
     /** */
     private static CountDownLatch latch;
 
+    /** */
+    private static CountDownLatch waitingLatch;
+
     /** {@inheritDoc} */
     @Override protected IgniteConfiguration getConfiguration(String gridName) throws Exception {
         IgniteConfiguration cfg = super.getConfiguration(gridName);
@@ -127,6 +131,7 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
         super.beforeTest();
 
         latch = new CountDownLatch(1);
+        waitingLatch = new CountDownLatch(1);
     }
 
     /**
@@ -172,6 +177,7 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
 
             blockedKey = keys.get(0);
             latch = new CountDownLatch(1);
+            waitingLatch = new CountDownLatch(1);
 
             IgniteInternalFuture<Object> f = GridTestUtils.runAsync(new Callable<Object>() {
                 @Override public Object call() throws Exception {
@@ -181,16 +187,7 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
                 }
             }, "putter");
 
-            boolean hang = false;
-
-            try {
-                f.get(200);
-            }
-            catch (IgniteFutureTimeoutCheckedException e) {
-                hang = true;
-            }
-
-            assertTrue("Operation was not stuck", hang);
+            U.await(waitingLatch, 5, TimeUnit.SECONDS);
             assertFalse(f.isDone());
 
             final List<Object> evts = new ArrayList<>();
@@ -291,6 +288,8 @@ public class CacheContinuousQueryConcurrentStartTest extends GridCommonAbstractT
             throws CacheWriterException {
             if (blockedKey.equals(entry.getKey())) {
                 try {
+                    waitingLatch.countDown();
+
                     U.await(latch);
                 }
                 catch (IgniteInterruptedCheckedException e) {

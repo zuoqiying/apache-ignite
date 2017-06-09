@@ -17,7 +17,7 @@
 
 package org.apache.ignite.internal.processors.cache.query.continuous;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryUpdatedListener;
 import org.apache.ignite.Ignite;
@@ -29,9 +29,10 @@ import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteClientReconnectAbstractTest;
+import org.apache.ignite.internal.util.typedef.PA;
 import org.apache.ignite.resources.LoggerResource;
+import org.apache.ignite.testframework.GridTestUtils;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
 import static org.apache.ignite.cache.CacheMode.PARTITIONED;
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
@@ -92,24 +93,44 @@ public class IgniteCacheContinuousQueryClientReconnectTest extends IgniteClientR
 
         QueryCursor<?> cur = clnCache.query(qry);
 
-        int keyCnt = 100;
+        final int keyCnt = 1;
 
         for (int i = 0; i < 10; i++) {
-            lsnr.latch = new CountDownLatch(keyCnt);
+            if (i == 2) {
+                int z = 0;
+
+                ++z;
+            }
+
+            System.out.println("Start iteration: " + i);
+            lsnr.cntr.set(0);
 
             for (int key = 0; key < keyCnt; key++)
                 clnCache.put(key, key);
 
-            assertTrue("Failed to wait for event.", lsnr.latch.await(5, SECONDS));
+            GridTestUtils.waitForCondition(new PA() {
+                @Override public boolean apply() {
+                    return keyCnt == lsnr.cntr.get();
+                }
+            }, 5000);
+
+            assertEquals("Iteration: " + i, keyCnt, lsnr.cntr.get());
 
             reconnectClientNode(client, srv, null);
 
-            lsnr.latch = new CountDownLatch(keyCnt);
+            lsnr.cntr.set(0);
 
             for (int key = 0; key < keyCnt; key++)
                 clnCache.put(key, key);
 
-            assertTrue("Failed to wait for event.", lsnr.latch.await(5, SECONDS));
+            GridTestUtils.waitForCondition(new PA() {
+                @Override public boolean apply() {
+                    return keyCnt == lsnr.cntr.get();
+                }
+            }, 5000);
+
+            System.out.println("Assertion iteration: " + i);
+            assertEquals("Iteration: " + i, keyCnt, lsnr.cntr.get());
         }
 
         cur.close();
@@ -137,14 +158,20 @@ public class IgniteCacheContinuousQueryClientReconnectTest extends IgniteClientR
 
         QueryCursor<?> cur = clnCache.query(qry);
 
-        int keyCnt = 100;
+        lsnr.cntr.set(0);
 
-        lsnr.latch = new CountDownLatch(keyCnt);
+        final int keyCnt = 100;
 
         for (int key = 0; key < keyCnt; key++)
             clnCache.put(key, key);
 
-        assertTrue("Failed to wait for event.", lsnr.latch.await(5, SECONDS));
+        boolean r = GridTestUtils.waitForCondition(new PA() {
+            @Override public boolean apply() {
+                return keyCnt == lsnr.cntr.get();
+            }
+        }, 5000);
+
+        assertTrue("Failed to wait for event.", r);
 
         reconnectClientNode(client, srv, new Runnable() {
             @Override public void run() {
@@ -154,12 +181,18 @@ public class IgniteCacheContinuousQueryClientReconnectTest extends IgniteClientR
 
         assertFalse("Client connected to the same server node.", clnRouterName.equals(clientRouter(client).name()));
 
-        lsnr.latch = new CountDownLatch(keyCnt);
+        lsnr.cntr.set(0);
 
         for (int key = 0; key < keyCnt; key++)
             clnCache.put(key, key);
 
-        assertTrue("Failed to wait for event.", lsnr.latch.await(5, SECONDS));
+        r = GridTestUtils.waitForCondition(new PA() {
+            @Override public boolean apply() {
+                return keyCnt == lsnr.cntr.get();
+            }
+        }, 5000);
+
+        assertTrue("Failed to wait for event.", r);
 
         cur.close();
     }
@@ -169,7 +202,7 @@ public class IgniteCacheContinuousQueryClientReconnectTest extends IgniteClientR
      */
     private static class CacheEventListener implements CacheEntryUpdatedListener<Object, Object> {
         /** */
-        private volatile CountDownLatch latch = new CountDownLatch(1);
+        private AtomicLong cntr = new AtomicLong();
 
         /** */
         @LoggerResource
@@ -180,7 +213,7 @@ public class IgniteCacheContinuousQueryClientReconnectTest extends IgniteClientR
             for (CacheEntryEvent<?, ?> evt : evts) {
                 log.info("Received cache event: " + evt);
 
-                latch.countDown();
+                cntr.incrementAndGet();
             }
         }
     }

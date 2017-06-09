@@ -51,6 +51,9 @@ public class CacheContinuousQueryEntry implements GridCacheDeployable, Message {
     private static final byte FILTERED_ENTRY = 0b0010;
 
     /** */
+    private static final byte OUT_OF_TURN = 0b0100;
+
+    /** */
     private static final EventType[] EVT_TYPE_VALS = EventType.values();
 
     /**
@@ -192,6 +195,13 @@ public class CacheContinuousQueryEntry implements GridCacheDeployable, Message {
     }
 
     /**
+     * Mark that this entry should be processed out of turn.
+     */
+    void markOutOfTurn() {
+        flags |= OUT_OF_TURN;
+    }
+
+    /**
      * Mark that entry filtered.
      */
     void markFiltered() {
@@ -248,6 +258,13 @@ public class CacheContinuousQueryEntry implements GridCacheDeployable, Message {
      */
     boolean isKeepBinary() {
         return keepBinary;
+    }
+
+    /**
+     * @return {@code True } if message should be processed out of turn.
+     */
+    boolean isOutOfTurn() {
+        return (flags & OUT_OF_TURN) != 0;
     }
 
     /**

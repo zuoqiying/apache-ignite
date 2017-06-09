@@ -583,7 +583,7 @@ public class CacheContinuousQueryRandomOperationsTest extends GridCommonAbstract
      * @throws Exception If failed.
      */
     private void doTestNotModifyOperation(CacheConfiguration ccfg) throws Exception {
-        singleOperation(ccfg);
+        //singleOperation(ccfg);
         batchOperation(ccfg);
     }
 
@@ -760,7 +760,7 @@ public class CacheContinuousQueryRandomOperationsTest extends GridCommonAbstract
                     // Get events.
                     cache.putAll(map);
 
-                    assert GridTestUtils.waitForCondition(new PA() {
+                    boolean b = GridTestUtils.waitForCondition(new PA() {
                         @Override public boolean apply() {
                             return evts.size() == KEYS;
                         }
