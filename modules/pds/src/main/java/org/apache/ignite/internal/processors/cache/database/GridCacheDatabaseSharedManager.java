@@ -411,6 +411,9 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
         if (reconnect || cctx.kernalContext().clientNode() || !cctx.kernalContext().state().active())
             return;
 
+        if (persistenceEnabled() && cctx.kernalContext().state().active())
+            initDataBase();
+
         GridCacheProcessor cachePrc = cctx.kernalContext().cache();
 
         // Todo join local info.

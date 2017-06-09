@@ -51,6 +51,8 @@ public abstract class IgniteAbstractStandByClientReconnectTest extends GridCommo
 
     private static final TcpDiscoveryVmIpFinder vmIpFinder = new TcpDiscoveryVmIpFinder(true);
 
+    private static final TcpDiscoveryVmIpFinder clientIpFinder = new TcpDiscoveryVmIpFinder(true);
+
     protected final String node1 = "node1";
     protected final String node2 = "node2";
     protected final String nodeClient = "nodeClient";
@@ -101,9 +103,9 @@ public abstract class IgniteAbstractStandByClientReconnectTest extends GridCommo
         if (!nodeClient.equals(name))
             cfg.setDiscoverySpi(new TcpDiscoverySpi().setIpFinder(vmIpFinder));
         else {
-            vmIpFinder.setAddresses(Collections.singletonList("127.0.0.1:45001"));
+            clientIpFinder.setAddresses(Collections.singletonList("127.0.0.1:47501"));
 
-            cfg.setDiscoverySpi(new TcpDiscoverySpi().setIpFinder(vmIpFinder));
+            cfg.setDiscoverySpi(new TcpDiscoverySpi().setIpFinder(clientIpFinder));
         }
 
         cfg.setPersistentStoreConfiguration(new PersistentStoreConfiguration());
@@ -117,7 +119,6 @@ public abstract class IgniteAbstractStandByClientReconnectTest extends GridCommo
         final CountDownLatch reconnectedLatch
     ) {
         grid(nodeClient).events().localListen(new IgnitePredicate<Event>() {
-
             @Override public boolean apply(Event event) {
                 switch (event.type()) {
                     case EventType.EVT_CLIENT_NODE_DISCONNECTED:
@@ -154,14 +155,20 @@ public abstract class IgniteAbstractStandByClientReconnectTest extends GridCommo
     }
 
     protected void startNodes(CountDownLatch activateLatch) throws Exception {
-        IgniteConfiguration cfg1 = getConfiguration(node1).setCacheConfiguration(ccfg1static, ccfg1staticWithFilter);
+        IgniteConfiguration cfg1 = getConfiguration(node1)
+            .setCacheConfiguration(ccfg1static, ccfg1staticWithFilter);
 
-        IgniteConfiguration cfg2 = getConfiguration(node2).setCacheConfiguration(ccfg2static, ccfg2staticWithFilter);
+        IgniteConfiguration cfg2 = getConfiguration(node2)
+            .setCacheConfiguration(ccfg2static, ccfg2staticWithFilter);
 
-        IgniteConfiguration cfg3 = getConfiguration(nodeClient).setCacheConfiguration(ccfg3static, ccfg3staticWithFilter);
+        IgniteConfiguration cfg3 = getConfiguration(nodeClient)
+            .setCacheConfiguration(ccfg3static, ccfg3staticWithFilter);
 
         if (activateLatch != null)
-            cfg3.setDiscoverySpi(new AwaitTcpDiscoverySpi(activateLatch).setIpFinder(vmIpFinder));
+            cfg3.setDiscoverySpi(
+                new AwaitTcpDiscoverySpi(activateLatch)
+                    .setIpFinder(clientIpFinder)
+            );
 
         cfg3.setClientMode(true);
 

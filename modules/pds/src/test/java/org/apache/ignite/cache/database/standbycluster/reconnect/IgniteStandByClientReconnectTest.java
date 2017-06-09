@@ -17,11 +17,7 @@
 
 package org.apache.ignite.cache.database.standbycluster.reconnect;
 
-import com.google.common.collect.Sets;
-import java.util.Collections;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.apache.ignite.internal.IgniteEx;
 
 /**
@@ -77,7 +73,7 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         stopGrid(node2);
 
-        disconnectedLatch.await(10, TimeUnit.SECONDS);
+        disconnectedLatch.await();
 
         ig2 = startGrid(getConfiguration(node2));
 
@@ -92,7 +88,7 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         info(">>>> reconnect client");
 
-        reconnectedLatch.await(10, TimeUnit.SECONDS);
+        reconnectedLatch.await();
 
         info(">>>> client reconnected");
 
@@ -108,7 +104,9 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
     }
 
     public void testActiveClientReconnectToInActiveCluster() throws Exception {
-        startNodes(null);
+        CountDownLatch activateLatch = new CountDownLatch(1);
+
+        startNodes(activateLatch);
 
         info(">>>> star grid");
 
@@ -149,17 +147,21 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         addDisconnectListener(disconnectedLatch, reconnectedLatch);
 
+        info(">>>> stop " + node2);
+
         stopGrid(node2);
 
-        assertTrue(client.active());
+        disconnectedLatch.await();
 
-        disconnectedLatch.await(10, TimeUnit.SECONDS);
+        ig1.active(false);
+
+        activateLatch.countDown();
 
         info(">>>> restart " + node2);
 
         ig2 = startGrid(getConfiguration(node2));
 
-        reconnectedLatch.await(10, TimeUnit.SECONDS);
+        reconnectedLatch.await();
 
         assertTrue(!ig1.active());
         assertTrue(!ig2.active());
@@ -198,7 +200,7 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         stopGrid(node2);
 
-        disconnectedLatch.await(10, TimeUnit.SECONDS);
+        disconnectedLatch.await();
 
         ig2 = startGrid(getConfiguration(node2));
 
@@ -207,19 +209,19 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
         assertTrue(ig1.active());
         assertTrue(ig2.active());
 
-        checkOnlySystemCaches();
+        checkDescriptors(ig1, staticCacheNames);
+        checkDescriptors(ig2, staticCacheNames);
 
         activateLatch.countDown();
 
-        reconnectedLatch.await(10, TimeUnit.SECONDS);
+        reconnectedLatch.await();
 
         assertTrue(ig1.active());
         assertTrue(ig2.active());
         assertTrue(client.active());
 
-        checkDescriptors(ig1, Collections.<String>emptySet());
-        checkDescriptors(ig2, Collections.<String>emptySet());
-        checkDescriptors(client, Collections.<String>emptySet());
+        checkDescriptors(ig1, staticCacheNames);
+        checkDescriptors(ig2, staticCacheNames);
 
         client.createCache(ccfgDynamic);
 
@@ -250,13 +252,11 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         stopGrid(node2);
 
-        assertTrue(!client.active());
-
-        disconnectedLatch.await(10, TimeUnit.SECONDS);
+        disconnectedLatch.await();
 
         ig2 = startGrid(getConfiguration(node2));
 
-        reconnectedLatch.await(10, TimeUnit.SECONDS);
+        reconnectedLatch.await();
 
         assertTrue(!ig1.active());
         assertTrue(!ig2.active());
