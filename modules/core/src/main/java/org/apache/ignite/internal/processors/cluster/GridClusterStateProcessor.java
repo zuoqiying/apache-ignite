@@ -253,6 +253,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
                 if (sharedCtx.wal() != null)
                     sharedCtx.wal().onDeActivate(ctx);
 
+                // Todo check after join
                 sharedCtx.database().onDeActivate(ctx);
             }
             catch (IgniteCheckedException e) {

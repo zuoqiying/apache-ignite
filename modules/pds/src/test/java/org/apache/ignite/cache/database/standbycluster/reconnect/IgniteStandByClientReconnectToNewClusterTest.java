@@ -22,12 +22,16 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.apache.ignite.events.Event;
+import org.apache.ignite.events.EventType;
 import org.apache.ignite.internal.IgniteEx;
+import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
+import org.apache.ignite.lang.IgnitePredicate;
 
 /**
  *
  */
-public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClientReconnectTest {
+public class IgniteStandByClientReconnectToNewClusterTest extends IgniteAbstractStandByClientReconnectTest {
 
     public void testActiveClientReconnectToActiveCluster() throws Exception {
         CountDownLatch activateLatch = new CountDownLatch(1);
@@ -44,9 +48,9 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
         assertTrue(!ig2.active());
         assertTrue(!client.active());
 
-        client.active(true);
-
         info(">>>> activate grid");
+
+        client.active(true);
 
         checkDescriptors(ig1, staticCacheNames);
         checkDescriptors(ig2, staticCacheNames);
@@ -54,11 +58,11 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         checkStaticCaches();
 
+        info(">>>> dynamic start [" + ccfgDynamicName + ", " + ccfgDynamicWithFilterName + "]");
+
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
-
-        info(">>>> dynamic start [" + ccfgDynamicName + ", " + ccfgDynamicWithFilterName + "]");
 
         assertTrue(ig1.active());
         assertTrue(ig2.active());
@@ -75,10 +79,12 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         info(">>>> stop servers");
 
+        stopGrid(node1);
         stopGrid(node2);
 
         disconnectedLatch.await(10, TimeUnit.SECONDS);
 
+        ig1 = startGrid(getConfiguration(node1));
         ig2 = startGrid(getConfiguration(node2));
 
         info(">>>> activate new servers");
@@ -100,11 +106,7 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
         assertTrue(ig2.active());
         assertTrue(client.active());
 
-        checkDescriptors(ig1, allCacheNames);
-        checkDescriptors(ig2, allCacheNames);
-        checkDescriptors(client, allCacheNames);
-
-        checkAllCaches();
+        checkOnlySystemCaches();
     }
 
     public void testActiveClientReconnectToInActiveCluster() throws Exception {
@@ -149,21 +151,31 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         addDisconnectListener(disconnectedLatch, reconnectedLatch);
 
+        info(">>>> stop servers");
+
+        stopGrid(node1);
         stopGrid(node2);
 
         assertTrue(client.active());
 
+        System.out.println("Await disconnected");
+
         disconnectedLatch.await(10, TimeUnit.SECONDS);
 
-        info(">>>> restart " + node2);
+        ig1 = startGrid(getConfiguration("node1"));
+        ig2 = startGrid(getConfiguration("node2"));
 
-        ig2 = startGrid(getConfiguration(node2));
+        info(">>>> reconnect client");
 
         reconnectedLatch.await(10, TimeUnit.SECONDS);
+
+        info(">>>> client reconnected");
 
         assertTrue(!ig1.active());
         assertTrue(!ig2.active());
         assertTrue(!client.active());
+
+        info(">>>> activate new servers");
 
         client.active(true);
 
@@ -171,11 +183,7 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
         assertTrue(ig2.active());
         assertTrue(client.active());
 
-        checkDescriptors(ig1, allCacheNames);
-        checkDescriptors(ig2, allCacheNames);
-        checkDescriptors(client, allCacheNames);
-
-        checkAllCaches();
+        checkOnlySystemCaches();
     }
 
     public void testInActiveClientReconnectToActiveCluster() throws Exception {
@@ -196,10 +204,12 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         addDisconnectListener(disconnectedLatch, reconnectedLatch);
 
+        stopGrid(node1);
         stopGrid(node2);
 
         disconnectedLatch.await(10, TimeUnit.SECONDS);
 
+        ig1 = startGrid(getConfiguration(node1));
         ig2 = startGrid(getConfiguration(node2));
 
         ig1.active(true);
@@ -207,7 +217,8 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
         assertTrue(ig1.active());
         assertTrue(ig2.active());
 
-        checkOnlySystemCaches();
+        checkDescriptors(ig1, Collections.<String>emptySet());
+        checkDescriptors(ig2, Collections.<String>emptySet());
 
         activateLatch.countDown();
 
@@ -217,19 +228,17 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
         assertTrue(ig2.active());
         assertTrue(client.active());
 
-        checkDescriptors(ig1, Collections.<String>emptySet());
-        checkDescriptors(ig2, Collections.<String>emptySet());
-        checkDescriptors(client, Collections.<String>emptySet());
+        checkOnlySystemCaches();
 
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
 
-        checkDescriptors(ig1, allCacheNames);
-        checkDescriptors(ig2, allCacheNames);
-        checkDescriptors(client, allCacheNames);
+        Set<String> exp2 = Sets.newHashSet(ccfgDynamicName, ccfgDynamicWithFilterName);
 
-        checkAllCaches();
+        checkDescriptors(ig1, exp2);
+        checkDescriptors(ig2, exp2);
+        checkDescriptors(client, exp2);
     }
 
     public void testInActiveClientReconnectToInActiveCluster() throws Exception {
@@ -248,12 +257,14 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
 
         addDisconnectListener(disconnectedLatch, reconnectedLatch);
 
+        stopGrid(node1);
         stopGrid(node2);
 
         assertTrue(!client.active());
 
         disconnectedLatch.await(10, TimeUnit.SECONDS);
 
+        ig1 = startGrid(getConfiguration(node1));
         ig2 = startGrid(getConfiguration(node2));
 
         reconnectedLatch.await(10, TimeUnit.SECONDS);
@@ -268,16 +279,16 @@ public class IgniteStandByClientReconnectTest extends IgniteAbstractStandByClien
         assertTrue(ig2.active());
         assertTrue(client.active());
 
-        checkStaticCaches();
+        checkOnlySystemCaches();
 
         client.createCache(ccfgDynamic);
 
         client.createCache(ccfgDynamicWithFilter);
 
-        checkDescriptors(ig1, allCacheNames);
-        checkDescriptors(ig2, allCacheNames);
-        checkDescriptors(client, allCacheNames);
+        Set<String> exp2 = Sets.newHashSet(ccfgDynamicName, ccfgDynamicWithFilterName);
 
-        checkAllCaches();
+        checkDescriptors(ig1, exp2);
+        checkDescriptors(ig2, exp2);
+        checkDescriptors(client, exp2);
     }
 }
