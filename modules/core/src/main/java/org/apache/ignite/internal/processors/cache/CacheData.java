@@ -180,7 +180,7 @@ public class CacheData implements Serializable {
     /**
      * @return Flags.
      */
-    public byte flags() {
+    public long flags() {
         return flags;
     }
 

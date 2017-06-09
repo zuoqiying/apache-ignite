@@ -352,7 +352,7 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
     public boolean onCacheChangeRequest(
         final GridDhtPartitionsExchangeFuture fut,
         boolean crd,
-        ExchangeActions exchActions
+        final ExchangeActions exchActions
     ) throws IgniteCheckedException {
         assert exchActions != null && !exchActions.empty() : exchActions;
 

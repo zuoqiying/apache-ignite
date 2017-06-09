@@ -316,7 +316,7 @@ public final class DataStructuresProcessor extends GridProcessorAdapter implemen
      * @param ctx Context.
      */
     public void restoreStructuresState(GridKernalContext ctx) {
-        onKernalStart0(true);
+        onKernalStart0();
 
         try {
             for (Map.Entry<GridCacheInternal, GridCacheRemovable> e : dsMap.entrySet()) {

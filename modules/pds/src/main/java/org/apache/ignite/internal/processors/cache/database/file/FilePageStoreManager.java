@@ -542,13 +542,14 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
         }
     }
 
+    //TODO remove
     /** {@inheritDoc} */
     @Override public void saveConfiguration(CacheConfiguration cfg) throws IgniteCheckedException {
         File cacheWorkDir = new File(storeWorkDir, CACHE_DIR_PREFIX + cfg.getName());
 
         checkAndInitCacheWorkDir(cacheWorkDir);
 
-        File file = new File(cacheWorkDir, CACHE_CONF_FILENAME);
+        File file = new File(cacheWorkDir, CACHE_DATA_FILENAME);
 
         if (!file.exists() || file.length() == 0) {
             try {

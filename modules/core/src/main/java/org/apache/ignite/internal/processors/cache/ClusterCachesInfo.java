@@ -139,6 +139,7 @@ class ClusterCachesInfo {
         assert cacheName != null;
 
         return grpName != null ? CU.cacheId(grpName) : CU.cacheId(cacheName);
+    }
 
     /**
      * @param checkConsistency {@code True} if need check cache configurations consistency.
@@ -680,6 +681,10 @@ class ClusterCachesInfo {
         }
 
         return started != null ? started : Collections.<DynamicCacheDescriptor>emptyList();
+    }
+
+    public void addJoinInfo() {
+
     }
 
     /**
@@ -1385,7 +1390,7 @@ class ClusterCachesInfo {
     /**
      * @return {@code True} if client node is currently in disconnected state.
      */
-    private boolean disconnectedState() {
+    public boolean disconnectedState() {
         return cachesOnDisconnect != null;
     }
 

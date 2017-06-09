@@ -139,7 +139,7 @@ public abstract class IgniteAbstractStandByClientReconnectTest extends GridCommo
     }
 
     protected void checkDescriptors(IgniteEx ig, Set<String> cacheNames) {
-        Collection<DynamicCacheDescriptor> descs = ig.context().cache().cacheDescriptors();
+        Collection<DynamicCacheDescriptor> descs = ig.context().cache().cacheDescriptors().values();
 
         assertEquals("Node name: " + ig.name(), cacheNames.size() + 2, descs.size());
 

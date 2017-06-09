@@ -34,6 +34,7 @@ import org.apache.ignite.IgniteCompute;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.events.Event;
 import org.apache.ignite.internal.GridKernalContext;
@@ -59,6 +60,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.GridChangeGlobalStateMessageResponse;
 import org.apache.ignite.internal.processors.cache.StoredCacheData;
+import org.apache.ignite.internal.processors.query.QuerySchema;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
@@ -198,7 +200,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         cacheProc = ctx.cache();
         sharedCtx = cacheProc.context();
 
-        sharedCtx.io().addHandler(
+        sharedCtx.io().addCacheHandler(
             0, GridChangeGlobalStateMessageResponse.class,
             new CI2<UUID, GridChangeGlobalStateMessageResponse>() {
                 @Override public void apply(UUID nodeId, GridChangeGlobalStateMessageResponse msg) {
@@ -312,32 +314,37 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
             });
         }
         else {
-            List<DynamicCacheChangeRequest> reqs = new ArrayList<>();
-
-            DynamicCacheChangeRequest changeGlobalStateReq = new DynamicCacheChangeRequest(
-                requestId, activate ? ACTIVE : INACTIVE, ctx.localNodeId());
-
-            reqs.add(changeGlobalStateReq);
-
-            List<DynamicCacheChangeRequest> cacheReqs = activate ? startAllCachesRequests() : stopAllCachesRequests();
-
-            reqs.addAll(cacheReqs);
-
-            printCacheInfo(cacheReqs, activate);
-
-            ChangeGlobalStateMessage changeGlobalStateMsg = new ChangeGlobalStateMessage(
-                requestId, ctx.localNodeId(), activate, new DynamicCacheChangeBatch(reqs));
-
             try {
-                ctx.discovery().sendCustomEvent(changeGlobalStateMsg);
+                List<DynamicCacheChangeRequest> reqs = new ArrayList<>();
 
-                if (ctx.isStopping())
-                    cgsFut.onDone(new IgniteCheckedException("Failed to execute " + prettyStr(activate) + " request, " +
-                        "node is stopping."));
+                DynamicCacheChangeRequest changeGlobalStateReq = new DynamicCacheChangeRequest(
+                    requestId, activate ? ACTIVE : INACTIVE, ctx.localNodeId());
+
+                reqs.add(changeGlobalStateReq);
+
+                List<DynamicCacheChangeRequest> cacheReqs = activate ? startAllCachesRequests() : stopAllCachesRequests();
+
+                reqs.addAll(cacheReqs);
+
+                printCacheInfo(cacheReqs, activate);
+
+                ChangeGlobalStateMessage changeGlobalStateMsg = new ChangeGlobalStateMessage(
+                    requestId, ctx.localNodeId(), activate, new DynamicCacheChangeBatch(reqs));
+
+                try {
+                    ctx.discovery().sendCustomEvent(changeGlobalStateMsg);
+
+                    if (ctx.isStopping())
+                        cgsFut.onDone(new IgniteCheckedException("Failed to execute " + prettyStr(activate) + " request, " +
+                            "node is stopping."));
+                }
+                catch (IgniteCheckedException e) {
+                    log.error("Fail create or send change global state request." + cgsFut, e);
+
+                    cgsFut.onDone(e);
+                }
             }
             catch (IgniteCheckedException e) {
-                log.error("Fail create or send change global state request." + cgsFut, e);
-
                 cgsFut.onDone(e);
             }
         }
@@ -371,10 +378,11 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         CacheInfo cacheInfo = cacheData.get(req.cacheName());
 
         if (cacheInfo == null)
-            cacheData.put(req.cacheName(), new CacheInfo(
-                    req.startCacheConfiguration(),
+            cacheData.put(req.cacheName(),
+                new CacheInfo(
+                    new StoredCacheData(req.startCacheConfiguration()),
                     req.cacheType(), req.sql(),
-                    (byte)0)
+                    0L)
             );
     }
 
@@ -390,12 +398,12 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
 
         for (Map.Entry<String, CacheInfo> entry : cacheData.entrySet())
             if (cfgs.get(entry.getKey()) == null)
-                cfgs.put(entry.getKey(), entry.getValue().config());
+                cfgs.put(entry.getKey(), entry.getValue().cacheData().config());
 
         return cfgs;
     }
 
-    private List<DynamicCacheChangeRequest> startAllCachesRequests() {
+    private List<DynamicCacheChangeRequest> startAllCachesRequests() throws IgniteCheckedException {
         assert !ctx.config().isDaemon();
 
         Collection<CacheConfiguration> cacheCfgs = allCaches().values();
@@ -403,17 +411,13 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         final List<DynamicCacheChangeRequest> reqs = new ArrayList<>();
 
         if (sharedCtx.pageStore() != null && sharedCtx.database().persistenceEnabled()) {
-            Set<String> savedCacheNames = sharedCtx.pageStore().savedCacheNames();
+            Map<String, StoredCacheData> ccfgs = sharedCtx.pageStore().readCacheConfigurations();
 
-            for (String name : savedCacheNames) {
-                CacheConfiguration cfg = sharedCtx.pageStore().readConfiguration(name);
-
-                if (cfg != null)
-                    reqs.add(createRequest(cfg));
-            }
+            for (Map.Entry<String, StoredCacheData> entry : ccfgs.entrySet())
+                reqs.add(createRequest(entry.getValue().config()));
 
             for (CacheConfiguration cfg : cacheCfgs)
-                if (!savedCacheNames.contains(cfg.getName()))
+                if (!ccfgs.keySet().contains(cfg.getName()))
                     reqs.add(createRequest(cfg));
 
             return reqs;
@@ -525,7 +529,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
                 CacheData val = entry.getValue();
 
                 CacheInfo info = new CacheInfo(
-                    val.cacheConfiguration(),
+                    new StoredCacheData(val.cacheConfiguration()),
                     val.cacheType(),
                     val.sql(),
                     val.flags()
