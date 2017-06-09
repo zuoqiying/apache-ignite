@@ -914,7 +914,7 @@ class ClusterCachesInfo {
 
             boolean stopped;
 
-            if (!surviveReconnect(cacheName)) {
+            if (!surviveReconnect(cacheName) || !ctx.state().active()) {
                 DynamicCacheDescriptor newDesc = registeredCaches.get(cacheName);
 
                 stopped = newDesc == null || !desc.deploymentId().equals(newDesc.deploymentId());
@@ -950,8 +950,7 @@ class ClusterCachesInfo {
      * @return {@code True} if cache with given name if system cache which should always survive client node disconnect.
      */
     private boolean surviveReconnect(String cacheName) {
-        //return CU.isUtilityCache(cacheName) || CU.isAtomicsCache(cacheName);
-        return false;
+        return CU.isUtilityCache(cacheName) || CU.isAtomicsCache(cacheName);
     }
 
     /**
