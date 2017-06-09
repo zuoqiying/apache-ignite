@@ -244,6 +244,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
         if (state != null)
             globalState = state;
 
+        // TODO warning, processing in discovery thread!!!
         if (globalState == INACTIVE) {
             // Clean up.
             try {

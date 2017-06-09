@@ -415,7 +415,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
         GridCacheProcessor cachePrc = cctx.kernalContext().cache();
 
-        // Todo join local info.
+        // Todo before join local node.
 
         Collection<String> cacheNames = new HashSet<>();
 
