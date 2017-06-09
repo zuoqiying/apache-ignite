@@ -381,14 +381,16 @@ public class QueryUtils {
 
         desc.tableName(qryEntity.getTableName());
 
+        // Let's allow Object[] as SQL type as long as H2 treats all Object[]s (non primitive arrays) as instances
+        // of SQL ARRAY type.
         if (binaryEnabled && !keyOrValMustDeserialize) {
             // Safe to check null.
-            if (SQL_TYPES.contains(valCls))
+            if (SQL_TYPES.contains(valCls) || (valCls != null && Object[].class.isAssignableFrom(valCls)))
                 desc.valueClass(valCls);
             else
                 desc.valueClass(Object.class);
 
-            if (SQL_TYPES.contains(keyCls))
+            if (SQL_TYPES.contains(keyCls) || Object[].class.isAssignableFrom(keyCls))
                 desc.keyClass(keyCls);
             else
                 desc.keyClass(Object.class);

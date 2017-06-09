@@ -29,6 +29,7 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import javax.cache.CacheException;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.CacheAtomicityMode;
@@ -105,6 +106,14 @@ public class H2DynamicTableSelfTest extends AbstractSchemaSelfTest {
      * @throws Exception if failed.
      */
     public void testCreateTable() throws Exception {
+        QueryEntity queryEntity = new QueryEntity(Integer.class.getName(), Integer[].class.getName());
+        queryEntity.setTableName("ints");
+        CacheConfiguration ccfg = new CacheConfiguration().setName("foo").setQueryEntities(Arrays.asList(queryEntity));
+        IgniteCache<Integer, Integer[]> cache = client().createCache(ccfg);
+
+        cache.query(new SqlFieldsQuery("insert into ints (_key, _val) values (?, ?)")
+            .setArgs(1, new Integer[] {1, 2})).getAll();  // throws
+
         doTestCreateTable(CACHE_NAME, null, null);
     }
 
