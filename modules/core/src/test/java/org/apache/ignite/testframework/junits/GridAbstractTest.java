@@ -63,13 +63,17 @@ import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.IgniteInterruptedCheckedException;
 import org.apache.ignite.internal.IgniteKernal;
 import org.apache.ignite.internal.IgnitionEx;
+import org.apache.ignite.internal.binary.BinaryCachingMetadataHandler;
+import org.apache.ignite.internal.binary.BinaryContext;
 import org.apache.ignite.internal.binary.BinaryEnumCache;
 import org.apache.ignite.internal.binary.BinaryMarshaller;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
+import org.apache.ignite.internal.processors.cache.CacheGroupContext;
 import org.apache.ignite.internal.processors.resource.GridSpringResourceContext;
 import org.apache.ignite.internal.util.GridClassLoaderCache;
 import org.apache.ignite.internal.util.GridTestClockTimer;
 import org.apache.ignite.internal.util.GridUnsafe;
+import org.apache.ignite.internal.util.IgniteUtils;
 import org.apache.ignite.internal.util.lang.GridAbsPredicate;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.G;
@@ -78,7 +82,9 @@ import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteCallable;
 import org.apache.ignite.lang.IgniteClosure;
+import org.apache.ignite.logger.NullLogger;
 import org.apache.ignite.marshaller.Marshaller;
+import org.apache.ignite.marshaller.MarshallerContextTestImpl;
 import org.apache.ignite.marshaller.MarshallerExclusions;
 import org.apache.ignite.marshaller.jdk.JdkMarshaller;
 import org.apache.ignite.resources.IgniteInstanceResource;
@@ -265,6 +271,13 @@ public abstract class GridAbstractTest extends TestCase {
     }
 
     /**
+     * @return Test resources.
+     */
+    protected IgniteTestResources getTestResources(IgniteConfiguration cfg) throws IgniteCheckedException {
+        return getTestCounters(cfg).getTestResources();
+    }
+
+    /**
      * @param msg Message to print.
      */
     protected void info(String msg) {
@@ -322,7 +335,7 @@ public abstract class GridAbstractTest extends TestCase {
             c.setName("CONSOLE_ERR");
             c.setTarget("System.err");
             c.setThreshold(Priority.WARN);
-            c.setLayout(new PatternLayout("[%d{ABSOLUTE}][%-5p][%t][%c{1}] %m%n"));
+            c.setLayout(new PatternLayout("[%d{ISO8601}][%-5p][%t][%c{1}] %m%n"));
 
             c.activateOptions();
 
@@ -337,7 +350,7 @@ public abstract class GridAbstractTest extends TestCase {
             file.setAppend(false);
             file.setMaxFileSize("10MB");
             file.setMaxBackupIndex(10);
-            file.setLayout(new PatternLayout("[%d{ABSOLUTE}][%-5p][%t][%c{1}] %m%n"));
+            file.setLayout(new PatternLayout("[%d{ISO8601}][%-5p][%t][%c{1}] %m%n"));
 
             file.activateOptions();
 
@@ -1376,6 +1389,34 @@ public abstract class GridAbstractTest extends TestCase {
     }
 
     /**
+     * Create instance of {@link BinaryMarshaller} suitable for use
+     * without starting a grid upon an empty {@link IgniteConfiguration}.
+     * @return Binary marshaller.
+     * @throws IgniteCheckedException if failed.
+     */
+    protected BinaryMarshaller createStandaloneBinaryMarshaller() throws IgniteCheckedException {
+        return createStandaloneBinaryMarshaller(new IgniteConfiguration());
+    }
+
+    /**
+     * Create instance of {@link BinaryMarshaller} suitable for use
+     * without starting a grid upon given {@link IgniteConfiguration}.
+     * @return Binary marshaller.
+     * @throws IgniteCheckedException if failed.
+     */
+    protected BinaryMarshaller createStandaloneBinaryMarshaller(IgniteConfiguration cfg) throws IgniteCheckedException {
+        BinaryMarshaller marsh = new BinaryMarshaller();
+
+        BinaryContext ctx = new BinaryContext(BinaryCachingMetadataHandler.create(), cfg, new NullLogger());
+
+        marsh.setContext(new MarshallerContextTestImpl());
+
+        IgniteUtils.invoke(BinaryMarshaller.class, marsh, "setBinaryContext", ctx, cfg);
+
+        return marsh;
+    }
+
+    /**
      * @return Generated unique test Ignite instance name.
      */
     public String getTestIgniteInstanceName() {
@@ -1834,6 +1875,15 @@ public abstract class GridAbstractTest extends TestCase {
         return tc;
     }
 
+    /**
+     * @param cfg Ignite configuration
+     * @return Test counters
+     * @throws IgniteCheckedException In case of error
+     */
+    protected synchronized TestCounters getTestCounters(IgniteConfiguration cfg) throws IgniteCheckedException {
+        return new TestCounters(cfg);
+    }
+
     /** {@inheritDoc} */
     @SuppressWarnings({"ProhibitedExceptionDeclared"})
     @Override protected void runTest() throws Throwable {
@@ -2068,6 +2118,22 @@ public abstract class GridAbstractTest extends TestCase {
     }
 
     /**
+     * @param node Node.
+     * @param cacheName Cache name.
+     * @return Cache group ID for given cache name.
+     */
+    protected final int groupIdForCache(Ignite node, String cacheName) {
+        for (CacheGroupContext grp : ((IgniteKernal)node).context().cache().cacheGroups()) {
+            if (grp.hasCache(cacheName))
+                return grp.groupId();
+        }
+
+        fail("Failed to find group for cache: " + cacheName);
+
+        return 0;
+    }
+
+    /**
      *
      */
     private static interface WriteReplaceOwner {
@@ -2188,6 +2254,14 @@ public abstract class GridAbstractTest extends TestCase {
          */
         public TestCounters() throws IgniteCheckedException {
             rsrcs = new IgniteTestResources();
+        }
+
+        /**
+         * @param cfg Ignite configuration
+         * @throws IgniteCheckedException In case of error
+         */
+        public TestCounters(IgniteConfiguration cfg) throws IgniteCheckedException {
+            rsrcs = new IgniteTestResources(cfg);
         }
 
         /**

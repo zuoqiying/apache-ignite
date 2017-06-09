@@ -309,7 +309,7 @@ public class GridCacheEventManager extends GridCacheManagerAdapter {
                 oldVal0 = cctx.cacheObjectContext().unwrapBinaryIfNeeded(oldVal, keepBinary, false);
             }
             catch (Exception e) {
-                if (!cctx.cacheObjectContext().processor().isBinaryEnabled(cctx.config()))
+                if (!cctx.cacheObjectContext().kernalContext().cacheObjects().isBinaryEnabled(cctx.config()))
                     throw e;
 
                 if (log.isDebugEnabled())
@@ -365,42 +365,6 @@ public class GridCacheEventManager extends GridCacheManagerAdapter {
         }
 
         return null;
-    }
-
-    /**
-     * Adds preloading event.
-     *
-     * @param part Partition.
-     * @param type Event type.
-     * @param discoNode Discovery node.
-     * @param discoType Discovery event type.
-     * @param discoTs Discovery event timestamp.
-     */
-    public void addPreloadEvent(int part, int type, ClusterNode discoNode, int discoType, long discoTs) {
-        assert discoNode != null;
-        assert type > 0;
-        assert discoType > 0;
-        assert discoTs > 0;
-
-        if (!cctx.events().isRecordable(type))
-            LT.warn(log, "Added event without checking if event is recordable: " + U.gridEventName(type));
-
-        cctx.gridEvents().record(new CacheRebalancingEvent(cctx.name(), cctx.localNode(),
-            "Cache rebalancing event.", type, part, discoNode, discoType, discoTs));
-    }
-
-    /**
-     * Adds partition unload event.
-     *
-     * @param part Partition.
-     */
-    public void addUnloadEvent(int part) {
-        if (!cctx.events().isRecordable(EVT_CACHE_REBALANCE_PART_UNLOADED))
-            LT.warn(log, "Added event without checking if event is recordable: " +
-                U.gridEventName(EVT_CACHE_REBALANCE_PART_UNLOADED));
-
-        cctx.gridEvents().record(new CacheRebalancingEvent(cctx.name(), cctx.localNode(),
-            "Cache unloading event.", EVT_CACHE_REBALANCE_PART_UNLOADED, part, null, 0, 0));
     }
 
     /**

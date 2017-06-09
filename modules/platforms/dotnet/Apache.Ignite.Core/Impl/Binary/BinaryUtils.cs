@@ -143,6 +143,9 @@ namespace Apache.Ignite.Core.Impl.Binary
         /** Type: enum array. */
         public const byte TypeArrayEnum = 29;
 
+        /** Type: binary enum. */
+        public const byte TypeBinaryEnum = 38;
+
         /** Type: native job holder. */
         public const byte TypeNativeJobHolder = 77;
 
@@ -1670,8 +1673,10 @@ namespace Apache.Ignite.Core.Impl.Binary
         private static void ToJavaDate(DateTime date, out long high, out int low)
         {
             if (date.Kind != DateTimeKind.Utc)
-                throw new InvalidOperationException(
+            {
+                throw new BinaryObjectException(
                     "DateTime is not UTC. Only UTC DateTime can be used for interop with other platforms.");
+            }
 
             long diff = date.Ticks - JavaDateTicks;
 
@@ -1773,6 +1778,24 @@ namespace Apache.Ignite.Core.Impl.Binary
         public static unsafe double LongToDoubleBits(long val)
         {
             return *(double*)&val;
+        }
+
+        /// <summary>
+        /// Determines whether specified type is Ignite-compatible enum (value fits into 4 bytes).
+        /// </summary>
+        public static bool IsIgniteEnum(Type type)
+        {
+            Debug.Assert(type != null);
+
+            type = Nullable.GetUnderlyingType(type) ?? type;
+
+            if (!type.IsEnum)
+                return false;
+
+            var enumType = Enum.GetUnderlyingType(type);
+
+            return enumType == typeof(int) || enumType == typeof(byte) || enumType == typeof(sbyte) 
+                || enumType == typeof(short) || enumType == typeof(ushort) || enumType == typeof(uint);
         }
 
         /// <summary>

@@ -42,12 +42,12 @@ namespace Apache.Ignite.Core.Tests.Cache
             var ignite = StartIgniteWithTwoPolicies();
 
             // Verify metrics.
-            var metrics = ignite.GetMemoryMetrics().ToArray();
+            var metrics = ignite.GetMemoryMetrics().OrderBy(x => x.Name).ToArray();
             Assert.AreEqual(3, metrics.Length);  // two defined plus system.
 
-            var sysMetrics = metrics[0];
-            Assert.AreEqual("sysMemPlc", sysMetrics.Name);
-            AssertMetricsAreEmpty(sysMetrics);
+            var emptyMetrics = metrics[0];
+            Assert.AreEqual(MemoryPolicyNoMetrics, emptyMetrics.Name);
+            AssertMetricsAreEmpty(emptyMetrics);
 
             var memMetrics = metrics[1];
             Assert.AreEqual(MemoryPolicyWithMetrics, memMetrics.Name);
@@ -57,9 +57,29 @@ namespace Apache.Ignite.Core.Tests.Cache
             Assert.Greater(memMetrics.PageFillFactor, 0);
             Assert.Greater(memMetrics.TotalAllocatedPages, 1000);
 
-            var emptyMetrics = metrics[2];
+            var sysMetrics = metrics[2];
+            Assert.AreEqual("sysMemPlc", sysMetrics.Name);
+            AssertMetricsAreEmpty(sysMetrics);
+
+            // Metrics by name.
+            emptyMetrics = ignite.GetMemoryMetrics(MemoryPolicyNoMetrics);
             Assert.AreEqual(MemoryPolicyNoMetrics, emptyMetrics.Name);
             AssertMetricsAreEmpty(emptyMetrics);
+
+            memMetrics = ignite.GetMemoryMetrics(MemoryPolicyWithMetrics);
+            Assert.AreEqual(MemoryPolicyWithMetrics, memMetrics.Name);
+            Assert.Greater(memMetrics.AllocationRate, 0);
+            Assert.AreEqual(0, memMetrics.EvictionRate);
+            Assert.AreEqual(0, memMetrics.LargeEntriesPagesPercentage);
+            Assert.Greater(memMetrics.PageFillFactor, 0);
+            Assert.Greater(memMetrics.TotalAllocatedPages, 1000);
+
+            sysMetrics = ignite.GetMemoryMetrics("sysMemPlc");
+            Assert.AreEqual("sysMemPlc", sysMetrics.Name);
+            AssertMetricsAreEmpty(sysMetrics);
+
+            // Invalid name.
+            Assert.IsNull(ignite.GetMemoryMetrics("boo"));
         }
 
         /// <summary>

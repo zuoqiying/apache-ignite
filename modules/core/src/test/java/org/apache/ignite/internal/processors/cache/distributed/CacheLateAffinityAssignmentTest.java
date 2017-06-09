@@ -2008,12 +2008,14 @@ public class CacheLateAffinityAssignmentTest extends GridCommonAbstractTest {
      * @param cacheName Cache name.
      */
     private void blockSupplySend(TestRecordingCommunicationSpi spi, final String cacheName) {
+        final int grpId = groupIdForCache(spi.ignite(), cacheName);
+
         spi.blockMessages(new IgniteBiPredicate<ClusterNode, Message>() {
             @Override public boolean apply(ClusterNode node, Message msg) {
                 if (!msg.getClass().equals(GridDhtPartitionSupplyMessage.class))
                     return false;
 
-                return ((GridDhtPartitionSupplyMessage)msg).cacheId() == CU.cacheId(cacheName);
+                return ((GridDhtPartitionSupplyMessage)msg).groupId() == grpId;
             }
         });
     }
@@ -2165,7 +2167,7 @@ public class CacheLateAffinityAssignmentTest extends GridCommonAbstractTest {
         Map<String, List<List<ClusterNode>>> aff = new HashMap<>();
 
         for (Ignite node : nodes) {
-            log.info("Check node: " + node.name());
+            log.info("Check affinity [node=" + node.name() + ", topVer=" + topVer + ", expIdeal=" + expIdeal + ']');
 
             IgniteKernal node0 = (IgniteKernal)node;
 
@@ -2175,7 +2177,7 @@ public class CacheLateAffinityAssignmentTest extends GridCommonAbstractTest {
                 fut.get();
 
             for (GridCacheContext cctx : node0.context().cache().context().cacheContexts()) {
-                if (cctx.startTopologyVersion() != null && cctx.startTopologyVersion().compareTo(topVer) > 0)
+                if (cctx.startTopologyVersion().compareTo(topVer) > 0)
                     continue;
 
                 List<List<ClusterNode>> aff1 = aff.get(cctx.name());
@@ -2420,7 +2422,7 @@ public class CacheLateAffinityAssignmentTest extends GridCommonAbstractTest {
 
         Collection<ClusterNode> allNodes = ctx.discovery().cacheNodes(topVer0);
 
-        for (DynamicCacheDescriptor cacheDesc : ctx.cache().cacheDescriptors()) {
+        for (DynamicCacheDescriptor cacheDesc : ctx.cache().cacheDescriptors().values()) {
             if (assignments.get(cacheDesc.cacheId()) != null)
                 continue;
 

@@ -20,14 +20,11 @@ package org.apache.ignite.internal.processors.cache;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import org.apache.ignite.Ignite;
-import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.QueryEntity;
 import org.apache.ignite.cache.QueryIndex;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.configuration.NearCacheConfiguration;
-import org.apache.ignite.internal.marshaller.optimized.OptimizedMarshaller;
+import org.apache.ignite.internal.binary.BinaryMarshaller;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
@@ -44,23 +41,6 @@ public class IgniteCacheNoClassQuerySelfTest extends GridCommonAbstractTest {
     /** */
     private static final TcpDiscoveryIpFinder ipFinder = new TcpDiscoveryVmIpFinder(true);
 
-    /** */
-    protected Ignite ignite;
-
-    /**
-     * @return Atomicity mode.
-     */
-    protected CacheAtomicityMode atomicityMode() {
-        return TRANSACTIONAL;
-    }
-
-    /**
-     * @return Distribution.
-     */
-    protected NearCacheConfiguration nearCacheConfiguration() {
-        return new NearCacheConfiguration();
-    }
-
     /** {@inheritDoc} */
     @SuppressWarnings("unchecked")
     @Override protected IgniteConfiguration getConfiguration(String igniteInstanceName) throws Exception {
@@ -70,7 +50,7 @@ public class IgniteCacheNoClassQuerySelfTest extends GridCommonAbstractTest {
 
         CacheConfiguration cc = defaultCacheConfiguration();
 
-        c.setMarshaller(new OptimizedMarshaller());
+        c.setMarshaller(new BinaryMarshaller());
 
         cc.setName("cache");
 
@@ -114,9 +94,14 @@ public class IgniteCacheNoClassQuerySelfTest extends GridCommonAbstractTest {
     public void testNoClass() throws Exception {
         try {
             startGrid();
+
+            fail();
         }
         catch (Exception e) {
             assertTrue(e.getMessage().contains("default marshaller"));
+        }
+        finally {
+            stopAllGrids();
         }
     }
 }
