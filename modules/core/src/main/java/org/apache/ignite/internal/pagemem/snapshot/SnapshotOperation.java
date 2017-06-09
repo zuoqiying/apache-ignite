@@ -37,7 +37,10 @@ public class SnapshotOperation implements Serializable {
      */
     private final long snapshotId;
 
-    /** */
+    /** Cache group ids. */
+    private final Set<Integer> cacheGrpIds;
+
+    /** Cache names. */
     private final Set<String> cacheNames;
 
     /** Message. */
@@ -49,6 +52,7 @@ public class SnapshotOperation implements Serializable {
     /**
      * @param type Type.
      * @param snapshotId Snapshot id.
+     * @param cacheGrpIds Cache group ids.
      * @param cacheNames Cache names.
      * @param msg
      * @param extraParam Additional parameter.
@@ -56,12 +60,14 @@ public class SnapshotOperation implements Serializable {
     public SnapshotOperation(
         SnapshotOperationType type,
         long snapshotId,
+        Set<Integer> cacheGrpIds,
         Set<String> cacheNames,
         String msg,
         Object extraParam
     ) {
         this.type = type;
         this.snapshotId = snapshotId;
+        this.cacheGrpIds = cacheGrpIds;
         this.cacheNames = cacheNames;
         this.msg = msg;
         this.extraParam = extraParam;
@@ -84,9 +90,16 @@ public class SnapshotOperation implements Serializable {
     }
 
     /**
-     * Cache names included to this snapshot.
+     * Cache group ids included to this snapshot.
      *
      * @return Cache names.
+     */
+    public Set<Integer> cacheGroupIds() {
+        return cacheGrpIds;
+    }
+
+    /**
+     * Cache names included to this snapshot.
      */
     public Set<String> cacheNames() {
         return cacheNames;
@@ -111,7 +124,9 @@ public class SnapshotOperation implements Serializable {
      * @param op Op.
      */
     public static Collection<File> getOptionalPathsParameter(SnapshotOperation op) {
-        assert (op.type() == SnapshotOperationType.CHECK || op.type() == SnapshotOperationType.RESTORE)
+        assert (op.type() == SnapshotOperationType.CHECK ||
+                op.type() == SnapshotOperationType.RESTORE ||
+                op.type() == SnapshotOperationType.RESTORE_2_PHASE)
             && (op.extraParameter() == null || op.extraParameter() instanceof Collection);
 
         return (Collection<File>)op.extraParameter();
@@ -170,6 +185,7 @@ public class SnapshotOperation implements Serializable {
             "type=" + type +
             ", snapshotId=" + snapshotId +
             ", cacheNames=" + cacheNames +
+            ", cacheGroupIds=" + cacheGrpIds +
             ", msg='" + msg + '\'' +
             ", extraParam=" + extraParam +
             '}';

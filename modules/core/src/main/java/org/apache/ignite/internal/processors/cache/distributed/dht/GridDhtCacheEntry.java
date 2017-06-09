@@ -41,6 +41,7 @@ import org.apache.ignite.internal.processors.cache.extras.GridCacheObsoleteEntry
 import org.apache.ignite.internal.processors.cache.transactions.IgniteInternalTx;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.lang.GridPlainRunnable;
+import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.C1;
 import org.apache.ignite.internal.util.typedef.CI1;
@@ -70,6 +71,7 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
     private volatile ReaderId[] rdrs = ReaderId.EMPTY_ARRAY;
 
     /** Local partition. */
+    @GridToStringExclude
     private final GridDhtLocalPartition locPart;
 
     /**
@@ -93,8 +95,10 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
     }
 
     /** {@inheritDoc} */
-    @Override protected long nextPartCounter() {
-        return locPart.nextUpdateCounter();
+    @Override protected long nextPartitionCounter(AffinityTopologyVersion topVer,
+        boolean primary,
+        @Nullable Long primaryCntr) {
+        return locPart.nextUpdateCounter(cctx.cacheId(), topVer, primary, primaryCntr);
     }
 
     /** {@inheritDoc} */
@@ -139,7 +143,7 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
         assert !Thread.holdsLock(this);
 
         // Remove this entry from partition mapping.
-        cctx.dht().topology().onRemoved(this);
+        cctx.topology().onRemoved(this);
     }
 
     /**
@@ -715,23 +719,25 @@ public class GridDhtCacheEntry extends GridDistributedCacheEntry {
     /**
      * @return Cache name.
      */
-    protected String cacheName() {
-        return cctx.dht().near().name();
+    protected final String cacheName() {
+        return cctx.name();
     }
 
     /** {@inheritDoc} */
     @Override public synchronized String toString() {
-        return S.toString(GridDhtCacheEntry.class, this, "super", super.toString());
+        return S.toString(GridDhtCacheEntry.class, this,
+            "part", locPart.id(),
+            "super", super.toString());
     }
 
     /** {@inheritDoc} */
     @Override protected void incrementMapPublicSize() {
-        locPart.incrementPublicSize(this);
+        locPart.incrementPublicSize(null, this);
     }
 
     /** {@inheritDoc} */
     @Override protected void decrementMapPublicSize() {
-        locPart.decrementPublicSize(this);
+        locPart.decrementPublicSize(null, this);
     }
 
     /**

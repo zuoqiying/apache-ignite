@@ -26,26 +26,27 @@ import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteAtomicReference;
 import org.apache.ignite.IgniteAtomicSequence;
 import org.apache.ignite.IgniteAtomicStamped;
+import org.apache.ignite.IgniteBinary;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteCluster;
 import org.apache.ignite.IgniteCompute;
 import org.apache.ignite.IgniteCountDownLatch;
-import org.apache.ignite.IgniteException;
-import org.apache.ignite.IgniteLock;
-import org.apache.ignite.IgniteSemaphore;
 import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.IgniteEvents;
+import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteFileSystem;
+import org.apache.ignite.IgniteLock;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.IgniteMessaging;
-import org.apache.ignite.IgniteBinary;
 import org.apache.ignite.IgniteQueue;
 import org.apache.ignite.IgniteScheduler;
+import org.apache.ignite.IgniteSemaphore;
 import org.apache.ignite.IgniteServices;
 import org.apache.ignite.IgniteSet;
 import org.apache.ignite.IgniteTransactions;
 import org.apache.ignite.MemoryMetrics;
+import org.apache.ignite.PersistenceMetrics;
 import org.apache.ignite.binary.BinaryObjectBuilder;
 import org.apache.ignite.binary.BinaryObjectException;
 import org.apache.ignite.cache.affinity.Affinity;
@@ -109,13 +110,14 @@ public class IgniteMock implements Ignite {
      * @param home Ignite home.
      */
     public IgniteMock(
-        String name, String locHost, UUID nodeId, Marshaller marshaller, MBeanServer jmx, String home) {
+        String name, String locHost, UUID nodeId, Marshaller marshaller, MBeanServer jmx, String home, IgniteConfiguration staticCfg) {
         this.locHost = locHost;
         this.nodeId = nodeId;
         this.marshaller = marshaller;
         this.jmx = jmx;
         this.home = home;
         this.name = name;
+        this.staticCfg = staticCfg;
     }
 
     /** {@inheritDoc} */
@@ -448,6 +450,11 @@ public class IgniteMock implements Ignite {
 
     /** {@inheritDoc} */
     @Nullable @Override public MemoryMetrics memoryMetrics(String memPlcName) {
+        return null;
+    }
+
+    /** {@inheritDoc} */
+    @Override public PersistenceMetrics persistentStoreMetrics() {
         return null;
     }
 

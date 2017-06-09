@@ -37,6 +37,9 @@ public class PagePartitionMetaIO extends PageMetaIO {
     private static final int PARTITION_STATE_OFF = GLOBAL_RMV_ID_OFF + 8;
 
     /** */
+    private static final int NEXT_PART_META_PAGE_OFF = PARTITION_STATE_OFF + 1;
+
+    /** */
     public static final IOVersions<PagePartitionMetaIO> VERSIONS = new IOVersions<>(
         new PagePartitionMetaIO(1)
     );
@@ -49,6 +52,7 @@ public class PagePartitionMetaIO extends PageMetaIO {
         setUpdateCounter(pageAddr, 0);
         setGlobalRemoveId(pageAddr, 0);
         setPartitionState(pageAddr, (byte)-1);
+        setCountersPageId(pageAddr, 0);
     }
 
     /**
@@ -70,8 +74,13 @@ public class PagePartitionMetaIO extends PageMetaIO {
      * @param pageAddr Page address.
      * @param size Partition size.
      */
-    public void setSize(long pageAddr, long size) {
+    public boolean setSize(long pageAddr, long size) {
+        if (getSize(pageAddr) == size)
+            return false;
+
         PageUtils.putLong(pageAddr, SIZE_OFF, size);
+
+        return true;
     }
 
     /**
@@ -86,8 +95,13 @@ public class PagePartitionMetaIO extends PageMetaIO {
      * @param pageAddr Page address.
      * @param cntr Partition update counter.
      */
-    public void setUpdateCounter(long pageAddr, long cntr) {
+    public boolean setUpdateCounter(long pageAddr, long cntr) {
+        if (getUpdateCounter(pageAddr) == cntr)
+            return false;
+
         PageUtils.putLong(pageAddr, UPDATE_CNTR_OFF, cntr);
+
+        return true;
     }
 
     /**
@@ -102,8 +116,13 @@ public class PagePartitionMetaIO extends PageMetaIO {
      * @param pageAddr Page address.
      * @param rmvId Global remove ID.
      */
-    public void setGlobalRemoveId(long pageAddr, long rmvId) {
+    public boolean setGlobalRemoveId(long pageAddr, long rmvId) {
+        if (getGlobalRemoveId(pageAddr) == rmvId)
+            return false;
+
         PageUtils.putLong(pageAddr, GLOBAL_RMV_ID_OFF, rmvId);
+
+        return true;
     }
 
     /**
@@ -117,7 +136,28 @@ public class PagePartitionMetaIO extends PageMetaIO {
      * @param pageAddr Page address
      * @param state State.
      */
-    public void setPartitionState(long pageAddr, byte state) {
+    public boolean setPartitionState(long pageAddr, byte state) {
+        if (getPartitionState(pageAddr) == state)
+            return false;
+
         PageUtils.putByte(pageAddr, PARTITION_STATE_OFF, state);
+
+        return true;
+    }
+
+    /**
+     * @param pageAddr Page address.
+     * @return Next meta partial page ID or {@code 0} if it does not exist.
+     */
+    public long getCountersPageId(long pageAddr) {
+        return PageUtils.getLong(pageAddr, NEXT_PART_META_PAGE_OFF);
+    }
+
+    /**
+     * @param pageAddr Page address.
+     * @param metaPageId Next partial meta page ID.
+     */
+    public void setCountersPageId(long pageAddr, long metaPageId) {
+        PageUtils.putLong(pageAddr, NEXT_PART_META_PAGE_OFF, metaPageId);
     }
 }

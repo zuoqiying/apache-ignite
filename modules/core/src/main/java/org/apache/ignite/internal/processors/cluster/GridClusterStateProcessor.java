@@ -34,7 +34,6 @@ import org.apache.ignite.IgniteCompute;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cluster.ClusterNode;
-import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.events.Event;
 import org.apache.ignite.internal.GridKernalContext;
@@ -59,7 +58,7 @@ import org.apache.ignite.internal.processors.cache.ExchangeActions;
 import org.apache.ignite.internal.processors.cache.GridCacheProcessor;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
 import org.apache.ignite.internal.processors.cache.GridChangeGlobalStateMessageResponse;
-import org.apache.ignite.internal.processors.query.QuerySchema;
+import org.apache.ignite.internal.processors.cache.StoredCacheData;
 import org.apache.ignite.internal.util.future.GridFinishedFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
@@ -212,7 +211,7 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
     @Override public void stop(boolean cancel) throws IgniteCheckedException {
         super.stop(cancel);
 
-        sharedCtx.io().removeHandler(0, GridChangeGlobalStateMessageResponse.class);
+        sharedCtx.io().removeHandler(false, 0, GridChangeGlobalStateMessageResponse.class);
         ctx.event().removeLocalEventListener(lsr, EVT_NODE_LEFT, EVT_NODE_FAILED);
 
         IgniteCheckedException stopErr = new IgniteInterruptedCheckedException(
@@ -651,11 +650,11 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
             log.info("Start activation process [nodeId=" + this.ctx.localNodeId() + ", client=" + client +
                 ", topVer=" + cgsCtx.topVer + "]");
 
-        Collection<CacheConfiguration> cfgs = new ArrayList<>();
+        Collection<StoredCacheData> cfgs = new ArrayList<>();
 
         for (DynamicCacheChangeRequest req : cgsCtx.batch.requests()) {
             if (req.startCacheConfiguration() != null)
-                cfgs.add(req.startCacheConfiguration());
+                cfgs.add(new StoredCacheData(req.startCacheConfiguration()));
         }
 
         try {
@@ -716,10 +715,6 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
 
             return e;
         }
-    /*    finally {
-            if (!client)
-                sharedCtx.database().unLock();
-        }*/
     }
 
     /**
@@ -875,6 +870,8 @@ public class GridClusterStateProcessor extends GridProcessorAdapter {
             });
         }
     }
+
+
 
     /**
      * @param activate Activate.

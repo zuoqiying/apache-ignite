@@ -19,7 +19,6 @@ package org.apache.ignite.internal.processors.cache;
 
 import java.io.Serializable;
 import java.util.Map;
-import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.lang.IgniteUuid;
@@ -100,7 +99,7 @@ public class CacheJoinNodeDiscoveryData implements Serializable {
 
         /** */
         @GridToStringInclude
-        private final CacheConfiguration ccfg;
+        private final StoredCacheData cacheData;
 
         /** */
         @GridToStringInclude
@@ -111,26 +110,26 @@ public class CacheJoinNodeDiscoveryData implements Serializable {
         private final boolean sql;
 
         /** Flags added for future usage. */
-        private final byte flags;
+        private final long flags;
 
         /**
-         * @param ccfg Cache configuration.
+         * @param cacheData Cache data.
          * @param cacheType Cache type.
          * @param sql SQL flag - {@code true} if cache was created with {@code CREATE TABLE}.
          * @param flags Flags (for future usage).
          */
-        public CacheInfo(CacheConfiguration ccfg, CacheType cacheType, boolean sql, byte flags) {
-            this.ccfg = ccfg;
+        public CacheInfo(StoredCacheData cacheData, CacheType cacheType, boolean sql, long flags) {
+            this.cacheData = cacheData;
             this.cacheType = cacheType;
             this.sql = sql;
             this.flags = flags;
         }
 
         /**
-         * @return Cache configuration.
+         * @return Cache data.
          */
-       public CacheConfiguration config() {
-            return ccfg;
+        public StoredCacheData cacheData() {
+            return cacheData;
         }
 
         /**

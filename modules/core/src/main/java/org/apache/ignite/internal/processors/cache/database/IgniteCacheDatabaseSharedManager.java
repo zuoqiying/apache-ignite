@@ -28,6 +28,7 @@ import javax.management.JMException;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.MemoryMetrics;
+import org.apache.ignite.PersistenceMetrics;
 import org.apache.ignite.configuration.DataPageEvictionMode;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.MemoryConfiguration;
@@ -39,6 +40,7 @@ import org.apache.ignite.internal.mem.file.MappedFileMemoryProvider;
 import org.apache.ignite.internal.mem.unsafe.UnsafeMemoryProvider;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.pagemem.impl.PageMemoryNoStoreImpl;
+import org.apache.ignite.internal.processors.cache.CacheGroupContext;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheMapEntry;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter;
@@ -584,6 +586,13 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     }
 
     /**
+     * @return PersistenceMetrics if persistence is enabled or {@code null} otherwise.
+     */
+    public PersistenceMetrics persistentStoreMetrics() {
+        return null;
+    }
+
+    /**
      * @param memPlcName Name of {@link MemoryPolicy} to obtain {@link MemoryMetrics} for.
      * @return {@link MemoryMetrics} snapshot for specified {@link MemoryPolicy} or {@code null} if
      * no {@link MemoryPolicy} is configured for specified name.
@@ -732,9 +741,16 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     }
 
     /**
-     * @param stoppedCtxs A collection of tuples (cache context, destroy flag).
+     * Needed action before any cache will stop
      */
-    public void onCachesStopped(Collection<IgniteBiTuple<GridCacheContext, Boolean>> stoppedCtxs) {
+    public void prepareCachesStop() {
+        // No-op.
+    }
+
+    /**
+     * @param stoppedGrps A collection of tuples (cache group, destroy flag).
+     */
+    public void onCacheGroupsStopped(Collection<IgniteBiTuple<CacheGroupContext, Boolean>> stoppedGrps) {
         // No-op.
     }
 
@@ -770,12 +786,12 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
     /**
      * Reserve update history for preloading.
-     * @param cacheId Cache ID.
+     * @param grpId Cache group ID.
      * @param partId Partition Id.
      * @param cntr Update counter.
      * @return True if successfully reserved.
      */
-    public boolean reserveHistoryForPreloading(int cacheId, int partId, long cntr) {
+    public boolean reserveHistoryForPreloading(int grpId, int partId, long cntr) {
         return false;
     }
 
@@ -905,6 +921,8 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
         MemoryPolicyConfiguration memPlcCfg,
         MemoryMetricsImpl memMetrics
     ) {
+        memMetrics.persistenceEnabled(false);
+
         return new PageMemoryNoStoreImpl(
             log,
             memProvider,

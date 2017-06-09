@@ -448,6 +448,12 @@ public final class IgniteSystemProperties {
     /** If this property is set to {@code true} then Ignite will log thread dump in case of partition exchange timeout. */
     public static final String IGNITE_THREAD_DUMP_ON_EXCHANGE_TIMEOUT = "IGNITE_THREAD_DUMP_ON_EXCHANGE_TIMEOUT";
 
+    /** */
+    public static final String IGNITE_IO_DUMP_ON_TIMEOUT = "IGNITE_IO_DUMP_ON_TIMEOUT";
+
+    /** */
+    public static final String IGNITE_DIAGNOSTIC_ENABLED = "IGNITE_DIAGNOSTIC_ENABLED";
+
     /** Cache operations that take more time than value of this property will be output to log. Set to {@code 0} to disable. */
     public static final String IGNITE_LONG_OPERATIONS_DUMP_TIMEOUT = "IGNITE_LONG_OPERATIONS_DUMP_TIMEOUT";
 
@@ -603,6 +609,9 @@ public final class IgniteSystemProperties {
      * Skip CRC calculation flag.
      */
     public static final String IGNITE_PDS_SKIP_CRC = "IGNITE_PDS_SKIP_CRC";
+
+    /** */
+    public static final String IGNITE_EXCHANGE_HISTORY_SIZE = "IGNITE_EXCHANGE_HISTORY_SIZE";
 
     /**
      * WAL rebalance threshold.

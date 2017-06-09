@@ -19,18 +19,19 @@ package org.apache.ignite.cache.database.pagemem;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.IgniteCheckedException;
-import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.GridKernalContext;
 import org.apache.ignite.internal.pagemem.FullPageId;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.store.IgnitePageStoreManager;
-import org.apache.ignite.internal.processors.cache.GridCacheContext;
+import org.apache.ignite.internal.processors.cache.CacheGroupContext;
+import org.apache.ignite.internal.processors.cache.CacheGroupDescriptor;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedContext;
+import org.apache.ignite.internal.processors.cache.StoredCacheData;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.lang.IgniteFuture;
 
@@ -52,17 +53,18 @@ public class NoOpPageStoreManager implements IgnitePageStoreManager {
     }
 
     /** {@inheritDoc} */
-    @Override public void initializeForCache(CacheConfiguration ccfg) throws IgniteCheckedException {
+    @Override public void initializeForCache(CacheGroupDescriptor grpDesc,
+        StoredCacheData cacheData) throws IgniteCheckedException {
         // No-op.
     }
 
     /** {@inheritDoc} */
-    @Override public void shutdownForCache(GridCacheContext cacheCtx, boolean destroy) throws IgniteCheckedException {
+    @Override public void shutdownForCacheGroup(CacheGroupContext grp, boolean destroy) throws IgniteCheckedException {
         // No-op.
     }
 
     /** {@inheritDoc} */
-    @Override public void onPartitionCreated(int cacheId, int partId) throws IgniteCheckedException {
+    @Override public void onPartitionCreated(int grpId, int partId) throws IgniteCheckedException {
         // No-op.
     }
 
@@ -170,13 +172,14 @@ public class NoOpPageStoreManager implements IgnitePageStoreManager {
     }
 
     /** {@inheritDoc} */
-    @Override public Set<String> savedCacheNames() {
-        return Collections.emptySet();
+    @Override public Map<String, StoredCacheData> readCacheConfigurations() throws IgniteCheckedException {
+        return Collections.emptyMap();
     }
 
     /** {@inheritDoc} */
-    @Override public CacheConfiguration readConfiguration(String cacheName) {
-        return null;
+    @Override public void storeCacheData(CacheGroupDescriptor grpDesc,
+        StoredCacheData cacheData) throws IgniteCheckedException {
+        // No-op.
     }
 
     /** {@inheritDoc} */
@@ -185,7 +188,7 @@ public class NoOpPageStoreManager implements IgnitePageStoreManager {
     }
 
     /** {@inheritDoc} */
-    @Override public boolean hasIndexStore(int cacheId) {
+    @Override public boolean hasIndexStore(int grpId) {
         return false;
     }
 

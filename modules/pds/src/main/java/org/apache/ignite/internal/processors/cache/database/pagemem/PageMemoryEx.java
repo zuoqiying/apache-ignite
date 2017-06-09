@@ -116,10 +116,11 @@ public interface PageMemoryEx extends PageMemory {
      * @param pageId Page ID to get byte buffer for. The page ID must be present in the collection returned by
      *      the {@link #beginCheckpoint()} method call.
      * @param tmpBuf Temporary buffer to write changes into.
+     * @param tracker Checkpoint metrics tracker.
      * @return {@code True} if data were read, {@code false} otherwise (data already saved to storage).
      * @throws IgniteException If failed to obtain page data.
      */
-    @Nullable public Integer getForCheckpoint(FullPageId pageId, ByteBuffer tmpBuf);
+    @Nullable public Integer getForCheckpoint(FullPageId pageId, ByteBuffer tmpBuf, CheckpointMetricsTracker tracker);
 
     /**
      * Marks partition as invalid / outdated.
@@ -131,16 +132,16 @@ public interface PageMemoryEx extends PageMemory {
     public int invalidate(int cacheId, int partId);
 
     /**
-     * Clears internal metadata of destroyed cache.
+     * Clears internal metadata of destroyed cache group.
      *
-     * @param cacheId Cache ID.
+     * @param grpId Cache group ID.
      */
-    public void onCacheDestroyed(int cacheId);
+    public void onCacheGroupDestroyed(int grpId);
 
     /**
      * Asynchronously clears pages satisfying the given predicate.
      *
-     * @param pred Predicate for cacheId, pageId and partition tag.
+     * @param pred Predicate for cache group id, pageId and partition tag.
      * @param cleanDirty Flag indicating that dirty pages collection should be cleaned.
      * @return Future that will be completed when all pages are cleared.
      */
