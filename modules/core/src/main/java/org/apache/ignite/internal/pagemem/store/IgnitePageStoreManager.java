@@ -188,12 +188,6 @@ public interface IgnitePageStoreManager extends GridCacheSharedManager, IgniteCh
      * @throws IgniteCheckedException If failed.
      */
     public void storeCacheData(CacheGroupDescriptor grpDesc, StoredCacheData cacheData) throws IgniteCheckedException;
-
-    /**
-     * @param cfg Cache configuration.
-     */
-    public void saveConfiguration(CacheConfiguration cfg) throws IgniteCheckedException;
-
     /**
      * @param grpId Cache group ID.
      * @return {@code True} if index store for given cache group existed before node started.

@@ -494,6 +494,9 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
     @Override public void onActivate(GridKernalContext kctx) throws IgniteCheckedException {
         snapshotMgr = cctx.snapshot();
 
+        if (cctx.localNode().isClient())
+            return;
+
         initDataBase();
 
         if (log.isDebugEnabled())

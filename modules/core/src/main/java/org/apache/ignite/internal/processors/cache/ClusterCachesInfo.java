@@ -109,25 +109,6 @@ class ClusterCachesInfo {
      */
     void onStart(CacheJoinNodeDiscoveryData joinDiscoData) throws IgniteCheckedException {
         this.joinDiscoData = joinDiscoData;
-
-        Map<String, CacheConfiguration> grpCfgs = new HashMap<>();
-
-        for (CacheJoinNodeDiscoveryData.CacheInfo info : joinDiscoData.caches().values()) {
-            if (info.cacheData().config().getGroupName() == null)
-                continue;
-
-            CacheConfiguration ccfg = grpCfgs.get(info.cacheData().config().getGroupName());
-
-            if (ccfg == null)
-                grpCfgs.put(info.cacheData().config().getGroupName(), info.cacheData().config());
-            else
-                validateCacheGroupConfiguration(ccfg, info.cacheData().config());
-        }
-
-        String conflictErr = processJoiningNode(joinDiscoData, ctx.localNodeId(), true);
-
-        if (conflictErr != null)
-            throw new IgniteCheckedException("Failed to start configured cache. " + conflictErr);
     }
 
     /**
@@ -684,7 +665,24 @@ class ClusterCachesInfo {
     }
 
     public void addJoinInfo() {
+        Map<String, CacheConfiguration> grpCfgs = new HashMap<>();
 
+        for (CacheJoinNodeDiscoveryData.CacheInfo info : joinDiscoData.caches().values()) {
+            if (info.cacheData().config().getGroupName() == null)
+                continue;
+
+            CacheConfiguration ccfg = grpCfgs.get(info.cacheData().config().getGroupName());
+
+            if (ccfg == null)
+                grpCfgs.put(info.cacheData().config().getGroupName(), info.cacheData().config());
+            /*else
+                validateCacheGroupConfiguration(ccfg, info.cacheData().config());*/
+        }
+
+        String conflictErr = processJoiningNode(joinDiscoData, ctx.localNodeId(), true);
+
+       /* if (conflictErr != null)
+            throw new IgniteCheckedException("Failed to start configured cache. " + conflictErr);*/
     }
 
     /**

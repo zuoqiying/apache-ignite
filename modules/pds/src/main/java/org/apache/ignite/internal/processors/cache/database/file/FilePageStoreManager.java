@@ -204,15 +204,18 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
 
             assert old == null : "Non-null old store holder for cache: " + cacheData.config().getName();
         }
-
-        storeCacheData(grpDesc, cacheData);
     }
 
     /** {@inheritDoc} */
-    @Override public void storeCacheData(CacheGroupDescriptor grpDesc, StoredCacheData cacheData)
-        throws IgniteCheckedException {
+    @Override public void storeCacheData(
+        CacheGroupDescriptor grpDesc,
+        StoredCacheData cacheData
+    ) throws IgniteCheckedException {
+
         File cacheWorkDir = cacheWorkDirectory(grpDesc, cacheData.config());
         File file;
+
+        checkAndInitCacheWorkDir(cacheWorkDir);
 
         assert cacheWorkDir.exists() : "Work directory does not exist: " + cacheWorkDir;
 
@@ -539,29 +542,6 @@ public class FilePageStoreManager extends GridCacheSharedManagerAdapter implemen
         catch (IOException e) {
             throw new IgniteCheckedException("Failed to read cache configuration from disk for cache: " +
                 conf.getAbsolutePath(), e);
-        }
-    }
-
-    //TODO remove
-    /** {@inheritDoc} */
-    @Override public void saveConfiguration(CacheConfiguration cfg) throws IgniteCheckedException {
-        File cacheWorkDir = new File(storeWorkDir, CACHE_DIR_PREFIX + cfg.getName());
-
-        checkAndInitCacheWorkDir(cacheWorkDir);
-
-        File file = new File(cacheWorkDir, CACHE_DATA_FILENAME);
-
-        if (!file.exists() || file.length() == 0) {
-            try {
-                file.createNewFile();
-
-                try (OutputStream stream = new BufferedOutputStream(new FileOutputStream(file))) {
-                    marshaller.marshal(cfg, stream);
-                }
-            }
-            catch (IOException ex) {
-                throw new IgniteCheckedException("Failed to persist cache configuration: " + cfg.getName(), ex);
-            }
         }
     }
 

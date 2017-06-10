@@ -184,11 +184,6 @@ public class NoOpPageStoreManager implements IgnitePageStoreManager {
     }
 
     /** {@inheritDoc} */
-    @Override public void saveConfiguration(CacheConfiguration cfg) throws IgniteCheckedException {
-
-    }
-
-    /** {@inheritDoc} */
     @Override public boolean hasIndexStore(int grpId) {
         return false;
     }

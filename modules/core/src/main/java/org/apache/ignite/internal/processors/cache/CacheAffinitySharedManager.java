@@ -402,7 +402,10 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
             try {
                 // Save configuration before cache started.
                 if (cctx.pageStore() != null && !cctx.localNode().isClient())
-                    cctx.pageStore().saveConfiguration(req.startCacheConfiguration());
+                    cctx.pageStore().storeCacheData(
+                        cacheDesc.groupDescriptor(),
+                        new StoredCacheData(req.startCacheConfiguration())
+                    );
 
                 if (startCache) {
                     cctx.cache().prepareCacheStart(cacheDesc, nearCfg, fut.topologyVersion());
