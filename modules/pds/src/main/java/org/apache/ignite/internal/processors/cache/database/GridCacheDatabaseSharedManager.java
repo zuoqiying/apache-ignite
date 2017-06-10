@@ -1973,6 +1973,9 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                 Checkpoint chp = markCheckpointBegin(tracker);
 
+                if (chp.cpPages == null)
+                    return;
+
                 snapshotMgr.onCheckPointBegin();
 
                 int pages = chp.cpPages.size();
