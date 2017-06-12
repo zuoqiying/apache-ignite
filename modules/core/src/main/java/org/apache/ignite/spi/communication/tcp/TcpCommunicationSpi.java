@@ -422,8 +422,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                 final ClusterNode rmtNode = getSpiContext().node(sndId);
 
                 if (rmtNode == null) {
-                    if (log.isDebugEnabled())
-                        log.debug("Close incoming connection, unknown node: " + sndId);
+                    U.warn(log, "Close incoming connection, unknown node [nodeId=" + sndId +
+                        ", ses=" + ses + ']');
 
                     ses.close();
 
@@ -441,10 +441,10 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
                 if (oldClient != null) {
                     if (oldClient instanceof GridTcpNioCommunicationClient) {
-                        if (log.isDebugEnabled())
-                            log.debug("Received incoming connection when already connected " +
-                                    "to this node, rejecting [locNode=" + locNode.id() +
-                                    ", rmtNode=" + sndId + ']');
+                        if (log.isInfoEnabled())
+                            log.info("Received incoming connection when already connected " +
+                                "to this node, rejecting [locNode=" + locNode.id() +
+                                ", rmtNode=" + sndId + ']');
 
                         ses.send(new RecoveryLastReceivedMessage(-1));
 
@@ -472,10 +472,10 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
                     if (oldClient != null) {
                         if (oldClient instanceof GridTcpNioCommunicationClient) {
-                            if (log.isDebugEnabled())
-                                log.debug("Received incoming connection when already connected " +
-                                        "to this node, rejecting [locNode=" + locNode.id() +
-                                        ", rmtNode=" + sndId + ']');
+                            if (log.isInfoEnabled())
+                                log.info("Received incoming connection when already connected " +
+                                    "to this node, rejecting [locNode=" + locNode.id() +
+                                    ", rmtNode=" + sndId + ']');
 
                             ses.send(new RecoveryLastReceivedMessage(-1));
 
@@ -495,7 +495,7 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
                     if (log.isDebugEnabled())
                         log.debug("Received incoming connection from remote node " +
-                                "[rmtNode=" + rmtNode.id() + ", reserved=" + reserved + ']');
+                            "[rmtNode=" + rmtNode.id() + ", reserved=" + reserved + ']');
 
                     if (reserved) {
                         try {
@@ -511,11 +511,11 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                 }
                 else {
                     if (oldFut instanceof ConnectFuture && locNode.order() < rmtNode.order()) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Received incoming connection from remote node while " +
-                                    "connecting to this node, rejecting [locNode=" + locNode.id() +
-                                    ", locNodeOrder=" + locNode.order() + ", rmtNode=" + rmtNode.id() +
-                                    ", rmtNodeOrder=" + rmtNode.order() + ']');
+                        if (log.isInfoEnabled()) {
+                            log.info("Received incoming connection from remote node while " +
+                                "connecting to this node, rejecting [locNode=" + locNode.id() +
+                                ", locNodeOrder=" + locNode.order() + ", rmtNode=" + rmtNode.id() +
+                                ", rmtNodeOrder=" + rmtNode.order() + ']');
                         }
 
                         ses.send(new RecoveryLastReceivedMessage(-1));
