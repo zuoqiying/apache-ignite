@@ -1722,7 +1722,7 @@ public class BinaryReaderExImpl implements BinaryReader, BinaryRawReaderEx, Bina
             if (fieldIdLen != BinaryUtils.FIELD_ID_LEN) {
                 BinaryTypeImpl type = (BinaryTypeImpl)ctx.metadata(typeId);
 
-                if (type == null || type.metadata() == null)
+                if (type == null || type.metadata() == null || type.metadata().schemas() == null || type.metadata().schemas().isEmpty())
                     throw new BinaryObjectException("Cannot find metadata for object with compact footer: " +
                         typeId);
 
