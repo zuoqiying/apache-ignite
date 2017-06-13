@@ -3489,7 +3489,7 @@ public class IgniteKernal implements IgniteEx, IgniteMXBean, Externalizable {
     }
 
     /** {@inheritDoc} */
-    public void dumpDebugInfo() {
+    @Override public void dumpDebugInfo() {
         try {
             GridKernalContextImpl ctx = this.ctx;
 
