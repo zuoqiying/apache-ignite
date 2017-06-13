@@ -2510,6 +2510,10 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
 
                     boolean failureDetThrReached = timeoutHelper.checkFailureTimeoutReached(e);
 
+                    U.error(log, "Failed to establish connection to a remote node [node=" + node +
+                        ", addr=" + addr + ", connectAttempts=" + connectAttempts +
+                        ", failureDetThrReached" + failureDetThrReached + ']', e);
+
                     if (failureDetThrReached)
                         LT.warn(log, "Connect timed out (consider increasing 'failureDetectionTimeout' " +
                             "configuration property) [addr=" + addr + ", failureDetectionTimeout=" +
@@ -2527,8 +2531,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
                     errs.addSuppressed(new IgniteCheckedException("Failed to connect to address: " + addr, e));
 
                     // Reconnect for the second time, if connection is not established.
-                    if (!failureDetThrReached && connectAttempts < 2 &&
-                        (e instanceof ConnectException || X.hasCause(e, ConnectException.class))) {
+                    if (!failureDetThrReached && connectAttempts < 5 &&
+                        (X.hasCause(e, ConnectException.class) || X.hasCause(e, SocketTimeoutException.class))) {
                         connectAttempts++;
 
                         continue;
@@ -2554,11 +2558,8 @@ public class TcpCommunicationSpi extends IgniteSpiAdapter
             if (getSpiContext().node(node.id()) != null && (CU.clientNode(node) || !CU.clientNode(getLocalNode())) &&
                 X.hasCause(errs, ConnectException.class, SocketTimeoutException.class, HandshakeTimeoutException.class,
                     IgniteSpiOperationTimeoutException.class)) {
-                LT.warn(log, "TcpCommunicationSpi failed to establish connection to node, node will be dropped from " +
-                    "cluster [" +
-                    "rmtNode=" + node +
-                    ", err=" + errs +
-                    ", connectErrs=" + Arrays.toString(errs.getSuppressed()) + ']');
+                U.error(log, "TcpCommunicationSpi failed to establish connection to node, node will be dropped from " +
+                    "cluster [" + "rmtNode=" + node + ']', errs);
 
                 getSpiContext().failNode(node.id(), "TcpCommunicationSpi failed to establish connection to node [" +
                     "rmtNode=" + node +
