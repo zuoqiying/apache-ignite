@@ -1462,6 +1462,33 @@ export default class IgniteConfigurationGenerator {
     }
 
     // Generate cluster query group.
+    static clusterQuery(cluster, available, cfg = this.igniteConfigurationBean(cluster)) {
+        if (available(['1.0.0', '2.1.0']))
+            return cfg;
+
+        cfg.intProperty('longQueryWarningTimeout');
+
+        if (_.get(cluster, 'sqlConnectorConfiguration.enabled') !== true)
+            return cfg;
+
+        const bean = new Bean('org.apache.ignite.configuration.SqlConnectorConfiguration', 'sqlConnCfg',
+            cluster.sqlConnectorConfiguration, clusterDflts.sqlConnectorConfiguration);
+
+        bean.stringProperty('host')
+            .intProperty('port')
+            .intProperty('portRange')
+            .intProperty('socketSendBufferSize')
+            .intProperty('socketReceiveBufferSize')
+            .intProperty('maxOpenCursorsPerConnection')
+            .intProperty('threadPoolSize')
+            .boolProperty('tcpNoDelay');
+
+        cfg.beanProperty('sqlConnectorConfiguration', bean);
+
+        return cfg;
+    }
+
+    // Generate cluster query group.
     static clusterPersistence(persistence, available, cfg = this.igniteConfigurationBean()) {
         if (available(['1.0.0', '2.1.0']) || !_.get(persistence, 'enabled'))
             return cfg;
