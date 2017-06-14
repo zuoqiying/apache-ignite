@@ -76,10 +76,11 @@ public class H2DynamicTableConcurrentSelfTest extends AbstractSchemaSelfTest {
     }
 
     /**
-     *
-     * @throws Exception
+     * Test cluster behavior under concurrent fire of {@code CREATE TABLE} and {@code DROP TABLE} statements
+     * from different nodes.
+     * @throws Exception if failed.
      */
-    public void testT() throws Exception {
+    public void testConcurrentCreateDrop() throws Exception {
         final AtomicBoolean stopped = new AtomicBoolean();
 
         IgniteInternalFuture<?> fut = multithreadedAsync(new Callable<Object>() {
