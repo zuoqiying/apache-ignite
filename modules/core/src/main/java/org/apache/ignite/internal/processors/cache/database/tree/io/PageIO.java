@@ -77,6 +77,12 @@ public abstract class PageIO {
     /** */
     private static IOVersions<? extends BPlusLeafIO<?>> h2LeafIOs;
 
+    /** */
+    private static IOVersions<? extends BPlusInnerIO<?>> luceneInnerIOs;
+
+    /** */
+    private static IOVersions<? extends BPlusLeafIO<?>> luceneLeafIOs;
+
     /** Maximum payload size. */
     public static final short MAX_PAYLOAD_SIZE = 2048;
 
@@ -168,6 +174,12 @@ public abstract class PageIO {
 
     /** */
     public static final short T_CACHE_ID_AWARE_PENDING_REF_LEAF = 19;
+
+    /** */
+    public static final short T_LUCENE_REF_LEAF = 20;
+
+    /** */
+    public static final short T_LUCENE_REF_INNER = 21;
 
     /** Index for payload == 1. */
     public static final short T_H2_EX_REF_LEAF_START = 10000;
@@ -321,6 +333,20 @@ public abstract class PageIO {
     ) {
         h2InnerIOs = innerIOs;
         h2LeafIOs = leafIOs;
+    }
+
+    /**
+     * Registers this B+Tree IO versions.
+     *
+     * @param innerIOs Inner IO versions.
+     * @param leafIOs Leaf IO versions.
+     */
+    public static void registerLucene(
+        IOVersions<? extends BPlusInnerIO<?>> innerIOs,
+        IOVersions<? extends BPlusLeafIO<?>> leafIOs
+    ) {
+        luceneInnerIOs = innerIOs;
+        luceneLeafIOs = leafIOs;
     }
 
     /**
@@ -519,6 +545,12 @@ public abstract class PageIO {
 
             case T_CACHE_ID_AWARE_PENDING_REF_LEAF:
                 return (Q)IgniteCacheOffheapManagerImpl.CacheIdAwarePendingEntryLeafIO.VERSIONS.forVersion(ver);
+
+            case T_LUCENE_REF_INNER:
+                return (Q)MetadataStorage.MetaStoreInnerIO.VERSIONS.forVersion(ver);
+
+            case T_LUCENE_REF_LEAF:
+                return (Q)MetadataStorage.MetaStoreLeafIO.VERSIONS.forVersion(ver);
 
             default:
                 // For tests.
