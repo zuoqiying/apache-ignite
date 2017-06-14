@@ -43,6 +43,7 @@ import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteInClosure;
+import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.TcpDiscoveryIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
@@ -356,6 +357,7 @@ public class IgniteCacheExpireAndUpdateConsistencyTest extends GridCommonAbstrac
         int backups) {
         CacheConfiguration<TestKey, TestValue> ccfg = new CacheConfiguration<>();
 
+        ccfg.setName(IgniteUuid.randomUuid().toString());
         ccfg.setCacheMode(PARTITIONED);
         ccfg.setAtomicityMode(atomicityMode);
         ccfg.setMemoryMode(memoryMode);

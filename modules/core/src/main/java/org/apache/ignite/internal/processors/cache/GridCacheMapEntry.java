@@ -1357,18 +1357,20 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                     keepBinary);
             }
 
-            cctx.continuousQueries().onEntryUpdated(
-                lsnrCol,
-                key,
-                val,
-                old,
-                internal,
-                partition(),
-                tx.local(),
-                false,
-                updateCntr0,
-                null,
-                topVer);
+            if (notifyContinuousQueries(tx)) {
+                cctx.continuousQueries().onEntryUpdated(
+                    lsnrCol,
+                    key,
+                    val,
+                    old,
+                    internal,
+                    partition(),
+                    tx.local(),
+                    false,
+                    updateCntr0,
+                    null,
+                    topVer);
+            }
 
             cctx.dataStructures().onEntryUpdated(key, false, keepBinary);
         }
