@@ -33,10 +33,7 @@ include /app/helpers/jade/mixins
         .panel-body(ng-if=`$ctrl.available("2.1.0") && ui.isPanelLoaded('${form}')`)
             .col-sm-6
                 .settings-row
-                    +number('Long query timeout:', `${model}.longQueryWarningTimeout`, '"LongQueryWarningTimeout"', 'true', '3000', '0',
-                        'Timeout in milliseconds after which long query warning will be printed')
-                .settings-row
-                    +checkbox('Enable SQL connection configuration', connectionEnabled, '"SqlConnectorEnabled"', 'Enable SQL connector configuration')
+                    +checkbox('Enabled', connectionEnabled, '"SqlConnectorEnabled"', 'Flag indicating whether to configure SQL connector configuration')
                 .settings-row
                     +text-enabled('Host:', `${connectionModel}.host`, '"SqlConnectorHost"', connectionEnabled, 'false', 'localhost', 'Host')
                 .settings-row
