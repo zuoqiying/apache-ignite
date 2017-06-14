@@ -56,7 +56,7 @@ import org.apache.ignite.internal.managers.deployment.GridDeploymentManager;
 import org.apache.ignite.internal.managers.discovery.GridDiscoveryManager;
 import org.apache.ignite.internal.managers.eventstorage.GridEventStorageManager;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
-import org.apache.ignite.internal.processors.cache.database.MemoryPolicy;
+import org.apache.ignite.internal.processors.cache.persistence.MemoryPolicy;
 import org.apache.ignite.internal.processors.cache.datastructures.CacheDataStructuresManager;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtCacheAdapter;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtCacheEntry;
@@ -2004,7 +2004,15 @@ public class GridCacheContext<K, V> implements Externalizable {
      * @return {@code True} if cache 'get' operation is allowed to get entry locally.
      */
     public boolean allowFastLocalRead(int part, List<ClusterNode> affNodes, AffinityTopologyVersion topVer) {
-        return affinityNode() && rebalanceEnabled() && hasPartition(part, affNodes, topVer);
+        boolean result = affinityNode() && rebalanceEnabled() && hasPartition(part, affNodes, topVer);
+
+        // When persistence is enabled, only reading from partitions with OWNING state is allowed.
+        assert !result || !ctx.cache().context().database().persistenceEnabled() ||
+            topology().partitionState(localNodeId(), part) == OWNING :
+            "result = " + result + ", persistenceEnabled = " + ctx.cache().context().database().persistenceEnabled() +
+                ", partitionState = " + topology().partitionState(localNodeId(), part);
+
+        return result;
     }
 
     /**

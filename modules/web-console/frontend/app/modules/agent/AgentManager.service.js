@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import io from 'socket.io-client'; // eslint-disable-line no-unused-vars
+import maskNull from 'app/core/utils/maskNull';
 
-const maskNull = (val) => _.isNil(val) ? 'null' : val;
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 const State = {
     INIT: 'INIT',
