@@ -3106,12 +3106,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                             // If node existed on connection initialization we should check
                             // whether it has not gone yet.
-                            if (nextNodeExists)
-                                U.warn(log, "Failed to send message to next node [msg=" + msg + ", next=" + next +
-                                    ", errMsg=" + (err != null ? err.getMessage() : "N/A") + ']');
-                            else if (log.isDebugEnabled())
-                                log.debug("Failed to send message to next node [msg=" + msg + ", next=" + next +
-                                    ", errMsg=" + (err != null ? err.getMessage() : "N/A") + ']');
+                            U.warn(log, "Failed to send message to next node [msg=" + msg + ", next=" + next +
+                                ", errMsg=" + (err != null ? err.getMessage() : "N/A") + ']');
                         }
                     }
 
@@ -3293,6 +3289,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                 if (existingNode != null) {
                     if (!node.socketAddresses().equals(existingNode.socketAddresses())) {
                         if (!pingNode(existingNode)) {
+                            U.warn(log, "Sending node failed message for existing node: " + node);
+
                             addMessage(new TcpDiscoveryNodeFailedMessage(locNodeId,
                                 existingNode.id(), existingNode.internalOrder()));
 
@@ -5332,8 +5330,7 @@ class ServerImpl extends TcpDiscoveryImpl {
 
             if (msgs != null) {
                 for (TcpDiscoveryNodeFailedMessage msg : msgs) {
-                    if (log.isDebugEnabled())
-                        log.debug("Add node failed message for node from failed nodes list: " + msg);
+                    U.warn(log, "Added node failed message for node from failed nodes list: " + msg);
 
                     addMessage(msg);
                 }
@@ -5561,6 +5558,10 @@ class ServerImpl extends TcpDiscoveryImpl {
                     synchronized (mux) {
                         readers.add(reader);
                     }
+
+                    if (log.isInfoEnabled())
+                        log.info("TCP discovery spawning a new thread for connection: " +
+                            sock.getInetAddress());
 
                     reader.start();
 
