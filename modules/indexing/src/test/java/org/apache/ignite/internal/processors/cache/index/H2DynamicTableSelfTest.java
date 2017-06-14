@@ -40,7 +40,6 @@ import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.internal.IgniteEx;
-import org.apache.ignite.internal.binary.BinaryMarshaller;
 import org.apache.ignite.internal.processors.cache.DynamicCacheDescriptor;
 import org.apache.ignite.internal.processors.query.GridQueryProperty;
 import org.apache.ignite.internal.processors.query.GridQueryTypeDescriptor;
@@ -743,8 +742,6 @@ public class H2DynamicTableSelfTest extends AbstractSchemaSelfTest {
      */
     private IgniteConfiguration commonConfiguration(int idx) throws Exception {
         IgniteConfiguration cfg = super.getConfiguration(getTestIgniteInstanceName(idx));
-
-        cfg.setMarshaller(new BinaryMarshaller());
 
         return optimize(cfg);
     }

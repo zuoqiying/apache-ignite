@@ -17,6 +17,12 @@
 
 package org.apache.ignite.internal.processors.cache.index;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteCheckedException;
@@ -45,13 +51,6 @@ import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Tests for dynamic schema changes.
@@ -543,6 +542,16 @@ public class AbstractSchemaSelfTest extends GridCommonAbstractTest {
         log.info("Executing DDL: " + sql);
 
         node.cache(cacheName).query(new SqlFieldsQuery(sql)).getAll();
+    }
+
+    /**
+     * Execute SQL statement on given node.
+     *
+     * @param node Node.
+     * @param sql Statement.
+     */
+    static List<List<?>> executeSql(Ignite node, String sql) {
+        return queryProcessor(node).querySqlFieldsNoCache(new SqlFieldsQuery(sql).setSchema("PUBLIC"), true).getAll();
     }
 
     /**

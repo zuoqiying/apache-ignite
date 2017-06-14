@@ -64,13 +64,13 @@ import static org.apache.ignite.internal.processors.query.h2.IgniteH2Indexing.UP
  */
 public class DdlStatementsProcessor {
     /** Kernal context. */
-    GridKernalContext ctx;
+    private GridKernalContext ctx;
 
     /** Indexing. */
-    IgniteH2Indexing idx;
+    private IgniteH2Indexing idx;
 
     /**
-     * Initialize message handlers and this' fields needed for further operation.
+     * Initialize this' fields needed for further operation.
      *
      * @param ctx Kernal context.
      * @param idx Indexing.
@@ -101,40 +101,74 @@ public class DdlStatementsProcessor {
 
                 GridH2Table tbl = idx.dataTable(cmd.schemaName(), cmd.tableName());
 
+                boolean cachesCreated = false;
+
+                if (tbl == null) {
+                    cachesCreated = true;
+
+                    ctx.cache().createMissingQueryCaches();
+
+                    tbl = idx.dataTable(cmd.schemaName(), cmd.tableName());
+                }
+
                 if (tbl == null)
                     throw new SchemaOperationException(SchemaOperationException.CODE_TABLE_NOT_FOUND, cmd.tableName());
 
-                assert tbl.rowDescriptor() != null;
+                GridH2Table exTbl = idx.dataTableForIndex(cmd.schemaName(), cmd.index().getName());
 
-                QueryIndex newIdx = new QueryIndex();
+                if (exTbl == null && !cmd.ifNotExists() && !cachesCreated) {
+                    ctx.cache().createMissingQueryCaches();
 
-                newIdx.setName(cmd.index().getName());
-
-                newIdx.setIndexType(cmd.index().getIndexType());
-
-                LinkedHashMap<String, Boolean> flds = new LinkedHashMap<>();
-
-                // Let's replace H2's table and property names by those operated by GridQueryProcessor.
-                GridQueryTypeDescriptor typeDesc = tbl.rowDescriptor().type();
-
-                for (Map.Entry<String, Boolean> e : cmd.index().getFields().entrySet()) {
-                    GridQueryProperty prop = typeDesc.property(e.getKey());
-
-                    if (prop == null)
-                        throw new SchemaOperationException(SchemaOperationException.CODE_COLUMN_NOT_FOUND, e.getKey());
-
-                    flds.put(prop.name(), e.getValue());
+                    exTbl = idx.dataTableForIndex(cmd.schemaName(), cmd.index().getName());
                 }
 
-                newIdx.setFields(flds);
+                if (exTbl == null) {
+                    assert tbl.rowDescriptor() != null;
 
-                fut = ctx.query().dynamicIndexCreate(tbl.cacheName(), cmd.schemaName(), typeDesc.tableName(),
-                    newIdx, cmd.ifNotExists());
+                    QueryIndex newIdx = new QueryIndex();
+
+                    newIdx.setName(cmd.index().getName());
+
+                    newIdx.setIndexType(cmd.index().getIndexType());
+
+                    LinkedHashMap<String, Boolean> flds = new LinkedHashMap<>();
+
+                    // Let's replace H2's table and property names by those operated by GridQueryProcessor.
+                    GridQueryTypeDescriptor typeDesc = tbl.rowDescriptor().type();
+
+                    for (Map.Entry<String, Boolean> e : cmd.index().getFields().entrySet()) {
+                        GridQueryProperty prop = typeDesc.property(e.getKey());
+
+                        if (prop == null)
+                            throw new SchemaOperationException(SchemaOperationException.CODE_COLUMN_NOT_FOUND,
+                                e.getKey());
+
+                        flds.put(prop.name(), e.getValue());
+                    }
+
+                    newIdx.setFields(flds);
+
+                    fut = ctx.query().dynamicIndexCreate(tbl.cacheName(), cmd.schemaName(), typeDesc.tableName(),
+                        newIdx, cmd.ifNotExists());
+                }
+                else {
+                    if (cmd.ifNotExists())
+                        fut = new GridFinishedFuture();
+                    else
+                        throw new SchemaOperationException(SchemaOperationException.CODE_INDEX_EXISTS,
+                            cmd.index().getName());
+                }
             }
             else if (stmt0 instanceof GridSqlDropIndex) {
                 GridSqlDropIndex cmd = (GridSqlDropIndex) stmt0;
 
                 GridH2Table tbl = idx.dataTableForIndex(cmd.schemaName(), cmd.indexName());
+
+                if (tbl == null && !cmd.ifExists()) {
+                    ctx.cache().createMissingQueryCaches();
+
+                    tbl = idx.dataTableForIndex(cmd.schemaName(), cmd.indexName());
+                }
 
                 if (tbl != null) {
                     fut = ctx.query().dynamicIndexDrop(tbl.cacheName(), cmd.schemaName(), cmd.indexName(),
@@ -157,6 +191,12 @@ public class DdlStatementsProcessor {
 
                 GridH2Table tbl = idx.dataTable(cmd.schemaName(), cmd.tableName());
 
+                if (tbl == null && cmd.ifNotExists()) {
+                    ctx.cache().createMissingQueryCaches();
+
+                    tbl = idx.dataTable(cmd.schemaName(), cmd.tableName());
+                }
+
                 if (tbl != null) {
                     if (!cmd.ifNotExists())
                         throw new SchemaOperationException(SchemaOperationException.CODE_TABLE_EXISTS,
@@ -173,11 +213,14 @@ public class DdlStatementsProcessor {
                     SchemaOperationException err =
                         QueryUtils.checkQueryEntityConflicts(ccfg, ctx.cache().cacheDescriptors().values());
 
-                    if (err != null)
-                        throw err;
-
-                    ctx.query().dynamicTableCreate(cmd.schemaName(), e, cmd.templateName(), cmd.cacheGroup(),
-                        cmd.affinityKey(), cmd.atomicityMode(), cmd.backups(), cmd.ifNotExists());
+                    if (err != null) {
+                        // Don't throw if we have IF NOT EXISTS flag and satisfactory error code.
+                        if (!cmd.ifNotExists() || err.code() != SchemaOperationException.CODE_TABLE_EXISTS)
+                            throw err;
+                    }
+                    else
+                        ctx.query().dynamicTableCreate(cmd.schemaName(), e, cmd.templateName(), cmd.cacheGroup(),
+                            cmd.affinityKey(), cmd.atomicityMode(), cmd.backups(), cmd.ifNotExists());
                 }
             }
             else if (stmt0 instanceof GridSqlDropTable) {
@@ -224,7 +267,7 @@ public class DdlStatementsProcessor {
             throw e;
         }
         catch (Exception e) {
-            throw new IgniteSQLException("Unexpected DLL operation failure: " + e.getMessage(), e);
+            throw new IgniteSQLException("Unexpected DDL operation failure: " + e.getMessage(), e);
         }
     }
 
