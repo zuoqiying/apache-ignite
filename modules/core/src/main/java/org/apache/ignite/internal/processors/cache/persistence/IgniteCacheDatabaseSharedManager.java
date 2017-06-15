@@ -662,7 +662,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
                 IgniteConfiguration cfg = cctx.gridConfig();
 
-              /*  try {
+             /*   try {
                     cfg.getMBeanServer().unregisterMBean(
                         U.makeMBeanName(
                             cfg.getIgniteInstanceName(),

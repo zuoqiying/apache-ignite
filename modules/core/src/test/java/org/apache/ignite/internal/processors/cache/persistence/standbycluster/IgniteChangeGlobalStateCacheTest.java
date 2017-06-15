@@ -17,7 +17,6 @@
 
 package org.apache.ignite.internal.processors.cache.persistence.standbycluster;
 
-import javax.cache.configuration.Configuration;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.configuration.CacheConfiguration;

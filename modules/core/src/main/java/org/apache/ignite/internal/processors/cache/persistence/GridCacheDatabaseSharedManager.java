@@ -366,7 +366,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
             persStoreMetrics.wal(cctx.wal());
 
-            try {
+            /*try {
                 persistenceMetricsMbeanName = U.registerMBean(
                     cctx.kernalContext().config().getMBeanServer(),
                     cctx.kernalContext().igniteInstanceName(),
@@ -377,7 +377,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             }
             catch (JMException e) {
                 throw new IgniteCheckedException("Failed to register persistence metrics MBean", e);
-            }
+            }*/
         }
     }
 
@@ -505,9 +505,6 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
             log.debug("Activate database manager [id=" + cctx.localNodeId() +
                 " topVer=" + cctx.discovery().topologyVersionEx() + " ]");
 
-        GridCacheProcessor cachePrc = cctx.kernalContext().cache();
-
-
         Collection<String> cacheNames = new HashSet<>();
 
         // TODO IGNITE-5075 group descriptors.
@@ -544,13 +541,13 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
     /** {@inheritDoc} */
     @Override public void onDeActivate(GridKernalContext kctx) throws IgniteCheckedException {
-        stop0(false);
-
         if (log.isDebugEnabled())
             log.debug("DeActivate database manager [id=" + cctx.localNodeId() +
                 " topVer=" + cctx.discovery().topologyVersionEx() + " ]");
 
         onKernalStop0(false);
+
+        stop0(false);
 
         /* Must be here, because after deactivate we can invoke activate and file lock must be already configured */
         stopping = false;
