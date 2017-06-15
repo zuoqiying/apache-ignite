@@ -220,17 +220,24 @@ public abstract class MarshallerContextAdapter implements MarshallerContext {
                 String clsName = null;
 
                 try {
-                    clsName = clo.applyx();
+                    try {
+                        clsName = clo.applyx();
 
-                    fut.onDone(clsName);
+                        fut.onDone(clsName);
 
-                    clsNameOrFuture = clsName;
-                }
-                catch (Throwable e) {
-                    fut.onDone(e);
+                        clsNameOrFuture = clsName;
+                    }
+                    catch (Throwable e) {
+                        fut.onDone(e);
+
+                        throw e;
+                    }
                 }
                 finally {
-                    map.replace(id, fut, clsName);
+                    if (clsName != null)
+                        map.replace(id, fut, clsName);
+                    else
+                        map.remove(id, fut);
                 }
             }
             else
