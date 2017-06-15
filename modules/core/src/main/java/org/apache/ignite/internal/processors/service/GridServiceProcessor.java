@@ -215,6 +215,10 @@ public class GridServiceProcessor extends GridProcessorAdapter implements Ignite
         if (ctx.isDaemon() || !ctx.state().active())
             return;
 
+        onKernalStart0();
+    }
+
+    private void onKernalStart0() throws IgniteCheckedException {
         cache = ctx.cache().utilityCache();
 
         if (!ctx.clientNode())
@@ -275,6 +279,7 @@ public class GridServiceProcessor extends GridProcessorAdapter implements Ignite
         if (log.isDebugEnabled())
             log.debug("Started service processor.");
     }
+
 
     /** {@inheritDoc} */
     @Override public void onKernalStop(boolean cancel) {
@@ -350,7 +355,7 @@ public class GridServiceProcessor extends GridProcessorAdapter implements Ignite
 
         start();
 
-        onKernalStart();
+        onKernalStart0();
     }
 
     /** {@inheritDoc} */

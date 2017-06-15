@@ -127,8 +127,6 @@ public class IgniteChangeGlobalStateCacheTest extends IgniteChangeGlobalStateAbs
 
         IgniteCache<String, String> cacheExp = ig1.getOrCreateCache(chName);
 
-        Configuration<String, String> cfgExp = cacheExp.getConfiguration(CacheConfiguration.class);
-
         cacheExp.put("key", "value");
 
         assertTrue(ig1.active());
@@ -160,8 +158,6 @@ public class IgniteChangeGlobalStateCacheTest extends IgniteChangeGlobalStateAbs
         assertTrue(ig3.active());
 
         IgniteCache<String, String> cacheAct = ig2.cache(chName);
-
-        Configuration<String, String> cfgAct = cacheAct.getConfiguration(CacheConfiguration.class);
 
         assertEquals("value", cacheAct.get("key"));
     }
