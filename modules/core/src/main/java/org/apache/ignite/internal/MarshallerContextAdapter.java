@@ -223,6 +223,8 @@ public abstract class MarshallerContextAdapter implements MarshallerContext {
                     clsName = clo.applyx();
 
                     fut.onDone(clsName);
+
+                    clsNameOrFuture = clsName;
                 }
                 catch (Throwable e) {
                     fut.onDone(e);
