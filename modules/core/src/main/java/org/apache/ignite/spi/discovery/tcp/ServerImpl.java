@@ -293,9 +293,16 @@ class ServerImpl extends TcpDiscoveryImpl {
 
     /** {@inheritDoc} */
     @Override public void spiStart(String gridName) throws IgniteSpiException {
+        long start = U.currentTimeMillis();
+
         synchronized (mux) {
             spiState = DISCONNECTED;
         }
+
+        long end = U.currentTimeMillis();
+
+        if (end - start > 100)
+            U.warn(log, "1 Held mutex for " + (end - start) + "ms");
 
         utilityPool = new IgniteThreadPoolExecutor("disco-pool",
             spi.ignite().name(),
@@ -387,14 +394,23 @@ class ServerImpl extends TcpDiscoveryImpl {
         }
 
         if (disconnect) {
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
                 spiState = DISCONNECTING;
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "2 Held mutex for " + (end - start) + "ms");
         }
 
         if (msgWorker != null && msgWorker.isAlive() && !disconnect) {
             // Send node left message only if it is final stop.
             msgWorker.addMessage(new TcpDiscoveryNodeLeftMessage(locNode.id()));
+
+            long start = U.currentTimeMillis();
 
             synchronized (mux) {
                 long timeout = spi.netTimeout;
@@ -424,6 +440,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                         " (will stop node anyway).");
                 }
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "3 Held mutex for " + (end - start) + "ms");
         }
 
         U.interrupt(tcpSrvr);
@@ -499,6 +520,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
         spi.stats.clear();
 
+        long start = U.currentTimeMillis();
+
         synchronized (mux) {
             // Clear stored data.
             leavingNodes.clear();
@@ -506,6 +529,11 @@ class ServerImpl extends TcpDiscoveryImpl {
 
             spiState = DISCONNECTED;
         }
+
+        long end = U.currentTimeMillis();
+
+        if (end - start > 100)
+            U.warn(log, "4 Held mutex for " + (end - start) + "ms");
     }
 
     /** {@inheritDoc} */
@@ -807,10 +835,17 @@ class ServerImpl extends TcpDiscoveryImpl {
         boolean nodeAlive = node != null && node.visible();
 
         if (nodeAlive) {
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
                 nodeAlive = !F.transform(failedNodes.keySet(), F.node2id()).contains(nodeId) &&
                     !F.transform(leavingNodes, F.node2id()).contains(nodeId);
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "5 Held mutex for " + (end - start) + "ms");
         }
 
         return nodeAlive;
@@ -861,6 +896,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                 ring.topologyVersion(1);
 
+                long start = U.currentTimeMillis();
+
                 synchronized (mux) {
                     topHist.clear();
 
@@ -869,6 +906,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                     mux.notifyAll();
                 }
 
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "6 Held mutex for " + (end - start) + "ms");
+
                 notifyDiscovery(EVT_NODE_JOINED, 1, locNode);
 
                 break;
@@ -876,6 +918,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
             if (log.isDebugEnabled())
                 log.debug("Join request message has been sent (waiting for coordinator response).");
+
+            long start = U.currentTimeMillis();
 
             synchronized (mux) {
                 long timeout = spi.netTimeout;
@@ -925,6 +969,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                         "Increase 'TcpDiscoverySpi.networkTimeout' configuration property " +
                         "if getting this message on the starting nodes [networkTimeout=" + spi.netTimeout + ']');
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "7 Held mutex for " + (end - start) + "ms");
         }
 
         locNode.attributes().remove(IgniteNodeAttributes.ATTR_SECURITY_CREDENTIALS);
@@ -1370,6 +1419,8 @@ class ServerImpl extends TcpDiscoveryImpl {
      * @return Copy of updated topology history.
      */
     @Nullable private Map<Long, Collection<ClusterNode>> updateTopologyHistory(long topVer, Collection<ClusterNode> top) {
+        long start = U.currentTimeMillis();
+
         synchronized (mux) {
             if (topHist.containsKey(topVer))
                 return null;
@@ -1382,7 +1433,14 @@ class ServerImpl extends TcpDiscoveryImpl {
             if (log.isDebugEnabled())
                 log.debug("Added topology snapshot to history, topVer=" + topVer + ", historySize=" + topHist.size());
 
-            return new TreeMap<>(topHist);
+            TreeMap<Long, Collection<ClusterNode>> tm = new TreeMap<>(topHist);
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "8 Held mutex for " + (end - start) + "ms");
+
+            return tm;
         }
     }
 
@@ -1393,11 +1451,18 @@ class ServerImpl extends TcpDiscoveryImpl {
      * @return {@code true} if local node is coordinator.
      */
     private boolean isLocalNodeCoordinator() {
+        long start = U.currentTimeMillis();
+
         synchronized (mux) {
             boolean crd = spiState == CONNECTED && locNode.equals(resolveCoordinator());
 
             if (crd)
                 spi.stats.onBecomingCoordinator();
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "9 Held mutex for " + (end - start) + "ms");
 
             return crd;
         }
@@ -1409,9 +1474,16 @@ class ServerImpl extends TcpDiscoveryImpl {
     private TcpDiscoverySpiState spiStateCopy() {
         TcpDiscoverySpiState state;
 
+        long start = U.currentTimeMillis();
+
         synchronized (mux) {
             state = spiState;
         }
+
+        long end = U.currentTimeMillis();
+
+        if (end - start > 100)
+            U.warn(log, "10 Held mutex for " + (end - start) + "ms");
 
         return state;
     }
@@ -1437,13 +1509,23 @@ class ServerImpl extends TcpDiscoveryImpl {
      */
     @Nullable private TcpDiscoveryNode resolveCoordinator(
         @Nullable Collection<TcpDiscoveryNode> filter) {
+        // TODO 1
+        long start = U.currentTimeMillis();
+
         synchronized (mux) {
             Collection<TcpDiscoveryNode> excluded = F.concat(false, failedNodes.keySet(), leavingNodes);
 
             if (!F.isEmpty(filter))
                 excluded = F.concat(false, excluded, filter);
 
-            return ring.coordinator(excluded);
+            TcpDiscoveryNode crd = ring.coordinator(excluded);
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "11 Held mutex for " + (end - start) + "ms");
+
+            return crd;
         }
     }
 
@@ -1457,12 +1539,19 @@ class ServerImpl extends TcpDiscoveryImpl {
             int joiningNodesSize;
             int pendingCustomMsgsSize;
 
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
                 failedNodesSize = failedNodes.size();
                 leavingNodesSize = leavingNodes.size();
                 joiningNodesSize = joiningNodes.size();
                 pendingCustomMsgsSize = pendingCustomMsgs.size();
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "12 Held mutex for " + (end - start) + "ms");
 
             Runtime runtime = Runtime.getRuntime();
 
@@ -1538,9 +1627,16 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                 Map<Long, Collection<ClusterNode>> hist;
 
+                long start = U.currentTimeMillis();
+
                 synchronized (mux) {
                     hist = new TreeMap<>(topHist);
                 }
+
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "13 Held mutex for " + (end - start) + "ms");
 
                 nodeAddedMsg.topologyHistory(hist);
             }
@@ -1583,9 +1679,16 @@ class ServerImpl extends TcpDiscoveryImpl {
 
         Collection<SocketReader> tmp;
 
+        long start = U.currentTimeMillis();
+
         synchronized (mux) {
             tmp = U.arrayList(readers);
         }
+
+        long end = U.currentTimeMillis();
+
+        if (end - start > 100)
+            U.warn(log, "14 Held mutex for " + (end - start) + "ms");
 
         U.interrupt(tmp);
         U.joinThreads(tmp, log);
@@ -1627,9 +1730,17 @@ class ServerImpl extends TcpDiscoveryImpl {
 
         TcpDiscoveryNode next;
 
+        // TODO 2
+        long start = U.currentTimeMillis();
+
         synchronized (mux) {
             next = ring.nextNode(failedNodes.keySet());
         }
+
+        long end = U.currentTimeMillis();
+
+        if (end - start > 100)
+            U.warn(log, "15 Held mutex for " + (end - start) + "ms");
 
         if (next != null)
             msgWorker.addMessage(new TcpDiscoveryNodeFailedMessage(getLocalNodeId(), next.id(),
@@ -1658,9 +1769,11 @@ class ServerImpl extends TcpDiscoveryImpl {
 
         assert log.isInfoEnabled();
 
-        synchronized (mux) {
-            StringBuilder b = new StringBuilder(U.nl());
+        StringBuilder b = new StringBuilder(U.nl());
 
+        long start = U.currentTimeMillis();
+
+        synchronized (mux) {
             b.append(">>>").append(U.nl());
             b.append(">>>").append("Dumping discovery SPI debug info.").append(U.nl());
             b.append(">>>").append(U.nl());
@@ -1707,9 +1820,14 @@ class ServerImpl extends TcpDiscoveryImpl {
             b.append(U.nl());
 
             b.append("Stats: ").append(spi.stats).append(U.nl());
-
-            U.quietAndInfo(log, b.toString());
         }
+
+        long end = U.currentTimeMillis();
+
+        if (end - start > 100)
+            U.warn(log, "16 Held mutex for " + (end - start) + "ms");
+
+        U.quietAndInfo(log, b.toString());
     }
 
     /**
@@ -1899,6 +2017,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                     if (!failedNode.isLocal()) {
                         boolean added = false;
 
+                        long start = U.currentTimeMillis();
+
                         synchronized (mux) {
                             if (!failedNodes.containsKey(failedNode)) {
                                 failedNodes.put(failedNode, msg.senderNodeId() != null ? msg.senderNodeId() : getLocalNodeId());
@@ -1906,6 +2026,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 added = true;
                             }
                         }
+
+                        long end = U.currentTimeMillis();
+
+                        if (end - start > 100)
+                            U.warn(log, "17 Held mutex for " + (end - start) + "ms");
 
                         if (added && log.isDebugEnabled())
                             log.debug("Added node to failed nodes list [node=" + failedNode + ", msg=" + msg + ']');
@@ -2700,11 +2825,18 @@ class ServerImpl extends TcpDiscoveryImpl {
 
             TcpDiscoverySpiState state;
 
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
                 failedNodes = U.arrayList(ServerImpl.this.failedNodes.keySet());
 
                 state = spiState;
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "18 Held mutex for " + (end - start) + "ms");
 
             Collection<Throwable> errs = null;
 
@@ -2924,9 +3056,16 @@ class ServerImpl extends TcpDiscoveryImpl {
                         try {
                             boolean failure;
 
+                            long start0 = U.currentTimeMillis();
+
                             synchronized (mux) {
                                 failure = ServerImpl.this.failedNodes.size() < failedNodes.size();
                             }
+
+                            long end0 = U.currentTimeMillis();
+
+                            if (end0 - start0 > 100)
+                                U.warn(log, "19 Held mutex for " + (end0 - start0) + "ms");
 
                             assert !forceSndPending || msg instanceof TcpDiscoveryNodeLeftMessage;
 
@@ -3119,9 +3258,16 @@ class ServerImpl extends TcpDiscoveryImpl {
                     break;
             }
 
+            long start0 = U.currentTimeMillis();
+
             synchronized (mux) {
                 failedNodes.removeAll(ServerImpl.this.failedNodes.keySet());
             }
+
+            long end0 = U.currentTimeMillis();
+
+            if (end0 - start0 > 100)
+                U.warn(log, "20 Held mutex for " + (end0 - start0) + "ms");
 
             if (!failedNodes.isEmpty()) {
                 if (state == CONNECTED) {
@@ -3133,6 +3279,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                         log.debug("Detected failed nodes: " + failedNodes);
                 }
 
+                long start1 = U.currentTimeMillis();
+
                 synchronized (mux) {
                     for (TcpDiscoveryNode failedNode : failedNodes) {
                         if (!ServerImpl.this.failedNodes.containsKey(failedNode))
@@ -3142,6 +3290,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                     for (TcpDiscoveryNode failedNode : failedNodes)
                         failedNodesMsgSent.add(failedNode.id());
                 }
+
+                long end1 = U.currentTimeMillis();
+
+                if (end1 - start1 > 100)
+                    U.warn(log, "21 Held mutex for " + (end1 - start1) + "ms");
 
                 for (TcpDiscoveryNode n : failedNodes)
                     msgWorker.addMessage(new TcpDiscoveryNodeFailedMessage(locNodeId, n.id(), n.internalOrder()));
@@ -4052,9 +4205,16 @@ class ServerImpl extends TcpDiscoveryImpl {
                     return;
                 }
 
+                long start = U.currentTimeMillis();
+
                 synchronized (mux) {
                     joiningNodes.add(node.id());
                 }
+
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "22 Held mutex for " + (end - start) + "ms");
 
                 if (!isLocalNodeCoordinator() && spi.nodeAuth != null && spi.nodeAuth.isGlobalNodeAuthentication()) {
                     boolean authFailed = true;
@@ -4147,6 +4307,8 @@ class ServerImpl extends TcpDiscoveryImpl {
             if (msg.verified() && locNodeId.equals(node.id())) {
                 // Discovery data.
                 Map<UUID, Map<Integer, byte[]>> dataMap;
+
+                long start = U.currentTimeMillis();
 
                 synchronized (mux) {
                     if (spiState == CONNECTING && locNode.internalOrder() != node.internalOrder()) {
@@ -4255,6 +4417,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                     }
                 }
 
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "23 Held mutex for " + (end - start) + "ms");
+
                 // Notify outside of synchronized block.
                 if (dataMap != null) {
                     for (Map.Entry<UUID, Map<Integer, byte[]>> entry : dataMap.entrySet())
@@ -4337,9 +4504,16 @@ class ServerImpl extends TcpDiscoveryImpl {
                 }
             }
 
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
                 joiningNodes.remove(nodeId);
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "24 Held mutex for " + (end - start) + "ms");
 
             TcpDiscoverySpiState state = spiStateCopy();
 
@@ -4392,11 +4566,18 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                 node.order(topVer);
 
+                long start0 = U.currentTimeMillis();
+
                 synchronized (mux) {
                     spiState = CONNECTED;
 
                     mux.notifyAll();
                 }
+
+                long end0 = U.currentTimeMillis();
+
+                if (end0 - start0 > 100)
+                    U.warn(log, "25 Held mutex for " + (end0 - start0) + "ms");
 
                 // Discovery manager must create local joined event before spiStart completes.
                 notifyDiscovery(EVT_NODE_JOINED, topVer, locNode);
@@ -4449,6 +4630,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
             if (locNodeId.equals(leavingNodeId)) {
                 if (msg.senderNodeId() == null) {
+                    long start = U.currentTimeMillis();
+
                     synchronized (mux) {
                         if (log.isDebugEnabled())
                             log.debug("Starting local node stop procedure.");
@@ -4457,6 +4640,11 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                         mux.notifyAll();
                     }
+
+                    long end = U.currentTimeMillis();
+
+                    if (end - start > 100)
+                        U.warn(log, "26 Held mutex for " + (end - start) + "ms");
                 }
 
                 if (msg.verified() || !ring.hasRemoteNodes() || msg.senderNodeId() != null) {
@@ -4470,6 +4658,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                         }
                     }
 
+                    long start = U.currentTimeMillis();
+
                     synchronized (mux) {
                         if (spiState == STOPPING) {
                             spiState = LEFT;
@@ -4477,6 +4667,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                             mux.notifyAll();
                         }
                     }
+
+                    long end = U.currentTimeMillis();
+
+                    if (end - start > 100)
+                        U.warn(log, "27 Held mutex for " + (end - start) + "ms");
 
                     return;
                 }
@@ -4496,9 +4691,16 @@ class ServerImpl extends TcpDiscoveryImpl {
             TcpDiscoveryNode leavingNode = ring.node(leavingNodeId);
 
             if (leavingNode != null) {
+                long start = U.currentTimeMillis();
+
                 synchronized (mux) {
                     leavingNodes.add(leavingNode);
                 }
+
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "28 Held mutex for " + (end - start) + "ms");
             }
             else {
                 if (log.isDebugEnabled())
@@ -4585,13 +4787,22 @@ class ServerImpl extends TcpDiscoveryImpl {
                     }
                 }
 
+                long start = U.currentTimeMillis();
+
                 synchronized (mux) {
                     joiningNodes.remove(leftNode.id());
                 }
 
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "29 Held mutex for " + (end - start) + "ms");
+
                 spi.stats.onNodeLeft();
 
                 notifyDiscovery(EVT_NODE_LEFT, topVer, leftNode);
+
+                long start0 = U.currentTimeMillis();
 
                 synchronized (mux) {
                     failedNodes.remove(leftNode);
@@ -4600,6 +4811,11 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                     failedNodesMsgSent.remove(leftNode.id());
                 }
+
+                long end0 = U.currentTimeMillis();
+
+                if (end0 - start0 > 100)
+                    U.warn(log, "30 Held mutex for " + (end - start) + "ms");
             }
 
             if (sendMessageToRemotes(msg)) {
@@ -4661,9 +4877,17 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                     assert creatorId != null : msg;
 
+                    // TODO 3
+                    long start = U.currentTimeMillis();
+
                     synchronized (mux) {
                         contains = failedNodes.containsKey(sndNode) || ring.node(creatorId) == null;
                     }
+
+                    long end = U.currentTimeMillis();
+
+                    if (end - start > 100)
+                        U.warn(log, "31 Held mutex for " + (end - start) + "ms");
 
                     if (contains) {
                         if (log.isDebugEnabled())
@@ -4693,10 +4917,17 @@ class ServerImpl extends TcpDiscoveryImpl {
                 boolean skipUpdateFailedNodes = msg.force() && !msg.verified();
 
                 if (!skipUpdateFailedNodes) {
+                    long start = U.currentTimeMillis();
+
                     synchronized (mux) {
                         if (!failedNodes.containsKey(failedNode))
                             failedNodes.put(failedNode, msg.senderNodeId() != null ? msg.senderNodeId() : getLocalNodeId());
                     }
+
+                    long end = U.currentTimeMillis();
+
+                    if (end - start > 100)
+                        U.warn(log, "32 Held mutex for " + (end - start) + "ms");
                 }
             }
             else {
@@ -4752,6 +4983,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                     lastMsg = msg;
                 }
 
+                long start = U.currentTimeMillis();
+
                 synchronized (mux) {
                     failedNodes.remove(failedNode);
 
@@ -4767,6 +5000,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                     }
                 }
 
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "33 Held mutex for " + (end - start) + "ms");
+
                 if (msg.warning() != null && !msg.creatorNodeId().equals(getLocalNodeId())) {
                     ClusterNode creatorNode = ring.node(msg.creatorNodeId());
 
@@ -4775,9 +5013,16 @@ class ServerImpl extends TcpDiscoveryImpl {
                         ", msg=" + msg.warning() + ']');
                 }
 
+                long start0 = U.currentTimeMillis();
+
                 synchronized (mux) {
                     joiningNodes.remove(failedNode.id());
                 }
+
+                long end0 = U.currentTimeMillis();
+
+                if (end0 - start0 > 100)
+                    U.warn(log, "34 Held mutex for " + (end - start) + "ms");
 
                 notifyDiscovery(EVT_NODE_FAILED, topVer, failedNode);
 
@@ -5037,9 +5282,16 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 if (aliveCheck <= 0 && isLocalNodeCoordinator()) {
                                     boolean failedNode;
 
+                                    long start = U.currentTimeMillis();
+
                                     synchronized (mux) {
                                         failedNode = failedNodes.containsKey(clientNode);
                                     }
+
+                                    long end = U.currentTimeMillis();
+
+                                    if (end - start > 100)
+                                        U.warn(log, "35 Held mutex for " + (end - start) + "ms");
 
                                     if (!failedNode) {
                                         TcpDiscoveryNodeFailedMessage nodeFailedMsg = new TcpDiscoveryNodeFailedMessage(
@@ -5182,9 +5434,16 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                 boolean joiningEmpty;
 
+                long start = U.currentTimeMillis();
+
                 synchronized (mux) {
                     joiningEmpty = joiningNodes.isEmpty();
                 }
+
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "36 Held mutex for " + (end - start) + "ms");
 
                 if (ring.minimumNodeVersion().compareTo(CUSTOM_MSG_ALLOW_JOINING_FOR_VERIFIED_SINCE) >= 0)
                     delayMsg = msg.topologyVersion() == 0L && !joiningEmpty;
@@ -5199,9 +5458,16 @@ class ServerImpl extends TcpDiscoveryImpl {
                         }
                     }
 
+                    long start0 = U.currentTimeMillis();
+
                     synchronized (mux) {
                         pendingCustomMsgs.add(msg);
                     }
+
+                    long end0 = U.currentTimeMillis();
+
+                    if (end - start > 100)
+                        U.warn(log, "37 Held mutex for " + (end - start) + "ms");
 
                     return;
                 }
@@ -5260,9 +5526,16 @@ class ServerImpl extends TcpDiscoveryImpl {
             else {
                 TcpDiscoverySpiState state0;
 
+                long start = U.currentTimeMillis();
+
                 synchronized (mux) {
                     state0 = spiState;
                 }
+
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "38 Held mutex for " + (end - start) + "ms");
 
                 if (msg.verified() && msg.topologyVersion() != ring.topologyVersion()) {
                     if (log.isDebugEnabled())
@@ -5292,6 +5565,10 @@ class ServerImpl extends TcpDiscoveryImpl {
          */
         private void checkFailedNodesList() {
             List<TcpDiscoveryNodeFailedMessage> msgs = null;
+
+            // TODO 4
+
+            long start = U.currentTimeMillis();
 
             synchronized (mux) {
                 if (!failedNodes.isEmpty()) {
@@ -5328,6 +5605,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                 }
             }
 
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "39 Held mutex for " + (end - start) + "ms");
+
             if (msgs != null) {
                 for (TcpDiscoveryNodeFailedMessage msg : msgs) {
                     U.warn(log, "Added node failed message for node from failed nodes list: " + msg);
@@ -5343,9 +5625,16 @@ class ServerImpl extends TcpDiscoveryImpl {
         private void checkPendingCustomMessages() {
             boolean joiningEmpty;
 
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
                 joiningEmpty = joiningNodes.isEmpty();
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "40 Held mutex for " + (end - start) + "ms");
 
             if (joiningEmpty && isLocalNodeCoordinator()) {
                 TcpDiscoveryCustomEventMessage msg;
@@ -5363,8 +5652,17 @@ class ServerImpl extends TcpDiscoveryImpl {
          * @return Pending custom message.
          */
         @Nullable private TcpDiscoveryCustomEventMessage pollPendingCustomeMessage() {
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
-                return pendingCustomMsgs.poll();
+                TcpDiscoveryCustomEventMessage ret = pendingCustomMsgs.poll();
+
+                long end = U.currentTimeMillis();
+
+                if (end - start > 100)
+                    U.warn(log, "41 Held mutex for " + (end - start) + "ms");
+
+                return ret;
             }
         }
 
@@ -5378,9 +5676,16 @@ class ServerImpl extends TcpDiscoveryImpl {
 
             Map<Long, Collection<ClusterNode>> hist;
 
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
                 hist = new TreeMap<>(topHist);
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "42 Held mutex for " + (end - start) + "ms");
 
             Collection<ClusterNode> snapshot = hist.get(msg.topologyVersion());
 
@@ -5553,7 +5858,13 @@ class ServerImpl extends TcpDiscoveryImpl {
                         log.info("TCP discovery accepted incoming connection from remote address: " +
                             sock.getInetAddress());
 
-                    SocketReader reader = new SocketReader(sock);
+                    long theStart = U.currentTimeMillis();
+
+                    SocketReader reader = new SocketReader(sock, theStart);
+
+                    if (log.isInfoEnabled())
+                        log.info("Finished creating socket reader object: " +
+                            sock.getInetAddress());
 
                     synchronized (mux) {
                         readers.add(reader);
@@ -5609,14 +5920,29 @@ class ServerImpl extends TcpDiscoveryImpl {
          *
          * @param sock Socket to read data from.
          */
-        SocketReader(Socket sock) {
+        SocketReader(Socket sock, long start) {
             super(spi.ignite().name(), "tcp-disco-sock-reader", log);
+
+            long superTs = U.currentTimeMillis();
+
+            if (superTs - start > 100)
+                U.warn(log, "super took " + (superTs - start) + "ms");
 
             this.sock = sock;
 
             setPriority(spi.threadPri);
 
+            long prioTs = U.currentTimeMillis();
+
+            if (prioTs - superTs > 100)
+                U.warn(log, "setPriority took " + (prioTs - superTs) + "ms");
+
             spi.stats.onSocketReaderCreated();
+
+            long tsTs = U.currentTimeMillis();
+
+            if (tsTs - prioTs > 100)
+                U.warn(log, "update metrics took " + (tsTs - prioTs) + "ms");
         }
 
         /** {@inheritDoc} */
@@ -5924,6 +6250,8 @@ class ServerImpl extends TcpDiscoveryImpl {
 
                             TcpDiscoverySpiState state = null;
 
+                            long start = U.currentTimeMillis();
+
                             synchronized (mux) {
                                 if (spiState == CONNECTING) {
                                     joinRes.set(msg);
@@ -5939,6 +6267,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 }
                             }
 
+                            long end = U.currentTimeMillis();
+
+                            if (end - start > 100)
+                                U.warn(log, "44 Held mutex for " + (end - start) + "ms");
+
                             if (ignored && log.isDebugEnabled())
                                 log.debug("Duplicate ID message has been ignored [msg=" + msg +
                                     ", spiState=" + state + ']');
@@ -5952,6 +6285,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                             boolean ignored = false;
 
                             TcpDiscoverySpiState state = null;
+
+                            long start = U.currentTimeMillis();
 
                             synchronized (mux) {
                                 if (spiState == CONNECTING) {
@@ -5968,6 +6303,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 }
                             }
 
+                            long end = U.currentTimeMillis();
+
+                            if (end - start > 100)
+                                U.warn(log, "45 Held mutex for " + (end - start) + "ms");
+
                             if (ignored && log.isDebugEnabled())
                                 log.debug("Auth failed message has been ignored [msg=" + msg +
                                     ", spiState=" + state + ']');
@@ -5981,6 +6321,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                             boolean ignored = false;
 
                             TcpDiscoverySpiState state = null;
+
+                            long start = U.currentTimeMillis();
 
                             synchronized (mux) {
                                 if (spiState == CONNECTING) {
@@ -5997,6 +6339,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                                 }
                             }
 
+                            long end = U.currentTimeMillis();
+
+                            if (end - start > 100)
+                                U.warn(log, "46 Held mutex for " + (end - start) + "ms");
+
                             if (ignored && log.isDebugEnabled())
                                 log.debug("Check failed message has been ignored [msg=" + msg +
                                     ", spiState=" + state + ']');
@@ -6010,6 +6357,8 @@ class ServerImpl extends TcpDiscoveryImpl {
                             boolean ignored = false;
 
                             TcpDiscoverySpiState state = null;
+
+                            long start = U.currentTimeMillis();
 
                             synchronized (mux) {
                                 if (spiState == CONNECTING) {
@@ -6025,6 +6374,11 @@ class ServerImpl extends TcpDiscoveryImpl {
                                     state = spiState;
                                 }
                             }
+
+                            long end = U.currentTimeMillis();
+
+                            if (end - start > 100)
+                                U.warn(log, "47 Held mutex for " + (end - start) + "ms");
 
                             if (ignored && log.isDebugEnabled())
                                 log.debug("Loopback problem message has been ignored [msg=" + msg +
@@ -6235,9 +6589,16 @@ class ServerImpl extends TcpDiscoveryImpl {
 
             U.closeQuiet(sock);
 
+            long start = U.currentTimeMillis();
+
             synchronized (mux) {
                 readers.remove(this);
             }
+
+            long end = U.currentTimeMillis();
+
+            if (end - start > 100)
+                U.warn(log, "48 Held mutex for " + (end - start) + "ms");
 
             spi.stats.onSocketReaderRemoved();
         }
