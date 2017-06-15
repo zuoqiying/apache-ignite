@@ -42,7 +42,6 @@ import org.apache.ignite.internal.processors.query.h2.opt.GridLuceneInputStream;
 import org.apache.ignite.internal.processors.query.h2.opt.GridLuceneLockFactory;
 import org.apache.ignite.internal.processors.query.h2.opt.GridLuceneOutputStream;
 import org.apache.ignite.internal.util.lang.GridCursor;
-import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.lucene.store.BaseDirectory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
@@ -53,9 +52,6 @@ import org.apache.lucene.store.IndexOutput;
 public class LuceneDirectory extends BaseDirectory {
     /** Maximum filename length in bytes. */
     private static final int MAX_FILENAME_LEN = 768;
-
-    /** Bytes in byte. */
-    private static final int BYTE_LEN = 1;
 
     /** Index tree. */
     private final DirectoryTree fileTree;
@@ -96,7 +92,7 @@ public class LuceneDirectory extends BaseDirectory {
             List<String> fileNames = new ArrayList<>((int)fileTree.size());
 
             while (cursor.next())
-                fileNames.add(new String(cursor.get().fileName));
+                fileNames.add(new String(cursor.get().getFileName()));
 
             // NOTE: fileMap.keySet().toArray(new String[0]) is broken in non Sun JDKs,
             // and the code below is resilient to map changes during the array population.
@@ -113,14 +109,14 @@ public class LuceneDirectory extends BaseDirectory {
         ensureOpen();
 
         try {
-            DirectoryItem file = fileTree.findOne(new DirectoryItem(source.getBytes(), 0));
+            DirectoryItem srcFile = fileTree.findOne(new DirectoryItem(source.getBytes()));
 
-            if (file == null)
+            if (srcFile == null)
                 throw new FileNotFoundException(source);
 
-            fileTree.put(new DirectoryItem(dest.getBytes(), file.pageId));
+            fileTree.put(new DirectoryItem(dest.getBytes(), srcFile.getPageId()));
 
-            fileTree.remove(file);
+            fileTree.remove(srcFile);
         }
         catch (IgniteCheckedException e) {
             throw new IOException(e);
@@ -134,7 +130,7 @@ public class LuceneDirectory extends BaseDirectory {
         DirectoryItem file;
 
         try {
-            file = fileTree.findOne(new DirectoryItem(name.getBytes(), 0));
+            file = fileTree.findOne(new DirectoryItem(name.getBytes()));
         }
         catch (IgniteCheckedException e) {
             throw new IOException(e);
@@ -160,7 +156,7 @@ public class LuceneDirectory extends BaseDirectory {
      */
     private void doDeleteFile(String name) throws IOException {
 
-        DirectoryItem file = fileTree.remove(new DirectoryItem(name.getBytes(), 0));
+        DirectoryItem file = fileTree.remove(new DirectoryItem(name.getBytes()));
 
         if (file != null) {
             file.delete(); //TODO: add 'delete' method to DirectoryItem
@@ -175,7 +171,7 @@ public class LuceneDirectory extends BaseDirectory {
     @Override public IndexOutput createOutput(final String name, final IOContext context) throws IOException {
         ensureOpen();
 
-        DirectoryItem existing = fileTree.remove(new DirectoryItem(name.getBytes(), 0));
+        DirectoryItem existing = fileTree.remove(new DirectoryItem(name.getBytes()));
 
         if (existing != null) {
             sizeInBytes.addAndGet(-existing.getSizeInBytes());
@@ -183,7 +179,7 @@ public class LuceneDirectory extends BaseDirectory {
             existing.delete();
         }
 
-        DirectoryItem file = newRAMFile();
+        GridLuceneFile file = newRAMFile();
 
         fileTree.put(new DirectoryItem(name.getBytes(), file.pageId);
 
@@ -209,7 +205,7 @@ public class LuceneDirectory extends BaseDirectory {
     @Override public IndexInput openInput(final String name, final IOContext context) throws IOException {
         ensureOpen();
 
-        GridLuceneFile file = fileTree.findOne(new DirectoryItem(name.getBytes(), 0));
+        GridLuceneFile file = fileTree.findOne(new DirectoryItem(name.getBytes()));
 
         if (file == null)
             throw new FileNotFoundException(name);
@@ -246,18 +242,20 @@ public class LuceneDirectory extends BaseDirectory {
         int off,
         final DirectoryItem row
     ) {
-        assert row.fileName.length <= Byte.MAX_VALUE;
+        byte[] fileName = row.getFileName();
+
+        assert fileName.length <= Byte.MAX_VALUE;
 
         // Index name length.
-        PageUtils.putByte(pageAddr, off, (byte)row.fileName.length);
+        PageUtils.putByte(pageAddr, off, (byte)fileName.length);
         off++;
 
         // Index name.
-        PageUtils.putBytes(pageAddr, off, row.fileName);
-        off += row.fileName.length;
+        PageUtils.putBytes(pageAddr, off, fileName);
+        off += fileName.length;
 
         // Page ID.
-        PageUtils.putLong(pageAddr, off, row.pageId);
+        PageUtils.putLong(pageAddr, off, row.getPageId());
     }
 
     /**
@@ -315,6 +313,9 @@ public class LuceneDirectory extends BaseDirectory {
      *
      */
     private static class DirectoryTree extends BPlusTree<DirectoryItem, DirectoryItem> {
+        /** Bytes in byte. */
+        private static final int BYTE_LEN = 1;
+
         /**
          * @param pageMem Page memory.
          * @param metaPageId Meta page ID.
@@ -343,7 +344,7 @@ public class LuceneDirectory extends BaseDirectory {
         /** {@inheritDoc} */
         @Override protected int compare(final BPlusIO<DirectoryItem> io, final long pageAddr, final int idx,
             final DirectoryItem row) throws IgniteCheckedException {
-            final int off = ((DerectoryIO)io).getOffset(pageAddr, idx);
+            final int off = ((DirectoryIO)io).getOffset(pageAddr, idx);
 
             int shift = 0;
 
@@ -352,27 +353,29 @@ public class LuceneDirectory extends BaseDirectory {
 
             shift += BYTE_LEN;
 
-            for (int i = 0; i < len && i < row.fileName.length; i++) {
-                final int cmp = Byte.compare(PageUtils.getByte(pageAddr, off + i + shift), row.fileName[i]);
+            byte[] fileName = row.getFileName();
+
+            for (int i = 0; i < len && i < fileName.length; i++) {
+                final int cmp = Byte.compare(PageUtils.getByte(pageAddr, off + i + shift), fileName[i]);
 
                 if (cmp != 0)
                     return cmp;
             }
 
-            return Integer.compare(len, row.fileName.length);
+            return Integer.compare(len, fileName.length);
         }
 
         /** {@inheritDoc} */
         @Override protected DirectoryItem getRow(final BPlusIO<DirectoryItem> io, final long pageAddr,
             final int idx, Object ignore) throws IgniteCheckedException {
-            return readRow(pageAddr, ((DerectoryIO)io).getOffset(pageAddr, idx));
+            return io.getLookupRow(this, pageAddr, idx);
         }
     }
 
     /**
      *
      */
-    private interface DerectoryIO {
+    private interface DirectoryIO {
         /**
          * @param pageAddr Page address.
          * @param idx Index.
@@ -384,33 +387,7 @@ public class LuceneDirectory extends BaseDirectory {
     /**
      *
      */
-    private static class DirectoryItem {
-        /** */
-        private byte[] fileName;
-
-        /** */
-        private long pageId;
-
-        /**
-         * @param fileName File name.
-         * @param pageId Page ID.
-         */
-        //TODO: add contructor 'DirectoryItem(String)'
-        private DirectoryItem(final byte[] fileName, final long pageId) {
-            this.fileName = fileName;
-            this.pageId = pageId;
-        }
-
-        /** {@inheritDoc} */
-        @Override public String toString() {
-            return "I [FileName=" + new String(fileName) + ", pageId=" + U.hexLong(pageId) + ']';
-        }
-    }
-
-    /**
-     *
-     */
-    private static class LuceneDirectoryInnerIO extends BPlusInnerIO<DirectoryItem> {
+    private static class LuceneDirectoryInnerIO extends BPlusInnerIO<DirectoryItem> implements DirectoryIO {
         /** */
         public static final IOVersions<LuceneDirectoryInnerIO> VERSIONS = new IOVersions<>(
             new LuceneDirectoryInnerIO(1)
@@ -423,27 +400,33 @@ public class LuceneDirectory extends BaseDirectory {
             super(T_LUCENE_REF_INNER, ver, false, MAX_FILENAME_LEN + 1 + 8);
         }
 
-        @Override
-        public void storeByOffset(long pageAddr, int off, DirectoryItem row) throws IgniteCheckedException {
+        /** {@inheritDoc} */
+        @Override public void storeByOffset(long pageAddr, int off, DirectoryItem row) throws IgniteCheckedException {
             storeRow(pageAddr, off, row);
         }
 
-        @Override
-        public void store(long dstPageAddr, int dstIdx, BPlusIO<DirectoryItem> srcIo, long srcPageAddr,
+        /** {@inheritDoc} */
+        @Override public void store(long dstPageAddr, int dstIdx, BPlusIO<DirectoryItem> srcIo, long srcPageAddr,
             int srcIdx) throws IgniteCheckedException {
-            storeRow(dstPageAddr, offset(dstIdx), srcPageAddr, ((DerectoryIO)srcIo).getOffset(srcPageAddr, srcIdx));
+            storeRow(dstPageAddr, offset(dstIdx), srcPageAddr, ((DirectoryIO)srcIo).getOffset(srcPageAddr, srcIdx));
         }
 
+        /** {@inheritDoc} */
         @Override public DirectoryItem getLookupRow(BPlusTree<DirectoryItem, ?> tree, long pageAddr,
             int idx) throws IgniteCheckedException {
             return readRow(pageAddr, offset(idx));
+        }
+
+        /** {@inheritDoc} */
+        @Override public int getOffset(long pageAddr, int idx) {
+            return offset(idx);
         }
     }
 
     /**
      *
      */
-    private static class LuceneDirectoryLeafIO extends BPlusLeafIO<DirectoryItem> {
+    private static class LuceneDirectoryLeafIO extends BPlusLeafIO<DirectoryItem> implements DirectoryIO {
         /** */
         public static final IOVersions<LuceneDirectoryLeafIO> VERSIONS = new IOVersions<>(
             new LuceneDirectoryLeafIO(1)
@@ -456,20 +439,26 @@ public class LuceneDirectory extends BaseDirectory {
             super(T_LUCENE_REF_LEAF, ver, MAX_FILENAME_LEN + 1 + 8);
         }
 
-        @Override
-        public void storeByOffset(long pageAddr, int off, DirectoryItem row) throws IgniteCheckedException {
+        /** {@inheritDoc} */
+        @Override public void storeByOffset(long pageAddr, int off, DirectoryItem row) throws IgniteCheckedException {
             storeRow(pageAddr, off, row);
         }
 
-        @Override
-        public void store(long dstPageAddr, int dstIdx, BPlusIO<DirectoryItem> srcIo, long srcPageAddr,
+        /** {@inheritDoc} */
+        @Override public void store(long dstPageAddr, int dstIdx, BPlusIO<DirectoryItem> srcIo, long srcPageAddr,
             int srcIdx) throws IgniteCheckedException {
-            storeRow(dstPageAddr, offset(dstIdx), srcPageAddr, ((DerectoryIO)srcIo).getOffset(srcPageAddr, srcIdx));
+            storeRow(dstPageAddr, offset(dstIdx), srcPageAddr, ((DirectoryIO)srcIo).getOffset(srcPageAddr, srcIdx));
         }
 
+        /** {@inheritDoc} */
         @Override public DirectoryItem getLookupRow(BPlusTree<DirectoryItem, ?> tree, long pageAddr,
             int idx) throws IgniteCheckedException {
             return readRow(pageAddr, offset(idx));
+        }
+
+        /** {@inheritDoc} */
+        @Override public int getOffset(long pageAddr, int idx) {
+            return offset(idx);
         }
     }
 }
