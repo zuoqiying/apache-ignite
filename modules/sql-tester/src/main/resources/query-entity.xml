@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--
+    Ignite Spring configuration file to startup Ignite cache.
+
+    This file demonstrates how to configure cache using Spring. Provided cache
+    will be created on node startup.
+
+    Use this configuration file when running HTTP REST examples (see 'examples/rest' folder).
+
+    When starting a standalone node, you need to execute the following command:
+    {IGNITE_HOME}/bin/ignite.{bat|sh} examples/config/example-cache.xml
+
+    When starting Ignite from Java IDE, pass path to this file to Ignition:
+    Ignition.start("examples/config/example-cache.xml");
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                           http://www.springframework.org/schema/util
+                           http://www.springframework.org/schema/util/spring-util-2.0.xsd">
+
+    <util:list id="entities">
+        <bean class="org.apache.ignite.cache.QueryEntity">
+            <property name="keyType" value="java.lang.Long"/>
+            <property name="valueType" value="org.apache.ignite.testtools.model.DefaultTable"/>
+            <property name="fields">
+                <map>
+                    <entry key="id" value="java.lang.Long"/>
+                    <entry key="col_Boolean_1" value="java.lang.Boolean"/>
+                    <entry key="col_Boolean_2" value="java.lang.Boolean"/>
+                    <entry key="col_Boolean_3" value="java.lang.Boolean"/>
+                    <entry key="col_Boolean_4" value="java.lang.Boolean"/>
+                    <entry key="col_Boolean_5" value="java.lang.Boolean"/>
+                    <entry key="col_Date_1" value="java.sql.Date"/>
+                    <entry key="col_Date_2" value="java.sql.Date"/>
+                    <entry key="col_Date_3" value="java.sql.Date"/>
+                    <entry key="col_Date_4" value="java.sql.Date"/>
+                    <entry key="col_Date_5" value="java.sql.Date"/>
+                    <entry key="col_Double_1" value="java.lang.Double"/>
+                    <entry key="col_Double_2" value="java.lang.Double"/>
+                    <entry key="col_Double_3" value="java.lang.Double"/>
+                    <entry key="col_Double_4" value="java.lang.Double"/>
+                    <entry key="col_Double_5" value="java.lang.Double"/>
+                    <entry key="col_Integer_1" value="java.lang.Integer"/>
+                    <entry key="col_Integer_2" value="java.lang.Integer"/>
+                    <entry key="col_Integer_3" value="java.lang.Integer"/>
+                    <entry key="col_Integer_4" value="java.lang.Integer"/>
+                    <entry key="col_Integer_5" value="java.lang.Integer"/>
+                    <entry key="col_Long_1" value="java.lang.Long"/>
+                    <entry key="col_Long_2" value="java.lang.Long"/>
+                    <entry key="col_Long_3" value="java.lang.Long"/>
+                    <entry key="col_Long_4" value="java.lang.Long"/>
+                    <entry key="col_Long_5" value="java.lang.Long"/>
+                    <entry key="col_Short_1" value="java.lang.Short"/>
+                    <entry key="col_Short_2" value="java.lang.Short"/>
+                    <entry key="col_Short_3" value="java.lang.Short"/>
+                    <entry key="col_Short_4" value="java.lang.Short"/>
+                    <entry key="col_Short_5" value="java.lang.Short"/>
+                    <entry key="col_String_1" value="java.lang.String"/>
+                    <entry key="col_String_2" value="java.lang.String"/>
+                    <entry key="col_String_3" value="java.lang.String"/>
+                    <entry key="col_String_4" value="java.lang.String"/>
+                    <entry key="col_String_5" value="java.lang.String"/>
+                    <entry key="col_Time_1" value="java.sql.Time"/>
+                    <entry key="col_Time_2" value="java.sql.Time"/>
+                    <entry key="col_Time_3" value="java.sql.Time"/>
+                    <entry key="col_Time_4" value="java.sql.Time"/>
+                    <entry key="col_Time_5" value="java.sql.Time"/>
+                    <entry key="col_Timestamp_5" value="java.sql.Timestamp"/>
+                    <entry key="col_Timestamp_1" value="java.sql.Timestamp"/>
+                    <entry key="col_Timestamp_2" value="java.sql.Timestamp"/>
+                    <entry key="col_Timestamp_3" value="java.sql.Timestamp"/>
+                    <entry key="col_Timestamp_4" value="java.sql.Timestamp"/>
+                    <entry key="col_Timestamp_5" value="java.sql.Timestamp"/>
+                </map>
+            </property>
+            <property name="indexes">
+                <list>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="id"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_Boolean_1"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_Date_1"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_Double_1"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_Integer_1"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_Long_1"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_Short_1"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_String_1"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_Time_1"/>
+                    </bean>
+                    <bean class="org.apache.ignite.cache.QueryIndex">
+                        <constructor-arg value="col_Timestamp_1"/>
+                    </bean>
+                </list>
+            </property>
+        </bean>
+    </util:list>
+</beans>
