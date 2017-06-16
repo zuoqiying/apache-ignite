@@ -1947,8 +1947,6 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
          */
         private void doCheckpoint() {
             try {
-                System.out.println("CHECKPOINT!!!!!!!!!");
-
                 CheckpointMetricsTracker tracker = new CheckpointMetricsTracker();
 
                 Checkpoint chp = markCheckpointBegin(tracker);
