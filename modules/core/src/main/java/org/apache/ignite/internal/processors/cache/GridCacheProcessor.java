@@ -2794,7 +2794,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         return fut;
     }
 
-
     public CacheType cacheType(String cacheName ) {
         if (CU.isUtilityCache(cacheName))
             return CacheType.UTILITY;
