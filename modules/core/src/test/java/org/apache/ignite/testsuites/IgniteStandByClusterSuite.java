@@ -62,8 +62,7 @@ public class IgniteStandByClusterSuite extends TestSuite {
 
         suite.addTestSuite(IgniteChangeGlobalStateTest.class);
         suite.addTestSuite(IgniteChangeGlobalStateCacheTest.class);
-        //TODO @ilya lantukh
-        //suite.addTestSuite(IgniteChangeGlobalStateDataStructureTest.class);
+        suite.addTestSuite(IgniteChangeGlobalStateDataStructureTest.class);
         suite.addTestSuite(IgniteChangeGlobalStateDataStreamerTest.class);
         suite.addTestSuite(IgniteChangeGlobalStateFailOverTest.class);
         suite.addTestSuite(IgniteChangeGlobalStateServiceTest.class);
