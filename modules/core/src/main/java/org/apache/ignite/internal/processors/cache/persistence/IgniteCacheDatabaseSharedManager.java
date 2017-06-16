@@ -118,7 +118,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
         initPageMemoryPolicies(memCfg);
 
-        //registerMetricsMBeans();
+        registerMetricsMBeans();
 
         startMemoryPolicies();
 
@@ -662,7 +662,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
 
                 IgniteConfiguration cfg = cctx.gridConfig();
 
-             /*   try {
+                try {
                     cfg.getMBeanServer().unregisterMBean(
                         U.makeMBeanName(
                             cfg.getIgniteInstanceName(),
@@ -672,7 +672,7 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
                 catch (JMException e) {
                     U.error(log, "Failed to unregister MBean for memory metrics: " +
                         memPlc.memoryMetrics().getName(), e);
-                }*/
+                }
             }
         }
     }
