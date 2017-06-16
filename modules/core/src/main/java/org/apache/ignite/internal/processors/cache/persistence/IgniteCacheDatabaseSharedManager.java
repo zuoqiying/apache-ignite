@@ -755,13 +755,6 @@ public class IgniteCacheDatabaseSharedManager extends GridCacheSharedManagerAdap
     }
 
     /**
-     * @param cctx Stopped cache context.
-     */
-    public void onCacheStop(GridCacheContext cctx) {
-        // No-op
-    }
-
-    /**
      * @return Future that will be completed when indexes for given cache are restored.
      */
     @Nullable public IgniteInternalFuture indexRebuildFuture(int cacheId) {

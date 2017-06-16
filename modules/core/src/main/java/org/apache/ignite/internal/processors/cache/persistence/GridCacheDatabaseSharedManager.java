@@ -599,11 +599,6 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
     }
 
     /** {@inheritDoc} */
-    @Override public void onCacheStop(GridCacheContext cctx) {
-        snapshotMgr.onCacheStop(cctx);
-    }
-
-    /** {@inheritDoc} */
     @Override protected void onKernalStop0(boolean cancel) {
         checkpointLock.writeLock().lock();
 
@@ -820,14 +815,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
     /** {@inheritDoc} */
     @Override public void onCacheGroupsStopped(
-        Collection<IgniteBiTuple<CacheGroupContext, Boolean>> stoppedGrps) {
-        try {
-            waitForCheckpoint("caches stop");
-        }
-        catch (IgniteCheckedException e) {
-            U.error(log, "Failed to wait for checkpoint finish during cache stop.", e);
-        }
-
+        Collection<IgniteBiTuple<CacheGroupContext, Boolean>> stoppedGrps
+    ) {
         Map<PageMemoryEx, Collection<Integer>> destroyed = new HashMap<>();
 
         for (IgniteBiTuple<CacheGroupContext, Boolean> tup : stoppedGrps) {
@@ -1958,6 +1947,8 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
          */
         private void doCheckpoint() {
             try {
+                System.out.println("CHECKPOINT!!!!!!!!!");
+
                 CheckpointMetricsTracker tracker = new CheckpointMetricsTracker();
 
                 Checkpoint chp = markCheckpointBegin(tracker);

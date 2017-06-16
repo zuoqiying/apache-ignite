@@ -193,6 +193,8 @@ public class IgniteStandByClusterTest extends GridCommonAbstractTest {
 
         cache0.put(1, "1");
 
+        assertEquals("1", cache0.get(1));
+
         ig.active(false);
 
         assertTrue(!ig.active());

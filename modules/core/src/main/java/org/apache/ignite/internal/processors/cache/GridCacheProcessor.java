@@ -1257,8 +1257,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         ctx.kernalContext().continuous().onCacheStop(ctx);
 
-        ctx.kernalContext().cache().context().database().onCacheStop(ctx);
-
         ctx.kernalContext().cache().context().snapshot().onCacheStop(ctx);
 
         ctx.group().stopCache(ctx, destroy);
@@ -2102,9 +2100,22 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         if (exchActions != null && err == null) {
             Collection<IgniteBiTuple<CacheGroupContext, Boolean>> stoppedGrps = null;
 
+            boolean forceCheckpoint = false;
+
             for (ExchangeActions.ActionData action : exchActions.cacheStopRequests()) {
                 GridCacheContext<?, ?> stopCtx;
                 boolean destroy;
+
+                if (!forceCheckpoint){
+                    try {
+                        sharedCtx.database().waitForCheckpoint("caches stop");
+                    }
+                    catch (IgniteCheckedException e) {
+                        U.error(log, "Failed to wait for checkpoint finish during cache stop.", e);
+                    }
+
+                    forceCheckpoint = true;
+                }
 
                 stopGateway(action.request());
 
