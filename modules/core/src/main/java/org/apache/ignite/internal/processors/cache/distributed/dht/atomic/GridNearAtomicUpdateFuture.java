@@ -453,12 +453,6 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
             if (fut == null)
                 fut = new GridFinishedFuture<>(remapTopVer);
 
-            if (CU.MARSH_CACHE_NAME.equals(cache.name())) {
-                log.info("Will wait for the next topology version to remap update future " +
-                    "[fut=" + this + ", remapToVer=" + remapTopVer + ", remapKeys=" + remapKeys +
-                    ", err=" + err + ']');
-            }
-
             fut.listen(new CI1<IgniteInternalFuture<AffinityTopologyVersion>>() {
                 @Override public void apply(final IgniteInternalFuture<AffinityTopologyVersion> fut) {
                     cctx.kernalContext().closure().runLocalSafe(new Runnable() {

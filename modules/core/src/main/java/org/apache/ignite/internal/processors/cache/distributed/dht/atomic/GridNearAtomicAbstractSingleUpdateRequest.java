@@ -563,6 +563,8 @@ public abstract class GridNearAtomicAbstractSingleUpdateRequest extends GridNear
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return S.toString(GridNearAtomicAbstractSingleUpdateRequest.class, this, super.toString());
+        return S.toString(GridNearAtomicAbstractSingleUpdateRequest.class, this,
+            "nodeId", nodeId, "futVer", futVer, "topVer", topVer,
+            "parent", super.toString());
     }
 }

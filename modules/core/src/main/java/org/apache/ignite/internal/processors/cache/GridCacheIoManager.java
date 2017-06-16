@@ -134,11 +134,6 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
                 log.debug("Received unordered cache communication message [nodeId=" + nodeId +
                     ", locId=" + cctx.localNodeId() + ", msg=" + msg + ']');
             }
-            else if (CU.cacheId(CU.MARSH_CACHE_NAME) == cacheMsg.cacheId()) {
-                if (log.isInfoEnabled())
-                    log.info("Received cache communication message [nodeId=" + nodeId +
-                        ", locId=" + cctx.localNodeId() + ", msg=" + msg + ']');
-            }
 
             IgniteInternalFuture<?> fut = null;
 
@@ -211,11 +206,6 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
 
                         log.debug(msg0.toString());
                     }
-                    else if (CU.cacheId(CU.MARSH_CACHE_NAME) == cacheMsg.cacheId()) {
-                        if (log.isInfoEnabled())
-                            log.info("Received message has higher affinity topology version [" +
-                                ", locId=" + cctx.localNodeId() + ", locAffVer=" + locAffVer + ", msg=" + msg + ']');
-                    }
 
                     fut = cctx.exchange().affinityReadyFuture(rmtAffVer);
                 }
@@ -236,12 +226,6 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
 
                                     log.debug(msg0.toString());
                                 }
-                                else if (CU.cacheId(CU.MARSH_CACHE_NAME) == cacheMsg.cacheId()) {
-                                    if (log.isInfoEnabled())
-                                        log.info("Processing cache message after waiting for affinity topology " +
-                                            "version [rmtNodeId=" + nodeId + ", msg=" + cacheMsg + ']');
-                                }
-
 
                                 handleMessage(nodeId, cacheMsg);
                             }
@@ -917,10 +901,6 @@ public class GridCacheIoManager extends GridCacheSharedManagerAdapter {
 
         if (log.isDebugEnabled())
             log.debug("Sending cache message [msg=" + msg + ", node=" + U.toShortString(node) + ']');
-        else if (CU.cacheId(CU.MARSH_CACHE_NAME) == msg.cacheId()) {
-            if (log.isInfoEnabled())
-                log.info("Sending cache message [msg=" + msg + ", node=" + U.toShortString(node) + ']');
-        }
 
         int cnt = 0;
 

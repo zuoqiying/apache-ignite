@@ -960,7 +960,7 @@ public class GridServiceProcessor extends GridProcessorAdapter {
 
                         if (log.isInfoEnabled())
                             log.info("Assigned service to primary node [svc=" + dep.configuration().getName() +
-                                ", node=" + n.id() + ']');
+                                ", topVer=" + topVer + ", node=" + n.id() + ']');
                     }
                 }
                 else {
@@ -969,7 +969,9 @@ public class GridServiceProcessor extends GridProcessorAdapter {
 
                         if (log.isInfoEnabled())
                             log.info("Calculating assignments for service " +
-                                "[svc=" + dep.configuration().getName() + ", nodes=" + U.nodeIds(nodes) +
+                                "[svc=" + dep.configuration().getName() +
+                                ", topVer=" + topVer +
+                                ", nodes=" + U.nodeIds(nodes) +
                                 ", oldAssignment=" + (oldAssigns == null ? "NA" : oldAssigns.assigns()) +
                                 ", totalCnt=" + totalCnt + ", maxPerNodeCnt=" + maxPerNodeCnt + ']');
 
@@ -1046,11 +1048,11 @@ public class GridServiceProcessor extends GridProcessorAdapter {
                     }
                 }
 
+                assigns.assigns(cnts);
+
                 if (log.isInfoEnabled())
                     log.info("Calculated new assignments for service [svc=" + dep.configuration().getName() +
                         ", assignment=" + assigns + ']');
-
-                assigns.assigns(cnts);
 
                 cache.put(key, assigns);
 
