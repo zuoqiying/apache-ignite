@@ -219,7 +219,7 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
     };
 
     /** */
-    private static final String MBEAN_NAME ="PersistenceMetrics";
+    private static final String MBEAN_NAME = "PersistenceMetrics";
 
     /** */
     private static final String MBEAN_GROUP = "Persistent Store";
