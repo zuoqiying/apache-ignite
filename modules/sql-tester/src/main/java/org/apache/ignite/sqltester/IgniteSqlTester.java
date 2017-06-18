@@ -89,7 +89,7 @@ public class IgniteSqlTester {
                 }
                 else
                     conn = DriverManager.getConnection(connStr);
-
+                /**
                 if (!F.isEmpty(typeConf.getDbInitScriptPath())) {
                     Statement stmt = conn.createStatement();
 
@@ -104,6 +104,7 @@ public class IgniteSqlTester {
                         throw e;
                     }
                 }
+                 */
 
                 RunContext runCtx = new RunContext();
 
@@ -132,8 +133,8 @@ public class IgniteSqlTester {
 
                 System.out.println(st);
 
-                if(!st.startsWith("pass")) {
-                    stmt.executeUpdate(st);
+                if(!type.equals("ignite")) {
+                    stmt.execute(st);
 
                     if(!(stmt.getResultSet() == null))
                         runCtx.res = stmt.getResultSet();

@@ -1,4 +1,6 @@
 main:
+  - drop
+
   - create
 
   - load
@@ -10,6 +12,7 @@ drop:
     iterator: >
       $1 = range 1, 3;
     h2: DROP TABLE IF EXISTS t$1
+    mysql: DROP TABLE IF EXISTS t$1
     ignite: DROP TABLE IF EXISTS t$1
 
 create:
@@ -18,6 +21,7 @@ create:
       $1 = range 1, 5;
       $2 = Class.toSqlString $1, 'createFields'
     h2: CREATE TABLE t$1 (id INT NOT NULL PRIMARY KEY, $2)
+    mysql: CREATE TABLE t$1 (id INT NOT NULL PRIMARY KEY, $2)
     ignite: CREATE TABLE "Person" ("id" int, "city" varchar,"name" varchar, "surname" varchar, "age" int, PRIMARY KEY ("id", "city"))
     .cache_name: t$1
 

@@ -73,12 +73,13 @@ public class DefaultTable implements Serializable {
     private Time col_Time_4;
     private Time col_Time_5;
 
-    /** Timestamp */
+    /** Timestamp
     private Timestamp col_Timestamp_1;
     private Timestamp col_Timestamp_2;
     private Timestamp col_Timestamp_3;
     private Timestamp col_Timestamp_4;
     private Timestamp col_Timestamp_5;
+     */
 
     private static final HashMap<String, String> javaTypeToSql;
     static
@@ -156,11 +157,13 @@ public class DefaultTable implements Serializable {
         this.col_Time_4 = new Time(dateOffset + key - 3600000L); // - 1 hour
         this.col_Time_5 = new Time(dateOffset + key + 86400000L); // + 1 day
 
+        /**
         this.col_Timestamp_1 = new Timestamp(dateOffset + key);
         this.col_Timestamp_2 = new Timestamp(dateOffset + key - 1000L); // - 1 sec
         this.col_Timestamp_3 = new Timestamp(dateOffset + key + 60000L); // + 1 min
         this.col_Timestamp_4 = new Timestamp(dateOffset + key - 3600000L); // - 1 hour
         this.col_Timestamp_5 = new Timestamp(dateOffset + key + 86400000L); // + 1 day
+        */
 
         String lastChar = Long.toString(key);
         lastChar = lastChar.substring(lastChar.length()-1, lastChar.length());
@@ -173,7 +176,7 @@ public class DefaultTable implements Serializable {
             this.col_Short_5 = null;
             this.col_String_5 = null;
             this.col_Time_5 = null;
-            this.col_Timestamp_5 = null;
+            //this.col_Timestamp_5 = null;
         }
     }
 
@@ -214,21 +217,21 @@ public class DefaultTable implements Serializable {
         ArrayList<String> clsFields = new ArrayList<>();
         for (Field f: this.getClass().getDeclaredFields()) {
             if (f.getName().startsWith("col_")) {
-                if (sqlType.equalsIgnoreCase("createFields")) {
+                if (sqlType.equalsIgnoreCase("createFields"))
                     output += f.getName() + " " + javaTypeToSql.get(f.getName().substring(4, f.getName().length()-2)) + ", ";
-                } else if (sqlType.equalsIgnoreCase("insertFields")) {
+                 else if (sqlType.equalsIgnoreCase("insertFields"))
                     output += f.getName() + ", ";
-                } else if (sqlType.equalsIgnoreCase("insertValues")) {
+                 else if (sqlType.equalsIgnoreCase("insertValues")) {
                     if (f.getName().startsWith("col_Time_"))
                         output += getNullOrStringForTime(f.get(this)) + ", ";
                     else
                         output += getNullOrString(f.get(this)) + ", ";
-                } else if (sqlType.equalsIgnoreCase("name")) {
+                } else if (sqlType.equalsIgnoreCase("name"))
                     output = this.getClass().getName().substring(34);
-                }
-            } else if (sqlType.equalsIgnoreCase("name")) {
+
+            } else if (sqlType.equalsIgnoreCase("name"))
                 output = this.getClass().getName().substring(34);
-            }
+
         }
         if (output.length() > 0 && output.endsWith(", "))
             output = output.substring(0, output.length() - 2);
@@ -273,12 +276,13 @@ public class DefaultTable implements Serializable {
                 + getNullOrString(col_String_2) + "', '"
                 + getNullOrString(col_String_3) + "', '"
                 + getNullOrString(col_String_4) + "', '"
-                + getNullOrString(col_String_5) + "', "
-                + getNullOrString(col_Timestamp_1) + ", "
+                + getNullOrString(col_String_5);/** + "', "
+
+            + getNullOrString(col_Timestamp_1) + ", "
                 + getNullOrString(col_Timestamp_2) + ", "
                 + getNullOrString(col_Timestamp_3) + ", "
                 + getNullOrString(col_Timestamp_4) + ", "
-                + getNullOrString(col_Timestamp_5);
+                + getNullOrString(col_Timestamp_5); */
     }
 
 }

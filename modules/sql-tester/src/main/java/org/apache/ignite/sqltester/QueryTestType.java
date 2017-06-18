@@ -18,7 +18,7 @@ public enum QueryTestType {
 
     MYSQL {
         @Override public QueryTestRunner createRunner() {
-            throw new UnsupportedOperationException();
+            return new MYSQLQueryTestRunner();
         }
     },
     ;

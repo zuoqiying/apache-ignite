@@ -25,6 +25,21 @@
         <property name="typeConfigurations">
             <list>
                 <bean class="org.apache.ignite.sqltester.QueryTypeConfiguration">
+                    <property name="type" value="MYSQL" />
+                    <property name="connectionString">
+                        <value>jdbc:mysql://localhost:3306/sqltester</value>
+                    </property>
+                    <property name="dbInitScriptPath">
+                        <value>/home/oostanin/gg/incubator-ignite/modules/sql-tester/src/main/resources/mysql-insert.sql</value>
+                    </property>
+                    <property name="properties">
+                        <map>
+                            <entry key="user" value="ignite" />
+                            <entry key="password" value="pass" />
+                        </map>
+                    </property>
+                </bean>
+                <bean class="org.apache.ignite.sqltester.QueryTypeConfiguration">
                     <property name="type" value="IGNITE" />
                     <property name="connectionString">
                         <value>jdbc:ignite:cfg://cache=query@/home/oostanin/gg/incubator-ignite/modules/sql-tester/src/main/resources/ignite-jdbc-config.xml</value>
