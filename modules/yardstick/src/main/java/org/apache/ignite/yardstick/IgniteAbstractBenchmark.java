@@ -64,13 +64,13 @@ public abstract class IgniteAbstractBenchmark extends BenchmarkDriverAdapter {
 
         waitForNodes();
 
-        if (!node.ignite().active()){
+        if (!ignite().active()){
             try {
-                node.ignite().active(true);
+                ignite().active(true);
             }
             catch (IgniteException e){
                 if (e.getMessage().contains("Concurrent change state"))
-                    BenchmarkUtils.println("Grid is been activated from another client node");
+                    BenchmarkUtils.println("Grid has been activated from another client node");
                 else
                     throw new IgniteException(e);
             }
