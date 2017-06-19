@@ -20,6 +20,7 @@ package org.apache.ignite.yardstick;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.IgniteState;
 import org.apache.ignite.Ignition;
@@ -63,8 +64,17 @@ public abstract class IgniteAbstractBenchmark extends BenchmarkDriverAdapter {
 
         waitForNodes();
 
-        if (!node.ignite().active())
-            node.ignite().active(true);
+        if (!node.ignite().active()){
+            try {
+                node.ignite().active(true);
+            }
+            catch (IgniteException e){
+                if (e.getMessage().contains("Concurrent change state"))
+                    BenchmarkUtils.println("Grid is been activated from another client node");
+                else
+                    throw new IgniteException(e);
+            }
+        }
 
         IgniteLogger log = ignite().log();
 
