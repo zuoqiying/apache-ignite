@@ -154,6 +154,8 @@ public class IgniteSqlTester {
 
     private static boolean compareSets(List<RunContext> runners) throws Exception {
 
+        ArrayList<ArrayList<ArrayList<String>>> sets = new ArrayList<>(runners.size());
+
         for (RunContext runCtx : runners) {
 
             if (runCtx.runner.getType().equals("ignite"))
@@ -183,9 +185,33 @@ public class IgniteSqlTester {
 
                 }
 
+                resultTbl.sort(new Comparator<ArrayList<String>>() {
+                    @Override public int compare(ArrayList<String> o1, ArrayList<String> o2) {
+                        for(int i = 0; i < o1.size(); i++){
+                            if(o1.get(i).compareTo(o2.get(i)) > 0)
+                                return 1;
+                            if(o1.get(i).compareTo(o2.get(i)) < 0)
+                                return -1;
+                        }
+                        return 0;
+                    }
+                });
+
+                sets.add(resultTbl);
+
+                for(ArrayList<String> innerList : resultTbl){
+                    for (String str : innerList)
+                        System.out.print(str + "    ");
+                    System.out.println();
+                }
+
             }
         }
         return true;
+
+    }
+
+    private void sortRows(ArrayList<ArrayList<String>> list){
 
     }
 
