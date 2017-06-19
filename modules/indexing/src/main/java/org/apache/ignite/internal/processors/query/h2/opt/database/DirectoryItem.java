@@ -44,6 +44,6 @@ class DirectoryItem {
 
     /** {@inheritDoc} */
     @Override public String toString() {
-        return "I [FileName=" + new String(fileName) + ", pageId=" + U.hexLong(pageId) + ']';
+        return "DirectoryItem [FileName=" + new String(fileName) + ", pageId=" + U.hexLong(pageId) + ']';
     }
 }

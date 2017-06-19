@@ -114,7 +114,9 @@ public class LuceneDirectory extends BaseDirectory {
             if (srcFile == null)
                 throw new FileNotFoundException(source);
 
-            fileTree.put(new DirectoryItem(dest.getBytes(), srcFile.getPageId()));
+            DirectoryItem old = fileTree.put(new DirectoryItem(dest.getBytes(), srcFile.getPageId()));
+
+            assert old == null : old;
 
             fileTree.remove(srcFile);
         }
@@ -139,7 +141,7 @@ public class LuceneDirectory extends BaseDirectory {
         if (file == null)
             throw new FileNotFoundException(name);
 
-        return file.getLength(); //TODO: add method to DirectoryItem to read size from file meta page directly
+        return file.getLength(); //TODO: move to IO. Read size from file meta page directly.
     }
 
     /** {@inheritDoc} */
@@ -161,10 +163,18 @@ public class LuceneDirectory extends BaseDirectory {
         if (file != null) {
             file.delete(); //TODO: add 'delete' method to DirectoryItem
 
-            sizeInBytes.addAndGet(-file.getSizeInBytes());
+            adjustDirectorySize(-file.getSizeInBytes());
         }
         else
             throw new FileNotFoundException(new String(item.fileName));
+    }
+
+    /**
+     * Adjust index size.
+     * @param delta index size delta in bytes.
+     */
+    private void adjustDirectorySize(long delta) {
+        sizeInBytes.addAndGet(delta); //TODO: Track size locally or save DirectorySize to Metapage.
     }
 
     /** {@inheritDoc} */
@@ -174,14 +184,14 @@ public class LuceneDirectory extends BaseDirectory {
         DirectoryItem existing = fileTree.remove(new DirectoryItem(name.getBytes()));
 
         if (existing != null) {
-            sizeInBytes.addAndGet(-existing.getSizeInBytes());
-
             existing.delete();
+
+            adjustDirectorySize(-existing.getSizeInBytes());
         }
 
-        GridLuceneFile file = newRAMFile();
+        LuceneFile file = newRAMFile(name);
 
-        fileTree.put(new DirectoryItem(name.getBytes(), file.pageId);
+        fileTree.put(new DirectoryItem(name.getBytes(), file.getPageId());
 
         return new GridLuceneOutputStream(file);
     }
@@ -192,20 +202,20 @@ public class LuceneDirectory extends BaseDirectory {
     }
 
     /**
-     * Returns a new {@link GridLuceneFile} for storing data. This method can be
-     * overridden to return different {@link GridLuceneFile} impls, that e.g. override.
+     * Returns a new {@link LuceneFile} for storing data. This method can be
+     * overridden to return different {@link LuceneFile} impls, that e.g. override.
      *
      * @return New ram file.
      */
-    protected GridLuceneFile newRAMFile() {
-        return new GridLuceneFile(this);
+    protected LuceneFile newRAMFile(final String name) {
+        return new LuceneFile(this, name.getBytes());
     }
 
     /** {@inheritDoc} */
     @Override public IndexInput openInput(final String name, final IOContext context) throws IOException {
         ensureOpen();
 
-        GridLuceneFile file = fileTree.findOne(new DirectoryItem(name.getBytes()));
+        LuceneFile file = fileTree.findOne(new DirectoryItem(name.getBytes()));
 
         if (file == null)
             throw new FileNotFoundException(name);
@@ -370,6 +380,7 @@ public class LuceneDirectory extends BaseDirectory {
             final int idx, Object ignore) throws IgniteCheckedException {
             return io.getLookupRow(this, pageAddr, idx);
         }
+
     }
 
     /**
