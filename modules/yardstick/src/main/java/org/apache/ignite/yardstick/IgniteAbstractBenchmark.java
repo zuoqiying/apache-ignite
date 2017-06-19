@@ -61,6 +61,8 @@ public abstract class IgniteAbstractBenchmark extends BenchmarkDriverAdapter {
             // Support for mixed benchmarks mode.
             node = new IgniteNode(args.isClientOnly() && !args.isNearCache(), Ignition.ignite());
 
+        node.ignite().active(true);
+
         waitForNodes();
 
         IgniteLogger log = ignite().log();
