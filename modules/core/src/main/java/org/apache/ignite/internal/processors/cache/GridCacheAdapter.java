@@ -820,7 +820,9 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                 if (nearKey && !ctx.isNear())
                     return null;
 
-                if (modes.heap) {
+                boolean offheapRead = ctx.offheapRead(expiryPolicy(expiry()), false);
+
+                if (modes.heap && !offheapRead) {
                     GridCacheEntryEx e = nearKey ? peekEx(cacheKey) :
                         (ctx.isNear() ? ctx.near().dht().peekEx(cacheKey) : peekEx(cacheKey));
 
