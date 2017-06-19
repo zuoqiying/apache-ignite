@@ -90,20 +90,20 @@ public class IgniteSqlTester {
                 else
                     conn = DriverManager.getConnection(connStr);
                 /**
-                if (!F.isEmpty(typeConf.getDbInitScriptPath())) {
-                    Statement stmt = conn.createStatement();
+                 if (!F.isEmpty(typeConf.getDbInitScriptPath())) {
+                 Statement stmt = conn.createStatement();
 
-                    try (BufferedReader br = new BufferedReader(new FileReader(typeConf.getDbInitScriptPath()))) {
-                        for (String testStr; (testStr = br.readLine()) != null; )
-                            stmt.execute(testStr);
-                    }
-                    catch (Exception e) {
-                        U.closeQuiet(stmt);
-                        U.closeQuiet(conn);
+                 try (BufferedReader br = new BufferedReader(new FileReader(typeConf.getDbInitScriptPath()))) {
+                 for (String testStr; (testStr = br.readLine()) != null; )
+                 stmt.execute(testStr);
+                 }
+                 catch (Exception e) {
+                 U.closeQuiet(stmt);
+                 U.closeQuiet(conn);
 
-                        throw e;
-                    }
-                }
+                 throw e;
+                 }
+                 }
                  */
 
                 RunContext runCtx = new RunContext();
@@ -131,44 +131,18 @@ public class IgniteSqlTester {
 
                 String st = (String)entry.get(type);
 
-                System.out.println(st);
+                if (!type.equals("ignite")) {
+                    System.out.println(st);
 
-                if(!type.equals("ignite")) {
                     stmt.execute(st);
 
-                    if(!(stmt.getResultSet() == null))
+                    if (!(stmt.getResultSet() == null))
                         runCtx.res = stmt.getResultSet();
                 }
-
-
-                System.out.println(st);
             }
 
-            // ...verify...
-            /**
-             for(RunContext runner : runners){
-
-             RunContext first = runner;
-
-             int colsCnt = first.res.getMetaData().getColumnCount();
-
-             System.out.println(first.conn.toString());
-             System.out.println(first.res.getMetaData().getColumnCount());
-             System.out.println(first.res.getMetaData().getColumnCount());
-
-             while (first.res.next()) {
-             for (int i = 1; i <= colsCnt; i++) {
-             Object colVal = first.res.getObject(i);
-
-             System.out.println(first.res.getMetaData().getColumnName(i) + " -> " + colVal.toString());
-             }
-             System.out.println("----------------------------------");
-             }
-             System.out.println("=================================");
-             }
-             */
             try {
-                System.out.println(compareSets(runners.get(0), runners.get(1)));
+                System.out.println(compareSets(runners));
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -178,35 +152,41 @@ public class IgniteSqlTester {
 
     }
 
-    private static boolean compareSets(RunContext rcIgnite, RunContext rcOther) throws Exception {
-        int colsCnt = rcIgnite.res.getMetaData().getColumnCount();
-        while (rcIgnite.res.next() && rcOther.res.next()) {
-            int cntOther = 0;
+    private static boolean compareSets(List<RunContext> runners) throws Exception {
 
-            for (int i = 1; i <= colsCnt; i++) {
+        for (RunContext runCtx : runners) {
 
-                String igniteColumnName = rcIgnite.res.getMetaData().getColumnName(i);
+            if (runCtx.runner.getType().equals("ignite"))
+                continue;
 
-                if (igniteColumnName.equals("_KEY") || igniteColumnName.equals("_VAL"))
-                    continue;
+            if (!(runCtx.res == null)) {
 
-                cntOther++;
+                ArrayList<ArrayList<String>> resultTbl = new ArrayList<>();
 
-                String otherColumnName = rcOther.res.getMetaData().getColumnName(cntOther);
+                int colsCnt = runCtx.res.getMetaData().getColumnCount();
+                System.out.println(colsCnt);
 
-                if (!igniteColumnName.equals(otherColumnName))
-                    return false;
-                else {
-                    String igniteVal = rcIgnite.res.getObject(i).toString();
-                    String otherVal = rcOther.res.getObject(cntOther).toString();
-                    if (!igniteVal.equals(otherVal))
-                        return false;
+
+                while (runCtx.res.next()) {
+
+                    ArrayList<String> row = new ArrayList<>(colsCnt);
+
+                    for (int i = 1; i <= colsCnt; i++) {
+                        Object colVal = runCtx.res.getObject(i);
+
+                        row.add(colVal.toString());
+
+                        System.out.println(runCtx.res.getMetaData().getColumnName(i) + " -> " + colVal.toString());
+                    }
+
+                    resultTbl.add(row);
+
                 }
 
             }
         }
-
         return true;
+
     }
 
     private static class RunContext {

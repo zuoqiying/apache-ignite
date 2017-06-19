@@ -75,7 +75,7 @@ public class StatementGenerator {
     private String jdbcRefPwd = "";
     private volatile ArrayList<Thread> threads;
     private boolean igniteSqlNativeMode = true;
-    private ArrayList<String> dialects = new ArrayList<>(Arrays.asList("h2", "ignite"));
+    private ArrayList<String> dialects = new ArrayList<>(Arrays.asList("h2", "ignite", "mysql"));
     private AtomicLong passedStmtCounter = new AtomicLong(0L);
     private AtomicLong failedStmtCounter = new AtomicLong(0L);
 

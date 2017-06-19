@@ -18,7 +18,7 @@ drop:
 create:
   -
     iterator: >
-      $1 = range 1, 5;
+      $1 = range 1, 3;
       $2 = Class.toSqlString $1, 'createFields'
     h2: CREATE TABLE t$1 (id INT NOT NULL PRIMARY KEY, $2)
     mysql: CREATE TABLE t$1 (id INT NOT NULL PRIMARY KEY, $2)
@@ -28,19 +28,21 @@ create:
 load:
   -
     iterator: >
-      $1 = range 1, 5;
+      $1 = range 1, 3;
       $2 = mrange 1, 11;
       $3 = Class.toSqlString $2, 'InsertFields';
       $4 = Class.toSqlString $2, 'InsertValues';
     h2: INSERT INTO t$1 (id, $3) VALUES ($2, $4)
+    mysql: INSERT INTO t$1 (id, $3) VALUES ($2, $4)
     ignite: IGNITE PUT ENTRY $2
     .cache_name: t$1
 
 check:
   -
     iterator: >
-      $1 = range 1, 5;
+      $1 = range 1, 3;
     h2: SELECT COUNT(*) FROM t$1
+    mysql: SELECT COUNT(*) FROM t$1
     ignite: IGNITE SHOW CACHE SIZE
     .cache_name: t$1
 
@@ -78,24 +80,27 @@ aggr_fields_group:
 from_any:
   -
     iterator: >
-      $1 = range 1, 5;
+      $1 = range 1, 3;
       $2 = Class.toSqlString $1, 'name';
     h2: FROM t$1
+    mysql: FROM t$1
     ignite: FROM $2
     .cache_name: t$1
 
 from_join:
   -
     iterator: >
-      $1 = range 1, 4;
+      $1 = range 1, 3;
       $2 = Class.toSqlString $1, 'name';
     h2: FROM t$1 AS a JOIN t4 AS b ON a.col_Long_1 = b.col_Long_3
+    mysql: FROM t$1 AS a JOIN t4 AS b ON a.col_Long_1 = b.col_Long_3
     ignite: FROM $2 AS a JOIN \"t4\".$2 AS b ON a.col_Long_1 = b.col_Long_3
     .cache_name: t$1
 
 from_partition_caches:
   -
     h2: FROM t1 AS a, t2 AS b
+    mysql: FROM t1 AS a, t2 AS b
     ignite: FROM DefaultTable AS a,\"t2\".DefaultTable AS b
     .cache_name: t1
     .distributed_joins: true
@@ -106,6 +111,7 @@ from_local:
       $1 = range 3, 5;
       $2 = Class.toSqlString $1, 'name';
     h2: FROM t$1
+    mysql: FROM t$1
     ignite: FROM $2
     .cache_name: t$1
     .setlocal: true
@@ -113,6 +119,7 @@ from_local:
 where:
   -
     h2: WHERE col_Long_2 < -2
+    mysql: WHERE col_Long_2 < -2
     ignite: WHERE col_Long_2 < -2
     #.args: -20
   - WHERE col_String_1 LIKE '%_3%'
@@ -138,5 +145,6 @@ orderby:
 sort:
   -
     h2: pass
+    mysql: pass
     ignite: pass
     sort: true
