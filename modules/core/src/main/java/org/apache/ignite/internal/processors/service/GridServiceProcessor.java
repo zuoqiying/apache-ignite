@@ -1636,6 +1636,19 @@ public class GridServiceProcessor extends GridProcessorAdapter {
                                 boolean firstTime = true;
 
                                 while (it.hasNext()) {
+                                    AffinityTopologyVersion curDiscoVer = ctx.discovery().topologyVersionEx();
+
+                                    // If topology changed again, let next event handle it.
+                                    if (!curDiscoVer.equals(topVer)) {
+                                        if (log.isInfoEnabled())
+                                            log.info("Service processor detected a topology change during " +
+                                                "assignments calculation (will abort current iteration and " +
+                                                "re-calculate on the newer version): " +
+                                                "[topVer=" + topVer + ", newTopVer=" + curDiscoVer + ']');
+
+                                        return;
+                                    }
+
                                     Cache.Entry<Object, Object> e = it.next();
 
                                     if (!(e.getKey() instanceof GridServiceDeploymentKey))
