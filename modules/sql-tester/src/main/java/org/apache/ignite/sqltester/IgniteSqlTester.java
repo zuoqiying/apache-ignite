@@ -71,6 +71,9 @@ public class IgniteSqlTester {
 
             QueryTestRunner runner = t.createRunner();
 
+            if (runner.getType().equals("ignite"))
+                continue;
+
             try {
                 runner.beforeTest(typeConf);
 
@@ -110,6 +113,7 @@ public class IgniteSqlTester {
 
                 runCtx.runner = runner;
                 runCtx.conn = conn;
+
 
                 runners.add(runCtx);
                 runnerTypes.add(t);
@@ -197,7 +201,7 @@ public class IgniteSqlTester {
                     }
                 });
 
-                sets.add(resultTbl);
+                runCtx.resultTbl = resultTbl;
 
                 for(ArrayList<String> innerList : resultTbl){
                     for (String str : innerList)
@@ -207,12 +211,38 @@ public class IgniteSqlTester {
 
             }
         }
-        return true;
+        return compareResTbls(runners);
 
     }
 
-    private void sortRows(ArrayList<ArrayList<String>> list){
+    private static boolean compareResTbls(List<RunContext> runners){
+        boolean res = true;
 
+
+
+        ArrayList<ArrayList<String>> main = runners.get(0).resultTbl;
+        for (int i = 0; i < runners.size(); i++){
+            ArrayList<ArrayList<String>> checked = runners.get(i).resultTbl;
+            for(int row = 0; row < main.size(); row++){
+                for(int col = 0; col < main.get(row).size(); col++){
+                    if (!main.get(row).get(col).equals(checked.get(row).get(col))){
+                        printError();
+                        res = false;
+                    }
+                    else {
+                        System.out.print(" Row = " + row);
+                        System.out.print(" Col = " + col);
+                        System.out.println(" All is fine");
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
+    private static void printError(){
+        System.out.println("ERROR");
     }
 
     private static class RunContext {
@@ -221,6 +251,8 @@ public class IgniteSqlTester {
         Connection conn;
 
         ResultSet res;
+
+        ArrayList<ArrayList<String>> resultTbl;
     }
 
 }
