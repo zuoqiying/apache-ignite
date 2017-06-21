@@ -71,6 +71,7 @@ import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.G;
 import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteCallable;
 import org.apache.ignite.lang.IgniteClosure;
 import org.apache.ignite.marshaller.Marshaller;
@@ -800,6 +801,68 @@ public abstract class GridAbstractTest extends TestCase {
         }
         else
             return startRemoteGrid(gridName, null, ctx);
+    }
+
+    /**
+     * Starts new grid with given name.
+     *
+     * @param gridName Grid name.
+     * @param client Client mode.
+     * @param cfgUrl Config URL.
+     * @return Started grid.
+     * @throws Exception If failed.
+     */
+    protected Ignite startGridWithSpringCtx(String gridName, boolean client, String cfgUrl) throws Exception {
+        IgniteBiTuple<Collection<IgniteConfiguration>, ? extends GridSpringResourceContext> cfgMap =
+                IgnitionEx.loadConfigurations(cfgUrl);
+
+        IgniteConfiguration cfg = F.first(cfgMap.get1());
+
+        cfg.setGridName(gridName);
+        cfg.setClientMode(client);
+
+        return IgnitionEx.start(cfg, cfgMap.getValue());
+    }
+
+    /**
+     * Starts new node with given index.
+     *
+     * @param idx Index of the node to start.
+     * @param client Client mode.
+     * @param cfgUrl Config URL.
+     * @return Started node.
+     * @throws Exception If failed.
+     */
+    protected Ignite startGridWithSpringCtx(int idx, boolean client, String cfgUrl) throws Exception {
+        return startGridWithSpringCtx(getTestGridName(idx), client, cfgUrl);
+    }
+
+    /**
+     * Start specified amount of nodes.
+     *
+     * @param cnt Nodes count.
+     * @param client Client mode.
+     * @param cfgUrl Config URL.
+     * @return First started node.
+     * @throws Exception If failed.
+     */
+    protected Ignite startGridsWithSpringCtx(int cnt, boolean client, String cfgUrl) throws Exception {
+        assert cnt > 0;
+
+        Ignite ignite = null;
+
+        for (int i = 0; i < cnt; i++) {
+            if (ignite == null)
+                ignite = startGridWithSpringCtx(i, client, cfgUrl);
+            else
+                startGridWithSpringCtx(i, client, cfgUrl);
+        }
+
+        checkTopology(cnt);
+
+        assert ignite != null;
+
+        return ignite;
     }
 
     /**
@@ -1828,7 +1891,7 @@ public abstract class GridAbstractTest extends TestCase {
      * @param store Store.
      */
     protected <T> Factory<T> singletonFactory(T store) {
-        return notSerializableProxy(new FactoryBuilder.SingletonFactory<T>(store), Factory.class);
+        return notSerializableProxy(new FactoryBuilder.SingletonFactory<>(store), Factory.class);
     }
 
     /**
@@ -2148,7 +2211,8 @@ public abstract class GridAbstractTest extends TestCase {
     }
 
     /** */
-    public static abstract class TestIgniteIdxCallable<R> implements Serializable {
+    public abstract static class TestIgniteIdxCallable<R> implements Serializable {
+        /** */
         @IgniteInstanceResource
         protected Ignite ignite;
 

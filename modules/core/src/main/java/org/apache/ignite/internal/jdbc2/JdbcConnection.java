@@ -77,12 +77,12 @@ import static org.apache.ignite.IgniteJdbcDriver.PROP_COLLOCATED;
 import static org.apache.ignite.IgniteJdbcDriver.PROP_DISTRIBUTED_JOINS;
 import static org.apache.ignite.IgniteJdbcDriver.PROP_LOCAL;
 import static org.apache.ignite.IgniteJdbcDriver.PROP_NODE_ID;
-import static org.apache.ignite.IgniteJdbcDriver.PROP_TX_ALLOWED;
 import static org.apache.ignite.IgniteJdbcDriver.PROP_STREAMING;
 import static org.apache.ignite.IgniteJdbcDriver.PROP_STREAMING_ALLOW_OVERWRITE;
 import static org.apache.ignite.IgniteJdbcDriver.PROP_STREAMING_FLUSH_FREQ;
 import static org.apache.ignite.IgniteJdbcDriver.PROP_STREAMING_PER_NODE_BUF_SIZE;
 import static org.apache.ignite.IgniteJdbcDriver.PROP_STREAMING_PER_NODE_PAR_OPS;
+import static org.apache.ignite.IgniteJdbcDriver.PROP_TX_ALLOWED;
 
 /**
  * JDBC connection implementation.
@@ -227,8 +227,12 @@ public class JdbcConnection implements Connection {
 
                             ignite = Ignition.start();
                         }
-                        else
-                            ignite = Ignition.start(loadConfiguration(cfgUrl));
+                        else {
+                            IgniteBiTuple<IgniteConfiguration, ? extends GridSpringResourceContext> cfgAndCtx =
+                                loadConfiguration(cfgUrl);
+
+                            ignite = IgnitionEx.start(cfgAndCtx.get1(), cfgAndCtx.get2());
+                        }
 
                         fut.onDone(ignite);
                     }
@@ -249,8 +253,9 @@ public class JdbcConnection implements Connection {
 
     /**
      * @param cfgUrl Config URL.
+     * @return Ignite config and Spring context.
      */
-    private IgniteConfiguration loadConfiguration(String cfgUrl) {
+    private IgniteBiTuple<IgniteConfiguration, ? extends GridSpringResourceContext> loadConfiguration(String cfgUrl) {
         try {
             IgniteBiTuple<Collection<IgniteConfiguration>, ? extends GridSpringResourceContext> cfgMap =
                 IgnitionEx.loadConfigurations(cfgUrl);
@@ -262,7 +267,7 @@ public class JdbcConnection implements Connection {
 
             cfg.setClientMode(true); // Force client mode.
 
-            return cfg;
+            return new IgniteBiTuple<>(cfg, cfgMap.getValue());
         }
         catch (IgniteCheckedException e) {
             throw new IgniteException(e);
