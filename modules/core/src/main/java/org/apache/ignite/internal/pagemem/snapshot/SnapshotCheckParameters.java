@@ -34,6 +34,8 @@ public class SnapshotCheckParameters implements Serializable {
     /**
      * Factory method.
      *
+     * @return Tuple with optional parameters or null if parameters are default.
+     *
      * @param optionalPaths Optional paths.
      * @param skipCrc Skip crc.
      */
@@ -48,7 +50,7 @@ public class SnapshotCheckParameters implements Serializable {
      * @param optionalPaths Optional paths.
      * @param skipCrc Flag for skipping CRC check.
      */
-    public SnapshotCheckParameters(Collection<File> optionalPaths, boolean skipCrc) {
+    private SnapshotCheckParameters(Collection<File> optionalPaths, boolean skipCrc) {
         this.optionalPaths = optionalPaths;
         this.skipCrc = skipCrc;
     }
