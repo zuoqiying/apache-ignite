@@ -17,17 +17,32 @@
 package org.apache.ignite.internal.pagemem.snapshot;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Collection;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Tuple for passing optional parameters of {@link SnapshotOperationType#CHECK}.
  */
-public class SnapshotCheckParameters {
+public class SnapshotCheckParameters implements Serializable {
     /** Optional paths. */
     private final Collection<File> optionalPaths;
 
     /** Flag for skipping CRC check. */
     private final boolean skipCrc;
+
+    /**
+     * Factory method.
+     *
+     * @param optionalPaths Optional paths.
+     * @param skipCrc Skip crc.
+     */
+    @Nullable public static SnapshotCheckParameters valueOf(Collection<File> optionalPaths, boolean skipCrc) {
+        if (optionalPaths == null && !skipCrc)
+            return null;
+
+        return new SnapshotCheckParameters(optionalPaths, skipCrc);
+    }
 
     /**
      * @param optionalPaths Optional paths.
