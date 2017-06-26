@@ -46,14 +46,17 @@ public class IgnitePutGetTxBenchmark extends IgniteCacheAbstractBenchmark<Intege
             @Override public Void call() throws Exception {
                 IgniteCache<Integer, Object> cache = cacheForOperation();
 
-                int key = nextRandom(0, args.range() / 2);
+                for(int i = 0; i < args.preloadAmount(); i++) {
 
-                Object val = cache.get(key);
+                    int key = nextRandom(0, args.range() / 2);
 
-                if (val != null)
-                    key = nextRandom(args.range() / 2, args.range());
+                    Object val = ignite().cache("tx" + i).get(key);
 
-                cache.put(key, new SampleValue(key));
+                    if (val != null)
+                        key = nextRandom(args.range() / 2, args.range());
+
+                    ignite().cache("tx" + i).put(key, new SampleValue(key));
+                }
 
                 return null;
             }

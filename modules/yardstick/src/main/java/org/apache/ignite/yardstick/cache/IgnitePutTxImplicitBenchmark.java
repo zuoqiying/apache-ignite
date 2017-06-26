@@ -42,7 +42,8 @@ public class IgnitePutTxImplicitBenchmark extends IgniteCacheAbstractBenchmark<I
         int key = nextRandom(args.range());
 
         // Implicit transaction is used.
-        cache.put(key, new SampleValue(key));
+        for(int i = 0; i < args.preloadAmount(); i++)
+            ignite().cache("tx" + i).put(key, new SampleValue(key));
 
         return true;
     }
