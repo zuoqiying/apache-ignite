@@ -18,54 +18,32 @@
 package org.apache.ignite.yardstick.cache;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteTransactions;
+import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.yardstick.cache.model.SampleValue;
 import org.yardstickframework.BenchmarkConfiguration;
 
-import static org.apache.ignite.yardstick.IgniteBenchmarkUtils.doInTransaction;
-
 /**
- * Ignite benchmark that performs transactional put and get operations.
+ * Ignite benchmark that performs transactional put operations using implicit transaction.
  */
-public class IgnitePutGetTxBenchmark extends IgniteCacheAbstractBenchmark<Integer, Object> {
-    /** */
-    private IgniteTransactions txs;
-
-    /** */
-    private Callable<Void> clo;
-
+public class IgniteSimplePutTxImplicitBenchmark extends IgniteCacheAbstractBenchmark<Integer, Object> {
     /** {@inheritDoc} */
     @Override public void setUp(BenchmarkConfiguration cfg) throws Exception {
         super.setUp(cfg);
 
-        txs = ignite().transactions();
-
-        clo = new Callable<Void>() {
-            @Override public Void call() throws Exception {
-                IgniteCache<Integer, Object> cache = cacheForOperation();
-
-                for(int i = 0; i < args.preloadAmount(); i++) {
-
-                    int key = nextRandom(0, args.range() / 2);
-
-                    Object val = ignite().cache("tx" + i).get(key);
-
-                    if (val != null)
-                        key = nextRandom(args.range() / 2, args.range());
-
-                    ignite().cache("tx" + i).put(key, new SampleValue(key));
-                }
-
-                return null;
-            }
-        };
+        if (!IgniteSystemProperties.getBoolean("SKIP_MAP_CHECK"))
+            ignite().compute().broadcast(new WaitMapExchangeFinishCallable());
     }
 
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
-        doInTransaction(txs, args.txConcurrency(), args.txIsolation(), clo);
+        IgniteCache<Integer, Object> cache = cacheForOperation();
+
+        int key = nextRandom(args.range());
+
+        // Implicit transaction is used.
+        for(int i = 0; i < args.preloadAmount(); i++)
+            ignite().cache("tx" + i).put(key, new SampleValue(key));
 
         return true;
     }
