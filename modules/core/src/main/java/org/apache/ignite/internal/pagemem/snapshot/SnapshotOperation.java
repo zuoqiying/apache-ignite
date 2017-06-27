@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Set;
+import org.apache.ignite.lang.IgniteFuture;
 
 /**
  * Description and parameters of snapshot operation
@@ -120,7 +121,10 @@ public class SnapshotOperation implements Serializable {
      *
      */
     public Object extraParameter() {
-        return extraParam;
+        if (extraParam instanceof IgniteFuture)
+            return ((IgniteFuture)extraParam).get();
+        else
+            return extraParam;
     }
 
     /**
@@ -182,8 +186,10 @@ public class SnapshotOperation implements Serializable {
     /** {@inheritDoc} */
     @Override public int hashCode() {
         int res = type.hashCode();
+
         res = 31 * res + (int)(snapshotId ^ (snapshotId >>> 32));
         res = 31 * res + (extraParam != null ? extraParam.hashCode() : 0);
+
         return res;
     }
 
