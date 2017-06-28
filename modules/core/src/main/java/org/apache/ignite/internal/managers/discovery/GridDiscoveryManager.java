@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -68,6 +69,7 @@ import org.apache.ignite.internal.IgniteNodeAttributes;
 import org.apache.ignite.internal.events.DiscoveryCustomEvent;
 import org.apache.ignite.internal.managers.GridManagerAdapter;
 import org.apache.ignite.internal.managers.communication.GridIoManager;
+import org.apache.ignite.internal.managers.communication.GridIoPolicy;
 import org.apache.ignite.internal.managers.eventstorage.GridLocalEventListener;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
 import org.apache.ignite.internal.processors.cache.CacheGroupDescriptor;
@@ -934,8 +936,40 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
             /** */
             private final long startTime = U.currentTimeMillis();
 
+            /** last collected ClusterMetrics */
+            private volatile ClusterMetrics clusterMetrics = null;
+
+            /** last collected CacheMetrics */
+            private volatile Map<Integer, CacheMetrics> cacheMetrics = null;
+
             /** {@inheritDoc} */
             @Override public ClusterMetrics metrics() {
+                async(new Runnable() {
+                    @Override public void run() {
+                        clusterMetrics = collectClusterMetrics();
+                    }
+                });
+
+                if (clusterMetrics != null)
+                    return clusterMetrics;
+
+                return collectClusterMetrics();
+            }
+
+            private void async(Runnable r) {
+                Executor executor;
+
+                try {
+                    executor = ctx.pools().poolForPolicy(GridIoPolicy.SYSTEM_POOL);
+                }
+                catch (IgniteCheckedException e) {
+                    throw U.convertException(e);
+                }
+
+                executor.execute(r);
+            }
+
+            @NotNull private ClusterMetrics collectClusterMetrics() {
                 GridJobMetrics jm = ctx.jobMetric().getJobMetrics();
 
                 ClusterMetricsSnapshot nm = new ClusterMetricsSnapshot();
@@ -1031,6 +1065,19 @@ public class GridDiscoveryManager extends GridManagerAdapter<DiscoverySpi> {
 
             /** {@inheritDoc} */
             @Override public Map<Integer, CacheMetrics> cacheMetrics() {
+                async(new Runnable() {
+                    @Override public void run() {
+                        cacheMetrics = collectCacheMetrics();
+                    }
+                });
+
+                if (cacheMetrics != null)
+                    return cacheMetrics;
+
+                return collectCacheMetrics();
+            }
+
+            @NotNull private Map<Integer, CacheMetrics> collectCacheMetrics() {
                 Collection<GridCacheAdapter<?, ?>> caches = ctx.cache().internalCaches();
 
                 if (F.isEmpty(caches))
