@@ -42,7 +42,8 @@
                 <bean class="org.apache.ignite.sqltester.QueryTypeConfiguration">
                     <property name="type" value="IGNITE" />
                     <property name="connectionString">
-                        <value>jdbc:ignite:cfg://cache=query@/home/oostanin/gg/incubator-ignite/modules/sql-tester/src/main/resources/ignite-jdbc-config.xml</value>
+                    <!--    <value>jdbc:ignite:cfg://cache=query@/home/oostanin/gg/incubator-ignite/modules/sql-tester/src/main/resources/ignite-jdbc-config.xml</value> -->
+                        <value>jdbc:ignite:thin://127.0.0.1:10800</value>
                     </property>
                     <property name="dbInitScriptPath">
                         <value>/home/oostanin/gg/incubator-ignite/modules/sql-tester/src/main/resources/ignite-insert.sql</value>

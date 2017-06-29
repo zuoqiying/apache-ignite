@@ -55,7 +55,7 @@ join:
 select:
   - SELECT fields from_any where orderby
   - SELECT aggr_fields from_any sort
-#  - SELECT fields_join from_join where_aliased sort
+  - SELECT fields_join from_join where_aliased sort
   - SELECT COUNT(*) from_partition_caches where_non_collocated sort
   - SELECT COUNT(*) from_local where sort
 
@@ -94,7 +94,7 @@ from_join:
       $2 = Class.toSqlString $1, 'name';
     h2: FROM t$1 AS a JOIN t4 AS b ON a.col_Long_1 = b.col_Long_3
     mysql: FROM t$1 AS a JOIN t4 AS b ON a.col_Long_1 = b.col_Long_3
-    ignite: FROM t$1 AS a JOIN t4 AS b ON a.col_Long_1 = b.col_Long_3
+    ignite: FROM $2 AS a JOIN \"t4\".$2 AS b ON a.col_Long_1 = b.col_Long_3
     .cache_name: t$1
 
 from_partition_caches:
@@ -108,11 +108,11 @@ from_partition_caches:
 from_local:
   -
     iterator: >
-      $1 = range 1, 3;
+      $1 = range 3, 5;
       $2 = Class.toSqlString $1, 'name';
     h2: FROM t$1
     mysql: FROM t$1
-    ignite: FROM t$1
+    ignite: FROM $2
     .cache_name: t$1
     .setlocal: true
 

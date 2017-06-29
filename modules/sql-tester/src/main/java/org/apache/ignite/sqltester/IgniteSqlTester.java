@@ -71,8 +71,8 @@ public class IgniteSqlTester {
 
             QueryTestRunner runner = t.createRunner();
 
-            if (runner.getType().equals("ignite"))
-                continue;
+            //if (runner.getType().equals("ignite"))
+            //    continue;
 
             try {
                 runner.beforeTest(typeConf);
@@ -135,14 +135,15 @@ public class IgniteSqlTester {
 
                 String st = (String)entry.get(type);
 
-                if (!type.equals("ignite")) {
+                //if (!type.equals("ignite")) {
                     System.out.println(st);
 
                     stmt.execute(st);
 
-                    if (!(stmt.getResultSet() == null))
-                        runCtx.res = stmt.getResultSet();
-                }
+                    runCtx.res = stmt.getResultSet();
+
+                System.out.println();
+                //}
             }
 
             try {
@@ -162,8 +163,8 @@ public class IgniteSqlTester {
 
         for (RunContext runCtx : runners) {
 
-            if (runCtx.runner.getType().equals("ignite"))
-                continue;
+            //if (runCtx.runner.getType().equals("ignite"))
+                //continue;
 
             if (!(runCtx.res == null)) {
 
@@ -218,6 +219,13 @@ public class IgniteSqlTester {
     private static boolean compareResTbls(List<RunContext> runners){
         boolean res = true;
 
+        if (runners.get(0).res == null) {
+            for (RunContext runner : runners) {
+                if (runner.res != null)
+                    return false;
+            }
+            return true;
+        }
 
 
         ArrayList<ArrayList<String>> main = runners.get(0).resultTbl;
@@ -225,6 +233,10 @@ public class IgniteSqlTester {
             ArrayList<ArrayList<String>> checked = runners.get(i).resultTbl;
             for(int row = 0; row < main.size(); row++){
                 for(int col = 0; col < main.get(row).size(); col++){
+                    Object mainObj = main.get(row).get(col);
+                    Object checkedObj = checked.get(row).get(col);
+
+
                     if (!main.get(row).get(col).equals(checked.get(row).get(col))){
                         printError();
                         res = false;
