@@ -2182,8 +2182,6 @@ public class GridCacheProcessor extends GridProcessorAdapter {
      * @param grp Cache group.
      */
     private void stopCacheGroup(CacheGroupContext grp) {
-        ctx.cache().context().snapshot().onCacheGroupStop(grp);
-
         grp.stopGroup();
 
         U.stopLifecycleAware(log, grp.configuredUserObjects());
