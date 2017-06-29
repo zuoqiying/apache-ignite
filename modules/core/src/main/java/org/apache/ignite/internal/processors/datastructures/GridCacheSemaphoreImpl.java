@@ -109,6 +109,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
      * Synchronization implementation for semaphore. Uses AQS state to represent permits.
      */
     final class Sync extends AbstractQueuedSynchronizer {
+        /** */
         private static final long serialVersionUID = 1192457210091910933L;
 
         /** Map containing number of acquired permits for each node waiting on this semaphore. */
@@ -132,7 +133,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
          *
          * @param nodeMap NodeMap.
          */
-        protected synchronized void setWaiters(Map<UUID, Integer> nodeMap) {
+        synchronized void setWaiters(Map<UUID, Integer> nodeMap) {
             this.nodeMap = nodeMap;
         }
 
@@ -141,7 +142,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
          *
          * @return Number of nodes waiting at this semaphore.
          */
-        public int getWaiters() {
+        int getWaiters() {
             int totalWaiters = 0;
 
             for (Integer i : nodeMap.values()) {
@@ -159,7 +160,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
          * @return Number of permits node has acquired at this semaphore. Can be less than 0 if more permits were
          * released than acquired on node.
          */
-        public int getPermitsForNode(UUID nodeID) {
+        int getPermitsForNode(UUID nodeID) {
             return nodeMap.containsKey(nodeID) ? nodeMap.get(nodeID) : 0;
         }
 
@@ -220,9 +221,8 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
 
                 int remaining = available - acquires;
 
-                if (remaining < 0 || compareAndSetGlobalState(available, remaining, false)) {
+                if (remaining < 0 || compareAndSetGlobalState(available, remaining, false))
                     return remaining;
-                }
             }
         }
 
@@ -266,10 +266,10 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
                 if (broken)
                     return 1;
 
-                int current = getState();
+                int curr = getState();
 
-                if (current == 0 || compareAndSetGlobalState(current, 0, true))
-                    return current;
+                if (curr == 0 || compareAndSetGlobalState(curr, 0, true))
+                    return curr;
             }
         }
 
@@ -281,10 +281,9 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
          * @param draining True if used for draining the permits.
          * @return True if this is the call that succeeded to change the global state.
          */
-        protected boolean compareAndSetGlobalState(final int expVal, final int newVal, final boolean draining) {
+        boolean compareAndSetGlobalState(final int expVal, final int newVal, final boolean draining) {
             try {
-                return CU.outTx(
-                    retryTopologySafe(new Callable<Boolean>() {
+                return retryTopologySafe(new Callable<Boolean>() {
                         @Override public Boolean call() throws Exception {
                             try (IgniteInternalTx tx = CU.txStartInternal(ctx,
                                 semView,
@@ -332,9 +331,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
                                 throw e;
                             }
                         }
-                    }),
-                    ctx
-                );
+                    });
             }
             catch (IgniteCheckedException e) {
                 if (ctx.kernalContext().isStopping()) {
@@ -354,10 +351,9 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
          * @param nodeId ID of the failing node.
          * @return True if this is the call that succeeded to change the global state.
          */
-        protected boolean releaseFailedNode(final UUID nodeId) {
+        boolean releaseFailedNode(final UUID nodeId) {
             try {
-                return CU.outTx(
-                    retryTopologySafe(new Callable<Boolean>() {
+                return retryTopologySafe(new Callable<Boolean>() {
                         @Override public Boolean call() throws Exception {
                             try (
                                 IgniteInternalTx tx = CU.txStartInternal(ctx,
@@ -402,9 +398,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
                                 throw e;
                             }
                         }
-                    }),
-                    ctx
-                );
+                    });
             }
             catch (IgniteCheckedException e) {
                 if (ctx.kernalContext().isStopping()) {
@@ -452,8 +446,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
     private void initializeSemaphore() throws IgniteCheckedException {
         if (!initGuard.get() && initGuard.compareAndSet(false, true)) {
             try {
-                sync = CU.outTx(
-                    retryTopologySafe(new Callable<Sync>() {
+                sync = retryTopologySafe(new Callable<Sync>() {
                         @Override public Sync call() throws Exception {
                             try (IgniteInternalTx tx = CU.txStartInternal(ctx,
                                 semView, PESSIMISTIC, REPEATABLE_READ)) {
@@ -477,9 +470,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
                                 return new Sync(count, waiters, failoverSafe);
                             }
                         }
-                    }),
-                    ctx
-                );
+                    });
 
                 if (log.isDebugEnabled())
                     log.debug("Initialized internal sync structure: " + sync);
@@ -673,8 +664,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
         try {
             initializeSemaphore();
 
-            ret = CU.outTx(
-                retryTopologySafe(new Callable<Integer>() {
+            ret = retryTopologySafe(new Callable<Integer>() {
                     @Override public Integer call() throws Exception {
                         try (
                             IgniteInternalTx tx = CU.txStartInternal(ctx,
@@ -692,9 +682,7 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
                             return count;
                         }
                     }
-                }),
-                ctx
-            );
+                });
         }
         catch (IgniteCheckedException e) {
             throw U.convertException(e);
@@ -730,12 +718,12 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
         try {
             initializeSemaphore();
 
-            boolean result = sync.nonfairTryAcquireShared(1) >= 0;
+            boolean res = sync.nonfairTryAcquireShared(1) >= 0;
 
             if (isBroken())
                 throw new InterruptedException();
 
-            return result;
+            return res;
         }
         catch (IgniteCheckedException e) {
             throw U.convertException(e);
@@ -755,12 +743,12 @@ public final class GridCacheSemaphoreImpl implements GridCacheSemaphoreEx, Ignit
         try {
             initializeSemaphore();
 
-            boolean result = sync.tryAcquireSharedNanos(1, unit.toNanos(timeout));
+            boolean res = sync.tryAcquireSharedNanos(1, unit.toNanos(timeout));
 
             if (isBroken())
                 throw new InterruptedException();
 
-            return result;
+            return res;
         }
         catch (IgniteCheckedException e) {
             throw U.convertException(e);
