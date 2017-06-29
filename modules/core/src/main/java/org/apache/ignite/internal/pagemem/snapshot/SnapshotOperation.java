@@ -20,6 +20,7 @@ package org.apache.ignite.internal.pagemem.snapshot;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,6 +50,9 @@ public class SnapshotOperation implements Serializable {
     /** Optional list of dependent snapshot IDs. */
     private final Set<Long> dependentSnapshotIds;
 
+    /** Optional map of previous snapshots grouped by caches. */
+    private final Map<Long, Set<String>> prevSnapshots;
+
     /**
      * @param type Type.
      * @param snapshotId Snapshot id.
@@ -56,15 +60,17 @@ public class SnapshotOperation implements Serializable {
      * @param msg Message.
      * @param extraParam Additional parameter.
      * @param dependentSnapshotIds Optional list of dependent snapshot IDs.
+     * @param prevSnapshots Optional map of previous snapshots grouped by caches.
      */
     public SnapshotOperation(SnapshotOperationType type, long snapshotId, Set<String> cacheNames, String msg,
-        Object extraParam, Set<Long> dependentSnapshotIds) {
+        Object extraParam, Set<Long> dependentSnapshotIds, Map<Long, Set<String>> prevSnapshots) {
         this.type = type;
         this.snapshotId = snapshotId;
         this.cacheNames = cacheNames;
         this.msg = msg;
         this.extraParam = extraParam;
         this.dependentSnapshotIds = dependentSnapshotIds;
+        this.prevSnapshots = prevSnapshots;
     }
 
     /**
@@ -111,6 +117,13 @@ public class SnapshotOperation implements Serializable {
      */
     public Set<Long> dependentSnapshotIds() {
         return dependentSnapshotIds;
+    }
+
+    /**
+     * @return Cache names grouped by previous snapshot IDs.
+     */
+    public Map<Long, Set<String>> previousSnapshots() {
+        return prevSnapshots;
     }
 
     /**
@@ -181,6 +194,7 @@ public class SnapshotOperation implements Serializable {
 
     }
 
+    /** {@inheritDoc} */
     @Override public int hashCode() {
         int result = type.hashCode();
         result = 31 * result + (int)(snapshotId ^ (snapshotId >>> 32));
@@ -189,6 +203,7 @@ public class SnapshotOperation implements Serializable {
         return result;
     }
 
+    /** {@inheritDoc} */
     @Override public String toString() {
         return "SnapshotOperation{" +
             "type=" + type +
@@ -197,6 +212,7 @@ public class SnapshotOperation implements Serializable {
             ", msg='" + msg + '\'' +
             ", extraParam=" + extraParam +
             ", dependentSnapshotIds=" + dependentSnapshotIds +
+            ", prevSnapshots=" + prevSnapshots +
             '}';
     }
 }
