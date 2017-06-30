@@ -22,9 +22,8 @@ import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.BitSet;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
-import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtPartitionState;
 
 /**
@@ -53,7 +52,7 @@ public class GridPartitionStateMap extends AbstractMap<Integer, GridDhtPartition
     @Override public Set<Entry<Integer, GridDhtPartitionState>> entrySet() {
         return new AbstractSet<Entry<Integer, GridDhtPartitionState>>() {
             @Override public Iterator<Entry<Integer, GridDhtPartitionState>> iterator() {
-                final int size = states.length() == 0 ? 0 : (states.length() - 1)/ BITS + 1;
+                final int size = states.isEmpty() ? 0 : (states.length() - 1)/ BITS + 1;
 
                 return new Iterator<Entry<Integer, GridDhtPartitionState>>() {
                     private int next;
@@ -67,6 +66,9 @@ public class GridPartitionStateMap extends AbstractMap<Integer, GridDhtPartition
                     }
 
                     @Override public Entry<Integer, GridDhtPartitionState> next() {
+                        if (!hasNext())
+                            throw new NoSuchElementException();
+
                         cur = next;
                         next++;
 
@@ -127,7 +129,9 @@ public class GridPartitionStateMap extends AbstractMap<Integer, GridDhtPartition
         if (onlyActive) {
             int part = 0;
 
-            while (part < from.size) {
+            int maxPart = states.size() / BITS;
+
+            while (part < maxPart) {
                 GridDhtPartitionState state = from.state(part);
 
                 if (state != null && !state.active())
