@@ -121,10 +121,7 @@ public class SnapshotOperation implements Serializable {
      *
      */
     public Object extraParameter() {
-        if (extraParam instanceof IgniteFuture)
-            return ((IgniteFuture)extraParam).get();
-        else
-            return extraParam;
+        return extraParam;
     }
 
     /**
