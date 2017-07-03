@@ -3012,6 +3012,13 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     }
 
     /**
+     * Reset restarting caches.
+     */
+    public void resetRestartingCaches(){
+        cachesInfo.restartingCaches().clear();
+    }
+
+    /**
      * @param node Joining node to validate.
      * @return Node validation result if there was an issue with the joining node, {@code null} otherwise.
      */
