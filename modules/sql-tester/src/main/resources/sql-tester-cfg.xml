@@ -25,6 +25,15 @@
         <property name="typeConfigurations">
             <list>
                 <bean class="org.apache.ignite.sqltester.QueryTypeConfiguration">
+                    <property name="type" value="H2" />
+                    <property name="connectionString">
+                        <value>jdbc:h2:~/H2/testdb</value>
+                    </property>
+                    <property name="dbInitScriptPath">
+                        <value>/home/oostanin/gg/incubator-ignite/modules/sql-tester/src/main/resources/h2-insert.sql</value>
+                    </property>
+                </bean>
+                <bean class="org.apache.ignite.sqltester.QueryTypeConfiguration">
                     <property name="type" value="MYSQL" />
                     <property name="connectionString">
                         <value>jdbc:mysql://localhost:3306/sqltester</value>
@@ -49,6 +58,7 @@
                         <value>/home/oostanin/gg/incubator-ignite/modules/sql-tester/src/main/resources/ignite-insert.sql</value>
                     </property>
                 </bean>
+                <!--
                 <bean class="org.apache.ignite.sqltester.QueryTypeConfiguration">
                     <property name="type" value="H2" />
                     <property name="connectionString">
@@ -58,6 +68,7 @@
                         <value>/home/oostanin/gg/incubator-ignite/modules/sql-tester/src/main/resources/h2-insert.sql</value>
                     </property>
                 </bean>
+                -->
             </list>
         </property>
     </bean>

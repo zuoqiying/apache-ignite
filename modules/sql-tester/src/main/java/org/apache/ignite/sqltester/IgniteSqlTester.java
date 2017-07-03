@@ -71,9 +71,6 @@ public class IgniteSqlTester {
 
             QueryTestRunner runner = t.createRunner();
 
-            //if (runner.getType().equals("ignite"))
-            //    continue;
-
             try {
                 runner.beforeTest(typeConf);
 
@@ -92,22 +89,6 @@ public class IgniteSqlTester {
                 }
                 else
                     conn = DriverManager.getConnection(connStr);
-                /**
-                 if (!F.isEmpty(typeConf.getDbInitScriptPath())) {
-                 Statement stmt = conn.createStatement();
-
-                 try (BufferedReader br = new BufferedReader(new FileReader(typeConf.getDbInitScriptPath()))) {
-                 for (String testStr; (testStr = br.readLine()) != null; )
-                 stmt.execute(testStr);
-                 }
-                 catch (Exception e) {
-                 U.closeQuiet(stmt);
-                 U.closeQuiet(conn);
-
-                 throw e;
-                 }
-                 }
-                 */
 
                 RunContext runCtx = new RunContext();
 
@@ -127,34 +108,44 @@ public class IgniteSqlTester {
             }
         }
 
+        int cnt = 0;
+
         for (HashMap<String, Object> entry : sqlStatements) {
+
+            String st = new String();
+
             for (RunContext runCtx : runners) {
                 Statement stmt = runCtx.conn.createStatement();
 
                 String type = runCtx.runner.getType();
 
-                String st = (String)entry.get(type);
+                st = (String)entry.get(type);
 
                 //if (!type.equals("ignite")) {
-                    System.out.println(st);
+                    //System.out.println(st);
 
                     stmt.execute(st);
 
                     runCtx.res = stmt.getResultSet();
 
-                System.out.println();
+                //System.out.println();
                 //}
             }
 
             try {
-                System.out.println(compareSets(runners));
+                if (!compareSets(runners)) {
+                    System.out.println("Statement = " + st);
+                    System.out.println("Statement id = " + cnt);
+                    System.out.println("======================================================");
+                }
             }
             catch (Exception e) {
                 e.printStackTrace();
             }
             // ...do cleanup...
+            cnt++;
         }
-
+        return;
     }
 
     private static boolean compareSets(List<RunContext> runners) throws Exception {
@@ -163,15 +154,15 @@ public class IgniteSqlTester {
 
         for (RunContext runCtx : runners) {
 
-            //if (runCtx.runner.getType().equals("ignite"))
-                //continue;
-
             if (!(runCtx.res == null)) {
 
                 ArrayList<ArrayList<String>> resultTbl = new ArrayList<>();
+                ArrayList<String> columnNames = new ArrayList<>();
+
+
 
                 int colsCnt = runCtx.res.getMetaData().getColumnCount();
-                System.out.println(colsCnt);
+                //System.out.println(colsCnt);
 
 
                 while (runCtx.res.next()) {
@@ -183,7 +174,8 @@ public class IgniteSqlTester {
 
                         row.add(colVal.toString());
 
-                        System.out.println(runCtx.res.getMetaData().getColumnName(i) + " -> " + colVal.toString());
+                        if(columnNames.size() < colsCnt)
+                            columnNames.add(runCtx.res.getMetaData().getColumnName(i));
                     }
 
                     resultTbl.add(row);
@@ -203,12 +195,14 @@ public class IgniteSqlTester {
                 });
 
                 runCtx.resultTbl = resultTbl;
-
+                runCtx.colNames = columnNames;
+                /**
                 for(ArrayList<String> innerList : resultTbl){
                     for (String str : innerList)
                         System.out.print(str + "    ");
                     System.out.println();
                 }
+                 */
 
             }
         }
@@ -238,14 +232,16 @@ public class IgniteSqlTester {
 
 
                     if (!main.get(row).get(col).equals(checked.get(row).get(col))){
-                        printError();
+                        printError(runners.get(0), runners.get(i), mainObj, checkedObj, runners.get(i).colNames.get(col));
                         res = false;
                     }
+                    /**
                     else {
                         System.out.print(" Row = " + row);
                         System.out.print(" Col = " + col);
                         System.out.println(" All is fine");
                     }
+                     */
                 }
             }
         }
@@ -253,8 +249,15 @@ public class IgniteSqlTester {
         return res;
     }
 
-    private static void printError(){
-        System.out.println("ERROR");
+    private static void printError(RunContext r1,  RunContext r2, Object main, Object checked, String columnName){
+        System.out.println("The results from " + r1.runner.getType() + " and " + r2.runner.getType() +
+            " do not match:");
+
+        System.out.println(r1.runner.getType() + " -> " + main);
+        System.out.println(r2.runner.getType() + " -> " + checked);
+        System.out.println("Column -> " + columnName);
+
+        System.out.println();
     }
 
     private static class RunContext {
@@ -265,6 +268,7 @@ public class IgniteSqlTester {
         ResultSet res;
 
         ArrayList<ArrayList<String>> resultTbl;
+        ArrayList<String> colNames;
     }
 
 }
