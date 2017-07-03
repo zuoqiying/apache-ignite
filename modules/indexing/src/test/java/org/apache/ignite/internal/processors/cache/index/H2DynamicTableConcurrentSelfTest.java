@@ -24,7 +24,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
@@ -224,16 +223,6 @@ public class H2DynamicTableConcurrentSelfTest extends AbstractSchemaSelfTest {
             if (!create && code == IgniteQueryErrorCode.TABLE_NOT_FOUND) {
                 if (exFlag)
                     throw new AssertionError(e); // Should never happen with this flag.
-                else
-                    return;
-            }
-
-            // TODO is ignoring this legit?
-            if (e.getCause() instanceof IgniteCheckedException &&
-                e.getCause().getMessage().startsWith("Failed to start client cache " +
-                    "(a cache with the given name is not started)")) {
-                if (!node.localNode().isClient())
-                    throw new AssertionError(e);
                 else
                     return;
             }
