@@ -47,6 +47,9 @@ public class GridNearSingleGetResponse extends GridCacheMessage implements GridC
     /** */
     public static final int CONTAINS_VAL_FLAG_MASK = 0x2;
 
+    /** */
+    public static final int CACHE_HIT_FLAG_MASK = 0x4;
+
     /** Future ID. */
     private long futId;
 
@@ -137,6 +140,23 @@ public class GridNearSingleGetResponse extends GridCacheMessage implements GridC
      */
     public void setContainsValue() {
         flags = (byte)(flags | CONTAINS_VAL_FLAG_MASK);
+    }
+
+    /**
+     * @return CacheHit flag.
+     */
+    public boolean cacheHit() {
+        return (flags & CACHE_HIT_FLAG_MASK) != 0;
+    }
+
+    /**
+     * @param cacheHit CacheHit flag.
+     */
+    public void setCacheHit(boolean cacheHit) {
+        if (cacheHit)
+            flags = (byte)(flags | CACHE_HIT_FLAG_MASK);
+        else
+            flags = (byte)(flags & ~CACHE_HIT_FLAG_MASK);
     }
 
     /**

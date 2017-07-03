@@ -2022,11 +2022,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
                                                 // Don't put key-value pair into result map if value is null.
                                                 if (verVal.value() != null) {
-                                                    if (verVal.value() instanceof CacheObjectImpl) {
-                                                        CacheObjectImpl missedVal = new CacheObjectImpl((CacheObjectImpl) verVal.value());
-                                                        missedVal.cacheHit(false);
-                                                        verVal.value(missedVal);
-                                                    }
+                                                    verVal.cacheHit(false);
                                                     ctx.addResult(map,
                                                         key,
                                                         verVal,

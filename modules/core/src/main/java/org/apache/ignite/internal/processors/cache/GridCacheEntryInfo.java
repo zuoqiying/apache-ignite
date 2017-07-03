@@ -68,6 +68,10 @@ public class GridCacheEntryInfo implements Message {
     @GridDirectTransient
     private boolean deleted;
 
+    /** CacheHit flag. */
+    @GridDirectTransient
+    private boolean cacheHit;
+
     /**
      * @return Cache ID.
      */
@@ -185,6 +189,20 @@ public class GridCacheEntryInfo implements Message {
      */
     public boolean isDeleted() {
         return deleted;
+    }
+
+    /**
+     * @param cacheHit CacheHit flag.
+     */
+    public void setCacheHit(boolean cacheHit) {
+        this.cacheHit = cacheHit;
+    }
+
+    /**
+     * @return CacheHit flag.
+     */
+    public boolean isCacheHit() {
+        return cacheHit;
     }
 
     /**

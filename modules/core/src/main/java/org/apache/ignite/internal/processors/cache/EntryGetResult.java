@@ -32,6 +32,9 @@ public class EntryGetResult {
     /** */
     private final boolean reserved;
 
+    /** */
+    private boolean cacheHit = true;
+
     /**
      * @param val Value.
      * @param ver Version.
@@ -91,5 +94,19 @@ public class EntryGetResult {
      */
     public long ttl() {
         return 0L;
+    }
+
+    /**
+     * @return CacheHit flag.
+     */
+    public boolean cacheHit() {
+        return cacheHit;
+    }
+
+    /**
+     * @param cacheHit CacheHit flag.
+     */
+    public void cacheHit(boolean cacheHit) {
+        this.cacheHit = cacheHit;
     }
 }

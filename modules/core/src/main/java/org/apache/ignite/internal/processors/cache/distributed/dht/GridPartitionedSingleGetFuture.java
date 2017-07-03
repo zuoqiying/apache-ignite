@@ -465,6 +465,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
             return;
 
         Message res0 = res.result();
+        cacheHit = res.cacheHit();
 
         if (needVer) {
             CacheVersionedValue verVal = (CacheVersionedValue)res0;
@@ -621,9 +622,6 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
     private void setResult(@Nullable CacheObject val, @Nullable GridCacheVersion ver) {
         try {
             assert !skipVals;
-
-            if (val instanceof CacheObjectImpl)
-                cacheHit = ((CacheObjectImpl) val).cacheHit();
 
             if (val != null) {
                 if (!keepCacheObjects) {
