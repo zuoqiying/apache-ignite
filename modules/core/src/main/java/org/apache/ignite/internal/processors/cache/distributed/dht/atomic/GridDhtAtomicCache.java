@@ -1533,6 +1533,27 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             needVer,
             false);
 
+        fut.listen(new CI1<IgniteInternalFuture<?>>() {
+            @Override public void apply(IgniteInternalFuture<?> f) {
+                try {
+                    Object val = f.get();
+
+                    final boolean isStatEnabled = ctx.config().isStatisticsEnabled();
+                    if (isStatEnabled && !skipVals) {
+                        boolean cacheHit = false;
+                        if (val != null) {
+                            assert (f instanceof GridPartitionedSingleGetFuture) == true;
+                            cacheHit = ((GridPartitionedSingleGetFuture) f).cacheHit();
+                        }
+                        metrics0().addGetTimeNanos(f.duration());
+                        metrics0().onRead(cacheHit);
+                    }
+                }
+                catch (IgniteCheckedException e) {
+                    // No-op.
+                }
+        }});
+
         fut.init();
 
         return (IgniteInternalFuture<V>)fut;

@@ -30,16 +30,7 @@ import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.cluster.ClusterTopologyCheckedException;
 import org.apache.ignite.internal.cluster.ClusterTopologyServerNotFoundException;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
-import org.apache.ignite.internal.processors.cache.CacheObject;
-import org.apache.ignite.internal.processors.cache.EntryGetResult;
-import org.apache.ignite.internal.processors.cache.GridCacheContext;
-import org.apache.ignite.internal.processors.cache.GridCacheEntryEx;
-import org.apache.ignite.internal.processors.cache.GridCacheEntryInfo;
-import org.apache.ignite.internal.processors.cache.GridCacheEntryRemovedException;
-import org.apache.ignite.internal.processors.cache.GridCacheFuture;
-import org.apache.ignite.internal.processors.cache.GridCacheMessage;
-import org.apache.ignite.internal.processors.cache.IgniteCacheExpiryPolicy;
-import org.apache.ignite.internal.processors.cache.KeyCacheObject;
+import org.apache.ignite.internal.processors.cache.*;
 import org.apache.ignite.internal.processors.cache.distributed.near.CacheVersionedValue;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearGetRequest;
 import org.apache.ignite.internal.processors.cache.distributed.near.GridNearGetResponse;
@@ -85,6 +76,9 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
 
     /** Key. */
     private final KeyCacheObject key;
+
+    /** cache hit */
+    private boolean cacheHit;
 
     /** Read through flag. */
     private final boolean readThrough;
@@ -628,6 +622,9 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
         try {
             assert !skipVals;
 
+            if (val instanceof CacheObjectImpl)
+                cacheHit = ((CacheObjectImpl) val).cacheHit();
+
             if (val != null) {
                 if (!keepCacheObjects) {
                     Object res = cctx.unwrapBinaryIfNeeded(val, !deserializeBinary);
@@ -749,6 +746,10 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
     /** {@inheritDoc} */
     @Override public void markNotTrackable() {
         // No-op.
+    }
+
+    public boolean cacheHit() {
+        return cacheHit;
     }
 
     /** {@inheritDoc} */

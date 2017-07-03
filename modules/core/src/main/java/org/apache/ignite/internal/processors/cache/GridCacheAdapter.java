@@ -1376,10 +1376,6 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
     @Nullable @Override public V get(K key) throws IgniteCheckedException {
         A.notNull(key, "key");
 
-        boolean statsEnabled = ctx.config().isStatisticsEnabled();
-
-        long start = statsEnabled ? System.nanoTime() : 0L;
-
         boolean keepBinary = ctx.keepBinary();
 
         if (keepBinary)
@@ -1392,9 +1388,6 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
             val = (V)ctx.config().getInterceptor().onGet(key, val);
         }
-
-        if (statsEnabled)
-            metrics0().addGetTimeNanos(System.nanoTime() - start);
 
         return val;
     }
@@ -1913,9 +1906,6 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                         GridCacheEntryEx entry = needEntry ? entryEx(key) : peekEx(key);
 
                         if (entry == null) {
-                            if (!skipVals && ctx.config().isStatisticsEnabled())
-                                ctx.cache().metrics0().onRead(false);
-
                             break;
                         }
 
@@ -1927,7 +1917,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
                             if (storeEnabled) {
                                 res = entry.innerGetAndReserveForLoad(ctx.isSwapOrOffheapEnabled(),
-                                    updateMetrics,
+                                    false/*updateMetrics*/,
                                     evt,
                                     subjId,
                                     taskName,
@@ -2032,6 +2022,11 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
                                                 // Don't put key-value pair into result map if value is null.
                                                 if (verVal.value() != null) {
+                                                    if (verVal.value() instanceof CacheObjectImpl) {
+                                                        CacheObjectImpl missedVal = new CacheObjectImpl((CacheObjectImpl) verVal.value());
+                                                        missedVal.cacheHit(false);
+                                                        verVal.value(missedVal);
+                                                    }
                                                     ctx.addResult(map,
                                                         key,
                                                         verVal,
