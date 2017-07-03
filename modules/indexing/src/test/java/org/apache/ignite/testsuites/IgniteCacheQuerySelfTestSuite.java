@@ -97,6 +97,14 @@ import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexAtomicRep
 import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexTransactionalPartitionedNearSelfTest;
 import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexTransactionalPartitionedSelfTest;
 import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexTransactionalReplicatedSelfTest;
+import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexingComplexClientAtomicPartitionedTest;
+import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexingComplexClientAtomicReplicatedTest;
+import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexingComplexClientTransactionalPartitionedTest;
+import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexingComplexClientTransactionalReplicatedTest;
+import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexingComplexServerAtomicPartitionedTest;
+import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexingComplexServerAtomicReplicatedTest;
+import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexingComplexServerTransactionalPartitionedTest;
+import org.apache.ignite.internal.processors.cache.index.H2DynamicIndexingComplexServerTransactionalReplicatedTest;
 import org.apache.ignite.internal.processors.cache.index.H2DynamicTableConcurrentSelfTest;
 import org.apache.ignite.internal.processors.cache.index.H2DynamicTableSelfTest;
 import org.apache.ignite.internal.processors.cache.index.SchemaExchangeSelfTest;
@@ -238,6 +246,16 @@ public class IgniteCacheQuerySelfTestSuite extends TestSuite {
         suite.addTestSuite(H2DynamicIndexAtomicPartitionedNearSelfTest.class);
         suite.addTestSuite(H2DynamicTableSelfTest.class);
         suite.addTestSuite(H2DynamicTableConcurrentSelfTest.class);
+
+        // DML+DDL.
+        suite.addTestSuite(H2DynamicIndexingComplexClientAtomicPartitionedTest.class);
+        suite.addTestSuite(H2DynamicIndexingComplexClientAtomicReplicatedTest.class);
+        suite.addTestSuite(H2DynamicIndexingComplexClientTransactionalPartitionedTest.class);
+        suite.addTestSuite(H2DynamicIndexingComplexClientTransactionalReplicatedTest.class);
+        suite.addTestSuite(H2DynamicIndexingComplexServerAtomicPartitionedTest.class);
+        suite.addTestSuite(H2DynamicIndexingComplexServerAtomicReplicatedTest.class);
+        suite.addTestSuite(H2DynamicIndexingComplexServerTransactionalPartitionedTest.class);
+        suite.addTestSuite(H2DynamicIndexingComplexServerTransactionalReplicatedTest.class);
 
         // Fields queries.
         suite.addTestSuite(SqlFieldsQuerySelfTest.class);

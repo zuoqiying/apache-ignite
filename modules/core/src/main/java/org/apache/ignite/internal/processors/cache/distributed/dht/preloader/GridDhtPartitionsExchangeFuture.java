@@ -73,6 +73,7 @@ import org.apache.ignite.internal.processors.cache.transactions.IgniteTxKey;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.processors.cluster.GridClusterStateProcessor;
 import org.apache.ignite.internal.processors.timeout.GridTimeoutObjectAdapter;
+import org.apache.ignite.internal.util.future.GridCompoundFuture;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.tostring.GridToStringExclude;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
@@ -213,7 +214,7 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
     private final ConcurrentMap<UUID, GridDhtPartitionsAbstractMessage> msgs = new ConcurrentHashMap8<>();
 
     /** Forced Rebalance future. */
-    private GridFutureAdapter<Boolean> forcedRebFut;
+    private GridCompoundFuture<Boolean, Boolean> forcedRebFut;
 
     /**
      * Dummy future created to trigger reassignments if partition
@@ -253,7 +254,7 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
      * @param forcedRebFut Forced Rebalance future.
      */
     public GridDhtPartitionsExchangeFuture(GridCacheSharedContext cctx, DiscoveryEvent discoEvt,
-        GridDhtPartitionExchangeId exchId, GridFutureAdapter<Boolean> forcedRebFut) {
+        GridDhtPartitionExchangeId exchId, GridCompoundFuture<Boolean, Boolean> forcedRebFut) {
         dummy = false;
         forcePreload = true;
 
@@ -452,7 +453,7 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
     /**
      * @return Forced Rebalance future.
      */
-    @Nullable public GridFutureAdapter<Boolean> forcedRebalanceFuture() {
+    @Nullable public GridCompoundFuture<Boolean, Boolean> forcedRebalanceFuture() {
         return forcedRebFut;
     }
 
@@ -1113,7 +1114,19 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
             log.debug("Sending full partition map [nodeIds=" + F.viewReadOnly(nodes, F.node2id()) +
                 ", exchId=" + exchId + ", msg=" + m + ']');
 
-        cctx.io().safeSend(nodes, m, SYSTEM_POOL, null);
+        for (ClusterNode node : nodes) {
+            try {
+                cctx.io().send(node, m, SYSTEM_POOL);
+            }
+            catch (IgniteCheckedException e) {
+                if (cctx.io().checkNodeLeft(node.id(), e, false)) {
+                    if (log.isDebugEnabled())
+                        log.debug("Failed to send partitions, node failed: " + node);
+                }
+                else
+                    U.error(log, "Failed to send partitions [node=" + node + ']', e);
+            }
+        }
     }
 
     /**
@@ -1137,7 +1150,7 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
     /**
      * @return {@code True} if exchange triggered by server node join or fail.
      */
-    private boolean serverNodeDiscoveryEvent() {
+    public boolean serverNodeDiscoveryEvent() {
         assert discoEvt != null;
 
         return discoEvt.type() != EVT_DISCOVERY_CUSTOM_EVT && !CU.clientNode(discoEvt.eventNode());
@@ -1160,16 +1173,17 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
        }
 
         if (err == null && realExchange) {
-            for (CacheGroupContext grp : cctx.cache().cacheGroups()) {
-                if (grp.isLocal())
-                    continue;
+            if (centralizedAff) {
+                for (CacheGroupContext grp : cctx.cache().cacheGroups()) {
+                    if (grp.isLocal())
+                        continue;
 
-                try {
-                    if (centralizedAff)
+                    try {
                         grp.topology().initPartitions(this);
-                }
-                catch (IgniteInterruptedCheckedException e) {
-                    U.error(log, "Failed to initialize partitions.", e);
+                    }
+                    catch (IgniteInterruptedCheckedException e) {
+                        U.error(log, "Failed to initialize partitions.", e);
+                    }
                 }
             }
 
@@ -1186,9 +1200,10 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
                 }
             }
 
-            if (discoEvt.type() == EVT_NODE_LEFT ||
+            if (serverNodeDiscoveryEvent() &&
+                (discoEvt.type() == EVT_NODE_LEFT ||
                 discoEvt.type() == EVT_NODE_FAILED ||
-                discoEvt.type() == EVT_NODE_JOINED)
+                discoEvt.type() == EVT_NODE_JOINED))
                 detectLostPartitions();
 
             Map<Integer, CacheValidation> m = U.newHashMap(cctx.cache().cacheGroups().size());
@@ -2044,7 +2059,7 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
                 else if (!remaining.isEmpty()){
                     UUID nodeId = remaining.iterator().next();
 
-                    diagCtx.exchangeInfo(crd.id(), topologyVersion(), "Exchange future on coordinator waiting for " +
+                    diagCtx.exchangeInfo(nodeId, topologyVersion(), "Exchange future on coordinator waiting for " +
                         "server response [node=" + nodeId + ", topVer=" + topologyVersion() + ']');
                 }
             }
