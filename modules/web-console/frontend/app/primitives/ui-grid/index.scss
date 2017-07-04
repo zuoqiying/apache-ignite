@@ -314,7 +314,7 @@
     .ui-grid-header,
     .ui-grid-viewport {
         .ui-grid-icon-cancel {
-            right: 20px;
+            right: 10px;
         }
 
         .ui-grid-tree-base-row-header-buttons {
@@ -374,6 +374,12 @@
                     border-left: 1px solid white;
                 }
             }
+        }
+    }
+
+    .ui-grid-header--subcategories {
+        .ui-grid-icon-cancel {
+            right: 20px;
         }
     }
 
