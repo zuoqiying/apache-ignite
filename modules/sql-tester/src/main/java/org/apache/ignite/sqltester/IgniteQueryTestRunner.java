@@ -12,6 +12,8 @@ public class IgniteQueryTestRunner implements QueryTestRunner {
 
     private final String type = "ignite";
 
+    private Ignite ignite;
+
     @Override public String getType() {
         return type;
     }
@@ -20,7 +22,7 @@ public class IgniteQueryTestRunner implements QueryTestRunner {
         String cfgPath = F.isEmpty(cfg.getProperties()) ? "ignite-localhost-config.xml" :
                 (String) cfg.getProperties().get("igniteCfgPath");
 
-        Ignite ignite = Ignition.start(cfgPath);
+        ignite = Ignition.start(cfgPath);
     }
 
     @Override public String driverClassName() {
@@ -28,6 +30,6 @@ public class IgniteQueryTestRunner implements QueryTestRunner {
     }
 
     @Override public void afterTest() {
-
+        ignite.close();
     }
 }
