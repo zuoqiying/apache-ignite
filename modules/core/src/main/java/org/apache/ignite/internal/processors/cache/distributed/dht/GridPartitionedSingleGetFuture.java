@@ -248,7 +248,9 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
 
                             assert F.isEmpty(infos) || infos.size() == 1 : infos;
 
-                            setResult(F.first(infos));
+                            GridCacheEntryInfo info = F.first(infos);
+                            GridPartitionedSingleGetFuture.this.cacheHit = (info != null)? info.isCacheHit(): false;
+                            setResult(info);
                         }
                         catch (Exception e) {
                             U.error(log, "Failed to get values from dht cache [fut=" + fut + "]", e);
@@ -421,8 +423,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                             colocated.removeEntry(entry);
                     }
                     else {
-                        if (!skipVals && cctx.config().isStatisticsEnabled())
-                            cctx.cache().metrics0().onRead(true);
+                        cacheHit = true;
 
                         if (!skipVals)
                             setResult(v, ver);
@@ -437,8 +438,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
 
                 // Entry not found, complete future with null result if topology did not change and there is no store.
                 if (!cctx.readThroughConfigured() && (topStable || partitionOwned(part))) {
-                    if (!skipVals && cctx.config().isStatisticsEnabled())
-                        colocated.metrics0().onRead(false);
+                    cacheHit = false;
 
                     if (skipVals)
                         setSkipValueResult(false, null);
@@ -738,6 +738,15 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                 cctx.mvcc().removeFuture(futId);
 
             cctx.dht().sendTtlUpdateRequest(expiryPlc);
+
+            if (err == null) {
+                final boolean isStatEnabled = cctx.config().isStatisticsEnabled();
+                if (isStatEnabled && !skipVals) {
+                    final boolean cacheHit = (res != null)? this.cacheHit: false;
+                    cctx.cache().metrics0().addGetTimeNanos(duration());
+                    cctx.cache().metrics0().onRead(cacheHit);
+                }
+            }
 
             return true;
         }

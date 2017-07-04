@@ -477,6 +477,7 @@ public final class GridDhtGetFuture<K, V> extends GridCompoundIdentityFuture<Col
             info.version(val.version());
             info.expireTime(val.expireTime());
             info.ttl(val.ttl());
+            info.setCacheHit(val.cacheHit());
 
             infos.add(info);
         }
