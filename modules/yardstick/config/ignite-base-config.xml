@@ -49,6 +49,42 @@
                 </bean>
 
                 <bean class="org.apache.ignite.configuration.CacheConfiguration">
+                    <property name="name" value="tx-0"/>
+
+                    <property name="cacheMode" value="PARTITIONED"/>
+
+                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+
+                </bean>
+
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
+                    <property name="name" value="tx-1"/>
+
+                    <property name="cacheMode" value="PARTITIONED"/>
+
+                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+
+                </bean>
+
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
+                    <property name="name" value="tx-2"/>
+
+                    <property name="cacheMode" value="PARTITIONED"/>
+
+                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+
+                </bean>
+
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
+                    <property name="name" value="tx-3"/>
+
+                    <property name="cacheMode" value="PARTITIONED"/>
+
+                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+
+                </bean>
+
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
                     <property name="name" value="atomic-index"/>
 
                     <property name="cacheMode" value="PARTITIONED"/>

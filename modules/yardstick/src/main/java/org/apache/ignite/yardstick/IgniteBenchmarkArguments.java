@@ -198,6 +198,18 @@ public class IgniteBenchmarkArguments {
     private int pageSize = MemoryConfiguration.DFLT_PAGE_SIZE;
 
     /** */
+    @Parameter(names = {"-sl", "--stringLength"}, description = "Test string length")
+    private int stringLength = 12;
+
+    /** */
+    @Parameter(names = {"-wt", "--warningTime"}, description = "Warning time interval for printing log")
+    private long warningTime = 500;
+
+    /** */
+    @Parameter(names = {"-prb", "--printRollBacks"}, description = "Print rollBacks")
+    private boolean printRollBacks;
+
+    /** */
     @Parameter(names = {"-cg", "--cacheGrp"}, description = "Cache group for caches")
     private String cacheGrp;
 
@@ -462,6 +474,27 @@ public class IgniteBenchmarkArguments {
      */
     public int getPageSize() {
         return pageSize;
+    }
+
+    /**
+     * @return Test string length.
+     */
+    public int getStringLength() {
+        return stringLength;
+    }
+
+    /**
+     * @return Warning time interval.
+     */
+    public long getWarningTime() {
+        return warningTime;
+    }
+
+    /**
+     * @return Flag for printing rollbacks.
+     */
+    public boolean printRollBacks() {
+        return printRollBacks;
     }
 
     /**
