@@ -326,7 +326,7 @@ public class VisorCacheConfiguration extends VisorDataTransferObject {
         return statisticsEnabled;
     }
 
-    /**eagerTtl
+    /**
      * @return Whether management is enabled.
      */
     public boolean isManagementEnabled() {
