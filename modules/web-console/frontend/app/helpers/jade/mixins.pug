@@ -17,10 +17,10 @@
 include ./form
 include ../../primitives/btn-group/index
 include ../../primitives/datepicker/index
+include ../../primitives/timepicker/index
 include ../../primitives/dropdown/index
 include ../../primitives/tooltip/index
-include ../../primitives/ui-grid-settings/index
-include ../../primitives/switch/index
+include ../../primitives/switcher/index
 
 //- Mixin for advanced options toggle.
 mixin advanced-options-toggle(click, cond, showMessage, hideMessage)
@@ -498,7 +498,7 @@ mixin evictionPolicy(model, name, enabled, required, tip)
             {value: "LRU", label: "LRU"},\
             {value: "FIFO", label: "FIFO"},\
             {value: "SORTED", label: "Sorted"},\
-            {value: undefined, label: "Not set"}\
+            {value: null, label: "Not set"}\
         ]', tip)
     span(ng-show=kind)
         +showHideLink('expanded', 'settings')

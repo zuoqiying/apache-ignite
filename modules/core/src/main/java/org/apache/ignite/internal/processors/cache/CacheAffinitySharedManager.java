@@ -701,8 +701,22 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                 nearCfg = req.nearCacheConfiguration();
             }
             else {
-                startCache = cctx.cacheContext(cacheDesc.cacheId()) == null &&
-                    CU.affinityNode(cctx.localNode(), cacheDesc.groupDescriptor().config().getNodeFilter());
+                // Cache should not be started
+                assert cctx.cacheContext(cacheDesc.cacheId()) == null
+                        : "Starting cache has not null context: " + cacheDesc.cacheName();
+
+                IgniteCacheProxy cacheProxy = cctx.cache().jcacheProxy(req.cacheName());
+
+                // If it has proxy then try to start it
+                if (cacheProxy != null) {
+                    // Cache should be in restarting mode
+                    assert cacheProxy.isRestarting()
+                            : "Cache has non restarting proxy " + cacheProxy;
+
+                    startCache = true;
+                }
+                else
+                    startCache = CU.affinityNode(cctx.localNode(), cacheDesc.groupDescriptor().config().getNodeFilter());
             }
 
             try {
@@ -758,17 +772,36 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
         for (ExchangeActions.ActionData action : exchActions.cacheStopRequests())
             cctx.cache().blockGateway(action.request().cacheName(), true, action.request().restart());
 
-        for (CacheGroupDescriptor grpDesc : exchActions.cacheGroupsToStop())
-            cctx.exchange().clearClientTopology(grpDesc.groupId());
+        for (ExchangeActions.CacheGroupActionData action : exchActions.cacheGroupsToStop()) {
+            cctx.exchange().clearClientTopology(action.descriptor().groupId());
+
+            CacheGroupContext gctx = cctx.cache().cacheGroup(action.descriptor().groupId());
+
+            if (gctx != null) {
+                IgniteCheckedException ex;
+
+                String msg = "Failed to wait for topology update, cache group is stopping.";
+
+                // If snapshot operation in progress we must throw CacheStoppedException
+                // for correct cache proxy restart. For more details see
+                // IgniteCacheProxy.cacheException()
+                if (cctx.cache().context().snapshot().snapshotOperationInProgress())
+                    ex = new CacheStoppedException(msg);
+                else
+                    ex = new IgniteCheckedException(msg);
+
+                gctx.affinity().cancelFutures(ex);
+            }
+        }
 
         Set<Integer> stoppedGrps = null;
 
         if (crd && lateAffAssign) {
-            for (CacheGroupDescriptor grpDesc : exchActions.cacheGroupsToStop()) {
-                if (grpDesc.config().getCacheMode() != LOCAL) {
-                    CacheGroupHolder cacheGrp = grpHolders.remove(grpDesc.groupId());
+            for (ExchangeActions.CacheGroupActionData data : exchActions.cacheGroupsToStop()) {
+                if (data.descriptor().config().getCacheMode() != LOCAL) {
+                    CacheGroupHolder cacheGrp = grpHolders.remove(data.descriptor().groupId());
 
-                    assert cacheGrp != null : grpDesc;
+                    assert cacheGrp != null : data.descriptor();
 
                     if (stoppedGrps == null)
                         stoppedGrps = new HashSet<>();
@@ -2237,7 +2270,7 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
                 if (!registeredGrps.containsKey(grpDesc.groupId()))
                     registeredGrps.put(grpDesc.groupId(), grpDesc);
 
-                if (!registeredCaches.containsKey(desc.cacheName()))
+                if (!registeredCaches.containsKey(desc.cacheId()))
                     registeredCaches.put(desc.cacheId(), desc);
             }
         }
@@ -2246,14 +2279,14 @@ public class CacheAffinitySharedManager<K, V> extends GridCacheSharedManagerAdap
          * @param exchActions Exchange actions.
          */
         void updateCachesInfo(ExchangeActions exchActions) {
-            for (CacheGroupDescriptor stopDesc : exchActions.cacheGroupsToStop()) {
-                CacheGroupDescriptor rmvd = registeredGrps.remove(stopDesc.groupId());
+            for (ExchangeActions.CacheGroupActionData stopAction : exchActions.cacheGroupsToStop()) {
+                CacheGroupDescriptor rmvd = registeredGrps.remove(stopAction.descriptor().groupId());
 
-                assert rmvd != null : stopDesc.cacheOrGroupName();
+                assert rmvd != null : stopAction.descriptor().cacheOrGroupName();
             }
 
-            for (CacheGroupDescriptor startDesc : exchActions.cacheGroupsToStart()) {
-                CacheGroupDescriptor old = registeredGrps.put(startDesc.groupId(), startDesc);
+            for (ExchangeActions.CacheGroupActionData startAction : exchActions.cacheGroupsToStart()) {
+                CacheGroupDescriptor old = registeredGrps.put(startAction.descriptor().groupId(), startAction.descriptor());
 
                 assert old == null : old;
             }

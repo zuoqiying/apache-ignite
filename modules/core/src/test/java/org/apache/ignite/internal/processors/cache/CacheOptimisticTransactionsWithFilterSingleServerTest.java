@@ -15,18 +15,14 @@
  * limitations under the License.
  */
 
-export default function pcbProtectFromBsSelectRender() {
-    return {
-        link(scope, el, attr, ctrl) {
-            const {$render} = ctrl;
+package org.apache.ignite.internal.processors.cache;
 
-            Object.defineProperty(ctrl, '$render', {
-                set() {},
-                get() {
-                    return $render;
-                }
-            });
-        },
-        require: 'ngModel'
-    };
+/**
+ *
+ */
+public class CacheOptimisticTransactionsWithFilterSingleServerTest extends CacheOptimisticTransactionsWithFilterTest {
+    /** {@inheritDoc} */
+    @Override protected int serversNumber() {
+        return 1;
+    }
 }

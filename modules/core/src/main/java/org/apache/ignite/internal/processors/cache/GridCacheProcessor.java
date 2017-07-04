@@ -692,8 +692,16 @@ public class GridCacheProcessor extends GridProcessorAdapter {
         for (GridCacheSharedManager mgr : sharedCtx.managers())
             mgr.start(sharedCtx);
 
-        if (ctx.config().isDaemon())
+        if (ctx.config().isDaemon()) {
+            ctx.state().cacheProcessorStarted(new CacheJoinNodeDiscoveryData(
+                IgniteUuid.randomUuid(),
+                Collections.<String, CacheInfo>emptyMap(),
+                Collections.<String, CacheInfo>emptyMap(),
+                false
+            ));
+
             return;
+        }
 
         Map<String, CacheInfo> caches = new HashMap<>();
 
@@ -1202,10 +1210,17 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         cacheCtx.onStarted();
 
+        String memPlcName = cfg.getMemoryPolicyName();
+
+        if (memPlcName == null
+            && ctx.config().getMemoryConfiguration() != null)
+            memPlcName = ctx.config().getMemoryConfiguration().getDefaultMemoryPolicyName();
+
+
         if (log.isInfoEnabled()) {
             log.info("Started cache [name=" + cfg.getName() +
                 (cfg.getGroupName() != null ? ", group=" + cfg.getGroupName() : "") +
-                ", memoryPolicyName=" + cfg.getMemoryPolicyName() +
+                ", memoryPolicyName=" + memPlcName +
                 ", mode=" + cfg.getCacheMode() +
                 ", atomicity=" + cfg.getAtomicityMode() + ']');
         }
@@ -2102,40 +2117,34 @@ public class GridCacheProcessor extends GridProcessorAdapter {
     public void onExchangeDone(
         AffinityTopologyVersion topVer,
         @Nullable ExchangeActions exchActions,
-        Throwable err
+        @Nullable Throwable err
     ) {
         initCacheProxies(topVer, err);
 
-        if (exchActions != null && exchActions.systemCachesStarting() && exchActions.newClusterState() == null)
+        if (exchActions == null)
+            return;
+
+        if (exchActions.systemCachesStarting() && exchActions.newClusterState() == null)
             ctx.dataStructures().restoreStructuresState(ctx);
 
-        if (exchActions != null && err == null) {
-            Collection<IgniteBiTuple<CacheGroupContext, Boolean>> stoppedGrps = null;
-
-            boolean forceCheckpoint = false;
+        if (err == null) {
+            // Force checkpoint if there is any cache stop request
+            if (exchActions.cacheStopRequests().size() > 0) {
+                try {
+                    sharedCtx.database().waitForCheckpoint("caches stop");
+                }
+                catch (IgniteCheckedException e) {
+                    U.error(log, "Failed to wait for checkpoint finish during cache stop.", e);
+                }
+            }
 
             for (ExchangeActions.ActionData action : exchActions.cacheStopRequests()) {
-                GridCacheContext<?, ?> stopCtx;
-                boolean destroy;
-
-                if (!forceCheckpoint){
-                    try {
-                        sharedCtx.database().waitForCheckpoint("caches stop");
-                    }
-                    catch (IgniteCheckedException e) {
-                        U.error(log, "Failed to wait for checkpoint finish during cache stop.", e);
-                    }
-
-                    forceCheckpoint = true;
-                }
-
                 stopGateway(action.request());
 
                 sharedCtx.database().checkpointReadLock();
 
                 try {
-                    stopCtx = prepareCacheStop(action.request().cacheName(), action.request().destroy());
-                    destroy = action.request().destroy();
+                    prepareCacheStop(action.request().cacheName(), action.request().destroy());
 
                     if (exchActions.newClusterState() == null)
                         ctx.state().onCacheStop(action.request());
@@ -2143,20 +2152,22 @@ public class GridCacheProcessor extends GridProcessorAdapter {
                 finally {
                     sharedCtx.database().checkpointReadUnlock();
                 }
+            }
 
-                if (stopCtx != null && !stopCtx.group().hasCaches()) {
-                    if (stoppedGrps == null)
-                        stoppedGrps = new ArrayList<>();
+            List<IgniteBiTuple<CacheGroupContext, Boolean>> stoppedGroups = new ArrayList<>();
 
-                    stoppedGrps.add(F.t(stopCtx.group(), destroy));
+            for (ExchangeActions.CacheGroupActionData action : exchActions.cacheGroupsToStop()) {
+                Integer groupId = action.descriptor().groupId();
+
+                if (cacheGrps.containsKey(groupId)) {
+                    stoppedGroups.add(F.t(cacheGrps.get(groupId), action.destroy()));
+
+                    stopCacheGroup(groupId);
                 }
             }
 
-            for (CacheGroupDescriptor grpDesc : exchActions.cacheGroupsToStop())
-                stopCacheGroup(grpDesc.groupId());
-
-            if (stoppedGrps != null && !sharedCtx.kernalContext().clientNode())
-                sharedCtx.database().onCacheGroupsStopped(stoppedGrps);
+            if (!sharedCtx.kernalContext().clientNode())
+                sharedCtx.database().onCacheGroupsStopped(stoppedGroups);
         }
     }
 
