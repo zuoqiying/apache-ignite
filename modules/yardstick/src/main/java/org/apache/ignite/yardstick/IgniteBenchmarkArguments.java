@@ -225,6 +225,18 @@ public class IgniteBenchmarkArguments {
     private boolean printRollBacks;
 
     /** */
+    @Parameter(names = {"-sl", "--stringLength"}, description = "Test string length")
+    private int stringLength = 12;
+
+    /** */
+    @Parameter(names = {"-wt", "--warningTime"}, description = "Warning time interval for printing log")
+    private long warningTime = 500;
+
+    /** */
+    @Parameter(names = {"-prb", "--printRollBacks"}, description = "Print rollBacks")
+    private boolean printRollBacks;
+
+    /** */
     @Parameter(names = {"-cg", "--cacheGrp"}, description = "Cache group for caches")
     private String cacheGrp;
 
@@ -519,6 +531,27 @@ public class IgniteBenchmarkArguments {
     }
 
     /**
+     * @return Test string length.
+     */
+    public int getStringLength() {
+        return stringLength;
+    }
+
+    /**
+     * @return Warning time interval.
+     */
+    public long getWarningTime() {
+        return warningTime;
+    }
+
+    /**
+     * @return Flag for printing rollbacks.
+     */
+    public boolean printRollBacks() {
+        return printRollBacks;
+    }
+
+    /**
      * @return Number of partitioned caches.
      */
     public int partitionedCachesNumber() {
@@ -601,34 +634,6 @@ public class IgniteBenchmarkArguments {
     public String description() {
         return "-nn=" + nodes + "-b=" + backups + "-sm=" + syncMode + "-cl=" + clientOnly + "-nc=" + nearCacheFlag +
             "-txc=" + txConcurrency + "-rd=" + restartDelay + "-rs=" + restartSleep;
-    }
-
-    /**
-     * @return Cache name prefix for caches to be used in {@link IgniteStreamerBenchmark}.
-     */
-    public String streamerCachesPrefix() {
-        return streamerCachesPrefix;
-    }
-
-    /**
-     * @return First cache index for {@link IgniteStreamerBenchmark}.
-     */
-    public int streamerCacheIndex() {
-        return streamerCacheIndex;
-    }
-
-    /**
-     * @return Number of concurrently loaded caches for {@link IgniteStreamerBenchmark}.
-     */
-    public int streamerConcurrentCaches() {
-        return streamerConcurrentCaches;
-    }
-
-    /**
-     * @return Streamer buffer size {@link IgniteStreamerBenchmark} (see {@link IgniteDataStreamer#perNodeBufferSize()}.
-     */
-    public int streamerBufferSize() {
-        return streamerBufSize;
     }
 
     /** {@inheritDoc} */
