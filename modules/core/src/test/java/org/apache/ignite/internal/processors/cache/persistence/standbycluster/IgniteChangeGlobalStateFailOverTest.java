@@ -21,11 +21,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.IgniteInternalFuture;
-import org.apache.ignite.internal.util.typedef.internal.U;
 
 import static java.lang.Thread.sleep;
 import static org.apache.ignite.testframework.GridTestUtils.runAsync;
@@ -144,8 +144,6 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
      * @throws Exception If failed.
      */
     public void testActivateDeActivateOnJoiningNode() throws Exception {
-        fail("https://issues.apache.org/jira/browse/IGNITE-5520");
-
         final Ignite igB1 = backUp(0);
         final Ignite igB2 = backUp(1);
         final Ignite igB3 = backUp(2);
@@ -165,11 +163,15 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
         final AtomicBoolean canAct = new AtomicBoolean(true);
         final AtomicInteger seqIdx = new AtomicInteger(backUpNodes());
 
+        final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+
         try {
             final IgniteInternalFuture<Void> af = runAsync(new Callable<Void>() {
                 @Override public Void call() throws Exception {
                     while (!stop.get()) {
-                        if (canAct.get()) {
+                        rwLock.readLock().lock();
+
+                        try {
                             Ignite ig = randomBackUp(false);
 
                             long start = System.currentTimeMillis();
@@ -184,11 +186,11 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
                                 assertTrue(ign.active());
 
                             canAct.set(false);
+                        }finally {
+                            rwLock.readLock().unlock();
                         }
-                        else
-                            U.sleep(100);
-
                     }
+
                     return null;
                 }
             });
@@ -196,7 +198,9 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
             final IgniteInternalFuture<Void> df = runAsync(new Callable<Void>() {
                 @Override public Void call() throws Exception {
                     while (!stop.get()) {
-                        if (!canAct.get()) {
+                        rwLock.writeLock().lock();
+
+                        try {
                             Ignite ig = randomBackUp(false);
 
                             long start = System.currentTimeMillis();
@@ -211,18 +215,27 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
                                 assertTrue(!ign.active());
 
                             canAct.set(true);
+                        }finally {
+                            rwLock.writeLock().unlock();
                         }
-                        else
-                            U.sleep(100);
                     }
+
                     return null;
                 }
             });
 
             IgniteInternalFuture<Void> jf1 = runAsync(new Callable<Void>() {
                 @Override public Void call() throws Exception {
-                    while (!stop.get())
-                        startBackUp(seqIdx.incrementAndGet());
+                    while (!stop.get()) {
+                        rwLock.readLock().lock();
+
+                        try {
+                            startBackUp(seqIdx.incrementAndGet());
+                        }
+                        finally {
+                            rwLock.readLock().unlock();
+                        }
+                    }
 
                     return null;
                 }
@@ -230,8 +243,16 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
 
             IgniteInternalFuture<Void> jf2 = runAsync(new Callable<Void>() {
                 @Override public Void call() throws Exception {
-                    while (!stop.get())
-                        startBackUp(seqIdx.incrementAndGet());
+                    while (!stop.get()) {
+                        rwLock.readLock().lock();
+
+                        try {
+                            startBackUp(seqIdx.incrementAndGet());
+                        }
+                        finally {
+                            rwLock.readLock().unlock();
+                        }
+                    }
 
                     return null;
                 }
