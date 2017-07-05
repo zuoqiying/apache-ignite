@@ -29,7 +29,6 @@ import org.apache.ignite.transactions.TransactionIsolation;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.ignite.yardstick.cache.IgniteStreamerBenchmark;
 import org.jetbrains.annotations.Nullable;
 
 /**
