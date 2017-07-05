@@ -87,7 +87,11 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
     private final KeyCacheObject key;
 
     /** cache hit */
-    private boolean cacheHit;
+    private final ThreadLocal<Boolean> cacheHit = new ThreadLocal<Boolean>() {
+        @Override protected Boolean initialValue() {
+            return Boolean.TRUE;
+        }
+    };
 
     /** Read through flag. */
     private final boolean readThrough;
@@ -249,7 +253,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                             assert F.isEmpty(infos) || infos.size() == 1 : infos;
 
                             GridCacheEntryInfo info = F.first(infos);
-                            GridPartitionedSingleGetFuture.this.cacheHit = (info != null)? info.isCacheHit(): false;
+                            GridPartitionedSingleGetFuture.this.cacheHit.set((info != null)? info.isCacheHit(): Boolean.FALSE);
                             setResult(info);
                         }
                         catch (Exception e) {
@@ -423,7 +427,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                             colocated.removeEntry(entry);
                     }
                     else {
-                        cacheHit = true;
+                        cacheHit.set(Boolean.TRUE);
 
                         if (!skipVals)
                             setResult(v, ver);
@@ -438,7 +442,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
 
                 // Entry not found, complete future with null result if topology did not change and there is no store.
                 if (!cctx.readThroughConfigured() && (topStable || partitionOwned(part))) {
-                    cacheHit = false;
+                    cacheHit.set(Boolean.FALSE);
 
                     if (skipVals)
                         setSkipValueResult(false, null);
@@ -474,7 +478,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
             return;
 
         Message res0 = res.result();
-        cacheHit = res.cacheHit();
+        cacheHit.set(res.cacheHit());
 
         if (needVer) {
             CacheVersionedValue verVal = (CacheVersionedValue)res0;
@@ -742,7 +746,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
             if (err == null) {
                 final boolean isStatEnabled = cctx.config().isStatisticsEnabled();
                 if (isStatEnabled && !skipVals) {
-                    final boolean cacheHit = (res != null)? this.cacheHit: false;
+                    final boolean cacheHit = (res != null)? this.cacheHit.get(): false;
                     cctx.cache().metrics0().addGetTimeNanos(duration());
                     cctx.cache().metrics0().onRead(cacheHit);
                 }
@@ -762,10 +766,6 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
     /** {@inheritDoc} */
     @Override public void markNotTrackable() {
         // No-op.
-    }
-
-    public boolean cacheHit() {
-        return cacheHit;
     }
 
     /** {@inheritDoc} */
