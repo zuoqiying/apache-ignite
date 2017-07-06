@@ -18,21 +18,38 @@
 package org.apache.ignite.cache.affinity.rendezvous;
 
 import java.io.Externalizable;
+import java.io.File;
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.PrintStream;
 import java.io.Serializable;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteCluster;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cache.affinity.AffinityFunction;
 import org.apache.ignite.cache.affinity.AffinityFunctionContext;
+import org.apache.ignite.cluster.ClusterGroup;
+import org.apache.ignite.cluster.ClusterMetrics;
 import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.cluster.ClusterStartNodeResult;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.events.DiscoveryEvent;
 import org.apache.ignite.events.EventType;
@@ -46,23 +63,14 @@ import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiPredicate;
 import org.apache.ignite.lang.IgniteBiTuple;
+import org.apache.ignite.lang.IgniteFuture;
+import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.resources.LoggerResource;
 import org.apache.ignite.testframework.GridTestNode;
 import org.apache.ignite.testframework.GridTestUtils;
+import org.apache.ignite.testframework.junits.IgniteMock;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
-
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -354,13 +362,17 @@ public class RendezvousAffinityFunctionSimpleBenchmark extends GridCommonAbstrac
     public void testImprovedLog() throws Exception {
         AffinityFunction aff = new RendezvousAffinityFunction(true, 1024);
 
+        GridTestUtils.setFieldValue(aff, "log", log);
+
+        IgniteMockWithLocalNode igniteMock = new IgniteMockWithLocalNode();
+
+        GridTestUtils.setFieldValue(aff, "ignite", igniteMock);
+
         List<ClusterNode> nodes = createBaseNodes(4);
 
+        igniteMock.setLocalNode(nodes.get(1));
+
         assignPartitions(aff, nodes, null, 2, 0);
-
-        List<List<ClusterNode>> lst = assignPartitions(aff, nodes, null, 2, 1).get2();
-
-        List<List<Integer>> dist = freqDistribution(lst, nodes);
     }
 
     /**
@@ -1064,6 +1076,225 @@ public class RendezvousAffinityFunctionSimpleBenchmark extends GridCommonAbstrac
                 return o1.get1() < o2.get1() ? -1 : o1.get1() > o2.get1() ? 1 :
                     o1.get2().id().compareTo(o2.get2().id());
             }
+        }
+    }
+
+    /**
+     *
+     */
+    static class IgniteMockWithLocalNode extends IgniteMock {
+        /** Local node. */
+        ClusterNode localNode;
+
+        /**
+         *
+         */
+        IgniteMockWithLocalNode() {
+            super(null, null, null, null, null, null, null);
+        }
+
+        /**
+         * @param localNode Local node.
+         */
+        void setLocalNode(ClusterNode localNode) {
+            this.localNode = localNode;
+        }
+
+        /** {@inheritDoc} */
+        @Override public IgniteCluster cluster() {
+            return new IgniteCluster() {
+                @Override public ClusterNode localNode() {
+                    return localNode;
+                }
+
+                @Override public ClusterGroup forLocal() {
+                    return null;
+                }
+
+                @Override public <K, V> ConcurrentMap<K, V> nodeLocalMap() {
+                    return null;
+                }
+
+                @Override public boolean pingNode(UUID nodeId) {
+                    return false;
+                }
+
+                @Override public long topologyVersion() {
+                    return 0;
+                }
+
+                @Override public Collection<ClusterNode> topology(long topVer) throws UnsupportedOperationException {
+                    return null;
+                }
+
+                @Override public Collection<ClusterStartNodeResult> startNodes(File file, boolean restart, int timeout,
+                    int maxConn) throws IgniteException {
+                    return null;
+                }
+
+                @Override
+                public IgniteFuture<Collection<ClusterStartNodeResult>> startNodesAsync(File file, boolean restart,
+                    int timeout,
+                    int maxConn) throws IgniteException {
+                    return null;
+                }
+
+                @Override public Collection<ClusterStartNodeResult> startNodes(Collection<Map<String, Object>> hosts,
+                    @Nullable Map<String, Object> dflts, boolean restart, int timeout, int maxConn) throws IgniteException {
+                    return null;
+                }
+
+                @Override
+                public IgniteFuture<Collection<ClusterStartNodeResult>> startNodesAsync(
+                    Collection<Map<String, Object>> hosts,
+                    @Nullable Map<String, Object> dflts, boolean restart, int timeout, int maxConn) throws IgniteException {
+                    return null;
+                }
+
+                @Override public void stopNodes() throws IgniteException {
+
+                }
+
+                @Override public void stopNodes(Collection<UUID> ids) throws IgniteException {
+
+                }
+
+                @Override public void restartNodes() throws IgniteException {
+
+                }
+
+                @Override public void restartNodes(Collection<UUID> ids) throws IgniteException {
+
+                }
+
+                @Override public void resetMetrics() {
+
+                }
+
+                @Nullable @Override public IgniteFuture<?> clientReconnectFuture() {
+                    return null;
+                }
+
+                @Override public IgniteCluster withAsync() {
+                    return null;
+                }
+
+                @Override public Ignite ignite() {
+                    return null;
+                }
+
+                @Override public ClusterGroup forNodes(Collection<? extends ClusterNode> nodes) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forNode(ClusterNode node, ClusterNode... nodes) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forOthers(ClusterNode node, ClusterNode... nodes) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forOthers(ClusterGroup prj) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forNodeIds(Collection<UUID> ids) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forNodeId(UUID id, UUID... ids) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forPredicate(IgnitePredicate<ClusterNode> p) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forAttribute(String name, @Nullable Object val) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forServers() {
+                    return null;
+                }
+
+                @Override public ClusterGroup forClients() {
+                    return null;
+                }
+
+                @Override public ClusterGroup forCacheNodes(String cacheName) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forDataNodes(String cacheName) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forClientNodes(String cacheName) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forRemotes() {
+                    return null;
+                }
+
+                @Override public ClusterGroup forHost(ClusterNode node) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forHost(String host, String... hosts) {
+                    return null;
+                }
+
+                @Override public ClusterGroup forDaemons() {
+                    return null;
+                }
+
+                @Override public ClusterGroup forRandom() {
+                    return null;
+                }
+
+                @Override public ClusterGroup forOldest() {
+                    return null;
+                }
+
+                @Override public ClusterGroup forYoungest() {
+                    return null;
+                }
+
+                @Override public Collection<ClusterNode> nodes() {
+                    return null;
+                }
+
+                @Override public ClusterNode node(UUID nid) {
+                    return null;
+                }
+
+                @Override public ClusterNode node() {
+                    return null;
+                }
+
+                @Override public Collection<String> hostNames() {
+                    return null;
+                }
+
+                @Override public IgnitePredicate<ClusterNode> predicate() {
+                    return null;
+                }
+
+                @Override public ClusterMetrics metrics() throws IgniteException {
+                    return null;
+                }
+
+                @Override public boolean isAsync() {
+                    return false;
+                }
+
+                @Override public <R> IgniteFuture<R> future() {
+                    return null;
+                }
+            };
         }
     }
 }

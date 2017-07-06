@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cache.affinity.AffinityFunction;
 import org.apache.ignite.cache.affinity.AffinityFunctionContext;
@@ -42,7 +43,7 @@ import org.apache.ignite.internal.util.typedef.internal.LT;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiPredicate;
 import org.apache.ignite.lang.IgniteBiTuple;
-import org.apache.ignite.logger.log4j.Log4JLogger;
+import org.apache.ignite.resources.IgniteInstanceResource;
 import org.apache.ignite.resources.LoggerResource;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +102,10 @@ public class RendezvousAffinityFunction implements AffinityFunction, Serializabl
     /** Logger instance. */
     @LoggerResource
     private transient IgniteLogger log;
+
+    /** Ignite instance. */
+    @IgniteInstanceResource
+    private transient Ignite ignite;
 
     /**
      * Empty constructor with all defaults.
@@ -169,7 +174,6 @@ public class RendezvousAffinityFunction implements AffinityFunction, Serializabl
         setPartitions(parts);
 
         this.backupFilter = backupFilter;
-        this.log = new Log4JLogger().getLogger(RendezvousAffinityFunction.class);
     }
 
     /**
