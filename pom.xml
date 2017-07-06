@@ -93,6 +93,7 @@
         <module>modules/kubernetes</module>
         <module>modules/zeromq</module>
         <module>modules/rocketmq</module>
+        <module>modules/sql-tester</module>
     </modules>
 
     <profiles>

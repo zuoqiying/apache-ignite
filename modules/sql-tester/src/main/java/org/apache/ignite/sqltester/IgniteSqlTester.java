@@ -179,7 +179,7 @@ public class IgniteSqlTester {
 
                 }
 
-                resultTbl.sort(new Comparator<ArrayList<String>>() {
+                Collections.sort(resultTbl, new Comparator<ArrayList<String>>() {
                     @Override public int compare(ArrayList<String> o1, ArrayList<String> o2) {
                         for (int i = 0; i < o1.size(); i++) {
                             if (o1.get(i).compareTo(o2.get(i)) > 0)
