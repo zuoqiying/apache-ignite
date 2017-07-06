@@ -160,7 +160,6 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
 
         final AtomicBoolean stop = new AtomicBoolean();
 
-        final AtomicBoolean canAct = new AtomicBoolean(true);
         final AtomicInteger seqIdx = new AtomicInteger(backUpNodes());
 
         final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
@@ -184,8 +183,6 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
 
                             for (Ignite ign : allBackUpNodes())
                                 assertTrue(ign.active());
-
-                            canAct.set(false);
                         }finally {
                             rwLock.readLock().unlock();
                         }
@@ -213,8 +210,6 @@ public class IgniteChangeGlobalStateFailOverTest extends IgniteChangeGlobalState
 
                             for (Ignite ign : allBackUpNodes())
                                 assertTrue(!ign.active());
-
-                            canAct.set(true);
                         }finally {
                             rwLock.writeLock().unlock();
                         }
