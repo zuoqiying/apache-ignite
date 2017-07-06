@@ -1833,7 +1833,8 @@ public class GridNearTxLocal extends GridDhtTxLocalAdapter implements AutoClosea
                             }
                         }
 
-                        if (!missed.isEmpty() && cacheCtx.isLocal()) {
+                        //if (!missed.isEmpty() && cacheCtx.isLocal()) {
+                        if (!missed.isEmpty()) {
                             AffinityTopologyVersion topVer = topologyVersionSnapshot();
 
                             if (topVer == null)
