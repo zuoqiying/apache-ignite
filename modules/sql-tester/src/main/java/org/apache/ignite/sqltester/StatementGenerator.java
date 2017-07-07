@@ -422,7 +422,7 @@ public class StatementGenerator {
 
                         }
                     }
-                    else 
+                    else
                         throw new IgniteCheckedException("Iterator syntax error: unknown Class method " + methodName);
 
                 }
