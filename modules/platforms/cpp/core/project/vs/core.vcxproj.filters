@@ -237,6 +237,15 @@
     <ClInclude Include="..\..\include\ignite\impl\compute\compute_task_holder.h">
       <Filter>Code\impl\compute</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\ignite\cluster\cluster.h">
+      <Filter>Code\cluster</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\ignite\cluster\cluster_node.h">
+      <Filter>Code\cluster</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\ignite\impl\cluster\cluster_impl.h">
+      <Filter>Code\impl\cluster</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Code">
@@ -289,6 +298,9 @@
     </Filter>
     <Filter Include="Code\impl\compute">
       <UniqueIdentifier>{ef20cfe1-cd30-429d-a241-575696df8399}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Code\cluster">
+      <UniqueIdentifier>{95c69df8-2f25-4eb7-81eb-b54cbd0a5a8c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

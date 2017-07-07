@@ -38,6 +38,8 @@ nobase_include_HEADERS = \
 	ignite/cache/query/query_text.h \
 	ignite/compute/compute.h \
 	ignite/compute/compute_func.h \
+	ignite/cluster/cluster.h \
+	ignite/cluster/cluster_node.h \
 	ignite/ignite.h \
 	ignite/ignite_binding.h \
 	ignite/ignite_binding_context.h \
@@ -56,6 +58,7 @@ nobase_include_HEADERS = \
 	ignite/impl/cache/query/query_fields_row_impl.h \
 	ignite/impl/cache/query/query_impl.h \
 	ignite/impl/cluster/cluster_group_impl.h \
+	ignite/impl/cluster/cluster_impl.h \
 	ignite/impl/compute/cancelable_impl.h \
 	ignite/impl/compute/compute_impl.h \
 	ignite/impl/compute/compute_job_holder.h \

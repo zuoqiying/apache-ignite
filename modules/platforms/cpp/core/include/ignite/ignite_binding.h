@@ -161,7 +161,7 @@ namespace ignite
         }
 
     private:
-        /** Registered cache entry processors. */
+        /** Implementation. */
         common::concurrent::SharedPointer<impl::IgniteBindingImpl> impl;
     };
 }
