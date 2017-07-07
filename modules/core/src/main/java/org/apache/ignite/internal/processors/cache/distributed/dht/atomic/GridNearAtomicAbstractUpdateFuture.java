@@ -350,4 +350,11 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
             "topLocked", topLocked, "remapCnt", remapCnt, "resCnt", resCnt, "err", err,
             "parent", super.toString());
     }
+
+    /**
+     * @return last operation result.
+     */
+    public GridCacheReturn getLastOpResult() {
+        return opRes;
+    }
 }

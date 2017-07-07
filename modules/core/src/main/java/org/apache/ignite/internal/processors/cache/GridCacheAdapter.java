@@ -1942,7 +1942,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                                     null,
                                     ctx.isSwapOrOffheapEnabled(),
                                     /*unmarshal*/true,
-                                    updateMetrics,
+                                    false/*updateMetrics*/,
                                     evt,
                                     subjId,
                                     null,
@@ -2273,9 +2273,6 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
      */
     public boolean put(final K key, final V val, final CacheEntryPredicate filter)
         throws IgniteCheckedException {
-        boolean statsEnabled = ctx.config().isStatisticsEnabled();
-
-        long start = statsEnabled ? System.nanoTime() : 0L;
 
         A.notNull(key, "key", val, "val");
 
@@ -2283,9 +2280,6 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
             validateCacheKey(key);
 
         boolean stored = put0(key, val, filter);
-
-        if (statsEnabled && stored)
-            metrics0().addPutTimeNanos(System.nanoTime() - start);
 
         return stored;
     }
@@ -2711,17 +2705,10 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
         if (F.isEmpty(m))
             return;
 
-        boolean statsEnabled = ctx.config().isStatisticsEnabled();
-
-        long start = statsEnabled ? System.nanoTime() : 0L;
-
         if (keyCheck)
             validateCacheKeys(m.keySet());
 
         putAll0(m);
-
-        if (statsEnabled)
-            metrics0().addPutTimeNanos(System.nanoTime() - start);
     }
 
     /**
@@ -2974,19 +2961,12 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
      * @throws IgniteCheckedException If failed.
      */
     public boolean remove(final K key, @Nullable CacheEntryPredicate filter) throws IgniteCheckedException {
-        boolean statsEnabled = ctx.config().isStatisticsEnabled();
-
-        long start = statsEnabled ? System.nanoTime() : 0L;
-
         A.notNull(key, "key");
 
         if (keyCheck)
             validateCacheKey(key);
 
         boolean rmv = remove0(key, filter);
-
-        if (statsEnabled && rmv)
-            metrics0().addRemoveTimeNanos(System.nanoTime() - start);
 
         return rmv;
     }
