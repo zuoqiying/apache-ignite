@@ -155,6 +155,7 @@ public class GridNearSingleGetResponse extends GridCacheMessage implements GridC
     public void setCacheHit(boolean cacheHit) {
         if (cacheHit)
             flags = (byte)(flags | CACHE_HIT_FLAG_MASK);
+
         else
             flags = (byte)(flags & ~CACHE_HIT_FLAG_MASK);
     }

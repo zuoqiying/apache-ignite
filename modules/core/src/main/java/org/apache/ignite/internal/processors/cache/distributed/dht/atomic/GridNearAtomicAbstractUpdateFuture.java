@@ -352,9 +352,9 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
     }
 
     /**
-     * @return last operation result.
+     * @return Last operation result.
      */
-    public GridCacheReturn getLastOpResult() {
+    public GridCacheReturn lastOpResult() {
         return opRes;
     }
 }

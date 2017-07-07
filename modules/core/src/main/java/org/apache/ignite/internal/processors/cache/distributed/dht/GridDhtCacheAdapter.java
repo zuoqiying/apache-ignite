@@ -806,11 +806,13 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
                             false,
                             req.addDeploymentInfo());
 
-                        if (info != null && req.skipValues())
-                            res.setContainsValue();
-
-                        if (info != null)
+                        if (info != null) {
                             res.setCacheHit(info.isCacheHit());
+
+                            if (req.skipValues())
+                                res.containsValue();
+                        }
+
                     }
                     else {
                         AffinityTopologyVersion topVer = ctx.shared().exchange().readyAffinityVersion();

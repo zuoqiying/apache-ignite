@@ -1917,7 +1917,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
                             if (storeEnabled) {
                                 res = entry.innerGetAndReserveForLoad(ctx.isSwapOrOffheapEnabled(),
-                                    false/*updateMetrics*/,
+                                    /*updateMetrics*/false,
                                     evt,
                                     subjId,
                                     taskName,
@@ -1942,7 +1942,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                                     null,
                                     ctx.isSwapOrOffheapEnabled(),
                                     /*unmarshal*/true,
-                                    false/*updateMetrics*/,
+                                    /*updateMetrics*/false,
                                     evt,
                                     subjId,
                                     null,
@@ -2023,6 +2023,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                                                 // Don't put key-value pair into result map if value is null.
                                                 if (verVal.value() != null) {
                                                     verVal.cacheHit(false);
+
                                                     ctx.addResult(map,
                                                         key,
                                                         verVal,

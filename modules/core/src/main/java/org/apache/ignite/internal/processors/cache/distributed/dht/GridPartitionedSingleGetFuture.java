@@ -86,7 +86,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
     /** Key. */
     private final KeyCacheObject key;
 
-    /** cache hit */
+    /** Cache hit. */
     private boolean cacheHit;
 
     /** Read through flag. */
@@ -249,7 +249,9 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                             assert F.isEmpty(infos) || infos.size() == 1 : infos;
 
                             GridCacheEntryInfo info = F.first(infos);
+
                             GridPartitionedSingleGetFuture.this.cacheHit = ((info != null)? info.isCacheHit(): false);
+
                             setResult(info);
                         }
                         catch (Exception e) {
@@ -474,6 +476,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
             return;
 
         Message res0 = res.result();
+
         cacheHit = res.cacheHit();
 
         if (needVer) {
@@ -755,6 +758,9 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
         // No-op.
     }
 
+    /**
+     * @return Cache hit flag.
+     */
     public boolean cacheHit() {
         return cacheHit;
     }

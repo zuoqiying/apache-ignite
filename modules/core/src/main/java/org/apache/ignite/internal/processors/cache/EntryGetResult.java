@@ -97,14 +97,14 @@ public class EntryGetResult {
     }
 
     /**
-     * @return CacheHit flag.
+     * @return Cache Hit flag.
      */
     public boolean cacheHit() {
         return cacheHit;
     }
 
     /**
-     * @param cacheHit CacheHit flag.
+     * @param cacheHit Cache Hit flag.
      */
     public void cacheHit(boolean cacheHit) {
         this.cacheHit = cacheHit;

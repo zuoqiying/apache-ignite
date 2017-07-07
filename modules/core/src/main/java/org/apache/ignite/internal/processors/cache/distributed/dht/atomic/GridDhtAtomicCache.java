@@ -93,7 +93,6 @@ import org.apache.ignite.internal.util.typedef.CO;
 import org.apache.ignite.internal.util.typedef.CX1;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.P1;
-import org.apache.ignite.internal.util.typedef.T2;
 import org.apache.ignite.internal.util.typedef.X;
 import org.apache.ignite.internal.util.typedef.internal.A;
 import org.apache.ignite.internal.util.typedef.internal.CU;
@@ -1159,8 +1158,11 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
         int taskNameHash = ctx.kernalContext().job().currentTaskNameHash();
 
-        final Collection<?> keys = map != null ? map.keySet() : invokeMap != null ? invokeMap.keySet() : conflictPutMap != null ?
+        final Collection<?> keys = map != null ? map.keySet() : invokeMap != null ?
+            invokeMap.keySet() : conflictPutMap != null ?
             conflictPutMap.keySet() : conflictRmvMap.keySet();
+
+        final Collection<?> values = map != null ? map.values() : invokeMap != null ? invokeMap.values() : null;
 
         final GridNearAtomicUpdateFuture updateFut = new GridNearAtomicUpdateFuture(
             ctx,
@@ -1168,7 +1170,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             ctx.config().getWriteSynchronizationMode(),
             op,
             keys,
-            map != null ? map.values() : invokeMap != null ? invokeMap.values() : null,
+            values,
             invokeArgs,
             (Collection)(conflictPutMap != null ? conflictPutMap.values() : null),
             conflictRmvMap != null ? conflictRmvMap.values() : null,
@@ -1187,8 +1189,11 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             updateFut.listen(new CI1<IgniteInternalFuture<?>>() {
                 @Override public void apply(IgniteInternalFuture<?> f) {
                     if (f.error() == null || X.hasCause(f.error(), CachePartialUpdateCheckedException.class)) {
-                        CachePartialUpdateCheckedException partialUpdate = X.cause(f.error(), CachePartialUpdateCheckedException.class);
-                        final int numOfUpdates = (partialUpdate == null) ? keys.size() : keys.size() - partialUpdate.failedKeys().size();
+                        CachePartialUpdateCheckedException partialUpdate = X.cause(
+                            f.error(), CachePartialUpdateCheckedException.class);
+
+                        final int numOfUpdates = (partialUpdate == null) ?
+                            keys.size() : keys.size() - partialUpdate.failedKeys().size();
 
                         if (numOfUpdates > 0) {
                             for (int i = 0; i < numOfUpdates; ++i)
@@ -1254,20 +1259,18 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         if (ctx.config().isStatisticsEnabled()) {
             updateFut.listen(new CI1<IgniteInternalFuture<?>>() {
                 @Override public void apply(IgniteInternalFuture<?> f) {
-                    try {
-                        Object val = f.get();
-
+                    if (f.error() == null) {
                         metrics0().onWrite();
+
                         if (retval || ctx.putIfAbsentFilter(CU.filterArray(filter))) {
                             // getAndPut || pufIfAbsent
                             metrics0().onRead(val != null);
+
+                            // check!!!
                             metrics0().addPutAndGetTimeNanos(f.duration());
                         }
                         else
                             metrics0().addPutTimeNanos(f.duration());
-                    }
-                    catch (IgniteCheckedException ignore) {
-                        // No-op.
                     }
                 }
             });
@@ -1319,8 +1322,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     try {
                         Object val = f.get();
 
-                        GridNearAtomicAbstractUpdateFuture f1 = (GridNearAtomicAbstractUpdateFuture) f;
-                        GridCacheReturn opRes = ((GridNearAtomicAbstractUpdateFuture)f).getOpRes();
+                        GridCacheReturn opRes = ((GridNearAtomicAbstractUpdateFuture)f).lastOpResult();
 
                         if (!retval) {
                             // remove(key, value)
@@ -1329,13 +1331,16 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                             if (Boolean.TRUE.equals(val)) {
                                 metrics0().onRemove();
+
                                 metrics0().addRemoveTimeNanos(f.duration());
                             }
                         }
                         else {
                             // getAndRemove(key)
                             metrics0().onRead(val != null);
+
                             metrics0().onRemove();
+
                             metrics0().addRemoveTimeNanos(f.duration());
                         }
                     }
@@ -1617,11 +1622,15 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                         Object val = f.get();
 
                         boolean cacheHit = false;
+
                         if (val != null) {
-                            assert (f instanceof GridPartitionedSingleGetFuture) == true;
+                            assert f instanceof GridPartitionedSingleGetFuture;
+
                             cacheHit = ((GridPartitionedSingleGetFuture)f).cacheHit();
                         }
+
                         metrics0().addGetTimeNanos(f.duration());
+
                         metrics0().onRead(cacheHit);
                     }
                     catch (IgniteCheckedException e) {
@@ -2594,7 +2603,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     req.keepBinary(),
                     expiry,
                     true,
-                    false,
+                    /*metricsUpdate*/false,
                     primary,
                     ctx.config().getAtomicWriteOrderMode() == CLOCK, // Check version in CLOCK mode on primary node.
                     topVer,
