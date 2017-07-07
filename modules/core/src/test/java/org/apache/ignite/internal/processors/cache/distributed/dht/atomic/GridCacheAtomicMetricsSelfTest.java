@@ -56,6 +56,7 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
     public static class TestCacheStore extends CacheStoreAdapter<Integer, Integer> {
         public static final Integer TEST_KEY = new Integer(12);
+
         public static final Integer TEST_VAL = new Integer(144);
 
         public TestCacheStore() {
@@ -138,8 +139,7 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
             IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
 
-            Integer key = new Integer(12);
-            Integer value = cache.get(key);
+            Integer value = cache.get(new Integer(12));
 
             awaitMetricsUpdate(true);
 
@@ -164,8 +164,7 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
             IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
 
-            Integer key = new Integer(12);
-            Integer value = cache.get(key);
+            Integer value = cache.get(new Integer(12));
 
             awaitMetricsUpdate(false);
 
@@ -232,9 +231,7 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
             IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
 
-            Integer key = new Integer(12);
-            Integer val = new Integer(144);
-            cache.put(key, val);
+            cache.put(new Integer(12), new Integer(144));
 
             awaitMetricsUpdate(true);
 
@@ -255,9 +252,7 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
             IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
 
-            Integer key = new Integer(12);
-            Integer val = new Integer(144);
-            cache.put(key, val);
+            cache.put(new Integer(12), new Integer(144));
 
             awaitMetricsUpdate(false);
 
@@ -275,20 +270,78 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
         }
     }
 
+    public void testLocalPutIfAbsent() throws Exception {
+        try {
+            Ignite server = startGrid(SERVER_NODE);
+
+            IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
+
+            boolean success = cache.putIfAbsent(new Integer(12), new Integer(144));
+            success = cache.putIfAbsent(new Integer(12), new Integer(145));
+
+            awaitMetricsUpdate(true);
+
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertFalse(success);
+            assertEquals(1, serverMetrics.getCachePuts());
+            assertEquals(1, serverMetrics.getCacheGets());
+            assertEquals(0, serverMetrics.getCacheHits());
+            assertEquals(1, serverMetrics.getCacheMisses());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testDistributedPutIfAbsent() throws Exception {
+        try {
+            startServerAndClientNodes();
+
+            IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
+
+            boolean success = cache.putIfAbsent(new Integer(12), new Integer(144));
+
+            awaitMetricsUpdate(false);
+
+            ClusterGroup clientGroup = grid(CLIENT_NODE).cluster().forClients();
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics clientMetrics = cache.metrics(clientGroup);
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertFalse(success);
+
+            assertEquals(1, clientMetrics.getCachePuts());
+            assertEquals(1, clientMetrics.getCacheGets());
+            assertEquals(0, clientMetrics.getCacheHits());
+            assertEquals(1, clientMetrics.getCacheMisses());
+
+            assertEquals(0, serverMetrics.getCachePuts());
+            assertEquals(0, serverMetrics.getCacheGets());
+            assertEquals(0, serverMetrics.getCacheHits());
+            assertEquals(0, serverMetrics.getCacheMisses());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
     public void testLocalPutAll() throws Exception {
         try {
             Ignite server = startGrid(SERVER_NODE);
 
             IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
 
-            Integer key1 = new Integer(12);
-            Integer val1 = new Integer(144);
-            Integer key2 = new Integer(13);
-            Integer val2 = new Integer(169);
-            Map<Integer, Integer> vals = new HashMap<>();
-            vals.put(key1, val1);
-            vals.put(key2, val2);
-            cache.putAll(vals);
+            Map<Integer, Integer> values = new HashMap<>();
+
+            values.put(new Integer(12), new Integer(144));
+
+            values.put(new Integer(13), new Integer(169));
+
+            cache.putAll(values);
 
             awaitMetricsUpdate(true);
 
@@ -309,14 +362,13 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
             IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
 
-            Integer key1 = new Integer(12);
-            Integer val1 = new Integer(144);
-            Integer key2 = new Integer(13);
-            Integer val2 = new Integer(169);
-            Map<Integer, Integer> vals = new HashMap<>();
-            vals.put(key1, val1);
-            vals.put(key2, val2);
-            cache.putAll(vals);
+            Map<Integer, Integer> values = new HashMap<>();
+
+            values.put(new Integer(12), new Integer(144));
+
+            values.put(new Integer(13), new Integer(169));
+
+            cache.putAll(values);
 
             awaitMetricsUpdate(false);
 
@@ -341,9 +393,13 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
             IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
 
             Integer key = new Integer(12);
+
             Integer val = new Integer(144);
+
             cache.remove(key);
+
             cache.put(key, val);
+
             cache.remove(key);
 
             awaitMetricsUpdate(true);
@@ -367,9 +423,13 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
             IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
 
             Integer key = new Integer(12);
+
             Integer val = new Integer(144);
+
             cache.remove(key);
+
             cache.put(key, val);
+
             cache.remove(key);
 
             awaitMetricsUpdate(false);
@@ -398,9 +458,13 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
             IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
 
             Integer key = new Integer(12);
+
             Integer val = new Integer(144);
+
             cache.remove(key, val);
+
             cache.put(key, val);
+
             cache.remove(key, val);
 
             awaitMetricsUpdate(true);
@@ -427,9 +491,13 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
             IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
 
             Integer key = new Integer(12);
+
             Integer val = new Integer(144);
+
             cache.remove(key, val);
+
             cache.put(key, val);
+
             cache.remove(key, val);
 
             awaitMetricsUpdate(false);

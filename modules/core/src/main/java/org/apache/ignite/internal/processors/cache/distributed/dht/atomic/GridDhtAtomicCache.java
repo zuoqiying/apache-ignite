@@ -1259,18 +1259,23 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         if (ctx.config().isStatisticsEnabled()) {
             updateFut.listen(new CI1<IgniteInternalFuture<?>>() {
                 @Override public void apply(IgniteInternalFuture<?> f) {
-                    if (f.error() == null) {
+                    try {
+                        Object returnedVal = f.get();
+
                         metrics0().onWrite();
 
-                        if (retval || ctx.putIfAbsentFilter(CU.filterArray(filter))) {
-                            // getAndPut || pufIfAbsent
-                            metrics0().onRead(val != null);
+                        if (retval || ctx.putIfAbsentFilter(CU.filterArray(filter)))
+                            // TODO: putIfAbsent returns false in case of CacheHit == true
+                            metrics0().onRead(returnedVal != null);
 
-                            // check!!!
-                            metrics0().addPutAndGetTimeNanos(f.duration());
-                        }
-                        else
+                        if (!retval)
                             metrics0().addPutTimeNanos(f.duration());
+
+                        else
+                            metrics0().addPutAndGetTimeNanos(f.duration());
+                    }
+                    catch (IgniteCheckedException ignore) {
+                        // No-op.
                     }
                 }
             });
