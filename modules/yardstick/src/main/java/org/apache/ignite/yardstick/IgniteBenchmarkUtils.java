@@ -36,6 +36,7 @@ import org.apache.ignite.transactions.TransactionIsolation;
 import org.apache.ignite.transactions.TransactionOptimisticException;
 import org.apache.ignite.transactions.TransactionRollbackException;
 import org.apache.ignite.yardstick.cache.IgnitePutBenchmark;
+import org.apache.ignite.yardstick.cache.IgnitePutHashBenchmark;
 import org.yardstickframework.BenchmarkConfiguration;
 import org.yardstickframework.BenchmarkDriver;
 import org.yardstickframework.BenchmarkDriverStartUp;
@@ -110,13 +111,13 @@ public class IgniteBenchmarkUtils {
     public static void main(String[] args) throws Exception {
         final String cfg = "modules/yardstick/config/ignite-localhost-config.xml";
 
-        final Class<? extends BenchmarkDriver> benchmark = IgnitePutBenchmark.class;
+        final Class<? extends BenchmarkDriver> benchmark = IgnitePutHashBenchmark.class;
 
         final int threads = 1;
 
         final boolean clientDriverNode = true;
 
-        final int extraNodes = 1;
+        final int extraNodes = 2;
 
         final int warmUp = 60;
         final int duration = 120;
