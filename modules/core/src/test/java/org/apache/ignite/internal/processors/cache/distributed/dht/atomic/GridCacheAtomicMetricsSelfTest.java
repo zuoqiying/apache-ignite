@@ -277,7 +277,12 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
             IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
 
             boolean success = cache.putIfAbsent(new Integer(12), new Integer(144));
+
+            assertTrue(success);
+
             success = cache.putIfAbsent(new Integer(12), new Integer(145));
+
+            assertFalse(success);
 
             awaitMetricsUpdate(true);
 
@@ -285,11 +290,10 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
             CacheMetrics serverMetrics = cache.metrics(serverGroup);
 
-            assertFalse(success);
             assertEquals(1, serverMetrics.getCachePuts());
-            assertEquals(1, serverMetrics.getCacheGets());
+            assertEquals(0, serverMetrics.getCacheGets());
             assertEquals(0, serverMetrics.getCacheHits());
-            assertEquals(1, serverMetrics.getCacheMisses());
+            assertEquals(0, serverMetrics.getCacheMisses());
         }
         finally {
             stopAllGrids();
@@ -304,6 +308,12 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
             boolean success = cache.putIfAbsent(new Integer(12), new Integer(144));
 
+            assertTrue(success);
+
+            success = cache.putIfAbsent(new Integer(12), new Integer(144));
+
+            assertFalse(success);
+
             awaitMetricsUpdate(false);
 
             ClusterGroup clientGroup = grid(CLIENT_NODE).cluster().forClients();
@@ -312,12 +322,10 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
             CacheMetrics clientMetrics = cache.metrics(clientGroup);
             CacheMetrics serverMetrics = cache.metrics(serverGroup);
 
-            assertFalse(success);
-
             assertEquals(1, clientMetrics.getCachePuts());
-            assertEquals(1, clientMetrics.getCacheGets());
+            assertEquals(0, clientMetrics.getCacheGets());
             assertEquals(0, clientMetrics.getCacheHits());
-            assertEquals(1, clientMetrics.getCacheMisses());
+            assertEquals(0, clientMetrics.getCacheMisses());
 
             assertEquals(0, serverMetrics.getCachePuts());
             assertEquals(0, serverMetrics.getCacheGets());

@@ -1260,19 +1260,25 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             updateFut.listen(new CI1<IgniteInternalFuture<?>>() {
                 @Override public void apply(IgniteInternalFuture<?> f) {
                     try {
-                        Object returnedVal = f.get();
+                        Object rval = f.get();
 
-                        metrics0().onWrite();
+                        if (retval) {
+                            metrics0().onWrite();
 
-                        if (retval || ctx.putIfAbsentFilter(CU.filterArray(filter)))
-                            // TODO: putIfAbsent returns false in case of CacheHit == true
-                            metrics0().onRead(returnedVal != null);
+                            metrics0().onRead(rval != null);
 
-                        if (!retval)
-                            metrics0().addPutTimeNanos(f.duration());
-
-                        else
                             metrics0().addPutAndGetTimeNanos(f.duration());
+                        }
+                        else {
+                            final boolean putMetric = !ctx.putIfAbsentFilter(new CacheEntryPredicate[] {filter})
+                                || Boolean.TRUE.equals(rval);
+
+                            if (putMetric) {
+                                metrics0().onWrite();
+
+                                metrics0().addPutTimeNanos(f.duration());
+                            }
+                        }
                     }
                     catch (IgniteCheckedException ignore) {
                         // No-op.
