@@ -48,7 +48,7 @@ public abstract class JdbcAbstractBenchmark extends IgniteAbstractBenchmark {
     private final List<String> dbqueries = new ArrayList<>();
 
     /** Each connection is also a transaction, so we better pin them to threads. */
-    ThreadLocal<Connection> conn = new ThreadLocal<Connection>() {
+    public ThreadLocal<Connection> conn = new ThreadLocal<Connection>() {
         @Override protected Connection initialValue() {
             Connection conn;
             try {
@@ -191,7 +191,7 @@ public abstract class JdbcAbstractBenchmark extends IgniteAbstractBenchmark {
      * @param tblName target table
      * @throws SQLException if failed
      */
-    void clearTable(String tblName) throws SQLException {
+    public void clearTable(String tblName) throws SQLException {
         try (Connection conn = connection()) {
             try (PreparedStatement stmt = conn.prepareStatement("drop table " + tblName)) {
                 if (!conn.getMetaData().getDatabaseProductName().equals("Ignite Cache"))

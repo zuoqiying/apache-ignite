@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!--
+    Ignite Spring configuration file to startup grid.
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+    <bean id="grid.cfg" class="org.apache.ignite.configuration.IgniteConfiguration">
+        <property name="localHost" value="127.0.0.1"/>
+
+        <property name="peerClassLoadingEnabled" value="false"/>
+
+        <property name="metricsLogFrequency" value="5000"/>
+
+        <property name="memoryConfiguration">
+            <bean class="org.apache.ignite.configuration.MemoryConfiguration">
+                <property name="defaultMemoryPolicySize" value="#{4L * 1024L * 1024L * 1024L}"/>
+            </bean>
+        </property>
+
+        <property name="binaryConfiguration">
+            <bean class="org.apache.ignite.configuration.BinaryConfiguration">
+                <property name="compactFooter" value="false"/>
+            </bean>
+        </property>
+
+        <property name="includeEventTypes">
+            <list/>
+        </property>
+
+        <property name="discoverySpi">
+            <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                <property name="ipFinder">
+                    <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder">
+                        <property name="addresses">
+                            <list>
+                                <value>127.0.0.1:47500..47502</value>
+                            </list>
+                        </property>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+
+        <property name="communicationSpi">
+            <bean class="org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi">
+                <property name="sharedMemoryPort" value="-1"/>
+            </bean>
+        </property>
+
+        <property name="cacheConfiguration">
+            <list>
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
+                    <property name="name" value="DG"/>
+                    <property name="cacheMode" value="PARTITIONED"/>
+                    <property name="atomicityMode" value="TRANSACTIONAL"/>
+                    <property name="writeSynchronizationMode" value="FULL_SYNC"/>
+                   <!-- <property name="sqlFunctionClasses">
+                        <list>
+                            <value>SqlFunctions</value>
+                        </list>
+                    </property>-->
+
+                    <!-- Configure type metadata to enable queries. -->
+                    <property name="queryEntities">
+                        <list>
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="PocsubscrinfoKey"/>
+                                <property name="valueType" value="Pocsubscrinfo"/>
+                                <property name="fields">
+                                    <map>
+                                        <entry key="mdn" value="java.lang.String"/>
+                                        <entry key="pochome" value="java.lang.String"/>
+                                        <entry key="presencehome" value="java.lang.String"/>
+                                        <entry key="xdmshome" value="java.lang.String"/>
+                                        <entry key="subscrcreationtime" value="java.lang.Long"/>
+                                        <entry key="lastprofileupdatetime" value="java.lang.Long"/>
+                                        <entry key="subscrname" value="java.lang.String"/>
+                                        <entry key="serviceauthstatus" value="java.lang.Byte"/>
+                                        <entry key="publicsubscriptiontype" value="java.lang.Byte"/>
+                                        <entry key="corpsubscriptiontype" value="java.lang.Byte"/>
+                                        <entry key="corpid" value="java.lang.Integer"/>
+                                        <entry key="corpcontactlistid" value="java.lang.Integer"/>
+                                        <entry key="corpcontactpairingind" value="java.lang.Byte"/>
+                                        <entry key="imei" value="java.lang.String"/>
+                                        <entry key="clientPassword" value="java.lang.String"/>
+                                        <entry key="affliateid" value="java.lang.String"/>
+                                        <entry key="paytype" value="java.lang.Byte"/>
+                                        <entry key="useragent" value="java.lang.String"/>
+                                        <entry key="email" value="java.lang.String"/>
+                                        <entry key="clientType" value="java.lang.Byte"/>
+                                        <entry key="dispatchGrpMember" value="java.lang.Byte"/>
+                                        <entry key="subscriberfs1" value="java.lang.Long"/>
+                                        <entry key="clientfs1" value="java.lang.Long"/>
+                                        <entry key="activefs1" value="java.lang.Long"/>
+                                        <entry key="clientpvMajorversion" value="java.lang.Byte"/>
+                                        <entry key="clientpvMinorversion" value="java.lang.Byte"/>
+                                        <entry key="accountId" value="java.lang.String"/>
+                                        <entry key="pamaccid" value="java.lang.Integer"/>
+                                        <entry key="opsfs1" value="java.lang.Long"/>
+                                        <entry key="statsreportintvl" value="java.lang.Short"/>
+                                        <entry key="statscollectionintvl" value="java.lang.Short"/>
+                                        <entry key="statsconfigbitmap" value="java.lang.Integer"/>
+                                        <entry key="corpadminfs1" value="java.lang.Long"/>
+                                        <entry key="lastActivationTime" value="java.lang.Long"/>
+                                        <entry key="clientuistatssample" value="java.lang.Byte"/>
+                                        <entry key="clientuistatsreportintvl" value="java.lang.Integer"/>
+                                        <entry key="clientPlatformType" value="java.lang.Integer"/>
+                                        <entry key="clientSwInfo" value="java.lang.Integer"/>
+                                        <entry key="dynamicqosflag" value="java.lang.Byte"/>
+                                        <entry key="vocoderid" value="java.lang.Short"/>
+                                        <!-- <entry key="addlinfo" value="java.lang.Byte"/>
+                                        <entry key="subscriberName" value="java.lang.String"/>
+                                        <entry key="derivedKey" value="java.lang.Object"/>
+                                        <entry key="mapProviderId" value="java.lang.Integer"/>
+                                        <entry key="dispatchType" value="java.lang.Byte"/>
+                                        <entry key="userId" value="java.lang.String"/> -->
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>mdn</value>
+                                    </set>
+                                </property>
+
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="mdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- START DG.CORPLISTMEMBER-->
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="CorplistmemberKey"/>
+                                <property name="valueType" value="Corplistmember"/>
+
+                                <property name="fields">
+                                    <map>
+                                        <entry key="corplistid" value="java.lang.Integer"/>
+                                        <entry key="membermdn" value="java.lang.String"/>
+                                        <entry key="membercorpid" value="java.lang.Integer"/>
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>corplistid</value>
+                                        <value>membermdn</value>
+                                    </set>
+                                </property>
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="corplistid" value="true"/>
+                                                    <entry key="membermdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="membermdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="corplistid" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- END DG.CORPLISTMEMBER-->
+                            <!-- STSRT DG.CORPLISTDISTINFO-->
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="CorplistdistinfoKey"/>
+                                <property name="valueType" value="Corplistdistinfo"/>
+                                <property name="fields">
+                                    <map>
+                                        <entry key="corplistid" value="java.lang.Integer"/>
+                                        <entry key="recipientmdn" value="java.lang.String"/>
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>corplistid</value>
+                                        <value>recipientmdn</value>
+                                    </set>
+                                </property>
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="corplistid" value="true"/>
+                                                    <entry key="recipientmdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="recipientmdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="corplistid" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- END DG.CORPLISTDISTINFO-->
+                            <!-- Start DG.XDM_POCCONTACTLIST-->
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="XdmPoccontactlistKey"/>
+                                <property name="valueType" value="XdmPoccontactlist"/>
+                                <property name="fields">
+                                    <map>
+                                        <entry key="mdn" value="java.lang.String"/>
+                                        <entry key="contactmdn" value="java.lang.String"/>
+                                        <entry key="contactType" value="java.lang.Byte"/>
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>mdn</value>
+                                    </set>
+                                </property>
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="mdn" value="true"/>
+                                                    <entry key="contactmdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="contactmdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- END DG.XDM_POCCONTACTLIST-->
+                            <!-- START DG.CORPLISTINFO-->
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="CorplistinfoKey"/>
+                                <property name="valueType" value="Corplistinfo"/>
+                                <property name="fields">
+                                    <map>
+                                        <entry key="corplistid" value="java.lang.Integer"/>
+                                        <entry key="corpid" value="java.lang.Integer"/>
+                                        <entry key="listdisplayname" value="java.lang.String"/>
+                                        <entry key="listdistributionpolicy" value="java.lang.Byte"/>
+                                        <entry key="listtype" value="java.lang.Byte"/>
+                                        <entry key="etag" value="java.lang.Integer"/>
+                                        <entry key="lastupdatetime" value="java.lang.Long"/>
+                                        <entry key="listdisplayName1" value="java.lang.String"/>
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>corplistid</value>
+                                    </set>
+                                </property>
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="corplistid" value="true"/>
+                                                    <entry key="corpid" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="corplistid" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- END DG.CORPLISTINFO-->
+                            <!-- STRT DG.CORPCONTACTCOUNT-->
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="CorpcontactcountKey"/>
+                                <property name="valueType" value="Corpcontactcount"/>
+                                <property name="fields">
+                                    <map>
+                                        <entry key="mdn" value="java.lang.String"/>
+                                        <entry key="contactcount" value="java.lang.Short"/>
+                                        <entry key="lastupdatetime" value="java.sql.Timestamp"/>
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>mdn</value>
+                                    </set>
+                                </property>
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="mdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- END DG.CORPCONTACTCOUNT-->
+                            <!-- START DG.XDM_CONTACTLIST_DOCMAP-->
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="XdmContactlistDocmapKey"/>
+                                <property name="valueType" value="XdmContactlistDocmap"/>
+                                <property name="fields">
+                                    <map>
+                                        <entry key="resourcelistdocid" value="java.lang.Integer"/>
+                                        <entry key="contactlistid" value="java.lang.Integer"/>
+                                        <entry key="ownermdn" value="java.lang.String"/>
+                                        <entry key="resourcelistEtag" value="java.lang.Integer"/>
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>resourcelistdocid</value>
+                                    </set>
+                                </property>
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="contactlistid" value="true"/>
+                                                    <entry key="ownermdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- END DG.XDM_CONTACTLIST_DOCMAP-->
+                            <!-- START DG.POCCORPINFO-->
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="PoccorpinfoKey"/>
+                                <property name="valueType" value="Poccorpinfo"/>
+                                <property name="fields">
+                                    <map>
+                                        <entry key="corpid" value="java.lang.Integer"/>
+                                        <entry key="extcorpid" value="java.lang.String"/>
+                                        <entry key="xdmshome" value="java.lang.String"/>
+                                        <entry key="profilecreationtime" value="java.lang.Long"/>
+                                        <entry key="lastprofileupdatetime" value="java.lang.Long"/>
+                                        <entry key="corpname" value="java.lang.String"/>
+                                        <entry key="pairedcontactlistid" value="java.lang.Integer"/>
+                                        <entry key="maxsubscrs" value="java.lang.Integer"/>
+                                        <entry key="maxcorplists" value="java.lang.Integer"/>
+                                        <entry key="maxmemberspercorplist" value="java.lang.Short"/>
+                                        <entry key="maxcorpgroups" value="java.lang.Integer"/>
+                                        <entry key="maxmemberspercorpgroup" value="java.lang.Short"/>
+                                        <entry key="pochome" value="java.lang.String"/>
+                                        <entry key="maxdispatchgrps" value="java.lang.Short"/>
+                                        <entry key="maxmembersperdispatchgrp" value="java.lang.Short"/>
+                                        <entry key="amrmode" value="java.lang.Integer"/>
+                                        <entry key="lteprofileid" value="java.lang.Integer"/>
+                                        <entry key="umtsprofileid" value="java.lang.Integer"/>
+                                        <entry key="wifiprofileid" value="java.lang.Integer"/>
+                                        <entry key="clientstatscollectinterval" value="java.lang.Integer"/>
+                                        <entry key="clientstatsreportinterval" value="java.lang.Integer"/>
+                                        <entry key="presencelistsize" value="java.lang.Integer"/>
+                                        <entry key="presencerusize" value="java.lang.Integer"/>
+                                        <entry key="locationpublishinterval" value="java.lang.Integer"/>
+                                        <entry key="corpfs1" value="java.lang.Long"/>
+                                        <entry key="opscorpfs1" value="java.lang.Long"/>
+                                        <entry key="siptransporttypeoncellular" value="java.lang.Byte"/>
+                                        <entry key="mediatransporttypeoncellular" value="java.lang.Byte"/>
+                                        <entry key="maxNniSubscrs" value="java.lang.Integer"/>
+                                        <entry key="bgcTtl" value="java.lang.Integer"/>
+                                        <entry key="maxCallLength" value="java.lang.Integer"/>
+                                        <entry key="maxMembersPerBg" value="java.lang.Integer"/>
+                                        <entry key="guardTimer" value="java.lang.Integer"/>
+                                        <entry key="clientuistatsreportintvl" value="java.lang.Integer"/>
+                                        <entry key="linkedGwKey" value="java.lang.String"/>
+                                        <entry key="cookieValidity" value="java.lang.Integer"/>
+                                        <entry key="dynamicqosflag" value="java.lang.Byte"/>
+                                        <entry key="nextgencatEnabled" value="java.lang.Byte"/>
+                                        <entry key="maxtextmsgsize" value="java.lang.Integer"/>
+                                        <entry key="maxmmmsgsizecell" value="java.lang.Integer"/>
+                                        <entry key="maxmmmsgsizewifi" value="java.lang.Integer"/>
+                                        <entry key="deliveryreceiptflag" value="java.lang.Short"/>
+                                        <entry key="readreportflag" value="java.lang.Short"/>
+                                        <entry key="msgTtl" value="java.lang.Integer"/>
+                                        <entry key="maxpredefinedmsgcnt" value="java.lang.Integer"/>
+                                        <entry key="maxpredefinedtmpltcnt" value="java.lang.Integer"/>
+                                        <entry key="maxuserdefinedmsgcnt" value="java.lang.Integer"/>
+                                        <entry key="fleetmembergeotagflag" value="java.lang.Short"/>
+                                        <entry key="mapProviderId" value="java.lang.Integer"/>
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>corpid</value>
+                                    </set>
+                                </property>
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="corpid" value="true"/>
+                                                    <entry key="extcorpid" value="true"/>
+                                                    <entry key="linkedGwKey" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- END DG.POCCORPINFO-->
+                            <!-- START DG.EXTSUBSCRINFO -->
+                            <bean class="org.apache.ignite.cache.QueryEntity">
+                                <property name="keyType" value="ExtsubscrinfoKey"/>
+                                <property name="valueType" value="Extsubscrinfo"/>
+                                <property name="fields">
+                                    <map>
+                                        <entry key="mdn" value="java.lang.String"/>
+                                        <entry key="profileId" value="java.lang.Integer"/>
+                                        <entry key="setBy" value="java.lang.Byte"/>
+                                    </map>
+                                </property>
+                                <property name="keyFields">
+                                    <set>
+                                        <value>mdn</value>
+                                    </set>
+                                </property>
+                                <property name="indexes">
+                                    <list>
+                                        <bean class="org.apache.ignite.cache.QueryIndex">
+                                            <property name="fields">
+                                                <map>
+                                                    <entry key="mdn" value="true"/>
+                                                </map>
+                                            </property>
+                                            <property name="indexType" value="SORTED"/>
+                                        </bean>
+                                    </list>
+                                </property>
+                            </bean>
+                            <!-- END DG.EXTSUBSCRINFO-->
+                        </list>
+                    </property>
+                </bean>
+            </list>
+        </property>
+    </bean>
+</beans>

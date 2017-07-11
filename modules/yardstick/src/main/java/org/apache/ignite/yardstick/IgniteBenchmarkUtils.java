@@ -36,6 +36,7 @@ import org.apache.ignite.transactions.TransactionIsolation;
 import org.apache.ignite.transactions.TransactionOptimisticException;
 import org.apache.ignite.transactions.TransactionRollbackException;
 import org.apache.ignite.yardstick.cache.IgnitePutBenchmark;
+import org.apache.ignite.yardstick.kodiak.KodiakQuery9Benchmark;
 import org.yardstickframework.BenchmarkConfiguration;
 import org.yardstickframework.BenchmarkDriver;
 import org.yardstickframework.BenchmarkDriverStartUp;
@@ -108,22 +109,22 @@ public class IgniteBenchmarkUtils {
      * @throws Exception If failed.
      */
     public static void main(String[] args) throws Exception {
-        final String cfg = "modules/yardstick/config/ignite-localhost-config.xml";
+        final String cfg = "modules/yardstick/config/ignite-db-kodiak-poc-config.xml";
 
-        final Class<? extends BenchmarkDriver> benchmark = IgnitePutBenchmark.class;
+        final Class<? extends BenchmarkDriver> benchmark = KodiakQuery9Benchmark.class;
 
-        final int threads = 1;
+        final int threads =1;
 
         final boolean clientDriverNode = true;
 
         final int extraNodes = 1;
 
-        final int warmUp = 60;
-        final int duration = 120;
+        final int warmUp = 20; //60;
+        final int duration = 30; //120;
 
         final int range = 100_000;
 
-        final boolean throughputLatencyProbe = false;
+        final boolean throughputLatencyProbe = true;
 
         for (int i = 0; i < extraNodes; i++) {
             IgniteConfiguration nodeCfg = Ignition.loadSpringBean(cfg, "grid.cfg");
@@ -141,9 +142,11 @@ public class IgniteBenchmarkUtils {
         addArg(args0, "-d", duration);
         addArg(args0, "-r", range);
         addArg(args0, "-dn", benchmark.getSimpleName());
+        addArg(args0, "-jdbcDrv", org.apache.ignite.IgniteJdbcDriver.class.getName());
+        addArg(args0, "-jdbc", "jdbc:ignite:thin://127.0.0.1:10800" );
         addArg(args0, "-sn", "IgniteNode");
+        addArg(args0, "-sm", "FULL_SYNC");
         addArg(args0, "-cfg", cfg);
-        addArg(args0, "-wom", "PRIMARY");
 
         if (throughputLatencyProbe)
             addArg(args0, "-pr", "ThroughputLatencyProbe");
