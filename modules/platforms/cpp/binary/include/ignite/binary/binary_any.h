@@ -67,6 +67,16 @@ namespace ignite
             }
 
             /**
+             * Check if the instance has stored value.
+             *
+             * @return True if instance has no stored value.
+             */
+            bool IsEmpty() const
+            {
+                return !value.IsValid();
+            }
+
+            /**
              * Cast function.
              * 
              * If passed a pointer, it returns a similarly qualified pointer to the value content
@@ -84,7 +94,7 @@ namespace ignite
             template<typename T>
             friend T BinaryAnyCast(BinaryAny& any)
             {
-                return impl::binary::BinaryAnyCaster<T>::DoCast(any.typeId, any.value->Get());
+                return impl::binary::BinaryAnyCaster<T>::DoCast(any.typeId, any.value.Get());
             }
 
             /**
@@ -105,12 +115,12 @@ namespace ignite
             template<typename T>
             friend T BinaryAnyCast(const BinaryAny& any)
             {
-                return impl::binary::BinaryAnyCaster<T>::DoCast(any.typeId, any.value->Get());
+                return impl::binary::BinaryAnyCaster<T>::DoCast(any.typeId, any.value.Get());
             }
 
         private:
             /** Value. */
-            common::concurrent::SharedPointer<void> *value;
+            common::concurrent::SharedPointer<void> value;
 
             /** Type ID. */
             int32_t typeId;

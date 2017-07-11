@@ -58,6 +58,7 @@
     <None Include="..\..\config\invalid.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\binary_any_test.cpp" />
     <ClCompile Include="..\..\src\binary_object_test.cpp" />
     <ClCompile Include="..\..\src\binary_identity_resolver_test.cpp" />
     <ClCompile Include="..\..\src\cache_store_test.cpp" />
