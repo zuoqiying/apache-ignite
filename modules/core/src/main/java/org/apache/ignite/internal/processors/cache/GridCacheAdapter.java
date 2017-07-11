@@ -2753,19 +2753,12 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
     /** {@inheritDoc} */
     @Nullable @Override public V getAndRemove(final K key) throws IgniteCheckedException {
-        boolean statsEnabled = ctx.config().isStatisticsEnabled();
-
-        long start = statsEnabled ? System.nanoTime() : 0L;
-
         A.notNull(key, "key");
 
         if (keyCheck)
             validateCacheKey(key);
 
         V prevVal = getAndRemove0(key);
-
-        if (statsEnabled)
-            metrics0().addRemoveAndGetTimeNanos(System.nanoTime() - start);
 
         return prevVal;
     }
@@ -2863,10 +2856,6 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
     /** {@inheritDoc} */
     @Override public void removeAll(final Collection<? extends K> keys) throws IgniteCheckedException {
-        boolean statsEnabled = ctx.config().isStatisticsEnabled();
-
-        long start = statsEnabled ? System.nanoTime() : 0L;
-
         A.notNull(keys, "keys");
 
         if (F.isEmpty(keys))
@@ -2876,9 +2865,6 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
             validateCacheKeys(keys);
 
         removeAll0(keys);
-
-        if (statsEnabled)
-            metrics0().addRemoveTimeNanos(System.nanoTime() - start);
     }
 
     /**

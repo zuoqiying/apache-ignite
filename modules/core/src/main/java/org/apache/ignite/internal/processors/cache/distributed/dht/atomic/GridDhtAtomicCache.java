@@ -1195,7 +1195,9 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                         final int numOfUpdates = (partialUpdate == null) ?
                             keys.size() : keys.size() - partialUpdate.failedKeys().size();
 
-                        if (numOfUpdates > 0) {
+                        GridCacheReturn opRes = ((GridNearAtomicAbstractUpdateFuture)f).lastOpResult();
+
+                        if (opRes.success() && numOfUpdates > 0) {
                             for (int i = 0; i < numOfUpdates; ++i)
                                 metrics0().onWrite();
 
@@ -1263,15 +1265,18 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                         Object rval = f.get();
 
                         if (retval) {
-                            metrics0().onWrite();
+                            if (filter == null || rval != null)
+                                metrics0().onWrite();
 
                             metrics0().onRead(rval != null);
 
                             metrics0().addPutAndGetTimeNanos(f.duration());
                         }
                         else {
-                            final boolean putMetric = !ctx.putIfAbsentFilter(new CacheEntryPredicate[] {filter})
-                                || Boolean.TRUE.equals(rval);
+                            boolean putMetric = Boolean.TRUE.equals(rval);
+
+                            if (filter != null && !ctx.putIfAbsentFilter(new CacheEntryPredicate[] {filter}))
+                                metrics0().onRead(Boolean.TRUE.equals(rval));
 
                             if (putMetric) {
                                 metrics0().onWrite();
@@ -1336,7 +1341,6 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                         GridCacheReturn opRes = ((GridNearAtomicAbstractUpdateFuture)f).lastOpResult();
 
                         if (!retval) {
-                            // remove(key, value)
                             if (filter != null)
                                 metrics0().onRead(opRes.success());
 
@@ -1347,12 +1351,12 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                             }
                         }
                         else {
-                            // getAndRemove(key)
                             metrics0().onRead(val != null);
 
-                            metrics0().onRemove();
+                            if (val != null)
+                                metrics0().onRemove();
 
-                            metrics0().addRemoveTimeNanos(f.duration());
+                            metrics0().addRemoveAndGetTimeNanos(f.duration());
                         }
                     }
                     catch (IgniteCheckedException e) {
@@ -1564,6 +1568,21 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             opCtx != null && opCtx.isKeepBinary(),
             opCtx != null && opCtx.noRetries() ? 1 : MAX_RETRIES,
             true);
+
+        if (ctx.config().isStatisticsEnabled()) {
+            updateFut.listen(new CI1<IgniteInternalFuture<?>>() {
+                @Override public void apply(IgniteInternalFuture<?> f) {
+                    if (!f.isCancelled() && f.error() == null) {
+                        assert f instanceof GridNearAtomicUpdateFuture;
+
+                        for (int i = 0; i < ((GridNearAtomicUpdateFuture) f).removals(); ++i)
+                            metrics0().onRemove();
+
+                        metrics0().addRemoveTimeNanos(f.duration());
+                    }
+                }
+            });
+        }
 
         if (async) {
             return asyncOp(new CO<IgniteInternalFuture<Object>>() {
@@ -2005,6 +2024,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                         GridCacheReturn retVal = null;
 
+                        int removals = 0;
+
                         if (req.size() > 1 &&                    // Several keys ...
                             writeThrough() && !req.skipStore() && // and store is enabled ...
                             !ctx.store().isLocal() &&             // and this is not local store ...
@@ -2048,12 +2069,15 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                             retVal = updRes.returnValue();
                             deleted = updRes.deleted();
                             dhtFut = updRes.dhtFuture();
+                            removals = updRes.removals();
                         }
 
                         if (retVal == null)
                             retVal = new GridCacheReturn(ctx, node.isLocal(), true, null, true);
 
                         res.returnValue(retVal);
+
+                        res.removals(removals);
 
                         if (req.writeSynchronizationMode() != FULL_ASYNC)
                             req.cleanup(!node.isLocal());
@@ -2597,6 +2621,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
         boolean intercept = ctx.config().getInterceptor() != null;
 
+        int removals = 0;
+
         // Avoid iterator creation.
         for (int i = 0; i < req.size(); i++) {
             KeyCacheObject k = req.key(i);
@@ -2758,6 +2784,9 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                     }
                 }
                 else {
+                    if (op == DELETE && updRes.success())
+                        removals += 1;
+
                     // Create only once.
                     if (retVal == null) {
                         CacheObject ret = updRes.oldValue();
@@ -2775,7 +2804,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             }
         }
 
-        return new UpdateSingleResult(retVal, deleted, dhtFut);
+        return new UpdateSingleResult(retVal, removals, deleted, dhtFut);
     }
 
     /**
@@ -3585,15 +3614,21 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         /** */
         private final GridDhtAtomicAbstractUpdateFuture dhtFut;
 
+        /** */
+        private final int removals;
+
         /**
          * @param retVal Return value.
+         * @param removals Number of deleted entries.
          * @param deleted Deleted entries.
          * @param dhtFut DHT future.
          */
         private UpdateSingleResult(GridCacheReturn retVal,
+            int removals,
             Collection<IgniteBiTuple<GridDhtCacheEntry, GridCacheVersion>> deleted,
             GridDhtAtomicAbstractUpdateFuture dhtFut) {
             this.retVal = retVal;
+            this.removals = removals;
             this.deleted = deleted;
             this.dhtFut = dhtFut;
         }
@@ -3603,6 +3638,13 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
          */
         private GridCacheReturn returnValue() {
             return retVal;
+        }
+
+        /**
+         * @return Number of removed entries.
+         */
+        public int removals() {
+            return removals;
         }
 
         /**

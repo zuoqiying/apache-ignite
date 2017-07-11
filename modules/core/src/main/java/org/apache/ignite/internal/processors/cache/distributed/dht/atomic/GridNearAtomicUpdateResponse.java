@@ -105,6 +105,9 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
     /** Near expire times. */
     private GridLongList nearExpireTimes;
 
+    /** Number of removed entries. */
+    private int removals;
+
     /**
      * Empty constructor required by {@link Externalizable}.
      */
@@ -335,6 +338,20 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
     }
 
     /**
+     * @param removals Number of removed entries.
+     */
+    public void removals(int removals) {
+        this.removals = removals;
+    }
+
+    /**
+     * @return Number of removed entries.
+     */
+    public int removals() {
+        return removals;
+    }
+
+    /**
      * Adds key to collection of failed keys.
      *
      * @param key Key to add.
@@ -521,6 +538,11 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
 
                 writer.incrementState();
 
+            case 14:
+                if (!writer.writeInt("removals", removals))
+                    return false;
+
+                writer.incrementState();
         }
 
         return true;
@@ -625,6 +647,13 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
 
                 reader.incrementState();
 
+            case 14:
+                removals = reader.readInt("removals");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
         }
 
         return reader.afterMessageRead(GridNearAtomicUpdateResponse.class);
@@ -637,7 +666,7 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 14;
+        return 15;
     }
 
     /** {@inheritDoc} */

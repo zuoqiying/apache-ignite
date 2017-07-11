@@ -25,6 +25,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.cache.Cache;
 import javax.cache.configuration.FactoryBuilder;
+import javax.cache.expiry.Duration;
+import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CacheLoaderException;
 import javax.cache.integration.CacheWriterException;
 import org.apache.ignite.Ignite;
@@ -82,6 +84,23 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
         /** {@inheritDoc} */
         @Override public void delete(Object key) throws CacheWriterException {
             // No-op.
+        }
+    }
+
+    public static class ExpireOnCreationPolicy implements ExpiryPolicy {
+        /** {@inheritDoc} */
+        @Override public Duration getExpiryForCreation() {
+            return Duration.ZERO;
+        }
+
+        /** {@inheritDoc} */
+        @Override public Duration getExpiryForAccess() {
+            return Duration.ZERO;
+        }
+
+        /** {@inheritDoc} */
+        @Override public Duration getExpiryForUpdate() {
+            return Duration.ZERO;
         }
     }
 
@@ -610,6 +629,363 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
             assertEquals(0, serverMetrics.getCacheGets());
             assertEquals(0, serverMetrics.getCacheHits());
             assertEquals(0, serverMetrics.getCacheMisses());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testLocalGetAndRemove() throws Exception {
+        try {
+            Ignite server = startGrid(SERVER_NODE);
+
+            IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
+
+            Integer key = new Integer(12);
+
+            Integer val = new Integer(144);
+
+            Integer retval = cache.getAndRemove(key);
+
+            assertNull(retval);
+
+            cache.put(key, val);
+
+            retval = cache.getAndRemove(key);
+
+            assertNotNull(retval);
+
+            awaitMetricsUpdate(true);
+
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(1, serverMetrics.getCacheRemovals());
+            assertEquals(2, serverMetrics.getCacheGets());
+            assertEquals(1, serverMetrics.getCacheHits());
+            assertEquals(1, serverMetrics.getCacheMisses());
+            assertEquals(1, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testDistributedGetAndRemove() throws Exception {
+        try {
+            startServerAndClientNodes();
+
+            IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
+
+            Integer key = new Integer(12);
+
+            Integer val = new Integer(144);
+
+            Integer retval = cache.getAndRemove(key);
+
+            assertNull(retval);
+
+            cache.put(key, val);
+
+            retval = cache.getAndRemove(key);
+
+            assertNotNull(retval);
+
+            awaitMetricsUpdate(false);
+
+            ClusterGroup clientGroup = grid(CLIENT_NODE).cluster().forClients();
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics clientMetrics = cache.metrics(clientGroup);
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(1, clientMetrics.getCacheRemovals());
+            assertEquals(2, clientMetrics.getCacheGets());
+            assertEquals(1, clientMetrics.getCacheHits());
+            assertEquals(1, clientMetrics.getCacheMisses());
+            assertEquals(1, clientMetrics.getCachePuts());
+
+            assertEquals(0, serverMetrics.getCacheRemovals());
+            assertEquals(0, serverMetrics.getCacheGets());
+            assertEquals(0, serverMetrics.getCacheHits());
+            assertEquals(0, serverMetrics.getCacheMisses());
+            assertEquals(0, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testLocalRemoveSet() throws Exception {
+        try {
+            Ignite server = startGrid(SERVER_NODE);
+
+            IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
+
+            Integer key1 = new Integer(12);
+
+            Integer val1 = new Integer(144);
+
+            Integer key2 = new Integer(13);
+
+            Integer val2 = new Integer(169);
+
+            Set<Integer> keys = new HashSet<>();
+            keys.add(key1);
+            keys.add(key2);
+
+            cache.removeAll(keys);
+
+            cache.put(key1, val1);
+
+            cache.removeAll(keys);
+
+            awaitMetricsUpdate(true);
+
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(1, serverMetrics.getCacheRemovals());
+            assertEquals(1, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testDistributedRemoveSet() throws Exception {
+        try {
+            startServerAndClientNodes();
+
+            IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
+
+            Integer key1 = new Integer(12);
+
+            Integer val1 = new Integer(144);
+
+            Integer key2 = new Integer(13);
+
+            Integer val2 = new Integer(169);
+
+            Set<Integer> keys = new HashSet<>();
+            keys.add(key1);
+            keys.add(key2);
+
+            cache.removeAll(keys);
+
+            cache.put(key1, val1);
+
+            cache.removeAll(keys);
+
+            awaitMetricsUpdate(false);
+
+            ClusterGroup clientGroup = grid(CLIENT_NODE).cluster().forClients();
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics clientsMetrics = cache.metrics(clientGroup);
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(1, clientsMetrics.getCacheRemovals());
+            assertEquals(1, clientsMetrics.getCachePuts());
+
+            assertEquals(0, serverMetrics.getCacheRemovals());
+            assertEquals(0, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testLocalGetAndReplace() throws Exception {
+        try {
+            Ignite server = startGrid(SERVER_NODE);
+
+            IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
+
+            Integer key = new Integer(12);
+
+            Integer val = new Integer(144);
+
+            Integer retval = cache.getAndReplace(key, val);
+
+            assertNull(retval);
+
+            cache.put(key, val);
+
+            retval = cache.getAndReplace(key, new Integer(169));
+
+            assertNotNull(retval);
+
+            awaitMetricsUpdate(true);
+
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(2, serverMetrics.getCacheGets());
+            assertEquals(1, serverMetrics.getCacheHits());
+            assertEquals(1, serverMetrics.getCacheMisses());
+            assertEquals(2, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testDistributedGetAndReplace() throws Exception {
+        try {
+            startServerAndClientNodes();
+
+            IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
+
+            Integer key = new Integer(12);
+
+            Integer val = new Integer(144);
+
+            Integer retval = cache.getAndReplace(key, val);
+
+            assertNull(retval);
+
+            cache.put(key, val);
+
+            retval = cache.getAndReplace(key, new Integer(169));
+
+            assertNotNull(retval);
+
+            awaitMetricsUpdate(false);
+
+            ClusterGroup clientGroup = grid(CLIENT_NODE).cluster().forClients();
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics clientMetrics = cache.metrics(clientGroup);
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(2, clientMetrics.getCacheGets());
+            assertEquals(1, clientMetrics.getCacheHits());
+            assertEquals(1, clientMetrics.getCacheMisses());
+            assertEquals(2, clientMetrics.getCachePuts());
+
+            assertEquals(0, serverMetrics.getCacheGets());
+            assertEquals(0, serverMetrics.getCacheHits());
+            assertEquals(0, serverMetrics.getCacheMisses());
+            assertEquals(0, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testLocalReplace() throws Exception {
+        try {
+            Ignite server = startGrid(SERVER_NODE);
+
+            IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
+
+            Integer key = new Integer(12);
+
+            Integer val = new Integer(144);
+
+            boolean success = cache.replace(key, val);
+
+            assertFalse(success);
+
+            cache.put(key, val);
+
+            success = cache.replace(key, new Integer(169));
+
+            assertTrue(success);
+
+            awaitMetricsUpdate(true);
+
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(2, serverMetrics.getCacheGets());
+            assertEquals(1, serverMetrics.getCacheHits());
+            assertEquals(1, serverMetrics.getCacheMisses());
+            assertEquals(2, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testDistributedReplace() throws Exception {
+        try {
+            startServerAndClientNodes();
+
+            IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
+
+            Integer key = new Integer(12);
+
+            Integer val = new Integer(144);
+
+            boolean success = cache.replace(key, val);
+
+            assertFalse(success);
+
+            cache.put(key, val);
+
+            success = cache.replace(key, new Integer(169));
+
+            assertTrue(success);
+
+            awaitMetricsUpdate(false);
+
+            ClusterGroup clientGroup = grid(CLIENT_NODE).cluster().forClients();
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics clientMetrics = cache.metrics(clientGroup);
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(2, clientMetrics.getCacheGets());
+            assertEquals(1, clientMetrics.getCacheHits());
+            assertEquals(1, clientMetrics.getCacheMisses());
+            assertEquals(2, clientMetrics.getCachePuts());
+
+            assertEquals(0, serverMetrics.getCacheGets());
+            assertEquals(0, serverMetrics.getCacheHits());
+            assertEquals(0, serverMetrics.getCacheMisses());
+            assertEquals(0, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testExpirationPolicy() throws Exception {
+        try {
+            Ignite server = startGrid(SERVER_NODE);
+
+            CacheConfiguration<Integer, Integer> cfg = getCacheConfiguration();
+            cfg.setExpiryPolicyFactory(FactoryBuilder.factoryOf(ExpireOnCreationPolicy.class));
+
+            IgniteCache<Integer, Integer> cache = server.getOrCreateCache(cfg);
+
+            Integer key1 = new Integer(12);
+
+            Integer val1 = new Integer(144);
+
+            Integer key2 = new Integer(13);
+
+            Integer val2 = new Integer(169);
+
+            HashMap<Integer, Integer> vals = new HashMap<>();
+            vals.put(key1, val1);
+            vals.put(key2, val2);
+
+            cache.putAll(vals);
+
+            awaitMetricsUpdate(true);
+
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(0, serverMetrics.getCachePuts());
         }
         finally {
             stopAllGrids();
