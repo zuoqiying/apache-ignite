@@ -29,6 +29,8 @@
 
 #include <ignite/binary/binary_type.h>
 
+#include <ignite/impl/binary/binary_common.h>
+
 namespace ignite
 {
     namespace impl
@@ -464,6 +466,7 @@ namespace ignite
 
                 /**
                  * Get default value for the type.
+                 * Works for primitive types.
                  *
                  * @return Null value for non primitive types and zeroes for primitives.
                  */
@@ -475,6 +478,16 @@ namespace ignite
                     ignite::binary::BinaryType<T>::GetNull(res);
 
                     return res;
+                }
+
+                /**
+                 * Get default type ID for the type.
+                 * Works for primitive types.
+                 */
+                template<typename T>
+                static int32_t GetTypeId()
+                {
+                    return ignite::binary::BinaryType<T>::GetTypeId();
                 }
             };
 
@@ -554,6 +567,84 @@ namespace ignite
             inline std::string BinaryUtils::GetDefaultValue<std::string>()
             {
                 return std::string();
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<int8_t>()
+            {
+                return IGNITE_TYPE_BYTE;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<int16_t>()
+            {
+                return IGNITE_TYPE_SHORT;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<uint16_t>()
+            {
+                return IGNITE_TYPE_CHAR;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<int32_t>()
+            {
+                return IGNITE_TYPE_INT;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<int64_t>()
+            {
+                return IGNITE_TYPE_LONG;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<bool>()
+            {
+                return IGNITE_TYPE_BOOL;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<float>()
+            {
+                return IGNITE_TYPE_FLOAT;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<double>()
+            {
+                return IGNITE_TYPE_DOUBLE;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<Guid>()
+            {
+                return IGNITE_TYPE_UUID;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<Date>()
+            {
+                return IGNITE_TYPE_DATE;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<Timestamp>()
+            {
+                return IGNITE_TYPE_TIMESTAMP;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<Time>()
+            {
+                return IGNITE_TYPE_TIME;
+            }
+
+            template<>
+            inline int32_t BinaryUtils::GetTypeId<std::string>()
+            {
+                return IGNITE_TYPE_STRING;
             }
         }
     }

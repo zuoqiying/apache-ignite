@@ -25,7 +25,8 @@
 
 #include <ignite/common/common.h>
 #include <ignite/common/utils.h>
-#include <ignite/binary/binary_type.h>
+
+#include <ignite/impl/binary/binary_utils.h>
 
 namespace ignite
 {
@@ -40,7 +41,7 @@ namespace ignite
              * BinaryAnyCast functions.
              */
             template<typename T>
-            struct IGNITE_IMPORT_EXPORT BinaryAnyHelper
+            struct BinaryAnyHelper
             {
                 typedef typename common::RemoveCv< typename common::RemoveReference<T>::Type >::Type ValueType;
 
@@ -51,16 +52,16 @@ namespace ignite
                  */
                 static void CheckType(int32_t typeId)
                 {
-                    if (typeId != ignite::binary::BinaryType<ValueType>::GetTypeId())
+                    if (typeId != BinaryUtils::GetTypeId<ValueType>())
                     {
                         IGNITE_ERROR_FORMATTED_2(IgniteError::IGNITE_ERR_ANY_CAST, "Bad cast.", "actualTypeId",
-                            typeId, "castedToTypeId", ignite::binary::BinaryType<ValueType>::GetTypeId());
+                            typeId, "castedToTypeId", BinaryUtils::GetTypeId<ValueType>());
                     }
                 }
             };
 
             template<typename T>
-            struct IGNITE_IMPORT_EXPORT BinaryAnyCaster : BinaryAnyHelper<T>
+            struct BinaryAnyCaster : BinaryAnyHelper<T>
             {
                 typedef typename BinaryAnyHelper<T>::ValueType ValueType;
 
@@ -80,22 +81,24 @@ namespace ignite
             };
 
             template<typename T>
-            struct IGNITE_IMPORT_EXPORT BinaryAnyCaster<T*> : BinaryAnyHelper<T>
+            struct BinaryAnyCaster<T*> : BinaryAnyHelper<T>
             {
                 typedef typename BinaryAnyHelper<T>::ValueType ValueType;
 
-                static T DoCast(int32_t typeId, void* ptr)
+                static T* DoCast(int32_t typeId, void* ptr)
                 {
-                    BinaryAnyHelper<T>::CheckType(typeId);
+                    if (typeId != BinaryUtils::GetTypeId<ValueType>())
+                        return 0;
 
                     return reinterpret_cast<T*>(ptr);
                 }
 
-                static T DoCast(int32_t typeId, const void* ptr)
+                static T* DoCast(int32_t typeId, const void* ptr)
                 {
-                    BinaryAnyHelper<T>::CheckType(typeId);
+                    if (typeId != BinaryUtils::GetTypeId<ValueType>())
+                        return 0;
 
-                    return *reinterpret_cast<const T*>(ptr);
+                    return reinterpret_cast<const T*>(ptr);
                 }
             };
         }

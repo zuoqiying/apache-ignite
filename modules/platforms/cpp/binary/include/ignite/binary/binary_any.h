@@ -25,8 +25,8 @@
 
 #include <ignite/common/common.h>
 #include <ignite/common/concurrent.h>
-#include <ignite/binary/binary_type.h>
 
+#include <ignite/impl/binary/binary_utils.h>
 #include <ignite/impl/binary/binary_any_impl.h>
 
 namespace ignite
@@ -61,7 +61,7 @@ namespace ignite
             template<typename T>
             BinaryAny(const T& value) :
                 value(new T(value)),
-                typeId(BinaryType<T>::GetTypeId())
+                typeId(impl::binary::BinaryUtils::GetTypeId<T>())
             {
                 // No-op.
             }
