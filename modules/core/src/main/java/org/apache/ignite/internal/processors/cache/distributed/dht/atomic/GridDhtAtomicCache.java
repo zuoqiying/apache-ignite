@@ -1670,7 +1670,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      * @param needVer Need version.
      * @return Get future.
      */
-    private IgniteInternalFuture<Map<K, V>> getAllAsync0(@Nullable Collection<KeyCacheObject> keys,
+    private IgniteInternalFuture<Map<K, V>> getAllAsync0(@Nullable final Collection<KeyCacheObject> keys,
         boolean forcePrimary,
         UUID subjId,
         String taskName,
@@ -1689,6 +1689,12 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         // Optimisation: try to resolve value locally and escape 'get future' creation.
         if (!forcePrimary && ctx.affinityNode()) {
             Map<K, V> locVals = U.newHashMap(keys.size());
+
+            boolean statsEnabled = ctx.config().isStatisticsEnabled();
+
+            long start = statsEnabled ? System.nanoTime() : 0L;
+
+            int cacheHits = 0;
 
             boolean success = true;
 
@@ -1781,11 +1787,18 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
                 if (!success)
                     break;
                 else if (!skipVals && ctx.config().isStatisticsEnabled())
-                    metrics0().onRead(true);
+                    cacheHits += 1;
             }
 
             if (success) {
                 sendTtlUpdateRequest(expiry);
+
+                if (!skipVals && statsEnabled) {
+                    for (int i = 0; i < cacheHits; ++i)
+                        metrics0().onRead(true);
+
+                    metrics0().addGetTimeNanos(System.nanoTime() - start);
+                }
 
                 return new GridFinishedFuture<>(locVals);
             }
@@ -1808,6 +1821,23 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             canRemap,
             needVer,
             false);
+
+        if (!skipVals && ctx.config().isStatisticsEnabled()) {
+            fut.listen(new CI1<IgniteInternalFuture<?>>() {
+                @Override public void apply(IgniteInternalFuture<?> f) {
+                    if (!f.isCancelled() && f.error() == null) {
+                        assert f instanceof GridPartitionedGetFuture;
+
+                        final int cacheHits = ((GridPartitionedGetFuture) f).cacheHits();
+
+                        for (int i = 0; i < keys.size(); ++i)
+                            metrics0().onRead(i < cacheHits);
+
+                        metrics0().addGetTimeNanos(f.duration());
+                    }
+                }
+            });
+        }
 
         fut.init();
 

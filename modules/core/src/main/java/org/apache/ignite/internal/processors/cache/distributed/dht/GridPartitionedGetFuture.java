@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteLogger;
@@ -80,6 +81,9 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
 
     /** Topology version. */
     private AffinityTopologyVersion topVer;
+
+    /** Number of cache hits. */
+    private final AtomicInteger cacheHits = new AtomicInteger();
 
     /**
      * @param cctx Context.
@@ -216,6 +220,13 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
         }
 
         return false;
+    }
+
+    /**
+     * @return Number of cache hits.
+     */
+    public int cacheHits() {
+        return cacheHits.get();
     }
 
     /**
@@ -508,6 +519,8 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
                             0,
                             needVer);
 
+                        cacheHits.incrementAndGet();
+
                         return true;
                     }
                 }
@@ -515,12 +528,8 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
                 boolean topStable = cctx.isReplicated() || topVer.equals(cctx.topology().topologyVersion());
 
                 // Entry not found, do not continue search if topology did not change and there is no store.
-                if (!cctx.readThroughConfigured() && (topStable || partitionOwned(part))) {
-                    if (!skipVals && cctx.config().isStatisticsEnabled())
-                        cache.metrics0().onRead(false);
-
+                if (!cctx.readThroughConfigured() && (topStable || partitionOwned(part)))
                     return true;
-                }
 
                 return false;
             }
@@ -719,6 +728,8 @@ public class GridPartitionedGetFuture<K, V> extends CacheDistributedGetFutureAda
 
                 return;
             }
+
+            GridPartitionedGetFuture.this.cacheHits.addAndGet(res.cacheHits());
 
             // Remap invalid partitions.
             if (!F.isEmpty(invalidParts)) {

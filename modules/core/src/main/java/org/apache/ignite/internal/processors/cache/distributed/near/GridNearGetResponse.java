@@ -79,6 +79,9 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
     /** Serialized error. */
     private byte[] errBytes;
 
+    /** Number of cache hits. */
+    private int cacheHits;
+
     /**
      * Empty constructor required for {@link Externalizable}.
      */
@@ -140,6 +143,18 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
      */
     public void entries(Collection<GridCacheEntryInfo> entries) {
         this.entries = entries;
+
+        for (GridCacheEntryInfo entry : entries) {
+            if (entry.isCacheHit())
+                cacheHits += 1;
+        }
+    }
+
+    /**
+     * @return  Number of cache hits.
+     */
+    public int cacheHits() {
+        return cacheHits;
     }
 
     /**
@@ -270,6 +285,11 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
 
                 writer.incrementState();
 
+            case 10:
+                if (!writer.writeInt("cacheHits", cacheHits))
+                    return false;
+
+                writer.incrementState();
         }
 
         return true;
@@ -342,6 +362,13 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
 
                 reader.incrementState();
 
+            case 10:
+                cacheHits = reader.readInt("cacheHits");
+
+                if (!reader.isLastRead())
+                    return false;
+
+                reader.incrementState();
         }
 
         return reader.afterMessageRead(GridNearGetResponse.class);
@@ -354,7 +381,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
 
     /** {@inheritDoc} */
     @Override public byte fieldsCount() {
-        return 10;
+        return 11;
     }
 
     /** {@inheritDoc} */
