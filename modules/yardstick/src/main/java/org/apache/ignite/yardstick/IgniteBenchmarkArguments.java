@@ -18,6 +18,8 @@
 package org.apache.ignite.yardstick;
 
 import com.beust.jcommander.Parameter;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.configuration.MemoryConfiguration;
@@ -26,9 +28,6 @@ import org.apache.ignite.internal.util.tostring.GridToStringBuilder;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
-
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.ignite.yardstick.cache.IgniteStreamerBenchmark;
 import org.jetbrains.annotations.Nullable;
 
@@ -240,6 +239,9 @@ public class IgniteBenchmarkArguments {
     @Parameter(names = {"-stbs", "--streamerBufSize"}, description = "Data streamer buffer size")
     private int streamerBufSize = IgniteDataStreamer.DFLT_PER_NODE_BUFFER_SIZE;
 
+    @Parameter(names = {"-zip", "--zip"}, description = "Zip fields for zip test")
+    private boolean zip;
+
     /**
      * @return {@code True} if need set {@link PersistentStoreConfiguration}.
      */
@@ -362,7 +364,7 @@ public class IgniteBenchmarkArguments {
     /**
      * @return {@code True} if flag for native benchmarking is set.
      */
-    public boolean isNative(){
+    public boolean isNative() {
         return ntv;
     }
 
@@ -596,6 +598,13 @@ public class IgniteBenchmarkArguments {
      */
     public int streamerBufferSize() {
         return streamerBufSize;
+    }
+
+    /**
+     * @return Zip.
+     */
+    public boolean zip() {
+        return zip;
     }
 
     /** {@inheritDoc} */

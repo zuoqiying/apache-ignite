@@ -28,14 +28,19 @@ import java.util.concurrent.TimeUnit;
 import javax.cache.CacheException;
 import org.apache.ignite.IgniteTransactions;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.binary.BinaryObject;
+import org.apache.ignite.cache.CacheAtomicityMode;
+import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.CacheWriteSynchronizationMode;
 import org.apache.ignite.cluster.ClusterTopologyException;
+import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.transactions.Transaction;
 import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
 import org.apache.ignite.transactions.TransactionOptimisticException;
 import org.apache.ignite.transactions.TransactionRollbackException;
-import org.apache.ignite.yardstick.cache.IgnitePutBenchmark;
+import org.apache.ignite.yardstick.cache.IgniteStreamerZipBenchmark;
 import org.yardstickframework.BenchmarkConfiguration;
 import org.yardstickframework.BenchmarkDriver;
 import org.yardstickframework.BenchmarkDriverStartUp;
@@ -110,26 +115,41 @@ public class IgniteBenchmarkUtils {
     public static void main(String[] args) throws Exception {
         final String cfg = "modules/yardstick/config/ignite-localhost-config.xml";
 
-        final Class<? extends BenchmarkDriver> benchmark = IgnitePutBenchmark.class;
+        final Class<? extends BenchmarkDriver> benchmark = IgniteStreamerZipBenchmark.class;
 
         final int threads = 1;
 
         final boolean clientDriverNode = true;
 
-        final int extraNodes = 1;
+        final int extraNodes = 3;
 
         final int warmUp = 60;
         final int duration = 120;
 
-        final int range = 100_000;
+        final int range = 1_000_000;
 
         final boolean throughputLatencyProbe = false;
+
+        final boolean zip = true;
 
         for (int i = 0; i < extraNodes; i++) {
             IgniteConfiguration nodeCfg = Ignition.loadSpringBean(cfg, "grid.cfg");
 
             nodeCfg.setIgniteInstanceName("node-" + i);
             nodeCfg.setMetricsLogFrequency(0);
+
+            CacheConfiguration ccfg = new CacheConfiguration("streamer-barclays");
+            ccfg.setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
+            ccfg.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
+            ccfg.setBackups(1);
+            ccfg.setOnheapCacheEnabled(false);
+            ccfg.setCacheMode(CacheMode.PARTITIONED);
+            ccfg.setRebalanceThrottle(0);
+            ccfg.setRebalanceBatchSize(5 * 1024 * 1024); //5MB
+            ccfg.setRebalanceThreadPoolSize(4);
+            ccfg.setIndexedTypes(String.class, BinaryObject.class);
+
+            nodeCfg.setCacheConfiguration(ccfg);
 
             Ignition.start(nodeCfg);
         }
@@ -144,6 +164,9 @@ public class IgniteBenchmarkUtils {
         addArg(args0, "-sn", "IgniteNode");
         addArg(args0, "-cfg", cfg);
         addArg(args0, "-wom", "PRIMARY");
+
+        if (zip)
+            args0.add("-zip");
 
         if (throughputLatencyProbe)
             addArg(args0, "-pr", "ThroughputLatencyProbe");
