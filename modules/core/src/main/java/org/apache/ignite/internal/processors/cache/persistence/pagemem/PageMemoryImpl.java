@@ -806,6 +806,9 @@ public class PageMemoryImpl implements PageMemoryEx {
         seg.readLock().lock();
 
         try {
+            if (!isInCheckpoint(fullId))
+                return null;
+
             tag = seg.partTag(fullId.groupId(), PageIdUtils.partId(fullId.pageId()));
 
             relPtr = seg.loadedPages.get(
@@ -887,6 +890,9 @@ public class PageMemoryImpl implements PageMemoryEx {
 
             if (!clearCheckpoint(fullId)){
                 assert tmpRelPtr == INVALID_REL_PTR;
+
+                // We pinned the page when resolve abs pointer.
+                PageHeader.releasePage(absPtr);
 
                 return false;
             }
