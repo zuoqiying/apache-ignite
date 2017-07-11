@@ -23,6 +23,7 @@
 #ifndef _IGNITE_BINARY_BINARY
 #define _IGNITE_BINARY_BINARY
 
+#include <ignite/binary/binary_any.h>
 #include <ignite/binary/binary_consts.h>
 #include <ignite/binary/binary_containers.h>
 #include <ignite/binary/binary_type.h>

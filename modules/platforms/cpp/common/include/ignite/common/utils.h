@@ -407,14 +407,14 @@ namespace ignite
             int day = 1, int hour = 0, int min = 0, int sec = 0, long ns = 0);
 
         /**
-         * Meta-programming class.
-         * Defines T1 as ::type if the condition is true, otherwise
-         * defines T2 as ::type.
+         * Meta-programming template.
+         * Defines T1 as ::Type if the condition is true, otherwise
+         * defines T2 as ::Type.
          */
         template<bool, typename T1, typename T2>
         struct Conditional
         {
-            typedef T1 type;
+            typedef T1 Type;
         };
 
         /**
@@ -423,7 +423,65 @@ namespace ignite
         template<typename T1, typename T2>
         struct Conditional<false, T1, T2>
         {
-            typedef T2 type;
+            typedef T2 Type;
+        };
+
+        /**
+         * Meta-programming template.
+         * Removes 'const' qualifier.
+         */
+        template<typename T>
+        struct RemoveConst
+        {
+            typedef T Type;
+        };
+
+        template<typename T>
+        struct RemoveConst<const T>
+        {
+            typedef T Type;
+        };
+
+        /**
+         * Meta-programming template.
+         * Removes 'volatile' qualifier.
+         */
+        template<typename T>
+        struct RemoveVolatile
+        {
+            typedef T Type;
+        };
+
+        template<typename T>
+        struct RemoveVolatile<volatile T>
+        {
+            typedef T Type;
+        };
+
+        /**
+         * Meta-programming template.
+         * Removes 'const' and 'volatile' qualifiers.
+         */
+        template<typename T>
+        struct RemoveCv
+        {
+            typedef typename RemoveVolatile<typename RemoveConst<T>::Type>::Type Type;
+        };
+
+        /**
+         * Meta-programming template.
+         * Removes reference.
+         */
+        template<typename T>
+        struct RemoveReference
+        {
+            typedef T Type;
+        };
+
+        template<typename T>
+        struct RemoveReference<T&>
+        {
+            typedef T Type;
         };
     }
 }

@@ -178,6 +178,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\ignite\binary\binary.h" />
+    <ClInclude Include="..\..\include\ignite\binary\binary_any.h" />
     <ClInclude Include="..\..\include\ignite\binary\binary_consts.h" />
     <ClInclude Include="..\..\include\ignite\binary\binary_containers.h" />
     <ClInclude Include="..\..\include\ignite\binary\binary_object.h" />
@@ -186,6 +187,7 @@
     <ClInclude Include="..\..\include\ignite\binary\binary_reader.h" />
     <ClInclude Include="..\..\include\ignite\binary\binary_type.h" />
     <ClInclude Include="..\..\include\ignite\binary\binary_writer.h" />
+    <ClInclude Include="..\..\include\ignite\impl\binary\binary_any_impl.h" />
     <ClInclude Include="..\..\include\ignite\impl\binary\binary_common.h" />
     <ClInclude Include="..\..\include\ignite\impl\binary\binary_field_meta.h" />
     <ClInclude Include="..\..\include\ignite\impl\binary\binary_id_resolver.h" />

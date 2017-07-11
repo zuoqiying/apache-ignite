@@ -201,6 +201,9 @@ namespace ignite
 
         /** Future state error. */
         static const int IGNITE_ERR_FUTURE_STATE = 2024;
+
+        /** Any cast error. */
+        static const int IGNITE_ERR_ANY_CAST = 2025;
         
         /** Unknown error. */
         static const int IGNITE_ERR_UNKNOWN = -1;
