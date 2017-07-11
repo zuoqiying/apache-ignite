@@ -425,7 +425,10 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
                             colocated.removeEntry(entry);
                     }
                     else {
-                        cacheHit = true;
+                        if (!skipVals && cctx.config().isStatisticsEnabled() && !cctx.cache().isDhtAtomic())
+                            cctx.cache().metrics0().onRead(true);
+                        else
+                            cacheHit = true;
 
                         if (!skipVals)
                             setResult(v, ver);
@@ -440,7 +443,10 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
 
                 // Entry not found, complete future with null result if topology did not change and there is no store.
                 if (!cctx.readThroughConfigured() && (topStable || partitionOwned(part))) {
-                    cacheHit = false;
+                    if (!skipVals && cctx.config().isStatisticsEnabled() && !cctx.cache().isDhtAtomic())
+                        colocated.metrics0().onRead(false);
+                    else
+                        cacheHit = false;
 
                     if (skipVals)
                         setSkipValueResult(false, null);

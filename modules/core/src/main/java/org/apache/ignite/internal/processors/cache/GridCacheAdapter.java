@@ -1376,6 +1376,10 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
     @Nullable @Override public V get(K key) throws IgniteCheckedException {
         A.notNull(key, "key");
 
+        boolean statsEnabled = ctx.config().isStatisticsEnabled();
+
+        long start = statsEnabled ? System.nanoTime() : 0L;
+
         boolean keepBinary = ctx.keepBinary();
 
         if (keepBinary)
@@ -1388,6 +1392,9 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
             val = (V)ctx.config().getInterceptor().onGet(key, val);
         }
+
+        if (statsEnabled && !isDhtAtomic())
+            metrics0().addGetTimeNanos(System.nanoTime() - start);
 
         return val;
     }
@@ -1508,10 +1515,17 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
     @Override public final Map<K, V> getAll(@Nullable Collection<? extends K> keys) throws IgniteCheckedException {
         A.notNull(keys, "keys");
 
+        boolean statsEnabled = ctx.config().isStatisticsEnabled();
+
+        long start = statsEnabled ? System.nanoTime() : 0L;
+
         Map<K, V> map = getAll0(keys, !ctx.keepBinary(), false);
 
         if (ctx.config().getInterceptor() != null)
             map = interceptGet(keys, map);
+
+        if (statsEnabled && !isDhtAtomic())
+            metrics0().addGetTimeNanos(System.nanoTime() - start);
 
         return map;
     }
@@ -1899,6 +1913,9 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                         GridCacheEntryEx entry = needEntry ? entryEx(key) : peekEx(key);
 
                         if (entry == null) {
+                            if (!skipVals && ctx.config().isStatisticsEnabled() && !isDhtAtomic())
+                                ctx.cache().metrics0().onRead(false);
+
                             break;
                         }
 
@@ -1910,7 +1927,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
                             if (storeEnabled) {
                                 res = entry.innerGetAndReserveForLoad(ctx.isSwapOrOffheapEnabled(),
-                                    /*updateMetrics*/false,
+                                    updateMetrics && !isDhtAtomic(),
                                     evt,
                                     subjId,
                                     taskName,
@@ -1935,7 +1952,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                                     null,
                                     ctx.isSwapOrOffheapEnabled(),
                                     /*unmarshal*/true,
-                                    /*updateMetrics*/false,
+                                    updateMetrics && !isDhtAtomic(),
                                     evt,
                                     subjId,
                                     null,
@@ -2267,6 +2284,9 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
      */
     public boolean put(final K key, final V val, final CacheEntryPredicate filter)
         throws IgniteCheckedException {
+        boolean statsEnabled = ctx.config().isStatisticsEnabled();
+
+        long start = statsEnabled ? System.nanoTime() : 0L;
 
         A.notNull(key, "key", val, "val");
 
@@ -2274,6 +2294,9 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
             validateCacheKey(key);
 
         boolean stored = put0(key, val, filter);
+
+        if (statsEnabled && stored && !isDhtAtomic())
+            metrics0().addPutTimeNanos(System.nanoTime() - start);
 
         return stored;
     }
@@ -2699,10 +2722,17 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
         if (F.isEmpty(m))
             return;
 
+        boolean statsEnabled = ctx.config().isStatisticsEnabled();
+
+        long start = statsEnabled ? System.nanoTime() : 0L;
+
         if (keyCheck)
             validateCacheKeys(m.keySet());
 
         putAll0(m);
+
+        if (statsEnabled && !isDhtAtomic())
+            metrics0().addPutTimeNanos(System.nanoTime() - start);
     }
 
     /**
@@ -2753,12 +2783,19 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
     /** {@inheritDoc} */
     @Nullable @Override public V getAndRemove(final K key) throws IgniteCheckedException {
+        boolean statsEnabled = ctx.config().isStatisticsEnabled();
+
+        long start = statsEnabled ? System.nanoTime() : 0L;
+
         A.notNull(key, "key");
 
         if (keyCheck)
             validateCacheKey(key);
 
         V prevVal = getAndRemove0(key);
+
+        if (statsEnabled && !isDhtAtomic())
+            metrics0().addRemoveAndGetTimeNanos(System.nanoTime() - start);
 
         return prevVal;
     }
@@ -2856,6 +2893,10 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
     /** {@inheritDoc} */
     @Override public void removeAll(final Collection<? extends K> keys) throws IgniteCheckedException {
+        boolean statsEnabled = ctx.config().isStatisticsEnabled();
+
+        long start = statsEnabled ? System.nanoTime() : 0L;
+
         A.notNull(keys, "keys");
 
         if (F.isEmpty(keys))
@@ -2865,6 +2906,9 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
             validateCacheKeys(keys);
 
         removeAll0(keys);
+
+        if (statsEnabled && !isDhtAtomic())
+            metrics0().addRemoveTimeNanos(System.nanoTime() - start);
     }
 
     /**
@@ -2941,12 +2985,19 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
      * @throws IgniteCheckedException If failed.
      */
     public boolean remove(final K key, @Nullable CacheEntryPredicate filter) throws IgniteCheckedException {
+        boolean statsEnabled = ctx.config().isStatisticsEnabled();
+
+        long start = statsEnabled ? System.nanoTime() : 0L;
+
         A.notNull(key, "key");
 
         if (keyCheck)
             validateCacheKey(key);
 
         boolean rmv = remove0(key, filter);
+
+        if (statsEnabled && rmv && !isDhtAtomic())
+            metrics0().addRemoveTimeNanos(System.nanoTime() - start);
 
         return rmv;
     }
