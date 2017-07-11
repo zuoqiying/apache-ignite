@@ -888,14 +888,9 @@ public class PageMemoryImpl implements PageMemoryEx {
         try {
             long tmpRelPtr = PageHeader.tempBufferPointer(absPtr);
 
-            if (!clearCheckpoint(fullId)){
-                assert tmpRelPtr == INVALID_REL_PTR;
+            boolean success = clearCheckpoint(fullId);
 
-                // We pinned the page when resolve abs pointer.
-                PageHeader.releasePage(absPtr);
-
-                return false;
-            }
+            assert success:"Page was not pinned, evicted during checkpoint.";
 
             if (tmpRelPtr != INVALID_REL_PTR){
                 PageHeader.tempBufferPointer(absPtr, INVALID_REL_PTR);
