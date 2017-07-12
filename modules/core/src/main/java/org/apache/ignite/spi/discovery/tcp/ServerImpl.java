@@ -6386,6 +6386,12 @@ class ServerImpl extends TcpDiscoveryImpl {
         /** Current client metrics. */
         private volatile ClusterMetrics metrics;
 
+        /** Last heartbeat message receive time. */
+        private volatile long lastHbMessageTime;
+
+        /** Max heartbeat message receive interval. */
+        private final long maxHbInterval;
+
         /** */
         private final AtomicReference<GridFutureAdapter<Boolean>> pingFut = new AtomicReference<>();
 
@@ -6397,10 +6403,13 @@ class ServerImpl extends TcpDiscoveryImpl {
          * @param clientNodeId Node ID.
          */
         protected ClientMessageWorker(Socket sock, UUID clientNodeId) throws IOException {
-            super("tcp-disco-client-message-worker", 2000);
+            super("tcp-disco-client-message-worker", Math.max(spi.getHeartbeatFrequency(), 10));
 
             this.sock = sock;
             this.clientNodeId = clientNodeId;
+
+            maxHbInterval = spi.getHeartbeatFrequency() * spi.getMaxMissedClientHeartbeats();
+            lastHbMessageTime = U.currentTimeMillis();
         }
 
         /**
@@ -6421,6 +6430,9 @@ class ServerImpl extends TcpDiscoveryImpl {
          * @param metrics New current client metrics.
          */
         void metrics(ClusterMetrics metrics) {
+            // Updates only on heartbeat message.
+            lastHbMessageTime = U.currentTimeMillis();
+
             this.metrics = metrics;
         }
 
@@ -6594,6 +6606,26 @@ class ServerImpl extends TcpDiscoveryImpl {
             }
             catch (IgniteCheckedException e) {
                 throw new IgniteSpiException("Internal error: ping future cannot be done with exception", e);
+            }
+        }
+
+        /** {@inheritDoc} */
+        @Override protected void noMessageLoop() {
+            if (U.currentTimeMillis() - lastHbMessageTime > maxHbInterval) {
+                String msg = "Client node considered as unreachable " +
+                    "and will be dropped from cluster, " +
+                    "because no heartbeat messages received in interval: " +
+                    "TcpDiscoverySpi.getHeartbeatFrequency() * TcpDiscoverySpi.getMaxMissedClientHeartbeats() ms. " +
+                    "It maybe caused by network problems or long GC pause on client node, try to increase mentioned " +
+                    "parameters. " +
+                    "[nodeId=" + clientNodeId +
+                    ", heartBeatFrequency=" + spi.getHeartbeatFrequency() +
+                    ", maxMissedClientHeartbeats=" + spi.getMaxMissedClientHeartbeats() +
+                    ']';
+
+                failNode(clientNodeId, msg);
+
+                U.warn(log, msg);
             }
         }
 
