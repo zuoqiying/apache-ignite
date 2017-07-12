@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -161,6 +162,8 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                                 }
                             }
 
+                            ignite().cache(cacheName).clear();
+
                             BenchmarkUtils.println("IgniteStreamerZipBenchmark finished warmup for cache " +
                                 "[name=" + cacheName + ']');
 
@@ -194,6 +197,9 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                     @Override public Void call() throws Exception {
                         Thread.currentThread().setName("streamer-" + cacheName);
 
+                        // Use random keys to allow submit entries from multiple clients independently.
+                        Random rnd = new Random();
+
                         long start = System.currentTimeMillis();
 
                         BenchmarkUtils.println("IgniteStreamerZipBenchmark start load cache [name=" + cacheName + ']');
@@ -203,7 +209,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                             streamer.perNodeParallelOperations(Runtime.getRuntime().availableProcessors() * 4);
 
                             for (int i = 0; i < entries; i++) {
-                                streamer.addData(String.valueOf(i), queue.take());
+                                streamer.addData(String.valueOf(rnd.nextLong()), queue.take());
 
                                 if (i > 0 && i % 1000 == 0) {
                                     if (stop.get())
@@ -223,7 +229,8 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                         BenchmarkUtils.println("IgniteStreamerZipBenchmark finished load cache [name=" + cacheName +
                             ", entries=" + entries +
                             ", bufferSize=" + args.streamerBufferSize() +
-                            ", totalTimeMillis=" + time + ']');
+                            ", totalTimeMillis=" + time +
+                            ", entriesInCache=" + ignite().cache(cacheName).size() + ']');
 
                         return null;
                     }
