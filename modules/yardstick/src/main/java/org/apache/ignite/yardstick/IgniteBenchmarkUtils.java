@@ -117,7 +117,7 @@ public class IgniteBenchmarkUtils {
 
         final boolean clientDriverNode = true;
 
-        final int extraNodes = 1;
+        final int extraNodes = 4;
 
         final int warmUp = 20; //60;
         final int duration = 30; //120;

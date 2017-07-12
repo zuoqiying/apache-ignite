@@ -34,10 +34,10 @@ public class KodiakQuery9Benchmark extends JdbcAbstractBenchmark {
     static final String DUMMY_CACHE = "DG";
 
     /** */
-    static final int noOfMdn = 1_000;
+    static final int noOfMdn = 100_000;
 
     /** */
-    static final int noOfContacts = 100;
+    static final int noOfContacts = 300;
 
     /** */
     static final long MDN_START_VALUE = 919200000001L;
