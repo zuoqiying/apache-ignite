@@ -146,6 +146,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
                             try (IgniteDataStreamer<Object, Object> streamer = ignite().dataStreamer(cacheName)) {
                                 streamer.perNodeBufferSize(args.streamerBufferSize());
+                                streamer.perNodeParallelOperations(Runtime.getRuntime().availableProcessors() * 4);
 
                                 while (System.currentTimeMillis() < warmupEnd && !stop.get()) {
                                     for (int i = 0; i < 10; i++) {
@@ -197,6 +198,9 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                         BenchmarkUtils.println("IgniteStreamerZipBenchmark start load cache [name=" + cacheName + ']');
 
                         try (IgniteDataStreamer<Object, Object> streamer = ignite().dataStreamer(cacheName)) {
+                            streamer.perNodeBufferSize(args.streamerBufferSize());
+                            streamer.perNodeParallelOperations(Runtime.getRuntime().availableProcessors() * 4);
+
                             for (int i = 0; i < entries; i++) {
                                 streamer.addData(String.valueOf(i), queue.take());
 
