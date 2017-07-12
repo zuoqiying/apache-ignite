@@ -23,6 +23,8 @@
 #ifndef _IGNITE_BINARY_BINARY_ANY
 #define _IGNITE_BINARY_BINARY_ANY
 
+#include <utility>
+
 #include <ignite/common/common.h>
 #include <ignite/common/concurrent.h>
 
@@ -54,6 +56,18 @@ namespace ignite
             }
 
             /**
+             * Copy constructor.
+             *
+             * @param other Other instance.
+             */
+            BinaryAny(const BinaryAny& other) :
+                value(other.value),
+                typeId(other.typeId)
+            {
+                // No-op.
+            }
+
+            /**
              * Constructor.
              *
              * @param value Value of the binary type.
@@ -64,6 +78,53 @@ namespace ignite
                 typeId(impl::binary::BinaryUtils::GetTypeId<T>())
             {
                 // No-op.
+            }
+
+            /**
+             * Assignment operator.
+             *
+             * @param other Other instance.
+             * @return *this.
+             */
+            BinaryAny& operator=(const BinaryAny& other)
+            {
+                if (this != &other)
+                {
+                    BinaryAny tmp(other);
+
+                    Swap(tmp);
+                }
+
+                return *this;
+            }
+
+            /**
+             * Assignment operator.
+             *
+             * @param value Value to consume.
+             * @return *this.
+             */
+            template<typename T>
+            BinaryAny& operator=(const T& value)
+            {
+                BinaryAny tmp(value);
+
+                Swap(tmp);
+
+                return *this;
+            }
+
+            /**
+             * Swaps content of the instance with another one.
+             *
+             * @param other Other instance.
+             */
+            void Swap(BinaryAny& other)
+            {
+                using std::swap;
+
+                value.Swap(other.value);
+                swap(typeId, other.typeId);
             }
 
             /**

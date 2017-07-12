@@ -77,6 +77,7 @@ void TestBasicInvalid(const T1& actual)
     BOOST_CHECK(cptr == 0);
 }
 
+// General case for the different stored and requested types.
 template<typename T1, typename T2>
 struct ConditionalTest
 {
@@ -86,6 +87,7 @@ struct ConditionalTest
     }
 };
 
+// Specialization for the same stored and requested types.
 template<typename T>
 struct ConditionalTest<T, T>
 {
