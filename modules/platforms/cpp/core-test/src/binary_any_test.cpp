@@ -23,6 +23,8 @@
 
 #include <ignite/binary/binary_any.h>
 
+#include <ignite/test_type.h>
+
 using namespace ignite;
 using namespace ignite::binary;
 using namespace ignite::common;
@@ -57,6 +59,60 @@ void TestBasicValid(const T& actual)
     BOOST_CHECK(*cptr == actual);
 }
 
+template<typename T1, typename T2>
+void TestBasicInvalid(const T1& actual)
+{
+    BinaryAny any(actual);
+
+    BOOST_CHECK(!any.IsEmpty());
+
+    BOOST_CHECK_EXCEPTION(BinaryAnyCast<T2>(any), ignite::IgniteError, IsAnyCastError);
+    BOOST_CHECK_EXCEPTION(BinaryAnyCast<T2&>(any), ignite::IgniteError, IsAnyCastError);
+    BOOST_CHECK_EXCEPTION(BinaryAnyCast<const T2&>(any), ignite::IgniteError, IsAnyCastError);
+
+    T2* ptr = BinaryAnyCast<T2*>(any);
+    BOOST_CHECK(ptr == 0);
+
+    const T2* cptr = BinaryAnyCast<const T2*>(any);
+    BOOST_CHECK(cptr == 0);
+}
+
+template<typename T1, typename T2>
+struct ConditionalTest
+{
+    static void Do(const T1& actual)
+    {
+        TestBasicInvalid<T1, T2>(actual);
+    }
+};
+
+template<typename T>
+struct ConditionalTest<T, T>
+{
+    static void Do(const T& actual)
+    {
+        TestBasicValid<T>(actual);
+    }
+};
+
+template<typename T>
+void TestAllTypes(const T& actual)
+{
+    ConditionalTest<T, int8_t>::Do(actual);
+    ConditionalTest<T, int16_t>::Do(actual);
+    ConditionalTest<T, int32_t>::Do(actual);
+    ConditionalTest<T, int64_t>::Do(actual);
+    ConditionalTest<T, bool>::Do(actual);
+    ConditionalTest<T, float>::Do(actual);
+    ConditionalTest<T, double>::Do(actual);
+    ConditionalTest<T, Guid>::Do(actual);
+    ConditionalTest<T, Date>::Do(actual);
+    ConditionalTest<T, Time>::Do(actual);
+    ConditionalTest<T, Timestamp>::Do(actual);
+    ConditionalTest<T, std::string>::Do(actual);
+    ConditionalTest<T, TestType>::Do(actual);
+}
+
 BOOST_AUTO_TEST_SUITE(BinaryAnyTestSuite)
 
 BOOST_AUTO_TEST_CASE(Empty)
@@ -65,9 +121,9 @@ BOOST_AUTO_TEST_CASE(Empty)
 
     BOOST_CHECK(any.IsEmpty());
 
-    BOOST_CHECK_EXCEPTION(int32_t val = BinaryAnyCast<int32_t>(any), ignite::IgniteError, IsAnyCastError);
-    BOOST_CHECK_EXCEPTION(int32_t& val = BinaryAnyCast<int32_t&>(any), ignite::IgniteError, IsAnyCastError);
-    BOOST_CHECK_EXCEPTION(const int32_t& val = BinaryAnyCast<const int32_t&>(any), ignite::IgniteError, IsAnyCastError);
+    BOOST_CHECK_EXCEPTION(BinaryAnyCast<int32_t>(any), ignite::IgniteError, IsAnyCastError);
+    BOOST_CHECK_EXCEPTION(BinaryAnyCast<int32_t&>(any), ignite::IgniteError, IsAnyCastError);
+    BOOST_CHECK_EXCEPTION(BinaryAnyCast<const int32_t&>(any), ignite::IgniteError, IsAnyCastError);
 
     std::string* ptr = BinaryAnyCast<std::string*>(any);
     BOOST_CHECK(ptr == 0);
@@ -78,82 +134,92 @@ BOOST_AUTO_TEST_CASE(Empty)
 
 BOOST_AUTO_TEST_CASE(BasicInt8)
 {
-    TestBasicValid<int8_t>(42);
-    TestBasicValid<int8_t>(0);
-    TestBasicValid<int8_t>(-127);
+    TestAllTypes<int8_t>(42);
+    TestAllTypes<int8_t>(0);
+    TestAllTypes<int8_t>(-127);
 }
 
 BOOST_AUTO_TEST_CASE(BasicInt16)
 {
-    TestBasicValid<int16_t>(4242);
-    TestBasicValid<int16_t>(0);
-    TestBasicValid<int16_t>(-32768);
+    TestAllTypes<int16_t>(4242);
+    TestAllTypes<int16_t>(0);
+    TestAllTypes<int16_t>(-32768);
 }
 
 BOOST_AUTO_TEST_CASE(BasicInt32)
 {
-    TestBasicValid<int32_t>(42424242);
-    TestBasicValid<int32_t>(0);
-    TestBasicValid<int32_t>(-2147483647);
+    TestAllTypes<int32_t>(42424242);
+    TestAllTypes<int32_t>(0);
+    TestAllTypes<int32_t>(-2147483647);
 }
 
 BOOST_AUTO_TEST_CASE(BasicInt64)
 {
-    TestBasicValid<int64_t>(4242424242424242);
-    TestBasicValid<int64_t>(0);
-    TestBasicValid<int64_t>(-9223372036854775807);
+    TestAllTypes<int64_t>(4242424242424242);
+    TestAllTypes<int64_t>(0);
+    TestAllTypes<int64_t>(-9223372036854775807);
 }
 
 BOOST_AUTO_TEST_CASE(BasicBool)
 {
-    TestBasicValid<bool>(true);
-    TestBasicValid<bool>(false);
+    TestAllTypes<bool>(true);
+    TestAllTypes<bool>(false);
 }
 
 BOOST_AUTO_TEST_CASE(BasicFloat)
 {
-    TestBasicValid<float>(42.42f);
-    TestBasicValid<float>(0.0f);
-    TestBasicValid<float>(-1.0f);
+    TestAllTypes<float>(42.42f);
+    TestAllTypes<float>(0.0f);
+    TestAllTypes<float>(-1.0f);
 }
 
 BOOST_AUTO_TEST_CASE(BasicDouble)
 {
-    TestBasicValid<double>(42.42);
-    TestBasicValid<double>(0.0);
-    TestBasicValid<double>(-1.0);
+    TestAllTypes<double>(42.42);
+    TestAllTypes<double>(0.0);
+    TestAllTypes<double>(-1.0);
 }
 
 BOOST_AUTO_TEST_CASE(BasicGuid)
 {
-    TestBasicValid<Guid>(Guid(0x198A423B4FE96730LL, 0xD82AB007263F82C6LL));
-    TestBasicValid<Guid>(Guid(0, 0));
+    TestAllTypes<Guid>(Guid(0x198A423B4FE96730LL, 0xD82AB007263F82C6LL));
+    TestAllTypes<Guid>(Guid(0, 0));
 }
 
 BOOST_AUTO_TEST_CASE(BasicDate)
 {
-    TestBasicValid<Date>(MakeDateGmt(1989, 10, 26));
-    TestBasicValid<Date>(MakeDateGmt(2057, 01, 31));
+    TestAllTypes<Date>(MakeDateGmt(1989, 10, 26));
+    TestAllTypes<Date>(MakeDateGmt(2057, 01, 31));
+    TestAllTypes<Date>(MakeDateGmt());
 }
 
 BOOST_AUTO_TEST_CASE(BasicTimestamp)
 {
-    TestBasicValid<Timestamp>(MakeTimestampGmt(1998, 12, 27, 1, 2, 3, 456));
-    TestBasicValid<Timestamp>(MakeTimestampGmt(2057, 01, 31, 14, 29, 10, 110394867));
+    TestAllTypes<Timestamp>(MakeTimestampGmt(1998, 12, 27, 1, 2, 3, 456));
+    TestAllTypes<Timestamp>(MakeTimestampGmt(2057, 01, 31, 14, 29, 10, 110394867));
+    TestAllTypes<Timestamp>(MakeTimestampGmt());
 }
 
 BOOST_AUTO_TEST_CASE(BasicTime)
 {
-    TestBasicValid<Time>(MakeTimeGmt(1, 2, 3));
-    TestBasicValid<Time>(MakeTimeGmt(0, 0, 0));
-    TestBasicValid<Time>(MakeTimeGmt(14, 29, 10));
+    TestAllTypes<Time>(MakeTimeGmt(1, 2, 3));
+    TestAllTypes<Time>(MakeTimeGmt(14, 29, 10));
+    TestAllTypes<Time>(MakeTimeGmt());
 }
 
 BOOST_AUTO_TEST_CASE(BasicString)
 {
-    TestBasicValid<std::string>("Lorem ipsum");
-    TestBasicValid<std::string>("");
-    TestBasicValid<std::string>("x");
+    TestAllTypes<std::string>("Lorem ipsum");
+    TestAllTypes<std::string>("x");
+    TestAllTypes<std::string>("");
+}
+
+BOOST_AUTO_TEST_CASE(BasicTestType)
+{
+    TestAllTypes<TestType>(TestType(1, 2, 3, 4, "5", 6.0f, 7.0, true, Guid(8, 9),
+        MakeDateGmt(1987, 6, 5), MakeTimeGmt(13, 32, 9), MakeTimestampGmt(1998, 12, 27, 1, 2, 3, 456)));
+
+    TestAllTypes<TestType>(TestType());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
