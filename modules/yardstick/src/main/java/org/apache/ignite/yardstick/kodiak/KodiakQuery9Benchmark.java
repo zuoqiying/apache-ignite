@@ -34,18 +34,22 @@ public class KodiakQuery9Benchmark extends JdbcAbstractBenchmark {
     static final String DUMMY_CACHE = "DG";
 
     /** */
-    static final int noOfMdn = 10;
+    static final int noOfMdn = 1_000;
 
     /** */
-    static final int noOfContacts = 10;
+    static final int noOfContacts = 100;
 
     /** */
     static final long MDN_START_VALUE = 919200000001L;
 
     /** */
-    int mCorpListID = 1;
+    private int mCorpListID = 1;
 
-    int mdnCntr = 1;
+    private ThreadLocal<Long> mdnCntr = new ThreadLocal<Long>(){
+        @Override protected Long initialValue() {
+            return 919200000001L;
+        }
+    };
 
     /** */
     private void createPocSubscr(long longMdnStartValue, String pttID, int noOfMdns) throws SQLException {
@@ -171,10 +175,17 @@ public class KodiakQuery9Benchmark extends JdbcAbstractBenchmark {
 
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
+        Long mdnCntr = this.mdnCntr.get();
+
+        if(mdnCntr >= MDN_START_VALUE + noOfMdn)
+            mdnCntr = MDN_START_VALUE;
+
         IgniteCache<Object, Object> cache = ignite().cache(DUMMY_CACHE);
 
         SqlFieldsQuery qry = new SqlFieldsQuery(SELECT_QUERY);
-        qry.setArgs(mdnCntr++);
+        qry.setArgs(mdnCntr);
+
+        this.mdnCntr.set(mdnCntr+1);
 
         try (QueryCursor cursor = cache.query(qry)) {
             long rowCnt = 0;
