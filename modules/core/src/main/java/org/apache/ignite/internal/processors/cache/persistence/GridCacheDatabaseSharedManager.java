@@ -2109,8 +2109,17 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
                     }
                 };
 
-                if (curr.nextSnapshot)
-                    snapshotMgr.onMarkCheckPointBegin(curr.snapshotOperation, map);
+                if (curr.nextSnapshot) {
+                    for (Integer grpId : curr.snapshotOperation.cacheGroupIds()) {
+                        if (cctx.discovery().cacheGroupAffinityNode(cctx.localNode(), grpId)) {
+                            CacheGroupContext grp = cctx.cache().cacheGroup(grpId);
+
+                            assert grp != null;
+
+                            snapshotMgr.getLastSuccessfulSnapshotTagForCacheGroup(grpId, (PageMemoryEx)grp.memoryPolicy().pageMemory());
+                        }
+                    }
+                }
 
                 // Listeners must be invoked before we write checkpoint record to WAL.
                 for (DbCheckpointListener lsnr : lsnrs)
@@ -2134,6 +2143,9 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                     cpRec.addCacheGroupState(grp.groupId(), state);
                 }
+
+                if (curr.nextSnapshot)
+                    snapshotMgr.onMarkCheckPointBegin(curr.snapshotOperation, map);
 
                 IgniteBiTuple<Collection<GridMultiCollectionWrapper<FullPageId>>, Integer> tup = beginAllCheckpoints();
 

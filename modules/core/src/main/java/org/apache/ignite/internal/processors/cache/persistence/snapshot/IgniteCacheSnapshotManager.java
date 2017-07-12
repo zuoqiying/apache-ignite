@@ -29,6 +29,7 @@ import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.processors.cache.CacheGroupContext;
 import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheSharedManagerAdapter;
+import org.apache.ignite.internal.processors.cache.persistence.pagemem.PageMemoryEx;
 import org.apache.ignite.internal.processors.cluster.IgniteChangeGlobalStateSupport;
 import org.apache.ignite.internal.util.typedef.T2;
 import org.jetbrains.annotations.Nullable;
@@ -147,6 +148,14 @@ public class IgniteCacheSnapshotManager<T extends SnapshotOperation> extends Gri
         Integer tag
     ) throws IgniteCheckedException {
         // No-op.
+    }
+
+    /**
+     * @param grpId Group id.
+     * @param pageMem Page mem.
+     */
+    public long getLastSuccessfulSnapshotTagForCacheGroup(int grpId, PageMemoryEx pageMem) {
+        return 0;
     }
 
     /** {@inheritDoc} */
