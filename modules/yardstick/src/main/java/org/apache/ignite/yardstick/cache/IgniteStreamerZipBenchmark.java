@@ -109,13 +109,12 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
         executor = Executors.newFixedThreadPool(args.streamerConcurrentCaches());
 
-//        int num = Runtime.getRuntime().availableProcessors();
-        int num = 4;
+        int num = args.zip() <= 0 ? 1 : args.zip();
 
         generatorExecutor = Executors.newFixedThreadPool(num);
 
         for (int i = 0; i < num; i++)
-            generatorExecutor.execute(new EntityGenerator(queue, ignite().binary(), args.zip()));
+            generatorExecutor.execute(new EntityGenerator(queue, ignite().binary(), args.zip() > 0));
 
         BenchmarkUtils.println("IgniteStreamerZipBenchmark start [cacheIndex=" + args.streamerCacheIndex() +
             ", concurrentCaches=" + args.streamerConcurrentCaches() +

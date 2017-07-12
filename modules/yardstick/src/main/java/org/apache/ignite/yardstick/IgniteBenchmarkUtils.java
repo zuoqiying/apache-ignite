@@ -164,9 +164,7 @@ public class IgniteBenchmarkUtils {
         addArg(args0, "-sn", "IgniteNode");
         addArg(args0, "-cfg", cfg);
         addArg(args0, "-wom", "PRIMARY");
-
-        if (zip)
-            args0.add("-zip");
+        addArg(args0, "-zip", 4);
 
         if (throughputLatencyProbe)
             addArg(args0, "-pr", "ThroughputLatencyProbe");

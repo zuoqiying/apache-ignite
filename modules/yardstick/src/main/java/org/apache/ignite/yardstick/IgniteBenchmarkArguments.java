@@ -239,8 +239,9 @@ public class IgniteBenchmarkArguments {
     @Parameter(names = {"-stbs", "--streamerBufSize"}, description = "Data streamer buffer size")
     private int streamerBufSize = IgniteDataStreamer.DFLT_PER_NODE_BUFFER_SIZE;
 
-    @Parameter(names = {"-zip", "--zip"}, description = "Zip fields for zip test")
-    private boolean zip;
+    /** */
+    @Parameter(names = {"-zip", "--zip"}, description = "Zip fields for zip test and number of compress threads.")
+    private int zip;
 
     /**
      * @return {@code True} if need set {@link PersistentStoreConfiguration}.
@@ -601,9 +602,9 @@ public class IgniteBenchmarkArguments {
     }
 
     /**
-     * @return Zip.
+     * @return Zip threads.
      */
-    public boolean zip() {
+    public int zip() {
         return zip;
     }
 
