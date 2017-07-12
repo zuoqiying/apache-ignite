@@ -138,7 +138,7 @@ public class IgniteBenchmarkUtils {
             nodeCfg.setIgniteInstanceName("node-" + i);
             nodeCfg.setMetricsLogFrequency(0);
 
-            CacheConfiguration ccfg = new CacheConfiguration("streamer-barclays");
+            CacheConfiguration ccfg = new CacheConfiguration("streamer-zip");
             ccfg.setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
             ccfg.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
             ccfg.setBackups(1);

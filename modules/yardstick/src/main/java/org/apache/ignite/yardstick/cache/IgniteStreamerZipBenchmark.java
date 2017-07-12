@@ -120,7 +120,8 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
             ", concurrentCaches=" + args.streamerConcurrentCaches() +
             ", entries=" + entries +
             ", bufferSize=" + args.streamerBufferSize() +
-            ", cachesToUse=" + cacheNames + ']');
+            ", cachesToUse=" + cacheNames +
+            ", zip=" + args.zip() + ']');
 
         if (cfg.warmup() > 0) {
             BenchmarkUtils.println("IgniteStreamerZipBenchmark start warmup [warmupTimeMillis=" + cfg.warmup() + ']');
