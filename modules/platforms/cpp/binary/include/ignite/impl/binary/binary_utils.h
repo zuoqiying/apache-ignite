@@ -530,6 +530,22 @@ namespace ignite
                 static void WriteUnsignedVarint(interop::InteropOutputStream* stream, int32_t val);
 
                 /**
+                 * Utility method to read array size from stream.
+                 *
+                 * @param stream Stream.
+                 * @return Value.
+                 */
+                static int32_t ReadArraySize(interop::InteropInputStream* stream);
+
+                /**
+                 * Utility method to write array size to stream.
+                 *
+                 * @param stream Stream.
+                 * @param val Value.
+                 */
+                static void WriteArraySize(interop::InteropOutputStream* stream, int32_t val);
+
+                /**
                  * Get default value for the type.
                  *
                  * @return Null value for non primitive types and zeroes for primitives.

@@ -222,7 +222,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_UUID);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
 
                     for (int i = 0; i < len; i++)
                     {
@@ -256,7 +256,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_UUID);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
 
                     for (int i = 0; i < len; i++)
                         WriteTopObject(val[i]);
@@ -285,7 +285,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_DATE);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
 
                     for (int i = 0; i < len; i++)
                     {
@@ -319,7 +319,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_DATE);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
 
                     for (int i = 0; i < len; i++)
                         WriteTopObject(val[i]);
@@ -346,7 +346,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_TIMESTAMP);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
 
                     for (int i = 0; i < len; i++)
                     {
@@ -380,7 +380,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_TIMESTAMP);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
 
                     for (int i = 0; i < len; i++)
                         WriteTopObject(val[i]);
@@ -407,7 +407,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_TIME);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
 
                     for (int i = 0; i < len; i++)
                     {
@@ -441,7 +441,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(IGNITE_TYPE_ARRAY_TIME);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
 
                     for (int i = 0; i < len; i++)
                         WriteTopObject(val[i]);
@@ -722,7 +722,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(hdr);
-                    BinaryUtils::WriteUnsignedVarint(stream, len);
+                    BinaryUtils::WriteArraySize(stream, len);
                     func(stream, val, len);
                 }
                 else
@@ -755,7 +755,7 @@ namespace ignite
                 if (val)
                 {
                     stream->WriteInt8(hdr);
-                    BinaryUtils::WriteUnsignedVarint(stream ,len);
+                    BinaryUtils::WriteArraySize(stream ,len);
                     func(stream, val, len);
                 }
                 else

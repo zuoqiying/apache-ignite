@@ -352,7 +352,7 @@ namespace ignite
 
             int32_t BinaryUtils::ReadString(InteropInputStream* stream, char* buf, const int32_t len, InputStreamPositionGuard& guard)
             {
-                int32_t realLen = ReadUnsignedVarint(stream);
+                int32_t realLen = ReadArraySize(stream);
 
                 if (buf && len >= realLen)
                 {
@@ -369,13 +369,13 @@ namespace ignite
 
             void BinaryUtils::WriteString(InteropOutputStream* stream, const char* val, const int32_t len)
             {
-                WriteUnsignedVarint(stream, len);
+                WriteArraySize(stream, len);
                 stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val), len);
             }
 
             void BinaryUtils::ReadString(InteropInputStream* stream, std::string& val)
             {
-                int32_t realLen = ReadUnsignedVarint(stream);
+                int32_t realLen = ReadArraySize(stream);
 
                 if (realLen > 0)
                 {
@@ -388,7 +388,7 @@ namespace ignite
             void BinaryUtils::WriteString(InteropOutputStream* stream, const std::string& val)
             {
                 int32_t len = static_cast<int32_t>(val.size());
-                WriteUnsignedVarint(stream, len);
+                WriteArraySize(stream, len);
                 stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val.data()), len);
             }
 
@@ -396,7 +396,7 @@ namespace ignite
             {
                 int32_t scale = ReadInt32(stream);
 
-                int32_t len = ReadUnsignedVarint(stream);
+                int32_t len = ReadArraySize(stream);
 
                 if (!len)
                 {
@@ -436,7 +436,7 @@ namespace ignite
                 if (unscaled.GetSign() == -1)
                     magnitude[0] |= -0x80;
 
-                WriteUnsignedVarint(stream, magnitude.GetSize());
+                WriteArraySize(stream, magnitude.GetSize());
 
                 WriteInt8Array(stream, magnitude.GetData(), magnitude.GetSize());
             }
@@ -466,6 +466,22 @@ namespace ignite
                 }
 
                 stream->WriteInt8(static_cast<int8_t>(uval & 0x7F));
+            }
+
+            int32_t BinaryUtils::ReadArraySize(InteropInputStream* stream)
+            {
+                if (USE_VARINT_ARRAY_LENGHT)
+                    return ReadUnsignedVarint(stream);
+
+                return ReadInt32(stream);
+            }
+
+            void BinaryUtils::WriteArraySize(InteropOutputStream* stream, int32_t val)
+            {
+                if (USE_VARINT_ARRAY_LENGHT)
+                    WriteUnsignedVarint(stream, val);
+                else
+                    WriteInt32(stream, val);
             }
         }
     }

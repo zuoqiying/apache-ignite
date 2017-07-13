@@ -302,7 +302,7 @@ namespace ignite
 
                 case IGNITE_TYPE_ARRAY_BYTE:
                 {
-                    sizeTmp = BinaryUtils::ReadUnsignedVarint(stream);
+                    sizeTmp = BinaryUtils::ReadArraySize(stream);
                     assert(sizeTmp >= 0);
 
                     startPosTmp = stream->Position();

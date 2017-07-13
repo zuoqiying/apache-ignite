@@ -944,7 +944,7 @@ namespace ignite
 
                 if (hdr == expHdr)
                 {
-                    int32_t realLen = BinaryUtils::ReadUnsignedVarint(stream);
+                    int32_t realLen = BinaryUtils::ReadArraySize(stream);
 
                     if (realLen == 0 || (res && len >= realLen))
                     {
