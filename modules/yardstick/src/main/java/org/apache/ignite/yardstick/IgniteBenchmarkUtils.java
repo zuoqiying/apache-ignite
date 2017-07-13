@@ -35,7 +35,6 @@ import org.apache.ignite.transactions.TransactionConcurrency;
 import org.apache.ignite.transactions.TransactionIsolation;
 import org.apache.ignite.transactions.TransactionOptimisticException;
 import org.apache.ignite.transactions.TransactionRollbackException;
-import org.apache.ignite.yardstick.cache.IgnitePutBenchmark;
 import org.apache.ignite.yardstick.kodiak.KodiakQuery9Benchmark;
 import org.yardstickframework.BenchmarkConfiguration;
 import org.yardstickframework.BenchmarkDriver;
@@ -113,14 +112,14 @@ public class IgniteBenchmarkUtils {
 
         final Class<? extends BenchmarkDriver> benchmark = KodiakQuery9Benchmark.class;
 
-        final int threads =1;
+        final int threads =16;
 
         final boolean clientDriverNode = true;
 
         final int extraNodes = 4;
 
-        final int warmUp = 20; //60;
-        final int duration = 30; //120;
+        final int warmUp = 60;
+        final int duration = 120;
 
         final int range = 100_000;
 
