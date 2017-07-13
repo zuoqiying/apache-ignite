@@ -163,7 +163,8 @@ public class IgniteBenchmarkUtils {
         addArg(args0, "-cfg", cfg);
         addArg(args0, "-wom", "PRIMARY");
         addArg(args0, "-cts", 8);
-        addArg(args0, "-ct", "ZIP");
+        addArg(args0, "-ct", "SNAPPY");
+        addArg(args0, "-sr", "0.9");
 
         if (throughputLatencyProbe)
             addArg(args0, "-pr", "ThroughputLatencyProbe");

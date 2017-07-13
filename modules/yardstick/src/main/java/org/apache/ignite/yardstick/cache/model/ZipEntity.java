@@ -32,7 +32,7 @@ import org.jsr166.ThreadLocalRandom8;
 public class ZipEntity {
     static final String ALPHABETH = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890_";
 
-    private static final int RND_STRING_LEN = 24;
+    public static final int RND_STRING_LEN = 24;
 
     public String ACCOUNTCODE;
     public String ASSETTYPE;
@@ -109,60 +109,69 @@ public class ZipEntity {
         return entity;
     }
 
-    public static ZipEntity generateHard() {
+    public static ZipEntity generateHard(double rndCoef, int len) {
         ZipEntity entity = new ZipEntity();
 
         ThreadLocalRandom8 rnd = ThreadLocalRandom8.current();
 
-        entity.ACCOUNTCODE = randomString(rnd, RND_STRING_LEN);
-        entity.ASSETTYPE = randomString(rnd, RND_STRING_LEN);
-        entity.ASSETUNIT = randomString(rnd, RND_STRING_LEN);
-        entity.ATLASFOLDERID = randomString(rnd, RND_STRING_LEN);
-        entity.ATLASINSTRUMENTSTRUCTUREPATH = randomString(rnd, RND_STRING_LEN);
-        entity.BOOKSOURCESYSTEM = randomString(rnd, RND_STRING_LEN);
-        entity.BOOKSOURCESYSTEMCODE = randomString(rnd, RND_STRING_LEN);
-        entity.BUSINESSDATE = randomString(rnd, RND_STRING_LEN);
-        entity.CUSIP = randomString(rnd, RND_STRING_LEN);
-        entity.DATASETFILTER = randomString(rnd, RND_STRING_LEN);
-        entity.DATASETLABEL = randomString(rnd, RND_STRING_LEN);
+        int strings = (int)(rndCoef * 38);
+
+        String[] strs = new String[strings];
+
+        for (int i = 0; i < strings; i++)
+            strs[i] = randomString(rnd, len);
+
+        int i = 0;
+
+        entity.ACCOUNTCODE = strs[i++ % strings];
+        entity.ASSETTYPE = strs[i++ % strings];
+        entity.ASSETUNIT = strs[i++ % strings];
+        entity.ATLASFOLDERID = strs[i++ % strings];
+        entity.ATLASINSTRUMENTSTRUCTUREPATH = strs[i++ % strings];
+        entity.BOOKSOURCESYSTEM = strs[i++ % strings];
+        entity.BOOKSOURCESYSTEMCODE = strs[i++ % strings];
+        entity.BUSINESSDATE = strs[i++ % strings];
+        entity.CUSIP = strs[i++ % strings];
+        entity.DATASETFILTER = strs[i++ % strings];
+        entity.DATASETLABEL = strs[i++ % strings];
         entity.EODTOTALVALUE = rnd.nextDouble();
-        entity.ESMP = randomString(rnd, RND_STRING_LEN);
-        entity.FOAGGRCODE = randomString(rnd, RND_STRING_LEN);
-        entity.HOSTPRODID = randomString(rnd, RND_STRING_LEN);
-        entity.INSTRUMENTEXPIRYDATE = randomString(rnd, RND_STRING_LEN);
-        entity.INSTRUMENTMATURITYDATE = randomString(rnd, RND_STRING_LEN);
-        entity.INSTRUMENTTYPE = randomString(rnd, RND_STRING_LEN);
-        entity.ISIN = randomString(rnd, RND_STRING_LEN);
-        entity.PROXYINSTRUMENTID = randomString(rnd, RND_STRING_LEN);
-        entity.PROXYINSTRUMENTIDTYPE = randomString(rnd, RND_STRING_LEN);
-        entity.PROXYINSTRUMENTTYPE = randomString(rnd, RND_STRING_LEN);
+        entity.ESMP = strs[i++ % strings];
+        entity.FOAGGRCODE = strs[i++ % strings];
+        entity.HOSTPRODID = strs[i++ % strings];
+        entity.INSTRUMENTEXPIRYDATE = strs[i++ % strings];
+        entity.INSTRUMENTMATURITYDATE = strs[i++ % strings];
+        entity.INSTRUMENTTYPE = strs[i++ % strings];
+        entity.ISIN = strs[i++ % strings];
+        entity.PROXYINSTRUMENTID = strs[i++ % strings];
+        entity.PROXYINSTRUMENTIDTYPE = strs[i++ % strings];
+        entity.PROXYINSTRUMENTTYPE = strs[i++ % strings];
         entity.QUANTITY = rnd.nextDouble();
-        entity.REGION = randomString(rnd, RND_STRING_LEN);
-        entity.RIC = randomString(rnd, RND_STRING_LEN);
-        entity.RISKFACTORNAME = randomString(rnd, RND_STRING_LEN);
-        entity.RISKPARENTINSTRUMENTID = randomString(rnd, RND_STRING_LEN);
-        entity.RISKPARENTINSTRUMENTIDTYPE = randomString(rnd, RND_STRING_LEN);
-        entity.RISKSOURCESYSTEM = randomString(rnd, RND_STRING_LEN);
-        entity.RISKSUBJECTCHORUSBOOKID = randomString(rnd, RND_STRING_LEN);
-        entity.RISKSUBJECTID = randomString(rnd, RND_STRING_LEN);
-        entity.RISKSUBJECTINSTRUMENTCOUNTERPARTYID = randomString(rnd, RND_STRING_LEN);
-        entity.RISKSUBJECTINSTRUMENTID = randomString(rnd, RND_STRING_LEN);
-        entity.RISKSUBJECTINSTRUMENTIDTYPE = randomString(rnd, RND_STRING_LEN);
-        entity.RISKSUBJECTSOURCE = randomString(rnd, RND_STRING_LEN);
-        entity.RISKSUBJECTTYPE = randomString(rnd, RND_STRING_LEN);
-        entity.SENSITIVITYTYPE = randomString(rnd, RND_STRING_LEN);
-        entity.SERIESDATE = randomString(rnd, RND_STRING_LEN);
-        entity.SERIESDAY = randomString(rnd, RND_STRING_LEN);
-        entity.SNAPVERSION = randomString(rnd, RND_STRING_LEN);
+        entity.REGION = strs[i++ % strings];
+        entity.RIC = strs[i++ % strings];
+        entity.RISKFACTORNAME = strs[i++ % strings];
+        entity.RISKPARENTINSTRUMENTID = strs[i++ % strings];
+        entity.RISKPARENTINSTRUMENTIDTYPE = strs[i++ % strings];
+        entity.RISKSOURCESYSTEM = strs[i++ % strings];
+        entity.RISKSUBJECTCHORUSBOOKID = strs[i++ % strings];
+        entity.RISKSUBJECTID = strs[i++ % strings];
+        entity.RISKSUBJECTINSTRUMENTCOUNTERPARTYID = strs[i++ % strings];
+        entity.RISKSUBJECTINSTRUMENTID = strs[i++ % strings];
+        entity.RISKSUBJECTINSTRUMENTIDTYPE = strs[i++ % strings];
+        entity.RISKSUBJECTSOURCE = strs[i++ % strings];
+        entity.RISKSUBJECTTYPE = strs[i++ % strings];
+        entity.SENSITIVITYTYPE = strs[i++ % strings];
+        entity.SERIESDATE = strs[i++ % strings];
+        entity.SERIESDAY = strs[i++ % strings];
+        entity.SNAPVERSION = strs[i++ % strings];
         entity.STRIKEVALUE = rnd.nextDouble();
-        entity.SYS_AUDIT_TRACE = randomString(rnd, RND_STRING_LEN);
+        entity.SYS_AUDIT_TRACE = strs[i++ % strings];
         entity.THEOPRICE = rnd.nextDouble();
         entity.TOTALVALUE = rnd.nextDouble();
-        entity.UNDERLYINGSECURITYID = randomString(rnd, RND_STRING_LEN);
-        entity.UNDERLYINGSECURITYIDTYPE = randomString(rnd, RND_STRING_LEN);
-        entity.VALUATIONSOURCECONTEXTLABELNAME = randomString(rnd, RND_STRING_LEN);
+        entity.UNDERLYINGSECURITYID = strs[i++ % strings];
+        entity.UNDERLYINGSECURITYIDTYPE = strs[i++ % strings];
+        entity.VALUATIONSOURCECONTEXTLABELNAME = strs[i++ % strings];
         entity.VALUE = rnd.nextDouble();
-        entity.VARTYPE = randomString(rnd, RND_STRING_LEN);
+        entity.VARTYPE = strs[i++ % strings];
 
         return entity;
     }

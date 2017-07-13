@@ -117,7 +117,9 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
             ", bufferSize=" + args.streamerBufferSize() +
             ", cachesToUse=" + cacheNames +
             ", compressorType=" + args.compressorType() +
-            ", compressThreads=" + args.compressThreads() + ']');
+            ", compressThreads=" + args.compressThreads() +
+            ", stringRandomization=" + args.stringRandomization() +
+            ']');
 
         final CompressionType type = CompressionType.valueOf(args.compressorType());
 
@@ -156,7 +158,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
                                             while (System.currentTimeMillis() < warmupEnd && !stop.get()) {
                                                 for (int i = 0; i < 10; i++) {
-                                                    streamer.addData(String.valueOf(-key++),  create(binary, type));
+                                                    streamer.addData(String.valueOf(-key++),  create(binary, type, args.stringRandomization()));
 
                                                     if (key >= KEYS)
                                                         key = 1;
@@ -232,7 +234,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                                         Random rnd = new Random();
 
                                         for (int i = 0; i < entries / num; i++) {
-                                            streamer.addData(String.valueOf(rnd.nextLong()), create(binary, type));
+                                            streamer.addData(String.valueOf(rnd.nextLong()), create(binary, type, args.stringRandomization()));
 
                                             if (i > 0 && i % 1000 == 0) {
                                                 if (stop.get())
@@ -306,12 +308,12 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
      * @param binary Binary.
      * @param type Compressor type.
      */
-    private static BinaryObject create(IgniteBinary binary, CompressionType type) {
+    private static BinaryObject create(IgniteBinary binary, CompressionType type, double strRandomization) {
         if (type != CompressionType.NONE) {
             OutputStream gout = null;
 
             try {
-                ZipEntity entity = ZipEntity.generateHard();
+                ZipEntity entity = ZipEntity.generateHard(strRandomization, ZipEntity.RND_STRING_LEN);
 
                 BinaryObjectBuilder builder = binary.builder("TestZip");
 

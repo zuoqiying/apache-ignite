@@ -246,6 +246,9 @@ public class IgniteBenchmarkArguments {
     @Parameter(names = {"-cts", "--compressThreads"}, description = "Number of threads that generate entities.")
     private int compressThreads;
 
+    @Parameter(names = {"-sr", "--stringRandomization"}, description = "Coefficient of non repeated strings.")
+    private double stringRandomization = 1.0;
+
     /**
      * @return {@code True} if need set {@link PersistentStoreConfiguration}.
      */
@@ -616,6 +619,13 @@ public class IgniteBenchmarkArguments {
      */
     public String compressorType() {
         return compressorType;
+    }
+
+    /**
+     * @return String randomization.
+     */
+    public double stringRandomization() {
+        return stringRandomization;
     }
 
     /** {@inheritDoc} */
