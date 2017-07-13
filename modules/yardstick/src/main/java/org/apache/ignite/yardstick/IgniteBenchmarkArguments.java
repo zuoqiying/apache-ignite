@@ -240,8 +240,11 @@ public class IgniteBenchmarkArguments {
     private int streamerBufSize = IgniteDataStreamer.DFLT_PER_NODE_BUFFER_SIZE;
 
     /** */
-    @Parameter(names = {"-zip", "--zip"}, description = "Zip fields for zip test and number of compress threads.")
-    private int zip;
+    @Parameter(names = {"-zip", "--zip"}, description = "Zip fields for zip test.")
+    private boolean zip;
+
+    @Parameter(names = {"-cts", "--compressThreads"}, description = "Number of threads that generate entities.")
+    private int compressThreads;
 
     /**
      * @return {@code True} if need set {@link PersistentStoreConfiguration}.
@@ -604,8 +607,15 @@ public class IgniteBenchmarkArguments {
     /**
      * @return Zip threads.
      */
-    public int zip() {
+    public boolean zip() {
         return zip;
+    }
+
+    /**
+     * @return Compress threads.
+     */
+    public int compressThreads() {
+        return compressThreads;
     }
 
     /** {@inheritDoc} */

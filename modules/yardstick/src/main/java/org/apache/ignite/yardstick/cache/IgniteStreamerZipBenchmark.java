@@ -23,12 +23,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPOutputStream;
 import org.apache.ignite.IgniteBinary;
@@ -54,9 +52,6 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
     /** Generator executor. */
     private ExecutorService generatorExecutor;
-
-    /** Queue. */
-    private BlockingQueue<BinaryObject> queue = new LinkedBlockingQueue<>(100);
 
     /** */
     private int entries;
@@ -110,19 +105,17 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
         executor = Executors.newFixedThreadPool(args.streamerConcurrentCaches());
 
-        int num = args.zip() <= 0 ? 1 : args.zip();
+        final int num = args.compressThreads();
 
         generatorExecutor = Executors.newFixedThreadPool(num);
-
-        for (int i = 0; i < num; i++)
-            generatorExecutor.execute(new EntityGenerator(queue, ignite().binary(), args.zip() > 0));
 
         BenchmarkUtils.println("IgniteStreamerZipBenchmark start [cacheIndex=" + args.streamerCacheIndex() +
             ", concurrentCaches=" + args.streamerConcurrentCaches() +
             ", entries=" + entries +
             ", bufferSize=" + args.streamerBufferSize() +
             ", cachesToUse=" + cacheNames +
-            ", zip=" + args.zip() + ']');
+            ", zip=" + args.zip() +
+            ", compressThreads=" + args.compressThreads() + ']');
 
         if (cfg.warmup() > 0) {
             BenchmarkUtils.println("IgniteStreamerZipBenchmark start warmup [warmupTimeMillis=" + cfg.warmup() + ']');
@@ -144,22 +137,37 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
                             final int KEYS = Math.min(100_000, entries);
 
-                            int key = 1;
-
                             try (IgniteDataStreamer<Object, Object> streamer = ignite().dataStreamer(cacheName)) {
                                 streamer.perNodeBufferSize(args.streamerBufferSize());
                                 streamer.perNodeParallelOperations(Runtime.getRuntime().availableProcessors() * 4);
 
-                                while (System.currentTimeMillis() < warmupEnd && !stop.get()) {
-                                    for (int i = 0; i < 10; i++) {
-                                        streamer.addData(String.valueOf(-key++),  queue.take());
+                                List<Future<Object>> futs = new ArrayList<>(num);
 
-                                        if (key >= KEYS)
-                                            key = 1;
-                                    }
+                                for (int i = 0; i < num; i++) {
+                                    Future<Object> fut = generatorExecutor.submit(new Callable<Object>() {
+                                        @Override public Object call() throws Exception {
+                                            IgniteBinary binary = ignite().binary();
 
-                                    streamer.flush();
+                                            int key = 1;
+
+                                            while (System.currentTimeMillis() < warmupEnd && !stop.get()) {
+                                                for (int i = 0; i < 10; i++) {
+                                                    streamer.addData(String.valueOf(-key++),  create(binary, args.zip()));
+
+                                                    if (key >= KEYS)
+                                                        key = 1;
+                                                }
+                                            }
+
+                                            return null;
+                                        }
+                                    });
+
+                                    futs.add(fut);
                                 }
+
+                                for (Future<Object> fut : futs)
+                                    fut.get();
                             }
 
                             ignite().cache(cacheName).clear();
@@ -197,42 +205,61 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                     @Override public Void call() throws Exception {
                         Thread.currentThread().setName("streamer-" + cacheName);
 
-                        // Use random keys to allow submit entries from multiple clients independently.
-                        Random rnd = new Random();
-
-                        long start = System.currentTimeMillis();
+                        final long start = System.currentTimeMillis();
 
                         BenchmarkUtils.println("IgniteStreamerZipBenchmark start load cache [name=" + cacheName + ']');
 
-                        try (IgniteDataStreamer<Object, Object> streamer = ignite().dataStreamer(cacheName)) {
+                        try (final IgniteDataStreamer<Object, Object> streamer = ignite().dataStreamer(cacheName)) {
                             streamer.perNodeBufferSize(args.streamerBufferSize());
                             streamer.perNodeParallelOperations(Runtime.getRuntime().availableProcessors() * 4);
 
-                            for (int i = 0; i < entries; i++) {
-                                streamer.addData(String.valueOf(rnd.nextLong()), queue.take());
+                            final int num = args.compressThreads();
 
-                                if (i > 0 && i % 1000 == 0) {
-                                    if (stop.get())
-                                        break;
+                            List<Future<Object>> futs = new ArrayList<>(num);
 
-                                    if (i % 100_000 == 0) {
-                                        BenchmarkUtils.println("IgniteStreamerZipBenchmark cache load progress [name=" + cacheName +
-                                            ", entries=" + i +
-                                            ", timeMillis=" + (System.currentTimeMillis() - start) + ']');
+                            for (int i = 0; i < num; i++) {
+                                Future<Object> fut = generatorExecutor.submit(new Callable<Object>() {
+                                    @Override public Object call() throws Exception {
+                                        IgniteBinary binary = ignite().binary();
+
+                                        // Use random keys to allow submit entries from multiple clients independently.
+                                        Random rnd = new Random();
+
+                                        for (int i = 0; i < entries / num; i++) {
+                                            streamer.addData(String.valueOf(rnd.nextLong()), create(binary, args.zip()));
+
+                                            if (i > 0 && i % 1000 == 0) {
+                                                if (stop.get())
+                                                    break;
+
+                                                if (i % 100_000 == 0) {
+                                                    BenchmarkUtils.println("IgniteStreamerZipBenchmark cache load progress [name=" + cacheName +
+                                                        ", entries=" + i +
+                                                        ", timeMillis=" + (System.currentTimeMillis() - start) + ']');
+                                                }
+                                            }
+                                        }
+
+                                        return null;
                                     }
-                                }
+                                });
+
+                                futs.add(fut);
                             }
+
+                            for (Future<Object> fut : futs)
+                                fut.get();
+
+                            long time = System.currentTimeMillis() - start;
+
+                            BenchmarkUtils.println("IgniteStreamerZipBenchmark finished load cache [name=" + cacheName +
+                                ", entries=" + entries +
+                                ", bufferSize=" + args.streamerBufferSize() +
+                                ", totalTimeMillis=" + time +
+                                ", entriesInCache=" + ignite().cache(cacheName).size() + ']');
+
+                            return null;
                         }
-
-                        long time = System.currentTimeMillis() - start;
-
-                        BenchmarkUtils.println("IgniteStreamerZipBenchmark finished load cache [name=" + cacheName +
-                            ", entries=" + entries +
-                            ", bufferSize=" + args.streamerBufferSize() +
-                            ", totalTimeMillis=" + time +
-                            ", entriesInCache=" + ignite().cache(cacheName).size() + ']');
-
-                        return null;
                     }
                 }));
             }
@@ -310,42 +337,4 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
         return binary.toBinary(ZipEntity.generate());
     }
-
-    /**
-     *
-     */
-    private static class EntityGenerator implements Runnable {
-        /** Queue. */
-        private final BlockingQueue<BinaryObject> queue;
-
-        /** Binary. */
-        private final IgniteBinary binary;
-
-        /** Zip. */
-        private final boolean zip;
-
-        /**
-         * @param queue Queue.
-         * @param binary Binary.
-         * @param zip Zip.
-         */
-        EntityGenerator(BlockingQueue<BinaryObject> queue, IgniteBinary binary, boolean zip) {
-            this.queue = queue;
-            this.binary = binary;
-            this.zip = zip;
-        }
-
-        /** {@inheritDoc} */
-        @Override public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    queue.put(create(binary, zip));
-                }
-                catch (InterruptedException e) {
-                    return;
-                }
-            }
-        }
-    }
-
 }
