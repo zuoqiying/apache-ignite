@@ -130,8 +130,6 @@ public class IgniteBenchmarkUtils {
 
         final boolean throughputLatencyProbe = false;
 
-        final boolean zip = false;
-
         for (int i = 0; i < extraNodes; i++) {
             IgniteConfiguration nodeCfg = Ignition.loadSpringBean(cfg, "grid.cfg");
 
@@ -165,9 +163,7 @@ public class IgniteBenchmarkUtils {
         addArg(args0, "-cfg", cfg);
         addArg(args0, "-wom", "PRIMARY");
         addArg(args0, "-cts", 8);
-
-        if (zip)
-            args0.add("-zip");
+        addArg(args0, "-ct", "ZIP");
 
         if (throughputLatencyProbe)
             addArg(args0, "-pr", "ThroughputLatencyProbe");

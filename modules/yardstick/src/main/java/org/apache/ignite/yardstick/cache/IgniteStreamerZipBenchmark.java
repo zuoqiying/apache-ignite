@@ -18,6 +18,7 @@
 package org.apache.ignite.yardstick.cache;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.apache.ignite.binary.BinaryObjectBuilder;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
 import org.apache.ignite.yardstick.cache.model.ZipEntity;
+import org.xerial.snappy.SnappyOutputStream;
 import org.yardstickframework.BenchmarkConfiguration;
 import org.yardstickframework.BenchmarkUtils;
 
@@ -114,8 +116,10 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
             ", entries=" + entries +
             ", bufferSize=" + args.streamerBufferSize() +
             ", cachesToUse=" + cacheNames +
-            ", zip=" + args.zip() +
+            ", compressorType=" + args.compressorType() +
             ", compressThreads=" + args.compressThreads() + ']');
+
+        final CompressionType type = CompressionType.valueOf(args.compressorType());
 
         if (cfg.warmup() > 0) {
             BenchmarkUtils.println("IgniteStreamerZipBenchmark start warmup [warmupTimeMillis=" + cfg.warmup() + ']');
@@ -152,7 +156,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
                                             while (System.currentTimeMillis() < warmupEnd && !stop.get()) {
                                                 for (int i = 0; i < 10; i++) {
-                                                    streamer.addData(String.valueOf(-key++),  create(binary, args.zip()));
+                                                    streamer.addData(String.valueOf(-key++),  create(binary, type));
 
                                                     if (key >= KEYS)
                                                         key = 1;
@@ -205,6 +209,8 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                     @Override public Void call() throws Exception {
                         Thread.currentThread().setName("streamer-" + cacheName);
 
+                        final CompressionType type = CompressionType.valueOf(args.compressorType());
+
                         final long start = System.currentTimeMillis();
 
                         BenchmarkUtils.println("IgniteStreamerZipBenchmark start load cache [name=" + cacheName + ']');
@@ -226,7 +232,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                                         Random rnd = new Random();
 
                                         for (int i = 0; i < entries / num; i++) {
-                                            streamer.addData(String.valueOf(rnd.nextLong()), create(binary, args.zip()));
+                                            streamer.addData(String.valueOf(rnd.nextLong()), create(binary, type));
 
                                             if (i > 0 && i % 1000 == 0) {
                                                 if (stop.get())
@@ -298,16 +304,16 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
     /**
      * @param binary Binary.
-     * @param zip Zip.
+     * @param type Compressor type.
      */
-    private static BinaryObject create(IgniteBinary binary, boolean zip) {
-        if (zip) {
-            GZIPOutputStream gout = null;
+    private static BinaryObject create(IgniteBinary binary, CompressionType type) {
+        if (type != CompressionType.NONE) {
+            OutputStream gout = null;
 
             try {
                 ZipEntity entity = ZipEntity.generateHard();
 
-                BinaryObjectBuilder builder = binary.builder("BarclaysZip");
+                BinaryObjectBuilder builder = binary.builder("TestZip");
 
                 builder.setField("BUSINESSDATE", entity.BUSINESSDATE);
                 builder.setField("RISKSUBJECTID", entity.RISKSUBJECTID);
@@ -316,10 +322,20 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                 builder.setField("VARTYPE", entity.VARTYPE);
 
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
-                gout = new GZIPOutputStream(bout);
+
+                if (type == CompressionType.ZIP)
+                    gout = new GZIPOutputStream(bout);
+                else if (type == CompressionType.SNAPPY)
+                    gout = new SnappyOutputStream(bout);
+                else
+                    throw new IllegalArgumentException("Unsupported compressor: " + type);
 
                 ZipEntity.notIndexedDataHard(entity, gout);
-                gout.finish();
+
+                if (type == CompressionType.ZIP)
+                    ((GZIPOutputStream)gout).finish();
+
+                gout.flush();
 
                 byte[] bytes = bout.toByteArray();
 
@@ -336,5 +352,12 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
         }
 
         return binary.toBinary(ZipEntity.generate());
+    }
+
+    /**
+     *
+     */
+    private enum CompressionType {
+        /** None. */NONE, /** Zip. */ZIP, /** Snappy. */SNAPPY
     }
 }
