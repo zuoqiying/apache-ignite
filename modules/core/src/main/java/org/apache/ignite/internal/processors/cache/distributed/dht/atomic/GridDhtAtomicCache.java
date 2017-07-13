@@ -796,12 +796,25 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
     /** {@inheritDoc} */
     @Override protected void removeAll0(Collection<? extends K> keys) throws IgniteCheckedException {
-        removeAllAsync0(keys, null, false, false, false).get();
+        removeAllAsync0(keys, null, false, false, false, false).get();
+    }
+
+    /** {@inheritDoc} */
+    @Override public void removeAll(Collection<? extends K> keys, boolean skipStatistics) throws IgniteCheckedException {
+        A.notNull(keys, "keys");
+
+        if (F.isEmpty(keys))
+            return;
+
+        if (keyCheck)
+            validateCacheKeys(keys);
+
+        removeAllAsync0(keys, null, false, false, false, true).get();
     }
 
     /** {@inheritDoc} */
     @Override public IgniteInternalFuture<Object> removeAllAsync0(Collection<? extends K> keys) {
-        return removeAllAsync0(keys, null, false, false, true).chain(RET2NULL);
+        return removeAllAsync0(keys, null, false, false, true, false).chain(RET2NULL);
     }
 
     /** {@inheritDoc} */
@@ -825,7 +838,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
     @Override public IgniteInternalFuture<?> removeAllConflictAsync(Map<KeyCacheObject, GridCacheVersion> conflictMap) {
         ctx.dr().onReceiveCacheEntriesReceived(conflictMap.size());
 
-        return removeAllAsync0(null, conflictMap, false, false, true);
+        return removeAllAsync0(null, conflictMap, false, false, true, false);
     }
 
     /**
@@ -1519,7 +1532,8 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
         @Nullable Map<KeyCacheObject, GridCacheVersion> conflictMap,
         final boolean retval,
         boolean rawRetval,
-        boolean async
+        boolean async,
+        boolean skipStatistics
     ) {
         assert ctx.updatesAllowed();
 
@@ -1569,7 +1583,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
             opCtx != null && opCtx.noRetries() ? 1 : MAX_RETRIES,
             true);
 
-        if (ctx.config().isStatisticsEnabled()) {
+        if (!skipStatistics && ctx.config().isStatisticsEnabled()) {
             updateFut.listen(new CI1<IgniteInternalFuture<?>>() {
                 @Override public void apply(IgniteInternalFuture<?> f) {
                     if (!f.isCancelled() && f.error() == null) {

@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.cache.distributed.dht.atomic;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -37,6 +38,7 @@ import org.apache.ignite.cache.store.CacheStoreAdapter;
 import org.apache.ignite.cluster.ClusterGroup;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.NearCacheConfiguration;
 import org.apache.ignite.events.Event;
 import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
@@ -46,6 +48,7 @@ import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
 
 import static org.apache.ignite.cache.CacheAtomicityMode.ATOMIC;
 import static org.apache.ignite.cache.CacheMode.PARTITIONED;
+import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_ASYNC;
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
 import static org.apache.ignite.events.EventType.EVT_NODE_METRICS_UPDATED;
 
@@ -789,6 +792,87 @@ public class GridCacheAtomicMetricsSelfTest  extends GridCommonAbstractTest {
 
             assertEquals(1, clientsMetrics.getCacheRemovals());
             assertEquals(1, clientsMetrics.getCachePuts());
+
+            assertEquals(0, serverMetrics.getCacheRemovals());
+            assertEquals(0, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testLocalRemoveAll() throws Exception {
+        try {
+            Ignite server = startGrid(SERVER_NODE);
+
+            IgniteCache<Integer, Integer> cache = server.getOrCreateCache(getCacheConfiguration());
+
+            Integer key1 = new Integer(12);
+
+            Integer val1 = new Integer(144);
+
+            Integer key2 = new Integer(13);
+
+            Integer val2 = new Integer(169);
+
+            Set<Integer> keys = new HashSet<>();
+            keys.add(key1);
+            keys.add(key2);
+
+            cache.removeAll(keys);
+
+            cache.put(key1, val1);
+
+            cache.removeAll();
+
+            awaitMetricsUpdate(true);
+
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(1, serverMetrics.getCacheRemovals());
+            assertEquals(1, serverMetrics.getCachePuts());
+        }
+        finally {
+            stopAllGrids();
+        }
+    }
+
+    public void testDistributedRemoveAll() throws Exception {
+        try {
+            startServerAndClientNodes();
+
+            IgniteCache<Integer, Integer> cache = grid(CLIENT_NODE).getOrCreateCache(getCacheConfiguration());
+
+            Integer key1 = new Integer(12);
+
+            Integer val1 = new Integer(144);
+
+            Integer key2 = new Integer(13);
+
+            Integer val2 = new Integer(169);
+
+            Set<Integer> keys = new HashSet<>();
+            keys.add(key1);
+            keys.add(key2);
+
+            //cache.removeAll(keys);
+
+            cache.withAsync().put(key1, val1);
+
+            cache.removeAll();
+
+            awaitMetricsUpdate(false);
+
+            ClusterGroup clientGroup = grid(CLIENT_NODE).cluster().forClients();
+            ClusterGroup serverGroup = grid(SERVER_NODE).cluster().forServers();
+
+            CacheMetrics clientMetrics = cache.metrics(clientGroup);
+            CacheMetrics serverMetrics = cache.metrics(serverGroup);
+
+            assertEquals(1, clientMetrics.getCacheRemovals());
+            assertEquals(1, clientMetrics.getCachePuts());
 
             assertEquals(0, serverMetrics.getCacheRemovals());
             assertEquals(0, serverMetrics.getCachePuts());

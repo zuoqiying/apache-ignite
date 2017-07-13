@@ -2912,6 +2912,18 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
     }
 
     /**
+     * Removes given key mappings from cache. This method ignores {@link CacheConfiguration#isStatisticsEnabled} flag
+     * if the given {@code skipStatistics} flag is {@true}.
+     *
+     * @param keys Keys whose mappings are to be removed from cache.
+     * @param skipStatistics Whether this operation should ignore {@link CacheConfiguration#isStatisticsEnabled} or not.
+     * @throws IgniteCheckedException If remove failed.
+     */
+    public void removeAll(final Collection<? extends K> keys, boolean skipStatistics) throws IgniteCheckedException {
+        removeAll(keys);
+    }
+
+    /**
      * @param keys Keys.
      * @throws IgniteCheckedException If failed.
      */
