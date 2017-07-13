@@ -67,6 +67,20 @@ namespace ignite
         IGNITE_IMPORT_EXPORT bool GetEnv(const std::string& name, std::string& val);
 
         /**
+         * Read system environment variable taking thread-safety in count.
+         *
+         * @param name Environment variable name.
+         * @return Environment variable value.
+         */
+        inline std::string GetEnv(const std::string& name)
+        {
+            std::string res;
+            GetEnv(name, res);
+
+            return res;
+        }
+
+        /**
          * Ensure that file on the given path exists in the system.
          *
          * @param path Path.

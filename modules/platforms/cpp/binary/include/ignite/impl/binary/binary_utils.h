@@ -508,28 +508,6 @@ namespace ignite
                 static void WriteDecimal(interop::InteropOutputStream* stream, const common::Decimal& decimal);
 
                 /**
-                 * Utility method to read signed varint from stream.
-                 *
-                 * Refer to http://code.google.com/apis/protocolbuffers/docs/encoding.html
-                 * for varint encoding details.
-                 *
-                 * @param stream Stream.
-                 * @return Value.
-                 */
-                static int32_t ReadSignedVarint(interop::InteropInputStream* stream);
-
-                /**
-                 * Utility method to write signed varint to stream.
-                 *
-                 * Refer to http://code.google.com/apis/protocolbuffers/docs/encoding.html
-                 * for varint encoding details.
-                 *
-                 * @param stream Stream.
-                 * @param val Value.
-                 */
-                static void WriteSignedVarint(interop::InteropOutputStream* stream, int32_t val);
-
-                /**
                  * Utility method to read unsigned varint from stream.
                  *
                  * Refer to http://code.google.com/apis/protocolbuffers/docs/encoding.html

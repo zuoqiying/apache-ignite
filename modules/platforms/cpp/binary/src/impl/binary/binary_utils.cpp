@@ -17,6 +17,7 @@
 
 #include <time.h>
 
+#include <ignite/common/platform_utils.h>
 #include <ignite/common/fixed_size_array.h>
 #include <ignite/ignite_error.h>
 
@@ -24,11 +25,18 @@
 #include <ignite/impl/interop/interop_stream_position_guard.h>
 #include <ignite/impl/binary/binary_utils.h>
 
+using namespace ignite::common;
 using namespace ignite::impl::interop;
 using namespace ignite::impl::binary;
 
 namespace
 {
+    /** Length of arrays format environment variable. */
+    const std::string IGNITE_NO_VARINT_ARRAY_LENGTH = "IGNITE_NO_VARINT_ARRAY_LENGTH";
+
+    /** Length of arrays writing mode. */
+    const bool USE_VARINT_ARRAY_LENGHT = ToLower(GetEnv(IGNITE_NO_VARINT_ARRAY_LENGTH)) != "true";
+
     /**
      * Check if there is enough data in memory.
      * @throw IgniteError if there is not enough memory.
@@ -37,7 +45,7 @@ namespace
      * @param pos Position.
      * @param len Data to read.
      */
-    inline void CheckEnoughData(InteropMemory& mem, int32_t pos, int32_t len)
+    void CheckEnoughData(InteropMemory& mem, int32_t pos, int32_t len)
     {
         if (mem.Length() < (pos + len))
         {
@@ -56,7 +64,7 @@ namespace
      * @return Primitive.
      */
     template<typename T>
-    inline T ReadPrimitive(InteropMemory& mem, int32_t pos)
+    T ReadPrimitive(InteropMemory& mem, int32_t pos)
     {
         CheckEnoughData(mem, pos, sizeof(T));
 
@@ -72,7 +80,7 @@ namespace
      * @return Primitive.
      */
     template<typename T>
-    inline T UnsafeReadPrimitive(InteropMemory& mem, int32_t pos)
+    T UnsafeReadPrimitive(InteropMemory& mem, int32_t pos)
     {
         return *reinterpret_cast<T*>(mem.Data() + pos);
     }
@@ -384,20 +392,20 @@ namespace ignite
                 stream->WriteInt8Array(reinterpret_cast<const int8_t*>(val.data()), len);
             }
 
-            void BinaryUtils::ReadDecimal(InteropInputStream* stream, common::Decimal& decimal)
+            void BinaryUtils::ReadDecimal(InteropInputStream* stream, Decimal& decimal)
             {
-                int32_t scale = ReadSignedVarint(stream);
+                int32_t scale = ReadInt32(stream);
 
                 int32_t len = ReadUnsignedVarint(stream);
 
                 if (!len)
                 {
-                    decimal = common::Decimal();
+                    decimal = Decimal();
 
                     return;
                 }
 
-                common::FixedSizeArray<int8_t> magnitude(len);
+                FixedSizeArray<int8_t> magnitude(len);
 
                 ReadInt8Array(stream, magnitude.GetData(), magnitude.GetSize());
 
@@ -410,18 +418,18 @@ namespace ignite
                     sign = -1;
                 }
 
-                common::Decimal res(magnitude.GetData(), magnitude.GetSize(), scale, sign);
+                Decimal res(magnitude.GetData(), magnitude.GetSize(), scale, sign);
 
                 decimal.Swap(res);
             }
 
-            void BinaryUtils::WriteDecimal(InteropOutputStream* stream, const common::Decimal& decimal)
+            void BinaryUtils::WriteDecimal(InteropOutputStream* stream, const Decimal& decimal)
             {
-                const common::BigInteger &unscaled = decimal.GetUnscaledValue();
+                const BigInteger &unscaled = decimal.GetUnscaledValue();
 
-                WriteSignedVarint(stream, decimal.GetScale());
+                WriteInt32(stream, decimal.GetScale());
 
-                common::FixedSizeArray<int8_t> magnitude;
+                FixedSizeArray<int8_t> magnitude;
 
                 unscaled.MagnitudeToBytes(magnitude);
 
@@ -431,22 +439,6 @@ namespace ignite
                 WriteUnsignedVarint(stream, magnitude.GetSize());
 
                 WriteInt8Array(stream, magnitude.GetData(), magnitude.GetSize());
-            }
-
-            int32_t BinaryUtils::ReadSignedVarint(InteropInputStream* stream)
-            {
-                int32_t raw = ReadUnsignedVarint(stream);
-                // Canceling the untrick from BinaryUtils::WriteSignedVarint
-                int32_t tmp = (((raw << 31) >> 31) ^ raw) >> 1;
-                // top bit must be reflip if the original read value had it set.
-                return tmp ^ (raw & (1 << 31));
-            }
-
-            void BinaryUtils::WriteSignedVarint(InteropOutputStream* stream, int32_t val)
-            {
-                // Using ZigZag encoding. For details refer to
-                // https://developers.google.com/protocol-buffers/docs/encoding#types
-                WriteUnsignedVarint(stream, (val << 1) ^ (val >> 31));
             }
 
             int32_t BinaryUtils::ReadUnsignedVarint(InteropInputStream* stream)

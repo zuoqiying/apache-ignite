@@ -72,11 +72,6 @@ void WriteReadType(const T& val, void(*wc)(InteropOutputStream*, const T&), void
     BOOST_CHECK_EQUAL(val, res);
 }
 
-void WriteReadSignedVarint(int32_t val)
-{
-    WriteReadType(val, BinaryUtils::WriteSignedVarint, BinaryUtils::ReadSignedVarint);
-}
-
 void WriteReadUnsignedVarint(int32_t val)
 {
     WriteReadType(val, BinaryUtils::WriteUnsignedVarint, BinaryUtils::ReadUnsignedVarint);
@@ -93,71 +88,6 @@ void WriteReadString(const std::string& val)
 }
 
 BOOST_AUTO_TEST_SUITE(BinaryUtilsTestSuite)
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_0)
-{
-    WriteReadSignedVarint(0);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_1)
-{
-    WriteReadSignedVarint(1);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_42)
-{
-    WriteReadSignedVarint(42);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_100)
-{
-    WriteReadSignedVarint(100);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_100000000)
-{
-    WriteReadSignedVarint(100000000);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_999999999)
-{
-    WriteReadSignedVarint(999999999);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_1926348257)
-{
-    WriteReadSignedVarint(1926348257);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N1)
-{
-    WriteReadSignedVarint(-1);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N42)
-{
-    WriteReadSignedVarint(-42);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N100)
-{
-    WriteReadSignedVarint(-100);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N100000000)
-{
-    WriteReadSignedVarint(-100000000);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N999999999)
-{
-    WriteReadSignedVarint(-999999999);
-}
-
-BOOST_AUTO_TEST_CASE(SignedVarintWriteReadTest_N1926348257)
-{
-    WriteReadSignedVarint(-1926348257);
-}
 
 BOOST_AUTO_TEST_CASE(UnsignedVarintWriteReadTest_0)
 {
