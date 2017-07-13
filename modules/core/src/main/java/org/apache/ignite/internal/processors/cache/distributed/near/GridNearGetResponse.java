@@ -244,52 +244,53 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
 
         switch (writer.state()) {
             case 3:
-                if (!writer.writeCollection("entries", entries, MessageCollectionItemType.MSG))
+                if (!writer.writeInt("cacheHits", cacheHits))
                     return false;
 
                 writer.incrementState();
 
             case 4:
-                if (!writer.writeByteArray("errBytes", errBytes))
+                if (!writer.writeCollection("entries", entries, MessageCollectionItemType.MSG))
                     return false;
 
                 writer.incrementState();
 
             case 5:
-                if (!writer.writeIgniteUuid("futId", futId))
+                if (!writer.writeByteArray("errBytes", errBytes))
                     return false;
 
                 writer.incrementState();
 
             case 6:
-                if (!writer.writeCollection("invalidParts", invalidParts, MessageCollectionItemType.INT))
+                if (!writer.writeIgniteUuid("futId", futId))
                     return false;
 
                 writer.incrementState();
 
             case 7:
-                if (!writer.writeIgniteUuid("miniId", miniId))
+                if (!writer.writeCollection("invalidParts", invalidParts, MessageCollectionItemType.INT))
                     return false;
 
                 writer.incrementState();
 
             case 8:
-                if (!writer.writeMessage("topVer", topVer))
+                if (!writer.writeIgniteUuid("miniId", miniId))
                     return false;
 
                 writer.incrementState();
 
             case 9:
-                if (!writer.writeMessage("ver", ver))
+                if (!writer.writeMessage("topVer", topVer))
                     return false;
 
                 writer.incrementState();
 
             case 10:
-                if (!writer.writeInt("cacheHits", cacheHits))
+                if (!writer.writeMessage("ver", ver))
                     return false;
 
                 writer.incrementState();
+
         }
 
         return true;
@@ -307,7 +308,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
 
         switch (reader.state()) {
             case 3:
-                entries = reader.readCollection("entries", MessageCollectionItemType.MSG);
+                cacheHits = reader.readInt("cacheHits");
 
                 if (!reader.isLastRead())
                     return false;
@@ -315,7 +316,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 4:
-                errBytes = reader.readByteArray("errBytes");
+                entries = reader.readCollection("entries", MessageCollectionItemType.MSG);
 
                 if (!reader.isLastRead())
                     return false;
@@ -323,7 +324,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 5:
-                futId = reader.readIgniteUuid("futId");
+                errBytes = reader.readByteArray("errBytes");
 
                 if (!reader.isLastRead())
                     return false;
@@ -331,7 +332,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 6:
-                invalidParts = reader.readCollection("invalidParts", MessageCollectionItemType.INT);
+                futId = reader.readIgniteUuid("futId");
 
                 if (!reader.isLastRead())
                     return false;
@@ -339,7 +340,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 7:
-                miniId = reader.readIgniteUuid("miniId");
+                invalidParts = reader.readCollection("invalidParts", MessageCollectionItemType.INT);
 
                 if (!reader.isLastRead())
                     return false;
@@ -347,7 +348,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 8:
-                topVer = reader.readMessage("topVer");
+                miniId = reader.readIgniteUuid("miniId");
 
                 if (!reader.isLastRead())
                     return false;
@@ -355,7 +356,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 9:
-                ver = reader.readMessage("ver");
+                topVer = reader.readMessage("topVer");
 
                 if (!reader.isLastRead())
                     return false;
@@ -363,12 +364,13 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
                 reader.incrementState();
 
             case 10:
-                cacheHits = reader.readInt("cacheHits");
+                ver = reader.readMessage("ver");
 
                 if (!reader.isLastRead())
                     return false;
 
                 reader.incrementState();
+
         }
 
         return reader.afterMessageRead(GridNearGetResponse.class);

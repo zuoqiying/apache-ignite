@@ -533,16 +533,17 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
                 writer.incrementState();
 
             case 13:
-                if (!writer.writeMessage("ret", ret))
+                if (!writer.writeInt("removals", removals))
                     return false;
 
                 writer.incrementState();
 
             case 14:
-                if (!writer.writeInt("removals", removals))
+                if (!writer.writeMessage("ret", ret))
                     return false;
 
                 writer.incrementState();
+
         }
 
         return true;
@@ -640,7 +641,7 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
                 reader.incrementState();
 
             case 13:
-                ret = reader.readMessage("ret");
+                removals = reader.readInt("removals");
 
                 if (!reader.isLastRead())
                     return false;
@@ -648,12 +649,13 @@ public class GridNearAtomicUpdateResponse extends GridCacheMessage implements Gr
                 reader.incrementState();
 
             case 14:
-                removals = reader.readInt("removals");
+                ret = reader.readMessage("ret");
 
                 if (!reader.isLastRead())
                     return false;
 
                 reader.incrementState();
+
         }
 
         return reader.afterMessageRead(GridNearAtomicUpdateResponse.class);
