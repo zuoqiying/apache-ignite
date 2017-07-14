@@ -37,7 +37,6 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.affinity.AffinityKey;
 import org.apache.ignite.cache.store.CacheStore;
 import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.lang.IgniteBiInClosure;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.resources.IgniteInstanceResource;
@@ -189,7 +188,9 @@ public class LoadStore implements CacheStore<Object, Object> {
      * @param args Args (none used).
      */
     public static void main(String[] args) {
-        Ignite ignite = Ignition.start(new IgniteConfiguration().setLocalHost("127.0.0.1"));
+        Arguments args0 = Arguments.parseArguments(args);
+
+        Ignite ignite = Ignition.start(args0.igniteCfgUrl);
 
         IgniteCache<Object, Object> cache = ignite.getOrCreateCache(
             new CacheConfiguration<>("cache")
@@ -200,7 +201,7 @@ public class LoadStore implements CacheStore<Object, Object> {
                         }
                     }));
 
-        cache.loadCache(null, Arguments.parseArguments(args));
+        cache.loadCache(null, args0);
     }
 
     /**
@@ -219,16 +220,8 @@ public class LoadStore implements CacheStore<Object, Object> {
         /** Range. */
         private int range = 1_000_000;
 
-        /**
-         * @param compType Comparator type.
-         * @param loadThreads Load threads.
-         * @param strRandomization String randomization.
-         */
-        public Arguments(CompressionType compType, int loadThreads, double strRandomization) {
-            this.compType = compType;
-            this.loadThreads = loadThreads;
-            this.strRandomization = strRandomization;
-        }
+        /** Ignite config url. */
+        private String igniteCfgUrl;
 
         /**
          * Default constructor.
@@ -265,6 +258,12 @@ public class LoadStore implements CacheStore<Object, Object> {
                     case "-r":
                     case "--range":
                         args0.range = Integer.parseInt(args[++i]);
+
+                        break;
+
+                    case "-cfg":
+                    case "--igniteConfigPath":
+                        args0.igniteCfgUrl = args[++i];
 
                         break;
                 }
