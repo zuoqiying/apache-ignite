@@ -69,7 +69,7 @@ public class LoadStore implements CacheStore<Object, Object> {
             "[entries=" + args0.range +
             ", threads=" + args0.loadThreads +
             ", compressionType=" + args0.compType +
-            ", stringRandomization=" + ']');
+            ", stringRandomization=" + args0.strRandomization + ']');
 
         ThreadPoolExecutor exec = new ThreadPoolExecutor(
             args0.loadThreads,
@@ -208,7 +208,9 @@ public class LoadStore implements CacheStore<Object, Object> {
                 });
 
         if (args0.idx)
-            ccfg.setIndexedTypes(int.class, ZipEntity.class);
+            ccfg.setIndexedTypes(AffinityKey.class, ZipEntity.class);
+
+        ignite.active(true);
 
         IgniteCache<Object, Object> cache = ignite.getOrCreateCache(
             ccfg);
