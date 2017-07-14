@@ -17,6 +17,8 @@
 #ifndef _IGNITE_COMMON_PLATFORM_UTILS
 #define _IGNITE_COMMON_PLATFORM_UTILS
 
+#include <string>
+
 #include <ignite/common/common.h>
 
 namespace ignite
