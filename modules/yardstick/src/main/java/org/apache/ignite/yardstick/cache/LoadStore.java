@@ -41,6 +41,7 @@ import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.lang.IgniteBiInClosure;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.resources.IgniteInstanceResource;
+import org.apache.ignite.yardstick.cache.model.ZipEntity;
 import org.jetbrains.annotations.Nullable;
 
 import static org.apache.ignite.yardstick.cache.IgniteStreamerZipBenchmark.CompressionType;
@@ -198,14 +199,19 @@ public class LoadStore implements CacheStore<Object, Object> {
         else
             ignite = Ignition.start(new IgniteConfiguration().setLocalHost("127.0.0.1"));
 
+        CacheConfiguration<Object, Object> ccfg = new CacheConfiguration<>(CACHE_NAME)
+            .setCacheStoreFactory(
+                new Factory<CacheStore<? super Object, ? super Object>>() {
+                    @Override public CacheStore<? super Object, ? super Object> create() {
+                        return new LoadStore();
+                    }
+                });
+
+        if (args0.idx)
+            ccfg.setIndexedTypes(int.class, ZipEntity.class);
+
         IgniteCache<Object, Object> cache = ignite.getOrCreateCache(
-            new CacheConfiguration<>(CACHE_NAME)
-                .setCacheStoreFactory(
-                    new Factory<CacheStore<? super Object, ? super Object>>() {
-                        @Override public CacheStore<? super Object, ? super Object> create() {
-                            return new LoadStore();
-                        }
-                    }));
+            ccfg);
 
         cache.loadCache(null, args0);
     }
@@ -228,6 +234,9 @@ public class LoadStore implements CacheStore<Object, Object> {
 
         /** Ignite config url. */
         private String igniteCfgUrl;
+
+        /** Index. */
+        private boolean idx;
 
         /**
          * Default constructor.
@@ -270,6 +279,12 @@ public class LoadStore implements CacheStore<Object, Object> {
                     case "-cfg":
                     case "--igniteConfigPath":
                         args0.igniteCfgUrl = args[++i];
+
+                        break;
+
+                    case "-idx":
+                    case "--index":
+                        args0.idx = true;
 
                         break;
                 }
