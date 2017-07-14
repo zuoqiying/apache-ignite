@@ -91,6 +91,7 @@ import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteInClosure;
+import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.lang.IgniteProductVersion;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.plugin.security.SecurityCredentials;
@@ -6387,7 +6388,7 @@ class ServerImpl extends TcpDiscoveryImpl {
         private volatile ClusterMetrics metrics;
 
         /** Last heartbeat message receive time. */
-        private volatile long lastHbMessageTime;
+        private volatile long lastHbMsgTime;
 
         /** Max heartbeat message receive interval. */
         private final long maxHbInterval;
@@ -6403,13 +6404,13 @@ class ServerImpl extends TcpDiscoveryImpl {
          * @param clientNodeId Node ID.
          */
         protected ClientMessageWorker(Socket sock, UUID clientNodeId) throws IOException {
-            super("tcp-disco-client-message-worker", Math.max(spi.getHeartbeatFrequency(), 10));
+            super("tcp-disco-client-message-worker", Math.max(spi.hbFreq, 10));
 
             this.sock = sock;
             this.clientNodeId = clientNodeId;
 
-            maxHbInterval = spi.getHeartbeatFrequency() * spi.getMaxMissedClientHeartbeats();
-            lastHbMessageTime = U.currentTimeMillis();
+            maxHbInterval = spi.hbFreq * spi.maxMissedClientHbs;
+            lastHbMsgTime = U.currentTimeMillis();
         }
 
         /**
@@ -6431,7 +6432,7 @@ class ServerImpl extends TcpDiscoveryImpl {
          */
         void metrics(ClusterMetrics metrics) {
             // Updates only on heartbeat message.
-            lastHbMessageTime = U.currentTimeMillis();
+            lastHbMsgTime = U.currentTimeMillis();
 
             this.metrics = metrics;
         }
@@ -6611,21 +6612,38 @@ class ServerImpl extends TcpDiscoveryImpl {
 
         /** {@inheritDoc} */
         @Override protected void noMessageLoop() {
-            if (U.currentTimeMillis() - lastHbMessageTime > maxHbInterval) {
-                String msg = "Client node considered as unreachable " +
-                    "and will be dropped from cluster, " +
-                    "because no heartbeat messages received in interval: " +
-                    "TcpDiscoverySpi.getHeartbeatFrequency() * TcpDiscoverySpi.getMaxMissedClientHeartbeats() ms. " +
-                    "It maybe caused by network problems or long GC pause on client node, try to increase mentioned " +
-                    "parameters. " +
-                    "[nodeId=" + clientNodeId +
-                    ", heartBeatFrequency=" + spi.getHeartbeatFrequency() +
-                    ", maxMissedClientHeartbeats=" + spi.getMaxMissedClientHeartbeats() +
-                    ']';
+            if (U.currentTimeMillis() - lastHbMsgTime > maxHbInterval) {
+                TcpDiscoveryNode clientNode = F.find(ring.clientNodes(), null,
+                    new IgnitePredicate<TcpDiscoveryNode>() {
+                    @Override public boolean apply(TcpDiscoveryNode node) {
+                        return node.id().equals(clientNodeId);
+                    }
+                });
 
-                failNode(clientNodeId, msg);
+                if (clientNode != null) {
+                    boolean failedNode;
 
-                U.warn(log, msg);
+                    synchronized (mux) {
+                        failedNode = failedNodes.containsKey(clientNode);
+                    }
+
+                    if (!failedNode) {
+                        String msg = "Client node considered as unreachable " +
+                            "and will be dropped from cluster, " +
+                            "because no heartbeat messages received in interval: " +
+                            "TcpDiscoverySpi.getHeartbeatFrequency() * TcpDiscoverySpi.getMaxMissedClientHeartbeats() ms. " +
+                            "It maybe caused by network problems or long GC pause on client node, try to increase mentioned " +
+                            "parameters. " +
+                            "[nodeId=" + clientNodeId +
+                            ", heartBeatFrequency=" + spi.hbFreq +
+                            ", maxMissedClientHeartbeats=" + spi.maxMissedClientHbs +
+                            ']';
+
+                        failNode(clientNodeId, msg);
+
+                        U.warn(log, msg);
+                    }
+                }
             }
         }
 

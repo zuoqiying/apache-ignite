@@ -210,9 +210,6 @@ public class TcpClientDiscoverySpiSelfTest extends GridCommonAbstractTest {
 
         disco.setClientReconnectDisabled(reconnectDisabled);
 
-        // Avoid client disconnect on missed heartbeats.
-        disco.setMaxMissedClientHeartbeats(Integer.MAX_VALUE);
-
         if (disco instanceof TestTcpDiscoverySpi)
             ((TestTcpDiscoverySpi)disco).afterWrite(afterWrite);
 
