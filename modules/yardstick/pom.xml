@@ -190,6 +190,15 @@
                 <version>2.4</version>
                 <configuration>
                     <outputDirectory>${basedir}/target/assembly/libs</outputDirectory>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>./</classpathPrefix>
+                            <mainClass>
+                                org.apache.ignite.yardstick.cache.LoadStore
+                            </mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
 
