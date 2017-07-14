@@ -91,7 +91,6 @@ import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteInClosure;
-import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.ignite.lang.IgniteProductVersion;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.plugin.security.SecurityCredentials;
@@ -6613,12 +6612,7 @@ class ServerImpl extends TcpDiscoveryImpl {
         /** {@inheritDoc} */
         @Override protected void noMessageLoop() {
             if (U.currentTimeMillis() - lastHbMsgTime > maxHbInterval) {
-                TcpDiscoveryNode clientNode = F.find(ring.clientNodes(), null,
-                    new IgnitePredicate<TcpDiscoveryNode>() {
-                    @Override public boolean apply(TcpDiscoveryNode node) {
-                        return node.id().equals(clientNodeId);
-                    }
-                });
+                TcpDiscoveryNode clientNode = ring.node(clientNodeId);
 
                 if (clientNode != null) {
                     boolean failedNode;
