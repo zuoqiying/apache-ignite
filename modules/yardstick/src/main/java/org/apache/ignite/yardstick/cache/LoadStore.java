@@ -32,11 +32,13 @@ import javax.cache.integration.CacheWriterException;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteBinary;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.affinity.AffinityKey;
 import org.apache.ignite.cache.store.CacheStore;
 import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.lang.IgniteBiInClosure;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.resources.IgniteInstanceResource;
@@ -82,6 +84,8 @@ public class LoadStore implements CacheStore<Object, Object> {
         int partsLenDiff = parts.length % args0.loadThreads;
         int k = 0;
 
+        final IgniteDataStreamer<Object, Object> streamer = ignite.dataStreamer(CACHE_NAME);
+
         final long start = System.currentTimeMillis();
 
         final int entriesPerThread = args0.range / args0.loadThreads;
@@ -108,7 +112,10 @@ public class LoadStore implements CacheStore<Object, Object> {
                         // 1. put condition to the loop.
                         // 2. put real values (read from files?).
                         for (int i = 0; i < entriesPerThread; i++) {
-                            clo.apply(generateKey(parts0[rnd.nextInt(parts0.length)]),
+//                            clo.apply(generateKey(parts0[rnd.nextInt(parts0.length)]),
+//                                create(binary, args0.compType, args0.strRandomization));
+
+                            streamer.addData(generateKey(parts0[rnd.nextInt(parts0.length)]),
                                 create(binary, args0.compType, args0.strRandomization));
                         }
 
@@ -190,10 +197,15 @@ public class LoadStore implements CacheStore<Object, Object> {
     public static void main(String[] args) {
         Arguments args0 = Arguments.parseArguments(args);
 
-        Ignite ignite = Ignition.start(args0.igniteCfgUrl);
+        Ignite ignite;
+
+        if (args0.igniteCfgUrl != null)
+            ignite = Ignition.start(args0.igniteCfgUrl);
+        else
+            ignite = Ignition.start(new IgniteConfiguration().setLocalHost("127.0.0.1"));
 
         IgniteCache<Object, Object> cache = ignite.getOrCreateCache(
-            new CacheConfiguration<>("cache")
+            new CacheConfiguration<>(CACHE_NAME)
                 .setCacheStoreFactory(
                     new Factory<CacheStore<? super Object, ? super Object>>() {
                         @Override public CacheStore<? super Object, ? super Object> create() {
