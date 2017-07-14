@@ -18,7 +18,7 @@
 FROM ubuntu:14.04
 
 ENV NPM_CONFIG_LOGLEVEL info
-ENV NODE_VERSION 6.6.0
+ENV NODE_VERSION 8.1.4
 
 # Before package list update.
 RUN set -ex  && \
@@ -82,7 +82,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 VOLUME ["/etc/nginx"]
 VOLUME ["/var/lib/mongodb"]
-VOLUME ["/opt/web-console/serve/agent_dists"]
+VOLUME ["/opt/web-console/backend/agent_dists"]
 
 EXPOSE 80
 
