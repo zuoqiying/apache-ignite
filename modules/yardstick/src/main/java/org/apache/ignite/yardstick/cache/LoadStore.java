@@ -32,7 +32,6 @@ import javax.cache.integration.CacheWriterException;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteBinary;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.IgniteSystemProperties;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.affinity.AffinityKey;
@@ -84,8 +83,6 @@ public class LoadStore implements CacheStore<Object, Object> {
         int partsLenDiff = parts.length % args0.loadThreads;
         int k = 0;
 
-        final IgniteDataStreamer<Object, Object> streamer = ignite.dataStreamer(CACHE_NAME);
-
         final long start = System.currentTimeMillis();
 
         final int entriesPerThread = args0.range / args0.loadThreads;
@@ -112,10 +109,7 @@ public class LoadStore implements CacheStore<Object, Object> {
                         // 1. put condition to the loop.
                         // 2. put real values (read from files?).
                         for (int i = 0; i < entriesPerThread; i++) {
-//                            clo.apply(generateKey(parts0[rnd.nextInt(parts0.length)]),
-//                                create(binary, args0.compType, args0.strRandomization));
-
-                            streamer.addData(generateKey(parts0[rnd.nextInt(parts0.length)]),
+                            clo.apply(generateKey(parts0[rnd.nextInt(parts0.length)]),
                                 create(binary, args0.compType, args0.strRandomization));
                         }
 
