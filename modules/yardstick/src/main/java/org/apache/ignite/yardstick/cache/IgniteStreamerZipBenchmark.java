@@ -308,7 +308,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
      * @param binary Binary.
      * @param type Compressor type.
      */
-    private static BinaryObject create(IgniteBinary binary, CompressionType type, double strRandomization) {
+    public static BinaryObject create(IgniteBinary binary, CompressionType type, double strRandomization) {
         if (type != CompressionType.NONE) {
             OutputStream gout = null;
 
@@ -359,7 +359,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
     /**
      *
      */
-    private enum CompressionType {
+    public enum CompressionType {
         /** None. */NONE, /** Zip. */ZIP, /** Snappy. */SNAPPY
     }
 }
