@@ -100,6 +100,8 @@ public class IgniteStreamerBenchmark extends IgniteAbstractBenchmark {
             ", bufferSize=" + args.streamerBufferSize() +
             ", cachesToUse=" + cacheNames + ']');
 
+        final int cpus = Runtime.getRuntime().availableProcessors();
+
         if (cfg.warmup() > 0) {
             BenchmarkUtils.println("IgniteStreamerBenchmark start warmup [warmupTimeMillis=" + cfg.warmup() + ']');
 
@@ -124,6 +126,7 @@ public class IgniteStreamerBenchmark extends IgniteAbstractBenchmark {
 
                             try (IgniteDataStreamer<Object, Object> streamer = ignite().dataStreamer(cacheName)) {
                                 streamer.perNodeBufferSize(args.streamerBufferSize());
+                                streamer.perNodeParallelOperations(cpus * 4);
 
                                 while (System.currentTimeMillis() < warmupEnd && !stop.get()) {
                                     for (int i = 0; i < 10; i++) {
@@ -165,6 +168,8 @@ public class IgniteStreamerBenchmark extends IgniteAbstractBenchmark {
         try {
             List<Future<Void>> futs = new ArrayList<>();
 
+            final int cpus = Runtime.getRuntime().availableProcessors();
+
             for (final String cacheName : cacheNames) {
                 futs.add(executor.submit(new Callable<Void>() {
                     @Override public Void call() throws Exception {
@@ -175,6 +180,8 @@ public class IgniteStreamerBenchmark extends IgniteAbstractBenchmark {
                         BenchmarkUtils.println("IgniteStreamerBenchmark start load cache [name=" + cacheName + ']');
 
                         try (IgniteDataStreamer<Object, Object> streamer = ignite().dataStreamer(cacheName)) {
+                            streamer.perNodeParallelOperations(cpus * 4);
+
                             for (int i = 0; i < entries; i++) {
                                 streamer.addData(i, new SampleValue(i));
 
