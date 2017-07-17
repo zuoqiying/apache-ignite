@@ -51,7 +51,7 @@ web-console-header {
         }
 
         &.wch-slot-left {
-            margin-left: 105px;
+            margin-left: 80px;
         }
 
         &.wch-slot-right {
@@ -73,7 +73,7 @@ web-console-header {
     }
 
     .wch-nav-item,
-    a.wch-nav-item {
+    .wch-nav-item > a {
         cursor: pointer;
         white-space: nowrap;
 
