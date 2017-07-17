@@ -2111,13 +2111,12 @@ public class GridCacheDatabaseSharedManager extends IgniteCacheDatabaseSharedMan
 
                 if (curr.nextSnapshot) {
                     for (Integer grpId : curr.snapshotOperation.cacheGroupIds()) {
-                        if (cctx.discovery().cacheGroupAffinityNode(cctx.localNode(), grpId)) {
-                            CacheGroupContext grp = cctx.cache().cacheGroup(grpId);
+                        CacheGroupContext grp = cctx.cache().cacheGroup(grpId);
 
-                            assert grp != null;
+                        if (grp == null)
+                            continue;
 
-                            snapshotMgr.getLastSuccessfulSnapshotTagForCacheGroup(grpId, (PageMemoryEx)grp.memoryPolicy().pageMemory());
-                        }
+                        snapshotMgr.getLastSuccessfulSnapshotTagForCacheGroup(grpId, (PageMemoryEx)grp.memoryPolicy().pageMemory());
                     }
                 }
 
