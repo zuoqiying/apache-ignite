@@ -19,10 +19,10 @@ package org.apache.ignite.internal.managers.communication;
 
 import java.io.Externalizable;
 import java.nio.ByteBuffer;
-
 import org.apache.ignite.internal.ExecutorAwareMessage;
 import org.apache.ignite.internal.GridDirectTransient;
 import org.apache.ignite.internal.processors.cache.GridCacheMessage;
+import org.apache.ignite.internal.processors.datastreamer.DataStreamerRequest;
 import org.apache.ignite.internal.util.tostring.GridToStringInclude;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.plugin.extensions.communication.Message;
@@ -336,6 +336,8 @@ public class GridIoMessage implements Message {
     public int partition() {
         if (msg instanceof GridCacheMessage)
             return ((GridCacheMessage)msg).partition();
+        if (msg instanceof DataStreamerRequest)
+            return ((DataStreamerRequest)msg).partition(); // TODO introduce partitionAware interface.
         else
             return STRIPE_DISABLED_PART;
     }
