@@ -19,6 +19,7 @@ package org.apache.ignite.yardstick.cache;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,6 +44,8 @@ import org.apache.ignite.configuration.WALMode;
 import org.apache.ignite.lang.IgniteBiInClosure;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.resources.IgniteInstanceResource;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.apache.ignite.yardstick.cache.model.ZipEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,6 +212,14 @@ public class LoadStore implements CacheStore<Object, Object> {
             ignite = Ignition.start(args0.igniteCfgUrl);
         else {
             IgniteConfiguration cfg = new IgniteConfiguration().setLocalHost("127.0.0.1");
+
+            TcpDiscoveryVmIpFinder finder = new TcpDiscoveryVmIpFinder();
+            finder.setAddresses(Collections.singleton("127.0.0.1"));
+
+            TcpDiscoverySpi spi = new TcpDiscoverySpi();
+            spi.setIpFinder(finder);
+
+            cfg.setDiscoverySpi(spi);
 
             if (args0.persistenceEnabled) {
                 PersistentStoreConfiguration pcfg = new PersistentStoreConfiguration();
