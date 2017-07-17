@@ -257,9 +257,7 @@ public class ZipEntity {
         };
     }
 
-
-
-    private static String randomString(Random rnd, int len) {
+    static String randomString(Random rnd, int len) {
         StringBuilder b = new StringBuilder(len);
 
         for (int i = 0; i < len; i++)

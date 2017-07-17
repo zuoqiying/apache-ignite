@@ -38,6 +38,7 @@ import org.apache.ignite.cache.affinity.AffinityKey;
 import org.apache.ignite.cache.store.CacheStore;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.binary.BinaryObjectImpl;
 import org.apache.ignite.lang.IgniteBiInClosure;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.resources.IgniteInstanceResource;
@@ -69,7 +70,10 @@ public class LoadStore implements CacheStore<Object, Object> {
             "[entries=" + args0.range +
             ", threads=" + args0.loadThreads +
             ", compressionType=" + args0.compType +
-            ", stringRandomization=" + args0.strRandomization + ']');
+            ", stringRandomization=" + args0.strRandomization +
+            ", index=" + args0.idx +
+            ", smallEntry=" + args0.smallEntry +
+            ']');
 
         ThreadPoolExecutor exec = new ThreadPoolExecutor(
             args0.loadThreads,
@@ -111,7 +115,9 @@ public class LoadStore implements CacheStore<Object, Object> {
                         // 2. put real values (read from files?).
                         for (int i = 0; i < entriesPerThread; i++) {
                             clo.apply(generateKey(parts0[rnd.nextInt(parts0.length)]),
-                                create(binary, args0.compType, args0.strRandomization));
+                                create(binary, args0.compType, args0.strRandomization, args0.smallEntry));
+
+                            System.out.println(((BinaryObjectImpl)create(binary, args0.compType, args0.strRandomization, args0.smallEntry)).array().length);
                         }
 
                         return null;
@@ -136,6 +142,8 @@ public class LoadStore implements CacheStore<Object, Object> {
             ", threads=" + args0.loadThreads +
             ", compressionType=" + args0.compType +
             ", stringRandomization=" + args0.strRandomization +
+            ", index=" + args0.idx +
+            ", smallEntry=" + args0.smallEntry +
             ", totalTime=" + time + ']');
     }
 
@@ -240,6 +248,9 @@ public class LoadStore implements CacheStore<Object, Object> {
         /** Index. */
         private boolean idx;
 
+        /** Small entry. */
+        private boolean smallEntry;
+
         /**
          * Default constructor.
          */
@@ -287,6 +298,12 @@ public class LoadStore implements CacheStore<Object, Object> {
                     case "-idx":
                     case "--index":
                         args0.idx = true;
+
+                        break;
+
+                    case "-se":
+                    case "--smallEntry":
+                        args0.smallEntry = true;
 
                         break;
                 }

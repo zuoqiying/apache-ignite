@@ -38,6 +38,7 @@ import org.apache.ignite.binary.BinaryObjectBuilder;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
 import org.apache.ignite.yardstick.cache.model.ZipEntity;
+import org.apache.ignite.yardstick.cache.model.ZipSmallEntity;
 import org.xerial.snappy.SnappyOutputStream;
 import org.yardstickframework.BenchmarkConfiguration;
 import org.yardstickframework.BenchmarkUtils;
@@ -158,7 +159,8 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
                                             while (System.currentTimeMillis() < warmupEnd && !stop.get()) {
                                                 for (int i = 0; i < 10; i++) {
-                                                    streamer.addData(String.valueOf(-key++),  create(binary, type, args.stringRandomization()));
+                                                    streamer.addData(String.valueOf(-key++),
+                                                        create(binary, type, args.stringRandomization(), false));
 
                                                     if (key >= KEYS)
                                                         key = 1;
@@ -234,7 +236,8 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                                         Random rnd = new Random();
 
                                         for (int i = 0; i < entries / num; i++) {
-                                            streamer.addData(String.valueOf(rnd.nextLong()), create(binary, type, args.stringRandomization()));
+                                            streamer.addData(String.valueOf(rnd.nextLong()), create(binary, type,
+                                                args.stringRandomization(), false));
 
                                             if (i > 0 && i % 1000 == 0) {
                                                 if (stop.get())
@@ -308,8 +311,8 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
      * @param binary Binary.
      * @param type Compressor type.
      */
-    public static BinaryObject create(IgniteBinary binary, CompressionType type, double strRandomization) {
-        if (type != CompressionType.NONE) {
+    public static BinaryObject create(IgniteBinary binary, CompressionType type, double strRandomization, boolean small) {
+        if (type != CompressionType.NONE && !small) {
             OutputStream gout = null;
 
             try {
@@ -352,6 +355,9 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                 U.closeQuiet(gout);
             }
         }
+
+        if (small)
+            return binary.toBinary(ZipSmallEntity.generateHard(ZipSmallEntity.RND_STRING_LEN));
 
         return binary.toBinary(ZipEntity.generate());
     }
