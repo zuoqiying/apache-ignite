@@ -38,7 +38,8 @@ import org.apache.ignite.cache.affinity.AffinityKey;
 import org.apache.ignite.cache.store.CacheStore;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.internal.binary.BinaryObjectImpl;
+import org.apache.ignite.configuration.PersistentStoreConfiguration;
+import org.apache.ignite.configuration.WALMode;
 import org.apache.ignite.lang.IgniteBiInClosure;
 import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.resources.IgniteInstanceResource;
@@ -73,6 +74,8 @@ public class LoadStore implements CacheStore<Object, Object> {
             ", stringRandomization=" + args0.strRandomization +
             ", index=" + args0.idx +
             ", smallEntry=" + args0.smallEntry +
+            ", persistenceEnabled=" + args0.persistenceEnabled +
+            ", WALMode=" + args0.walMode +
             ']');
 
         ThreadPoolExecutor exec = new ThreadPoolExecutor(
@@ -116,8 +119,6 @@ public class LoadStore implements CacheStore<Object, Object> {
                         for (int i = 0; i < entriesPerThread; i++) {
                             clo.apply(generateKey(parts0[rnd.nextInt(parts0.length)]),
                                 create(binary, args0.compType, args0.strRandomization, args0.smallEntry));
-
-                            System.out.println(((BinaryObjectImpl)create(binary, args0.compType, args0.strRandomization, args0.smallEntry)).array().length);
                         }
 
                         return null;
@@ -144,6 +145,8 @@ public class LoadStore implements CacheStore<Object, Object> {
             ", stringRandomization=" + args0.strRandomization +
             ", index=" + args0.idx +
             ", smallEntry=" + args0.smallEntry +
+            ", persistenceEnabled=" + args0.persistenceEnabled +
+            ", WALMode=" + args0.walMode +
             ", totalTime=" + time + ']');
     }
 
@@ -204,8 +207,19 @@ public class LoadStore implements CacheStore<Object, Object> {
 
         if (args0.igniteCfgUrl != null)
             ignite = Ignition.start(args0.igniteCfgUrl);
-        else
-            ignite = Ignition.start(new IgniteConfiguration().setLocalHost("127.0.0.1"));
+        else {
+            IgniteConfiguration cfg = new IgniteConfiguration().setLocalHost("127.0.0.1");
+
+            if (args0.persistenceEnabled) {
+                PersistentStoreConfiguration pcfg = new PersistentStoreConfiguration();
+
+                pcfg.setWalMode(args0.walMode);
+
+                cfg.setPersistentStoreConfiguration(pcfg);
+            }
+
+            ignite = Ignition.start(cfg);
+        }
 
         CacheConfiguration<Object, Object> ccfg = new CacheConfiguration<>(CACHE_NAME)
             .setCacheStoreFactory(
@@ -250,6 +264,12 @@ public class LoadStore implements CacheStore<Object, Object> {
 
         /** Small entry. */
         private boolean smallEntry;
+
+        /** Persistence enabled. */
+        private boolean persistenceEnabled;
+
+        /** Wal mode. */
+        private WALMode walMode = WALMode.NONE;
 
         /**
          * Default constructor.
@@ -304,6 +324,18 @@ public class LoadStore implements CacheStore<Object, Object> {
                     case "-se":
                     case "--smallEntry":
                         args0.smallEntry = true;
+
+                        break;
+
+                    case "-pe":
+                    case "--persistenceEnabled":
+                        args0.persistenceEnabled = true;
+
+                        break;
+
+                    case "-wm":
+                    case "--walMode":
+                        args0.walMode = WALMode.valueOf(args[++i]);
 
                         break;
                 }
