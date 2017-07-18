@@ -1707,7 +1707,9 @@ public class PageMemoryImpl implements PageMemoryEx {
                 pageEvictWarned = true;
 
                 U.warn(log, "Page evictions started, this will affect storage performance (consider increasing " +
-                    "MemoryConfiguration#setPageCacheSize).");
+                    "MemoryPolicyConfiguration#maxSize).");
+
+                printSegmentFillStats();
             }
 
             final ThreadLocalRandom rnd = ThreadLocalRandom.current();
@@ -1820,6 +1822,35 @@ public class PageMemoryImpl implements PageMemoryEx {
 
                 return relEvictAddr;
             }
+        }
+
+        /**
+         *
+         */
+        private void printSegmentFillStats() {
+            StringBuilder segmentStatsMsg = new StringBuilder("[");
+
+            int maxLoadedPages = Integer.MIN_VALUE;
+            int minLoadedPages = Integer.MAX_VALUE;
+
+            for (int i = 0; i < segments.length; i++) {
+                if (i != 0)
+                    segmentStatsMsg.append(", ");
+
+                segmentStatsMsg.append(i).append("=");
+
+                int loadedPages = segments[i].loadedPages.size();
+
+                maxLoadedPages = Math.max(maxLoadedPages, loadedPages);
+                minLoadedPages = Math.min(minLoadedPages, loadedPages);
+
+                segmentStatsMsg.append(loadedPages).append("/").append(segments[i].pages());
+            }
+
+            segmentStatsMsg.append("]");
+
+            U.warn(log, "Segment fill stats: maxPages=" + maxLoadedPages + ", minPages=" + minLoadedPages +
+                ", stats=" + segmentStatsMsg.toString());
         }
 
         /**
