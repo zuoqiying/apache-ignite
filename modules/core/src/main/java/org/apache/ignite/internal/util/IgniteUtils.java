@@ -73,6 +73,7 @@ import java.nio.channels.FileLock;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.charset.Charset;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9982,9 +9983,32 @@ public abstract class IgniteUtils {
     }
 
     /**
+     * Return count of regular file in the directory (including in sub-directories)
+     *
+     * @param dir path to directory
+     * @return count of regular file
+     * @throws IOException sometimes
+     */
+    public static int fileCount(Path dir) throws IOException {
+        int cnt = 0;
+
+        try (DirectoryStream<Path> ds = Files.newDirectoryStream(dir)){
+            for (Path d : ds) {
+                if (Files.isDirectory(d))
+                    cnt += fileCount(d);
+
+                else if (Files.isRegularFile(d))
+                    cnt++;
+            }
+        }
+
+        return cnt;
+    }
+
+    /**
      * Will calculate the size of a directory.
      *
-     * If there is concurrent activity in the directed, than returned value may be inaccurate.
+     * If there is concurrent activity in the directory, than returned value may be wrong.
      */
     public static long dirSize(Path path) throws IgniteCheckedException {
         final AtomicLong s = new AtomicLong(0);
