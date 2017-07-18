@@ -612,7 +612,7 @@
                                     <goal>sign</goal>
                                 </goals>
                                 <configuration>
-                                    <ascDirectory>${basedir}</ascDirectory>
+                                    <ascDirectory>${basedir}/bin</ascDirectory>
                                 </configuration>
                             </execution>
                         </executions>
