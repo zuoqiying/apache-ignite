@@ -603,6 +603,8 @@
                         </executions>
                     </plugin>
 
+
+                    <!--
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
@@ -612,11 +614,12 @@
                                     <goal>sign</goal>
                                 </goals>
                                 <configuration>
-                                    <ascDirectory>${basedir}/bin</ascDirectory>
+                                    <ascDirectory>${basedir}</ascDirectory>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
+                    -->
 
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
