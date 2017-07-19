@@ -185,7 +185,7 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
                 rowCnt++;
             }
 
-            System.out.println(rowCnt);
+//            System.out.println(rowCnt);
         }
 
         return true;

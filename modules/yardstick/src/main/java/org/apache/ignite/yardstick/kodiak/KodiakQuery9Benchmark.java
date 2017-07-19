@@ -1,18 +1,5 @@
 package org.apache.ignite.yardstick.kodiak;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.Iterator;
-import java.util.Map;
-import org.apache.ignite.IgniteCache;
-import org.apache.ignite.cache.query.QueryCursor;
-import org.apache.ignite.cache.query.SqlFieldsQuery;
-import org.apache.ignite.yardstick.cache.jdbc.JdbcAbstractBenchmark;
-import org.yardstickframework.BenchmarkConfiguration;
-
-import static org.yardstickframework.BenchmarkUtils.println;
-
 /**
  *
  */
