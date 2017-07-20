@@ -1296,7 +1296,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      * @return Future.
      */
     private IgniteInternalFuture remove0(K key, final boolean retval,
-        @Nullable final CacheEntryPredicate filter,
+        @Nullable CacheEntryPredicate filter,
         boolean async) {
         assert ctx.updatesAllowed();
 
@@ -1540,15 +1540,6 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
 
                         metrics0().addRemoveTimeNanos(f.duration());
                     }
-
-//                    if (!f.isCancelled() && f.error() == null) {
-//                        assert f instanceof GridNearAtomicUpdateFuture;
-//
-//                        for (int i = 0; i < ((GridNearAtomicUpdateFuture) f).updates(); ++i)
-//                            metrics0().onRemove();
-//
-//                        metrics0().addRemoveTimeNanos(f.duration());
-//                    }
                 }
             });
         }
@@ -1658,7 +1649,7 @@ public class GridDhtAtomicCache<K, V> extends GridDhtCacheAdapter<K, V> {
      * @param needVer Need version.
      * @return Get future.
      */
-    private IgniteInternalFuture<Map<K, V>> getAllAsync0(@Nullable final Collection<KeyCacheObject> keys,
+    private IgniteInternalFuture<Map<K, V>> getAllAsync0(@Nullable Collection<KeyCacheObject> keys,
         boolean forcePrimary,
         UUID subjId,
         String taskName,

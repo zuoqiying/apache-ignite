@@ -357,19 +357,12 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
             "parent", super.toString());
     }
 
-//    /**
-//     * @return Last operation result.
-//     */
-//    public GridCacheReturn lastOpResult() {
-//        return opRes;
-//    }
-
     /**
      * @return Last operation result.
      */
     public JCacheMetricsSnapshot metrics() {
         synchronized (mux) {
-            return metricsSnapshot;
+            return new JCacheMetricsSnapshot(metricsSnapshot);
         }
     }
 }
