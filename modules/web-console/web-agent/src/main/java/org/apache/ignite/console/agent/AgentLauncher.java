@@ -45,9 +45,11 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import org.apache.ignite.console.agent.handlers.ClusterListener;
 import org.apache.ignite.console.agent.handlers.DemoListener;
+import org.apache.ignite.console.agent.rest.RestBinaryExecutor;
 import org.apache.ignite.console.agent.rest.RestExecutor;
 import org.apache.ignite.console.agent.handlers.DatabaseListener;
 import org.apache.ignite.console.agent.handlers.RestListener;
+import org.apache.ignite.console.agent.rest.RestHttpExecutor;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.internal.util.typedef.X;
 import org.json.JSONArray;
@@ -368,7 +370,10 @@ public class AgentLauncher {
         }
 
         final Socket client = IO.socket(uri, opts);
-        final RestExecutor restExecutor = new RestExecutor(cfg.nodeUri());
+
+        String nodeUri = cfg.nodeUri();
+
+        final RestExecutor restExecutor = nodeUri.startsWith("binary://") ? new RestBinaryExecutor(nodeUri) : new RestHttpExecutor(nodeUri);
 
         try {
             final ClusterListener clusterLsnr = new ClusterListener(client, restExecutor);

@@ -24,9 +24,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.IgniteServices;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.configuration.MemoryConfiguration;
 import org.apache.ignite.configuration.MemoryPolicyConfiguration;
@@ -37,7 +39,6 @@ import org.apache.ignite.console.demo.service.DemoServiceClusterSingleton;
 import org.apache.ignite.console.demo.service.DemoServiceKeyAffinity;
 import org.apache.ignite.console.demo.service.DemoServiceMultipleInstances;
 import org.apache.ignite.console.demo.service.DemoServiceNodeSingleton;
-import org.apache.ignite.internal.IgniteEx;
 import org.apache.ignite.internal.util.typedef.F;
 import org.apache.ignite.logger.slf4j.Slf4jLogger;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
@@ -189,10 +190,12 @@ public class AgentClusterDemo {
                     int port = basePort.get();
 
                     try {
-                        IgniteEx ignite = (IgniteEx)Ignition.start(igniteConfiguration(port, idx, false));
+                        Ignite ignite = Ignition.start(igniteConfiguration(port, idx, false));
 
                         if (idx == 0) {
-                            Collection<String> jettyAddrs = ignite.localNode().attribute(ATTR_REST_JETTY_ADDRS);
+                            ClusterNode node = ignite.cluster().localNode();
+
+                            Collection<String> jettyAddrs = node.attribute(ATTR_REST_JETTY_ADDRS);
 
                             if (jettyAddrs == null) {
                                 ignite.cluster().stopNodes();
@@ -202,7 +205,7 @@ public class AgentClusterDemo {
 
                             String jettyHost = jettyAddrs.iterator().next();
 
-                            Integer jettyPort = ignite.localNode().attribute(ATTR_REST_JETTY_PORT);
+                            Integer jettyPort = node.attribute(ATTR_REST_JETTY_PORT);
 
                             if (F.isEmpty(jettyHost) || jettyPort == null)
                                 throw new IgniteException("DEMO: Failed to start Jetty REST handler on embedded node");

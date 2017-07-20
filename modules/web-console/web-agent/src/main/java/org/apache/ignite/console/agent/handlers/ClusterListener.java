@@ -65,7 +65,7 @@ public class ClusterListener {
     private static final long DFLT_TIMEOUT = 3000L;
 
     /** JSON object mapper. */
-    private static final ObjectMapper mapper = new GridJettyObjectMapper();
+    private static final ObjectMapper MAPPER = new GridJettyObjectMapper();
 
     /** Latest topology snapshot. */
     private TopologySnapshot top;
@@ -250,7 +250,7 @@ public class ClusterListener {
 
                 switch (res.getStatus()) {
                     case STATUS_SUCCESS:
-                        List<GridClientNodeBean> nodes = mapper.readValue(res.getData(),
+                        List<GridClientNodeBean> nodes = MAPPER.readValue(res.getData(),
                             new TypeReference<List<GridClientNodeBean>>() {});
 
                         TopologySnapshot newTop = new TopologySnapshot(nodes);
@@ -290,7 +290,7 @@ public class ClusterListener {
 
                 switch (res.getStatus()) {
                     case STATUS_SUCCESS:
-                        List<GridClientNodeBean> nodes = mapper.readValue(res.getData(),
+                        List<GridClientNodeBean> nodes = MAPPER.readValue(res.getData(),
                             new TypeReference<List<GridClientNodeBean>>() {});
 
                         TopologySnapshot newTop = new TopologySnapshot(nodes);
