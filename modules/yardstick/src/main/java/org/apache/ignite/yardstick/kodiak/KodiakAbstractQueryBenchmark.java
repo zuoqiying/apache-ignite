@@ -6,6 +6,8 @@ import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.Map;
 import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteLock;
+import org.apache.ignite.IgniteSemaphore;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.yardstick.cache.jdbc.JdbcAbstractBenchmark;
@@ -32,7 +34,7 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
     /** */
     private int mCorpListID = 1;
 
-    private ThreadLocal<Long> mdnCntr = new ThreadLocal<Long>(){
+    private ThreadLocal<Long> mdnCntr = new ThreadLocal<Long>() {
         @Override protected Long initialValue() {
             return 919200000001L;
         }
@@ -151,20 +153,34 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
     @Override public void setUp(BenchmarkConfiguration cfg) throws Exception {
         super.setUp(cfg);
 
-        println(cfg, "Populating query data...");
+        IgniteLock lock = ignite().reentrantLock("fillCacheLock", true, false, true);
 
-        long start = System.nanoTime();
+        if (lock.tryLock()) {
+            try {
+                if (ignite().cache(DUMMY_CACHE).size() > 0)
+                    return;
 
-        createPocSubscr(MDN_START_VALUE, "010111", noOfMdn);
+                println(cfg, "Populating query data...");
 
-        println(cfg, "Finished populating join query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
+                long start = System.nanoTime();
+
+                createPocSubscr(MDN_START_VALUE, "010111", noOfMdn);
+
+                println(cfg, "Finished populating join query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
+            }
+            finally {
+                lock.unlock();
+            }
+        }
+        else
+            lock.getOrCreateCondition("fillCacheCondition").await();
     }
 
     /** {@inheritDoc} */
     @Override public boolean test(Map<Object, Object> ctx) throws Exception {
         Long mdnCntr = this.mdnCntr.get();
 
-        if(mdnCntr >= MDN_START_VALUE + noOfMdn)
+        if (mdnCntr >= MDN_START_VALUE + noOfMdn)
             mdnCntr = MDN_START_VALUE;
 
         IgniteCache<Object, Object> cache = ignite().cache(DUMMY_CACHE);
@@ -172,7 +188,7 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
         SqlFieldsQuery qry = new SqlFieldsQuery(getQuery());
         qry.setArgs(mdnCntr);
 
-        this.mdnCntr.set(mdnCntr+1);
+        this.mdnCntr.set(mdnCntr + 1);
 
         try (QueryCursor cursor = cache.query(qry)) {
             long rowCnt = 0;
