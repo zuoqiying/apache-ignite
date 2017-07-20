@@ -143,16 +143,16 @@ public class GridNearSingleGetResponse extends GridCacheMessage implements GridC
     }
 
     /**
-     * @return CacheHit flag.
+     * @return Cache Hit flag.
      */
     public boolean cacheHit() {
         return (flags & CACHE_HIT_FLAG_MASK) != 0;
     }
 
     /**
-     * @param cacheHit CacheHit flag.
+     * @param cacheHit Cache Hit flag.
      */
-    public void setCacheHit(boolean cacheHit) {
+    public void cacheHit(boolean cacheHit) {
         if (cacheHit)
             flags = (byte)(flags | CACHE_HIT_FLAG_MASK);
 

@@ -1906,6 +1906,9 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
                 final boolean needEntry = storeEnabled || ctx.isSwapOrOffheapEnabled();
 
+                final boolean isStatisticsEnabled = !skipVals && ctx.config().isStatisticsEnabled()
+                    && (!isDhtAtomic() || ctx.dht().near() != null);
+
                 Map<KeyCacheObject, EntryGetResult> misses = null;
 
                 for (KeyCacheObject key : keys) {
@@ -1913,7 +1916,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                         GridCacheEntryEx entry = needEntry ? entryEx(key) : peekEx(key);
 
                         if (entry == null) {
-                            if (!skipVals && ctx.config().isStatisticsEnabled() && !isDhtAtomic())
+                            if (isStatisticsEnabled)
                                 ctx.cache().metrics0().onRead(false);
 
                             break;
@@ -1923,11 +1926,11 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                             EntryGetResult res;
 
                             boolean evt = !skipVals;
-                            boolean updateMetrics = !skipVals;
+                            boolean updateMetrics = isStatisticsEnabled;
 
                             if (storeEnabled) {
                                 res = entry.innerGetAndReserveForLoad(ctx.isSwapOrOffheapEnabled(),
-                                    updateMetrics && !isDhtAtomic(),
+                                    updateMetrics,
                                     evt,
                                     subjId,
                                     taskName,
@@ -1952,7 +1955,7 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
                                     null,
                                     ctx.isSwapOrOffheapEnabled(),
                                     /*unmarshal*/true,
-                                    updateMetrics && !isDhtAtomic(),
+                                    updateMetrics,
                                     evt,
                                     subjId,
                                     null,
@@ -2909,18 +2912,6 @@ public abstract class GridCacheAdapter<K, V> implements IgniteInternalCache<K, V
 
         if (statsEnabled && !isDhtAtomic())
             metrics0().addRemoveTimeNanos(System.nanoTime() - start);
-    }
-
-    /**
-     * Removes given key mappings from cache. This method ignores {@link CacheConfiguration#isStatisticsEnabled} flag
-     * if the given {@code skipStatistics} flag is {@true}.
-     *
-     * @param keys Keys whose mappings are to be removed from cache.
-     * @param skipStatistics Whether this operation should ignore {@link CacheConfiguration#isStatisticsEnabled} or not.
-     * @throws IgniteCheckedException If remove failed.
-     */
-    public void removeAll(final Collection<? extends K> keys, boolean skipStatistics) throws IgniteCheckedException {
-        removeAll(keys);
     }
 
     /**

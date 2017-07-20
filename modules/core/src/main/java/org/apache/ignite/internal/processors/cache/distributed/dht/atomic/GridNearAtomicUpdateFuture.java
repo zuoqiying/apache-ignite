@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
 import org.apache.ignite.IgniteCheckedException;
@@ -96,9 +95,6 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
 
     /** Not null is operation is mapped to single node. */
     private GridNearAtomicFullUpdateRequest singleReq;
-
-    /** Number of removed entries. */
-    private final AtomicInteger removals = new AtomicInteger();
 
     /**
      * @param cctx Cache context.
@@ -278,6 +274,9 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
             if (!res.futureVersion().equals(futVer))
                 return;
 
+            if (metricsSnapshot != null)
+                metricsSnapshot.merge(res.metrics());
+
             if (singleReq != null) {
                 if (!singleReq.nodeId().equals(nodeId))
                     return;
@@ -286,8 +285,6 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
 
                 singleReq = null;
 
-                removals.set(res.removals());
-
                 rcvAll = true;
             }
             else {
@@ -295,8 +292,6 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
 
                 if (req != null && req.onResponse(res)) {
                     resCnt++;
-
-                    removals.addAndGet(res.removals());
 
                     rcvAll = mappings.size() == resCnt;
                 }
@@ -476,13 +471,6 @@ public class GridNearAtomicUpdateFuture extends GridNearAtomicAbstractUpdateFutu
 
         if (rcvAll)
             onDone(opRes0, err0);
-    }
-
-    /**
-     * @return Number of removed entries.
-     */
-    public int removals() {
-        return removals.get();
     }
 
     /**

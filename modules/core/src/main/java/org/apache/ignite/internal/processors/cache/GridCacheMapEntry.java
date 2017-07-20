@@ -2023,6 +2023,73 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
         @Nullable final Long updateCntr,
         @Nullable GridDhtAtomicAbstractUpdateFuture fut
     ) throws IgniteCheckedException, GridCacheEntryRemovedException, GridClosureException {
+        CacheMetricsImpl metricsProvider = null;
+
+        if (metrics && cctx.config().isStatisticsEnabled())
+            metricsProvider = cctx.cache().metrics0();
+
+        return innerUpdate(newVer,
+            evtNodeId,
+            affNodeId,
+            op,
+            writeObj,
+            invokeArgs,
+            writeThrough,
+            readThrough,
+            retval,
+            keepBinary,
+            expiryPlc,
+            evt,
+            metricsProvider,
+            primary,
+            verCheck,
+            topVer,
+            filter,
+            drType,
+            explicitTtl,
+            explicitExpireTime,
+            conflictVer,
+            conflictResolve,
+            intercept,
+            subjId,
+            taskName,
+            prevVal,
+            updateCntr,
+            fut);
+    }
+
+    /** {@inheritDoc} */
+    @SuppressWarnings("unchecked")
+    @Override public GridCacheUpdateAtomicResult innerUpdate(
+        GridCacheVersion newVer,
+        final UUID evtNodeId,
+        final UUID affNodeId,
+        GridCacheOperation op,
+        @Nullable Object writeObj,
+        @Nullable final Object[] invokeArgs,
+        final boolean writeThrough,
+        final boolean readThrough,
+        final boolean retval,
+        final boolean keepBinary,
+        @Nullable final IgniteCacheExpiryPolicy expiryPlc,
+        final boolean evt,
+        @Nullable final CacheMetricsImpl metrics,
+        final boolean primary,
+        final boolean verCheck,
+        final AffinityTopologyVersion topVer,
+        @Nullable final CacheEntryPredicate[] filter,
+        final GridDrType drType,
+        final long explicitTtl,
+        final long explicitExpireTime,
+        @Nullable GridCacheVersion conflictVer,
+        final boolean conflictResolve,
+        final boolean intercept,
+        @Nullable final UUID subjId,
+        final String taskName,
+        @Nullable final CacheObject prevVal,
+        @Nullable final Long updateCntr,
+        @Nullable GridDhtAtomicAbstractUpdateFuture fut
+    ) throws IgniteCheckedException, GridCacheEntryRemovedException, GridClosureException {
         assert cctx.atomic();
 
         boolean res = true;
@@ -2311,10 +2378,10 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
             }
 
             // Apply metrics.
-            if (metrics && cctx.cache().configuration().isStatisticsEnabled() && needVal) {
+            if (metrics != null && needVal) {
                 // PutIfAbsent methods mustn't update hit/miss statistics
                 if (op != GridCacheOperation.UPDATE || F.isEmpty(filter) || !cctx.putIfAbsentFilter(filter))
-                    cctx.cache().metrics0().onRead(oldVal != null);
+                    metrics.onRead(oldVal != null);
             }
 
             // Check filter inside of synchronization.
@@ -4778,6 +4845,21 @@ public abstract class GridCacheMapEntry extends GridMetadataAwareAdapter impleme
                 cctx.cache().metrics0().onRemove();
             else
                 cctx.cache().metrics0().onWrite();
+        }
+    }
+
+    /**
+     * Updates given metrics provider.
+     *
+     * @param op Operation.
+     * @param metrics Metrics provider.
+     */
+    private void updateMetrics(GridCacheOperation op, CacheMetricsImpl metrics) {
+        if (metrics != null) {
+            if (op == GridCacheOperation.DELETE)
+                metrics.onRemove();
+            else
+                metrics.onWrite();
         }
     }
 

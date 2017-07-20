@@ -807,7 +807,7 @@ public abstract class GridDhtCacheAdapter<K, V> extends GridDistributedCacheAdap
                             req.addDeploymentInfo());
 
                         if (info != null) {
-                            res.setCacheHit(info.isCacheHit());
+                            res.cacheHit(info.cacheHit());
 
                             if (req.skipValues())
                                 res.containsValue();

@@ -192,16 +192,16 @@ public class GridCacheEntryInfo implements Message {
     }
 
     /**
-     * @param cacheHit CacheHit flag.
+     * @param cacheHit Cache Hit flag.
      */
-    public void setCacheHit(boolean cacheHit) {
+    public void cacheHit(boolean cacheHit) {
         this.cacheHit = cacheHit;
     }
 
     /**
-     * @return CacheHit flag.
+     * @return Cache Hit flag.
      */
-    public boolean isCacheHit() {
+    public boolean cacheHit() {
         return cacheHit;
     }
 

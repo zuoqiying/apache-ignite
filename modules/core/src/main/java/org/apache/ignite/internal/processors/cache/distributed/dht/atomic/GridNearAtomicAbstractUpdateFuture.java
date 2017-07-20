@@ -31,6 +31,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheContext;
 import org.apache.ignite.internal.processors.cache.GridCacheMvccManager;
 import org.apache.ignite.internal.processors.cache.GridCacheOperation;
 import org.apache.ignite.internal.processors.cache.GridCacheReturn;
+import org.apache.ignite.internal.processors.cache.JCacheMetricsSnapshot;
 import org.apache.ignite.internal.processors.cache.version.GridCacheVersion;
 import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.typedef.CI2;
@@ -135,6 +136,9 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
     /** Operation result. */
     protected GridCacheReturn opRes;
 
+    /** Cache metrics snapshot. */
+    protected final JCacheMetricsSnapshot metricsSnapshot;
+
     /**
      * Constructor.
      *
@@ -197,6 +201,8 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
             remapCnt = 1;
 
         this.remapCnt = remapCnt;
+
+        this.metricsSnapshot = (cctx.config().isStatisticsEnabled())? new JCacheMetricsSnapshot() : null;
     }
 
     /**
@@ -351,10 +357,19 @@ public abstract class GridNearAtomicAbstractUpdateFuture extends GridFutureAdapt
             "parent", super.toString());
     }
 
+//    /**
+//     * @return Last operation result.
+//     */
+//    public GridCacheReturn lastOpResult() {
+//        return opRes;
+//    }
+
     /**
      * @return Last operation result.
      */
-    public GridCacheReturn lastOpResult() {
-        return opRes;
+    public JCacheMetricsSnapshot metrics() {
+        synchronized (mux) {
+            return metricsSnapshot;
+        }
     }
 }

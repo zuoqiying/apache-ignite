@@ -45,6 +45,7 @@ import org.apache.ignite.internal.processors.cache.GridCacheEntryInfo;
 import org.apache.ignite.internal.processors.cache.GridCacheEvictionRequest;
 import org.apache.ignite.internal.processors.cache.GridCacheEvictionResponse;
 import org.apache.ignite.internal.processors.cache.GridCacheReturn;
+import org.apache.ignite.internal.processors.cache.JCacheMetricsSnapshot;
 import org.apache.ignite.internal.processors.cache.KeyCacheObjectImpl;
 import org.apache.ignite.internal.processors.cache.distributed.GridCacheTtlUpdateRequest;
 import org.apache.ignite.internal.processors.cache.distributed.GridCacheTxRecoveryRequest;
@@ -165,6 +166,10 @@ public class GridIoMessageFactory implements MessageFactory {
         Message msg = null;
 
         switch (type) {
+            case -62:
+                msg = new JCacheMetricsSnapshot();
+
+                break;
             case -43:
                 msg = new IgniteIoTestMessage();
 

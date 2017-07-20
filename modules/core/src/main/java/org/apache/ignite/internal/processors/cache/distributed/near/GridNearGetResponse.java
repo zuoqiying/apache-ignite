@@ -145,7 +145,7 @@ public class GridNearGetResponse extends GridCacheMessage implements GridCacheDe
         this.entries = entries;
 
         for (GridCacheEntryInfo entry : entries) {
-            if (entry.isCacheHit())
+            if (entry.cacheHit())
                 cacheHits += 1;
         }
     }

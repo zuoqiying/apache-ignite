@@ -55,7 +55,6 @@ import org.apache.ignite.internal.util.future.GridFutureAdapter;
 import org.apache.ignite.internal.util.lang.GridCloseableIterator;
 import org.apache.ignite.internal.util.typedef.internal.S;
 import org.apache.ignite.internal.util.typedef.internal.U;
-import org.apache.ignite.lang.IgniteBiTuple;
 import org.apache.ignite.lang.IgniteInClosure;
 import org.apache.ignite.transactions.TransactionIsolation;
 import org.jetbrains.annotations.NotNull;
@@ -176,12 +175,6 @@ public abstract class GridDistributedCacheAdapter<K, V> extends GridCacheAdapter
 
             boolean keepBinary = opCtx != null && opCtx.isKeepBinary();
 
-            boolean statsEnabled = ctx.config().isStatisticsEnabled();
-
-            long start = statsEnabled ? System.nanoTime() : 0L;
-
-            int removals = 0;
-
             do {
                 retry = false;
 
@@ -193,22 +186,11 @@ public abstract class GridDistributedCacheAdapter<K, V> extends GridCacheAdapter
                 if (!nodes.isEmpty()) {
                     ctx.kernalContext().task().setThreadContext(TC_SUBGRID, nodes);
 
-                    IgniteBiTuple<Boolean, Integer> res = ctx.kernalContext().task().execute(
-                        new RemoveAllTask2(ctx.name(), topVer, skipStore, keepBinary), null).get();
-
-                    retry = !res.get1();
-
-                    removals += res.get2();
+                    retry = !ctx.kernalContext().task().execute(
+                        new RemoveAllTask(ctx.name(), topVer, skipStore, keepBinary), null).get();
                 }
             }
             while (ctx.affinity().affinityTopologyVersion().compareTo(topVer) != 0 || retry);
-
-            if (statsEnabled && isDhtAtomic()) {
-                for (int i = 0; i < removals; ++i)
-                    metrics0().onRemove();
-
-                metrics0().addRemoveTimeNanos(System.nanoTime() - start);
-            }
         }
         catch (ClusterGroupEmptyCheckedException ignore) {
             if (log.isDebugEnabled())
@@ -464,202 +446,6 @@ public abstract class GridDistributedCacheAdapter<K, V> extends GridCacheAdapter
             }
 
             return true;
-        }
-    }
-
-    /**
-     * Remove task.
-     */
-    @GridInternal
-    private static class RemoveAllTask2 extends ComputeTaskAdapter<Object, IgniteBiTuple<Boolean, Integer>> {
-        /** */
-        private static final long serialVersionUID = 0L;
-
-        /** Cache name. */
-        private final String cacheName;
-
-        /** Affinity topology version. */
-        private final AffinityTopologyVersion topVer;
-
-        /** Skip store flag. */
-        private final boolean skipStore;
-
-        /** Keep binary flag. */
-        private final boolean keepBinary;
-
-        /**
-         * @param cacheName Cache name.
-         * @param topVer Affinity topology version.
-         * @param skipStore Skip store flag.
-         */
-        public RemoveAllTask2(String cacheName, AffinityTopologyVersion topVer, boolean skipStore, boolean keepBinary) {
-            this.cacheName = cacheName;
-            this.topVer = topVer;
-            this.skipStore = skipStore;
-            this.keepBinary = keepBinary;
-        }
-
-        /** {@inheritDoc} */
-        @Nullable @Override public Map<? extends ComputeJob, ClusterNode> map(List<ClusterNode> subgrid,
-            @Nullable Object arg) throws IgniteException {
-            Map<ComputeJob, ClusterNode> jobs = new HashMap<>();
-
-            for (ClusterNode node : subgrid)
-                jobs.put(new GlobalRemoveAllJob2(cacheName, topVer, skipStore, keepBinary), node);
-
-            return jobs;
-        }
-
-        /** {@inheritDoc} */
-        @Override public ComputeJobResultPolicy result(ComputeJobResult res, List<ComputeJobResult> rcvd) {
-            IgniteException e = res.getException();
-
-            if (e != null) {
-                if (e instanceof ClusterTopologyException)
-                    return ComputeJobResultPolicy.WAIT;
-
-                throw new IgniteException("Remote job threw exception.", e);
-            }
-
-            return ComputeJobResultPolicy.WAIT;
-        }
-
-        /** {@inheritDoc} */
-        @Nullable @Override public IgniteBiTuple<Boolean, Integer> reduce(List<ComputeJobResult> results) throws IgniteException {
-            boolean success = true;
-
-            int removals = 0;
-
-            for (ComputeJobResult locRes : results) {
-                if (locRes != null) {
-                    if (locRes.getException() != null)
-                        success = false;
-
-                    success &= locRes.<IgniteBiTuple<Boolean, Integer>>getData().get1();
-
-                    removals += locRes.<IgniteBiTuple<Boolean, Integer>>getData().get2();
-                }
-            }
-
-            return new IgniteBiTuple<>(success, removals);
-        }
-    }
-    /**
-     * Internal job which performs remove all primary key mappings
-     * operation on a cache with the given name.
-     */
-    @GridInternal
-    private static class GlobalRemoveAllJob2<K,V>  extends TopologyVersionAwareJob {
-        /** */
-        private static final long serialVersionUID = 0L;
-
-        /** Skip store flag. */
-        private final boolean skipStore;
-
-        /** Keep binary flag. */
-        private final boolean keepBinary;
-
-        /**
-         * @param cacheName Cache name.
-         * @param topVer Topology version.
-         * @param skipStore Skip store flag.
-         */
-        private GlobalRemoveAllJob2(
-            String cacheName,
-            @NotNull AffinityTopologyVersion topVer,
-            boolean skipStore,
-            boolean keepBinary
-        ) {
-            super(cacheName, topVer);
-
-            this.skipStore = skipStore;
-            this.keepBinary = keepBinary;
-        }
-
-        /** {@inheritDoc} */
-        @Nullable @Override public Object localExecute(@Nullable IgniteInternalCache cache0) {
-            GridCacheAdapter cache = ((IgniteKernal) ignite).context().cache().internalCache(cacheName);
-
-            if (cache == null)
-                return new IgniteBiTuple<>(Boolean.TRUE, 0);
-
-            final GridCacheContext<K, V> ctx = cache.context();
-
-            ctx.gate().enter();
-
-            int removals = 0;
-
-            try {
-                if (!ctx.affinity().affinityTopologyVersion().equals(topVer))
-                    // Ignore this remove request because remove request will be sent again.
-                    return new IgniteBiTuple<>(Boolean.FALSE, 0);
-
-                GridDhtCacheAdapter<K, V> dht;
-                GridNearCacheAdapter<K, V> near = null;
-
-                if (cache instanceof GridNearCacheAdapter) {
-                    near = ((GridNearCacheAdapter<K, V>) cache);
-                    dht = near.dht();
-                }
-                else
-                    dht = (GridDhtCacheAdapter<K, V>) cache;
-
-                try (DataStreamerImpl<KeyCacheObject, Object> dataLdr =
-                         (DataStreamerImpl) ignite.dataStreamer(cacheName)) {
-                    ((DataStreamerImpl) dataLdr).maxRemapCount(0);
-
-                    dataLdr.skipStore(skipStore);
-                    dataLdr.keepBinary(keepBinary);
-
-                    dataLdr.receiver(DataStreamerCacheUpdaters.<KeyCacheObject, Object>batchedRevomer());
-
-                    for (int part : ctx.affinity().primaryPartitions(ctx.localNodeId(), topVer)) {
-                        GridDhtLocalPartition locPart = dht.topology().localPartition(part, topVer, false);
-
-                        if (locPart == null || (ctx.rebalanceEnabled() && locPart.state() != OWNING) || !locPart.reserve())
-                            return new IgniteBiTuple<>(Boolean.FALSE, 0);;
-
-                        try {
-                            if (!locPart.isEmpty()) {
-                                for (GridCacheEntryEx o : locPart.allEntries()) {
-                                    if (!o.obsoleteOrDeleted()) {
-                                        dataLdr.removeDataInternal(o.key());
-                                        removals++;
-                                    }
-                                }
-                            }
-
-                            GridCloseableIterator<Map.Entry<byte[], GridCacheSwapEntry>> iter =
-                                dht.context().swap().iterator(part);
-
-                            if (iter != null) {
-                                for (Map.Entry<byte[], GridCacheSwapEntry> e : iter)
-                                    dataLdr.removeDataInternal(ctx.toCacheKeyObject(e.getKey()));
-                            }
-                        }
-                        finally {
-                            locPart.release();
-                        }
-                    }
-                }
-
-                if (near != null) {
-                    GridCacheVersion obsoleteVer = ctx.versions().next();
-
-                    for (GridCacheEntryEx e : near.allEntries()) {
-                        if (!e.valid(topVer) && e.markObsolete(obsoleteVer))
-                            near.removeEntry(e);
-                    }
-                }
-            }
-            catch (IgniteCheckedException e) {
-                throw U.convertException(e);
-            }
-            finally {
-                ctx.gate().leave();
-            }
-
-            return new IgniteBiTuple<>(Boolean.TRUE, removals);
         }
     }
 }

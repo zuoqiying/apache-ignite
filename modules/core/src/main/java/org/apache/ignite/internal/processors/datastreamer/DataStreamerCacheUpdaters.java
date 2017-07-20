@@ -25,15 +25,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
-import org.apache.ignite.internal.processors.cache.GridCacheAdapter;
-import org.apache.ignite.internal.processors.cache.IgniteCacheProxy;
-import org.apache.ignite.internal.processors.cache.IgniteInternalCache;
-import org.apache.ignite.internal.processors.cache.distributed.dht.GridDhtCacheAdapter;
-import org.apache.ignite.internal.processors.cache.distributed.near.GridNearCacheAdapter;
 import org.apache.ignite.internal.util.typedef.F;
-import org.apache.ignite.internal.util.typedef.internal.CU;
 import org.apache.ignite.stream.StreamReceiver;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,9 +39,6 @@ public class DataStreamerCacheUpdaters {
 
     /** */
     private static final StreamReceiver BATCHED = new Batched();
-
-    /** */
-    private static final StreamReceiver BATCHED_REMOVER = new BatchedRemover();
 
     /** */
     private static final StreamReceiver BATCHED_SORTED = new BatchedSorted();
@@ -73,17 +63,6 @@ public class DataStreamerCacheUpdaters {
      */
     public static <K, V> StreamReceiver<K, V> batched() {
         return BATCHED;
-    }
-
-    /**
-     * Updates cache using batched methods {@link IgniteCache#removeAll(Set)}.
-     * Can cause deadlocks if the same keys are getting updated concurrently.
-     * Performance is generally better than in {@link #individual()}.
-     *
-     * @return Batched remover.
-     */
-    public static <K, V> StreamReceiver<K, V> batchedRevomer() {
-        return BATCHED_REMOVER;
     }
 
     /**
@@ -115,44 +94,6 @@ public class DataStreamerCacheUpdaters {
 
         if (putMap != null)
             cache.putAll(putMap);
-    }
-
-    /**
-     * Updates cache.
-     *
-     * @param cache Cache.
-     * @param rmvCol Keys to remove.
-     * @throws IgniteException If failed.
-     */
-    protected static <K, V> void removeAll(IgniteCache<K, V> cache, @Nullable Set<K> rmvCol) {
-        assert cache != null;
-        assert rmvCol != null;
-
-        IgniteInternalCache delegate = ((IgniteCacheProxy) cache).delegate();
-
-        GridCacheAdapter<K, V> dht = null;
-
-        if (delegate instanceof GridCacheAdapter) {
-            if (((GridCacheAdapter) delegate).isDhtAtomic()) {
-                if (delegate instanceof GridNearCacheAdapter) {
-                    dht = ((GridNearCacheAdapter<K, V>) delegate).dht();
-                }
-                else if (delegate instanceof GridCacheAdapter)
-                    dht = (GridCacheAdapter<K, V>) delegate;
-            }
-        }
-
-        // Here we assume that there are no key duplicates, so the following calls are valid.
-        if (rmvCol != null && dht != null) {
-            try {
-                dht.removeAll(rmvCol, true);
-            }
-            catch (IgniteCheckedException e) {
-                throw CU.convertToCacheException(e);
-            }
-        }
-        else
-            cache.removeAll(rmvCol);
     }
 
     /**
@@ -219,39 +160,6 @@ public class DataStreamerCacheUpdaters {
             }
 
             updateAll(cache, rmvAll, putAll);
-        }
-    }
-
-    /**
-     * Batched remover. Updates cache using batch operations thus is dead lock prone.
-     */
-    private static class BatchedRemover<K, V> implements StreamReceiver<K, V>, InternalUpdater {
-        /** */
-        private static final long serialVersionUID = 0L;
-
-        /** {@inheritDoc} */
-        @Override public void receive(IgniteCache<K, V> cache, Collection<Map.Entry<K, V>> entries) {
-            assert cache != null;
-            assert !F.isEmpty(entries);
-
-            Set<K> rmvAll = null;
-
-            for (Map.Entry<K, V> entry : entries) {
-                K key = entry.getKey();
-
-                assert key != null;
-
-                V val = entry.getValue();
-
-                if (val == null) {
-                    if (rmvAll == null)
-                        rmvAll = new HashSet<>();
-
-                    rmvAll.add(key);
-                }
-            }
-
-            removeAll(cache, rmvAll);
         }
     }
 

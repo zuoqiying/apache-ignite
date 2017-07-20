@@ -250,7 +250,7 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
 
                             GridCacheEntryInfo info = F.first(infos);
 
-                            GridPartitionedSingleGetFuture.this.cacheHit = ((info != null)? info.isCacheHit(): false);
+                            GridPartitionedSingleGetFuture.this.cacheHit = ((info != null)? info.cacheHit(): false);
 
                             setResult(info);
                         }
@@ -521,6 +521,9 @@ public class GridPartitionedSingleGetFuture extends GridFutureAdapter<Object> im
         Collection<GridCacheEntryInfo> infos = res.entries();
 
         assert F.isEmpty(infos) || infos.size() == 1 : infos;
+
+        if (!F.isEmpty(infos))
+            cacheHit = res.cacheHits() != 0;
 
         setResult(F.first(infos));
     }

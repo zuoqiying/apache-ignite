@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.processor.EntryProcessor;
 import org.apache.ignite.IgniteCheckedException;
@@ -216,6 +217,9 @@ public class GridNearAtomicSingleUpdateFuture extends GridNearAtomicAbstractUpda
             req = this.req;
 
             this.req = null;
+
+            if (metricsSnapshot != null)
+                metricsSnapshot.merge(res.metrics());
 
             boolean remapKey = !F.isEmpty(res.remapKeys());
 

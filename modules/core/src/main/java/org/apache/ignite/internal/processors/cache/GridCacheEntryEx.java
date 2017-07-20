@@ -537,6 +537,73 @@ public interface GridCacheEntryEx {
     ) throws IgniteCheckedException, GridCacheEntryRemovedException;
 
     /**
+     * @param ver Cache version to set. Entry will be updated only if current version is less then passed version.
+     * @param evtNodeId Event node ID.
+     * @param affNodeId Affinity node ID.
+     * @param op Update operation.
+     * @param val Value. Type depends on operation.
+     * @param invokeArgs Optional arguments for entry processor.
+     * @param writeThrough Write through flag.
+     * @param readThrough Read through flag.
+     * @param retval Return value flag.
+     * @param expiryPlc Expiry policy.
+     * @param evt Event flag.
+     * @param metrics Metrics provider.
+     * @param primary If update is performed on primary node (the one which assigns version).
+     * @param checkVer Whether update should check current version and ignore update if current version is
+     *      greater than passed in.
+     * @param topVer Topology version.
+     * @param filter Optional filter to check.
+     * @param drType DR type.
+     * @param conflictTtl Conflict TTL (if any).
+     * @param conflictExpireTime Conflict expire time (if any).
+     * @param conflictVer DR version (if any).
+     * @param conflictResolve If {@code true} then performs conflicts resolution.
+     * @param intercept If {@code true} then calls cache interceptor.
+     * @param subjId Subject ID initiated this update.
+     * @param taskName Task name.
+     * @param updateCntr Update counter.
+     * @param fut Dht atomic future.
+     * @return Tuple where first value is flag showing whether operation succeeded,
+     *      second value is old entry value if return value is requested, third is updated entry value,
+     *      fourth is the version to enqueue for deferred delete the fifth is DR conflict context
+     *      or {@code null} if conflict resolution was not performed, the last boolean - whether update should be
+     *      propagated to backups or not.
+     * @throws IgniteCheckedException If update failed.
+     * @throws GridCacheEntryRemovedException If entry is obsolete.
+     */
+    public GridCacheUpdateAtomicResult innerUpdate(
+        GridCacheVersion ver,
+        UUID evtNodeId,
+        UUID affNodeId,
+        GridCacheOperation op,
+        @Nullable Object val,
+        @Nullable Object[] invokeArgs,
+        boolean writeThrough,
+        boolean readThrough,
+        boolean retval,
+        boolean keepBinary,
+        @Nullable IgniteCacheExpiryPolicy expiryPlc,
+        boolean evt,
+        CacheMetricsImpl metrics,
+        boolean primary,
+        boolean checkVer,
+        AffinityTopologyVersion topVer,
+        @Nullable CacheEntryPredicate[] filter,
+        GridDrType drType,
+        long conflictTtl,
+        long conflictExpireTime,
+        @Nullable GridCacheVersion conflictVer,
+        boolean conflictResolve,
+        boolean intercept,
+        @Nullable UUID subjId,
+        String taskName,
+        @Nullable CacheObject prevVal,
+        @Nullable Long updateCntr,
+        @Nullable GridDhtAtomicAbstractUpdateFuture fut
+    ) throws IgniteCheckedException, GridCacheEntryRemovedException;
+
+    /**
      * Update method for local cache in atomic mode.
      *
      * @param ver Cache version.
