@@ -157,8 +157,7 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
 
         if (lock.tryLock()) {
             try {
-                if (ignite().cache(DUMMY_CACHE).size() > 0)
-                    return;
+                ignite().cache(DUMMY_CACHE).clear();
 
                 println(cfg, "Populating query data...");
 
