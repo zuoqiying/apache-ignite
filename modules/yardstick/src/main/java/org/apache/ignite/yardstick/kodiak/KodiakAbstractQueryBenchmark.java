@@ -155,24 +155,22 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
 
         IgniteLock lock = ignite().reentrantLock("fillCacheLock", true, false, true);
 
-        if (lock.tryLock()) {
-            try {
-                ignite().cache(DUMMY_CACHE).clear();
+        lock.lock();
+        try {
+            if (ignite().cache(DUMMY_CACHE).size() > 0)
+                return;
 
-                println(cfg, "Populating query data...");
+            println(cfg, "Populating query data...");
 
-                long start = System.nanoTime();
+            long start = System.nanoTime();
 
-                createPocSubscr(MDN_START_VALUE, "010111", noOfMdn);
+            createPocSubscr(MDN_START_VALUE, "010111", noOfMdn);
 
-                println(cfg, "Finished populating join query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
-            }
-            finally {
-                lock.unlock();
-            }
+            println(cfg, "Finished populating join query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
         }
-        else
-            lock.getOrCreateCondition("fillCacheCondition").await();
+        finally {
+            lock.unlock();
+        }
     }
 
     /** {@inheritDoc} */
