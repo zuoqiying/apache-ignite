@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteLock;
+import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.thread.IgniteThreadPoolExecutor;
@@ -26,7 +27,7 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
     static final String DUMMY_CACHE = "DG";
 
     /** */
-    static final int noOfMdn = 10;
+    static final int noOfMdn = 100_000;
 
     /** */
     static final int noOfContacts = 100;
@@ -54,6 +55,8 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
 
         final AtomicLong finished = new AtomicLong();
 
+        final IgniteLogger logger = ignite().log();
+
         for (int i = 1; i <= noOfMdns; i++) {
             loaderExec.submit(new Runnable() {
                 @Override public void run() {
@@ -68,7 +71,7 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
 
                         long fin = finished.incrementAndGet();
                         if (fin % 1000 == 0)
-                            ignite().log().info("Loaded " + (100 * fin / noOfMdn) + "%");
+                            logger.info("Loaded " + (100 * fin / noOfMdn) + "%");
                     }
                     catch (SQLException e) {
                         e.printStackTrace();
