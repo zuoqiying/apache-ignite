@@ -7,14 +7,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteLock;
-import org.apache.ignite.IgniteLogger;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
+import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.thread.IgniteThreadPoolExecutor;
 import org.apache.ignite.yardstick.cache.jdbc.JdbcAbstractBenchmark;
 import org.yardstickframework.BenchmarkConfiguration;
@@ -36,6 +37,9 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
     static final long MDN_START_VALUE = 919200000001L;
 
     /** */
+    public static final int LOADER_POOL_SIZE = 16;
+
+    /** */
     private AtomicInteger mCorpListID = new AtomicInteger(1);
 
     /** */
@@ -49,31 +53,38 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
     };
 
     /** */
-    private void createPocSubscr(long longMdnStartValue, final String pttID, int noOfMdns) throws SQLException {
+    private void createPocSubscr(long longMdnStartValue, final String pttID, int noOfMdns) throws Exception {
 
         final AtomicLong mdnCounter = new AtomicLong(longMdnStartValue);
 
         final AtomicLong finished = new AtomicLong();
 
-        final IgniteLogger logger = ignite().log();
+        final Semaphore sem = new Semaphore(200);
 
         for (int i = 1; i <= noOfMdns; i++) {
+            sem.acquire();
+
             loaderExec.submit(new Runnable() {
                 @Override public void run() {
                     try {
-                        final long longMdn = mdnCounter.getAndIncrement();
+                        try {
+                            final long longMdn = mdnCounter.getAndIncrement();
 
-                        insertPocsubTable(longMdn, pttID, 2, 0, 1, 0, 1, 1, 1);
+                            insertPocsubTable(longMdn, pttID, 2, 0, 1, 0, 1, 1, 1);
 
-                        insertCorpcontactcount(longMdn);
+                            insertCorpcontactcount(longMdn);
 
-                        addContacts(longMdn, 0, 1, noOfContacts);
+                            addContacts(longMdn, 0, 1, noOfContacts);
 
-                        long fin = finished.incrementAndGet();
-                        if (fin % 1000 == 0)
-                            logger.info("Loaded " + (100 * fin / noOfMdn) + "%");
+                            long fin = finished.incrementAndGet();
+                            if (fin % 1000 == 0)
+                                U.quietAndInfo(ignite().log(),"Loaded " + (100 * fin / noOfMdn) + "%");
+                        }
+                        finally {
+                            sem.release();
+                        }
                     }
-                    catch (SQLException e) {
+                    catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -198,21 +209,21 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
             if (ignite().cache(DUMMY_CACHE).size() > 0)
                 return;
 
-            ignite().log().info("Populating query data...");
+            U.quietAndInfo(ignite().log(),"Populating query data...");
 
             long start = System.nanoTime();
 
             loaderExec = new IgniteThreadPoolExecutor(
                 "loaderPool",
                 "loaderNode",
-                16,
-                16,
+                LOADER_POOL_SIZE,
+                LOADER_POOL_SIZE,
                 10_000,
-                new LinkedBlockingQueue<Runnable>(100));
+                new LinkedBlockingQueue<Runnable>());
 
             createPocSubscr(MDN_START_VALUE, "010111", noOfMdn);
 
-            ignite().log().info("Finished populating join query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
+            U.quietAndInfo(ignite().log(),"Finished populating join query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
         }
         finally {
             lock.unlock();
