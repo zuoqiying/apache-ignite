@@ -267,9 +267,6 @@ public class JavaLogger implements IgniteLogger, LoggerNodeIdAware {
 
     /** {@inheritDoc} */
     @Override public void info(String msg) {
-        if (!impl.isLoggable(INFO))
-            warning("Logging at INFO level without checking if INFO level is enabled: " + msg);
-
         impl.info(msg);
     }
 
