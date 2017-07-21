@@ -5,15 +5,18 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteLock;
-import org.apache.ignite.IgniteSemaphore;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.SqlFieldsQuery;
+import org.apache.ignite.thread.IgniteThreadPoolExecutor;
 import org.apache.ignite.yardstick.cache.jdbc.JdbcAbstractBenchmark;
 import org.yardstickframework.BenchmarkConfiguration;
-
-import static org.yardstickframework.BenchmarkUtils.println;
 
 /**
  *
@@ -23,7 +26,7 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
     static final String DUMMY_CACHE = "DG";
 
     /** */
-    static final int noOfMdn = 100_000;
+    static final int noOfMdn = 10;
 
     /** */
     static final int noOfContacts = 100;
@@ -32,8 +35,12 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
     static final long MDN_START_VALUE = 919200000001L;
 
     /** */
-    private int mCorpListID = 1;
+    private AtomicInteger mCorpListID = new AtomicInteger(1);
 
+    /** */
+    private ExecutorService loaderExec;
+
+    /** */
     private ThreadLocal<Long> mdnCntr = new ThreadLocal<Long>() {
         @Override protected Long initialValue() {
             return 919200000001L;
@@ -41,16 +48,44 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
     };
 
     /** */
-    private void createPocSubscr(long longMdnStartValue, String pttID, int noOfMdns) throws SQLException {
-        long longMdn = longMdnStartValue;
+    private void createPocSubscr(long longMdnStartValue, final String pttID, int noOfMdns) throws SQLException {
+
+        final AtomicLong mdnCounter = new AtomicLong(longMdnStartValue);
+
+        final AtomicLong finished = new AtomicLong();
 
         for (int i = 1; i <= noOfMdns; i++) {
-            insertPocsubTable(longMdn, pttID, 2, 0, 1, 0, 1, 1, 1);
+            loaderExec.submit(new Runnable() {
+                @Override public void run() {
+                    try {
+                        final long longMdn = mdnCounter.getAndIncrement();
 
-            insertCorpcontactcount(longMdn);
+                        insertPocsubTable(longMdn, pttID, 2, 0, 1, 0, 1, 1, 1);
 
-            addContacts(longMdn, 0, 1, noOfContacts);
-            ++longMdn;
+                        insertCorpcontactcount(longMdn);
+
+                        addContacts(longMdn, 0, 1, noOfContacts);
+
+                        long fin = finished.incrementAndGet();
+                        if (fin % 1000 == 0)
+                            ignite().log().info("Loaded " + (100 * fin / noOfMdn) + "%");
+                    }
+                    catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+
+        loaderExec.shutdown();
+
+        try {
+            while (!loaderExec.awaitTermination(1, TimeUnit.SECONDS)){
+
+            }
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -90,16 +125,16 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
 
     /** */
     private void addContacts(long longMDN, int publicSubType, int corpSubType, int numCont) throws SQLException {
-        mCorpListID++;
+        int corpListID = mCorpListID.getAndIncrement();
         if (corpSubType == 1) {
-            insertCorplistinfo(mCorpListID, 1);
+            insertCorplistinfo(corpListID, 1);
 
-            insertCorplistDistinfo(mCorpListID, longMDN);
+            insertCorplistDistinfo(corpListID, longMDN);
 
             long addCont = longMDN;
 
             while (numCont > 0) {
-                insertCorpMemberbTable(mCorpListID, ++addCont);
+                insertCorpMemberbTable(corpListID, ++addCont);
 
                 --numCont;
             }
@@ -160,13 +195,21 @@ public abstract class KodiakAbstractQueryBenchmark extends JdbcAbstractBenchmark
             if (ignite().cache(DUMMY_CACHE).size() > 0)
                 return;
 
-            println(cfg, "Populating query data...");
+            ignite().log().info("Populating query data...");
 
             long start = System.nanoTime();
 
+            loaderExec = new IgniteThreadPoolExecutor(
+                "loaderPool",
+                "loaderNode",
+                16,
+                16,
+                10_000,
+                new LinkedBlockingQueue<Runnable>(100));
+
             createPocSubscr(MDN_START_VALUE, "010111", noOfMdn);
 
-            println(cfg, "Finished populating join query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
+            ignite().log().info("Finished populating join query data in " + ((System.nanoTime() - start) / 1_000_000) + " ms.");
         }
         finally {
             lock.unlock();
