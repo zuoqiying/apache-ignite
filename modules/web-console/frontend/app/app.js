@@ -96,6 +96,7 @@ import ModelNormalizer from './services/ModelNormalizer.service.js';
 import UnsavedChangesGuard from './services/UnsavedChangesGuard.service';
 import Clusters from './services/Clusters';
 import Caches from './services/Caches';
+import AngularStrapTooltip from './services/AngularStrapTooltip.decorator';
 
 // Filters.
 import byName from './filters/byName.filter';
@@ -196,7 +197,8 @@ angular
     bsSelectMenu.name,
     protectFromBsSelectRender.name,
     // Ignite modules.
-    IgniteModules.name
+    IgniteModules.name,
+    AngularStrapTooltip.name
 ])
 // Directives.
 .directive(...igniteAutoFocus)
