@@ -101,7 +101,7 @@ export default ['profileController', [
 
                     $http.post('/api/v1/organizations/create', data)
                         .then(() => Messages.showInfo(`Organization "${$scope.user.company}" created.`))
-                        .catch((err) => Messages.showError('Failed to create organization: ', err))
+                        .catch((err) => Messages.showError('Failed to create organization: ', err));
                 });
         };
 
@@ -113,7 +113,7 @@ export default ['profileController', [
                     };
 
                     $http.post('/api/v1/organizations/invite', data)
-                        .then(() => Messages.showInfo(`Invite has been sent to: ${emial}.`))
+                        .then(() => Messages.showInfo(`Invite has been sent to: ${email}.`));
                 })
                 .catch((err) => Messages.showError('Failed to invite user: ', err));
         };
