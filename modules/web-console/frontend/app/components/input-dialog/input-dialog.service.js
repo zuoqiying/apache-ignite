@@ -55,7 +55,7 @@ export default class InputDialog {
 
         const modalHide = modal.hide;
 
-        modal.hide = () => deferred.reject('cancelled');
+        modal.hide = () => deferred.reject({cancelled: true});
 
         return deferred.promise
             .finally(modalHide);

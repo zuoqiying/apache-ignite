@@ -21,7 +21,7 @@
 
 module.exports = {
     implements: 'services/users',
-    inject: ['require(lodash)', 'errors', 'settings', 'mongo', 'services/spaces', 'services/mails', 'services/activities', 'agents-handler']
+    inject: ['require(lodash)', 'errors', 'settings', 'mongo', 'services/spaces', 'services/mails', 'services/activities', 'services/utils', 'agents-handler']
 };
 
 /**
@@ -32,22 +32,11 @@ module.exports = {
  * @param {SpacesService} spacesService
  * @param {MailsService} mailsService
  * @param {ActivitiesService} activitiesService
+ * @param {UtilsService} utilsService
  * @param {AgentsHandler} agentHnd
  * @returns {UsersService}
  */
-module.exports.factory = (_, errors, settings, mongo, spacesService, mailsService, activitiesService, agentHnd) => {
-    const _randomString = () => {
-        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        const possibleLen = possible.length;
-
-        let res = '';
-
-        for (let i = 0; i < settings.tokenLength; i++)
-            res += possible.charAt(Math.floor(Math.random() * possibleLen));
-
-        return res;
-    };
-
+module.exports.factory = (_, errors, settings, mongo, spacesService, mailsService, activitiesService, utilsService, agentHnd) => {
     class UsersService {
         /**
          * Save profile information.
@@ -60,7 +49,7 @@ module.exports.factory = (_, errors, settings, mongo, spacesService, mailsServic
                 .then((cnt) => {
                     user.admin = cnt === 0;
 
-                    user.token = _randomString();
+                    user.token = utilsService.randomString(settings.tokenLength);
 
                     return new mongo.Account(user);
                 })
@@ -78,7 +67,7 @@ module.exports.factory = (_, errors, settings, mongo, spacesService, mailsServic
                     });
                 })
                 .then((registered) => {
-                    registered.resetPasswordToken = _randomString();
+                    registered.resetPasswordToken = utilsService.randomString(settings.tokenLength);
 
                     return registered.save()
                         .then(() => mongo.Space.create({name: 'Personal space', owner: registered._id}))

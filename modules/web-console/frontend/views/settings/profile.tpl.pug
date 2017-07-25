@@ -74,3 +74,5 @@ mixin lbl(txt)
                                     input#profile_confirm.form-control(type='password' ng-model='user.confirm' ignite-match='user.password' placeholder='Confirm new password')
                 .col-xs-12.col-sm-12.details-row
                     a.btn.btn-primary(ng-disabled='!profileCouldBeSaved()' ng-click='profileCouldBeSaved() && saveUser()' bs-tooltip='' data-title='{{saveBtnTipText()}}' data-placement='bottom' data-trigger='hover') Save
+                    a.btn.btn-primary(ng-if='!user.organization' ng-click='createOrganization()') Create organization
+                    a.btn.btn-primary(ng-click='inviteUser()') Invite user

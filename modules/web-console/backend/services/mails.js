@@ -125,6 +125,28 @@ module.exports.factory = (_, nodemailer, settings) => {
                 `You are receiving this email because your account for <a href="${host}">${settings.mail.greeting}</a> was removed.`,
                 'Account was removed, but failed to send email notification to user!');
         }
+        /**
+         * Send email to user with invite.
+         *
+         * @param host
+         * @param user
+         * @param invite
+         */
+        static emailInvite(host, user, invite) {
+            const invitedUser = {
+                firstName: '',
+                secondName: '',
+                email: invite.email
+            };
+
+            const inviteLink = `${host}/invite/accept?token=${invite.token}`;
+
+            return send(invitedUser, 'You was invited to join organization',
+                `Hello!<br><br>` +
+                `User ${user.firstName} ${user.lastName} invites you to join organization ${invite.organization.name}`+
+                'To accept invintation, please click on the following link, or paste this into your browser to complete the process:<br><br>' +
+                `<a href="${invite}">${invite}</a><br><br>`);
+        }
     }
 
     return MailsService;

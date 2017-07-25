@@ -55,7 +55,7 @@ export default ['IgniteMessages', ['$alert', ($alert) => {
         errorMessage,
         hideAlert,
         showError(message, err) {
-            if (message && message.cancelled)
+            if (_.get(message, 'cancelled') || _.get(err, 'cancelled'))
                 return false;
 
             _showMessage(message, err, 'danger', 10);

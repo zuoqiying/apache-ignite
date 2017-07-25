@@ -40,6 +40,25 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
 
     result.ObjectId = ObjectId;
 
+    // Define Role schema.
+    const RoleSchema = new Schema({
+        name: String,
+        permissions: [String]
+    });
+
+    // Define Role model.
+    result.Role = mongoose.model('Role', RoleSchema);
+
+    // Define Organization schema.
+    const OrganizationSchema = new Schema({
+        name: String
+    });
+
+    OrganizationSchema.index({name: 1}, {unique: true});
+
+    // Define Organization model.
+    result.Organization = mongoose.model('Organization', OrganizationSchema);
+
     // Define Account schema.
     const AccountSchema = new Schema({
         firstName: String,
@@ -50,6 +69,9 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         lastLogin: Date,
         lastActivity: Date,
         admin: Boolean,
+        organization: {type: ObjectId, ref: 'Organization'},
+        organizationAdmin: Boolean,
+        roles: [{type: ObjectId, ref: 'Role'}],
         token: String,
         resetPasswordToken: String
     });
@@ -85,6 +107,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         DUPLICATE_KEY_ERROR: 11000,
         DUPLICATE_KEY_UPDATE_ERROR: 11001
     };
+
     // Define Account model.
     result.Account = mongoose.model('Account', AccountSchema);
 
@@ -99,7 +122,18 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         }]
     }));
 
-    // Define Domain model schema.
+    // Define Invite schema.
+    const InviteSchema = new Schema({
+       token: String,
+       organization: {type: ObjectId, ref: 'Organization'},
+       account: {type: ObjectId, ref: 'Account'},
+       email: String
+    });
+
+    // Define model for Invite.
+    result.Invite = mongoose.model('Invite', InviteSchema);
+
+        // Define Domain model schema.
     const DomainModelSchema = new Schema({
         space: {type: ObjectId, ref: 'Space', index: true, required: true},
         caches: [{type: ObjectId, ref: 'Cache'}],

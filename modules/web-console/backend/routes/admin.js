@@ -33,6 +33,7 @@ module.exports = {
  * @param {MailsService} mailsService
  * @param {SessionsService} sessionsService
  * @param {UsersService} usersService
+ * @param {NotificationsService} notificationsService
  * @returns {Promise}
  */
 module.exports.factory = function(_, express, settings, mongo, spacesService, mailsService, sessionsService, usersService, notificationsService) {
