@@ -172,7 +172,7 @@ public class IgnitePdsDynamicCacheTest extends IgniteDbDynamicCacheSelfTest {
 
         ccfg.setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL);
         ccfg.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
-        ccfg.setRebalanceMode(CacheRebalanceMode.NONE);
+        ccfg.setRebalanceMode(CacheRebalanceMode.SYNC);
         ccfg.setAffinity(new RendezvousAffinityFunction(false, 32));
 
         IgniteCache cache = ignite.getOrCreateCache(ccfg);
@@ -180,9 +180,14 @@ public class IgnitePdsDynamicCacheTest extends IgniteDbDynamicCacheSelfTest {
         for (int i = 0; i < 160; i++)
             cache.put(i, i);
 
-        startGrid(1);
+        ignite = startGrid(1);
 
         awaitPartitionMapExchange();
+
+        cache = ignite.cache(DEFAULT_CACHE_NAME);
+
+        for (int i = 0; i < 160; i++)
+            assertEquals(i, cache.get(i));
 
         stopAllGrids(true);
 
