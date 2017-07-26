@@ -38,7 +38,7 @@ mixin lbl(txt)
                         .col-xs-5.col-sm-4
                             input#profile-email.form-control(ignite-on-enter-focus-move='profile-company' type='email' ng-model='user.email' placeholder='Input email' required)
                     .details-row
-                        +lbl('Company:')
+                        +lbl('{{canCreateOrganization() ? "Company:" : "Organization:"}}')
                         .col-xs-5.col-sm-4
                             input#profile-company.form-control(ignite-on-enter-focus-move='profile-country' type='text' ng-model='user.company' placeholder='Input company name' required)
                     .details-row
@@ -74,5 +74,5 @@ mixin lbl(txt)
                                     input#profile_confirm.form-control(type='password' ng-model='user.confirm' ignite-match='user.password' placeholder='Confirm new password')
                 .col-xs-12.col-sm-12.details-row
                     a.btn.btn-primary(ng-disabled='!profileCouldBeSaved()' ng-click='profileCouldBeSaved() && saveUser()' bs-tooltip='' data-title='{{saveBtnTipText()}}' data-placement='bottom' data-trigger='hover') Save
-                    a.btn.btn-primary(ng-if='!user.organization' ng-click='createOrganization()') Create organization
-                    a.btn.btn-primary(ng-click='inviteUser()') Invite user
+                    a.btn.btn-primary(ng-if='canCreateOrganization()' ng-click='createOrganization()') Create organization
+                    a.btn.btn-primary(ng-if='canInviteUsers()' ng-click='inviteUser()') Invite user

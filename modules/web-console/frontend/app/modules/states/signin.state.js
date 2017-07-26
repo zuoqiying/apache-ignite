@@ -17,6 +17,7 @@
 
 import angular from 'angular';
 import templateUrl from 'views/signin.tpl.pug';
+import controller from 'app/controllers/auth.controller';
 
 angular
 .module('ignite-console.states.login', [
@@ -28,7 +29,12 @@ angular
     // set up the states
     $stateProvider
     .state('signin', {
-        url: '/',
+        url: '/?invite',
+        // params: {
+        //     invite: {
+        //         value: null
+        //     }
+        // },
         templateUrl,
         redirectTo: (trans) => {
             return trans.injector().get('User').read()
@@ -43,7 +49,9 @@ angular
                         return 'base.configuration.tabs';
                     }
                 })
-                .catch(() => true);
-        }
+                .catch(() => false);
+        },
+        controller,
+        controllerAs: '$ctrl'
     });
 }]);

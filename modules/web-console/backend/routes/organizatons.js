@@ -44,12 +44,10 @@ module.exports.factory = function (_, express, mongo, errors, settings, mailsSer
                 throw new Error('Organization name was not specified!');
 
             return mongo.Organization.create({name: data.organization})
-                .then((savedOrganization) => mongo.Account.update({_id: data.user}, {
-                    $set: {
-                        organization: savedOrganization._id,
-                        orgAdmin: true
-                    }
-                }).exec())
+                .then((savedOrganization) =>
+                    mongo.Account.update({_id: data.account}, {$set: {organization: savedOrganization._id, organizationAdmin: true}}).exec()
+                        .then(() => savedOrganization)
+                )
                 .catch((err) => {
                     if (err.code === mongo.errCodes.DUPLICATE_KEY_ERROR)
                         throw new Error(`Organization with name: "${data.organization}" already exist.`);
@@ -61,45 +59,52 @@ module.exports.factory = function (_, express, mongo, errors, settings, mailsSer
         // Create organization.
         router.post('/create', (req, res) => {
             _createOrganization(req.body)
-                .then(res.api.ok)
+                .then((organization) => res.api.ok(organization._id))
                 .catch(res.api.error);
         });
 
-        // Invite user to join organization.
-        router.post('/invite', (req, res) => {
-            const data = res.body;
-
+        const _createInvite = (host, user, data) => {
             if (_.isEmpty(data.email))
-                return res.status(500).send('User e-mail was not specified!');
+                throw new Error('User e-mail was not specified!');
 
             return mongo.Account.findOne({email: data.email})
                 .then((foundAccount) => {
                         const invite = {
                             token: utilsService.randomString(settings.tokenLength),
-                            organization: data.organization
+                            organization: data.organization,
+                            email: data.email
                         };
 
                         if (foundAccount)
                             invite.account = foundAccount._id;
 
                         return mongo.Invite.create(invite)
-                            .then((invite) => mailsService.emailInvite(invite))
-                            .then(res.api.ok)
-                            .catch(res.api.error);
+                            .then((savedInvite) => {
+                                return mailsService.emailInvite(host, user, savedInvite);
+                            })
+                            .catch((err) => {
+                                console.log(err);
+                            });
                     }
                 );
+        };
+
+        // Invite user to join organization.
+        router.post('/invite', (req, res) => {
+            _createInvite(req.origin(), {name: 'Test'},  req.body)
+                .then(res.api.ok)
+                .catch(res.api.error);
         });
 
-        // Add user to organization.
-        router.post('/add', (req, res) => {
-            const data = res.body;
-
-            return mongo.Invite.findOne({token: data.token}).exec()
-
-            return mongo.Account.findOne({_id: data.account})
-                .then((foundUser) => mailsService.emailInvite(foundUser));
-        });
-
+        // // Add user to organization.
+        // router.post('/add', (req, res) => {
+        //     const data = res.body;
+        //
+        //     return mongo.Invite.findOne({token: data.token}).exec();
+        //
+        //     return mongo.Account.findOne({_id: data.account})
+        //         .then((foundUser) => mailsService.emailInvite(foundUser));
+        // });
 
         resolveFactory(router);
     });

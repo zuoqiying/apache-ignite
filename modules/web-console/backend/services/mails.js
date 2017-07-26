@@ -139,13 +139,17 @@ module.exports.factory = (_, nodemailer, settings) => {
                 email: invite.email
             };
 
-            const inviteLink = `${host}/invite/accept?token=${invite.token}`;
+            const inviteLink = `${host}?invite=${invite.token}`;
 
-            return send(invitedUser, 'You was invited to join organization',
-                `Hello!<br><br>` +
-                `User ${user.firstName} ${user.lastName} invites you to join organization ${invite.organization.name}`+
-                'To accept invintation, please click on the following link, or paste this into your browser to complete the process:<br><br>' +
-                `<a href="${invite}">${invite}</a><br><br>`);
+            console.log('inviteLink: ' + inviteLink);
+
+            return true;
+
+            // return send(invitedUser, 'You was invited to join organization',
+            //     `Hello!<br><br>` +
+            //     `User ${user.firstName} ${user.lastName} invites you to join organization ${invite.organization.name}`+
+            //     'To accept invintation, please click on the following link, or paste this into your browser to complete the process:<br><br>' +
+            //     `<a href="${inviteLink}">${inviteLink}</a><br><br>`);
         }
     }
 

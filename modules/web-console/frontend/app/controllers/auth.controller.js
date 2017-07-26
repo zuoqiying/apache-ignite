@@ -17,9 +17,13 @@
 
 // Sign in controller.
 // TODO IGNITE-1936 Refactor this controller.
-export default ['auth', [
-    '$scope', 'IgniteFocus', 'IgniteCountries', 'Auth',
-    ($scope, Focus, Countries, Auth) => {
+export default [
+    '$scope', '$uiRouterGlobals', 'IgniteFocus', 'IgniteCountries', 'Auth',
+    ($scope, $uiRouterGlobals, Focus, Countries, Auth) => {
+        setTimeout(() => {
+            console.log($uiRouterGlobals.params);
+        }, 1000);
+
         $scope.auth = Auth.auth;
         $scope.forgotPassword = Auth.forgotPassword;
         $scope.action = 'signin';
@@ -27,4 +31,4 @@ export default ['auth', [
 
         Focus.move('user_email');
     }
-]];
+];

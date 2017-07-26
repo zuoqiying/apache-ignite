@@ -66,6 +66,7 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
         email: String,
         company: String,
         country: String,
+        registered: Date,
         lastLogin: Date,
         lastActivity: Date,
         admin: Boolean,
@@ -90,10 +91,14 @@ module.exports.factory = function(passportMongo, settings, pluginMongo, mongoose
             lastName: ret.lastName,
             company: ret.company,
             country: ret.country,
-            admin: ret.admin,
-            token: ret.token,
+            registered: ret.registered,
             lastLogin: ret.lastLogin,
-            lastActivity: ret.lastActivity
+            lastActivity: ret.lastActivity,
+            admin: ret.admin,
+            organization: ret.organization,
+            organizationAdmin: ret.organizationAdmin,
+            roles: ret.roles,
+            token: ret.token
         };
     };
 
