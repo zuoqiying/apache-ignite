@@ -16,19 +16,28 @@
  */
 
 // Sign in controller.
-// TODO IGNITE-1936 Refactor this controller.
 export default [
-    '$scope', '$uiRouterGlobals', 'IgniteFocus', 'IgniteCountries', 'Auth',
-    ($scope, $uiRouterGlobals, Focus, Countries, Auth) => {
-        setTimeout(() => {
-            console.log($uiRouterGlobals.params);
-        }, 1000);
-
+    '$scope', '$uiRouterGlobals', 'IgniteFocus', 'IgniteCountries', 'Auth', 'Invites',
+    ($scope, $uiRouterGlobals, Focus, Countries, Auth, Invites) => {
         $scope.auth = Auth.auth;
         $scope.forgotPassword = Auth.forgotPassword;
         $scope.action = 'signin';
         $scope.countries = Countries.getAll();
+        $scope.ui = {};
 
-        Focus.move('user_email');
+        $scope.invite = _.get($uiRouterGlobals.params, 'invite');
+
+        $scope.signInByInvite = () => {
+            return _.nonEmpty($scope.invite);
+        };
+
+        if (_.nonEmpty($scope.invite)) {
+            Invites.find($scope.invite)
+                .then((res) => {
+                    $scope.ui.email = res.data.email;
+                    $scope.ui.organization = res.data.organization.name;
+                    $scope.showSignIn = true;
+                });
+        }
     }
 ];

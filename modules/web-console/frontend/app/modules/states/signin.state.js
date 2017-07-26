@@ -32,7 +32,7 @@ angular
         url: '/?invite',
         // params: {
         //     invite: {
-        //         value: null
+        //         type: 'query'
         //     }
         // },
         templateUrl,

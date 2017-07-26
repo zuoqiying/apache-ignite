@@ -96,6 +96,14 @@ module.exports.factory = function (_, express, mongo, errors, settings, mailsSer
                 .catch(res.api.error);
         });
 
+        // Find invite and return data.
+        router.post('/info', (req, res) => {
+            mongo.Invite.findOne({token: '12345'})
+                .then(res.api.ok({organization: {name: 'Test'}, email: 'test@test.com'}))
+                .catch(res.api.error);
+        });
+
+
         // // Add user to organization.
         // router.post('/add', (req, res) => {
         //     const data = res.body;

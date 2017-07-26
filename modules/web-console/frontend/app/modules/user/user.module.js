@@ -31,14 +31,14 @@ angular.module('ignite-console.user', [
     return {
         responseError: (response) => {
             // Session has expired
-            if (response.status === 401) {
-                $injector.get('User').clean();
-
-                const $state = $injector.get('$state');
-
-                if ($state.current.name !== 'signin')
-                    $state.go('signin');
-            }
+            // if (response.status === 401) {
+            //     $injector.get('User').clean();
+            //
+            //     // const $state = $injector.get('$state');
+            //
+            //     // if ($state.current.name !== 'signin')
+            //     //     $state.go('signin');
+            // }
 
             return $q.reject(response);
         }

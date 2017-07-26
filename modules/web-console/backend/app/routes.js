@@ -63,6 +63,7 @@ module.exports.factory = function(publicRoute, adminRoute, profilesRoute, demoRo
             app.use('/downloads', _mustAuthenticated, downloadsRoute);
             app.use('/activities', _mustAuthenticated, activitiesRoute);
             app.use('/organizations', _mustAuthenticated, organizationRoute);
+            app.use('/invite', organizationRoute);
         }
     };
 };
