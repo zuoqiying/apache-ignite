@@ -873,6 +873,11 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
                 return 0;
 
             return io.getFirstPageId(pageAddr, lvl);
+        } catch (IgniteException ex) {
+            String msg = "FD-2937: meta = " + meta + " (partId = " + PageIdUtils.partId(meta.id()) +
+                ", index = " + PageIdUtils.pageIndex(meta.id()) + "), pageAddr = " + pageAddr;
+
+            throw new IgniteException(msg, ex);
         }
         finally {
             readUnlock(meta, pageAddr);
@@ -3867,6 +3872,11 @@ public abstract class BPlusTree<L, T extends L> extends DataStructure implements
                             return true;
 
                         // Continue fetching forward.
+                    } catch (IllegalStateException ex) {
+                        String msg = "FD-2937: nextPageId = " + nextPageId + " (partId = " + PageIdUtils.partId(nextPageId) +
+                            ", index = " + PageIdUtils.pageIndex(nextPageId) + "), pageAddr = " + pageAddr + ", page = " + next;
+
+                        throw new IgniteCheckedException(msg, ex);
                     }
                     finally {
                         readUnlock(next, pageAddr);

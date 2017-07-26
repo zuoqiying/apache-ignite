@@ -19,6 +19,7 @@ package org.apache.ignite.internal.processors.cache.database.tree.util;
 
 import java.nio.ByteBuffer;
 import org.apache.ignite.IgniteCheckedException;
+import org.apache.ignite.IgniteException;
 import org.apache.ignite.internal.pagemem.Page;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.pagemem.wal.IgniteWriteAheadLogManager;
@@ -210,7 +211,7 @@ public abstract class PageHandler<X, R> {
         Page page,
         PageLockListener lockLsnr,
         PageHandler<X, R> h,
-        PageIO init,
+        final PageIO init,
         IgniteWriteAheadLogManager wal,
         X arg,
         int intArg,
@@ -225,15 +226,21 @@ public abstract class PageHandler<X, R> {
 
         boolean ok = false;
 
-        try {
-            if (init != null) // It is a new page and we have to initialize it.
-                doInitPage(pageMem, page, pageAddr, init, wal);
-            else
-                init = PageIO.getPageIO(pageAddr);
+        PageIO init0 = init;
 
-            res = h.run(page, init, pageAddr, arg, intArg);
+        try {
+            if (init0 != null) // It is a new page and we have to initialize it.
+                doInitPage(pageMem, page, pageAddr, init0, wal);
+            else
+                init0 = PageIO.getPageIO(pageAddr);
+
+
+            res = h.run(page, init0, pageAddr, arg, intArg);
 
             ok = true;
+
+        } catch (IgniteException ex) {
+            throw new IgniteException("initWasNull = " + (init == null), ex);
         }
         finally {
             assert PageIO.getCrc(pageAddr) == 0; //TODO GG-11480

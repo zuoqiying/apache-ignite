@@ -598,7 +598,7 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
     }
 
     /** {@inheritDoc} */
-    @Override public GridIterator<CacheDataRow> iterator(int part) throws IgniteCheckedException {
+    @Override public GridIterator<CacheDataRow> iterator(final int part) throws IgniteCheckedException {
         CacheDataStore data = partitionData(part);
 
         if (data == null)
@@ -619,13 +619,19 @@ public class IgniteCacheOffheapManagerImpl extends GridCacheManagerAdapter imple
             }
 
             @Override protected boolean onHasNext() throws IgniteCheckedException {
-                if (next != null)
-                    return true;
+                try {
+                    if (next != null)
+                        return true;
 
-                if (cur.next())
-                    next = cur.get();
+                    if (cur.next())
+                        next = cur.get();
 
-                return next != null;
+                    return next != null;
+                }
+                catch (IgniteCheckedException e) {
+                    throw new IgniteCheckedException("Error while iterating through partition = " + part +
+                        ", cache = " + cctx.name(), e);
+                }
             }
         };
     }

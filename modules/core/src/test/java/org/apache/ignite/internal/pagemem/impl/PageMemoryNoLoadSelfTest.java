@@ -31,6 +31,7 @@ import org.apache.ignite.internal.pagemem.PageIdAllocator;
 import org.apache.ignite.internal.pagemem.PageIdUtils;
 import org.apache.ignite.internal.pagemem.PageMemory;
 import org.apache.ignite.internal.pagemem.PageUtils;
+import org.apache.ignite.internal.processors.cache.database.tree.io.DataPageIO;
 import org.apache.ignite.internal.processors.cache.database.tree.io.PageIO;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.testframework.junits.common.GridCommonAbstractTest;
@@ -196,7 +197,7 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
                     try {
                         long updId = PageIdUtils.rotatePageId(id.pageId());
 
-                        PageIO.setPageId(buf, updId);
+                        DataPageIO.VERSIONS.latest().initNewPage(buf, page.id(), 1024);
 
                         updated.add(new FullPageId(updId, id.cacheId()));
                     }
@@ -281,13 +282,13 @@ public class PageMemoryNoLoadSelfTest extends GridCommonAbstractTest {
      * @param val Value to write.
      */
     private void writePage(Page page, int val) {
-        long bytes = page.getForWritePointer();
+        long addr = page.getForWritePointer();
 
         try {
-            PageIO.setPageId(bytes, page.id());
+            DataPageIO.VERSIONS.latest().initNewPage(addr, page.id(), 1024);
 
             for (int i = PageIO.COMMON_HEADER_END; i < PAGE_SIZE; i++)
-                PageUtils.putByte(bytes, i, (byte)val);
+                PageUtils.putByte(addr, i, (byte)val);
         }
         finally {
             page.releaseWrite(true);

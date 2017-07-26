@@ -17,6 +17,8 @@
 
 package org.apache.ignite.internal.processors.cache.database.tree.io;
 
+import org.apache.ignite.IgniteException;
+
 /**
  * Registry for IO versions.
  */
@@ -79,6 +81,9 @@ public final class IOVersions<V extends PageIO> {
      * @return IO.
      */
     public V forVersion(int ver) {
+        if (ver == 0)
+            throw new IgniteException("Version couldn't be 0, it means that page was corrupted or not-initialized");
+
         return vers[ver - 1];
     }
 
