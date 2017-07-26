@@ -4,31 +4,40 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.file.FileSystem;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.IgniteException;
+import org.apache.ignite.internal.util.typedef.internal.S;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  *
  */
 public class IgniteSqlTester {
 
-    private static CopyOnWriteArrayList<HashMap<String, Object>> sqlStatements;
+    private static Collection<HashMap<String, Object>> sqlStatements;
     private static int operID;
     private static int passedOPS;
     private static int failedOPS;
     private static int msgInterval;
     private static PrintWriter writer;
+    private static HashMap<Integer, ArrayList<String>> igniteResult;
 
     public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
         //if (F.isEmpty(args) || args.length != 2)
         //    throw new IgniteException();
+
+        igniteResult = new HashMap<>();
 
         Properties props = new Properties();
 
@@ -40,11 +49,18 @@ public class IgniteSqlTester {
         }
 
         try {
-            sqlStatements = new StatementGenerator(props).generate(args);
+            if (props.getProperty("mode").equals("generate"))
+                sqlStatements = new StatementGenerator(props).generate(args);
+            else
+                sqlStatements = readStatements(props.getProperty("statementsPath"));
         }
         catch (IgniteCheckedException e) {
-            e.printStackTrace();
+            e.printStackTrace();//TODO
         }
+
+        writer = new PrintWriter(new FileOutputStream(
+            new File(props.getProperty("workDir") + File.separator + "sqltestlog" + System.currentTimeMillis() + ".log"),
+            true));
 
         // Initialize Spring factory.
         FileSystemXmlApplicationContext ctx = new FileSystemXmlApplicationContext(props.getProperty("cfgPath"));
@@ -55,11 +71,29 @@ public class IgniteSqlTester {
 
         Set<QueryTestType> types = new HashSet<>();
 
+        QueryTypeConfiguration igniteConf = null;
+
         for (QueryTypeConfiguration typeConf : cfg.getTypeConfigurations()) {
             QueryTestType t = typeConf.getType();
 
+            if (t.equals(QueryTestType.IGNITE))
+                igniteConf = typeConf;
+
             if (!types.add(t))
                 throw new IgniteException(); // Duplicate types
+        }
+
+        if (props.getProperty("onlyIgnite").equals("true")) {
+            IgniteSqlRunner ir = new IgniteSqlRunner();
+
+            igniteResult = ir.runStatements(igniteConf, sqlStatements);
+
+            Yaml yaml = new Yaml();
+            writer.write(yaml.dumpAs(igniteResult, null, DumperOptions.FlowStyle.BLOCK));
+            writer.flush();
+            writer.close();
+
+            System.exit(0);
         }
 
         List<RunContext> runners = new ArrayList<>();
@@ -105,7 +139,7 @@ public class IgniteSqlTester {
         }
 
         writer = new PrintWriter(new FileOutputStream(
-            new File(props.getProperty("workDir") + "/sqltestlog" + System.currentTimeMillis() + ".log"),
+            new File(props.getProperty("workDir") + File.separator + "sqltestlog" + System.currentTimeMillis() + ".log"),
             true));
 
         for (HashMap<String, Object> entry : sqlStatements) {
@@ -115,11 +149,27 @@ public class IgniteSqlTester {
             for (RunContext runCtx : runners) {
                 Statement stmt = runCtx.conn.createStatement();
 
+                String ex = null;
+
+                if (entry.get(runCtx.runner.getType()) == null)
+                    continue;
+
                 String st = (String)entry.get(runCtx.runner.getType());
 
-                stmt.execute(st);
+                try {
+                    stmt.execute(st);
+                }
+                catch (Exception e) {
+                    ex = e.getMessage();
+                }
 
                 runCtx.res = stmt.getResultSet();
+
+                if (props.getProperty("onlyIgnite").equals("true")) {
+                    if (runCtx.res != null)
+                        igniteResult.put((int)entry.get("id"), null);
+
+                }
             }
 
             try {
@@ -157,7 +207,7 @@ public class IgniteSqlTester {
 
             if (runCtx.res != null) {
 
-                ArrayList<ArrayList<String>> resultTbl = new ArrayList<>();
+                LinkedList<ArrayList<String>> resultTbl = new LinkedList<>();
                 ArrayList<String> columnNames = new ArrayList<>();
 
                 int colsCnt = runCtx.res.getMetaData().getColumnCount();
@@ -216,8 +266,8 @@ public class IgniteSqlTester {
             return false;
         }
 
-        ArrayList<ArrayList<String>> main = runners.get(0).resultTbl;
-        ArrayList<ArrayList<String>> checked = runners.get(1).resultTbl;
+        LinkedList<ArrayList<String>> main = runners.get(0).resultTbl;
+        LinkedList<ArrayList<String>> checked = runners.get(1).resultTbl;
         if (!main.equals(checked)) {
             printDiff(runners);
             return false;
@@ -276,6 +326,53 @@ public class IgniteSqlTester {
         writer.println();
     }
 
+    private static Collection<HashMap<String, Object>> readStatements(String path) {
+        File newConfiguration = new File(path);
+        InputStream is = null;
+
+        try {
+            is = new FileInputStream(newConfiguration);
+        }
+        catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        Yaml yaml = new Yaml();
+        return (Collection<HashMap<String, Object>>)yaml.load(is);
+    }
+
+    private static LinkedList<ArrayList<String>> setToTable(ResultSet set) throws Exception {
+
+        LinkedList<ArrayList<String>> resultTbl = new LinkedList<>();
+        ArrayList<String> columnNames = new ArrayList<>();
+
+        int colsCnt = set.getMetaData().getColumnCount();
+
+        while (set.next()) {
+
+            ArrayList<String> row = new ArrayList<>(colsCnt);
+
+            for (int i = 1; i <= colsCnt; i++) {
+                Object colVal = set.getObject(i);
+
+                row.add(colVal.toString());
+
+                if (columnNames.size() < colsCnt)
+                    columnNames.add(set.getMetaData().getColumnName(i));
+            }
+
+            resultTbl.add(row);
+
+        }
+
+        resultTbl.add(columnNames);
+
+        return resultTbl;
+
+    }
+
     private static class RunContext {
         QueryTestRunner runner;
 
@@ -283,7 +380,7 @@ public class IgniteSqlTester {
 
         ResultSet res;
 
-        ArrayList<ArrayList<String>> resultTbl;
+        LinkedList<ArrayList<String>> resultTbl;
         ArrayList<String> colNames;
     }
 

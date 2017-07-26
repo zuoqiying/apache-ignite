@@ -187,7 +187,7 @@ public class StatementGenerator {
         return sqlStatements;
     }
 
-    private HashMap<String, Object> readYaml (String yamlFile) {
+    public HashMap<String, Object> readYaml (String yamlFile) {
         // Read combination config file
         File newConfiguration = new File(yamlFile);
         InputStream is = null;
