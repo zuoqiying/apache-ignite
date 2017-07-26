@@ -92,6 +92,36 @@ module.exports.factory = (_, mongo, spacesService, errors) => {
     };
 
     class ClustersService {
+        static shortList(userId, demo) {
+            return spacesService.spaceIds(userId, demo)
+                .then((spaceIds) => Promise.all([
+                    mongo.Cluster.find({space: {$in: spaceIds}}).select('name discovery.kind caches igfss').sort('name').lean().exec(),
+                    mongo.Cache.aggregate([{$match: {space: {$in: spaceIds}}}, {$unwind: '$domains'}, {$group: {_id: '$_id', domains: { $addToSet: '$domains' }}}]).exec()
+                ])
+                .then(([clusters, caches]) => _.map(clusters, (cluster) => {
+                    const modelsCount = _.reduce(caches, (acc, c) => {
+                        if (_.find(cluster.caches, (id) => _.isEqual(id, c._id)))
+                            return acc + _.size(c.domains);
+
+                        return acc;
+                    }, 0);
+
+                    return {
+                        _id: cluster._id,
+                        name: cluster.name,
+                        discovery: cluster.discovery.kind,
+                        cachesCount: _.size(cluster.caches),
+                        modelsCount,
+                        igfsCount: _.size(cluster.igfss)
+                    };
+                })));
+        }
+
+        static get(userId, demo, _id) {
+            return spacesService.spaceIds(userId, demo)
+                .then((spaceIds) => mongo.Cluster.findOne({space: {$in: spaceIds}, _id}).lean().exec());
+        }
+
         /**
          * Create or update cluster.
          *

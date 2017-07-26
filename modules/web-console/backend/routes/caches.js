@@ -28,6 +28,18 @@ module.exports.factory = function(_, express, mongo, cachesService) {
     return new Promise((factoryResolve) => {
         const router = new express.Router();
 
+        router.get('/:_id', (req, res) => {
+            cachesService.get(req.currentUserId(), req.demo(), req.params._id)
+                .then(res.api.ok)
+                .catch(res.api.error);
+        });
+
+        router.get('/', (req, res) => {
+            cachesService.shortList(req.currentUserId(), req.demo())
+                .then(res.api.ok)
+                .catch(res.api.error);
+        });
+
         /**
          * Save cache.
          */

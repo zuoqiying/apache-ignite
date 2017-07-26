@@ -42,6 +42,18 @@ suite('ClusterServiceTestsSuite', () => {
 
     setup(() => db.init());
 
+    test('Get cluster', (done) => {
+        const _id = testClusters[0]._id;
+
+        clusterService.get(testClusters[0].space, false, _id)
+            .then((cluster) => {
+                assert.isNotNull(cluster);
+                assert.equal(cluster._id, _id);
+            })
+            .then(done)
+            .catch(done);
+    });
+
     test('Create new cluster', (done) => {
         const dupleCluster = Object.assign({}, testClusters[0], {name: 'Other name'});
 
@@ -126,6 +138,21 @@ suite('ClusterServiceTestsSuite', () => {
             .then(({rowsAffected}) =>
                 assert.equal(rowsAffected, 2)
             )
+            .then(done)
+            .catch(done);
+    });
+
+    test('List of all clusters in space', (done) => {
+        clusterService.shortList(testAccounts[0]._id, false)
+            .then((clusters) => {
+                assert.equal(clusters.length, 2);
+                assert.isNotNull(clusters[0]._id);
+                assert.isNotNull(clusters[0].name);
+                assert.isNotNull(clusters[0].discovery);
+                assert.isNotNull(clusters[0].cachesCount);
+                assert.isNotNull(clusters[0].modelsCount);
+                assert.isNotNull(clusters[0].igfsCount);
+            })
             .then(done)
             .catch(done);
     });

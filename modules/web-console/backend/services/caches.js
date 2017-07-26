@@ -27,11 +27,11 @@ module.exports = {
 /**
  * @param _
  * @param mongo
- * @param {SpacesService} spaceService
+ * @param {SpacesService} spacesService
  * @param errors
  * @returns {CachesService}
  */
-module.exports.factory = (_, mongo, spaceService, errors) => {
+module.exports.factory = (_, mongo, spacesService, errors) => {
     /**
      * Convert remove status operation to own presentation.
      *
@@ -96,6 +96,16 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
      * Service for manipulate Cache entities.
      */
     class CachesService {
+        static shortList(userId, demo, clusterId) {
+            return spacesService.spaceIds(userId, demo)
+                .then((spaceIds) => mongo.Cache.find({space: {$in: spaceIds}, clusters: clusterId }).select('name cacheMode atomicityMode').sort('name').lean().exec());
+        }
+
+        static get(userId, demo, _id) {
+            return spacesService.spaceIds(userId, demo)
+                .then((spaceIds) => mongo.Cache.findOne({space: {$in: spaceIds}, _id}).lean().exec());
+        }
+
         /**
          * Create or update cache.
          *
@@ -146,7 +156,7 @@ module.exports.factory = (_, mongo, spaceService, errors) => {
          * @returns {Promise.<{rowsAffected}>} - The number of affected rows.
          */
         static removeAll(userId, demo) {
-            return spaceService.spaceIds(userId, demo)
+            return spacesService.spaceIds(userId, demo)
                 .then(removeAllBySpaces)
                 .then(convertRemoveStatus);
         }
