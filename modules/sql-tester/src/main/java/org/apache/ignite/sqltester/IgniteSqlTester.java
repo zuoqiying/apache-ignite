@@ -117,7 +117,15 @@ public class IgniteSqlTester {
 
                 String connStr = typeConf.getConnectionString();
 
-                conn = DriverManager.getConnection(connStr);
+                if (typeConf.getProperties() != null) {
+                    Properties p = new Properties();
+
+                    p.putAll(typeConf.getProperties());
+
+                    conn = DriverManager.getConnection(connStr, p);
+                }
+                else
+                    conn = DriverManager.getConnection(connStr);
 
                 RunContext runCtx = new RunContext();
 

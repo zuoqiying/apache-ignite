@@ -118,7 +118,10 @@ public class IgniteSqlRunner {
             for (int i = 1; i <= colsCnt; i++) {
                 Object colVal = set.getObject(i);
 
-                row.add(colVal.toString());
+                if(colVal != null)
+                    row.add(colVal.toString());
+                else
+                    row.add("null");
 
                 if (columnNames.size() < colsCnt)
                     columnNames.add(set.getMetaData().getColumnName(i));
