@@ -35,6 +35,7 @@ import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
+import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.internal.util.typedef.internal.U;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
 import org.apache.ignite.yardstick.cache.model.ZipEntity;
@@ -221,7 +222,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
                         try (final IgniteDataStreamer<Object, Object> streamer = ignite().dataStreamer(cacheName)) {
                             streamer.perNodeBufferSize(args.streamerBufferSize());
-                            streamer.perNodeParallelOperations(Runtime.getRuntime().availableProcessors() * 4);
+                            streamer.perNodeParallelOperations(Runtime.getRuntime().availableProcessors() * 8);
 
                             final int num = args.compressThreads();
 
@@ -277,6 +278,49 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
             for (Future<Void> fut : futs)
                 fut.get();
+
+            for (final String cacheName : cacheNames) {
+                long startIdx = System.currentTimeMillis();
+
+                if (args.groupIndex()) {
+                    SqlFieldsQuery qry = new SqlFieldsQuery("CREATE INDEX on ZIP_ENTITY (BUSINESSDATE, RISKSUBJECTID, " +
+                        "SERIESDATE, SNAPVERSION, VARTYPE)");
+
+                    ignite().cache(cacheName).query(qry);
+                }
+                else {
+                    List<Future<?>> futs0 = new ArrayList<>();
+
+                    final String[] fields = {"BUSINESSDATE", "RISKSUBJECTID", "SERIESDATE", "SNAPVERSION", "VARTYPE"};
+
+                    ExecutorService exe = Executors.newFixedThreadPool(fields.length);
+
+                    try {
+                        for (final String field : fields) {
+                            futs0.add(exe.submit(new Callable<Object>() {
+                                @Override public Object call() throws Exception {
+                                    SqlFieldsQuery qry = new SqlFieldsQuery("CREATE INDEX on ZIP_ENTITY (" + field + ")");
+
+                                    ignite().cache(cacheName).query(qry);
+
+                                    return null;
+                                }
+                            }));
+                        }
+
+                        for (Future<?> fut : futs0)
+                            fut.get();
+                    }
+                    finally {
+                        exe.shutdown();
+                    }
+                }
+
+                long endIdx = System.currentTimeMillis();
+
+                BenchmarkUtils.println("IgniteStreamerZipBenchmark finished indexing [name=" + cacheName +
+                    ", indexCreationTime=" + (endIdx - startIdx) + ", groupIndex=" + args.groupIndex() + ']');
+            }
         }
         finally {
             stop.set(true);

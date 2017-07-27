@@ -41,7 +41,7 @@ public class ZipEntity {
     public String ATLASINSTRUMENTSTRUCTUREPATH;
     public String BOOKSOURCESYSTEM;
     public String BOOKSOURCESYSTEMCODE;
-    @QuerySqlField(index = true)
+    @QuerySqlField(index = false)
     public String BUSINESSDATE;
     public String CUSIP;
     public String DATASETFILTER;
@@ -65,7 +65,7 @@ public class ZipEntity {
     public String RISKPARENTINSTRUMENTIDTYPE;
     public String RISKSOURCESYSTEM;
     public String RISKSUBJECTCHORUSBOOKID;
-    @QuerySqlField(index = true)
+    @QuerySqlField(index = false)
     public String RISKSUBJECTID;
     public String RISKSUBJECTINSTRUMENTCOUNTERPARTYID;
     public String RISKSUBJECTINSTRUMENTID;
@@ -73,10 +73,10 @@ public class ZipEntity {
     public String RISKSUBJECTSOURCE;
     public String RISKSUBJECTTYPE;
     public String SENSITIVITYTYPE;
-    @QuerySqlField(index = true)
+    @QuerySqlField(index = false)
     public String SERIESDATE;
     public String SERIESDAY;
-    @QuerySqlField(index = true)
+    @QuerySqlField(index = false)
     public String SNAPVERSION;
     public Double STRIKEVALUE;
     public String SYS_AUDIT_TRACE;
@@ -86,7 +86,7 @@ public class ZipEntity {
     public String UNDERLYINGSECURITYIDTYPE;
     public String VALUATIONSOURCECONTEXTLABELNAME;
     public Double VALUE;
-    @QuerySqlField(index = true)
+    @QuerySqlField(index = false)
     public String VARTYPE;
 
     public static ZipEntity generate() {
@@ -268,5 +268,405 @@ public class ZipEntity {
 
     public static String generateRestString() {
         return randomString(ThreadLocalRandom8.current(), RND_STRING_LEN * 44);
+    }
+
+    public static String getALPHABETH() {
+        return ALPHABETH;
+    }
+
+    public static int getRndStringLen() {
+        return RND_STRING_LEN;
+    }
+
+    public String getACCOUNTCODE() {
+        return ACCOUNTCODE;
+    }
+
+    public void setACCOUNTCODE(String ACCOUNTCODE) {
+        this.ACCOUNTCODE = ACCOUNTCODE;
+    }
+
+    public String getASSETTYPE() {
+        return ASSETTYPE;
+    }
+
+    public void setASSETTYPE(String ASSETTYPE) {
+        this.ASSETTYPE = ASSETTYPE;
+    }
+
+    public String getASSETUNIT() {
+        return ASSETUNIT;
+    }
+
+    public void setASSETUNIT(String ASSETUNIT) {
+        this.ASSETUNIT = ASSETUNIT;
+    }
+
+    public String getATLASFOLDERID() {
+        return ATLASFOLDERID;
+    }
+
+    public void setATLASFOLDERID(String ATLASFOLDERID) {
+        this.ATLASFOLDERID = ATLASFOLDERID;
+    }
+
+    public String getATLASINSTRUMENTSTRUCTUREPATH() {
+        return ATLASINSTRUMENTSTRUCTUREPATH;
+    }
+
+    public void setATLASINSTRUMENTSTRUCTUREPATH(String ATLASINSTRUMENTSTRUCTUREPATH) {
+        this.ATLASINSTRUMENTSTRUCTUREPATH = ATLASINSTRUMENTSTRUCTUREPATH;
+    }
+
+    public String getBOOKSOURCESYSTEM() {
+        return BOOKSOURCESYSTEM;
+    }
+
+    public void setBOOKSOURCESYSTEM(String BOOKSOURCESYSTEM) {
+        this.BOOKSOURCESYSTEM = BOOKSOURCESYSTEM;
+    }
+
+    public String getBOOKSOURCESYSTEMCODE() {
+        return BOOKSOURCESYSTEMCODE;
+    }
+
+    public void setBOOKSOURCESYSTEMCODE(String BOOKSOURCESYSTEMCODE) {
+        this.BOOKSOURCESYSTEMCODE = BOOKSOURCESYSTEMCODE;
+    }
+
+    public String getBUSINESSDATE() {
+        return BUSINESSDATE;
+    }
+
+    public void setBUSINESSDATE(String BUSINESSDATE) {
+        this.BUSINESSDATE = BUSINESSDATE;
+    }
+
+    public String getCUSIP() {
+        return CUSIP;
+    }
+
+    public void setCUSIP(String CUSIP) {
+        this.CUSIP = CUSIP;
+    }
+
+    public String getDATASETFILTER() {
+        return DATASETFILTER;
+    }
+
+    public void setDATASETFILTER(String DATASETFILTER) {
+        this.DATASETFILTER = DATASETFILTER;
+    }
+
+    public String getDATASETLABEL() {
+        return DATASETLABEL;
+    }
+
+    public void setDATASETLABEL(String DATASETLABEL) {
+        this.DATASETLABEL = DATASETLABEL;
+    }
+
+    public Double getEODTOTALVALUE() {
+        return EODTOTALVALUE;
+    }
+
+    public void setEODTOTALVALUE(Double EODTOTALVALUE) {
+        this.EODTOTALVALUE = EODTOTALVALUE;
+    }
+
+    public String getESMP() {
+        return ESMP;
+    }
+
+    public void setESMP(String ESMP) {
+        this.ESMP = ESMP;
+    }
+
+    public String getFOAGGRCODE() {
+        return FOAGGRCODE;
+    }
+
+    public void setFOAGGRCODE(String FOAGGRCODE) {
+        this.FOAGGRCODE = FOAGGRCODE;
+    }
+
+    public String getHOSTPRODID() {
+        return HOSTPRODID;
+    }
+
+    public void setHOSTPRODID(String HOSTPRODID) {
+        this.HOSTPRODID = HOSTPRODID;
+    }
+
+    public String getINSTRUMENTEXPIRYDATE() {
+        return INSTRUMENTEXPIRYDATE;
+    }
+
+    public void setINSTRUMENTEXPIRYDATE(String INSTRUMENTEXPIRYDATE) {
+        this.INSTRUMENTEXPIRYDATE = INSTRUMENTEXPIRYDATE;
+    }
+
+    public String getINSTRUMENTMATURITYDATE() {
+        return INSTRUMENTMATURITYDATE;
+    }
+
+    public void setINSTRUMENTMATURITYDATE(String INSTRUMENTMATURITYDATE) {
+        this.INSTRUMENTMATURITYDATE = INSTRUMENTMATURITYDATE;
+    }
+
+    public String getINSTRUMENTTYPE() {
+        return INSTRUMENTTYPE;
+    }
+
+    public void setINSTRUMENTTYPE(String INSTRUMENTTYPE) {
+        this.INSTRUMENTTYPE = INSTRUMENTTYPE;
+    }
+
+    public String getISIN() {
+        return ISIN;
+    }
+
+    public void setISIN(String ISIN) {
+        this.ISIN = ISIN;
+    }
+
+    public String getPROXYINSTRUMENTID() {
+        return PROXYINSTRUMENTID;
+    }
+
+    public void setPROXYINSTRUMENTID(String PROXYINSTRUMENTID) {
+        this.PROXYINSTRUMENTID = PROXYINSTRUMENTID;
+    }
+
+    public String getPROXYINSTRUMENTIDTYPE() {
+        return PROXYINSTRUMENTIDTYPE;
+    }
+
+    public void setPROXYINSTRUMENTIDTYPE(String PROXYINSTRUMENTIDTYPE) {
+        this.PROXYINSTRUMENTIDTYPE = PROXYINSTRUMENTIDTYPE;
+    }
+
+    public String getPROXYINSTRUMENTTYPE() {
+        return PROXYINSTRUMENTTYPE;
+    }
+
+    public void setPROXYINSTRUMENTTYPE(String PROXYINSTRUMENTTYPE) {
+        this.PROXYINSTRUMENTTYPE = PROXYINSTRUMENTTYPE;
+    }
+
+    public Double getQUANTITY() {
+        return QUANTITY;
+    }
+
+    public void setQUANTITY(Double QUANTITY) {
+        this.QUANTITY = QUANTITY;
+    }
+
+    public String getREGION() {
+        return REGION;
+    }
+
+    public void setREGION(String REGION) {
+        this.REGION = REGION;
+    }
+
+    public String getRIC() {
+        return RIC;
+    }
+
+    public void setRIC(String RIC) {
+        this.RIC = RIC;
+    }
+
+    public String getRISKFACTORNAME() {
+        return RISKFACTORNAME;
+    }
+
+    public void setRISKFACTORNAME(String RISKFACTORNAME) {
+        this.RISKFACTORNAME = RISKFACTORNAME;
+    }
+
+    public String getRISKPARENTINSTRUMENTID() {
+        return RISKPARENTINSTRUMENTID;
+    }
+
+    public void setRISKPARENTINSTRUMENTID(String RISKPARENTINSTRUMENTID) {
+        this.RISKPARENTINSTRUMENTID = RISKPARENTINSTRUMENTID;
+    }
+
+    public String getRISKPARENTINSTRUMENTIDTYPE() {
+        return RISKPARENTINSTRUMENTIDTYPE;
+    }
+
+    public void setRISKPARENTINSTRUMENTIDTYPE(String RISKPARENTINSTRUMENTIDTYPE) {
+        this.RISKPARENTINSTRUMENTIDTYPE = RISKPARENTINSTRUMENTIDTYPE;
+    }
+
+    public String getRISKSOURCESYSTEM() {
+        return RISKSOURCESYSTEM;
+    }
+
+    public void setRISKSOURCESYSTEM(String RISKSOURCESYSTEM) {
+        this.RISKSOURCESYSTEM = RISKSOURCESYSTEM;
+    }
+
+    public String getRISKSUBJECTCHORUSBOOKID() {
+        return RISKSUBJECTCHORUSBOOKID;
+    }
+
+    public void setRISKSUBJECTCHORUSBOOKID(String RISKSUBJECTCHORUSBOOKID) {
+        this.RISKSUBJECTCHORUSBOOKID = RISKSUBJECTCHORUSBOOKID;
+    }
+
+    public String getRISKSUBJECTID() {
+        return RISKSUBJECTID;
+    }
+
+    public void setRISKSUBJECTID(String RISKSUBJECTID) {
+        this.RISKSUBJECTID = RISKSUBJECTID;
+    }
+
+    public String getRISKSUBJECTINSTRUMENTCOUNTERPARTYID() {
+        return RISKSUBJECTINSTRUMENTCOUNTERPARTYID;
+    }
+
+    public void setRISKSUBJECTINSTRUMENTCOUNTERPARTYID(String RISKSUBJECTINSTRUMENTCOUNTERPARTYID) {
+        this.RISKSUBJECTINSTRUMENTCOUNTERPARTYID = RISKSUBJECTINSTRUMENTCOUNTERPARTYID;
+    }
+
+    public String getRISKSUBJECTINSTRUMENTID() {
+        return RISKSUBJECTINSTRUMENTID;
+    }
+
+    public void setRISKSUBJECTINSTRUMENTID(String RISKSUBJECTINSTRUMENTID) {
+        this.RISKSUBJECTINSTRUMENTID = RISKSUBJECTINSTRUMENTID;
+    }
+
+    public String getRISKSUBJECTINSTRUMENTIDTYPE() {
+        return RISKSUBJECTINSTRUMENTIDTYPE;
+    }
+
+    public void setRISKSUBJECTINSTRUMENTIDTYPE(String RISKSUBJECTINSTRUMENTIDTYPE) {
+        this.RISKSUBJECTINSTRUMENTIDTYPE = RISKSUBJECTINSTRUMENTIDTYPE;
+    }
+
+    public String getRISKSUBJECTSOURCE() {
+        return RISKSUBJECTSOURCE;
+    }
+
+    public void setRISKSUBJECTSOURCE(String RISKSUBJECTSOURCE) {
+        this.RISKSUBJECTSOURCE = RISKSUBJECTSOURCE;
+    }
+
+    public String getRISKSUBJECTTYPE() {
+        return RISKSUBJECTTYPE;
+    }
+
+    public void setRISKSUBJECTTYPE(String RISKSUBJECTTYPE) {
+        this.RISKSUBJECTTYPE = RISKSUBJECTTYPE;
+    }
+
+    public String getSENSITIVITYTYPE() {
+        return SENSITIVITYTYPE;
+    }
+
+    public void setSENSITIVITYTYPE(String SENSITIVITYTYPE) {
+        this.SENSITIVITYTYPE = SENSITIVITYTYPE;
+    }
+
+    public String getSERIESDATE() {
+        return SERIESDATE;
+    }
+
+    public void setSERIESDATE(String SERIESDATE) {
+        this.SERIESDATE = SERIESDATE;
+    }
+
+    public String getSERIESDAY() {
+        return SERIESDAY;
+    }
+
+    public void setSERIESDAY(String SERIESDAY) {
+        this.SERIESDAY = SERIESDAY;
+    }
+
+    public String getSNAPVERSION() {
+        return SNAPVERSION;
+    }
+
+    public void setSNAPVERSION(String SNAPVERSION) {
+        this.SNAPVERSION = SNAPVERSION;
+    }
+
+    public Double getSTRIKEVALUE() {
+        return STRIKEVALUE;
+    }
+
+    public void setSTRIKEVALUE(Double STRIKEVALUE) {
+        this.STRIKEVALUE = STRIKEVALUE;
+    }
+
+    public String getSYS_AUDIT_TRACE() {
+        return SYS_AUDIT_TRACE;
+    }
+
+    public void setSYS_AUDIT_TRACE(String SYS_AUDIT_TRACE) {
+        this.SYS_AUDIT_TRACE = SYS_AUDIT_TRACE;
+    }
+
+    public Double getTHEOPRICE() {
+        return THEOPRICE;
+    }
+
+    public void setTHEOPRICE(Double THEOPRICE) {
+        this.THEOPRICE = THEOPRICE;
+    }
+
+    public Double getTOTALVALUE() {
+        return TOTALVALUE;
+    }
+
+    public void setTOTALVALUE(Double TOTALVALUE) {
+        this.TOTALVALUE = TOTALVALUE;
+    }
+
+    public String getUNDERLYINGSECURITYID() {
+        return UNDERLYINGSECURITYID;
+    }
+
+    public void setUNDERLYINGSECURITYID(String UNDERLYINGSECURITYID) {
+        this.UNDERLYINGSECURITYID = UNDERLYINGSECURITYID;
+    }
+
+    public String getUNDERLYINGSECURITYIDTYPE() {
+        return UNDERLYINGSECURITYIDTYPE;
+    }
+
+    public void setUNDERLYINGSECURITYIDTYPE(String UNDERLYINGSECURITYIDTYPE) {
+        this.UNDERLYINGSECURITYIDTYPE = UNDERLYINGSECURITYIDTYPE;
+    }
+
+    public String getVALUATIONSOURCECONTEXTLABELNAME() {
+        return VALUATIONSOURCECONTEXTLABELNAME;
+    }
+
+    public void setVALUATIONSOURCECONTEXTLABELNAME(String VALUATIONSOURCECONTEXTLABELNAME) {
+        this.VALUATIONSOURCECONTEXTLABELNAME = VALUATIONSOURCECONTEXTLABELNAME;
+    }
+
+    public Double getVALUE() {
+        return VALUE;
+    }
+
+    public void setVALUE(Double VALUE) {
+        this.VALUE = VALUE;
+    }
+
+    public String getVARTYPE() {
+        return VARTYPE;
+    }
+
+    public void setVARTYPE(String VARTYPE) {
+        this.VARTYPE = VARTYPE;
     }
 }

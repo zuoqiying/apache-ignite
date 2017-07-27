@@ -249,6 +249,9 @@ public class IgniteBenchmarkArguments {
     @Parameter(names = {"-sr", "--stringRandomization"}, description = "Coefficient of non repeated strings.")
     private double stringRandomization = 1.0;
 
+    @Parameter(names = {"-gi", "--groupIndex"}, description = "Group index.")
+    private boolean grpIndex;
+
     /**
      * @return {@code True} if need set {@link PersistentStoreConfiguration}.
      */
@@ -626,6 +629,13 @@ public class IgniteBenchmarkArguments {
      */
     public double stringRandomization() {
         return stringRandomization;
+    }
+
+    /**
+     * @return Group index.
+     */
+    public boolean groupIndex() {
+        return grpIndex;
     }
 
     /** {@inheritDoc} */
