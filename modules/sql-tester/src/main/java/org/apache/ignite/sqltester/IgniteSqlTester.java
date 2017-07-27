@@ -33,7 +33,7 @@ public class IgniteSqlTester {
     private static PrintWriter writer;
     private static HashMap<Integer, ArrayList<String>> igniteResult;
 
-    public static void main(String[] args) throws IOException, SQLException, ClassNotFoundException {
+    public static void main(String[] args) throws Exception {
         //if (F.isEmpty(args) || args.length != 2)
         //    throw new IgniteException();
 
@@ -86,7 +86,12 @@ public class IgniteSqlTester {
         if (props.getProperty("onlyIgnite").equals("true")) {
             IgniteSqlRunner ir = new IgniteSqlRunner();
 
-            igniteResult = ir.runStatements(igniteConf, sqlStatements);
+            try {
+                igniteResult = ir.runStatements(igniteConf, sqlStatements);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
 
             Yaml yaml = new Yaml();
             writer.write(yaml.dumpAs(igniteResult, null, DumperOptions.FlowStyle.BLOCK));
@@ -112,15 +117,7 @@ public class IgniteSqlTester {
 
                 String connStr = typeConf.getConnectionString();
 
-                if (typeConf.getProperties() != null) {
-                    Properties p = new Properties();
-
-                    p.putAll(typeConf.getProperties());
-
-                    conn = DriverManager.getConnection(connStr, p);
-                }
-                else
-                    conn = DriverManager.getConnection(connStr);
+                conn = DriverManager.getConnection(connStr);
 
                 RunContext runCtx = new RunContext();
 
