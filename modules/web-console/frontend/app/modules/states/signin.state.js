@@ -47,6 +47,7 @@ angular
                 .catch(() => true);
         },
         controller,
-        controllerAs: '$ctrl'
+        controllerAs: '$ctrl',
+        unsaved: true
     });
 }]);

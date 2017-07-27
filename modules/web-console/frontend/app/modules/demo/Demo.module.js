@@ -34,7 +34,8 @@ angular
         .state('demo.resume', {
             url: '/resume',
             permission: 'demo',
-            redirectTo: 'base.configuration.tabs.advanced.clusters',
+            redirectTo: 'base.configuration.tabs',
+            unsaved: true,
             tfMetaTags: {
                 title: 'Demo resume'
             }
@@ -45,10 +46,15 @@ angular
             redirectTo: (trans) => {
                 const $http = trans.injector().get('$http');
 
-                $http.post('/api/v1/demo/reset')
-                    .catch(trans.injector().get('IgniteMessages').showError)
-                    .finally(() => 'base.configuration.tabs.advanced.clusters');
+                return $http.post('/api/v1/demo/reset')
+                    .then(() => 'base.configuration.tabs')
+                    .catch((err) => {
+                        trans.injector().get('IgniteMessages').showError(err);
+
+                        return 'base.configuration.tabs';
+                    });
             },
+            unsaved: true,
             tfMetaTags: {
                 title: 'Demo reset'
             }

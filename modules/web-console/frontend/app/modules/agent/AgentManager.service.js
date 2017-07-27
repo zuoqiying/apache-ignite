@@ -92,7 +92,7 @@ export default class IgniteAgentManager {
 
         this.promises = new Set();
 
-        $root.$on('$stateChangeSuccess', () => this.stopWatch());
+        $root.$on('stateChangeStart', () => this.stopWatch());
 
         /**
          * Connection to backend.
