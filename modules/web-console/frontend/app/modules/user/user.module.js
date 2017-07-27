@@ -71,19 +71,22 @@ angular.module('ignite-console.user', [
         AclService.attachRole(role);
     });
 
-    $transitions.onEnter({}, (t) => {
-        const $state = t.router.stateService;
-        const {name, permission} = t.to();
+    $transitions.onEnter({}, (trans) => {
+        const $state = trans.router.stateService;
+        const {name, permission} = trans.to();
 
         if (_.isEmpty(permission))
             return;
 
-        if (AclService.can(permission)) {
-            Activities.post({action: $state.href(name, t.params('to'))});
+        trans.injector().get('User').read()
+            .then(() => {
+                if (AclService.can(permission)) {
+                    Activities.post({action: $state.href(name, trans.params('to'))});
 
-            return;
-        }
+                    return;
+                }
 
-        return $state.target(t.to().failState || '403');
+                return $state.target(trans.to().failState || '403');
+            });
     });
 }]);
