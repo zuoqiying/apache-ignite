@@ -289,30 +289,12 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                     ignite().cache(cacheName).query(qry);
                 }
                 else {
-                    List<Future<?>> futs0 = new ArrayList<>();
-
                     final String[] fields = {"BUSINESSDATE", "RISKSUBJECTID", "SERIESDATE", "SNAPVERSION", "VARTYPE"};
 
-                    ExecutorService exe = Executors.newFixedThreadPool(fields.length);
+                    for (final String field : fields) {
+                        SqlFieldsQuery qry = new SqlFieldsQuery("CREATE INDEX on ZIP_ENTITY (" + field + ")");
 
-                    try {
-                        for (final String field : fields) {
-                            futs0.add(exe.submit(new Callable<Object>() {
-                                @Override public Object call() throws Exception {
-                                    SqlFieldsQuery qry = new SqlFieldsQuery("CREATE INDEX on ZIP_ENTITY (" + field + ")");
-
-                                    ignite().cache(cacheName).query(qry);
-
-                                    return null;
-                                }
-                            }));
-                        }
-
-                        for (Future<?> fut : futs0)
-                            fut.get();
-                    }
-                    finally {
-                        exe.shutdown();
+                        ignite().cache(cacheName).query(qry);
                     }
                 }
 
