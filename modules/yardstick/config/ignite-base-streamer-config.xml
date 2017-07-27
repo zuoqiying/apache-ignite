@@ -64,7 +64,10 @@
                     <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder">
                         <property name="addresses">
                             <list>
-                                <value>127.0.0.1:47500..47509</value>
+                                <value>172.25.1.44:47500..47509</value>
+                                <value>172.25.1.45:47500..47509</value>
+                                <value>172.25.1.46:47500..47509</value>
+                                <value>172.25.1.47:47500..47509</value>
                             </list>
                         </property>
                     </bean>
