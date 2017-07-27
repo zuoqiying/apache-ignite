@@ -108,7 +108,6 @@ import id8 from './filters/id8.filter';
 
 // Controllers
 import profile from 'Controllers/profile-controller';
-import auth from './controllers/auth.controller';
 import resetPassword from './controllers/reset-password.controller';
 
 // Components
@@ -247,7 +246,6 @@ angular.module('ignite-console', [
 .service('Clusters', Clusters)
 .service('Caches', Caches)
 // Controllers.
-.controller(...auth)
 .controller(...resetPassword)
 .controller(...profile)
 // Filters.

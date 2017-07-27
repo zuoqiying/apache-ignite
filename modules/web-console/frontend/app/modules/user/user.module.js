@@ -34,10 +34,10 @@ angular.module('ignite-console.user', [
             if (response.status === 401) {
                 $injector.get('User').clean();
 
-                const $state = $injector.get('$state');
+                const stateName = $injector.get('$uiRouterGlobals').current.name;
 
-                if ($state.current.name !== 'signin')
-                    $state.go('signin');
+                if (stateName !== 'signin')
+                    $injector.get('$state').go('signin');
             }
 
             return $q.reject(response);
@@ -71,31 +71,19 @@ angular.module('ignite-console.user', [
         AclService.attachRole(role);
     });
 
-    $transitions.onBefore({}, (t) => {
+    $transitions.onEnter({}, (t) => {
         const $state = t.router.stateService;
         const {name, permission} = t.to();
 
-        return User.read()
-            .catch(() => {
-                User.clean();
+        if (_.isEmpty(permission))
+            return;
 
-                if (name !== 'signin')
-                    return $state.target('signin');
+        if (AclService.can(permission)) {
+            Activities.post({action: $state.href(name, t.params('to'))});
 
-                return true;
-            })
-            .then(() => {
-                if (_.isEmpty(permission))
-                    return true;
+            return;
+        }
 
-                if (AclService.can(permission)) {
-                    Activities.post({action: $state.href(name, t.params('to'))});
-
-                    return true;
-                }
-
-                return $state.target(t.to().failState || '403');
-            });
-
+        return $state.target(t.to().failState || '403');
     });
 }]);
