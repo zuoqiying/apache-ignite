@@ -23,7 +23,8 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class IgniteSqlRunner {
 
-    public HashMap<Integer, ArrayList<String>> runStatements(QueryTypeConfiguration igniteConf, Collection<HashMap<String, Object>> sqlStatements){
+    public HashMap<Integer, ArrayList<String>> runStatements(QueryTypeConfiguration igniteConf,
+        Collection<HashMap<String, Object>> sqlStatements) throws Exception {
 
         QueryTestRunner runner = igniteConf.getType().createRunner();
 
@@ -50,6 +51,8 @@ public class IgniteSqlRunner {
 
             Statement stmt = conn.createStatement();
 
+            System.out.println("Processing " + sqlStatements.size() + " statements");
+
 
             for(HashMap<String, Object> statement : sqlStatements){
                 int id = Integer.valueOf(statement.get("id").toString());
@@ -66,6 +69,8 @@ public class IgniteSqlRunner {
                 }
                 catch (Exception e) {
                     ex = e.getMessage();
+                    System.out.println("Got exception " + ex + "processing " + id + " statement.");
+                    System.out.println("Query: " + query);
                 }
 
                 if(ex == null)
@@ -84,12 +89,11 @@ public class IgniteSqlRunner {
                 else
                     results.put(id, resultList);
             }
-
-
         }
         catch (Exception e) {
             // Do cleanup TODO
             runner.afterTest();
+            throw e;
         }
 
         runner.afterTest();
@@ -98,7 +102,7 @@ public class IgniteSqlRunner {
 
     }
 
-    private ArrayList<String> setToList(ResultSet set) throws Exception{
+    private ArrayList<String> setToList(ResultSet set) throws Exception {
 
         ArrayList<ArrayList<String>> resultTbl = new ArrayList<>();
         ArrayList<String> columnNames = new ArrayList<>();
