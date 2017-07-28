@@ -36,12 +36,6 @@ export default class AgentModal {
             controllerAs: 'ctrl'
         });
 
-        self.modal.$scope.$on('modal.hide.before', () => {
-            Messages.hideAlert();
-
-            _.forEach(angular.element('.modal'), (m) => angular.element(m).scope().$hide());
-        });
-
         $root.$on('user', (event, user) => self.user = user);
     }
 
@@ -53,7 +47,11 @@ export default class AgentModal {
      * Close dialog and go by specified link.
      */
     back() {
+        this.Messages.hideAlert();
+
         this.hide();
+
+        _.forEach(angular.element('.modal'), (m) => angular.element(m).scope().$hide());
 
         if (this.backState)
             this.$state.go(this.backState);
