@@ -38,6 +38,8 @@ export default class AgentModal {
 
         self.modal.$scope.$on('modal.hide.before', () => {
             Messages.hideAlert();
+
+            _.forEach(angular.element('.modal'), (m) => angular.element(m).scope().$hide());
         });
 
         $root.$on('user', (event, user) => self.user = user);

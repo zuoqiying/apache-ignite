@@ -285,10 +285,6 @@ angular.module('ignite-console', [
     $root.$on('user', () => agentMgr.connect());
 }])
 .run(['$transitions', ($transitions) => {
-    $transitions.onStart({ }, () => {
-        _.forEach(angular.element('.modal'), (m) => angular.element(m).scope().$hide());
-    });
-
     $transitions.onSuccess({ }, (trans) => {
         try {
             const {name, params, unsaved} = trans.$to();
