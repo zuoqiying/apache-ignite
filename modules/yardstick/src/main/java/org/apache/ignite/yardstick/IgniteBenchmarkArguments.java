@@ -252,6 +252,10 @@ public class IgniteBenchmarkArguments {
     @Parameter(names = {"-gi", "--groupIndex"}, description = "Group index.")
     private boolean grpIndex;
 
+    /** */
+    @Parameter(names = {"-stpo", "--streamerParallelOps"}, description = "Data streamer max parallel ops")
+    private int streamerPerNodeParallelOps = 0;
+
     /**
      * @return {@code True} if need set {@link PersistentStoreConfiguration}.
      */
@@ -636,6 +640,13 @@ public class IgniteBenchmarkArguments {
      */
     public boolean groupIndex() {
         return grpIndex;
+    }
+
+    /**
+     * @return Streamer per node parallel ops.
+     */
+    public int getStreamerPerNodeParallelOps() {
+        return streamerPerNodeParallelOps;
     }
 
     /** {@inheritDoc} */
