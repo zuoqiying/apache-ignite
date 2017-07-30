@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,8 +34,9 @@ import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.IgniteException;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
-import org.apache.ignite.cache.query.SqlFieldsQuery;
+import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.internal.util.typedef.internal.U;
+import org.apache.ignite.lang.IgniteUuid;
 import org.apache.ignite.yardstick.IgniteAbstractBenchmark;
 import org.apache.ignite.yardstick.cache.model.ZipEntity;
 import org.apache.ignite.yardstick.cache.model.ZipSmallEntity;
@@ -233,11 +233,8 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                                     @Override public Object call() throws Exception {
                                         IgniteBinary binary = ignite().binary();
 
-                                        // Use random keys to allow submit entries from multiple clients independently.
-                                        Random rnd = new Random();
-
                                         for (int i = 0; i < entries / num; i++) {
-                                            streamer.addData(String.valueOf(rnd.nextLong()), create(binary, type,
+                                            streamer.addData(String.valueOf(IgniteUuid.randomUuid()), create(binary, type,
                                                 args.stringRandomization(), false));
 
                                             if (i > 0 && i % 1000 == 0) {
@@ -268,7 +265,9 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
                                 ", entries=" + entries +
                                 ", bufferSize=" + args.streamerBufferSize() +
                                 ", totalTimeMillis=" + time +
-                                ", entriesInCache=" + ignite().cache(cacheName).size() + ']');
+                                ", entriesInCache=" + ignite().cache(cacheName).size() +
+                                ", queryParallelism=" + ignite().cache(cacheName)
+                                .getConfiguration(CacheConfiguration.class).getQueryParallelism() + ']');
 
                             return null;
                         }
@@ -278,31 +277,6 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
             for (Future<Void> fut : futs)
                 fut.get();
-
-            for (final String cacheName : cacheNames) {
-                long startIdx = System.currentTimeMillis();
-
-                if (args.groupIndex()) {
-                    SqlFieldsQuery qry = new SqlFieldsQuery("CREATE INDEX on ZIP_ENTITY (BUSINESSDATE, RISKSUBJECTID, " +
-                        "SERIESDATE, SNAPVERSION, VARTYPE)");
-
-                    ignite().cache(cacheName).query(qry);
-                }
-                else {
-                    final String[] fields = {"BUSINESSDATE", "RISKSUBJECTID", "SERIESDATE", "SNAPVERSION", "VARTYPE"};
-
-                    for (final String field : fields) {
-                        SqlFieldsQuery qry = new SqlFieldsQuery("CREATE INDEX on ZIP_ENTITY (" + field + ")");
-
-                        ignite().cache(cacheName).query(qry);
-                    }
-                }
-
-                long endIdx = System.currentTimeMillis();
-
-                BenchmarkUtils.println("IgniteStreamerZipBenchmark finished indexing [name=" + cacheName +
-                    ", indexCreationTime=" + (endIdx - startIdx) + ", groupIndex=" + args.groupIndex() + ']');
-            }
         }
         finally {
             stop.set(true);
