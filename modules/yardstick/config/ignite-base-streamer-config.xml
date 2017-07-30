@@ -44,7 +44,7 @@
                         <bean class="org.apache.ignite.cache.QueryEntity">
                             <property name="tableName" value="ZIP_ENTITY"/>
                             <property name="keyType" value="java.lang.String"/>
-                            <property name="valueType" value="org.apache.ignite.yardstick.cache.model.ZipEntity"/>
+                            <property name="valueType" value="org.apache.ignite.yardstick.cache.model.ZipSmallEntity"/>
                             <property name="fields">
                                 <map>
                                     <entry key="BUSINESSDATE" value="java.lang.String"/>

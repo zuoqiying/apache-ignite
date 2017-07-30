@@ -235,7 +235,7 @@ public class IgniteStreamerZipBenchmark extends IgniteAbstractBenchmark {
 
                                         for (int i = 0; i < entries / num; i++) {
                                             streamer.addData(String.valueOf(IgniteUuid.randomUuid()), create(binary, type,
-                                                args.stringRandomization(), false));
+                                                args.stringRandomization(), true));
 
                                             if (i > 0 && i % 1000 == 0) {
                                                 if (stop.get())
