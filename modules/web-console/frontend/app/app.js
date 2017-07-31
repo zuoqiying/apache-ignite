@@ -125,8 +125,10 @@ import pageConfigure from './components/page-configure';
 import pageConfigureBasic from './components/page-configure-basic';
 import pageConfigureAdvanced from './components/page-configure-advanced';
 import gridColumnSelector from './components/grid-column-selector';
+import gridItemSelected from './components/grid-item-selected';
 import bsSelectMenu from './components/bs-select-menu';
 import protectFromBsSelectRender from './components/protect-from-bs-select-render';
+import uiGridHovering from './components/ui-grid-hovering';
 
 // Inject external modules.
 import IgniteModules from 'IgniteModules/index';
@@ -193,7 +195,9 @@ angular.module('ignite-console', [
     pageConfigureBasic.name,
     pageConfigureAdvanced.name,
     gridColumnSelector.name,
+    gridItemSelected.name,
     bsSelectMenu.name,
+    uiGridHovering.name,
     protectFromBsSelectRender.name,
     AngularStrapTooltip.name,
     AngularStrapSelect.name,
@@ -287,10 +291,6 @@ angular.module('ignite-console', [
     $root.$on('user', () => agentMgr.connect());
 }])
 .run(['$transitions', ($transitions) => {
-    $transitions.onStart({ }, () => {
-        _.forEach(angular.element('.modal'), (m) => angular.element(m).scope().$hide());
-    });
-
     $transitions.onSuccess({ }, (trans) => {
         try {
             const {name, params, unsaved} = trans.$to();

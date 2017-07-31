@@ -49,9 +49,10 @@ angular
                         return 'base.configuration.tabs';
                     }
                 })
-                .catch(() => false);
+                .catch(() => true);
         },
         controller,
-        controllerAs: '$ctrl'
+        controllerAs: '$ctrl',
+        unsaved: true
     });
 }]);
