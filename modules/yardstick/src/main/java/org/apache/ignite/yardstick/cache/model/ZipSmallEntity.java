@@ -29,11 +29,11 @@ public class ZipSmallEntity {
     public static final int RND_STRING_LEN = ZipEntity.RND_STRING_LEN;
 
     @QuerySqlField(index = true)
-    public String BUSINESSDATE;
+    public long BUSINESSDATE;
     @QuerySqlField(index = true)
     public String RISKSUBJECTID;
     @QuerySqlField(index = true)
-    public String SERIESDATE;
+    public long SERIESDATE;
     @QuerySqlField(index = true)
     public String SNAPVERSION;
     @QuerySqlField(index = true)
@@ -44,9 +44,9 @@ public class ZipSmallEntity {
 
         ThreadLocalRandom8 rnd = ThreadLocalRandom8.current();
 
-        entity.BUSINESSDATE = randomString(rnd, len);
+        entity.BUSINESSDATE = rnd.nextLong();
         entity.RISKSUBJECTID = randomString(rnd, len);
-        entity.SERIESDATE = randomString(rnd, len);
+        entity.SERIESDATE = rnd.nextLong();
         entity.SNAPVERSION = randomString(rnd, len);
         entity.VARTYPE = randomString(rnd, len);
 

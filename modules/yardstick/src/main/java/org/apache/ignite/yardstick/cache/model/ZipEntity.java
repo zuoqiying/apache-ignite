@@ -41,7 +41,7 @@ public class ZipEntity {
     public String ATLASINSTRUMENTSTRUCTUREPATH;
     public String BOOKSOURCESYSTEM;
     public String BOOKSOURCESYSTEMCODE;
-    @QuerySqlField(index = false)
+    @QuerySqlField(index = true)
     public String BUSINESSDATE;
     public String CUSIP;
     public String DATASETFILTER;
@@ -65,7 +65,7 @@ public class ZipEntity {
     public String RISKPARENTINSTRUMENTIDTYPE;
     public String RISKSOURCESYSTEM;
     public String RISKSUBJECTCHORUSBOOKID;
-    @QuerySqlField(index = false)
+    @QuerySqlField(index = true)
     public String RISKSUBJECTID;
     public String RISKSUBJECTINSTRUMENTCOUNTERPARTYID;
     public String RISKSUBJECTINSTRUMENTID;
@@ -73,10 +73,10 @@ public class ZipEntity {
     public String RISKSUBJECTSOURCE;
     public String RISKSUBJECTTYPE;
     public String SENSITIVITYTYPE;
-    @QuerySqlField(index = false)
+    @QuerySqlField(index = true)
     public String SERIESDATE;
     public String SERIESDAY;
-    @QuerySqlField(index = false)
+    @QuerySqlField(index = true)
     public String SNAPVERSION;
     public Double STRIKEVALUE;
     public String SYS_AUDIT_TRACE;
@@ -86,7 +86,7 @@ public class ZipEntity {
     public String UNDERLYINGSECURITYIDTYPE;
     public String VALUATIONSOURCECONTEXTLABELNAME;
     public Double VALUE;
-    @QuerySqlField(index = false)
+    @QuerySqlField(index = true)
     public String VARTYPE;
 
     public static ZipEntity generate() {
