@@ -254,7 +254,7 @@ public class IgniteBenchmarkArguments {
 
     /** */
     @Parameter(names = {"-stpo", "--streamerParallelOps"}, description = "Data streamer max parallel ops")
-    private int streamerPerNodeParallelOps = 0;
+    private int streamerPerNodeParallelOps = Runtime.getRuntime().availableProcessors() * 8;
 
     /**
      * @return {@code True} if need set {@link PersistentStoreConfiguration}.
