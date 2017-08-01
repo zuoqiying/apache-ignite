@@ -98,7 +98,7 @@ module.exports.factory = (_, mongo, spacesService, errors) => {
     class CachesService {
         static shortList(userId, demo, clusterId) {
             return spacesService.spaceIds(userId, demo)
-                .then((spaceIds) => mongo.Cache.find({space: {$in: spaceIds}, clusters: clusterId }).select('name cacheMode atomicityMode').sort('name').lean().exec());
+                .then((spaceIds) => mongo.Cache.find({space: {$in: spaceIds}, clusters: clusterId }).select('name cacheMode atomicityMode backups').sort('name').lean().exec());
         }
 
         static get(userId, demo, _id) {
