@@ -21,11 +21,14 @@
 
 module.exports = {
     implements: 'middlewares:api',
-    factory: () => {
+    inject: ['require("mongodb-core")'],
+    factory: (mongodb) => {
         return (req, res, next) => {
             res.api = {
                 error(err) {
-                    // TODO: removed code from error
+                    if (err instanceof mongodb.MongoError)
+                        res.status(500).send(err.message);
+
                     res.status(err.httpCode || err.code || 500).send(err.message);
                 },
                 ok(data) {
